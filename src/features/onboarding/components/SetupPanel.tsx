@@ -2,6 +2,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SectionCard } from "../../../components/SectionCard";
 import { runDoctor } from "../../../lib/client";
+import { sharedProfileEntries } from "../../../lib/profile-display";
 import { AppBootstrap, AppSnapshot, InitReport } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
 import { useDesktopActions } from "../../shared/useDesktopActions";
@@ -30,6 +31,7 @@ export function SetupPanel({
   initReport: InitReport | undefined;
   onOpenProfiles: (tool: string) => void;
 }) {
+  const settings = bootstrap.settings;
   const { initMutation, addProfileMutation, useAllProfilesMutation, mutationLock } =
     useDesktopActions();
   const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor });
@@ -53,7 +55,10 @@ export function SetupPanel({
     () => buildHealthItems(bootstrap, snapshot, doctor.data),
     [bootstrap, snapshot, doctor.data],
   );
-  const switchableProfiles = useMemo(() => findSharedProfiles(snapshot), [snapshot]);
+  const switchableProfiles = useMemo(
+    () => sharedProfileEntries(settings, snapshot),
+    [settings, snapshot],
+  );
   const shouldShowSetup =
     totalProfiles === 0 || liveAccounts.length > 0 || undetectedInstalledTools.length > 0;
 
@@ -220,8 +225,8 @@ export function SetupPanel({
             >
               <option value="">Select profile</option>
               {switchableProfiles.map((profile) => (
-                <option key={profile} value={profile}>
-                  {profile}
+                <option key={profile.name} value={profile.name}>
+                  {profile.label}
                 </option>
               ))}
             </select>
@@ -267,18 +272,6 @@ function readLiveAccounts(initReport: InitReport | undefined): LiveAccount[] {
   const result = initReport?.result as { live_accounts?: unknown } | undefined;
   const accounts = result?.live_accounts;
   return Array.isArray(accounts) ? (accounts as LiveAccount[]) : [];
-}
-
-function findSharedProfiles(snapshot: AppSnapshot) {
-  const counts = new Map<string, number>();
-  Object.values(snapshot.profiles).forEach((entry) => {
-    entry.profiles.forEach((profile) => {
-      counts.set(profile.name, (counts.get(profile.name) ?? 0) + 1);
-    });
-  });
-  return [...counts.entries()]
-    .filter(([, count]) => count > 1)
-    .map(([name]) => name);
 }
 
 function buildHealthItems(

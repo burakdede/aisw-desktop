@@ -12,6 +12,7 @@ import { SettingsPanel } from "./features/settings/components/SettingsPanel";
 import { useDesktop } from "./features/shared/useDesktop";
 import { WorkspacesPanel } from "./features/workspaces/components/WorkspacesPanel";
 import { notifyDesktop } from "./lib/notifications";
+import { activeSetLabel } from "./lib/profile-display";
 import { listenDesktopEvent, type TrayCommandResultEvent } from "./lib/tauri";
 
 const NAV = [
@@ -117,6 +118,7 @@ export function App() {
   const { runtime_status: runtimeStatus, settings } = bootstrap.data;
   const resolvedSnapshot = snapshot.data ?? bootstrap.data.snapshot;
   const toolCapabilities = runtimeStatus.capabilities?.tools ?? {};
+  const currentActiveSet = resolvedSnapshot ? activeSetLabel(settings, resolvedSnapshot) : null;
 
   return (
     <AppFrame
@@ -127,7 +129,8 @@ export function App() {
       onSelectNav={(id) => setActiveNav(id as (typeof NAV)[number]["id"])}
       statusBadge={
         <div>
-          <strong>{runtimeStatus.compatible ? "Runtime ready" : "Runtime blocked"}</strong>
+          <strong>{currentActiveSet ? `Active set: ${currentActiveSet}` : "No shared active set"}</strong>
+          <p>{runtimeStatus.compatible ? "Runtime ready" : "Runtime blocked"}</p>
           <p>{runtimeStatus.resolved_path ?? "No aisw runtime resolved"}</p>
         </div>
       }

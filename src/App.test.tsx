@@ -188,6 +188,7 @@ describe("App", () => {
       expect(screen.getByText("Control Center")).toBeInTheDocument();
     });
     expect(screen.getByText("Re-apply work")).toBeInTheDocument();
+    expect(screen.getByText("Active set: Work")).toBeInTheDocument();
     expect(screen.getByText("Runtime ready")).toBeInTheDocument();
     expect(screen.getByText("First-run setup")).toBeInTheDocument();
     expect(screen.getByText("Backend check")).toBeInTheDocument();
@@ -2491,6 +2492,45 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Switch all")).toBeInTheDocument());
     expect(screen.getByRole("option", { name: "Shared profile: Office" })).toBeInTheDocument();
+  });
+
+  it("uses saved profile labels in onboarding first switch options and sidebar badge", async () => {
+    const settingsWithOverride: DesktopSettings = {
+      ...bootstrap.settings,
+      profile_labels: {
+        claude: {
+          work: "Office",
+        },
+      },
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) =>
+      (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            settings: settingsWithOverride,
+          },
+          get_snapshot: bootstrap.snapshot,
+          run_init: {
+            result: {
+              live_accounts: [{ tool: "claude", outcome: "detected", auth_method: "oauth" }],
+            },
+          },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: settingsWithOverride,
+        } as Record<string, unknown>
+      )[command];
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
+    expect(screen.getByText("Active set: Office")).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Office" })).toBeInTheDocument();
   });
 
   it("checks and installs a signed desktop update", async () => {

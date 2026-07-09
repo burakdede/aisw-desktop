@@ -14,6 +14,7 @@ test("imports detected Claude, Codex, and Gemini accounts during onboarding", as
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "First-run setup" })).toBeVisible();
+  await expect(page.getByText("Active set: Work")).toBeVisible();
   await expect(page.getByText("detected · oauth").first()).toBeVisible();
 
   await importDetectedAccount(page, "claude", "work");

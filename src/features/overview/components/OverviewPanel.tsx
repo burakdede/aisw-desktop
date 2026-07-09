@@ -10,6 +10,7 @@ import {
   toolBinaryName,
 } from "../../../lib/tool-guidance";
 import { useDesktopActions } from "../../shared/useDesktopActions";
+import { sharedProfileEntries } from "../../../lib/profile-display";
 import { titleCase } from "../../../lib/utils";
 import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 import { resolveWorkspaceActivationTarget } from "../../workspaces/workspace-activation";
@@ -38,23 +39,7 @@ export function OverviewPanel({
   } = useDesktopActions();
   const [quickSwitch, setQuickSwitch] = useState("");
   const quickSwitchOptions = useMemo(() => {
-    const counts = new Map<string, { count: number; label: string }>();
-    Object.entries(snapshot.profiles).forEach(([tool, entry]) => {
-      entry.profiles.forEach((profile) => {
-        const current = counts.get(profile.name);
-        counts.set(profile.name, {
-          count: (current?.count ?? 0) + 1,
-          label:
-            current?.label ??
-            settings.profile_labels?.[tool]?.[profile.name] ??
-            profile.label ??
-            titleCase(profile.name),
-        });
-      });
-    });
-    const sharedProfiles = [...counts.entries()]
-      .filter(([, value]) => value.count > 1)
-      .map(([name, value]) => ({ name, label: value.label }));
+    const sharedProfiles = sharedProfileEntries(settings, snapshot);
     const profileSets = [...(settings.profile_sets ?? [])]
       .sort((left, right) => left.name.localeCompare(right.name))
       .map((set) => ({
@@ -68,7 +53,7 @@ export function OverviewPanel({
         label: `Shared profile: ${profile.label}`,
       })),
     ];
-  }, [settings.profile_labels, settings.profile_sets, snapshot.profiles]);
+  }, [settings, snapshot]);
 
   const refresh = useMutation({
     mutationFn: async () => {
