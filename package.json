@@ -9,6 +9,7 @@
     "prepare:sidecar": "node ./scripts/prepare-sidecar.mjs",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "test:watch": "vitest",
     "tauri": "tauri",
     "tauri:build": "tauri build"
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0",
+    "@playwright/test": "^1.61.1",
     "@testing-library/jest-dom": "^6.4.8",
     "@testing-library/react": "^16.0.0",
     "@types/react": "^18.3.3",
