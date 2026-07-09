@@ -73,8 +73,17 @@ describe("App", () => {
       get_bootstrap: bootstrap,
       get_snapshot: bootstrap.snapshot,
       run_doctor: { summary: { status: "pass" } },
+      run_init: {
+        result: {
+          live_accounts: [
+            { tool: "claude", outcome: "detected", auth_method: "oauth" },
+          ],
+        },
+      },
       run_verify: { summary: { status: "pass" } },
       run_repair: { result: { mode: "dry_run" } },
+      get_workspace_status: { result: { status: "match" } },
+      get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
       list_backups: [],
       get_settings: bootstrap.settings,
     };
@@ -91,6 +100,7 @@ describe("App", () => {
     });
     expect(screen.getByText("Re-apply work")).toBeInTheDocument();
     expect(screen.getByText("Runtime ready")).toBeInTheDocument();
+    expect(screen.getByText("First-run setup")).toBeInTheDocument();
   });
 
   it("shows compatibility blockers when runtime is not usable", async () => {

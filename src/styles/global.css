@@ -307,9 +307,29 @@ body {
   padding: 16px 18px;
 }
 
+.list-row-form {
+  align-items: center;
+}
+
 .list-row p {
   margin: 6px 0 0;
   color: rgba(244, 247, 251, 0.72);
+}
+
+.inline-form,
+.button-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.inline-form input {
+  min-height: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(4, 8, 14, 0.72);
+  color: inherit;
+  padding: 0 14px;
 }
 
 @media (max-width: 720px) {

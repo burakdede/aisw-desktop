@@ -1,5 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addProfile, updateSettings, useContext, useProfile } from "../../lib/client";
+import {
+  addProfile,
+  runInit,
+  updateSettings,
+  useContext,
+  useProfile,
+  workspaceBind,
+  workspaceGuard,
+  workspaceUnbind,
+} from "../../lib/client";
 
 export function useDesktopActions() {
   const queryClient = useQueryClient();
@@ -10,6 +19,9 @@ export function useDesktopActions() {
     await queryClient.invalidateQueries({ queryKey: ["doctor"] });
     await queryClient.invalidateQueries({ queryKey: ["verify"] });
     await queryClient.invalidateQueries({ queryKey: ["backups"] });
+    await queryClient.invalidateQueries({ queryKey: ["init"] });
+    await queryClient.invalidateQueries({ queryKey: ["workspace-status"] });
+    await queryClient.invalidateQueries({ queryKey: ["project-bindings"] });
   };
 
   return {
@@ -27,6 +39,22 @@ export function useDesktopActions() {
     }),
     updateSettingsMutation: useMutation({
       mutationFn: updateSettings,
+      onSuccess: invalidate,
+    }),
+    initMutation: useMutation({
+      mutationFn: runInit,
+      onSuccess: invalidate,
+    }),
+    workspaceBindMutation: useMutation({
+      mutationFn: workspaceBind,
+      onSuccess: invalidate,
+    }),
+    workspaceUnbindMutation: useMutation({
+      mutationFn: workspaceUnbind,
+      onSuccess: invalidate,
+    }),
+    workspaceGuardMutation: useMutation({
+      mutationFn: workspaceGuard,
       onSuccess: invalidate,
     }),
   };

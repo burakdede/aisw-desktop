@@ -128,6 +128,8 @@ impl AppState {
             statuses: bridge.status().await?,
             profiles: bridge.list_profiles().await?,
             contexts: bridge.list_contexts().await.unwrap_or_default(),
+            workspace_status: bridge.workspace_status().await.ok(),
+            project_bindings: bridge.project_bindings().await.ok(),
         })
     }
 }

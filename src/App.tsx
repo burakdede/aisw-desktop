@@ -4,15 +4,18 @@ import { SectionCard } from "./components/SectionCard";
 import { BackupsPanel } from "./features/backups/components/BackupsPanel";
 import { ContextsPanel } from "./features/contexts/components/ContextsPanel";
 import { DiagnosticsPanel } from "./features/diagnostics/components/DiagnosticsPanel";
+import { SetupPanel } from "./features/onboarding/components/SetupPanel";
 import { OverviewPanel } from "./features/overview/components/OverviewPanel";
 import { ProfilesPanel } from "./features/profiles/components/ProfilesPanel";
 import { SettingsPanel } from "./features/settings/components/SettingsPanel";
 import { useDesktop } from "./features/shared/useDesktop";
+import { WorkspacesPanel } from "./features/workspaces/components/WorkspacesPanel";
 
 const NAV = [
   { id: "overview", label: "Overview" },
   { id: "profiles", label: "Profiles" },
   { id: "contexts", label: "Contexts" },
+  { id: "workspaces", label: "Workspaces" },
   { id: "diagnostics", label: "Diagnostics" },
   { id: "backups", label: "Backups" },
   { id: "settings", label: "Settings" },
@@ -20,7 +23,7 @@ const NAV = [
 
 export function App() {
   const [activeNav, setActiveNav] = useState<(typeof NAV)[number]["id"]>("overview");
-  const { bootstrap, snapshot } = useDesktop();
+  const { bootstrap, snapshot, init } = useDesktop();
 
   if (bootstrap.isLoading) {
     return (
@@ -76,9 +79,11 @@ export function App() {
 
       {resolvedSnapshot ? (
         <>
+          <SetupPanel snapshot={resolvedSnapshot} initReport={init.data} />
           {activeNav === "overview" ? <OverviewPanel snapshot={resolvedSnapshot} /> : null}
           {activeNav === "profiles" ? <ProfilesPanel snapshot={resolvedSnapshot} /> : null}
           {activeNav === "contexts" ? <ContextsPanel snapshot={resolvedSnapshot} /> : null}
+          {activeNav === "workspaces" ? <WorkspacesPanel snapshot={resolvedSnapshot} /> : null}
           {activeNav === "diagnostics" ? <DiagnosticsPanel /> : null}
           {activeNav === "backups" ? <BackupsPanel /> : null}
           {activeNav === "settings" ? <SettingsPanel settings={settings} /> : null}

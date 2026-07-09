@@ -27,6 +27,7 @@ fn main() {
             commands::get_snapshot,
             commands::get_settings,
             commands::update_settings,
+            commands::run_init,
             commands::add_profile,
             commands::use_profile,
             commands::use_context,
@@ -36,7 +37,12 @@ fn main() {
             commands::run_doctor,
             commands::run_verify,
             commands::run_repair,
-            commands::list_backups
+            commands::list_backups,
+            commands::get_workspace_status,
+            commands::get_project_bindings,
+            commands::workspace_bind,
+            commands::workspace_unbind,
+            commands::workspace_guard
         ])
         .run(tauri::generate_context!())
         .expect("failed to run AISW Desktop");

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getBootstrap, getSnapshot } from "../../lib/client";
+import { getBootstrap, getSnapshot, runInit } from "../../lib/client";
 
 export function useDesktop() {
   const bootstrap = useQuery({
@@ -14,8 +14,15 @@ export function useDesktop() {
     initialData: bootstrap.data?.snapshot ?? undefined,
   });
 
+  const init = useQuery({
+    queryKey: ["init"],
+    queryFn: runInit,
+    enabled: bootstrap.data?.runtime_status.compatible ?? false,
+  });
+
   return {
     bootstrap,
     snapshot,
+    init,
   };
 }

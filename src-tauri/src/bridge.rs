@@ -1,8 +1,9 @@
 use crate::errors::{DesktopError, GuiErrorKind};
 use crate::models::{
     AddProfileMode, AddProfileRequest, BackupEntry, CapabilitiesInfo, ContextSummary, DoctorReport,
-    RepairReport, RepairRequest, RuntimeKind, ToolProfiles, ToolStatus, UseContextRequest,
-    UseProfileRequest, VerifyReport, VersionInfo,
+    InitReport, ProjectBindingsReport, RepairReport, RepairRequest, RuntimeKind, ToolProfiles,
+    ToolStatus, UseContextRequest, UseProfileRequest, VerifyReport, VersionInfo,
+    WorkspaceBindRequest, WorkspaceBindTarget, WorkspaceStatusReport, WorkspaceUnbindTarget,
 };
 use crate::redaction::redact_text;
 use async_trait::async_trait;
@@ -23,6 +24,9 @@ pub trait AiswBridge: Send + Sync {
     async fn list_contexts(&self) -> Result<Vec<ContextSummary>, DesktopError>;
     async fn doctor(&self) -> Result<DoctorReport, DesktopError>;
     async fn verify(&self) -> Result<VerifyReport, DesktopError>;
+    async fn init(&self) -> Result<InitReport, DesktopError>;
+    async fn workspace_status(&self) -> Result<WorkspaceStatusReport, DesktopError>;
+    async fn project_bindings(&self) -> Result<ProjectBindingsReport, DesktopError>;
     async fn list_backups(&self) -> Result<Vec<BackupEntry>, DesktopError>;
     async fn add_profile(&self, req: AddProfileRequest) -> Result<serde_json::Value, DesktopError>;
     async fn use_profile(&self, req: UseProfileRequest) -> Result<serde_json::Value, DesktopError>;
@@ -41,6 +45,15 @@ pub trait AiswBridge: Send + Sync {
     ) -> Result<serde_json::Value, DesktopError>;
     async fn repair(&self, req: RepairRequest) -> Result<RepairReport, DesktopError>;
     async fn restore_backup(&self, backup_id: String) -> Result<serde_json::Value, DesktopError>;
+    async fn workspace_bind(
+        &self,
+        req: WorkspaceBindRequest,
+    ) -> Result<serde_json::Value, DesktopError>;
+    async fn workspace_unbind(
+        &self,
+        target: WorkspaceUnbindTarget,
+    ) -> Result<serde_json::Value, DesktopError>;
+    async fn workspace_guard(&self, mode: String) -> Result<serde_json::Value, DesktopError>;
 }
 
 #[derive(Clone)]
@@ -179,6 +192,29 @@ impl AiswBridge for CliAiswBridge {
         self.run_json("verify", &["verify", "--json"], None).await
     }
 
+    async fn init(&self) -> Result<InitReport, DesktopError> {
+        self.run_json(
+            "init",
+            &["init", "--json", "--no-shell-hook", "--detect-live"],
+            None,
+        )
+        .await
+    }
+
+    async fn workspace_status(&self) -> Result<WorkspaceStatusReport, DesktopError> {
+        self.run_json("workspace_status", &["workspace", "status", "--json"], None)
+            .await
+    }
+
+    async fn project_bindings(&self) -> Result<ProjectBindingsReport, DesktopError> {
+        self.run_json(
+            "project_bindings",
+            &["project-bindings", "list", "--json"],
+            None,
+        )
+        .await
+    }
+
     async fn list_backups(&self) -> Result<Vec<BackupEntry>, DesktopError> {
         self.run_json("backup_list", &["backup", "list", "--json"], None)
             .await
@@ -273,6 +309,53 @@ impl AiswBridge for CliAiswBridge {
         )
         .await
     }
+
+    async fn workspace_bind(
+        &self,
+        req: WorkspaceBindRequest,
+    ) -> Result<serde_json::Value, DesktopError> {
+        let mut owned = vec!["workspace".to_owned(), "bind".to_owned()];
+        match req.target {
+            WorkspaceBindTarget::Default => owned.push("--default".to_owned()),
+            WorkspaceBindTarget::Path { path } => owned.push(path),
+            WorkspaceBindTarget::GitRemote { pattern } => {
+                owned.push("--git-remote".to_owned());
+                owned.push(pattern);
+            }
+        }
+        owned.push("--context".to_owned());
+        owned.push(req.context);
+        owned.push("--json".to_owned());
+        let args = owned.iter().map(String::as_str).collect::<Vec<_>>();
+        self.run_json("workspace_bind", &args, None).await
+    }
+
+    async fn workspace_unbind(
+        &self,
+        target: WorkspaceUnbindTarget,
+    ) -> Result<serde_json::Value, DesktopError> {
+        let mut owned = vec!["workspace".to_owned(), "unbind".to_owned()];
+        match target {
+            WorkspaceUnbindTarget::Default => owned.push("--default".to_owned()),
+            WorkspaceUnbindTarget::Path { path } => owned.push(path),
+            WorkspaceUnbindTarget::GitRemote { pattern } => {
+                owned.push("--git-remote".to_owned());
+                owned.push(pattern);
+            }
+        }
+        owned.push("--json".to_owned());
+        let args = owned.iter().map(String::as_str).collect::<Vec<_>>();
+        self.run_json("workspace_unbind", &args, None).await
+    }
+
+    async fn workspace_guard(&self, mode: String) -> Result<serde_json::Value, DesktopError> {
+        self.run_json(
+            "workspace_guard",
+            &["workspace", "guard", "--mode", mode.as_str(), "--json"],
+            None,
+        )
+        .await
+    }
 }
 
 fn parse_contexts(raw: serde_json::Value) -> Result<Vec<ContextSummary>, DesktopError> {
@@ -335,7 +418,10 @@ fn map_command_failure(command: &str, stderr: &str) -> DesktopError {
 #[cfg(test)]
 mod tests {
     use super::{AiswBridge, CliAiswBridge};
-    use crate::models::{AddProfileMode, AddProfileRequest, RuntimeKind};
+    use crate::models::{
+        AddProfileMode, AddProfileRequest, RuntimeKind, WorkspaceBindRequest,
+        WorkspaceBindTarget,
+    };
     use std::fs;
     use std::os::unix::fs::PermissionsExt;
     use tempfile::tempdir;
@@ -378,5 +464,35 @@ printf '{"version":"0.3.7","cli_api_version":1,"json_schema_version":1,"progress
             .unwrap();
 
         assert_eq!(response["received"], "sk-ant-api03-secret");
+    }
+
+    #[tokio::test]
+    async fn init_and_workspace_commands_use_machine_flags() {
+        let path = write_fake_aisw(
+            r#"#!/bin/sh
+if [ "$1" = "init" ]; then
+  printf '{"ok":true,"command":"init","result":{"shell":{"action":"skipped"},"live_accounts":[]}}'
+  exit 0
+fi
+if [ "$1" = "workspace" ] && [ "$2" = "bind" ]; then
+  printf '{"ok":true,"command":"workspace_bind","args":"%s %s %s %s %s %s"}' "$1" "$2" "$3" "$4" "$5" "$6"
+  exit 0
+fi
+printf '{}'
+"#,
+        );
+        let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
+        let init = bridge.init().await.unwrap();
+        assert_eq!(init.raw["command"], "init");
+
+        let bound = bridge
+            .workspace_bind(WorkspaceBindRequest {
+                target: WorkspaceBindTarget::Default,
+                context: "work".to_owned(),
+            })
+            .await
+            .unwrap();
+        assert_eq!(bound["command"], "workspace_bind");
+        assert_eq!(bound["args"], "workspace bind --default --context work --json");
     }
 }

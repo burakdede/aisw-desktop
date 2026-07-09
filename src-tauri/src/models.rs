@@ -99,7 +99,25 @@ pub struct VerifyReport {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InitReport {
+    #[serde(flatten)]
+    pub raw: serde_json::Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RepairReport {
+    #[serde(flatten)]
+    pub raw: serde_json::Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkspaceStatusReport {
+    #[serde(flatten)]
+    pub raw: serde_json::Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectBindingsReport {
     #[serde(flatten)]
     pub raw: serde_json::Value,
 }
@@ -132,6 +150,8 @@ pub struct AppSnapshot {
     pub statuses: Vec<ToolStatus>,
     pub profiles: HashMap<String, ToolProfiles>,
     pub contexts: Vec<ContextSummary>,
+    pub workspace_status: Option<WorkspaceStatusReport>,
+    pub project_bindings: Option<ProjectBindingsReport>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -177,6 +197,28 @@ pub struct RepairRequest {
     pub apply: bool,
     #[serde(default)]
     pub fixes: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "scope", rename_all = "snake_case")]
+pub enum WorkspaceBindTarget {
+    Default,
+    Path { path: String },
+    GitRemote { pattern: String },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkspaceBindRequest {
+    pub target: WorkspaceBindTarget,
+    pub context: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "scope", rename_all = "snake_case")]
+pub enum WorkspaceUnbindTarget {
+    Default,
+    Path { path: String },
+    GitRemote { pattern: String },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

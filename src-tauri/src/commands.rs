@@ -2,8 +2,9 @@ use crate::bridge::{AiswBridge, CliAiswBridge};
 use crate::errors::{DesktopResult, ErrorPayload};
 use crate::models::{
     AddProfileRequest, AppBootstrap, AppSnapshot, BackupEntry, DesktopSettings, DoctorReport,
-    MutationResponse, RepairReport, RepairRequest, UpdateSettingsRequest, UseContextRequest,
-    UseProfileRequest, VerifyReport,
+    InitReport, MutationResponse, ProjectBindingsReport, RepairReport, RepairRequest,
+    UpdateSettingsRequest, UseContextRequest, UseProfileRequest, VerifyReport,
+    WorkspaceBindRequest, WorkspaceStatusReport, WorkspaceUnbindTarget,
 };
 use crate::state::{incompatible_runtime_error, AppState};
 use std::path::PathBuf;
@@ -144,6 +145,70 @@ pub async fn list_backups(state: tauri::State<'_, AppState>) -> DesktopResult<Ve
         .list_backups()
         .await
         .map_err(ErrorPayload::from)
+}
+
+#[tauri::command]
+pub async fn run_init(state: tauri::State<'_, AppState>) -> DesktopResult<InitReport> {
+    make_bridge(&state)
+        .await?
+        .init()
+        .await
+        .map_err(ErrorPayload::from)
+}
+
+#[tauri::command]
+pub async fn get_workspace_status(
+    state: tauri::State<'_, AppState>,
+) -> DesktopResult<WorkspaceStatusReport> {
+    make_bridge(&state)
+        .await?
+        .workspace_status()
+        .await
+        .map_err(ErrorPayload::from)
+}
+
+#[tauri::command]
+pub async fn get_project_bindings(
+    state: tauri::State<'_, AppState>,
+) -> DesktopResult<ProjectBindingsReport> {
+    make_bridge(&state)
+        .await?
+        .project_bindings()
+        .await
+        .map_err(ErrorPayload::from)
+}
+
+#[tauri::command]
+pub async fn workspace_bind(
+    state: tauri::State<'_, AppState>,
+    request: WorkspaceBindRequest,
+) -> DesktopResult<MutationResponse> {
+    ensure_compatible(&state).await?;
+    state
+        .mutate("workspace_bind", move |bridge| async move { bridge.workspace_bind(request).await })
+        .await
+}
+
+#[tauri::command]
+pub async fn workspace_unbind(
+    state: tauri::State<'_, AppState>,
+    target: WorkspaceUnbindTarget,
+) -> DesktopResult<MutationResponse> {
+    ensure_compatible(&state).await?;
+    state
+        .mutate("workspace_unbind", move |bridge| async move { bridge.workspace_unbind(target).await })
+        .await
+}
+
+#[tauri::command]
+pub async fn workspace_guard(
+    state: tauri::State<'_, AppState>,
+    mode: String,
+) -> DesktopResult<MutationResponse> {
+    ensure_compatible(&state).await?;
+    state
+        .mutate("workspace_guard", move |bridge| async move { bridge.workspace_guard(mode).await })
+        .await
 }
 
 async fn ensure_compatible(state: &tauri::State<'_, AppState>) -> DesktopResult<()> {

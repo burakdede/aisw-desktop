@@ -1,0 +1,162 @@
+import {
+  appBootstrapSchema,
+  appSnapshotSchema,
+  backupEntrySchema,
+  desktopSettingsSchema,
+  doctorReportSchema,
+  initReportSchema,
+  mutationResponseSchema,
+  projectBindingsReportSchema,
+  repairReportSchema,
+  type AppBootstrap,
+  type AppSnapshot,
+  type BackupEntry,
+  type DesktopSettings,
+  type InitReport,
+  type MutationResponse,
+  workspaceStatusReportSchema,
+  verifyReportSchema,
+} from "./schemas";
+import { invokeDesktop } from "./tauri";
+
+export interface AddProfileInput {
+  tool: string;
+  profile: string;
+  label?: string | null;
+  stateMode?: string | null;
+  importMode:
+    | { kind: "from_live" }
+    | { kind: "from_env" }
+    | { kind: "api_key"; value: string };
+}
+
+export interface UseProfileInput {
+  tool: string;
+  profile: string;
+  stateMode?: string | null;
+}
+
+export interface UseContextInput {
+  context: string;
+  stateMode?: string | null;
+}
+
+export interface UpdateSettingsInput {
+  runtime_kind: "bundled" | "system" | "custom";
+  runtime_path?: string | null;
+  aisw_home?: string | null;
+  update_channel: string;
+}
+
+export interface WorkspaceBindInput {
+  target:
+    | { scope: "default" }
+    | { scope: "path"; path: string }
+    | { scope: "git_remote"; pattern: string };
+  context: string;
+}
+
+export interface WorkspaceUnbindInput {
+  scope: "default" | "path" | "git_remote";
+  path?: string;
+  pattern?: string;
+}
+
+export async function getBootstrap(): Promise<AppBootstrap> {
+  return appBootstrapSchema.parse(await invokeDesktop("get_bootstrap"));
+}
+
+export async function getSnapshot(): Promise<AppSnapshot> {
+  return appSnapshotSchema.parse(await invokeDesktop("get_snapshot"));
+}
+
+export async function addProfile(input: AddProfileInput): Promise<MutationResponse> {
+  return mutationResponseSchema.parse(
+    await invokeDesktop("add_profile", {
+      request: {
+        tool: input.tool,
+        profile: input.profile,
+        label: input.label ?? null,
+        state_mode: input.stateMode ?? null,
+        import_mode: input.importMode,
+      },
+    }),
+  );
+}
+
+export async function useProfile(input: UseProfileInput): Promise<MutationResponse> {
+  return mutationResponseSchema.parse(
+    await invokeDesktop("use_profile", {
+      request: {
+        tool: input.tool,
+        profile: input.profile,
+        state_mode: input.stateMode ?? null,
+      },
+    }),
+  );
+}
+
+export async function useContext(input: UseContextInput): Promise<MutationResponse> {
+  return mutationResponseSchema.parse(
+    await invokeDesktop("use_context", {
+      request: {
+        context: input.context,
+        state_mode: input.stateMode ?? null,
+      },
+    }),
+  );
+}
+
+export async function listBackups(): Promise<BackupEntry[]> {
+  return backupEntrySchema.array().parse(await invokeDesktop("list_backups"));
+}
+
+export async function runDoctor() {
+  return doctorReportSchema.parse(await invokeDesktop("run_doctor"));
+}
+
+export async function runInit(): Promise<InitReport> {
+  return initReportSchema.parse(await invokeDesktop("run_init"));
+}
+
+export async function runVerify() {
+  return verifyReportSchema.parse(await invokeDesktop("run_verify"));
+}
+
+export async function runRepair(request: { apply: boolean; fixes: string[] }) {
+  return repairReportSchema.parse(await invokeDesktop("run_repair", { request }));
+}
+
+export async function getSettings(): Promise<DesktopSettings> {
+  return desktopSettingsSchema.parse(await invokeDesktop("get_settings"));
+}
+
+export async function getWorkspaceStatus() {
+  return workspaceStatusReportSchema.parse(await invokeDesktop("get_workspace_status"));
+}
+
+export async function getProjectBindings() {
+  return projectBindingsReportSchema.parse(await invokeDesktop("get_project_bindings"));
+}
+
+export async function workspaceBind(
+  request: WorkspaceBindInput,
+): Promise<MutationResponse> {
+  return mutationResponseSchema.parse(await invokeDesktop("workspace_bind", { request }));
+}
+
+export async function workspaceUnbind(
+  target: WorkspaceUnbindInput,
+): Promise<MutationResponse> {
+  return mutationResponseSchema.parse(await invokeDesktop("workspace_unbind", { target }));
+}
+
+export async function workspaceGuard(mode: "warn" | "strict"): Promise<MutationResponse> {
+  return mutationResponseSchema.parse(await invokeDesktop("workspace_guard", { mode }));
+}
+
+export async function updateSettings(
+  request: UpdateSettingsInput,
+): Promise<DesktopSettings> {
+  return desktopSettingsSchema.parse(await invokeDesktop("update_settings", { request }));
+}
