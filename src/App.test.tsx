@@ -261,6 +261,63 @@ describe("App", () => {
     );
   });
 
+  it("opens the profiles screen from overview details actions", async () => {
+    const codexStatus = {
+      tool: "codex",
+      binary_found: true,
+      stored_profiles: 1,
+      active_profile: "personal",
+      auth_method: "api_key",
+      credential_backend: "file",
+      state_mode: "shared",
+      active_profile_applied: true,
+      credentials_present: true,
+      permissions_ok: true,
+      warnings: [],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = {
+      ...window.__AISW_DESKTOP_MOCK__,
+      get_bootstrap: {
+        ...bootstrap,
+        snapshot: {
+          ...bootstrap.snapshot,
+          statuses: [...bootstrap.snapshot.statuses, codexStatus],
+          profiles: {
+            ...bootstrap.snapshot.profiles,
+            codex: {
+              active: "personal",
+              profiles: [{ name: "personal", auth: "api_key", label: "Personal" }],
+            },
+          },
+        },
+      },
+      get_snapshot: {
+        ...bootstrap.snapshot,
+        statuses: [...bootstrap.snapshot.statuses, codexStatus],
+        profiles: {
+          ...bootstrap.snapshot.profiles,
+          codex: {
+            active: "personal",
+            profiles: [{ name: "personal", auth: "api_key", label: "Personal" }],
+          },
+        },
+      },
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+
+    fireEvent.click(screen.getAllByText("Open details")[1]);
+
+    await waitFor(() => {
+      expect(screen.getByText("Provisioning")).toBeInTheDocument();
+      expect(screen.getByDisplayValue("Codex")).toBeInTheDocument();
+      expect(screen.getByText("Diagnostic details")).toBeInTheDocument();
+      expect(screen.getByText("No additional token or runtime warnings are currently reported for this tool.")).toBeInTheDocument();
+    });
+  });
+
   it("surfaces token warnings in the overview cards", async () => {
     window.__AISW_DESKTOP_MOCK__ = {
       ...window.__AISW_DESKTOP_MOCK__,

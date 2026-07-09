@@ -16,9 +16,11 @@ import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 export function OverviewPanel({
   snapshot,
   toolCapabilities,
+  onOpenProfiles,
 }: {
   snapshot: AppSnapshot;
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
+  onOpenProfiles: (tool: string, expandedProfile?: string | null) => void;
 }) {
   const queryClient = useQueryClient();
   const {
@@ -136,6 +138,8 @@ export function OverviewPanel({
             onUse={(tool, profile, stateMode) =>
               useProfileMutation.mutate({ tool, profile, stateMode })
             }
+            onAddProfile={(tool) => onOpenProfiles(tool)}
+            onOpenDetails={(tool, profile) => onOpenProfiles(tool, profile)}
           />
         ))}
       </div>
@@ -163,6 +167,8 @@ function ToolCard({
   stateModes,
   onImport,
   onUse,
+  onAddProfile,
+  onOpenDetails,
 }: {
   status: ToolStatus;
   lastResult?: {
@@ -176,6 +182,8 @@ function ToolCard({
   stateModes: string[];
   onImport: (tool: string, profile: string, stateMode: string | null) => void;
   onUse: (tool: string, profile: string, stateMode: string | null) => void;
+  onAddProfile: (tool: string) => void;
+  onOpenDetails: (tool: string, profile: string | null | undefined) => void;
 }) {
   const activeState = status.active_profile_applied;
   const [importName, setImportName] = useState("");
@@ -290,6 +298,27 @@ function ToolCard({
           Re-apply {status.active_profile}
         </button>
       ) : null}
+      <div className="button-row">
+        {status.binary_found ? (
+          <button
+            className="ghost-button"
+            type="button"
+            disabled={mutationLocked}
+            onClick={() => onAddProfile(status.tool)}
+          >
+            Add profile
+          </button>
+        ) : null}
+        {status.active_profile ? (
+          <button
+            className="ghost-button"
+            type="button"
+            onClick={() => onOpenDetails(status.tool, status.active_profile)}
+          >
+            Open details
+          </button>
+        ) : null}
+      </div>
     </article>
   );
 }

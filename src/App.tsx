@@ -24,8 +24,14 @@ const NAV = [
   { id: "settings", label: "Settings" },
 ] as const;
 
+type ProfilesRouteState = {
+  tool?: string;
+  expandedProfile?: string | null;
+};
+
 export function App() {
   const [activeNav, setActiveNav] = useState<(typeof NAV)[number]["id"]>("overview");
+  const [profilesRouteState, setProfilesRouteState] = useState<ProfilesRouteState>({});
   const { bootstrap, snapshot, init } = useDesktop();
 
   useEffect(() => {
@@ -142,13 +148,22 @@ export function App() {
         <>
           <SetupPanel bootstrap={bootstrap.data} snapshot={resolvedSnapshot} initReport={init.data} />
           {activeNav === "overview" ? (
-            <OverviewPanel snapshot={resolvedSnapshot} toolCapabilities={toolCapabilities} />
+            <OverviewPanel
+              snapshot={resolvedSnapshot}
+              toolCapabilities={toolCapabilities}
+              onOpenProfiles={(tool, expandedProfile) => {
+                setProfilesRouteState({ tool, expandedProfile });
+                setActiveNav("profiles");
+              }}
+            />
           ) : null}
           {activeNav === "profiles" ? (
             <ProfilesPanel
               snapshot={resolvedSnapshot}
               settings={settings}
               toolCapabilities={toolCapabilities}
+              initialTool={profilesRouteState.tool}
+              initialExpandedProfile={profilesRouteState.expandedProfile}
             />
           ) : null}
           {activeNav === "contexts" ? (

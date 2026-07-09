@@ -19,10 +19,14 @@ export function ProfilesPanel({
   snapshot,
   settings,
   toolCapabilities,
+  initialTool,
+  initialExpandedProfile,
 }: {
   snapshot: AppSnapshot;
   settings: DesktopSettings;
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
+  initialTool?: string;
+  initialExpandedProfile?: string | null;
 }) {
   const {
     addProfileMutation,
@@ -35,7 +39,9 @@ export function ProfilesPanel({
     apiKeyProfileAction,
     mutationLock,
   } = useDesktopActions();
-  const [tool, setTool] = useState<(typeof TOOLS)[number]>("claude");
+  const [tool, setTool] = useState<(typeof TOOLS)[number]>(
+    isSupportedTool(initialTool) ? initialTool : "claude",
+  );
   const [profile, setProfile] = useState("");
   const [label, setLabel] = useState("");
   const [mode, setMode] = useState<"from_live" | "from_env" | "api_key" | "oauth">("from_live");
@@ -67,6 +73,17 @@ export function ProfilesPanel({
       setStateMode(availableStateModes[0]);
     }
   }, [availableStateModes, stateMode]);
+
+  useEffect(() => {
+    if (!isSupportedTool(initialTool)) {
+      return;
+    }
+    setTool(initialTool);
+  }, [initialTool]);
+
+  useEffect(() => {
+    setExpandedDetails(initialExpandedProfile ?? null);
+  }, [initialExpandedProfile, tool]);
 
   useEffect(() => {
     let active = true;
@@ -546,6 +563,10 @@ export function ProfilesPanel({
       </div>
     </SectionCard>
   );
+}
+
+function isSupportedTool(tool: string | undefined): tool is (typeof TOOLS)[number] {
+  return Boolean(tool && TOOLS.includes(tool as (typeof TOOLS)[number]));
 }
 
 function effectiveLabel(
