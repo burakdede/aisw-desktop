@@ -15,6 +15,7 @@ Object.assign(navigator, {
 
 Object.assign(window, {
   open: vi.fn(),
+  __AISW_DESKTOP_NOTIFY__: vi.fn(),
 });
 
 const bootstrapSettings: DesktopSettings = {
@@ -103,6 +104,10 @@ async function renderApp() {
 describe("App", () => {
   beforeEach(() => {
     vi.mocked(window.open).mockClear();
+    const notify = window.__AISW_DESKTOP_NOTIFY__;
+    if (notify) {
+      vi.mocked(notify).mockClear();
+    }
     const eventHandlers: Record<string, ((payload: unknown) => void) | undefined> = {};
     window.__AISW_DESKTOP_LISTEN__ = async (event, handler) => {
       eventHandlers[event] = handler as (payload: unknown) => void;
@@ -1537,6 +1542,32 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Doctor · Verify · Repair")).toBeInTheDocument();
+    });
+  });
+
+  it("records tray command results and shows a desktop notification", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["tray-command-result"]?.({
+        scope: "tool",
+        tool: "claude",
+        label: "Switch profile",
+        status: "success",
+        message: "Switched claude to work.",
+      });
+      await Promise.resolve();
+    });
+
+    expect(screen.getByText("Last result: Switched claude to work.")).toBeInTheDocument();
+    expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
+      title: "Switch profile",
+      body: "Switched claude to work.",
     });
   });
 

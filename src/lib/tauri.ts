@@ -13,6 +13,24 @@ export class DesktopCommandError extends Error {
   }
 }
 
+export type TrayCommandResultEvent =
+  | {
+      scope: "tool";
+      tool: string;
+      label: string;
+      status: "success" | "error";
+      message: string;
+      remediation?: string;
+    }
+  | {
+      scope: "global";
+      id: string;
+      label: string;
+      status: "success" | "error";
+      message: string;
+      remediation?: string;
+    };
+
 declare global {
   interface Window {
     __AISW_DESKTOP_MOCK__?: Record<string, unknown> | ((cmd: string, args?: unknown) => unknown);

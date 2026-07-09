@@ -22,6 +22,7 @@ fn main() {
     tauri::Builder::default()
         .manage(app_state)
         .setup(|app| {
+            app.handle().plugin(tauri_plugin_notification::init())?;
             app.handle()
                 .plugin(tauri_plugin_updater::Builder::new().build())?;
             let state = app.state::<AppState>().inner().clone();

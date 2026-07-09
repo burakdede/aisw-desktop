@@ -1,5 +1,7 @@
+use crate::errors::ErrorPayload;
 use crate::models::{AppSnapshot, UseAllProfilesRequest, UseContextRequest, UseProfileRequest};
 use crate::state::AppState;
+use serde::Serialize;
 use tauri::menu::{IsMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Emitter, Manager, Runtime};
 
@@ -9,6 +11,7 @@ const DIAGNOSTICS_ID: &str = "diagnostics";
 const QUIT_ID: &str = "quit";
 const SWITCH_ALL_PREFIX: &str = "switch-all:";
 const OPEN_DIAGNOSTICS_EVENT: &str = "tray-open-diagnostics";
+const TRAY_COMMAND_RESULT_EVENT: &str = "tray-command-result";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct TraySection {
@@ -20,6 +23,23 @@ struct TraySection {
 struct TrayEntry {
     id: String,
     label: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(tag = "scope", rename_all = "snake_case")]
+enum TrayCommandScope {
+    Tool { tool: String },
+    Global { id: String },
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct TrayCommandResultEvent {
+    scope: TrayCommandScope,
+    label: String,
+    status: String,
+    message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    remediation: Option<String>,
 }
 
 pub fn build_tray<R: Runtime>(
@@ -68,16 +88,26 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
             let context = id.trim_start_matches("context:").to_owned();
             let app_handle = app.clone();
             tauri::async_runtime::spawn(async move {
-                let _ = state
+                let context_for_command = context.clone();
+                let result = state
                     .mutate("tray_use_context", move |bridge| async move {
                         bridge
                             .use_context(UseContextRequest {
-                                context,
+                                context: context_for_command,
                                 state_mode: Some("isolated".to_owned()),
                             })
                             .await
                     })
                     .await;
+                emit_tray_command_result(
+                    &app_handle,
+                    result,
+                    TrayCommandScope::Global {
+                        id: "context".to_owned(),
+                    },
+                    "Switch context",
+                    format!("Activated context {context}."),
+                );
                 let _ = refresh_tray(&app_handle, state).await;
             });
         }
@@ -85,16 +115,26 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
             let profile = id.trim_start_matches(SWITCH_ALL_PREFIX).to_owned();
             let app_handle = app.clone();
             tauri::async_runtime::spawn(async move {
-                let _ = state
+                let profile_for_command = profile.clone();
+                let result = state
                     .mutate("tray_use_all_profiles", move |bridge| async move {
                         bridge
                             .use_all_profiles(UseAllProfilesRequest {
-                                profile,
+                                profile: profile_for_command,
                                 state_mode: Some("isolated".to_owned()),
                             })
                             .await
                     })
                     .await;
+                emit_tray_command_result(
+                    &app_handle,
+                    result,
+                    TrayCommandScope::Global {
+                        id: "switch-all".to_owned(),
+                    },
+                    "Switch all profiles",
+                    format!("Switched all tools to {profile}."),
+                );
                 let _ = refresh_tray(&app_handle, state).await;
             });
         }
@@ -105,22 +145,57 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
             let profile = parts.next().unwrap_or_default().to_owned();
             let app_handle = app.clone();
             tauri::async_runtime::spawn(async move {
-                let _ = state
+                let tool_for_command = tool.clone();
+                let profile_for_command = profile.clone();
+                let result = state
                     .mutate("tray_use_profile", move |bridge| async move {
                         bridge
                             .use_profile(UseProfileRequest {
-                                tool,
-                                profile,
+                                tool: tool_for_command,
+                                profile: profile_for_command,
                                 state_mode: Some("isolated".to_owned()),
                             })
                             .await
                     })
                     .await;
+                emit_tray_command_result(
+                    &app_handle,
+                    result,
+                    TrayCommandScope::Tool { tool: tool.clone() },
+                    "Switch profile",
+                    format!("Switched {tool} to {profile}."),
+                );
                 let _ = refresh_tray(&app_handle, state).await;
             });
         }
         _ => {}
     }
+}
+
+fn emit_tray_command_result<R: Runtime>(
+    app: &AppHandle<R>,
+    result: Result<crate::models::MutationResponse, ErrorPayload>,
+    scope: TrayCommandScope,
+    label: &str,
+    success_message: String,
+) {
+    let payload = match result {
+        Ok(_) => TrayCommandResultEvent {
+            scope,
+            label: label.to_owned(),
+            status: "success".to_owned(),
+            message: success_message,
+            remediation: None,
+        },
+        Err(error) => TrayCommandResultEvent {
+            scope,
+            label: label.to_owned(),
+            status: "error".to_owned(),
+            message: error.message,
+            remediation: error.remediation,
+        },
+    };
+    let _ = app.emit(TRAY_COMMAND_RESULT_EVENT, payload);
 }
 
 fn tray_menu<R: Runtime>(

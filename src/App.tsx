@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AppFrame } from "./components/AppFrame";
 import { SectionCard } from "./components/SectionCard";
+import { recordCommandResult } from "./features/shared/lastCommandResult";
 import { BackupsPanel } from "./features/backups/components/BackupsPanel";
 import { ContextsPanel } from "./features/contexts/components/ContextsPanel";
 import { DiagnosticsPanel } from "./features/diagnostics/components/DiagnosticsPanel";
@@ -10,7 +11,8 @@ import { ProfilesPanel } from "./features/profiles/components/ProfilesPanel";
 import { SettingsPanel } from "./features/settings/components/SettingsPanel";
 import { useDesktop } from "./features/shared/useDesktop";
 import { WorkspacesPanel } from "./features/workspaces/components/WorkspacesPanel";
-import { listenDesktopEvent } from "./lib/tauri";
+import { notifyDesktop } from "./lib/notifications";
+import { listenDesktopEvent, type TrayCommandResultEvent } from "./lib/tauri";
 
 const NAV = [
   { id: "overview", label: "Overview" },
@@ -28,18 +30,58 @@ export function App() {
 
   useEffect(() => {
     let active = true;
-    let unlisten: (() => void) | undefined;
+    const disposers: Array<() => void> = [];
 
     void listenDesktopEvent("tray-open-diagnostics", () => {
       if (!active) return;
       setActiveNav("diagnostics");
     }).then((dispose) => {
-      unlisten = typeof dispose === "function" ? dispose : undefined;
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
+    void listenDesktopEvent<TrayCommandResultEvent>("tray-command-result", (payload) => {
+      if (!active) return;
+
+      if (payload.scope === "tool") {
+        recordCommandResult(
+          { type: "tool", tool: payload.tool },
+          {
+            label: payload.label,
+            status: payload.status,
+            message: payload.message,
+            remediation: payload.remediation,
+          },
+        );
+      } else {
+        recordCommandResult(
+          { type: "global", id: payload.id },
+          {
+            label: payload.label,
+            status: payload.status,
+            message: payload.message,
+            remediation: payload.remediation,
+          },
+        );
+      }
+
+      void notifyDesktop({
+        title: payload.label,
+        body:
+          payload.status === "success"
+            ? payload.message
+            : [payload.message, payload.remediation].filter(Boolean).join(" "),
+      });
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
     });
 
     return () => {
       active = false;
-      unlisten?.();
+      disposers.forEach((dispose) => dispose());
     };
   }, []);
 
