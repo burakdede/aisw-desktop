@@ -64,7 +64,11 @@ test("switches one tool and refreshes the active profile state", async ({ page }
   await page.getByLabel("Tool").selectOption("codex");
 
   await expect(page.getByText("Active: no")).toBeVisible();
-  await page.locator(".list-row").filter({ hasText: "work · api_key" }).getByRole("button", { name: "Activate" }).click();
+  await page
+    .locator(".list-row")
+    .filter({ hasText: "work · api_key" })
+    .getByRole("button", { name: /^Activate$/ })
+    .click();
 
   await expect(page.getByText("Active: yes · Backend: system_keyring")).toBeVisible();
 
@@ -92,6 +96,24 @@ test("creates profiles from environment and API key modes", async ({ page }) => 
   await page.locator('input[type="password"]').fill("sk-ant-live-secret");
   await page.getByRole("button", { name: "Add profile" }).click();
   await expect(page.getByText("ops · api_key")).toBeVisible();
+});
+
+test("warns before backup restore and re-activates the restored profile", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Backups" }).click();
+  await expect(
+    page.getByText(
+      "Restore replays the saved files only. It does not activate that profile again until you run a matching use action or choose restore and activate here.",
+    ),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Restore and activate" }).click();
+
+  await page.getByRole("button", { name: "Overview" }).click();
+  await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "work" })).toBeVisible();
 });
 
 async function installDesktopMock(page: Page, scenario: ScenarioName) {
@@ -388,6 +410,15 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
           return { result: { user_bindings: { guard_mode: "warn" } } };
         }
         if (command === "list_backups") {
+          if (activeScenario === "switching") {
+            return [
+              {
+                backup_id: "20260325T114502Z-codex-work",
+                tool: "codex",
+                profile: "codex/work",
+              },
+            ];
+          }
           return [];
         }
         if (command === "get_settings") {
@@ -452,6 +483,9 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
             statusEntry.active_profile_applied = true;
             statusEntry.state_mode = request.state_mode ?? statusEntry.state_mode;
           }
+          return { command, snapshot: cloneSnapshot() };
+        }
+        if (command === "restore_backup") {
           return { command, snapshot: cloneSnapshot() };
         }
         if (command === "add_profile_oauth") {
