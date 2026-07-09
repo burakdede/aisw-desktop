@@ -1325,6 +1325,67 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("reruns setup detection when Start setup is clicked", async () => {
+    let initCalls = 0;
+    const firstRunSnapshot = {
+      ...bootstrap.snapshot,
+      statuses: [],
+      profiles: {
+        claude: {
+          active: null,
+          profiles: [],
+        },
+        codex: {
+          active: null,
+          profiles: [],
+        },
+      },
+      contexts: [],
+    };
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "run_init") {
+        initCalls += 1;
+        if (initCalls === 1) {
+          return { result: { live_accounts: [] } };
+        }
+        return {
+          result: {
+            live_accounts: [{ tool: "codex", outcome: "detected", auth_method: "oauth" }],
+          },
+        };
+      }
+      return (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            snapshot: firstRunSnapshot,
+          },
+          get_snapshot: firstRunSnapshot,
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    renderApp();
+    await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
+    await waitFor(() => {
+      expect(screen.getByText("Run the setup scan to detect live Claude, Codex, and Gemini accounts.")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("Start setup"));
+
+    await waitFor(() => {
+      expect(screen.getByText("detected · oauth")).toBeInTheDocument();
+      expect(initCalls).toBeGreaterThanOrEqual(2);
+    });
+  });
+
   it("saves and activates a local profile set", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     let currentSettings: DesktopSettings = bootstrap.settings;
