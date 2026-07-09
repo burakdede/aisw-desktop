@@ -20,12 +20,25 @@ import {
 } from "../../lib/client";
 import type { AddProfileInput } from "../../lib/client";
 import { DesktopCommandError } from "../../lib/tauri";
+import { notifyDesktop } from "../../lib/notifications";
 import {
   recordCommandResult,
   useLastCommandResults,
   type CommandResultScope,
 } from "./lastCommandResult";
 import { enqueueMutation, useMutationQueueState } from "./mutationQueue";
+
+type WorkspaceTargetInput =
+  | {
+      kind: "profile_set";
+      name: string;
+      matchedTarget: string;
+    }
+  | {
+      kind: "context";
+      name: string;
+      matchedTarget: string;
+    };
 
 export function useDesktopActions() {
   const queryClient = useQueryClient();
@@ -113,6 +126,51 @@ export function useDesktopActions() {
         throw error;
       }
     };
+  };
+
+  const activateWorkspaceTarget = async (variables: WorkspaceTargetInput) => {
+    const label = "Use expected workspace target";
+    try {
+      const result = await enqueueMutation(label, () =>
+        variables.kind === "profile_set"
+          ? activateProfileSet({ name: variables.name })
+          : useContext({ context: variables.name, stateMode: "isolated" }),
+      );
+      const message = `Switched to ${variables.name} for ${variables.matchedTarget}.`;
+      recordCommandResult(
+        { type: "global", id: "workspace" },
+        {
+          label,
+          status: "success",
+          message,
+        },
+      );
+      await notifyDesktop({
+        title: "Workspace switch",
+        body: message,
+      });
+      await invalidate();
+      return result;
+    } catch (error) {
+      const resolved = error instanceof Error ? error : new Error(`${label} failed.`);
+      recordCommandResult(
+        { type: "global", id: "workspace" },
+        {
+          label,
+          status: "error",
+          message: resolved.message,
+          remediation: resolved instanceof DesktopCommandError ? resolved.remediation : undefined,
+        },
+      );
+      await notifyDesktop({
+        title: "Workspace switch",
+        body:
+          resolved instanceof DesktopCommandError && resolved.remediation
+            ? `${resolved.message} ${resolved.remediation}`
+            : resolved.message,
+      });
+      throw error;
+    }
   };
 
   return {
@@ -268,6 +326,9 @@ export function useDesktopActions() {
         (mode) => `Updated workspace guard to ${mode}.`,
       ),
       onSuccess: invalidate,
+    }),
+    activateWorkspaceTargetMutation: useMutation({
+      mutationFn: activateWorkspaceTarget,
     }),
     apiKeyProfileAction: {
       submit: submitApiKeyProfile,

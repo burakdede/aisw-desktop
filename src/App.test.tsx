@@ -1487,6 +1487,10 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
     });
+    expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
+      title: "Workspace switch",
+      body: "Switched to client-acme for /code/acme.",
+    });
 
     fireEvent.click(screen.getByText("Workspaces"));
     await waitFor(() => {
@@ -1711,6 +1715,9 @@ describe("App", () => {
 
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
+      if (command === "activate_profile_set") {
+        return { command, snapshot: diagnosticsSnapshot };
+      }
       return (
         {
           get_bootstrap: {
@@ -1780,6 +1787,10 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Use expected context now"));
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
+    });
+    expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
+      title: "Workspace switch",
+      body: "Switched to client-acme for /code/acme.",
     });
   });
 

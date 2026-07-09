@@ -28,6 +28,7 @@ export function OverviewPanel({
   const queryClient = useQueryClient();
   const {
     addProfileMutation,
+    activateWorkspaceTargetMutation,
     activateProfileSetMutation,
     useProfileMutation,
     useAllProfilesMutation,
@@ -138,13 +139,9 @@ export function OverviewPanel({
                     settings,
                     snapshot,
                   );
-                  if (target.kind === "profile_set") {
-                    activateProfileSetMutation.mutate({ name: target.name });
-                    return;
-                  }
-                  useContextMutation.mutate({
-                    context: target.name,
-                    stateMode: "isolated",
+                  activateWorkspaceTargetMutation.mutate({
+                    ...target,
+                    matchedTarget: workspaceStatus.target,
                   });
                 }}
               >

@@ -21,7 +21,13 @@ import { resolveWorkspaceActivationTarget } from "../../workspaces/workspace-act
 export function DiagnosticsPanel({ settings }: { settings: DesktopSettings }) {
   const { snapshot } = useDesktop();
   const queryClient = useQueryClient();
-  const { useProfileMutation, useContextMutation, activateProfileSetMutation, mutationLock } =
+  const {
+    useProfileMutation,
+    useContextMutation,
+    activateProfileSetMutation,
+    activateWorkspaceTargetMutation,
+    mutationLock,
+  } =
     useDesktopActions();
   const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor });
   const verify = useQuery({ queryKey: ["verify"], queryFn: runVerify });
@@ -58,6 +64,7 @@ export function DiagnosticsPanel({ settings }: { settings: DesktopSettings }) {
     useProfile: useProfileMutation.mutate,
     useContext: useContextMutation.mutate,
     activateProfileSet: activateProfileSetMutation.mutate,
+    activateWorkspaceTarget: activateWorkspaceTargetMutation.mutate,
     applyRepairFixes: (fixes) => applyRepair.mutate(fixes),
   });
 
@@ -214,6 +221,7 @@ function buildQuickFixes(
     useProfile,
     useContext,
     activateProfileSet,
+    activateWorkspaceTarget,
     applyRepairFixes,
   }: {
     snapshot: AppSnapshot | undefined;
@@ -223,6 +231,11 @@ function buildQuickFixes(
     useProfile: (request: { tool: string; profile: string; stateMode: string | null }) => void;
     useContext: (request: { context: string; stateMode: string | null }) => void;
     activateProfileSet: (request: { name: string }) => void;
+    activateWorkspaceTarget: (request: {
+      kind: "profile_set" | "context";
+      name: string;
+      matchedTarget: string;
+    }) => void;
     applyRepairFixes: (fixes: string[]) => void;
   },
 ): QuickFixCard[] {
@@ -287,13 +300,9 @@ function buildQuickFixes(
       primary: true,
       action: () => {
         const target = resolveWorkspaceActivationTarget(workspace.expectedContext, settings, snapshot);
-        if (target.kind === "profile_set") {
-          activateProfileSet({ name: target.name });
-          return;
-        }
-        useContext({
-          context: target.name,
-          stateMode: "isolated",
+        activateWorkspaceTarget({
+          ...target,
+          matchedTarget: workspace.target,
         });
       },
     });

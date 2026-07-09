@@ -34,8 +34,7 @@ export function WorkspacesPanel({
     workspaceBindMutation,
     workspaceUnbindMutation,
     workspaceGuardMutation,
-    activateProfileSetMutation,
-    useContextMutation,
+    activateWorkspaceTargetMutation,
     mutationLock,
   } = useDesktopActions();
   const [scope, setScope] = useState<BindScope>("default");
@@ -66,13 +65,9 @@ export function WorkspacesPanel({
 
   function activateExpectedWorkspaceTarget() {
     const target = resolveWorkspaceActivationTarget(statusCard.expectedContext, settings, snapshot);
-    if (target.kind === "profile_set") {
-      activateProfileSetMutation.mutate({ name: target.name });
-      return;
-    }
-    useContextMutation.mutate({
-      context: target.name,
-      stateMode: "isolated",
+    activateWorkspaceTargetMutation.mutate({
+      ...target,
+      matchedTarget: statusCard.target,
     });
   }
 
