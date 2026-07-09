@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
 import { AppBootstrap, AppSnapshot, type OAuthProgressEvent } from "../../../lib/schemas";
 import { listenDesktopEvent } from "../../../lib/tauri";
@@ -26,12 +26,12 @@ export function ProfilesPanel({
   const [profile, setProfile] = useState("");
   const [label, setLabel] = useState("");
   const [mode, setMode] = useState<"from_live" | "from_env" | "api_key" | "oauth">("from_live");
-  const [apiKey, setApiKey] = useState("");
   const [stateMode, setStateMode] = useState("isolated");
   const [renameDrafts, setRenameDrafts] = useState<Record<string, string>>({});
   const [oauthEvents, setOauthEvents] = useState<OAuthProgressEvent[]>([]);
   const [oauthError, setOauthError] = useState("");
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
+  const apiKeyInputRef = useRef<HTMLInputElement | null>(null);
 
   const profiles = useMemo(() => snapshot.profiles[tool]?.profiles ?? [], [snapshot, tool]);
   const toolStatus = useMemo(
@@ -100,6 +100,7 @@ export function ProfilesPanel({
       return;
     }
 
+    const apiKey = mode === "api_key" ? (apiKeyInputRef.current?.value ?? "") : "";
     const importMode =
       mode === "api_key"
         ? { kind: "api_key" as const, value: apiKey }
@@ -119,7 +120,9 @@ export function ProfilesPanel({
         onSuccess: () => {
           setProfile("");
           setLabel("");
-          setApiKey("");
+          if (apiKeyInputRef.current) {
+            apiKeyInputRef.current.value = "";
+          }
         },
       },
     );
@@ -159,11 +162,7 @@ export function ProfilesPanel({
           {mode === "api_key" ? (
             <label>
               API key
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(event) => setApiKey(event.target.value)}
-              />
+              <input ref={apiKeyInputRef} type="password" autoComplete="off" />
             </label>
           ) : null}
           {mode === "from_env" ? (
