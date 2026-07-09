@@ -237,4 +237,82 @@ describe("App", () => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
     });
   });
+
+  it("applies safe repairs from diagnostics", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "run_repair") {
+        const request = (args as { request?: { apply?: boolean } })?.request;
+        if (request?.apply) {
+          return {
+            result: {
+              summary: {
+                status: "pass",
+                actions_planned: 1,
+                actions_applied: 1,
+                issues_remaining: 0,
+              },
+              actions: [],
+            },
+          };
+        }
+        return {
+          result: {
+            summary: {
+              status: "warn",
+              actions_planned: 1,
+              actions_applied: 0,
+              issues_remaining: 1,
+            },
+            actions: [
+              {
+                kind: "create_dir",
+                fix: "home",
+                path: "/tmp/aisw",
+                detail: "create AISW_HOME directory",
+                status: "planned",
+              },
+            ],
+          },
+        };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: {
+            checks: [{ name: "tool/codex", status: "warn", detail: "codex not found on PATH" }],
+          },
+          run_verify: {
+            summary: { status: "warn", passed: 1, warnings: 1, failed: 0 },
+            tools: [
+              {
+                tool: "codex",
+                status: "warn",
+                issues: ["tool binary not found on PATH"],
+                remediation: ["Install codex or run 'aisw doctor --json'"],
+              },
+            ],
+          },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    renderApp();
+    await waitFor(() => expect(screen.getByText("Diagnostics")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Diagnostics"));
+    await waitFor(() => expect(screen.getByText("1 actions planned")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Apply safe repairs"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Last applied repair")).toBeInTheDocument();
+      expect(screen.getByText("1 actions applied")).toBeInTheDocument();
+    });
+  });
 });

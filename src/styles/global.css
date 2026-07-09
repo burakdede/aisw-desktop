@@ -301,6 +301,46 @@ body {
   padding: 18px;
 }
 
+.diagnostic-pass {
+  border-color: rgba(73, 201, 123, 0.28);
+}
+
+.diagnostic-warn {
+  border-color: rgba(255, 193, 94, 0.28);
+}
+
+.diagnostic-fail {
+  border-color: rgba(220, 84, 84, 0.34);
+}
+
+.diagnostic-status {
+  margin: 8px 0 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.74rem;
+  color: #7fa0c8;
+}
+
+.diagnostics-body {
+  margin-top: 20px;
+}
+
+.diagnostic-remediation {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.diagnostic-remediation code {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffe2ae;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .diagnostic-card pre {
   margin: 0;
   white-space: pre-wrap;
