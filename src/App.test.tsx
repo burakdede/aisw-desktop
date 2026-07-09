@@ -105,6 +105,8 @@ describe("App", () => {
     expect(screen.getByText("Re-apply work")).toBeInTheDocument();
     expect(screen.getByText("Runtime ready")).toBeInTheDocument();
     expect(screen.getByText("First-run setup")).toBeInTheDocument();
+    expect(screen.getByText("Backend check")).toBeInTheDocument();
+    expect(screen.getByText("Health check")).toBeInTheDocument();
   });
 
   it("shows compatibility blockers when runtime is not usable", async () => {
@@ -228,13 +230,56 @@ describe("App", () => {
 
     renderApp();
     await waitFor(() => expect(screen.getByText("Switch all")).toBeInTheDocument());
-    fireEvent.change(screen.getByRole("combobox"), {
+    fireEvent.change(screen.getByDisplayValue("Switch all tools to…"), {
       target: { value: "work" },
     });
     fireEvent.click(screen.getByText("Switch all"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
+    });
+  });
+
+  it("runs the onboarding first switch flow", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "use_all_profiles") {
+        return { command, snapshot: bootstrap.snapshot };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: {
+            result: {
+              live_accounts: [{ tool: "claude", outcome: "detected", auth_method: "oauth" }],
+            },
+          },
+          run_doctor: {
+            checks: [{ name: "aisw home", status: "pass", detail: "ready" }],
+          },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    renderApp();
+    await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText("First switch profile"), {
+      target: { value: "work" },
+    });
+    fireEvent.click(screen.getByText("Switch now"));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
+      expect(screen.getByText("Shell guidance")).toBeInTheDocument();
+      expect(screen.getByText(/AISW runtime contract/)).toBeInTheDocument();
     });
   });
 

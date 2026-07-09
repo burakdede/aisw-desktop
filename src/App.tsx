@@ -79,7 +79,7 @@ export function App() {
 
       {resolvedSnapshot ? (
         <>
-          <SetupPanel snapshot={resolvedSnapshot} initReport={init.data} />
+          <SetupPanel bootstrap={bootstrap.data} snapshot={resolvedSnapshot} initReport={init.data} />
           {activeNav === "overview" ? <OverviewPanel snapshot={resolvedSnapshot} /> : null}
           {activeNav === "profiles" ? <ProfilesPanel snapshot={resolvedSnapshot} /> : null}
           {activeNav === "contexts" ? <ContextsPanel snapshot={resolvedSnapshot} /> : null}

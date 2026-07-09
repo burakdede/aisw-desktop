@@ -209,7 +209,8 @@ body {
 }
 
 .tool-card h3,
-.diagnostic-card h3 {
+.diagnostic-card h3,
+.diagnostic-card h4 {
   margin: 0;
 }
 
@@ -319,6 +320,18 @@ body {
   letter-spacing: 0.12em;
   font-size: 0.74rem;
   color: #7fa0c8;
+}
+
+.diagnostic-status-pass {
+  color: #93f0b2;
+}
+
+.diagnostic-status-warn {
+  color: #ffe2ae;
+}
+
+.diagnostic-status-fail {
+  color: #ffc5c5;
 }
 
 .diagnostics-body {
