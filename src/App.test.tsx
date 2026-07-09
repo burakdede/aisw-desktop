@@ -227,6 +227,102 @@ describe("App", () => {
     expect(screen.getByText("which gemini")).toBeInTheDocument();
   });
 
+  it("refreshes snapshot state after a failed switch to show the rolled-back profile", async () => {
+    const staleSnapshot = {
+      ...bootstrap.snapshot,
+      statuses: [
+        {
+          ...bootstrap.snapshot.statuses[0],
+          tool: "claude",
+          active_profile: "work",
+        },
+        {
+          tool: "codex",
+          binary_found: true,
+          stored_profiles: 2,
+          active_profile: "work",
+          auth_method: "api_key",
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+        },
+      ],
+      profiles: {
+        claude: {
+          active: "work",
+          profiles: [
+            { name: "work", auth: "oauth", label: "Work" },
+            { name: "personal", auth: "oauth", label: "Personal" },
+          ],
+        },
+        codex: {
+          active: "work",
+          profiles: [
+            { name: "work", auth: "api_key", label: "Work" },
+            { name: "personal", auth: "api_key", label: "Personal" },
+          ],
+        },
+      },
+    };
+    const rolledBackSnapshot = {
+      ...staleSnapshot,
+      statuses: staleSnapshot.statuses.map((entry) => ({
+        ...entry,
+        active_profile: "personal",
+      })),
+      profiles: {
+        claude: {
+          active: "personal",
+          profiles: staleSnapshot.profiles.claude.profiles,
+        },
+        codex: {
+          active: "personal",
+          profiles: staleSnapshot.profiles.codex.profiles,
+        },
+      },
+    };
+    let snapshotReads = 0;
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "use_all_profiles") {
+        throw new Error("switch failed");
+      }
+      if (command === "get_snapshot") {
+        snapshotReads += 1;
+        return snapshotReads === 1 ? staleSnapshot : rolledBackSnapshot;
+      }
+      return (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            snapshot: staleSnapshot,
+          },
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    renderApp();
+    await waitFor(() => expect(screen.getAllByRole("heading", { name: "work" }).length).toBeGreaterThan(0));
+    fireEvent.change(screen.getByDisplayValue("Switch all tools to…"), {
+      target: { value: "work" },
+    });
+    fireEvent.click(screen.getByText("Switch all"));
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("heading", { name: "personal" }).length).toBeGreaterThan(0);
+    });
+  });
+
   it("renames and removes a profile through desktop commands", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {

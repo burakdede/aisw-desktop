@@ -42,15 +42,15 @@ export function useDesktopActions() {
     }),
     useProfileMutation: useMutation({
       mutationFn: useProfile,
-      onSuccess: invalidate,
+      onSettled: invalidate,
     }),
     useAllProfilesMutation: useMutation({
       mutationFn: useAllProfiles,
-      onSuccess: invalidate,
+      onSettled: invalidate,
     }),
     useContextMutation: useMutation({
       mutationFn: useContext,
-      onSuccess: invalidate,
+      onSettled: invalidate,
     }),
     renameProfileMutation: useMutation({
       mutationFn: renameProfile,
