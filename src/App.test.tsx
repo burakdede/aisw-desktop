@@ -228,6 +228,65 @@ describe("App", () => {
     expect(screen.getByText("which gemini")).toBeInTheDocument();
   });
 
+  it("surfaces token warnings in the overview cards", async () => {
+    window.__AISW_DESKTOP_MOCK__ = {
+      ...window.__AISW_DESKTOP_MOCK__,
+      get_bootstrap: {
+        ...bootstrap,
+        snapshot: {
+          ...bootstrap.snapshot,
+          statuses: [
+            {
+              ...bootstrap.snapshot.statuses[0],
+              token_warning: {
+                severity: "warn",
+                summary: "Claude session expires soon",
+                expires_in_days: 2,
+              },
+              warnings: [
+                {
+                  code: "token_expiry",
+                  message: "Refresh Claude authentication soon.",
+                  remediation: "Run the guided OAuth flow again.",
+                },
+              ],
+            },
+          ],
+        },
+      },
+      get_snapshot: {
+        ...bootstrap.snapshot,
+        statuses: [
+          {
+            ...bootstrap.snapshot.statuses[0],
+            token_warning: {
+              severity: "warn",
+              summary: "Claude session expires soon",
+              expires_in_days: 2,
+            },
+            warnings: [
+              {
+                code: "token_expiry",
+                message: "Refresh Claude authentication soon.",
+                remediation: "Run the guided OAuth flow again.",
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    renderApp();
+    await waitFor(() => {
+      expect(screen.getByText("Token warning: Claude session expires soon Expires in 2 days.")).toBeInTheDocument();
+    });
+    expect(
+      screen.getByText(
+        "Warning: Refresh Claude authentication soon. Remediation: Run the guided OAuth flow again.",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("refreshes snapshot state after a failed switch to show the rolled-back profile", async () => {
     const staleSnapshot = {
       ...bootstrap.snapshot,

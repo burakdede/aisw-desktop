@@ -153,6 +153,23 @@ function ToolCard({
               : "mismatch"}
         </span>
       </div>
+      {status.token_warning ? (
+        <p className="inline-note">
+          Token warning: {formatTokenWarning(status)}
+        </p>
+      ) : null}
+      {status.warnings.length ? (
+        <div className="stack-list">
+          {status.warnings.map((warning, index) => (
+            <p
+              key={`${warning.code ?? warning.message ?? "warning"}-${index}`}
+              className="inline-note"
+            >
+              Warning: {formatDiagnosticWarning(warning)}
+            </p>
+          ))}
+        </div>
+      ) : null}
       {stateModes.length ? (
         <label className="stacked-form">
           <span>State mode</span>
@@ -235,6 +252,28 @@ function MissingBinaryGuidance({ tool }: { tool: string }) {
       </p>
     </div>
   );
+}
+
+function formatTokenWarning(status: ToolStatus) {
+  const warning = status.token_warning;
+  if (!warning) {
+    return "Token state needs attention.";
+  }
+
+  const detail = warning.summary ?? warning.message ?? warning.code ?? "Token state needs attention.";
+  const suffix = warning.expires_at
+    ? ` Expires at ${warning.expires_at}.`
+    : typeof warning.expires_in_days === "number"
+      ? ` Expires in ${warning.expires_in_days} days.`
+      : "";
+  return `${detail}${suffix}`;
+}
+
+function formatDiagnosticWarning(
+  warning: ToolStatus["warnings"][number],
+) {
+  const detail = warning.message ?? warning.code ?? "Warning reported by aisw.";
+  return warning.remediation ? `${detail} Remediation: ${warning.remediation}` : detail;
 }
 
 function supportedStateModes(

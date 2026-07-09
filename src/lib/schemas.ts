@@ -19,6 +19,28 @@ export const capabilitiesInfoSchema = z.object({
   ),
 });
 
+export const tokenWarningSchema = z
+  .object({
+    code: z.string().nullable().optional(),
+    severity: z.string().nullable().optional(),
+    summary: z.string().nullable().optional(),
+    message: z.string().nullable().optional(),
+    provider: z.string().nullable().optional(),
+    expires_at: z.string().nullable().optional(),
+    expires_in_days: z.number().nullable().optional(),
+  })
+  .passthrough();
+
+export const diagnosticWarningSchema = z
+  .object({
+    code: z.string().nullable().optional(),
+    severity: z.string().nullable().optional(),
+    message: z.string().nullable().optional(),
+    remediation: z.string().nullable().optional(),
+    command: z.string().nullable().optional(),
+  })
+  .passthrough();
+
 export const desktopSettingsSchema = z.object({
   runtime_kind: runtimeKindSchema,
   runtime_path: z.string().nullable().optional(),
@@ -47,6 +69,8 @@ export const toolStatusSchema = z.object({
   active_profile_applied: z.boolean().nullable().optional(),
   credentials_present: z.boolean().nullable().optional(),
   permissions_ok: z.boolean().nullable().optional(),
+  token_warning: tokenWarningSchema.nullable().optional(),
+  warnings: z.array(diagnosticWarningSchema).default([]),
 });
 
 export const toolProfileSummarySchema = z.object({

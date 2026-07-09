@@ -61,6 +61,26 @@ pub struct ToolCapabilities {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TokenWarning {
+    pub code: Option<String>,
+    pub severity: Option<String>,
+    pub summary: Option<String>,
+    pub message: Option<String>,
+    pub provider: Option<String>,
+    pub expires_at: Option<String>,
+    pub expires_in_days: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiagnosticWarning {
+    pub code: Option<String>,
+    pub severity: Option<String>,
+    pub message: Option<String>,
+    pub remediation: Option<String>,
+    pub command: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CapabilitiesInfo {
     pub features: HashMap<String, bool>,
     pub tools: HashMap<String, ToolCapabilities>,
@@ -78,6 +98,9 @@ pub struct ToolStatus {
     pub active_profile_applied: Option<bool>,
     pub credentials_present: Option<bool>,
     pub permissions_ok: Option<bool>,
+    pub token_warning: Option<TokenWarning>,
+    #[serde(default)]
+    pub warnings: Vec<DiagnosticWarning>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
