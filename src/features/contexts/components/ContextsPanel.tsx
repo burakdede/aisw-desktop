@@ -83,6 +83,15 @@ export function ContextsPanel({
   }
 
   async function activateProfileSet(set: DesktopSettings["profile_sets"][number]) {
+    if (snapshot.contexts.some((context) => context.name === set.name)) {
+      await useContextMutation.mutateAsync({
+        context: set.name,
+        stateMode: "isolated",
+      });
+      setLastAction(`Activated profile set ${set.name}.`);
+      return;
+    }
+
     const selected = Object.entries(set.profiles).filter(([, profile]) => profile) as Array<
       [string, string]
     >;

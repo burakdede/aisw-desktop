@@ -1574,12 +1574,17 @@ describe("App", () => {
   it("saves and activates a local profile set", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     let currentSettings: DesktopSettings = bootstrap.settings;
+    const snapshotWithoutCliContexts = {
+      ...bootstrap.snapshot,
+      contexts: [],
+    };
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
       if (command === "get_bootstrap") {
         return {
           ...bootstrap,
           settings: currentSettings,
+          snapshot: snapshotWithoutCliContexts,
         };
       }
       if (command === "update_settings") {
@@ -1596,11 +1601,11 @@ describe("App", () => {
         return currentSettings;
       }
       if (command === "use_all_profiles") {
-        return { command, snapshot: bootstrap.snapshot };
+        return { command, snapshot: snapshotWithoutCliContexts };
       }
       return (
         {
-          get_snapshot: bootstrap.snapshot,
+          get_snapshot: snapshotWithoutCliContexts,
           run_init: { result: { live_accounts: [] } },
           run_doctor: { summary: { status: "pass" } },
           run_verify: { summary: { status: "pass" } },
@@ -1640,6 +1645,76 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
     });
+  });
+
+  it("prefers the native CLI context when a profile set matches it", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    const contextSnapshot = {
+      ...bootstrap.snapshot,
+      contexts: [
+        {
+          name: "client-acme",
+          profiles: {
+            claude: "work",
+            codex: "work",
+          },
+        },
+      ],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "use_context") {
+        return { command, snapshot: contextSnapshot };
+      }
+      return (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            settings: {
+              ...bootstrap.settings,
+              profile_sets: [
+                {
+                  name: "client-acme",
+                  label: "Client Acme",
+                  profiles: { claude: "work", codex: "work", gemini: null },
+                },
+              ],
+            },
+            snapshot: contextSnapshot,
+          },
+          get_snapshot: contextSnapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: {
+            ...bootstrap.settings,
+            profile_sets: [
+              {
+                name: "client-acme",
+                label: "Client Acme",
+                profiles: { claude: "work", codex: "work", gemini: null },
+              },
+            ],
+          },
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Contexts"));
+    fireEvent.click(screen.getByText("Activate set"));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
+    });
+    expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(false);
+    expect(calls.some((entry) => entry.command === "use_profile")).toBe(false);
   });
 
   it("checks and installs a signed desktop update", async () => {
