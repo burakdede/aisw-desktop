@@ -46,7 +46,7 @@ test("switches shared profiles and recovers from live mismatch", async ({ page }
   await expect(page.getByText("Last result: Saved claude profile incident.")).toBeVisible();
 
   const overview = page.locator(".section-card").filter({ hasText: "Control Center" });
-  await overview.getByRole("combobox").first().selectOption("work");
+  await overview.getByRole("combobox").first().selectOption("profile:work");
   await overview.getByRole("button", { name: "Switch all" }).click();
 
   await expect(page.getByText("Last bulk result: Switched all tools to work.")).toBeVisible();

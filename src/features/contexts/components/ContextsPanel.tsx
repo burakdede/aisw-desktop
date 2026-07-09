@@ -21,9 +21,8 @@ export function ContextsPanel({
 }) {
   const {
     updateSettingsMutation,
-    useAllProfilesMutation,
+    activateProfileSetMutation,
     useContextMutation,
-    useProfileMutation,
     mutationLock,
   } = useDesktopActions();
   const [draft, setDraft] = useState<EditableProfileSet>({
@@ -83,37 +82,7 @@ export function ContextsPanel({
   }
 
   async function activateProfileSet(set: DesktopSettings["profile_sets"][number]) {
-    if (snapshot.contexts.some((context) => context.name === set.name)) {
-      await useContextMutation.mutateAsync({
-        context: set.name,
-        stateMode: "isolated",
-      });
-      setLastAction(`Activated profile set ${set.name}.`);
-      return;
-    }
-
-    const selected = Object.entries(set.profiles).filter(([, profile]) => profile) as Array<
-      [string, string]
-    >;
-    if (!selected.length) return;
-
-    const uniqueProfiles = [...new Set(selected.map(([, profile]) => profile))];
-    if (uniqueProfiles.length === 1 && selected.length > 1) {
-      await useAllProfilesMutation.mutateAsync({
-        profile: uniqueProfiles[0],
-        stateMode: "isolated",
-      });
-      setLastAction(`Activated profile set ${set.name}.`);
-      return;
-    }
-
-    for (const [tool, profile] of selected) {
-      await useProfileMutation.mutateAsync({
-        tool,
-        profile,
-        stateMode: tool === "gemini" ? null : "isolated",
-      });
-    }
+    await activateProfileSetMutation.mutateAsync({ name: set.name });
     setLastAction(`Activated profile set ${set.name}.`);
   }
 

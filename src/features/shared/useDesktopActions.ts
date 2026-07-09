@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import {
+  activateProfileSet,
   addProfile,
   addProfileOAuth,
   checkForUpdates,
@@ -157,6 +158,15 @@ export function useDesktopActions() {
         useContext,
         () => ({ type: "global", id: "context" }),
         (variables) => `Activated context ${variables.context}.`,
+      ),
+      onSettled: invalidate,
+    }),
+    activateProfileSetMutation: useMutation({
+      mutationFn: queueMutation(
+        "Activate profile set",
+        activateProfileSet,
+        () => ({ type: "global", id: "profile-set" }),
+        (variables) => `Activated profile set ${variables.name}.`,
       ),
       onSettled: invalidate,
     }),

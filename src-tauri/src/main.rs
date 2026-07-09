@@ -43,6 +43,7 @@ fn main() {
             commands::use_profile,
             commands::use_all_profiles,
             commands::use_context,
+            commands::activate_profile_set,
             commands::rename_profile,
             commands::remove_profile,
             commands::restore_backup,

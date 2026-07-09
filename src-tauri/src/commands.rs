@@ -156,6 +156,18 @@ pub async fn use_context(
 }
 
 #[tauri::command]
+pub async fn activate_profile_set(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, AppState>,
+    name: String,
+) -> DesktopResult<MutationResponse> {
+    ensure_compatible(&state).await?;
+    let result = state.activate_profile_set(&name).await?;
+    let _ = tray::refresh_tray(&app, state.inner().clone()).await;
+    Ok(result)
+}
+
+#[tauri::command]
 pub async fn rename_profile(
     app: tauri::AppHandle,
     state: tauri::State<'_, AppState>,

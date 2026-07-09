@@ -61,6 +61,10 @@ export interface UseContextInput {
   stateMode?: string | null;
 }
 
+export interface ActivateProfileSetInput {
+  name: string;
+}
+
 export interface RenameProfileInput {
   tool: string;
   oldName: string;
@@ -169,6 +173,16 @@ export async function useContext(input: UseContextInput): Promise<MutationRespon
         context: input.context,
         state_mode: input.stateMode ?? null,
       },
+    }),
+  );
+}
+
+export async function activateProfileSet(
+  input: ActivateProfileSetInput,
+): Promise<MutationResponse> {
+  return mutationResponseSchema.parse(
+    await invokeDesktop("activate_profile_set", {
+      name: input.name,
     }),
   );
 }

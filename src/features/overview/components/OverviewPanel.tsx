@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { AppBootstrap, AppSnapshot, ToolStatus } from "../../../lib/schemas";
+import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import { SectionCard } from "../../../components/SectionCard";
 import {
   commandForCurrentPlatform,
@@ -15,34 +15,50 @@ import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 
 export function OverviewPanel({
   snapshot,
+  settings,
   toolCapabilities,
   onOpenProfiles,
 }: {
   snapshot: AppSnapshot;
+  settings: DesktopSettings;
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
   onOpenProfiles: (tool: string, expandedProfile?: string | null) => void;
 }) {
   const queryClient = useQueryClient();
   const {
     addProfileMutation,
+    activateProfileSetMutation,
     useProfileMutation,
     useAllProfilesMutation,
     useContextMutation,
     mutationLock,
     lastCommandResults,
   } = useDesktopActions();
-  const [bulkProfile, setBulkProfile] = useState("");
-  const sharedProfileNames = useMemo(() => {
+  const [quickSwitch, setQuickSwitch] = useState("");
+  const quickSwitchOptions = useMemo(() => {
     const counts = new Map<string, number>();
     Object.values(snapshot.profiles).forEach((entry) => {
       entry.profiles.forEach((profile) => {
         counts.set(profile.name, (counts.get(profile.name) ?? 0) + 1);
       });
     });
-    return [...counts.entries()]
+    const sharedProfiles = [...counts.entries()]
       .filter(([, count]) => count > 1)
       .map(([name]) => name);
-  }, [snapshot.profiles]);
+    const profileSets = [...(settings.profile_sets ?? [])]
+      .sort((left, right) => left.name.localeCompare(right.name))
+      .map((set) => ({
+        value: `set:${set.name}`,
+        label: `Profile set: ${set.label ?? set.name}`,
+      }));
+    return [
+      ...profileSets,
+      ...sharedProfiles.map((name) => ({
+        value: `profile:${name}`,
+        label: `Shared profile: ${name}`,
+      })),
+    ];
+  }, [settings.profile_sets, snapshot.profiles]);
 
   const refresh = useMutation({
     mutationFn: async () => {
@@ -62,21 +78,32 @@ export function OverviewPanel({
       kicker="Overview"
       actions={
         <div className="button-row">
-          <select value={bulkProfile} onChange={(event) => setBulkProfile(event.target.value)}>
-            <option value="">Switch all tools to…</option>
-            {sharedProfileNames.map((name) => (
-              <option key={name} value={name}>
-                {name}
+          <select value={quickSwitch} onChange={(event) => setQuickSwitch(event.target.value)}>
+            <option value="">Switch profile set or shared profile…</option>
+            {quickSwitchOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </select>
           <button
             className="primary-button"
             disabled={mutationLock.isBusy}
-            onClick={() =>
-              bulkProfile &&
-              useAllProfilesMutation.mutate({ profile: bulkProfile, stateMode: "isolated" })
-            }
+            onClick={() => {
+              if (!quickSwitch) return;
+              if (quickSwitch.startsWith("set:")) {
+                activateProfileSetMutation.mutate({
+                  name: quickSwitch.slice("set:".length),
+                });
+                return;
+              }
+              if (quickSwitch.startsWith("profile:")) {
+                useAllProfilesMutation.mutate({
+                  profile: quickSwitch.slice("profile:".length),
+                  stateMode: "isolated",
+                });
+              }
+            }}
           >
             Switch all
           </button>
@@ -144,15 +171,24 @@ export function OverviewPanel({
           />
         ))}
       </div>
-      {lastCommandResults.global["switch-all"] ? (
+      {lastCommandResults.global["switch-all"] || lastCommandResults.global["profile-set"] ? (
         <p
           className={`inline-note ${
-            lastCommandResults.global["switch-all"]?.status === "error" ? "diagnostic-status-fail" : ""
+            (lastCommandResults.global["profile-set"] ?? lastCommandResults.global["switch-all"])
+              ?.status === "error"
+              ? "diagnostic-status-fail"
+              : ""
           }`}
         >
-          Last bulk result: {lastCommandResults.global["switch-all"]?.message}
-          {lastCommandResults.global["switch-all"]?.remediation
-            ? ` Remediation: ${lastCommandResults.global["switch-all"]?.remediation}`
+          Last bulk result:{" "}
+          {(lastCommandResults.global["profile-set"] ?? lastCommandResults.global["switch-all"])
+            ?.message}
+          {(lastCommandResults.global["profile-set"] ?? lastCommandResults.global["switch-all"])
+            ?.remediation
+            ? ` Remediation: ${
+                (lastCommandResults.global["profile-set"] ??
+                  lastCommandResults.global["switch-all"])?.remediation
+              }`
             : ""}
         </p>
       ) : null}

@@ -478,8 +478,8 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getAllByRole("heading", { name: "work" }).length).toBeGreaterThan(0));
-    fireEvent.change(screen.getByDisplayValue("Switch all tools to…"), {
-      target: { value: "work" },
+    fireEvent.change(screen.getByDisplayValue("Switch profile set or shared profile…"), {
+      target: { value: "profile:work" },
     });
     fireEvent.click(screen.getByText("Switch all"));
 
@@ -1290,8 +1290,8 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByText("Switch all")).toBeInTheDocument());
-    fireEvent.change(screen.getByDisplayValue("Switch all tools to…"), {
-      target: { value: "work" },
+    fireEvent.change(screen.getByDisplayValue("Switch profile set or shared profile…"), {
+      target: { value: "profile:work" },
     });
     fireEvent.click(screen.getByText("Switch all"));
 
@@ -2019,7 +2019,7 @@ describe("App", () => {
         };
         return currentSettings;
       }
-      if (command === "use_all_profiles") {
+      if (command === "activate_profile_set") {
         return { command, snapshot: snapshotWithoutCliContexts };
       }
       return (
@@ -2062,7 +2062,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Activate set"));
 
     await waitFor(() => {
-      expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
+      expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
     });
   });
 
@@ -2083,7 +2083,7 @@ describe("App", () => {
 
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
-      if (command === "use_context") {
+      if (command === "activate_profile_set") {
         return { command, snapshot: contextSnapshot };
       }
       return (
@@ -2130,10 +2130,60 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Activate set"));
 
     await waitFor(() => {
-      expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
+      expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
     });
     expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(false);
     expect(calls.some((entry) => entry.command === "use_profile")).toBe(false);
+  });
+
+  it("activates a local profile set directly from overview quick switch", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    const settingsWithSet: DesktopSettings = {
+      ...bootstrap.settings,
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "activate_profile_set") {
+        return { command, snapshot: bootstrap.snapshot };
+      }
+      return (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            settings: settingsWithSet,
+          },
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: settingsWithSet,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Switch all")).toBeInTheDocument());
+    fireEvent.change(screen.getByDisplayValue("Switch profile set or shared profile…"), {
+      target: { value: "set:client-acme" },
+    });
+    fireEvent.click(screen.getByText("Switch all"));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
+    });
+    expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(false);
   });
 
   it("checks and installs a signed desktop update", async () => {

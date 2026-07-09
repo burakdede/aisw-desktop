@@ -158,6 +158,7 @@ export function App() {
           {activeNav === "overview" ? (
             <OverviewPanel
               snapshot={resolvedSnapshot}
+              settings={settings}
               toolCapabilities={toolCapabilities}
               onOpenProfiles={(tool, expandedProfile) => {
                 setProfilesRouteState({ tool, expandedProfile });
