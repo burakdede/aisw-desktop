@@ -86,6 +86,8 @@ jobs:
       - name: Verify frontend
         run: |
           npm test
+          npx playwright install chromium
+          npm run test:e2e
           npm run build
 
       - name: Verify Rust
