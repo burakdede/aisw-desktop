@@ -7,7 +7,7 @@ import { titleCase } from "../../../lib/utils";
 
 export function OverviewPanel({ snapshot }: { snapshot: AppSnapshot }) {
   const queryClient = useQueryClient();
-  const { useProfileMutation, useAllProfilesMutation } = useDesktopActions();
+  const { addProfileMutation, useProfileMutation, useAllProfilesMutation } = useDesktopActions();
   const [lastAction, setLastAction] = useState<string>("");
   const [bulkProfile, setBulkProfile] = useState("");
   const sharedProfileNames = useMemo(() => {
@@ -68,6 +68,20 @@ export function OverviewPanel({ snapshot }: { snapshot: AppSnapshot }) {
           <ToolCard
             key={status.tool}
             status={status}
+            onImport={(tool, profile) =>
+              addProfileMutation.mutate(
+                {
+                  tool,
+                  profile,
+                  label: titleCase(profile),
+                  stateMode: tool === "gemini" ? null : "isolated",
+                  importMode: { kind: "from_live" },
+                },
+                {
+                  onSuccess: () => setLastAction(`Imported current ${tool} login as ${profile}.`),
+                },
+              )
+            }
             onUse={(tool, profile) =>
               useProfileMutation.mutate(
                 { tool, profile, stateMode: status.state_mode ?? "isolated" },
@@ -86,12 +100,16 @@ export function OverviewPanel({ snapshot }: { snapshot: AppSnapshot }) {
 
 function ToolCard({
   status,
+  onImport,
   onUse,
 }: {
   status: ToolStatus;
+  onImport: (tool: string, profile: string) => void;
   onUse: (tool: string, profile: string) => void;
 }) {
   const activeState = status.active_profile_applied;
+  const [importName, setImportName] = useState("");
+
   return (
     <article className="tool-card">
       <header>
@@ -116,6 +134,40 @@ function ToolCard({
               : "mismatch"}
         </span>
       </div>
+      {!status.binary_found ? (
+        <p className="inline-note">
+          Install {titleCase(status.tool)} and refresh diagnostics to restore switching support.
+        </p>
+      ) : null}
+      {activeState === false ? (
+        <div className="stack-list">
+          <p className="inline-note">
+            Live credentials changed outside AISW. Re-apply the active profile or import the current
+            login as a new profile.
+          </p>
+          <div className="inline-form">
+            <input
+              aria-label={`import ${status.tool} current login`}
+              placeholder="new profile name"
+              value={importName}
+              onChange={(event) => setImportName(event.target.value)}
+            />
+            <button
+              className="ghost-button"
+              type="button"
+              disabled={!importName.trim()}
+              onClick={() => {
+                const profile = importName.trim();
+                if (!profile) return;
+                onImport(status.tool, profile);
+                setImportName("");
+              }}
+            >
+              Import current as new
+            </button>
+          </div>
+        </div>
+      ) : null}
       {status.active_profile ? (
         <button
           className="primary-button"

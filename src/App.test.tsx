@@ -283,6 +283,61 @@ describe("App", () => {
     });
   });
 
+  it("imports the current login from a live mismatch card", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "add_profile") {
+        return { command, snapshot: bootstrap.snapshot };
+      }
+      return (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            snapshot: {
+              ...bootstrap.snapshot,
+              statuses: [
+                {
+                  ...bootstrap.snapshot.statuses[0],
+                  active_profile_applied: false,
+                },
+              ],
+            },
+          },
+          get_snapshot: {
+            ...bootstrap.snapshot,
+            statuses: [
+              {
+                ...bootstrap.snapshot.statuses[0],
+                active_profile_applied: false,
+              },
+            ],
+          },
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText("import claude current login"), {
+      target: { value: "recovered" },
+    });
+    fireEvent.click(screen.getByText("Import current as new"));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "add_profile")).toBe(true);
+      expect(screen.getByText("Live credentials changed outside AISW. Re-apply the active profile or import the current login as a new profile.")).toBeInTheDocument();
+    });
+  });
+
   it("applies safe repairs from diagnostics", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
