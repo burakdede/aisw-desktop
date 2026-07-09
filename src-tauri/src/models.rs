@@ -87,12 +87,6 @@ pub struct ContextSummary {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WorkspaceStatus {
-    #[serde(flatten)]
-    pub raw: serde_json::Value,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DoctorReport {
     #[serde(flatten)]
     pub raw: serde_json::Value,
@@ -176,20 +170,6 @@ pub struct UseProfileRequest {
 pub struct UseContextRequest {
     pub context: String,
     pub state_mode: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RenameProfileRequest {
-    pub tool: String,
-    pub old_name: String,
-    pub new_name: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RemoveProfileRequest {
-    pub tool: String,
-    pub profile: String,
-    pub force: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

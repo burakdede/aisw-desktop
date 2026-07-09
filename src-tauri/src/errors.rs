@@ -21,6 +21,7 @@ pub enum DesktopError {
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[allow(dead_code)]
 #[serde(rename_all = "PascalCase")]
 pub enum GuiErrorKind {
     AiswNotFound,

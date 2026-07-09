@@ -1,6 +1,6 @@
 use crate::errors::DesktopError;
 use crate::models::{DesktopSettings, UpdateSettingsRequest};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 const SETTINGS_FILE: &str = "settings.json";
 
@@ -42,10 +42,6 @@ impl SettingsStore {
         let bytes = serde_json::to_vec_pretty(&settings)?;
         tokio::fs::write(&self.path, bytes).await?;
         Ok(settings)
-    }
-
-    pub fn path(&self) -> &Path {
-        &self.path
     }
 }
 
