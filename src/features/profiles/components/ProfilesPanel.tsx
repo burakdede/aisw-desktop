@@ -6,6 +6,7 @@ import {
   DesktopSettings,
   type OAuthProgressEvent,
 } from "../../../lib/schemas";
+import { DesktopCommandError } from "../../../lib/tauri";
 import { listenDesktopEvent } from "../../../lib/tauri";
 import { parseOAuthProgressEvent } from "../../../lib/client";
 import { titleCase } from "../../../lib/utils";
@@ -104,7 +105,7 @@ export function ProfilesPanel({
             setLabel("");
           },
           onError: (error) => {
-            setOauthError(error instanceof Error ? error.message : "OAuth capture failed.");
+            setOauthError(formatDesktopError(error));
           },
         },
       );
@@ -569,14 +570,24 @@ function formatOauthStep(event: OAuthProgressEvent) {
 function profileMutationError(...errors: Array<unknown>) {
   for (const error of errors) {
     if (!error) continue;
-    if (error instanceof Error) {
-      return error.message;
-    }
-    if (typeof error === "object" && error && "message" in error && typeof error.message === "string") {
-      return error.message;
-    }
+    return formatDesktopError(error);
   }
   return "";
+}
+
+function formatDesktopError(error: unknown) {
+  if (error instanceof DesktopCommandError) {
+    return error.remediation ? `${error.message} Remediation: ${error.remediation}` : error.message;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "object" && error && "message" in error && typeof error.message === "string") {
+    const remediation =
+      "remediation" in error && typeof error.remediation === "string" ? error.remediation : undefined;
+    return remediation ? `${error.message} Remediation: ${remediation}` : error.message;
+  }
+  return "Desktop command failed.";
 }
 
 function formatProfileTokenWarning(

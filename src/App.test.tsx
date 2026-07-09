@@ -589,6 +589,48 @@ describe("App", () => {
     });
   });
 
+  it("shows remediation text for profile command failures", async () => {
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "add_profile") {
+        throw {
+          kind: "KeyringUnavailable",
+          message: "keyring unavailable",
+          remediation: "Unlock the system keychain and retry.",
+        };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    renderApp();
+    await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Profiles"));
+    fireEvent.change(screen.getByLabelText("Profile name"), {
+      target: { value: "ops" },
+    });
+    fireEvent.click(screen.getByText("Add profile"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "keyring unavailable Remediation: Unlock the system keychain and retry.",
+        ),
+      ).toBeInTheDocument();
+    });
+  });
+
   it("submits API keys via stdin payload and clears the field after save", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {

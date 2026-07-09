@@ -667,9 +667,9 @@ fn map_command_failure(command: &str, stderr: &str) -> DesktopError {
 
     DesktopError::CommandFailed {
         command: command.to_owned(),
+        remediation: remediation_for_kind(&kind),
         kind,
         message: stderr.trim().to_owned(),
-        remediation: None,
     }
 }
 
@@ -706,7 +706,8 @@ fn map_machine_failure(command: &str, value: &serde_json::Value) -> Option<Deskt
         .get("remediation")
         .and_then(|item| item.get("command"))
         .and_then(|item| item.as_str())
-        .map(str::to_owned);
+        .map(str::to_owned)
+        .or_else(|| remediation_for_kind(&kind));
     let message = error
         .get("message")
         .and_then(|item| item.as_str())
@@ -721,9 +722,40 @@ fn map_machine_failure(command: &str, value: &serde_json::Value) -> Option<Deskt
     })
 }
 
+fn remediation_for_kind(kind: &GuiErrorKind) -> Option<String> {
+    match kind {
+        GuiErrorKind::ToolMissing => Some(
+            "Install the missing agent CLI or fix PATH, then refresh diagnostics.".to_owned(),
+        ),
+        GuiErrorKind::DuplicateProfile => Some(
+            "Choose a different profile name or rename the existing profile first.".to_owned(),
+        ),
+        GuiErrorKind::KeyringUnavailable => Some(
+            "Unlock the system keychain or switch to a backend that is available on this machine."
+                .to_owned(),
+        ),
+        GuiErrorKind::PermissionDenied => Some(
+            "Check filesystem and keychain permissions for AISW and the selected tool.".to_owned(),
+        ),
+        GuiErrorKind::OAuthTimeout => Some(
+            "Retry the guided OAuth flow and complete the upstream login before the timeout expires."
+                .to_owned(),
+        ),
+        GuiErrorKind::ConfigLockTimeout => Some(
+            "Close other AISW sessions or wait for the config lock to clear, then retry."
+                .to_owned(),
+        ),
+        GuiErrorKind::InvalidStateMode => Some(
+            "Pick a state mode supported by this tool and aisw build.".to_owned(),
+        ),
+        _ => None,
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{AiswBridge, CliAiswBridge};
+    use super::{map_command_failure, map_machine_failure, remediation_for_kind, AiswBridge, CliAiswBridge};
+    use crate::errors::GuiErrorKind;
     use crate::models::{
         AddOAuthProfileRequest, AddProfileMode, AddProfileRequest, RuntimeKind,
         UseAllProfilesRequest, WorkspaceBindRequest, WorkspaceBindTarget,
@@ -895,5 +927,50 @@ printf '{}'
             CliAiswBridge::new(RuntimeKind::Bundled, Some(PathBuf::from("/missing")), None);
         let resolved = bridge.resolve_binary().await;
         assert!(resolved.is_err());
+    }
+
+    #[test]
+    fn command_failures_include_default_remediation() {
+        let error = map_command_failure("add_profile", "keyring unavailable");
+        let crate::errors::DesktopError::CommandFailed {
+            kind,
+            remediation,
+            ..
+        } = error
+        else {
+            panic!("expected command failure");
+        };
+
+        assert!(matches!(kind, GuiErrorKind::KeyringUnavailable));
+        assert_eq!(
+            remediation.as_deref(),
+            remediation_for_kind(&GuiErrorKind::KeyringUnavailable).as_deref()
+        );
+    }
+
+    #[test]
+    fn machine_failures_fall_back_to_default_remediation() {
+        let value = serde_json::json!({
+            "ok": false,
+            "error": {
+                "kind": "permission_denied",
+                "message": "Cannot write config"
+            }
+        });
+
+        let crate::errors::DesktopError::CommandFailed {
+            kind,
+            remediation,
+            ..
+        } = map_machine_failure("use_profile", &value).expect("expected machine failure")
+        else {
+            panic!("expected command failure");
+        };
+
+        assert!(matches!(kind, GuiErrorKind::PermissionDenied));
+        assert_eq!(
+            remediation.as_deref(),
+            remediation_for_kind(&GuiErrorKind::PermissionDenied).as_deref()
+        );
     }
 }
