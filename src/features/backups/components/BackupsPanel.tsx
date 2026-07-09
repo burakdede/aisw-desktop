@@ -9,6 +9,10 @@ export function BackupsPanel() {
 
   return (
     <SectionCard title="Backups" kicker="Recovery">
+      <p className="inline-note">
+        Restore replays the saved files only. It does not activate that profile again until you run
+        a matching <code>use</code> action or choose restore and activate here.
+      </p>
       <div className="stack-list">
         {backups.data?.map((entry) => (
           <article key={entry.backup_id} className="list-row">
@@ -17,13 +21,14 @@ export function BackupsPanel() {
               <p>
                 {entry.tool} / {entry.profile}
               </p>
+              <p className="inline-note">Restore files only unless you explicitly re-activate this profile.</p>
             </div>
             <div className="button-row">
               <button
                 className="ghost-button"
                 onClick={() => restoreBackupMutation.mutate(entry.backup_id)}
               >
-                Restore
+                Restore files only
               </button>
               <button
                 className="primary-button"
