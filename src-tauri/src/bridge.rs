@@ -10,6 +10,7 @@ use crate::redaction::redact_text;
 use async_trait::async_trait;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
+use std::ffi::OsStr;
 use std::path::PathBuf;
 use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
@@ -160,9 +161,10 @@ impl AiswBridge for CliAiswBridge {
             }
         }
 
-        let fallback = PathBuf::from("aisw");
         match self.runtime_kind {
-            RuntimeKind::Bundled | RuntimeKind::System | RuntimeKind::Custom => Ok(fallback),
+            RuntimeKind::Bundled => resolve_bundled_binary(),
+            RuntimeKind::System => find_binary_on_path("aisw"),
+            RuntimeKind::Custom => Err(DesktopError::AiswNotFound),
         }
     }
 
@@ -407,6 +409,87 @@ fn parse_contexts(raw: serde_json::Value) -> Result<Vec<ContextSummary>, Desktop
     })
 }
 
+fn resolve_bundled_binary() -> Result<PathBuf, DesktopError> {
+    if let Some(path) = std::env::var_os("AISW_DESKTOP_BUNDLED_AISW_PATH") {
+        let candidate = PathBuf::from(path);
+        if candidate.exists() {
+            return Ok(candidate);
+        }
+    }
+
+    let current_exe = std::env::current_exe().map_err(|_| DesktopError::AiswNotFound)?;
+    bundled_binary_candidates(&current_exe)
+        .into_iter()
+        .find(|candidate| candidate.exists())
+        .ok_or(DesktopError::AiswNotFound)
+}
+
+fn bundled_binary_candidates(current_exe: &std::path::Path) -> Vec<PathBuf> {
+    let Some(exe_dir) = current_exe.parent() else {
+        return Vec::new();
+    };
+
+    let mut candidates = Vec::new();
+    for name in sidecar_names() {
+        candidates.push(exe_dir.join(&name));
+        candidates.push(exe_dir.join("binaries").join(&name));
+        candidates.push(exe_dir.join("../Resources").join(&name));
+        candidates.push(exe_dir.join("../Resources/binaries").join(&name));
+    }
+    candidates
+}
+
+fn sidecar_names() -> Vec<String> {
+    let mut names = vec!["aisw".to_owned(), format!("aisw-{}", runtime_target_suffix())];
+    if cfg!(windows) {
+        names.push("aisw.exe".to_owned());
+        names.push(format!("aisw-{}.exe", runtime_target_suffix()));
+    }
+    names
+}
+
+fn runtime_target_suffix() -> String {
+    match std::env::consts::OS {
+        "macos" => format!("{}-apple-darwin", std::env::consts::ARCH),
+        "windows" => format!("{}-pc-windows-msvc", std::env::consts::ARCH),
+        _ => format!("{}-unknown-linux-gnu", std::env::consts::ARCH),
+    }
+}
+
+fn find_binary_on_path(name: &str) -> Result<PathBuf, DesktopError> {
+    let path_value = std::env::var_os("PATH").ok_or(DesktopError::AiswNotFound)?;
+    find_binary_in_path(name, &path_value).ok_or(DesktopError::AiswNotFound)
+}
+
+fn find_binary_in_path(name: &str, path_value: &OsStr) -> Option<PathBuf> {
+    let path_exts = windows_path_exts();
+    std::env::split_paths(path_value)
+        .flat_map(|dir| {
+            let base = dir.join(name);
+            std::iter::once(base.clone())
+                .chain(path_exts.iter().map(move |ext| dir.join(format!("{name}{ext}"))))
+        })
+        .find(|candidate| candidate.exists())
+}
+
+fn windows_path_exts() -> Vec<String> {
+    if !cfg!(windows) {
+        return Vec::new();
+    }
+
+    std::env::var_os("PATHEXT")
+        .map(|value| {
+            value
+                .to_string_lossy()
+                .split(';')
+                .filter(|ext| !ext.is_empty())
+                .map(|ext| ext.to_ascii_lowercase())
+                .collect::<Vec<_>>()
+        })
+        .filter(|items| !items.is_empty())
+        .unwrap_or_else(|| vec![".exe".to_owned(), ".cmd".to_owned(), ".bat".to_owned()])
+}
+
 fn map_command_failure(command: &str, stderr: &str) -> DesktopError {
     let lower = stderr.to_ascii_lowercase();
     let kind = if lower.contains("not found") {
@@ -444,6 +527,7 @@ mod tests {
     };
     use std::fs;
     use std::os::unix::fs::PermissionsExt;
+    use std::path::PathBuf;
     use tempfile::tempdir;
 
     fn write_fake_aisw(script: &str) -> std::path::PathBuf {
@@ -533,5 +617,40 @@ printf '{}'
             .await
             .unwrap();
         assert_eq!(switched["command"], "use_all");
+    }
+
+    #[test]
+    fn bundled_runtime_only_accepts_real_sidecar_candidates() {
+        let dir = tempdir().unwrap();
+        let exe_dir = dir.path().join("AISW Desktop.app/Contents/MacOS");
+        let resources_dir = dir.path().join("AISW Desktop.app/Contents/Resources");
+        fs::create_dir_all(&exe_dir).unwrap();
+        fs::create_dir_all(&resources_dir).unwrap();
+
+        let sidecar_name = format!("aisw-{}", super::runtime_target_suffix());
+        let bundled = resources_dir.join(&sidecar_name);
+        fs::write(&bundled, "").unwrap();
+
+        let candidates = super::bundled_binary_candidates(&exe_dir.join("aisw-desktop"));
+        assert!(candidates.iter().any(|candidate| candidate.ends_with(PathBuf::from(format!(
+            "Resources/{sidecar_name}"
+        )))));
+    }
+
+    #[test]
+    fn system_runtime_searches_path_entries() {
+        let dir = tempdir().unwrap();
+        let binary = dir.path().join("aisw");
+        fs::write(&binary, "").unwrap();
+
+        let resolved = super::find_binary_in_path("aisw", dir.path().as_os_str());
+        assert_eq!(resolved, Some(binary));
+    }
+
+    #[tokio::test]
+    async fn bundled_runtime_does_not_fall_back_to_plain_path() {
+        let bridge = CliAiswBridge::new(RuntimeKind::Bundled, Some(PathBuf::from("/missing")), None);
+        let resolved = bridge.resolve_binary().await;
+        assert!(resolved.is_err());
     }
 }
