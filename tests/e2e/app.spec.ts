@@ -8,20 +8,29 @@ const toolCapabilities = {
   gemini: { state_modes: [] },
 };
 
-test("imports a detected account during onboarding", async ({ page }) => {
+test("imports detected Claude, Codex, and Gemini accounts during onboarding", async ({ page }) => {
   await installDesktopMock(page, "onboarding");
 
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "First-run setup" })).toBeVisible();
-  await expect(page.getByText("detected · oauth")).toBeVisible();
+  await expect(page.getByText("detected · oauth").first()).toBeVisible();
 
-  await page.getByLabel("gemini profile name").fill("travel");
-  await page.getByRole("button", { name: "Import current login" }).click();
+  await importDetectedAccount(page, "claude", "work");
+  await importDetectedAccount(page, "codex", "ops");
+  await importDetectedAccount(page, "gemini", "travel");
 
   await page.getByRole("button", { name: "Profiles" }).click();
-  await page.getByLabel("Tool").selectOption("gemini");
 
+  await page.getByLabel("Tool").selectOption("claude");
+  await expect(page.locator(".list-row p").filter({ hasText: "work · oauth" }).first()).toBeVisible();
+  await expect(page.locator(".list-row strong").filter({ hasText: "Work" }).first()).toBeVisible();
+
+  await page.getByLabel("Tool").selectOption("codex");
+  await expect(page.getByText("ops · oauth")).toBeVisible();
+  await expect(page.locator(".list-row strong").filter({ hasText: "Ops" })).toBeVisible();
+
+  await page.getByLabel("Tool").selectOption("gemini");
   await expect(page.getByText("travel · oauth")).toBeVisible();
   await expect(page.locator(".list-row strong").filter({ hasText: "Travel" })).toBeVisible();
 });
@@ -98,6 +107,18 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
                 permissions_ok: true,
               },
               {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 0,
+                active_profile: null,
+                auth_method: null,
+                credential_backend: null,
+                state_mode: "isolated",
+                active_profile_applied: null,
+                credentials_present: false,
+                permissions_ok: true,
+              },
+              {
                 tool: "gemini",
                 binary_found: true,
                 stored_profiles: 0,
@@ -129,6 +150,8 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
           initReport: {
             result: {
               live_accounts: [
+                { tool: "claude", outcome: "detected", auth_method: "oauth" },
+                { tool: "codex", outcome: "detected", auth_method: "oauth" },
                 { tool: "gemini", outcome: "detected", auth_method: "oauth" },
               ],
             },
@@ -339,4 +362,10 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
     },
     { activeScenario: scenario, capabilities: toolCapabilities },
   );
+}
+
+async function importDetectedAccount(page: Page, tool: string, profile: string) {
+  const form = page.locator("form").filter({ has: page.getByLabel(`${tool} profile name`) });
+  await form.getByLabel(`${tool} profile name`).fill(profile);
+  await form.getByRole("button", { name: "Import current login" }).click();
 }
