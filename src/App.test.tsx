@@ -1809,6 +1809,66 @@ describe("App", () => {
     });
   });
 
+  it("opens profiles from onboarding when an installed tool has no live credentials", async () => {
+    const firstRunSnapshot = {
+      statuses: [
+        {
+          tool: "codex",
+          binary_found: true,
+          stored_profiles: 0,
+          active_profile: null,
+          auth_method: null,
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: null,
+          credentials_present: false,
+          permissions_ok: true,
+          warnings: [],
+        },
+      ],
+      profiles: {
+        codex: {
+          active: null,
+          profiles: [],
+        },
+      },
+      contexts: [],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      return (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            snapshot: firstRunSnapshot,
+          },
+          get_snapshot: firstRunSnapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
+    await waitFor(() => {
+      expect(screen.getByText("No live credentials detected")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByLabelText("Add codex profile"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Provisioning")).toBeInTheDocument();
+      expect(screen.getByDisplayValue("Codex")).toBeInTheDocument();
+    });
+  });
+
   it("opens diagnostics when the tray requests it", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());

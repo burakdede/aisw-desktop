@@ -146,7 +146,15 @@ export function App() {
 
       {resolvedSnapshot ? (
         <>
-          <SetupPanel bootstrap={bootstrap.data} snapshot={resolvedSnapshot} initReport={init.data} />
+          <SetupPanel
+            bootstrap={bootstrap.data}
+            snapshot={resolvedSnapshot}
+            initReport={init.data}
+            onOpenProfiles={(tool) => {
+              setProfilesRouteState({ tool, expandedProfile: null });
+              setActiveNav("profiles");
+            }}
+          />
           {activeNav === "overview" ? (
             <OverviewPanel
               snapshot={resolvedSnapshot}

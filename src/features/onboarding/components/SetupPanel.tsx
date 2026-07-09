@@ -23,10 +23,12 @@ export function SetupPanel({
   bootstrap,
   snapshot,
   initReport,
+  onOpenProfiles,
 }: {
   bootstrap: AppBootstrap;
   snapshot: AppSnapshot;
   initReport: InitReport | undefined;
+  onOpenProfiles: (tool: string) => void;
 }) {
   const { initMutation, addProfileMutation, useAllProfilesMutation, mutationLock } =
     useDesktopActions();
@@ -39,6 +41,14 @@ export function SetupPanel({
     [snapshot.profiles],
   );
   const liveAccounts = readLiveAccounts(initReport);
+  const liveAccountTools = useMemo(() => new Set(liveAccounts.map((account) => account.tool)), [liveAccounts]);
+  const undetectedInstalledTools = useMemo(
+    () =>
+      snapshot.statuses.filter(
+        (status) => status.binary_found && !liveAccountTools.has(status.tool),
+      ),
+    [liveAccountTools, snapshot.statuses],
+  );
   const healthItems = useMemo(
     () => buildHealthItems(bootstrap, snapshot, doctor.data),
     [bootstrap, snapshot, doctor.data],
@@ -166,10 +176,31 @@ export function SetupPanel({
               </div>
             </form>
           ))}
+          {undetectedInstalledTools.map((status) => (
+            <article key={status.tool} className="list-row list-row-form">
+              <div>
+                <strong>{titleCase(status.tool)}</strong>
+                <p>No live credentials detected</p>
+              </div>
+              <div className="inline-form">
+                <button
+                  className="ghost-button"
+                  type="button"
+                  aria-label={`Add ${status.tool} profile`}
+                  disabled={mutationLock.isBusy}
+                  onClick={() => onOpenProfiles(status.tool)}
+                >
+                  Add profile
+                </button>
+              </div>
+            </article>
+          ))}
           {!liveAccounts.length ? (
-            <p className="inline-note">
-              Run the setup scan to detect live Claude, Codex, and Gemini accounts.
-            </p>
+            undetectedInstalledTools.length ? null : (
+              <p className="inline-note">
+                Run the setup scan to detect live Claude, Codex, and Gemini accounts.
+              </p>
+            )
           ) : null}
         </div>
 
