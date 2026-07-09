@@ -108,6 +108,11 @@ export const runtimeStatusSchema = z.object({
   resolved_path: z.string().nullable().optional(),
   version: versionInfoSchema.nullable().optional(),
   capabilities: capabilitiesInfoSchema.nullable().optional(),
+  inventory: z.object({
+    bundled_path: z.string().nullable().optional(),
+    system_path: z.string().nullable().optional(),
+    configured_path: z.string().nullable().optional(),
+  }),
   compatible: z.boolean(),
   issues: z.array(z.string()),
 });

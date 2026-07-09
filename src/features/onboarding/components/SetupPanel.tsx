@@ -85,8 +85,19 @@ export function SetupPanel({
         <article className="diagnostic-card">
           <h3>Backend check</h3>
           <p className="inline-note">
-            Selected runtime: <strong>{bootstrap.settings.runtime_kind}</strong>
+            Selected runtime: <strong>{titleCase(bootstrap.settings.runtime_kind)}</strong>
           </p>
+          <p className="inline-note">
+            Bundled aisw: {bootstrap.runtime_status.inventory.bundled_path ?? "Not available in this build"}
+          </p>
+          <p className="inline-note">
+            System aisw: {bootstrap.runtime_status.inventory.system_path ?? "Not found on PATH"}
+          </p>
+          {bootstrap.runtime_status.inventory.configured_path ? (
+            <p className="inline-note">
+              Configured custom path: {bootstrap.runtime_status.inventory.configured_path}
+            </p>
+          ) : null}
           <p className="inline-note">
             Resolved path: {bootstrap.runtime_status.resolved_path ?? "No aisw runtime resolved"}
           </p>

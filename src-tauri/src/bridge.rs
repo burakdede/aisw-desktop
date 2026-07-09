@@ -2,9 +2,9 @@ use crate::errors::{DesktopError, GuiErrorKind};
 use crate::models::{
     AddOAuthProfileRequest, AddProfileMode, AddProfileRequest, BackupEntry, CapabilitiesInfo,
     ContextSummary, DoctorReport, InitReport, ProjectBindingsReport, RepairReport, RepairRequest,
-    RuntimeKind, ToolProfiles, ToolStatus, UseAllProfilesRequest, UseContextRequest,
-    UseProfileRequest, VerifyReport, VersionInfo, WorkspaceBindRequest, WorkspaceBindTarget,
-    WorkspaceStatusReport, WorkspaceUnbindTarget,
+    RuntimeInventory, RuntimeKind, ToolProfiles, ToolStatus, UseAllProfilesRequest,
+    UseContextRequest, UseProfileRequest, VerifyReport, VersionInfo, WorkspaceBindRequest,
+    WorkspaceBindTarget, WorkspaceStatusReport, WorkspaceUnbindTarget,
 };
 use crate::redaction::redact_text;
 use async_trait::async_trait;
@@ -19,6 +19,7 @@ use tracing::{debug, warn};
 #[async_trait]
 pub trait AiswBridge: Send + Sync {
     async fn resolve_binary(&self) -> Result<PathBuf, DesktopError>;
+    async fn runtime_inventory(&self) -> RuntimeInventory;
     async fn version(&self) -> Result<VersionInfo, DesktopError>;
     async fn capabilities(&self) -> Result<CapabilitiesInfo, DesktopError>;
     async fn status(&self) -> Result<Vec<ToolStatus>, DesktopError>;
@@ -313,6 +314,22 @@ impl AiswBridge for CliAiswBridge {
             RuntimeKind::Bundled => resolve_bundled_binary(),
             RuntimeKind::System => find_binary_on_path("aisw"),
             RuntimeKind::Custom => Err(DesktopError::AiswNotFound),
+        }
+    }
+
+    async fn runtime_inventory(&self) -> RuntimeInventory {
+        RuntimeInventory {
+            bundled_path: resolve_bundled_binary()
+                .ok()
+                .map(|path| path.to_string_lossy().to_string()),
+            system_path: find_binary_on_path("aisw")
+                .ok()
+                .map(|path| path.to_string_lossy().to_string()),
+            configured_path: self
+                .configured_path
+                .as_ref()
+                .filter(|path| path.exists())
+                .map(|path| path.to_string_lossy().to_string()),
         }
     }
 
@@ -946,6 +963,15 @@ printf '{}'
 
         let resolved = super::find_binary_in_path("aisw", dir.path().as_os_str());
         assert_eq!(resolved, Some(binary));
+    }
+
+    #[tokio::test]
+    async fn runtime_inventory_reports_existing_custom_path() {
+        let path = write_fake_aisw("#!/bin/sh\nprintf '{}'\n");
+        let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path.clone()), None);
+        let inventory = bridge.runtime_inventory().await;
+
+        assert_eq!(inventory.configured_path, Some(path.to_string_lossy().to_string()));
     }
 
     #[tokio::test]

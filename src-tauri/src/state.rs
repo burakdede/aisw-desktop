@@ -121,6 +121,7 @@ impl AppState {
             .await
             .ok()
             .map(|path| path.to_string_lossy().to_string());
+        let inventory = bridge.runtime_inventory().await;
         let version = bridge.version().await.ok();
         let capabilities = bridge.capabilities().await.ok();
         let compatible = version
@@ -158,6 +159,7 @@ impl AppState {
             resolved_path,
             version,
             capabilities,
+            inventory,
             compatible,
             issues,
         }

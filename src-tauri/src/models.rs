@@ -216,6 +216,13 @@ pub struct BackupEntry {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RuntimeInventory {
+    pub bundled_path: Option<String>,
+    pub system_path: Option<String>,
+    pub configured_path: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppBootstrap {
     pub settings: DesktopSettings,
     pub runtime_status: RuntimeStatus,
@@ -227,6 +234,7 @@ pub struct RuntimeStatus {
     pub resolved_path: Option<String>,
     pub version: Option<VersionInfo>,
     pub capabilities: Option<CapabilitiesInfo>,
+    pub inventory: RuntimeInventory,
     pub compatible: bool,
     pub issues: Vec<String>,
 }

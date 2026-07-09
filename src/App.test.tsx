@@ -43,6 +43,11 @@ const bootstrap = {
       },
       tools: {},
     },
+    inventory: {
+      bundled_path: "/Applications/AISW.app/Contents/Resources/aisw",
+      system_path: "/opt/homebrew/bin/aisw",
+      configured_path: null,
+    },
     compatible: true,
     issues: [],
   },
@@ -178,6 +183,7 @@ describe("App", () => {
     expect(screen.getByText("First-run setup")).toBeInTheDocument();
     expect(screen.getByText("Backend check")).toBeInTheDocument();
     expect(screen.getByText("Health check")).toBeInTheDocument();
+    expect(screen.getByText("System aisw: /opt/homebrew/bin/aisw")).toBeInTheDocument();
   });
 
   it("shows compatibility blockers when runtime is not usable", async () => {

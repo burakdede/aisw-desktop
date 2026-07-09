@@ -145,6 +145,11 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
             },
             tools: capabilities,
           },
+          inventory: {
+            bundled_path: "/Applications/AISW.app/Contents/Resources/aisw",
+            system_path: "/opt/homebrew/bin/aisw",
+            configured_path: null,
+          },
           compatible: true,
           issues: [],
         },
