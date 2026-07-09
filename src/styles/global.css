@@ -27,13 +27,17 @@ body {
 
 .app-shell {
   min-height: 100vh;
-  padding: 48px;
+  padding: 28px;
   display: grid;
   place-items: center;
 }
 
+.hero-card,
+.layout-shell {
+  width: min(1400px, 100%);
+}
+
 .hero-card {
-  width: min(760px, 100%);
   padding: 40px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 28px;
@@ -64,6 +68,250 @@ body {
   line-height: 1.7;
 }
 
+.layout-shell {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 24px;
+}
+
+.sidebar,
+.content-shell,
+.section-card,
+.tool-card,
+.diagnostic-card,
+.list-row {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(8, 12, 18, 0.72);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.22);
+}
+
+.sidebar {
+  padding: 28px;
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sidebar-title {
+  margin: 0;
+  font-size: 2.4rem;
+  line-height: 0.95;
+}
+
+.sidebar-copy {
+  color: rgba(244, 247, 251, 0.72);
+  line-height: 1.6;
+}
+
+.nav-list {
+  display: grid;
+  gap: 10px;
+}
+
+.nav-button {
+  border: none;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  border-radius: 16px;
+  padding: 14px 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 140ms ease, background 140ms ease;
+}
+
+.nav-button:hover,
+.nav-button-active {
+  background: linear-gradient(135deg, rgba(240, 119, 64, 0.2), rgba(64, 139, 255, 0.22));
+  transform: translateY(-1px);
+}
+
+.status-badge {
+  margin-top: auto;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.status-badge p {
+  margin-bottom: 0;
+  color: rgba(244, 247, 251, 0.72);
+}
+
+.content-shell {
+  padding: 24px;
+  border-radius: 28px;
+  display: grid;
+  gap: 20px;
+}
+
+.section-card {
+  padding: 24px;
+  border-radius: 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 18px;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 1.55rem;
+}
+
+.section-kicker,
+.card-kicker {
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  color: #7fa0c8;
+}
+
+.tool-grid,
+.panel-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.tool-grid,
+.panel-grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.panel-grid-2 {
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+}
+
+.tool-card,
+.diagnostic-card,
+.list-row {
+  border-radius: 22px;
+}
+
+.tool-card {
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.tool-card header,
+.list-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+
+.tool-card h3,
+.diagnostic-card h3 {
+  margin: 0;
+}
+
+.tool-card-meta {
+  display: grid;
+  gap: 6px;
+  color: rgba(244, 247, 251, 0.72);
+}
+
+.stacked-form,
+.stack-list {
+  display: grid;
+  gap: 14px;
+}
+
+.stacked-form label {
+  display: grid;
+  gap: 8px;
+  color: rgba(244, 247, 251, 0.8);
+}
+
+.stacked-form input,
+.stacked-form select,
+.primary-button,
+.ghost-button {
+  min-height: 44px;
+  border-radius: 14px;
+  font: inherit;
+}
+
+.stacked-form input,
+.stacked-form select {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(4, 8, 14, 0.72);
+  color: inherit;
+  padding: 0 14px;
+}
+
+.primary-button,
+.ghost-button {
+  cursor: pointer;
+  border: none;
+  padding: 0 16px;
+}
+
+.primary-button {
+  color: #061018;
+  background: linear-gradient(135deg, #f8bf63, #ff7a41);
+  font-weight: 700;
+}
+
+.ghost-button {
+  color: inherit;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+}
+
+.pill-ok {
+  background: rgba(73, 201, 123, 0.18);
+  color: #93f0b2;
+}
+
+.pill-warn,
+.pill-soft {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(244, 247, 251, 0.82);
+}
+
+.inline-note {
+  margin: 0;
+  color: rgba(244, 247, 251, 0.72);
+  line-height: 1.6;
+}
+
+.diagnostic-card {
+  padding: 18px;
+}
+
+.diagnostic-card pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: rgba(244, 247, 251, 0.78);
+}
+
+.list-row {
+  padding: 16px 18px;
+}
+
+.list-row p {
+  margin: 6px 0 0;
+  color: rgba(244, 247, 251, 0.72);
+}
+
 @media (max-width: 720px) {
   .app-shell {
     padding: 24px;
@@ -72,5 +320,15 @@ body {
   .hero-card {
     padding: 28px;
     border-radius: 22px;
+  }
+}
+
+@media (max-width: 1080px) {
+  .layout-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-grid-2 {
+    grid-template-columns: 1fr;
   }
 }
