@@ -1,5 +1,6 @@
 import { FormEvent, useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
+import { toolProfileDisplayLabel } from "../../../lib/profile-display";
 import { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
 import { useDesktopActions } from "../../shared/useDesktopActions";
@@ -38,10 +39,13 @@ export function ContextsPanel({
       Object.fromEntries(
         TOOLS.map((tool) => [
           tool,
-          snapshot.profiles[tool]?.profiles.map((profile) => profile.name) ?? [],
+          (snapshot.profiles[tool]?.profiles ?? []).map((profile) => ({
+            value: profile.name,
+            label: toolProfileDisplayLabel(settings, snapshot, tool, profile.name),
+          })),
         ]),
-      ) as Record<(typeof TOOLS)[number], string[]>,
-    [snapshot.profiles],
+      ) as Record<(typeof TOOLS)[number], Array<{ value: string; label: string }>>,
+    [settings, snapshot],
   );
 
   function saveProfileSet(event: FormEvent<HTMLFormElement>) {
@@ -132,8 +136,8 @@ export function ContextsPanel({
               >
                 <option value="">None</option>
                 {profileOptions[tool].map((profile) => (
-                  <option key={profile} value={profile}>
-                    {profile}
+                  <option key={profile.value} value={profile.value}>
+                    {profile.label}
                   </option>
                 ))}
               </select>
@@ -150,7 +154,13 @@ export function ContextsPanel({
               <div>
                 <strong>{set.label ?? set.name}</strong>
                 <p>
-                  {TOOLS.map((tool) => `${tool}: ${set.profiles[tool] ?? "none"}`).join(" · ")}
+                  {TOOLS.map((tool) => {
+                    const profile = set.profiles[tool];
+                    const label = profile
+                      ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
+                      : "none";
+                    return `${tool}: ${label}`;
+                  }).join(" · ")}
                 </p>
               </div>
               <div className="button-row button-row-column">
@@ -203,7 +213,12 @@ export function ContextsPanel({
                   <strong>{context.name}</strong>
                   <p>
                     {Object.entries(context.profiles)
-                      .map(([tool, profile]) => `${tool}: ${profile ?? "none"}`)
+                      .map(([tool, profile]) => {
+                        const label = profile
+                          ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
+                          : "none";
+                        return `${tool}: ${label}`;
+                      })
                       .join(" · ")}
                   </p>
                 </div>

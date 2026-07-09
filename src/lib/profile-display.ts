@@ -22,6 +22,21 @@ export function profileDisplayLabel(
   return titleCase(profile);
 }
 
+export function toolProfileDisplayLabel(
+  settings: DesktopSettings,
+  snapshot: AppSnapshot,
+  tool: string,
+  profile: string,
+): string {
+  const override = settings.profile_labels?.[tool]?.[profile];
+  if (override) {
+    return override;
+  }
+
+  const label = snapshot.profiles[tool]?.profiles.find((entry) => entry.name === profile)?.label;
+  return label ?? titleCase(profile);
+}
+
 export function sharedProfileEntries(settings: DesktopSettings, snapshot: AppSnapshot) {
   const counts = new Map<string, number>();
   Object.values(snapshot.profiles).forEach((entry) => {

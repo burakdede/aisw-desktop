@@ -2550,6 +2550,64 @@ describe("App", () => {
     expect(screen.getByRole("option", { name: "Office" })).toBeInTheDocument();
   });
 
+  it("uses profile labels in context profile-set editing and summaries", async () => {
+    const settingsWithOverride: DesktopSettings = {
+      ...bootstrap.settings,
+      profile_labels: {
+        claude: {
+          work: "Office",
+        },
+        codex: {
+          work: "Code Work",
+        },
+      },
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) =>
+      (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            settings: settingsWithOverride,
+          },
+          get_snapshot: {
+            ...bootstrap.snapshot,
+            contexts: [
+              {
+                name: "client-acme",
+                profiles: { claude: "work", codex: "work", gemini: null },
+              },
+            ],
+          },
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: settingsWithOverride,
+        } as Record<string, unknown>
+      )[command];
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Contexts"));
+
+    expect(screen.getByText("Client Acme")).toBeInTheDocument();
+    expect(screen.getByText("client-acme")).toBeInTheDocument();
+    expect(screen.getAllByText("claude: Office · codex: Code Work · gemini: none")).toHaveLength(2);
+    expect(screen.getAllByRole("option", { name: "Office" }).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByRole("option", { name: "Code Work" })).toBeInTheDocument();
+  });
+
   it("checks and installs a signed desktop update", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
