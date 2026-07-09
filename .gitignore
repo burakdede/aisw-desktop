@@ -2,6 +2,7 @@ node_modules
 dist
 .vite
 src-tauri/target
+src-tauri/binaries/aisw*
 *.log
 .DS_Store
 docs/aisw-desktop-product-spec.md
