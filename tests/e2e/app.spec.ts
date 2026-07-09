@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-type ScenarioName = "onboarding" | "switching";
+type ScenarioName = "onboarding" | "switching" | "profiles";
 
 const toolCapabilities = {
   claude: { state_modes: ["isolated", "shared"] },
@@ -70,6 +70,28 @@ test("switches one tool and refreshes the active profile state", async ({ page }
 
   await page.getByRole("button", { name: "Overview" }).click();
   await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "work" })).toBeVisible();
+});
+
+test("creates profiles from environment and API key modes", async ({ page }) => {
+  await installDesktopMock(page, "profiles");
+
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  await page.getByLabel("Tool").selectOption("codex");
+  await page.getByLabel("Profile name").fill("ci");
+  await page.getByLabel("Import mode").selectOption("from_env");
+  await expect(page.getByText("OPENAI_API_KEY")).toBeVisible();
+  await page.getByRole("button", { name: "Add profile" }).click();
+  await expect(page.getByText("ci · api_key")).toBeVisible();
+
+  await page.getByLabel("Tool").selectOption("claude");
+  await page.getByLabel("Profile name").fill("ops");
+  await page.getByLabel("Import mode").selectOption("api_key");
+  await page.locator('input[type="password"]').fill("sk-ant-live-secret");
+  await page.getByRole("button", { name: "Add profile" }).click();
+  await expect(page.getByText("ops · api_key")).toBeVisible();
 });
 
 async function installDesktopMock(page: Page, scenario: ScenarioName) {
@@ -230,6 +252,68 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
             },
           },
         },
+        profiles: {
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 0,
+                active_profile: null,
+                auth_method: null,
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: null,
+                credentials_present: false,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 0,
+                active_profile: null,
+                auth_method: null,
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: null,
+                credentials_present: false,
+                permissions_ok: true,
+              },
+              {
+                tool: "gemini",
+                binary_found: true,
+                stored_profiles: 0,
+                active_profile: null,
+                auth_method: null,
+                credential_backend: null,
+                state_mode: null,
+                active_profile_applied: null,
+                credentials_present: false,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: null,
+                profiles: [],
+              },
+              codex: {
+                active: null,
+                profiles: [],
+              },
+              gemini: {
+                active: null,
+                profiles: [],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
       };
 
       const scenarioState = scenarios[activeScenario];
@@ -321,7 +405,7 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
         if (command === "add_profile") {
           const request = args.request;
           ensureToolEntry(request.tool);
-          const auth = request.import_mode.kind === "api_key" ? "api_key" : "oauth";
+          const auth = request.import_mode.kind === "from_live" ? "oauth" : "api_key";
           state.snapshot.profiles[request.tool].profiles.push({
             name: request.profile,
             auth,
