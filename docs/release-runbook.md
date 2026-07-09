@@ -19,6 +19,12 @@ Produce signed desktop bundles that embed the exact `aisw` binary validated for 
 npm run prepare:sidecar -- /absolute/path/to/aisw
 ```
 
+To stage a binary for a non-host target triple during CI or cross-compilation:
+
+```sh
+npm run prepare:sidecar -- --target x86_64-apple-darwin /absolute/path/to/aisw
+```
+
 3. Verify application gates:
 
 ```sh
@@ -57,3 +63,23 @@ npm run tauri:build
 - macOS: sign and notarize the app bundle for both Apple Silicon and Intel builds.
 - Windows: sign the installer to reduce SmartScreen friction.
 - Linux: validate generated `.deb`, `.rpm`, and AppImage artifacts on a clean machine before release.
+
+## CI release workflow inputs
+
+The repository workflow at `.github/workflows/publish.yml` expects these secrets:
+
+- `AISW_SIDECAR_URL_MACOS_ARM64`
+- `AISW_SIDECAR_URL_MACOS_X64`
+- `AISW_SIDECAR_URL_LINUX_X64`
+- `AISW_SIDECAR_URL_WINDOWS_X64`
+- `TAURI_SIGNING_PRIVATE_KEY`
+- `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
+
+Optional signing secrets:
+
+- `APPLE_CERTIFICATE`
+- `APPLE_CERTIFICATE_PASSWORD`
+- `APPLE_SIGNING_IDENTITY`
+- `APPLE_ID`
+- `APPLE_PASSWORD`
+- `APPLE_TEAM_ID`

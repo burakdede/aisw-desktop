@@ -1,0 +1,111 @@
+name: publish
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish-tauri:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            target: aarch64-apple-darwin
+            args: --target aarch64-apple-darwin
+            sidecar_url_secret: AISW_SIDECAR_URL_MACOS_ARM64
+            sidecar_ext: ""
+          - platform: macos-latest
+            target: x86_64-apple-darwin
+            args: --target x86_64-apple-darwin
+            sidecar_url_secret: AISW_SIDECAR_URL_MACOS_X64
+            sidecar_ext: ""
+          - platform: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            args: --target x86_64-unknown-linux-gnu
+            sidecar_url_secret: AISW_SIDECAR_URL_LINUX_X64
+            sidecar_ext: ""
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+            args: --target x86_64-pc-windows-msvc
+            sidecar_url_secret: AISW_SIDECAR_URL_WINDOWS_X64
+            sidecar_ext: ".exe"
+    runs-on: ${{ matrix.platform }}
+    env:
+      SIDE_CAR_URL: ${{ secrets[matrix.sidecar_url_secret] }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Download aisw sidecar
+        shell: bash
+        run: |
+          if [ -z "${SIDE_CAR_URL}" ]; then
+            echo "Missing ${SIDE_CAR_URL} for ${TARGET}"
+            exit 1
+          fi
+          curl -L "${SIDE_CAR_URL}" -o "${RUNNER_TEMP}/aisw${SIDECAR_EXT}"
+          if [ "${SIDECAR_EXT}" != ".exe" ]; then
+            chmod +x "${RUNNER_TEMP}/aisw${SIDECAR_EXT}"
+          fi
+        env:
+          TARGET: ${{ matrix.target }}
+          SIDECAR_EXT: ${{ matrix.sidecar_ext }}
+
+      - name: Stage aisw sidecar
+        run: npm run prepare:sidecar -- --target ${{ matrix.target }} "${{ runner.temp }}/aisw${{ matrix.sidecar_ext }}"
+
+      - name: Verify frontend
+        run: |
+          npm test
+          npm run build
+
+      - name: Verify Rust
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: v__VERSION__
+          releaseName: AISW Desktop v__VERSION__
+          releaseBody: See the attached bundles for this release.
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}

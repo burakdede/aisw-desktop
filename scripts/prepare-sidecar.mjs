@@ -21,7 +21,20 @@ function detectTargetTriple() {
   }
 }
 
-const sourceArg = process.argv[2];
+const args = process.argv.slice(2);
+let explicitTarget = process.env.AISW_DESKTOP_TARGET_TRIPLE ?? null;
+let sourceArg = null;
+
+for (let index = 0; index < args.length; index += 1) {
+  const arg = args[index];
+  if (arg === "--target") {
+    explicitTarget = args[index + 1] ?? null;
+    index += 1;
+    continue;
+  }
+  sourceArg = arg;
+}
+
 const sourcePath = sourceArg ?? process.env.AISW_DESKTOP_AISW_SOURCE;
 if (!sourcePath) {
   console.error("Provide an aisw binary path as the first argument or AISW_DESKTOP_AISW_SOURCE.");
@@ -34,7 +47,7 @@ if (!existsSync(resolvedSource)) {
   process.exit(1);
 }
 
-const targetTriple = detectTargetTriple();
+const targetTriple = explicitTarget ?? detectTargetTriple();
 const extension = extname(resolvedSource).toLowerCase() === ".exe" ? ".exe" : "";
 const targetDir = resolve("src-tauri/binaries");
 const targetPath = join(targetDir, `aisw-${targetTriple}${extension}`);
