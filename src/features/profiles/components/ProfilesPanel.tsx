@@ -33,6 +33,7 @@ export function ProfilesPanel({
     restoreBackupMutation,
     updateSettingsMutation,
     apiKeyProfileAction,
+    mutationLock,
   } = useDesktopActions();
   const [tool, setTool] = useState<(typeof TOOLS)[number]>("claude");
   const [profile, setProfile] = useState("");
@@ -232,6 +233,7 @@ export function ProfilesPanel({
             className="primary-button"
             type="submit"
             disabled={
+              mutationLock.isBusy ||
               addProfileMutation.isPending ||
               addProfileOAuthMutation.isPending ||
               apiKeyProfileAction.isPending
@@ -326,6 +328,7 @@ export function ProfilesPanel({
                   <button
                     className="ghost-button"
                     type="button"
+                    disabled={mutationLock.isBusy}
                     onClick={() => {
                       const newName = renameDrafts[entry.name]?.trim();
                       if (!newName) return;
@@ -355,6 +358,7 @@ export function ProfilesPanel({
                   <button
                     className="ghost-button"
                     type="button"
+                    disabled={mutationLock.isBusy}
                     onClick={() => {
                       const nextLabel = labelDrafts[entry.name]?.trim() ?? "";
                       setPendingRemoval(null);
@@ -431,6 +435,7 @@ export function ProfilesPanel({
               <div className="button-row button-row-column">
                 <button
                   className="ghost-button"
+                  disabled={mutationLock.isBusy}
                   onClick={() =>
                     useProfileMutation.mutate({
                       tool,
@@ -455,6 +460,7 @@ export function ProfilesPanel({
                     <button
                       className="ghost-button"
                       type="button"
+                      disabled={mutationLock.isBusy}
                       onClick={() => restoreBackupMutation.mutate(latestBackup.backup_id)}
                     >
                       Restore latest
@@ -462,6 +468,7 @@ export function ProfilesPanel({
                     <button
                       className="ghost-button"
                       type="button"
+                      disabled={mutationLock.isBusy}
                       onClick={() => {
                         restoreBackupMutation.mutate(latestBackup.backup_id, {
                           onSuccess: () => {
@@ -484,6 +491,7 @@ export function ProfilesPanel({
                       <button
                         className="ghost-button danger-button"
                         type="button"
+                        disabled={mutationLock.isBusy}
                         onClick={() => {
                           setPendingRemoval(null);
                           removeProfileMutation.mutate({
@@ -516,6 +524,7 @@ export function ProfilesPanel({
                   <button
                     className="ghost-button danger-button"
                     type="button"
+                    disabled={mutationLock.isBusy}
                     onClick={() => {
                       setPendingRemoval(null);
                       removeProfileMutation.mutate({

@@ -3,6 +3,7 @@ import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-li
 import type { ReactNode } from "react";
 import { App } from "./App";
 import { useDesktopActions } from "./features/shared/useDesktopActions";
+import { resetMutationQueueForTests } from "./features/shared/mutationQueue";
 import type { DesktopSettings } from "./lib/schemas";
 
 Object.assign(navigator, {
@@ -140,6 +141,7 @@ describe("App", () => {
   });
 
   afterEach(() => {
+    resetMutationQueueForTests();
     delete window.__AISW_DESKTOP_MOCK__;
     delete window.__AISW_DESKTOP_LISTEN__;
   });
@@ -794,6 +796,72 @@ describe("App", () => {
     });
 
     expect(result.current.addProfileMutation.variables).toBeUndefined();
+  });
+
+  it("serializes desktop mutations through a shared queue", async () => {
+    const calls: string[] = [];
+    let resolveUseProfile: ((value: unknown) => void) | undefined;
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "use_profile") {
+        calls.push(command);
+        return await new Promise((resolve) => {
+          resolveUseProfile = resolve;
+        });
+      }
+      if (command === "rename_profile") {
+        calls.push(command);
+        return { command, snapshot: bootstrap.snapshot };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    const queryClient = new QueryClient();
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useDesktopActions(), { wrapper });
+
+    let firstMutation: Promise<unknown> | undefined;
+    let secondMutation: Promise<unknown> | undefined;
+    await act(async () => {
+      firstMutation = result.current.useProfileMutation.mutateAsync({
+        tool: "claude",
+        profile: "work",
+        stateMode: "isolated",
+      });
+      secondMutation = result.current.renameProfileMutation.mutateAsync({
+        tool: "claude",
+        oldName: "work",
+        newName: "client-acme",
+      });
+      await Promise.resolve();
+    });
+
+    expect(calls).toEqual(["use_profile"]);
+    expect(result.current.mutationLock.isBusy).toBe(true);
+
+    await act(async () => {
+      resolveUseProfile?.({ command: "use_profile", snapshot: bootstrap.snapshot });
+      await firstMutation;
+      await secondMutation;
+    });
+
+    expect(calls).toEqual(["use_profile", "rename_profile"]);
+    expect(result.current.mutationLock.isBusy).toBe(false);
   });
 
   it("restores and re-activates a backup through desktop commands", async () => {

@@ -18,11 +18,13 @@ import {
   workspaceUnbind,
 } from "../../lib/client";
 import type { AddProfileInput } from "../../lib/client";
+import { enqueueMutation, useMutationQueueState } from "./mutationQueue";
 
 export function useDesktopActions() {
   const queryClient = useQueryClient();
   const [apiKeyProfilePending, setApiKeyProfilePending] = useState(false);
   const [apiKeyProfileError, setApiKeyProfileError] = useState<Error | null>(null);
+  const mutationLock = useMutationQueueState();
 
   const invalidate = async () => {
     await queryClient.invalidateQueries({ queryKey: ["bootstrap"] });
@@ -39,7 +41,7 @@ export function useDesktopActions() {
     setApiKeyProfilePending(true);
     setApiKeyProfileError(null);
     try {
-      const result = await addProfile(input);
+      const result = await enqueueMutation("Add profile", () => addProfile(input));
       await invalidate();
       return result;
     } catch (error) {
@@ -52,41 +54,48 @@ export function useDesktopActions() {
     }
   };
 
+  const queueMutation = <TVariables, TResult>(
+    label: string,
+    mutationFn: (variables: TVariables) => Promise<TResult>,
+  ) => {
+    return (variables: TVariables) => enqueueMutation(label, () => mutationFn(variables));
+  };
+
   return {
     addProfileMutation: useMutation({
-      mutationFn: addProfile,
+      mutationFn: queueMutation("Add profile", addProfile),
       onSuccess: invalidate,
     }),
     addProfileOAuthMutation: useMutation({
-      mutationFn: addProfileOAuth,
+      mutationFn: queueMutation("Add profile", addProfileOAuth),
       onSuccess: invalidate,
     }),
     useProfileMutation: useMutation({
-      mutationFn: useProfile,
+      mutationFn: queueMutation("Switch profile", useProfile),
       onSettled: invalidate,
     }),
     useAllProfilesMutation: useMutation({
-      mutationFn: useAllProfiles,
+      mutationFn: queueMutation("Switch all profiles", useAllProfiles),
       onSettled: invalidate,
     }),
     useContextMutation: useMutation({
-      mutationFn: useContext,
+      mutationFn: queueMutation("Switch context", useContext),
       onSettled: invalidate,
     }),
     renameProfileMutation: useMutation({
-      mutationFn: renameProfile,
+      mutationFn: queueMutation("Rename profile", renameProfile),
       onSuccess: invalidate,
     }),
     removeProfileMutation: useMutation({
-      mutationFn: removeProfile,
+      mutationFn: queueMutation("Remove profile", removeProfile),
       onSuccess: invalidate,
     }),
     restoreBackupMutation: useMutation({
-      mutationFn: restoreBackup,
+      mutationFn: queueMutation("Restore backup", restoreBackup),
       onSuccess: invalidate,
     }),
     updateSettingsMutation: useMutation({
-      mutationFn: updateSettings,
+      mutationFn: queueMutation("Update settings", updateSettings),
       onSuccess: invalidate,
     }),
     checkForUpdatesMutation: useMutation({
@@ -96,19 +105,19 @@ export function useDesktopActions() {
       mutationFn: installUpdate,
     }),
     initMutation: useMutation({
-      mutationFn: runInit,
+      mutationFn: () => enqueueMutation("Run setup", runInit),
       onSuccess: invalidate,
     }),
     workspaceBindMutation: useMutation({
-      mutationFn: workspaceBind,
+      mutationFn: queueMutation("Save workspace binding", workspaceBind),
       onSuccess: invalidate,
     }),
     workspaceUnbindMutation: useMutation({
-      mutationFn: workspaceUnbind,
+      mutationFn: queueMutation("Remove workspace binding", workspaceUnbind),
       onSuccess: invalidate,
     }),
     workspaceGuardMutation: useMutation({
-      mutationFn: workspaceGuard,
+      mutationFn: queueMutation("Update workspace guard", workspaceGuard),
       onSuccess: invalidate,
     }),
     apiKeyProfileAction: {
@@ -117,5 +126,6 @@ export function useDesktopActions() {
       error: apiKeyProfileError,
       clearError: () => setApiKeyProfileError(null),
     },
+    mutationLock,
   };
 }

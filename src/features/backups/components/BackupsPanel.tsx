@@ -6,7 +6,7 @@ import { useDesktopActions } from "../../shared/useDesktopActions";
 
 export function BackupsPanel() {
   const backups = useQuery({ queryKey: ["backups"], queryFn: listBackups });
-  const { restoreBackupMutation, useProfileMutation } = useDesktopActions();
+  const { restoreBackupMutation, useProfileMutation, mutationLock } = useDesktopActions();
   const [copyMessage, setCopyMessage] = useState("");
 
   async function copyBackupId(backupId: string) {
@@ -45,12 +45,14 @@ export function BackupsPanel() {
               </button>
               <button
                 className="ghost-button"
+                disabled={mutationLock.isBusy}
                 onClick={() => restoreBackupMutation.mutate(entry.backup_id)}
               >
                 Restore files only
               </button>
               <button
                 className="primary-button"
+                disabled={mutationLock.isBusy}
                 onClick={() => {
                   restoreBackupMutation.mutate(entry.backup_id, {
                     onSuccess: () => {

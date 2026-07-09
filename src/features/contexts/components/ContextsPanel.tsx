@@ -19,8 +19,13 @@ export function ContextsPanel({
   snapshot: AppSnapshot;
   settings: DesktopSettings;
 }) {
-  const { updateSettingsMutation, useAllProfilesMutation, useContextMutation, useProfileMutation } =
-    useDesktopActions();
+  const {
+    updateSettingsMutation,
+    useAllProfilesMutation,
+    useContextMutation,
+    useProfileMutation,
+    mutationLock,
+  } = useDesktopActions();
   const [draft, setDraft] = useState<EditableProfileSet>({
     name: "",
     label: "",
@@ -156,7 +161,7 @@ export function ContextsPanel({
               </select>
             </label>
           ))}
-          <button className="primary-button" type="submit">
+          <button className="primary-button" type="submit" disabled={mutationLock.isBusy}>
             Save profile set
           </button>
         </form>
@@ -174,6 +179,7 @@ export function ContextsPanel({
                 <button
                   className="primary-button"
                   type="button"
+                  disabled={mutationLock.isBusy}
                   onClick={() => void activateProfileSet(set)}
                 >
                   Activate set
@@ -196,6 +202,7 @@ export function ContextsPanel({
                 <button
                   className="ghost-button danger-button"
                   type="button"
+                  disabled={mutationLock.isBusy}
                   onClick={() => deleteProfileSet(set.name)}
                 >
                   Delete
@@ -225,6 +232,7 @@ export function ContextsPanel({
                 <button
                   className="ghost-button"
                   type="button"
+                  disabled={mutationLock.isBusy}
                   onClick={() =>
                     useContextMutation.mutate({ context: context.name, stateMode: "isolated" })
                   }

@@ -20,8 +20,12 @@ export function WorkspacesPanel({ snapshot }: { snapshot: AppSnapshot }) {
     queryKey: ["workspace-status"],
     queryFn: getWorkspaceStatus,
   });
-  const { workspaceBindMutation, workspaceUnbindMutation, workspaceGuardMutation } =
-    useDesktopActions();
+  const {
+    workspaceBindMutation,
+    workspaceUnbindMutation,
+    workspaceGuardMutation,
+    mutationLock,
+  } = useDesktopActions();
   const [scope, setScope] = useState<BindScope>("default");
   const [context, setContext] = useState(snapshot.contexts[0]?.name ?? "");
   const [targetValue, setTargetValue] = useState("");
@@ -77,12 +81,13 @@ export function WorkspacesPanel({ snapshot }: { snapshot: AppSnapshot }) {
             </select>
           </label>
           <div className="button-row">
-            <button className="primary-button" type="submit">
+            <button className="primary-button" type="submit" disabled={mutationLock.isBusy}>
               Save binding
             </button>
             <button
               className="ghost-button"
               type="button"
+              disabled={mutationLock.isBusy}
               onClick={() =>
                 workspaceUnbindMutation.mutate(
                   scope === "default"
@@ -100,6 +105,7 @@ export function WorkspacesPanel({ snapshot }: { snapshot: AppSnapshot }) {
             <button
               className="ghost-button"
               type="button"
+              disabled={mutationLock.isBusy}
               onClick={() => workspaceGuardMutation.mutate("warn")}
             >
               Guard warn
@@ -107,6 +113,7 @@ export function WorkspacesPanel({ snapshot }: { snapshot: AppSnapshot }) {
             <button
               className="ghost-button"
               type="button"
+              disabled={mutationLock.isBusy}
               onClick={() => workspaceGuardMutation.mutate("strict")}
             >
               Guard strict

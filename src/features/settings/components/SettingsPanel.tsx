@@ -7,7 +7,8 @@ import { titleCase } from "../../../lib/utils";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 
 export function SettingsPanel({ settings }: { settings: DesktopSettings }) {
-  const { updateSettingsMutation, checkForUpdatesMutation, installUpdateMutation } = useDesktopActions();
+  const { updateSettingsMutation, checkForUpdatesMutation, installUpdateMutation, mutationLock } =
+    useDesktopActions();
   const [runtimeKind, setRuntimeKind] = useState(settings.runtime_kind);
   const [runtimePath, setRuntimePath] = useState(settings.runtime_path ?? "");
   const [aiswHome, setAiswHome] = useState(settings.aisw_home ?? "");
@@ -80,7 +81,11 @@ export function SettingsPanel({ settings }: { settings: DesktopSettings }) {
               <option value="beta">Beta</option>
             </select>
           </label>
-          <button className="primary-button" type="submit" disabled={updateSettingsMutation.isPending}>
+          <button
+            className="primary-button"
+            type="submit"
+            disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
+          >
             {updateSettingsMutation.isPending ? "Saving…" : "Save settings"}
           </button>
         </form>
@@ -95,14 +100,18 @@ export function SettingsPanel({ settings }: { settings: DesktopSettings }) {
             <button
               className="primary-button"
               type="button"
-              disabled={checkForUpdatesMutation.isPending}
+              disabled={mutationLock.isBusy || checkForUpdatesMutation.isPending}
               onClick={() => checkForUpdatesMutation.mutate()}
             >
               {checkForUpdatesMutation.isPending ? "Checking…" : "Check for updates"}
             </button>
             <button
               type="button"
-              disabled={installUpdateMutation.isPending || !checkForUpdatesMutation.data?.update}
+              disabled={
+                mutationLock.isBusy ||
+                installUpdateMutation.isPending ||
+                !checkForUpdatesMutation.data?.update
+              }
               onClick={() => installUpdateMutation.mutate()}
             >
               {installUpdateMutation.isPending ? "Installing…" : "Install update"}

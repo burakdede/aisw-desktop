@@ -13,7 +13,8 @@ export function OverviewPanel({
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
 }) {
   const queryClient = useQueryClient();
-  const { addProfileMutation, useProfileMutation, useAllProfilesMutation } = useDesktopActions();
+  const { addProfileMutation, useProfileMutation, useAllProfilesMutation, mutationLock } =
+    useDesktopActions();
   const [lastAction, setLastAction] = useState<string>("");
   const [bulkProfile, setBulkProfile] = useState("");
   const sharedProfileNames = useMemo(() => {
@@ -51,6 +52,7 @@ export function OverviewPanel({
           </select>
           <button
             className="primary-button"
+            disabled={mutationLock.isBusy}
             onClick={() =>
               bulkProfile &&
               useAllProfilesMutation.mutate(
@@ -74,6 +76,7 @@ export function OverviewPanel({
           <ToolCard
             key={status.tool}
             status={status}
+            mutationLocked={mutationLock.isBusy}
             stateModes={supportedStateModes(status.tool, toolCapabilities)}
             onImport={(tool, profile, stateMode) =>
               addProfileMutation.mutate(
@@ -107,11 +110,13 @@ export function OverviewPanel({
 
 function ToolCard({
   status,
+  mutationLocked,
   stateModes,
   onImport,
   onUse,
 }: {
   status: ToolStatus;
+  mutationLocked: boolean;
   stateModes: string[];
   onImport: (tool: string, profile: string, stateMode: string | null) => void;
   onUse: (tool: string, profile: string, stateMode: string | null) => void;
@@ -201,7 +206,7 @@ function ToolCard({
             <button
               className="ghost-button"
               type="button"
-              disabled={!importName.trim()}
+              disabled={mutationLocked || !importName.trim()}
               onClick={() => {
                 const profile = importName.trim();
                 if (!profile) return;
@@ -217,6 +222,7 @@ function ToolCard({
       {status.active_profile ? (
         <button
           className="primary-button"
+          disabled={mutationLocked}
           onClick={() => onUse(status.tool, status.active_profile!, stateModes.length ? stateMode : null)}
         >
           Re-apply {status.active_profile}

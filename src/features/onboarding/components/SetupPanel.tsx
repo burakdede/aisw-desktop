@@ -28,7 +28,8 @@ export function SetupPanel({
   snapshot: AppSnapshot;
   initReport: InitReport | undefined;
 }) {
-  const { initMutation, addProfileMutation, useAllProfilesMutation } = useDesktopActions();
+  const { initMutation, addProfileMutation, useAllProfilesMutation, mutationLock } =
+    useDesktopActions();
   const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor });
   const [profileNames, setProfileNames] = useState<Record<string, string>>({});
   const [firstSwitchProfile, setFirstSwitchProfile] = useState("");
@@ -66,7 +67,11 @@ export function SetupPanel({
       title="First-run setup"
       kicker="Onboarding"
       actions={
-        <button className="primary-button" onClick={() => initMutation.mutate()}>
+        <button
+          className="primary-button"
+          disabled={mutationLock.isBusy}
+          onClick={() => initMutation.mutate()}
+        >
           {initMutation.isPending ? "Scanning…" : "Start setup"}
         </button>
       }
@@ -144,7 +149,7 @@ export function SetupPanel({
                     }))
                   }
                 />
-                <button className="ghost-button" type="submit">
+                <button className="ghost-button" type="submit" disabled={mutationLock.isBusy}>
                   Import current login
                 </button>
               </div>
@@ -179,7 +184,7 @@ export function SetupPanel({
             <button
               className="primary-button"
               type="button"
-              disabled={!firstSwitchProfile || useAllProfilesMutation.isPending}
+              disabled={!firstSwitchProfile || mutationLock.isBusy || useAllProfilesMutation.isPending}
               onClick={() =>
                 useAllProfilesMutation.mutate({
                   profile: firstSwitchProfile,
