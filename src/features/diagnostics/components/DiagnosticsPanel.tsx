@@ -17,6 +17,7 @@ import {
 } from "../diagnostic-parsers";
 import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 import { resolveWorkspaceActivationTarget } from "../../workspaces/workspace-activation";
+import { toolProfileDisplayLabel } from "../../../lib/profile-display";
 
 export function DiagnosticsPanel({ settings }: { settings: DesktopSettings }) {
   const { snapshot } = useDesktop();
@@ -269,10 +270,11 @@ function buildQuickFixes(
     }
 
     if (status.active_profile && status.active_profile_applied === false) {
+      const profileLabel = toolProfileDisplayLabel(settings, snapshot, status.tool, status.active_profile);
       fixes.push({
         title: `${status.tool} live mismatch`,
-        detail: `Re-apply ${status.active_profile} so the live credentials match AISW again.`,
-        label: `Re-apply ${status.active_profile}`,
+        detail: `Re-apply ${profileLabel} so the live credentials match AISW again.`,
+        label: `Re-apply ${profileLabel}`,
         status: "fail",
         primary: true,
         action: () =>

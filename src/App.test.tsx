@@ -1938,7 +1938,7 @@ describe("App", () => {
       "noopener,noreferrer",
     );
 
-    fireEvent.click(screen.getByText("Re-apply work"));
+    fireEvent.click(screen.getByText("Re-apply Work"));
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
     });
