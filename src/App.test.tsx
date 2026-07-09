@@ -3,6 +3,12 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { App } from "./App";
 import type { DesktopSettings } from "./lib/schemas";
 
+Object.assign(navigator, {
+  clipboard: {
+    writeText: vi.fn().mockResolvedValue(undefined),
+  },
+});
+
 const bootstrapSettings: DesktopSettings = {
   runtime_kind: "bundled",
   runtime_path: null,
@@ -214,7 +220,11 @@ describe("App", () => {
           get_workspace_status: { result: { status: "match" } },
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [
-            { backup_id: "b1", tool: "claude", profile: "claude/work" },
+            {
+              backup_id: "20260325T114502Z-claude-work",
+              tool: "claude",
+              profile: "claude/work",
+            },
           ],
           get_settings: bootstrap.settings,
         } as Record<string, unknown>
@@ -226,6 +236,11 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Backups"));
     await waitFor(() => expect(screen.getByText("Restore and activate")).toBeInTheDocument());
     expect(screen.getByText(/Restore replays the saved files only/)).toBeInTheDocument();
+    expect(screen.getByText(/Created:/)).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Copy backup ID"));
+    await waitFor(() => {
+      expect(screen.getByText("Copied backup id 20260325T114502Z-claude-work.")).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByText("Restore and activate"));
 
     await waitFor(() => {
