@@ -1757,6 +1757,148 @@ describe("App", () => {
     });
   });
 
+  it("runs targeted diagnostic repairs for keyring, permissions, and OAuth failures", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "run_repair") {
+        const request = (args as { request?: { apply?: boolean; fixes?: string[] } })?.request;
+        if (request?.apply) {
+          return {
+            result: {
+              summary: {
+                status: "pass",
+                actions_planned: request.fixes?.length ?? 0,
+                actions_applied: request.fixes?.length ?? 0,
+                issues_remaining: 0,
+              },
+              actions: (request.fixes ?? []).map((fix) => ({
+                kind: "repair",
+                fix,
+                path: "~/.aisw",
+                detail: `applied ${fix}`,
+                status: "applied",
+              })),
+            },
+          };
+        }
+        return {
+          result: {
+            summary: {
+              status: "warn",
+              actions_planned: 3,
+              actions_applied: 0,
+              issues_remaining: 3,
+            },
+            actions: [
+              {
+                kind: "repair",
+                fix: "keyring",
+                path: "~/.aisw",
+                detail: "unlock the system keyring integration",
+                status: "planned",
+              },
+              {
+                kind: "repair",
+                fix: "permissions",
+                path: "~/.aisw",
+                detail: "repair config path permissions",
+                status: "planned",
+              },
+              {
+                kind: "repair",
+                fix: "oauth",
+                path: "~/.aisw",
+                detail: "retry the OAuth recovery flow",
+                status: "planned",
+              },
+            ],
+          },
+        };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: {
+            checks: [
+              {
+                name: "keyring",
+                status: "fail",
+                detail: "System keyring is locked.",
+                remediation: ["Unlock the system keychain and retry."],
+              },
+              {
+                name: "permissions",
+                status: "warn",
+                detail: "AISW cannot write the active config path.",
+                remediation: ["Grant write access to ~/.aisw", "Retry the switch"],
+              },
+              {
+                name: "oauth",
+                status: "fail",
+                detail: "Upstream OAuth session timed out.",
+                remediation: "Run the guided OAuth flow again and finish login before timeout.",
+              },
+            ],
+          },
+          run_verify: { summary: { status: "warn", passed: 0, warnings: 0, failed: 0 }, tools: [] },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Diagnostics")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Diagnostics"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Apply keyring repair")).toBeInTheDocument();
+      expect(screen.getByText("Repair permissions")).toBeInTheDocument();
+      expect(screen.getByText("Retry OAuth repair")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("Apply keyring repair"));
+    await waitFor(() => {
+      expect(
+        calls.some(
+          (entry) =>
+            entry.command === "run_repair" &&
+            (entry.args as { request?: { apply?: boolean; fixes?: string[] } })?.request?.apply === true &&
+            (entry.args as { request?: { fixes?: string[] } })?.request?.fixes?.includes("keyring"),
+        ),
+      ).toBe(true);
+    });
+
+    fireEvent.click(screen.getByText("Repair permissions"));
+    await waitFor(() => {
+      expect(
+        calls.some(
+          (entry) =>
+            entry.command === "run_repair" &&
+            (entry.args as { request?: { apply?: boolean; fixes?: string[] } })?.request?.apply === true &&
+            (entry.args as { request?: { fixes?: string[] } })?.request?.fixes?.includes("permissions"),
+        ),
+      ).toBe(true);
+    });
+
+    fireEvent.click(screen.getByText("Retry OAuth repair"));
+    await waitFor(() => {
+      expect(
+        calls.some(
+          (entry) =>
+            entry.command === "run_repair" &&
+            (entry.args as { request?: { apply?: boolean; fixes?: string[] } })?.request?.apply === true &&
+            (entry.args as { request?: { fixes?: string[] } })?.request?.fixes?.includes("oauth"),
+        ),
+      ).toBe(true);
+    });
+  });
+
   it("reruns setup detection when Start setup is clicked", async () => {
     let initCalls = 0;
     const firstRunSnapshot = {

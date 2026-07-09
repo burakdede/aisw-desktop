@@ -28,7 +28,7 @@ export function DiagnosticsPanel() {
     queryFn: () => runRepair({ apply: false, fixes: [] }),
   });
   const applyRepair = useMutation({
-    mutationFn: () => runRepair({ apply: true, fixes: [] }),
+    mutationFn: (fixes: string[]) => runRepair({ apply: true, fixes }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["repair", "dry-run"] });
       await queryClient.invalidateQueries({ queryKey: ["doctor"] });
@@ -48,7 +48,14 @@ export function DiagnosticsPanel() {
     ...parseVerifyIssues(verify.data),
   ];
   const repairActions = parseRepairActions(repair.data);
-  const quickFixes = buildQuickFixes(snapshot.data, useProfileMutation.mutate, useContextMutation.mutate);
+  const quickFixes = buildQuickFixes({
+    snapshot: snapshot.data,
+    doctor: doctor.data,
+    repair: repair.data,
+    useProfile: useProfileMutation.mutate,
+    useContext: useContextMutation.mutate,
+    applyRepairFixes: (fixes) => applyRepair.mutate(fixes),
+  });
 
   return (
     <SectionCard
@@ -68,7 +75,7 @@ export function DiagnosticsPanel() {
           </button>
           <button
             className="primary-button"
-            onClick={() => applyRepair.mutate()}
+            onClick={() => applyRepair.mutate([])}
             disabled={applyRepair.isPending || !repairActions.length}
           >
             {applyRepair.isPending ? "Applying repairs…" : "Apply safe repairs"}
@@ -190,19 +197,44 @@ type QuickFixCard = {
   label: string;
   status: "warn" | "fail";
   primary?: boolean;
+  disabled?: boolean;
   action: () => void;
 };
 
 function buildQuickFixes(
-  snapshot: AppSnapshot | undefined,
-  useProfile: (request: { tool: string; profile: string; stateMode: string | null }) => void,
-  useContext: (request: { context: string; stateMode: string | null }) => void,
+  {
+    snapshot,
+    doctor,
+    repair,
+    useProfile,
+    useContext,
+    applyRepairFixes,
+  }: {
+    snapshot: AppSnapshot | undefined;
+    doctor: Record<string, unknown> | undefined;
+    repair: Record<string, unknown> | undefined;
+    useProfile: (request: { tool: string; profile: string; stateMode: string | null }) => void;
+    useContext: (request: { context: string; stateMode: string | null }) => void;
+    applyRepairFixes: (fixes: string[]) => void;
+  },
 ): QuickFixCard[] {
-  if (!snapshot) {
-    return [];
+  const fixes: QuickFixCard[] = [];
+  const repairFixMap = buildRepairFixMap(repair);
+
+  for (const issue of repairableDoctorIssues(doctor, repairFixMap)) {
+    fixes.push({
+      title: issue.title,
+      detail: issue.detail,
+      label: issue.label,
+      status: issue.status,
+      primary: issue.primary,
+      action: () => applyRepairFixes([issue.fix]),
+    });
   }
 
-  const fixes: QuickFixCard[] = [];
+  if (!snapshot) {
+    return fixes;
+  }
 
   snapshot.statuses.forEach((status) => {
     if (!status.binary_found) {
@@ -254,6 +286,101 @@ function buildQuickFixes(
   }
 
   return fixes;
+}
+
+function buildRepairFixMap(repair: Record<string, unknown> | undefined) {
+  const result = asObject(repair?.result);
+  return asArray(result?.actions)
+    .map((action) => asObject(action))
+    .filter((action): action is Record<string, unknown> => Boolean(action))
+    .reduce((map, action) => {
+      const fix = asStringValue(action.fix);
+      if (fix) {
+        map.set(fix.toLowerCase(), fix);
+      }
+      return map;
+    }, new Map<string, string>());
+}
+
+function repairableDoctorIssues(
+  doctor: Record<string, unknown> | undefined,
+  repairFixMap: Map<string, string>,
+): Array<{
+  title: string;
+  detail: string;
+  label: string;
+  fix: string;
+  status: "warn" | "fail";
+  primary?: boolean;
+}> {
+  return asArray(doctor?.checks)
+    .map((check) => asObject(check))
+    .filter((check): check is Record<string, unknown> => Boolean(check))
+    .flatMap((check) => {
+      const name = asStringValue(check.name)?.toLowerCase() ?? "";
+      const detail = asStringValue(check.detail) ?? "AISW reported an issue.";
+      const status = (asStringValue(check.status) as "warn" | "fail" | undefined) ?? "warn";
+
+      if (name.includes("keyring")) {
+        return [doctorRepairFixCard(
+          "Keyring unavailable",
+          detail,
+          "Apply keyring repair",
+          status,
+          repairFixMap.get("keyring") ?? "keyring",
+        )];
+      }
+      if (name.includes("permission")) {
+        return [doctorRepairFixCard(
+          "Permission issue",
+          detail,
+          "Repair permissions",
+          status,
+          repairFixMap.get("permissions") ?? "permissions",
+        )];
+      }
+      if (name.includes("oauth")) {
+        return [doctorRepairFixCard(
+          "OAuth failure",
+          detail,
+          "Retry OAuth repair",
+          status,
+          repairFixMap.get("oauth") ?? "oauth",
+        )];
+      }
+      return [];
+    });
+}
+
+function doctorRepairFixCard(
+  title: string,
+  detail: string,
+  label: string,
+  status: "warn" | "fail",
+  fix: string,
+) {
+  return {
+    title,
+    detail,
+    label,
+    status,
+    fix,
+    primary: true,
+  };
+}
+
+function asObject(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+function asArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function asStringValue(value: unknown) {
+  return typeof value === "string" ? value : undefined;
 }
 
 function resolveStateMode(status: ToolStatus) {
