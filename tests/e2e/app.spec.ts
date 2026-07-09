@@ -55,6 +55,23 @@ test("switches shared profiles and recovers from live mismatch", async ({ page }
   await expect(page.getByText("incident · oauth")).toBeVisible();
 });
 
+test("switches one tool and refreshes the active profile state", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Profiles" }).click();
+  await page.getByLabel("Tool").selectOption("codex");
+
+  await expect(page.getByText("Active: no")).toBeVisible();
+  await page.locator(".list-row").filter({ hasText: "work · api_key" }).getByRole("button", { name: "Activate" }).click();
+
+  await expect(page.getByText("Active: yes · Backend: system_keyring")).toBeVisible();
+
+  await page.getByRole("button", { name: "Overview" }).click();
+  await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "work" })).toBeVisible();
+});
+
 async function installDesktopMock(page: Page, scenario: ScenarioName) {
   await page.addInitScript(
     ({ activeScenario, capabilities }) => {
@@ -337,6 +354,20 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
             entry.active_profile_applied = true;
             entry.state_mode = request.state_mode ?? entry.state_mode;
           });
+          return { command, snapshot: cloneSnapshot() };
+        }
+        if (command === "use_profile") {
+          const request = args.request;
+          const profileEntry = state.snapshot.profiles[request.tool];
+          const statusEntry = state.snapshot.statuses.find((entry) => entry.tool === request.tool);
+          const matching = profileEntry?.profiles.find((profile) => profile.name === request.profile);
+          if (profileEntry && statusEntry && matching) {
+            profileEntry.active = request.profile;
+            statusEntry.active_profile = request.profile;
+            statusEntry.auth_method = matching.auth;
+            statusEntry.active_profile_applied = true;
+            statusEntry.state_mode = request.state_mode ?? statusEntry.state_mode;
+          }
           return { command, snapshot: cloneSnapshot() };
         }
         if (command === "add_profile_oauth") {
