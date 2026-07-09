@@ -29,6 +29,13 @@ function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
+function asStringArray(value: unknown): string[] {
+  if (typeof value === "string") {
+    return [value];
+  }
+  return asArray(value).map((item) => asString(item)).filter(Boolean);
+}
+
 function asString(value: unknown, fallback = "unknown") {
   return typeof value === "string" ? value : fallback;
 }
@@ -90,7 +97,7 @@ export function parseDoctorIssues(payload: Record<string, unknown> | undefined):
       title: asString(check.name),
       status: asString(check.status) as StatusTone,
       issues: [asString(check.detail)],
-      remediation: [],
+      remediation: asStringArray(check.remediation),
     }));
 }
 
