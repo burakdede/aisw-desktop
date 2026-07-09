@@ -11,6 +11,7 @@ mod tray;
 
 use settings::SettingsStore;
 use state::AppState;
+use tauri::Manager;
 
 fn main() {
     tracing_subscriber::fmt().with_target(false).init();
@@ -19,7 +20,8 @@ fn main() {
     tauri::Builder::default()
         .manage(app_state)
         .setup(|app| {
-            tray::build_tray().build(app)?;
+            let state = app.state::<AppState>().inner().clone();
+            tray::build_tray(&app.handle().clone(), state)?.build(app)?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
