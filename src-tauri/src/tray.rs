@@ -230,7 +230,7 @@ fn tray_menu<R: Runtime>(
     settings: Option<&DesktopSettings>,
     snapshot: Option<&AppSnapshot>,
 ) -> tauri::Result<Menu<R>> {
-    let active_label = active_set_label(snapshot)
+    let active_label = active_set_label(settings, snapshot)
         .map(|name| format!("Active set: {name}"))
         .unwrap_or_else(|| format!("Active: {}", active_summary_or_default(snapshot)));
     let mut items: Vec<MenuItemKind<R>> = vec![
@@ -307,7 +307,10 @@ fn active_summary_or_default(snapshot: Option<&AppSnapshot>) -> String {
         .unwrap_or_else(|| "no active profiles".to_owned())
 }
 
-fn active_set_label(snapshot: Option<&AppSnapshot>) -> Option<String> {
+fn active_set_label(
+    settings: Option<&DesktopSettings>,
+    snapshot: Option<&AppSnapshot>,
+) -> Option<String> {
     let snapshot = snapshot?;
     let mut active_profiles = snapshot
         .statuses
@@ -317,39 +320,50 @@ fn active_set_label(snapshot: Option<&AppSnapshot>) -> Option<String> {
     active_profiles.sort_unstable();
     active_profiles.dedup();
     if active_profiles.len() == 1 {
-        active_profiles.first().map(|profile| (*profile).to_owned())
+        active_profiles
+            .first()
+            .map(|profile| shared_profile_display_name(settings, snapshot, profile))
     } else {
         None
     }
 }
 
-fn shared_profile_names(snapshot: &AppSnapshot) -> Vec<String> {
-    let mut counts = std::collections::HashMap::<String, usize>::new();
-    snapshot.profiles.values().for_each(|entry| {
+fn shared_profile_entries(
+    settings: Option<&DesktopSettings>,
+    snapshot: &AppSnapshot,
+) -> Vec<(String, String)> {
+    let mut counts = std::collections::HashMap::<String, (usize, String)>::new();
+    snapshot.profiles.iter().for_each(|(tool, entry)| {
         entry.profiles.iter().for_each(|profile| {
-            *counts.entry(profile.name.clone()).or_insert(0) += 1;
+            let current = counts.entry(profile.name.clone()).or_insert_with(|| {
+                (
+                    0,
+                    shared_profile_display_name_from_parts(settings, tool, profile),
+                )
+            });
+            current.0 += 1;
         });
     });
-    let mut names = counts
+    let mut entries = counts
         .into_iter()
-        .filter_map(|(name, count)| if count > 1 { Some(name) } else { None })
+        .filter_map(|(name, (count, label))| if count > 1 { Some((name, label)) } else { None })
         .collect::<Vec<_>>();
-    names.sort();
-    names
+    entries.sort_by(|left, right| left.0.cmp(&right.0));
+    entries
 }
 
 fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> Vec<TraySection> {
     let mut sections = Vec::new();
 
-    let shared_profiles = shared_profile_names(snapshot);
+    let shared_profiles = shared_profile_entries(settings, snapshot);
     if !shared_profiles.is_empty() {
         sections.push(TraySection {
             title: "Switch all".to_owned(),
             items: shared_profiles
                 .into_iter()
-                .map(|profile| TrayEntry {
+                .map(|(profile, label)| TrayEntry {
                     id: format!("{SWITCH_ALL_PREFIX}{profile}"),
-                    label: profile,
+                    label,
                 })
                 .collect(),
         });
@@ -401,7 +415,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
                         id: format!("profile:{tool}:{}", profile.name),
                         label: format!(
                             "{}{}",
-                            profile.label.as_deref().unwrap_or(&profile.name),
+                            shared_profile_display_name_from_parts(settings, tool, profile),
                             suffix
                         ),
                     }
@@ -453,6 +467,36 @@ fn profile_set_is_active(set: &ProfileSet, snapshot: &AppSnapshot) -> bool {
         })
 }
 
+fn shared_profile_display_name(
+    settings: Option<&DesktopSettings>,
+    snapshot: &AppSnapshot,
+    profile: &str,
+) -> String {
+    snapshot
+        .profiles
+        .iter()
+        .find_map(|(tool, entry)| {
+            entry.profiles.iter().find_map(|candidate| {
+                (candidate.name == profile)
+                    .then(|| shared_profile_display_name_from_parts(settings, tool, candidate))
+            })
+        })
+        .unwrap_or_else(|| title_case(profile))
+}
+
+fn shared_profile_display_name_from_parts(
+    settings: Option<&DesktopSettings>,
+    tool: &str,
+    profile: &crate::models::ToolProfileSummary,
+) -> String {
+    settings
+        .and_then(|settings| settings.profile_labels.get(tool))
+        .and_then(|labels| labels.get(&profile.name))
+        .and_then(|label| label.clone())
+        .or_else(|| profile.label.clone())
+        .unwrap_or_else(|| title_case(&profile.name))
+}
+
 fn active_profile_for_tool<'a>(snapshot: &'a AppSnapshot, tool: &str) -> Option<&'a str> {
     snapshot
         .statuses
@@ -471,7 +515,7 @@ fn active_profile_for_tool<'a>(snapshot: &'a AppSnapshot, tool: &str) -> Option<
 mod tests {
     use super::{
         active_set_label, active_summary, active_summary_or_default, profile_set_is_active,
-        shared_profile_names, tray_sections, TrayEntry, TraySection,
+        shared_profile_entries, tray_sections, TrayEntry, TraySection,
     };
     use crate::models::{
         AppSnapshot, ContextSummary, DesktopSettings, ProfileSet, RuntimeKind, ToolProfileSummary,
@@ -522,7 +566,7 @@ mod tests {
             active_summary_or_default(Some(&snapshot)),
             "claude=work, codex=personal"
         );
-        assert_eq!(active_set_label(Some(&snapshot)), None);
+        assert_eq!(active_set_label(None, Some(&snapshot)), None);
     }
 
     #[test]
@@ -563,11 +607,11 @@ mod tests {
             workspace_status: None,
             project_bindings: None,
         };
-        assert_eq!(active_set_label(Some(&snapshot)).as_deref(), Some("work"));
+        assert_eq!(active_set_label(None, Some(&snapshot)).as_deref(), Some("Work"));
     }
 
     #[test]
-    fn shared_profile_names_lists_common_names_once() {
+    fn shared_profile_entries_list_common_names_once() {
         let snapshot = AppSnapshot {
             statuses: vec![],
             profiles: HashMap::from([
@@ -612,7 +656,10 @@ mod tests {
             workspace_status: None,
             project_bindings: None,
         };
-        assert_eq!(shared_profile_names(&snapshot), vec!["work".to_owned()]);
+        assert_eq!(
+            shared_profile_entries(None, &snapshot),
+            vec![("work".to_owned(), "Work".to_owned())]
+        );
     }
 
     #[test]
@@ -692,7 +739,7 @@ mod tests {
                     title: "Switch all".to_owned(),
                     items: vec![TrayEntry {
                         id: "switch-all:work".to_owned(),
-                        label: "work".to_owned(),
+                        label: "Work".to_owned(),
                     }],
                 },
                 TraySection {
@@ -736,6 +783,86 @@ mod tests {
                     }],
                 },
             ]
+        );
+    }
+
+    #[test]
+    fn active_set_label_prefers_settings_override() {
+        let snapshot = AppSnapshot {
+            statuses: vec![
+                ToolStatus {
+                    tool: "claude".to_owned(),
+                    binary_found: true,
+                    stored_profiles: 1,
+                    active_profile: Some("work".to_owned()),
+                    auth_method: None,
+                    credential_backend: None,
+                    state_mode: None,
+                    active_profile_applied: None,
+                    credentials_present: None,
+                    permissions_ok: None,
+                    token_warning: None,
+                    warnings: vec![],
+                },
+                ToolStatus {
+                    tool: "codex".to_owned(),
+                    binary_found: true,
+                    stored_profiles: 1,
+                    active_profile: Some("work".to_owned()),
+                    auth_method: None,
+                    credential_backend: None,
+                    state_mode: None,
+                    active_profile_applied: None,
+                    credentials_present: None,
+                    permissions_ok: None,
+                    token_warning: None,
+                    warnings: vec![],
+                },
+            ],
+            profiles: HashMap::from([
+                (
+                    "claude".to_owned(),
+                    ToolProfiles {
+                        active: Some("work".to_owned()),
+                        profiles: vec![ToolProfileSummary {
+                            name: "work".to_owned(),
+                            auth: "oauth".to_owned(),
+                            label: Some("Work".to_owned()),
+                        }],
+                    },
+                ),
+                (
+                    "codex".to_owned(),
+                    ToolProfiles {
+                        active: Some("work".to_owned()),
+                        profiles: vec![ToolProfileSummary {
+                            name: "work".to_owned(),
+                            auth: "api_key".to_owned(),
+                            label: Some("Work".to_owned()),
+                        }],
+                    },
+                ),
+            ]),
+            contexts: vec![],
+            workspace_status: None,
+            project_bindings: None,
+        };
+
+        let settings = DesktopSettings {
+            runtime_kind: RuntimeKind::Bundled,
+            runtime_path: None,
+            aisw_home: None,
+            update_channel: "stable".to_owned(),
+            profile_labels: HashMap::from([(
+                "claude".to_owned(),
+                HashMap::from([("work".to_owned(), Some("Office".to_owned()))]),
+            )]),
+            profile_sets: vec![],
+        };
+
+        assert_eq!(
+            active_set_label(Some(&settings), Some(&snapshot)).as_deref(),
+            Some("Office")
         );
     }
 

@@ -38,15 +38,19 @@ export function OverviewPanel({
   } = useDesktopActions();
   const [quickSwitch, setQuickSwitch] = useState("");
   const quickSwitchOptions = useMemo(() => {
-    const counts = new Map<string, number>();
+    const counts = new Map<string, { count: number; label: string }>();
     Object.values(snapshot.profiles).forEach((entry) => {
       entry.profiles.forEach((profile) => {
-        counts.set(profile.name, (counts.get(profile.name) ?? 0) + 1);
+        const current = counts.get(profile.name);
+        counts.set(profile.name, {
+          count: (current?.count ?? 0) + 1,
+          label: current?.label ?? profile.label ?? titleCase(profile.name),
+        });
       });
     });
     const sharedProfiles = [...counts.entries()]
-      .filter(([, count]) => count > 1)
-      .map(([name]) => name);
+      .filter(([, value]) => value.count > 1)
+      .map(([name, value]) => ({ name, label: value.label }));
     const profileSets = [...(settings.profile_sets ?? [])]
       .sort((left, right) => left.name.localeCompare(right.name))
       .map((set) => ({
@@ -55,9 +59,9 @@ export function OverviewPanel({
       }));
     return [
       ...profileSets,
-      ...sharedProfiles.map((name) => ({
-        value: `profile:${name}`,
-        label: `Shared profile: ${name}`,
+      ...sharedProfiles.map((profile) => ({
+        value: `profile:${profile.name}`,
+        label: `Shared profile: ${profile.label}`,
       })),
     ];
   }, [settings.profile_sets, snapshot.profiles]);
