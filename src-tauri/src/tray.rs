@@ -1,4 +1,4 @@
-use crate::models::{AppSnapshot, UseContextRequest, UseProfileRequest};
+use crate::models::{AppSnapshot, UseAllProfilesRequest, UseContextRequest, UseProfileRequest};
 use crate::state::AppState;
 use tauri::menu::{IsMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Manager, Runtime};
@@ -7,6 +7,7 @@ const TRAY_ID: &str = "main-tray";
 const OPEN_ID: &str = "open";
 const DIAGNOSTICS_ID: &str = "diagnostics";
 const QUIT_ID: &str = "quit";
+const SWITCH_ALL_PREFIX: &str = "switch-all:";
 
 pub fn build_tray<R: Runtime>(
     app: &AppHandle<R>,
@@ -63,6 +64,23 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
                 let _ = refresh_tray(&app_handle, state).await;
             });
         }
+        _ if id.starts_with(SWITCH_ALL_PREFIX) => {
+            let profile = id.trim_start_matches(SWITCH_ALL_PREFIX).to_owned();
+            let app_handle = app.clone();
+            tauri::async_runtime::spawn(async move {
+                let _ = state
+                    .mutate("tray_use_all_profiles", move |bridge| async move {
+                        bridge
+                            .use_all_profiles(UseAllProfilesRequest {
+                                profile,
+                                state_mode: Some("isolated".to_owned()),
+                            })
+                            .await
+                    })
+                    .await;
+                let _ = refresh_tray(&app_handle, state).await;
+            });
+        }
         _ if id.starts_with("profile:") => {
             let mut parts = id.splitn(3, ':');
             let _ = parts.next();
@@ -92,19 +110,38 @@ fn tray_menu<R: Runtime>(
     app: &AppHandle<R>,
     snapshot: Option<&AppSnapshot>,
 ) -> tauri::Result<Menu<R>> {
+    let active_label = active_set_label(snapshot)
+        .map(|name| format!("Active set: {name}"))
+        .unwrap_or_else(|| format!("Active: {}", active_summary_or_default(snapshot)));
     let mut items: Vec<MenuItemKind<R>> = vec![
-        MenuItem::with_id(
-            app,
-            "active-summary",
-            format!("Active: {}", active_summary_or_default(snapshot)),
-            false,
-            None::<&str>,
-        )?
-        .kind(),
+        MenuItem::with_id(app, "active-summary", active_label, false, None::<&str>)?.kind(),
         PredefinedMenuItem::separator(app)?.kind(),
     ];
 
     if let Some(snapshot) = snapshot {
+        let shared_profiles = shared_profile_names(snapshot);
+        if !shared_profiles.is_empty() {
+            let switch_all_items = shared_profiles
+                .iter()
+                .map(|profile| {
+                    MenuItem::with_id(
+                        app,
+                        format!("{SWITCH_ALL_PREFIX}{profile}"),
+                        profile.clone(),
+                        true,
+                        None::<&str>,
+                    )
+                    .map(|item| item.kind())
+                })
+                .collect::<tauri::Result<Vec<_>>>()?;
+            let switch_all_refs = switch_all_items
+                .iter()
+                .map(|item| item as &dyn IsMenuItem<R>)
+                .collect::<Vec<_>>();
+            let switch_all = Submenu::with_items(app, "Switch all", true, &switch_all_refs)?;
+            items.push(switch_all.kind());
+        }
+
         if !snapshot.contexts.is_empty() {
             let context_items = snapshot
                 .contexts
@@ -213,6 +250,37 @@ fn active_summary_or_default(snapshot: Option<&AppSnapshot>) -> String {
         .unwrap_or_else(|| "no active profiles".to_owned())
 }
 
+fn active_set_label(snapshot: Option<&AppSnapshot>) -> Option<String> {
+    let snapshot = snapshot?;
+    let mut active_profiles = snapshot
+        .statuses
+        .iter()
+        .filter_map(|status| status.active_profile.as_deref())
+        .collect::<Vec<_>>();
+    active_profiles.sort_unstable();
+    active_profiles.dedup();
+    if active_profiles.len() == 1 {
+        active_profiles.first().map(|profile| (*profile).to_owned())
+    } else {
+        None
+    }
+}
+
+fn shared_profile_names(snapshot: &AppSnapshot) -> Vec<String> {
+    let mut counts = std::collections::HashMap::<String, usize>::new();
+    snapshot.profiles.values().for_each(|entry| {
+        entry.profiles.iter().for_each(|profile| {
+            *counts.entry(profile.name.clone()).or_insert(0) += 1;
+        });
+    });
+    let mut names = counts
+        .into_iter()
+        .filter_map(|(name, count)| if count > 1 { Some(name) } else { None })
+        .collect::<Vec<_>>();
+    names.sort();
+    names
+}
+
 fn title_case(value: &str) -> String {
     let mut chars = value.chars();
     match chars.next() {
@@ -223,8 +291,10 @@ fn title_case(value: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{active_summary, active_summary_or_default};
-    use crate::models::{AppSnapshot, ToolProfiles, ToolStatus};
+    use super::{
+        active_set_label, active_summary, active_summary_or_default, shared_profile_names,
+    };
+    use crate::models::{AppSnapshot, ToolProfileSummary, ToolProfiles, ToolStatus};
     use std::collections::HashMap;
 
     #[test]
@@ -266,5 +336,92 @@ mod tests {
             active_summary_or_default(Some(&snapshot)),
             "claude=work, codex=personal"
         );
+        assert_eq!(active_set_label(Some(&snapshot)), None);
+    }
+
+    #[test]
+    fn active_set_label_prefers_single_shared_profile() {
+        let snapshot = AppSnapshot {
+            statuses: vec![
+                ToolStatus {
+                    tool: "claude".to_owned(),
+                    binary_found: true,
+                    stored_profiles: 1,
+                    active_profile: Some("work".to_owned()),
+                    auth_method: None,
+                    credential_backend: None,
+                    state_mode: None,
+                    active_profile_applied: None,
+                    credentials_present: None,
+                    permissions_ok: None,
+                },
+                ToolStatus {
+                    tool: "codex".to_owned(),
+                    binary_found: true,
+                    stored_profiles: 1,
+                    active_profile: Some("work".to_owned()),
+                    auth_method: None,
+                    credential_backend: None,
+                    state_mode: None,
+                    active_profile_applied: None,
+                    credentials_present: None,
+                    permissions_ok: None,
+                },
+            ],
+            profiles: HashMap::<String, ToolProfiles>::new(),
+            contexts: vec![],
+            workspace_status: None,
+            project_bindings: None,
+        };
+        assert_eq!(active_set_label(Some(&snapshot)).as_deref(), Some("work"));
+    }
+
+    #[test]
+    fn shared_profile_names_lists_common_names_once() {
+        let snapshot = AppSnapshot {
+            statuses: vec![],
+            profiles: HashMap::from([
+                (
+                    "claude".to_owned(),
+                    ToolProfiles {
+                        active: Some("work".to_owned()),
+                        profiles: vec![
+                            ToolProfileSummary {
+                                name: "work".to_owned(),
+                                auth: "oauth".to_owned(),
+                                label: Some("Work".to_owned()),
+                            },
+                            ToolProfileSummary {
+                                name: "personal".to_owned(),
+                                auth: "oauth".to_owned(),
+                                label: Some("Personal".to_owned()),
+                            },
+                        ],
+                    },
+                ),
+                (
+                    "codex".to_owned(),
+                    ToolProfiles {
+                        active: Some("work".to_owned()),
+                        profiles: vec![
+                            ToolProfileSummary {
+                                name: "work".to_owned(),
+                                auth: "api_key".to_owned(),
+                                label: Some("Work".to_owned()),
+                            },
+                            ToolProfileSummary {
+                                name: "client-acme".to_owned(),
+                                auth: "api_key".to_owned(),
+                                label: Some("Client Acme".to_owned()),
+                            },
+                        ],
+                    },
+                ),
+            ]),
+            contexts: vec![],
+            workspace_status: None,
+            project_bindings: None,
+        };
+        assert_eq!(shared_profile_names(&snapshot), vec!["work".to_owned()]);
     }
 }
