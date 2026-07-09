@@ -77,6 +77,7 @@ export function OverviewPanel({
             status={status}
             lastResult={lastCommandResults.tool[status.tool]}
             mutationLocked={mutationLock.isBusy}
+            onRefresh={() => refresh.mutate()}
             stateModes={supportedStateModes(status.tool, toolCapabilities)}
             onImport={(tool, profile, stateMode) =>
               addProfileMutation.mutate({
@@ -113,6 +114,7 @@ function ToolCard({
   status,
   lastResult,
   mutationLocked,
+  onRefresh,
   stateModes,
   onImport,
   onUse,
@@ -125,6 +127,7 @@ function ToolCard({
     remediation?: string;
   };
   mutationLocked: boolean;
+  onRefresh: () => void;
   stateModes: string[];
   onImport: (tool: string, profile: string, stateMode: string | null) => void;
   onUse: (tool: string, profile: string, stateMode: string | null) => void;
@@ -202,7 +205,7 @@ function ToolCard({
         </label>
       ) : null}
       {!status.binary_found ? (
-        <MissingBinaryGuidance tool={status.tool} />
+        <MissingBinaryGuidance tool={status.tool} onRefresh={onRefresh} />
       ) : null}
       {activeState === false ? (
         <div className="stack-list">
@@ -246,11 +249,12 @@ function ToolCard({
   );
 }
 
-function MissingBinaryGuidance({ tool }: { tool: string }) {
+function MissingBinaryGuidance({ tool, onRefresh }: { tool: string; onRefresh: () => void }) {
   const binary = toolBinaryName(tool);
   const verifyCommand = commandForCurrentPlatform(binary, "verify");
   const pathCommand = commandForCurrentPlatform(binary, "path");
   const installCommand = installCommandForTool(tool);
+  const guideUrl = installGuideUrlForTool(tool);
 
   return (
     <div className="stack-list">
@@ -270,6 +274,18 @@ function MissingBinaryGuidance({ tool }: { tool: string }) {
       <p className="inline-note">
         Refresh state after the CLI is installed or after you update your shell PATH.
       </p>
+      <div className="button-row">
+        <button
+          className="ghost-button"
+          type="button"
+          onClick={() => openExternalGuide(guideUrl)}
+        >
+          Open installation guide
+        </button>
+        <button className="ghost-button" type="button" onClick={onRefresh}>
+          Refresh
+        </button>
+      </div>
     </div>
   );
 }
@@ -320,6 +336,19 @@ function installCommandForTool(tool: string) {
   }
 }
 
+function installGuideUrlForTool(tool: string) {
+  switch (tool) {
+    case "claude":
+      return "https://www.npmjs.com/package/@anthropic-ai/claude-code";
+    case "codex":
+      return "https://www.npmjs.com/package/@openai/codex";
+    case "gemini":
+      return "https://www.npmjs.com/package/@google/gemini-cli";
+    default:
+      return "https://www.npmjs.com/";
+  }
+}
+
 function toolBinaryName(tool: string) {
   switch (tool) {
     case "claude":
@@ -340,4 +369,11 @@ function commandForCurrentPlatform(binary: string, kind: "verify" | "path") {
     return `${binary} --version`;
   }
   return isWindows ? `where ${binary}` : `which ${binary}`;
+}
+
+function openExternalGuide(url: string) {
+  if (typeof window === "undefined" || typeof window.open !== "function") {
+    return;
+  }
+  window.open(url, "_blank", "noopener,noreferrer");
 }

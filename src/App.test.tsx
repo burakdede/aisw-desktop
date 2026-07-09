@@ -13,6 +13,10 @@ Object.assign(navigator, {
   },
 });
 
+Object.assign(window, {
+  open: vi.fn(),
+});
+
 const bootstrapSettings: DesktopSettings = {
   runtime_kind: "bundled",
   runtime_path: null,
@@ -98,6 +102,7 @@ async function renderApp() {
 
 describe("App", () => {
   beforeEach(() => {
+    vi.mocked(window.open).mockClear();
     const eventHandlers: Record<string, ((payload: unknown) => void) | undefined> = {};
     window.__AISW_DESKTOP_LISTEN__ = async (event, handler) => {
       eventHandlers[event] = handler as (payload: unknown) => void;
@@ -242,6 +247,13 @@ describe("App", () => {
     expect(screen.getByText("npm install -g @google/gemini-cli")).toBeInTheDocument();
     expect(screen.getByText("gemini --version")).toBeInTheDocument();
     expect(screen.getByText("which gemini")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Open installation guide"));
+    expect(window.open).toHaveBeenCalledWith(
+      "https://www.npmjs.com/package/@google/gemini-cli",
+      "_blank",
+      "noopener,noreferrer",
+    );
   });
 
   it("surfaces token warnings in the overview cards", async () => {
