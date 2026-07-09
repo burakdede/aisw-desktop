@@ -3,7 +3,7 @@ use crate::errors::{DesktopResult, ErrorPayload};
 use crate::models::{
     AddProfileRequest, AppBootstrap, AppSnapshot, BackupEntry, DesktopSettings, DoctorReport,
     InitReport, MutationResponse, ProjectBindingsReport, RepairReport, RepairRequest,
-    UpdateSettingsRequest, UseContextRequest, UseProfileRequest, VerifyReport,
+    UpdateSettingsRequest, UseAllProfilesRequest, UseContextRequest, UseProfileRequest, VerifyReport,
     WorkspaceBindRequest, WorkspaceStatusReport, WorkspaceUnbindTarget,
 };
 use crate::state::{incompatible_runtime_error, AppState};
@@ -51,6 +51,19 @@ pub async fn use_profile(
     ensure_compatible(&state).await?;
     state
         .mutate("use_profile", move |bridge| async move { bridge.use_profile(request).await })
+        .await
+}
+
+#[tauri::command]
+pub async fn use_all_profiles(
+    state: tauri::State<'_, AppState>,
+    request: UseAllProfilesRequest,
+) -> DesktopResult<MutationResponse> {
+    ensure_compatible(&state).await?;
+    state
+        .mutate("use_all_profiles", move |bridge| async move {
+            bridge.use_all_profiles(request).await
+        })
         .await
 }
 

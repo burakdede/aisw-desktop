@@ -1,15 +1,26 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AppSnapshot, ToolStatus } from "../../../lib/schemas";
-import { useDesktop } from "../../shared/useDesktop";
 import { SectionCard } from "../../../components/SectionCard";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { titleCase } from "../../../lib/utils";
 
 export function OverviewPanel({ snapshot }: { snapshot: AppSnapshot }) {
   const queryClient = useQueryClient();
-  const { useProfileMutation } = useDesktopActions();
+  const { useProfileMutation, useAllProfilesMutation } = useDesktopActions();
   const [lastAction, setLastAction] = useState<string>("");
+  const [bulkProfile, setBulkProfile] = useState("");
+  const sharedProfileNames = useMemo(() => {
+    const counts = new Map<string, number>();
+    Object.values(snapshot.profiles).forEach((entry) => {
+      entry.profiles.forEach((profile) => {
+        counts.set(profile.name, (counts.get(profile.name) ?? 0) + 1);
+      });
+    });
+    return [...counts.entries()]
+      .filter(([, count]) => count > 1)
+      .map(([name]) => name);
+  }, [snapshot.profiles]);
 
   const refresh = useMutation({
     mutationFn: async () => {
@@ -23,9 +34,33 @@ export function OverviewPanel({ snapshot }: { snapshot: AppSnapshot }) {
       title="Control Center"
       kicker="Overview"
       actions={
-        <button className="ghost-button" onClick={() => refresh.mutate()}>
-          Refresh state
-        </button>
+        <div className="button-row">
+          <select value={bulkProfile} onChange={(event) => setBulkProfile(event.target.value)}>
+            <option value="">Switch all tools to…</option>
+            {sharedProfileNames.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+          <button
+            className="primary-button"
+            onClick={() =>
+              bulkProfile &&
+              useAllProfilesMutation.mutate(
+                { profile: bulkProfile, stateMode: "isolated" },
+                {
+                  onSuccess: () => setLastAction(`Switched all tools to ${bulkProfile}.`),
+                },
+              )
+            }
+          >
+            Switch all
+          </button>
+          <button className="ghost-button" onClick={() => refresh.mutate()}>
+            Refresh state
+          </button>
+        </div>
       }
     >
       <div className="tool-grid">

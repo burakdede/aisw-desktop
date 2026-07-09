@@ -2,7 +2,8 @@ use crate::errors::{DesktopError, GuiErrorKind};
 use crate::models::{
     AddProfileMode, AddProfileRequest, BackupEntry, CapabilitiesInfo, ContextSummary, DoctorReport,
     InitReport, ProjectBindingsReport, RepairReport, RepairRequest, RuntimeKind, ToolProfiles,
-    ToolStatus, UseContextRequest, UseProfileRequest, VerifyReport, VersionInfo,
+    ToolStatus, UseAllProfilesRequest, UseContextRequest, UseProfileRequest, VerifyReport,
+    VersionInfo,
     WorkspaceBindRequest, WorkspaceBindTarget, WorkspaceStatusReport, WorkspaceUnbindTarget,
 };
 use crate::redaction::redact_text;
@@ -30,6 +31,10 @@ pub trait AiswBridge: Send + Sync {
     async fn list_backups(&self) -> Result<Vec<BackupEntry>, DesktopError>;
     async fn add_profile(&self, req: AddProfileRequest) -> Result<serde_json::Value, DesktopError>;
     async fn use_profile(&self, req: UseProfileRequest) -> Result<serde_json::Value, DesktopError>;
+    async fn use_all_profiles(
+        &self,
+        req: UseAllProfilesRequest,
+    ) -> Result<serde_json::Value, DesktopError>;
     async fn use_context(&self, req: UseContextRequest) -> Result<serde_json::Value, DesktopError>;
     async fn rename_profile(
         &self,
@@ -253,6 +258,17 @@ impl AiswBridge for CliAiswBridge {
         self.run_json("use_profile", &args, None).await
     }
 
+    async fn use_all_profiles(
+        &self,
+        req: UseAllProfilesRequest,
+    ) -> Result<serde_json::Value, DesktopError> {
+        let mut args = vec!["use", "--all", "--profile", req.profile.as_str(), "--json"];
+        if let Some(state_mode) = &req.state_mode {
+            args.extend(["--state-mode", state_mode.as_str()]);
+        }
+        self.run_json("use_all_profiles", &args, None).await
+    }
+
     async fn use_context(&self, req: UseContextRequest) -> Result<serde_json::Value, DesktopError> {
         let mut args = vec!["context", "use", req.context.as_str(), "--json"];
         if let Some(state_mode) = &req.state_mode {
@@ -359,7 +375,11 @@ impl AiswBridge for CliAiswBridge {
 }
 
 fn parse_contexts(raw: serde_json::Value) -> Result<Vec<ContextSummary>, DesktopError> {
-    if let Some(items) = raw.as_array() {
+    if let Some(items) = raw
+        .get("contexts")
+        .and_then(|value| value.as_array())
+        .or_else(|| raw.as_array())
+    {
         let mut contexts = Vec::with_capacity(items.len());
         for item in items {
             let name = item
@@ -419,7 +439,7 @@ fn map_command_failure(command: &str, stderr: &str) -> DesktopError {
 mod tests {
     use super::{AiswBridge, CliAiswBridge};
     use crate::models::{
-        AddProfileMode, AddProfileRequest, RuntimeKind, WorkspaceBindRequest,
+        AddProfileMode, AddProfileRequest, RuntimeKind, UseAllProfilesRequest, WorkspaceBindRequest,
         WorkspaceBindTarget,
     };
     use std::fs;
@@ -478,12 +498,22 @@ if [ "$1" = "workspace" ] && [ "$2" = "bind" ]; then
   printf '{"ok":true,"command":"workspace_bind","args":"%s %s %s %s %s %s"}' "$1" "$2" "$3" "$4" "$5" "$6"
   exit 0
 fi
+if [ "$1" = "context" ]; then
+  printf '{"contexts":[{"name":"client-acme","profiles":{"claude":"work"}}]}'
+  exit 0
+fi
+if [ "$1" = "use" ] && [ "$2" = "--all" ]; then
+  printf '{"ok":true,"command":"use_all","args":"%s %s %s %s %s"}' "$1" "$2" "$3" "$4" "$5"
+  exit 0
+fi
 printf '{}'
 "#,
         );
         let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
         let init = bridge.init().await.unwrap();
         assert_eq!(init.raw["command"], "init");
+        let contexts = bridge.list_contexts().await.unwrap();
+        assert_eq!(contexts[0].name, "client-acme");
 
         let bound = bridge
             .workspace_bind(WorkspaceBindRequest {
@@ -494,5 +524,14 @@ printf '{}'
             .unwrap();
         assert_eq!(bound["command"], "workspace_bind");
         assert_eq!(bound["args"], "workspace bind --default --context work --json");
+
+        let switched = bridge
+            .use_all_profiles(UseAllProfilesRequest {
+                profile: "work".to_owned(),
+                state_mode: Some("isolated".to_owned()),
+            })
+            .await
+            .unwrap();
+        assert_eq!(switched["command"], "use_all");
     }
 }

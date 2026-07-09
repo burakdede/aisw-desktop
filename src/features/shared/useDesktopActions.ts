@@ -6,6 +6,7 @@ import {
   restoreBackup,
   runInit,
   updateSettings,
+  useAllProfiles,
   useContext,
   useProfile,
   workspaceBind,
@@ -34,6 +35,10 @@ export function useDesktopActions() {
     }),
     useProfileMutation: useMutation({
       mutationFn: useProfile,
+      onSuccess: invalidate,
+    }),
+    useAllProfilesMutation: useMutation({
+      mutationFn: useAllProfiles,
       onSuccess: invalidate,
     }),
     useContextMutation: useMutation({

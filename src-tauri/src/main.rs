@@ -32,6 +32,7 @@ fn main() {
             commands::run_init,
             commands::add_profile,
             commands::use_profile,
+            commands::use_all_profiles,
             commands::use_context,
             commands::rename_profile,
             commands::remove_profile,

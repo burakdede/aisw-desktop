@@ -187,6 +187,12 @@ pub struct UseProfileRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UseAllProfilesRequest {
+    pub profile: String,
+    pub state_mode: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UseContextRequest {
     pub context: String,
     pub state_mode: Option<String>,

@@ -36,6 +36,11 @@ export interface UseProfileInput {
   stateMode?: string | null;
 }
 
+export interface UseAllProfilesInput {
+  profile: string;
+  stateMode?: string | null;
+}
+
 export interface UseContextInput {
   context: string;
   stateMode?: string | null;
@@ -101,6 +106,19 @@ export async function useProfile(input: UseProfileInput): Promise<MutationRespon
     await invokeDesktop("use_profile", {
       request: {
         tool: input.tool,
+        profile: input.profile,
+        state_mode: input.stateMode ?? null,
+      },
+    }),
+  );
+}
+
+export async function useAllProfiles(
+  input: UseAllProfilesInput,
+): Promise<MutationResponse> {
+  return mutationResponseSchema.parse(
+    await invokeDesktop("use_all_profiles", {
+      request: {
         profile: input.profile,
         state_mode: input.stateMode ?? null,
       },
