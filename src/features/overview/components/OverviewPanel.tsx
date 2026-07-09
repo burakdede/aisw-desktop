@@ -13,9 +13,13 @@ export function OverviewPanel({
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
 }) {
   const queryClient = useQueryClient();
-  const { addProfileMutation, useProfileMutation, useAllProfilesMutation, mutationLock } =
-    useDesktopActions();
-  const [lastAction, setLastAction] = useState<string>("");
+  const {
+    addProfileMutation,
+    useProfileMutation,
+    useAllProfilesMutation,
+    mutationLock,
+    lastCommandResults,
+  } = useDesktopActions();
   const [bulkProfile, setBulkProfile] = useState("");
   const sharedProfileNames = useMemo(() => {
     const counts = new Map<string, number>();
@@ -55,12 +59,7 @@ export function OverviewPanel({
             disabled={mutationLock.isBusy}
             onClick={() =>
               bulkProfile &&
-              useAllProfilesMutation.mutate(
-                { profile: bulkProfile, stateMode: "isolated" },
-                {
-                  onSuccess: () => setLastAction(`Switched all tools to ${bulkProfile}.`),
-                },
-              )
+              useAllProfilesMutation.mutate({ profile: bulkProfile, stateMode: "isolated" })
             }
           >
             Switch all
@@ -76,46 +75,55 @@ export function OverviewPanel({
           <ToolCard
             key={status.tool}
             status={status}
+            lastResult={lastCommandResults.tool[status.tool]}
             mutationLocked={mutationLock.isBusy}
             stateModes={supportedStateModes(status.tool, toolCapabilities)}
             onImport={(tool, profile, stateMode) =>
-              addProfileMutation.mutate(
-                {
-                  tool,
-                  profile,
-                  label: titleCase(profile),
-                  stateMode,
-                  importMode: { kind: "from_live" },
-                },
-                {
-                  onSuccess: () => setLastAction(`Imported current ${tool} login as ${profile}.`),
-                },
-              )
+              addProfileMutation.mutate({
+                tool,
+                profile,
+                label: titleCase(profile),
+                stateMode,
+                importMode: { kind: "from_live" },
+              })
             }
             onUse={(tool, profile, stateMode) =>
-              useProfileMutation.mutate(
-                { tool, profile, stateMode },
-                {
-                  onSuccess: () => setLastAction(`Switched ${tool} to ${profile}.`),
-                },
-              )
+              useProfileMutation.mutate({ tool, profile, stateMode })
             }
           />
         ))}
       </div>
-      {lastAction ? <p className="inline-note">{lastAction}</p> : null}
+      {lastCommandResults.global["switch-all"] ? (
+        <p
+          className={`inline-note ${
+            lastCommandResults.global["switch-all"]?.status === "error" ? "diagnostic-status-fail" : ""
+          }`}
+        >
+          Last bulk result: {lastCommandResults.global["switch-all"]?.message}
+          {lastCommandResults.global["switch-all"]?.remediation
+            ? ` Remediation: ${lastCommandResults.global["switch-all"]?.remediation}`
+            : ""}
+        </p>
+      ) : null}
     </SectionCard>
   );
 }
 
 function ToolCard({
   status,
+  lastResult,
   mutationLocked,
   stateModes,
   onImport,
   onUse,
 }: {
   status: ToolStatus;
+  lastResult?: {
+    label: string;
+    status: "success" | "error";
+    message: string;
+    remediation?: string;
+  };
   mutationLocked: boolean;
   stateModes: string[];
   onImport: (tool: string, profile: string, stateMode: string | null) => void;
@@ -174,6 +182,12 @@ function ToolCard({
             </p>
           ))}
         </div>
+      ) : null}
+      {lastResult ? (
+        <p className={`inline-note ${lastResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
+          Last result: {lastResult.message}
+          {lastResult.remediation ? ` Remediation: ${lastResult.remediation}` : ""}
+        </p>
       ) : null}
       {stateModes.length ? (
         <label className="stacked-form">

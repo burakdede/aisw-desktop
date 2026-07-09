@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { App } from "./App";
+import { resetLastCommandResultsForTests } from "./features/shared/lastCommandResult";
 import { useDesktopActions } from "./features/shared/useDesktopActions";
 import { resetMutationQueueForTests } from "./features/shared/mutationQueue";
 import type { DesktopSettings } from "./lib/schemas";
@@ -76,13 +77,23 @@ const bootstrap = {
   },
 };
 
-function renderApp() {
-  const queryClient = new QueryClient();
-  render(
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>,
-  );
+async function renderApp() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  await act(async () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>,
+    );
+    await Promise.resolve();
+  });
 }
 
 describe("App", () => {
@@ -140,6 +151,7 @@ describe("App", () => {
   });
 
   afterEach(() => {
+    resetLastCommandResultsForTests();
     resetMutationQueueForTests();
     delete (window as typeof window & { __AISW_DESKTOP_EVENT_HANDLERS__?: unknown }).__AISW_DESKTOP_EVENT_HANDLERS__;
     delete window.__AISW_DESKTOP_MOCK__;
@@ -147,7 +159,7 @@ describe("App", () => {
   });
 
   it("renders the overview from bootstrap data", async () => {
-    renderApp();
+    await renderApp();
     await waitFor(() => {
       expect(screen.getByText("Control Center")).toBeInTheDocument();
     });
@@ -170,7 +182,7 @@ describe("App", () => {
         snapshot: null,
       },
     };
-    renderApp();
+    await renderApp();
     await waitFor(() => {
       expect(screen.getByText("Runtime compatibility")).toBeInTheDocument();
     });
@@ -223,7 +235,7 @@ describe("App", () => {
       },
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => {
       expect(screen.getByText("Gemini is not available on PATH, so AISW Desktop cannot switch or verify that tool yet.")).toBeInTheDocument();
     });
@@ -280,7 +292,7 @@ describe("App", () => {
       },
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => {
       expect(screen.getByText("Token warning: Claude session expires soon Expires in 2 days.")).toBeInTheDocument();
     });
@@ -375,7 +387,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getAllByRole("heading", { name: "work" }).length).toBeGreaterThan(0));
     fireEvent.change(screen.getByDisplayValue("Switch all tools to…"), {
       target: { value: "work" },
@@ -385,6 +397,40 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getAllByRole("heading", { name: "personal" }).length).toBeGreaterThan(0);
     });
+    expect(screen.getByText("Last bulk result: switch failed")).toBeInTheDocument();
+  });
+
+  it("shows the last successful tool command result on the overview card", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "use_profile") {
+        return { command, snapshot: bootstrap.snapshot };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Re-apply work"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Last result: Switched claude to work.")).toBeInTheDocument();
+    });
+    expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
   });
 
   it("renames and removes a profile through desktop commands", async () => {
@@ -410,7 +456,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
     fireEvent.change(screen.getByLabelText("rename work"), {
@@ -456,7 +502,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
     fireEvent.change(screen.getByLabelText("label work"), {
@@ -535,7 +581,7 @@ describe("App", () => {
       },
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
     fireEvent.click(screen.getByText("View diagnostic details"));
@@ -578,7 +624,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
     fireEvent.change(screen.getByLabelText("Profile name"), {
@@ -616,7 +662,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
     fireEvent.change(screen.getByLabelText("Profile name"), {
@@ -656,7 +702,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
     fireEvent.change(screen.getByLabelText("Tool"), {
@@ -715,7 +761,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
     fireEvent.change(screen.getByLabelText("Tool"), {
@@ -893,7 +939,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Backups")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Backups"));
     await waitFor(() => expect(screen.getByText("Restore and activate")).toBeInTheDocument());
@@ -991,7 +1037,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
     fireEvent.change(screen.getByLabelText("Profile name"), {
@@ -1042,7 +1088,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
     await waitFor(() => expect(screen.getByText("Restore latest + activate")).toBeInTheDocument());
@@ -1078,7 +1124,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Switch all")).toBeInTheDocument());
     fireEvent.change(screen.getByDisplayValue("Switch all tools to…"), {
       target: { value: "work" },
@@ -1119,7 +1165,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
     fireEvent.change(screen.getByLabelText("First switch profile"), {
       target: { value: "work" },
@@ -1175,7 +1221,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
     fireEvent.change(screen.getByLabelText("import claude current login"), {
       target: { value: "recovered" },
@@ -1236,7 +1282,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Workspaces")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Workspaces"));
     await waitFor(() => {
@@ -1325,7 +1371,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Diagnostics")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Diagnostics"));
     await waitFor(() => expect(screen.getByText("1 actions planned")).toBeInTheDocument());
@@ -1376,7 +1422,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Diagnostics")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Diagnostics"));
 
@@ -1440,7 +1486,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
     await waitFor(() => {
       expect(screen.getByText("Run the setup scan to detect live Claude, Codex, and Gemini accounts.")).toBeInTheDocument();
@@ -1455,7 +1501,7 @@ describe("App", () => {
   });
 
   it("opens diagnostics when the tray requests it", async () => {
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
 
     const handlers = (window as typeof window & {
@@ -1513,7 +1559,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Contexts"));
     fireEvent.change(screen.getByLabelText("Profile set name"), {
@@ -1587,7 +1633,7 @@ describe("App", () => {
       )[command];
     };
 
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Settings"));
     fireEvent.click(screen.getByText("Check for updates"));
@@ -1606,7 +1652,7 @@ describe("App", () => {
   });
 
   it("shows explicit shell hook guidance in settings", async () => {
-    renderApp();
+    await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Settings"));
 

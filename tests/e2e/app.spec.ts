@@ -43,12 +43,12 @@ test("switches shared profiles and recovers from live mismatch", async ({ page }
   await page.getByLabel("import claude current login").fill("incident");
   await page.getByRole("button", { name: "Import current as new" }).click();
 
-  await expect(page.getByText("Imported current claude login as incident.")).toBeVisible();
+  await expect(page.getByText("Last result: Saved claude profile incident.")).toBeVisible();
 
   await page.getByRole("combobox").first().selectOption("work");
   await page.getByRole("button", { name: "Switch all" }).click();
 
-  await expect(page.getByText("Switched all tools to work.")).toBeVisible();
+  await expect(page.getByText("Last bulk result: Switched all tools to work.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "work" }).nth(1)).toBeVisible();
 
   await page.getByRole("button", { name: "Profiles" }).click();

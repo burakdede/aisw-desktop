@@ -18,6 +18,12 @@ import {
   workspaceUnbind,
 } from "../../lib/client";
 import type { AddProfileInput } from "../../lib/client";
+import { DesktopCommandError } from "../../lib/tauri";
+import {
+  recordCommandResult,
+  useLastCommandResults,
+  type CommandResultScope,
+} from "./lastCommandResult";
 import { enqueueMutation, useMutationQueueState } from "./mutationQueue";
 
 export function useDesktopActions() {
@@ -25,6 +31,7 @@ export function useDesktopActions() {
   const [apiKeyProfilePending, setApiKeyProfilePending] = useState(false);
   const [apiKeyProfileError, setApiKeyProfileError] = useState<Error | null>(null);
   const mutationLock = useMutationQueueState();
+  const lastCommandResults = useLastCommandResults();
 
   const invalidate = async () => {
     await queryClient.invalidateQueries({ queryKey: ["bootstrap"] });
@@ -42,11 +49,29 @@ export function useDesktopActions() {
     setApiKeyProfileError(null);
     try {
       const result = await enqueueMutation("Add profile", () => addProfile(input));
+      recordCommandResult(
+        { type: "tool", tool: input.tool },
+        {
+          label: "Add profile",
+          status: "success",
+          message: `Saved ${input.tool} profile ${input.profile}.`,
+        },
+      );
       await invalidate();
       return result;
     } catch (error) {
       const resolved =
         error instanceof Error ? error : new Error("Failed to add API key profile.");
+      recordCommandResult(
+        { type: "tool", tool: input.tool },
+        {
+          label: "Add profile",
+          status: "error",
+          message: resolved.message,
+          remediation:
+            resolved instanceof DesktopCommandError ? resolved.remediation : undefined,
+        },
+      );
       setApiKeyProfileError(resolved);
       throw resolved;
     } finally {
@@ -57,45 +82,118 @@ export function useDesktopActions() {
   const queueMutation = <TVariables, TResult>(
     label: string,
     mutationFn: (variables: TVariables) => Promise<TResult>,
+    scopeForVariables: (variables: TVariables) => CommandResultScope | null,
+    successMessage: (variables: TVariables) => string,
   ) => {
-    return (variables: TVariables) => enqueueMutation(label, () => mutationFn(variables));
+    return async (variables: TVariables) => {
+      try {
+        const result = await enqueueMutation(label, () => mutationFn(variables));
+        const scope = scopeForVariables(variables);
+        if (scope) {
+          recordCommandResult(scope, {
+            label,
+            status: "success",
+            message: successMessage(variables),
+          });
+        }
+        return result;
+      } catch (error) {
+        const scope = scopeForVariables(variables);
+        if (scope) {
+          const resolved = error instanceof Error ? error : new Error(`${label} failed.`);
+          recordCommandResult(scope, {
+            label,
+            status: "error",
+            message: resolved.message,
+            remediation:
+              resolved instanceof DesktopCommandError ? resolved.remediation : undefined,
+          });
+        }
+        throw error;
+      }
+    };
   };
 
   return {
     addProfileMutation: useMutation({
-      mutationFn: queueMutation("Add profile", addProfile),
+      mutationFn: queueMutation(
+        "Add profile",
+        addProfile,
+        (variables) => ({ type: "tool", tool: variables.tool }),
+        (variables) => `Saved ${variables.tool} profile ${variables.profile}.`,
+      ),
       onSuccess: invalidate,
     }),
     addProfileOAuthMutation: useMutation({
-      mutationFn: queueMutation("Add profile", addProfileOAuth),
+      mutationFn: queueMutation(
+        "Add profile",
+        addProfileOAuth,
+        (variables) => ({ type: "tool", tool: variables.tool }),
+        (variables) => `Saved ${variables.tool} profile ${variables.profile}.`,
+      ),
       onSuccess: invalidate,
     }),
     useProfileMutation: useMutation({
-      mutationFn: queueMutation("Switch profile", useProfile),
+      mutationFn: queueMutation(
+        "Switch profile",
+        useProfile,
+        (variables) => ({ type: "tool", tool: variables.tool }),
+        (variables) => `Switched ${variables.tool} to ${variables.profile}.`,
+      ),
       onSettled: invalidate,
     }),
     useAllProfilesMutation: useMutation({
-      mutationFn: queueMutation("Switch all profiles", useAllProfiles),
+      mutationFn: queueMutation(
+        "Switch all profiles",
+        useAllProfiles,
+        () => ({ type: "global", id: "switch-all" }),
+        (variables) => `Switched all tools to ${variables.profile}.`,
+      ),
       onSettled: invalidate,
     }),
     useContextMutation: useMutation({
-      mutationFn: queueMutation("Switch context", useContext),
+      mutationFn: queueMutation(
+        "Switch context",
+        useContext,
+        () => ({ type: "global", id: "context" }),
+        (variables) => `Activated context ${variables.context}.`,
+      ),
       onSettled: invalidate,
     }),
     renameProfileMutation: useMutation({
-      mutationFn: queueMutation("Rename profile", renameProfile),
+      mutationFn: queueMutation(
+        "Rename profile",
+        renameProfile,
+        (variables) => ({ type: "tool", tool: variables.tool }),
+        (variables) => `Renamed ${variables.tool} profile ${variables.oldName} to ${variables.newName}.`,
+      ),
       onSuccess: invalidate,
     }),
     removeProfileMutation: useMutation({
-      mutationFn: queueMutation("Remove profile", removeProfile),
+      mutationFn: queueMutation(
+        "Remove profile",
+        removeProfile,
+        (variables) => ({ type: "tool", tool: variables.tool }),
+        (variables) => `Removed ${variables.tool} profile ${variables.profile}.`,
+      ),
       onSuccess: invalidate,
     }),
     restoreBackupMutation: useMutation({
-      mutationFn: queueMutation("Restore backup", restoreBackup),
+      mutationFn: queueMutation(
+        "Restore backup",
+        restoreBackup,
+        () => ({ type: "global", id: "backup" }),
+        (backupId) => `Restored backup ${backupId}.`,
+      ),
       onSuccess: invalidate,
     }),
     updateSettingsMutation: useMutation({
-      mutationFn: queueMutation("Update settings", updateSettings),
+      mutationFn: queueMutation(
+        "Update settings",
+        updateSettings,
+        () => ({ type: "global", id: "settings" }),
+        () => "Saved desktop settings.",
+      ),
       onSuccess: invalidate,
     }),
     checkForUpdatesMutation: useMutation({
@@ -105,19 +203,60 @@ export function useDesktopActions() {
       mutationFn: installUpdate,
     }),
     initMutation: useMutation({
-      mutationFn: () => enqueueMutation("Run setup", runInit),
+      mutationFn: async () => {
+        try {
+          const result = await enqueueMutation("Run setup", runInit);
+          recordCommandResult(
+            { type: "global", id: "setup" },
+            {
+              label: "Run setup",
+              status: "success",
+              message: "Finished setup scan.",
+            },
+          );
+          return result;
+        } catch (error) {
+          const resolved = error instanceof Error ? error : new Error("Run setup failed.");
+          recordCommandResult(
+            { type: "global", id: "setup" },
+            {
+              label: "Run setup",
+              status: "error",
+              message: resolved.message,
+              remediation:
+                resolved instanceof DesktopCommandError ? resolved.remediation : undefined,
+            },
+          );
+          throw error;
+        }
+      },
       onSuccess: invalidate,
     }),
     workspaceBindMutation: useMutation({
-      mutationFn: queueMutation("Save workspace binding", workspaceBind),
+      mutationFn: queueMutation(
+        "Save workspace binding",
+        workspaceBind,
+        () => ({ type: "global", id: "workspace" }),
+        (variables) => `Saved workspace binding for ${variables.context}.`,
+      ),
       onSuccess: invalidate,
     }),
     workspaceUnbindMutation: useMutation({
-      mutationFn: queueMutation("Remove workspace binding", workspaceUnbind),
+      mutationFn: queueMutation(
+        "Remove workspace binding",
+        workspaceUnbind,
+        () => ({ type: "global", id: "workspace" }),
+        () => "Removed workspace binding.",
+      ),
       onSuccess: invalidate,
     }),
     workspaceGuardMutation: useMutation({
-      mutationFn: queueMutation("Update workspace guard", workspaceGuard),
+      mutationFn: queueMutation(
+        "Update workspace guard",
+        workspaceGuard,
+        () => ({ type: "global", id: "workspace" }),
+        (mode) => `Updated workspace guard to ${mode}.`,
+      ),
       onSuccess: invalidate,
     }),
     apiKeyProfileAction: {
@@ -127,5 +266,6 @@ export function useDesktopActions() {
       clearError: () => setApiKeyProfileError(null),
     },
     mutationLock,
+    lastCommandResults,
   };
 }
