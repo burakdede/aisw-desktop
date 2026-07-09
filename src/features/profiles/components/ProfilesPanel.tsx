@@ -31,8 +31,13 @@ export function ProfilesPanel({
   const [renameDrafts, setRenameDrafts] = useState<Record<string, string>>({});
   const [oauthEvents, setOauthEvents] = useState<OAuthProgressEvent[]>([]);
   const [oauthError, setOauthError] = useState("");
+  const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
 
   const profiles = useMemo(() => snapshot.profiles[tool]?.profiles ?? [], [snapshot, tool]);
+  const toolStatus = useMemo(
+    () => snapshot.statuses.find((entry) => entry.tool === tool),
+    [snapshot.statuses, tool],
+  );
   const availableStateModes = useMemo(
     () => supportedStateModes(tool, toolCapabilities),
     [tool, toolCapabilities],
@@ -206,6 +211,23 @@ export function ProfilesPanel({
                 ? "Saving…"
                 : "Add profile"}
           </button>
+          {profileMutationError(
+            addProfileMutation.error,
+            addProfileOAuthMutation.error,
+            renameProfileMutation.error,
+            removeProfileMutation.error,
+            useProfileMutation.error,
+          ) ? (
+            <p className="inline-note">
+              {profileMutationError(
+                addProfileMutation.error,
+                addProfileOAuthMutation.error,
+                renameProfileMutation.error,
+                removeProfileMutation.error,
+                useProfileMutation.error,
+              )}
+            </p>
+          ) : null}
         </form>
         <div className="stack-list">
           {mode === "oauth" ? (
@@ -237,6 +259,16 @@ export function ProfilesPanel({
                 <p>
                   {entry.name} · {entry.auth}
                 </p>
+                <p className="inline-note">
+                  Active: {snapshot.profiles[tool]?.active === entry.name ? "yes" : "no"}
+                  {snapshot.profiles[tool]?.active === entry.name && toolStatus?.credential_backend
+                    ? ` · Backend: ${toolStatus.credential_backend}`
+                    : ""}
+                  {snapshot.profiles[tool]?.active === entry.name &&
+                  toolStatus?.active_profile_applied === false
+                    ? " · Live mismatch detected"
+                    : ""}
+                </p>
                 <div className="inline-form inline-form-compact">
                   <input
                     aria-label={`rename ${entry.name}`}
@@ -255,6 +287,7 @@ export function ProfilesPanel({
                     onClick={() => {
                       const newName = renameDrafts[entry.name]?.trim();
                       if (!newName) return;
+                      setPendingRemoval(null);
                       renameProfileMutation.mutate({
                         tool,
                         oldName: entry.name,
@@ -279,19 +312,56 @@ export function ProfilesPanel({
                 >
                   Activate
                 </button>
-                <button
-                  className="ghost-button danger-button"
-                  type="button"
-                  onClick={() =>
-                    removeProfileMutation.mutate({
-                      tool,
-                      profile: entry.name,
-                      force: true,
-                    })
-                  }
-                >
-                  Remove
-                </button>
+                {snapshot.profiles[tool]?.active === entry.name ? (
+                  pendingRemoval === entry.name ? (
+                    <>
+                      <button
+                        className="ghost-button danger-button"
+                        type="button"
+                        onClick={() => {
+                          setPendingRemoval(null);
+                          removeProfileMutation.mutate({
+                            tool,
+                            profile: entry.name,
+                            force: true,
+                          });
+                        }}
+                      >
+                        Confirm remove active
+                      </button>
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        onClick={() => setPendingRemoval(null)}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      className="ghost-button danger-button"
+                      type="button"
+                      onClick={() => setPendingRemoval(entry.name)}
+                    >
+                      Remove active…
+                    </button>
+                  )
+                ) : (
+                  <button
+                    className="ghost-button danger-button"
+                    type="button"
+                    onClick={() => {
+                      setPendingRemoval(null);
+                      removeProfileMutation.mutate({
+                        tool,
+                        profile: entry.name,
+                        force: false,
+                      });
+                    }}
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
             </article>
           ))}
@@ -331,6 +401,19 @@ function formatOauthStep(event: OAuthProgressEvent) {
     default:
       return titleCase(phase.replace(/_/g, " "));
   }
+}
+
+function profileMutationError(...errors: Array<unknown>) {
+  for (const error of errors) {
+    if (!error) continue;
+    if (error instanceof Error) {
+      return error.message;
+    }
+    if (typeof error === "object" && error && "message" in error && typeof error.message === "string") {
+      return error.message;
+    }
+  }
+  return "";
 }
 
 function supportedStateModes(
