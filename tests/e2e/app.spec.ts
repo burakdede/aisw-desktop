@@ -69,6 +69,19 @@ test("switches one tool directly from overview and refreshes the active profile 
   await expect(codexCard.getByText("Last result: Switched codex to work.")).toBeVisible();
 });
 
+test("activates a local profile set from overview quick switch", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+
+  const overview = page.locator(".section-card").filter({ hasText: "Control Center" });
+  await overview.getByRole("combobox").first().selectOption("set:client-acme");
+  await overview.getByRole("button", { name: "Switch all" }).click();
+
+  await expect(page.getByText("Last bulk result: Activated profile set client-acme.")).toBeVisible();
+  await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "work" })).toBeVisible();
+});
+
 test("creates profiles from environment and API key modes", async ({ page }) => {
   await installDesktopMock(page, "profiles");
 
@@ -218,6 +231,20 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
           },
         },
         switching: {
+          settings: {
+            ...bootstrapSettings,
+            profile_sets: [
+              {
+                name: "client-acme",
+                label: "Client Acme",
+                profiles: {
+                  claude: "work",
+                  codex: "work",
+                  gemini: null,
+                },
+              },
+            ],
+          },
           snapshot: {
             statuses: [
               {
@@ -274,6 +301,7 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
           },
         },
         profiles: {
+          settings: bootstrapSettings,
           snapshot: {
             statuses: [
               {
@@ -341,10 +369,12 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
       const state = {
         bootstrap: {
           ...deepClone(baseBootstrap),
+          settings: deepClone(scenarioState.settings ?? bootstrapSettings),
           snapshot: deepClone(scenarioState.snapshot),
         },
         snapshot: deepClone(scenarioState.snapshot),
         initReport: deepClone(scenarioState.initReport),
+        settings: deepClone(scenarioState.settings ?? bootstrapSettings),
       };
 
       const cloneSnapshot = () => deepClone(state.snapshot);
@@ -421,7 +451,7 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
           return [];
         }
         if (command === "get_settings") {
-          return deepClone(bootstrapSettings);
+          return deepClone(state.settings);
         }
         if (command === "get_shell_guidance") {
           return {
@@ -467,6 +497,28 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
             entry.auth_method = matching.auth;
             entry.active_profile_applied = true;
             entry.state_mode = request.state_mode ?? entry.state_mode;
+          });
+          return { command, snapshot: cloneSnapshot() };
+        }
+        if (command === "activate_profile_set") {
+          const set = state.settings.profile_sets.find((entry) => entry.name === args.name);
+          if (!set) {
+            throw new Error(`Unknown profile set: ${args.name}`);
+          }
+          Object.entries(set.profiles).forEach(([tool, profile]) => {
+            if (!profile) {
+              return;
+            }
+            const profileEntry = state.snapshot.profiles[tool];
+            const statusEntry = state.snapshot.statuses.find((entry) => entry.tool === tool);
+            const matching = profileEntry?.profiles.find((entry) => entry.name === profile);
+            if (profileEntry && statusEntry && matching) {
+              profileEntry.active = profile;
+              statusEntry.active_profile = profile;
+              statusEntry.auth_method = matching.auth;
+              statusEntry.active_profile_applied = true;
+              statusEntry.state_mode = tool === "gemini" ? null : "isolated";
+            }
           });
           return { command, snapshot: cloneSnapshot() };
         }
