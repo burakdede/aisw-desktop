@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SectionCard } from "../../../components/SectionCard";
+import { AppSnapshot, ToolStatus } from "../../../lib/schemas";
 import { runDoctor, runRepair, runVerify } from "../../../lib/client";
+import { openExternalGuide, installGuideUrlForTool } from "../../../lib/tool-guidance";
+import { useDesktop } from "../../shared/useDesktop";
+import { useDesktopActions } from "../../shared/useDesktopActions";
 import {
   parseDoctorIssues,
   parseDoctorSummary,
@@ -11,9 +15,12 @@ import {
   type IssueCardData,
   type SummaryCardData,
 } from "../diagnostic-parsers";
+import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 
 export function DiagnosticsPanel() {
+  const { snapshot } = useDesktop();
   const queryClient = useQueryClient();
+  const { useProfileMutation, useContextMutation, mutationLock } = useDesktopActions();
   const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor });
   const verify = useQuery({ queryKey: ["verify"], queryFn: runVerify });
   const repair = useQuery({
@@ -41,6 +48,7 @@ export function DiagnosticsPanel() {
     ...parseVerifyIssues(verify.data),
   ];
   const repairActions = parseRepairActions(repair.data);
+  const quickFixes = buildQuickFixes(snapshot.data, useProfileMutation.mutate, useContextMutation.mutate);
 
   return (
     <SectionCard
@@ -136,6 +144,29 @@ export function DiagnosticsPanel() {
         </div>
 
         <div className="stack-list">
+          <h3>Direct fixes</h3>
+          {quickFixes.map((fix) => (
+            <article key={fix.title} className={`diagnostic-card diagnostic-${fix.status}`}>
+              <h4>{fix.title}</h4>
+              <p className="inline-note">{fix.detail}</p>
+              <div className="button-row">
+                <button
+                  className={fix.primary ? "primary-button" : "ghost-button"}
+                  type="button"
+                  disabled={mutationLock.isBusy}
+                  onClick={fix.action}
+                >
+                  {fix.label}
+                </button>
+              </div>
+            </article>
+          ))}
+          {!quickFixes.length ? (
+            <p className="inline-note">No direct fix actions are available from the current diagnostics state.</p>
+          ) : null}
+        </div>
+
+        <div className="stack-list">
           <h3>Planned repair actions</h3>
           {repairActions.map((action) => (
             <article key={`${action.title}-${action.detail}`} className="diagnostic-card">
@@ -151,4 +182,83 @@ export function DiagnosticsPanel() {
       </div>
     </SectionCard>
   );
+}
+
+type QuickFixCard = {
+  title: string;
+  detail: string;
+  label: string;
+  status: "warn" | "fail";
+  primary?: boolean;
+  action: () => void;
+};
+
+function buildQuickFixes(
+  snapshot: AppSnapshot | undefined,
+  useProfile: (request: { tool: string; profile: string; stateMode: string | null }) => void,
+  useContext: (request: { context: string; stateMode: string | null }) => void,
+): QuickFixCard[] {
+  if (!snapshot) {
+    return [];
+  }
+
+  const fixes: QuickFixCard[] = [];
+
+  snapshot.statuses.forEach((status) => {
+    if (!status.binary_found) {
+      fixes.push({
+        title: `${status.tool} is missing`,
+        detail: `Open the install guide for ${status.tool} and then refresh diagnostics.`,
+        label: "Open installation guide",
+        status: "warn",
+        action: () => openExternalGuide(installGuideUrlForTool(status.tool)),
+      });
+    }
+
+    if (status.active_profile && status.active_profile_applied === false) {
+      fixes.push({
+        title: `${status.tool} live mismatch`,
+        detail: `Re-apply ${status.active_profile} so the live credentials match AISW again.`,
+        label: `Re-apply ${status.active_profile}`,
+        status: "fail",
+        primary: true,
+        action: () =>
+          useProfile({
+            tool: status.tool,
+            profile: status.active_profile!,
+            stateMode: resolveStateMode(status),
+          }),
+      });
+    }
+  });
+
+  const workspace = parseWorkspaceStatus(snapshot.workspace_status ?? undefined);
+  const hasWorkspaceMismatch =
+    workspace.status === "mismatch" &&
+    workspace.expectedContext !== "none" &&
+    workspace.expectedContext !== workspace.currentContext;
+
+  if (hasWorkspaceMismatch) {
+    fixes.push({
+      title: "Workspace context mismatch",
+      detail: `This folder wants ${workspace.expectedContext}, but ${workspace.currentContext} is currently active.`,
+      label: "Use expected context now",
+      status: "warn",
+      primary: true,
+      action: () =>
+        useContext({
+          context: workspace.expectedContext,
+          stateMode: "isolated",
+        }),
+    });
+  }
+
+  return fixes;
+}
+
+function resolveStateMode(status: ToolStatus) {
+  if (status.tool === "gemini") {
+    return null;
+  }
+  return status.state_mode ?? "isolated";
 }

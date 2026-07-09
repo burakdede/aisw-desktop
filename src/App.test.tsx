@@ -1491,6 +1491,125 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("offers direct diagnostic fixes for missing tools, live mismatch, and workspace mismatch", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    const diagnosticsSnapshot = {
+      ...bootstrap.snapshot,
+      statuses: [
+        {
+          tool: "claude",
+          binary_found: true,
+          stored_profiles: 1,
+          active_profile: "work",
+          auth_method: "oauth",
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: false,
+          credentials_present: true,
+          permissions_ok: true,
+          warnings: [],
+        },
+        {
+          tool: "codex",
+          binary_found: false,
+          stored_profiles: 0,
+          active_profile: null,
+          auth_method: null,
+          credential_backend: null,
+          state_mode: "isolated",
+          active_profile_applied: null,
+          credentials_present: false,
+          permissions_ok: true,
+          warnings: [],
+        },
+      ],
+      workspace_status: {
+        result: {
+          status: "mismatch",
+          current_context: "work",
+          expected_context: "client-acme",
+          matched_binding: {
+            scope: "path",
+            target: "/code/acme",
+            context: "client-acme",
+          },
+        },
+      },
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      return (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            snapshot: diagnosticsSnapshot,
+          },
+          get_snapshot: diagnosticsSnapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: {
+            checks: [{ name: "tool/codex", status: "warn", detail: "codex not found on PATH" }],
+          },
+          run_verify: {
+            summary: { status: "fail", passed: 0, warnings: 1, failed: 2 },
+            tools: [
+              {
+                tool: "claude",
+                status: "fail",
+                issues: ["live credentials changed outside AISW"],
+                remediation: ["Re-apply the active profile"],
+              },
+              {
+                tool: "codex",
+                status: "warn",
+                issues: ["tool binary not found on PATH"],
+                remediation: ["Install codex"],
+              },
+            ],
+          },
+          run_repair: {
+            result: {
+              summary: { status: "warn", actions_planned: 0, actions_applied: 0, issues_remaining: 3 },
+              actions: [],
+            },
+          },
+          get_workspace_status: diagnosticsSnapshot.workspace_status,
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Diagnostics")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Diagnostics"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Direct fixes")).toBeInTheDocument();
+      expect(screen.getByText("codex is missing")).toBeInTheDocument();
+      expect(screen.getByText("claude live mismatch")).toBeInTheDocument();
+      expect(screen.getByText("Workspace context mismatch")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("Open installation guide"));
+    expect(window.open).toHaveBeenCalledWith(
+      "https://www.npmjs.com/package/@openai/codex",
+      "_blank",
+      "noopener,noreferrer",
+    );
+
+    fireEvent.click(screen.getByText("Re-apply work"));
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
+    });
+
+    fireEvent.click(screen.getByText("Use expected context now"));
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
+    });
+  });
+
   it("reruns setup detection when Start setup is clicked", async () => {
     let initCalls = 0;
     const firstRunSnapshot = {
