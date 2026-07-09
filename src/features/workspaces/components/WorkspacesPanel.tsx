@@ -12,6 +12,7 @@ import {
   resolveWorkspaceActivationTarget,
   workspaceBindingOptions,
 } from "../workspace-activation";
+import type { WorkspaceUnbindInput } from "../../../lib/client";
 
 type BindScope = "default" | "path" | "git_remote";
 
@@ -214,6 +215,16 @@ export function WorkspacesPanel({
                     {binding.scope} · {binding.target}
                   </p>
                 </div>
+                <button
+                  className="ghost-button danger-button"
+                  type="button"
+                  disabled={mutationLock.isBusy}
+                  onClick={() =>
+                    workspaceUnbindMutation.mutate(unbindTargetForBinding(binding.scope, binding.target))
+                  }
+                >
+                  Remove this binding
+                </button>
               </article>
             ))}
             {!bindingsSummary.bindings.length ? (
@@ -227,4 +238,14 @@ export function WorkspacesPanel({
       </div>
     </SectionCard>
   );
+}
+
+function unbindTargetForBinding(scope: string, target: string): WorkspaceUnbindInput {
+  if (scope === "path") {
+    return { scope: "path", path: target };
+  }
+  if (scope === "git_remote") {
+    return { scope: "git_remote", pattern: target };
+  }
+  return { scope: "default" };
 }

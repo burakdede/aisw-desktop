@@ -1539,7 +1539,11 @@ describe("App", () => {
     };
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
-      if (command === "workspace_bind" || command === "activate_profile_set") {
+      if (
+        command === "workspace_bind" ||
+        command === "workspace_unbind" ||
+        command === "activate_profile_set"
+      ) {
         return { command, snapshot: workspaceSnapshot };
       }
       return (
@@ -1616,6 +1620,19 @@ describe("App", () => {
       expect(calls.some((entry) => entry.command === "workspace_bind")).toBe(true);
     });
     expect(screen.getByRole("option", { name: "Profile set: Client Acme" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Remove this binding"));
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "workspace_unbind")).toBe(true);
+    });
+    expect(
+      calls.some(
+        (entry) =>
+          entry.command === "workspace_unbind" &&
+          (entry.args as { target?: { scope?: string; path?: string } })?.target?.scope === "path" &&
+          (entry.args as { target?: { scope?: string; path?: string } })?.target?.path === "/code/acme",
+      ),
+    ).toBe(true);
   });
 
   it("applies safe repairs from diagnostics", async () => {
