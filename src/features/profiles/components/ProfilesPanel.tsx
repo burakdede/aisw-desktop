@@ -41,6 +41,7 @@ export function ProfilesPanel({
   const [oauthEvents, setOauthEvents] = useState<OAuthProgressEvent[]>([]);
   const [oauthError, setOauthError] = useState("");
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
+  const [expandedDetails, setExpandedDetails] = useState<string | null>(null);
   const apiKeyInputRef = useRef<HTMLInputElement | null>(null);
 
   const profiles = useMemo(() => snapshot.profiles[tool]?.profiles ?? [], [snapshot, tool]);
@@ -364,6 +365,62 @@ export function ProfilesPanel({
                     Relabel
                   </button>
                 </div>
+                {expandedDetails === entry.name ? (
+                  <article className="diagnostic-card">
+                    <h4>Diagnostic details</h4>
+                    <p className="inline-note">
+                      Credential backend: {toolStatus?.credential_backend ?? "unknown"}
+                    </p>
+                    <p className="inline-note">
+                      Live match:{" "}
+                      {toolStatus?.active_profile_applied === undefined ||
+                      toolStatus?.active_profile_applied === null
+                        ? "unknown"
+                        : toolStatus.active_profile_applied
+                          ? "yes"
+                          : "no"}
+                    </p>
+                    <p className="inline-note">
+                      Credentials present:{" "}
+                      {toolStatus?.credentials_present === undefined ||
+                      toolStatus?.credentials_present === null
+                        ? "unknown"
+                        : toolStatus.credentials_present
+                          ? "yes"
+                          : "no"}
+                    </p>
+                    <p className="inline-note">
+                      Permissions OK:{" "}
+                      {toolStatus?.permissions_ok === undefined || toolStatus?.permissions_ok === null
+                        ? "unknown"
+                        : toolStatus.permissions_ok
+                          ? "yes"
+                          : "no"}
+                    </p>
+                    {toolStatus?.token_warning ? (
+                      <p className="inline-note">
+                        Token warning: {formatProfileTokenWarning(toolStatus)}
+                      </p>
+                    ) : null}
+                    {toolStatus?.warnings.length ? (
+                      <div className="stack-list">
+                        {toolStatus.warnings.map((warning, index) => (
+                          <p
+                            key={`${warning.code ?? warning.message ?? "warning"}-${index}`}
+                            className="inline-note"
+                          >
+                            Warning: {formatProfileWarning(warning)}
+                          </p>
+                        ))}
+                      </div>
+                    ) : null}
+                    {!toolStatus?.token_warning && !toolStatus?.warnings.length ? (
+                      <p className="inline-note">
+                        No additional token or runtime warnings are currently reported for this tool.
+                      </p>
+                    ) : null}
+                  </article>
+                ) : null}
               </div>
               <div className="button-row button-row-column">
                 <button
@@ -377,6 +434,15 @@ export function ProfilesPanel({
                   }
                 >
                   Activate
+                </button>
+                <button
+                  className="ghost-button"
+                  type="button"
+                  onClick={() =>
+                    setExpandedDetails((current) => (current === entry.name ? null : entry.name))
+                  }
+                >
+                  {expandedDetails === entry.name ? "Hide diagnostic details" : "View diagnostic details"}
                 </button>
                 {snapshot.profiles[tool]?.active === entry.name ? (
                   pendingRemoval === entry.name ? (
@@ -511,6 +577,29 @@ function profileMutationError(...errors: Array<unknown>) {
     }
   }
   return "";
+}
+
+function formatProfileTokenWarning(
+  status: NonNullable<AppSnapshot["statuses"][number]>,
+) {
+  const warning = status.token_warning;
+  if (!warning) {
+    return "Token state needs attention.";
+  }
+  const detail = warning.summary ?? warning.message ?? warning.code ?? "Token state needs attention.";
+  const suffix = warning.expires_at
+    ? ` Expires at ${warning.expires_at}.`
+    : typeof warning.expires_in_days === "number"
+      ? ` Expires in ${warning.expires_in_days} days.`
+      : "";
+  return `${detail}${suffix}`;
+}
+
+function formatProfileWarning(
+  warning: NonNullable<AppSnapshot["statuses"][number]["warnings"]>[number],
+) {
+  const detail = warning.message ?? warning.code ?? "Warning reported by aisw.";
+  return warning.remediation ? `${detail} Remediation: ${warning.remediation}` : detail;
 }
 
 function supportedStateModes(

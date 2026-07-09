@@ -485,6 +485,76 @@ describe("App", () => {
     });
   });
 
+  it("shows profile diagnostic details from the current tool status", async () => {
+    window.__AISW_DESKTOP_MOCK__ = {
+      ...window.__AISW_DESKTOP_MOCK__,
+      get_bootstrap: {
+        ...bootstrap,
+        snapshot: {
+          ...bootstrap.snapshot,
+          statuses: [
+            {
+              ...bootstrap.snapshot.statuses[0],
+              credentials_present: false,
+              permissions_ok: false,
+              token_warning: {
+                summary: "Claude session expires soon",
+                expires_in_days: 1,
+              },
+              warnings: [
+                {
+                  message: "Keyring access failed.",
+                  remediation: "Unlock the system keychain and retry.",
+                },
+              ],
+            },
+          ],
+        },
+      },
+      get_snapshot: {
+        ...bootstrap.snapshot,
+        statuses: [
+          {
+            ...bootstrap.snapshot.statuses[0],
+            credentials_present: false,
+            permissions_ok: false,
+            token_warning: {
+              summary: "Claude session expires soon",
+              expires_in_days: 1,
+            },
+            warnings: [
+              {
+                message: "Keyring access failed.",
+                remediation: "Unlock the system keychain and retry.",
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    renderApp();
+    await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Profiles"));
+    fireEvent.click(screen.getByText("View diagnostic details"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Diagnostic details")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Credential backend: system_keyring")).toBeInTheDocument();
+    expect(screen.getByText("Live match: yes")).toBeInTheDocument();
+    expect(screen.getByText("Credentials present: no")).toBeInTheDocument();
+    expect(screen.getByText("Permissions OK: no")).toBeInTheDocument();
+    expect(
+      screen.getByText("Token warning: Claude session expires soon Expires in 1 days."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Warning: Keyring access failed. Remediation: Unlock the system keychain and retry.",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("surfaces duplicate profile failures in the profiles screen", async () => {
     window.__AISW_DESKTOP_MOCK__ = async (command) => {
       if (command === "add_profile") {
