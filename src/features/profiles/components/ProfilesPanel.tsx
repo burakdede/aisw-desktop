@@ -1,6 +1,8 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
-import { AppBootstrap, AppSnapshot } from "../../../lib/schemas";
+import { AppBootstrap, AppSnapshot, type OAuthProgressEvent } from "../../../lib/schemas";
+import { listenDesktopEvent } from "../../../lib/tauri";
+import { parseOAuthProgressEvent } from "../../../lib/client";
 import { titleCase } from "../../../lib/utils";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 
@@ -15,6 +17,7 @@ export function ProfilesPanel({
 }) {
   const {
     addProfileMutation,
+    addProfileOAuthMutation,
     useProfileMutation,
     renameProfileMutation,
     removeProfileMutation,
@@ -22,10 +25,12 @@ export function ProfilesPanel({
   const [tool, setTool] = useState<(typeof TOOLS)[number]>("claude");
   const [profile, setProfile] = useState("");
   const [label, setLabel] = useState("");
-  const [mode, setMode] = useState<"from_live" | "from_env" | "api_key">("from_live");
+  const [mode, setMode] = useState<"from_live" | "from_env" | "api_key" | "oauth">("from_live");
   const [apiKey, setApiKey] = useState("");
   const [stateMode, setStateMode] = useState("isolated");
   const [renameDrafts, setRenameDrafts] = useState<Record<string, string>>({});
+  const [oauthEvents, setOauthEvents] = useState<OAuthProgressEvent[]>([]);
+  const [oauthError, setOauthError] = useState("");
 
   const profiles = useMemo(() => snapshot.profiles[tool]?.profiles ?? [], [snapshot, tool]);
   const availableStateModes = useMemo(
@@ -42,9 +47,51 @@ export function ProfilesPanel({
     }
   }, [availableStateModes, stateMode]);
 
+  useEffect(() => {
+    let active = true;
+    let unlisten: (() => void) | undefined;
+    void listenDesktopEvent<unknown>("oauth-progress", (payload) => {
+      if (!active) return;
+      const event = parseOAuthProgressEvent(payload);
+      setOauthEvents((current) => [...current, event]);
+    }).then((dispose) => {
+      unlisten = typeof dispose === "function" ? dispose : undefined;
+    });
+
+    return () => {
+      active = false;
+      unlisten?.();
+    };
+  }, []);
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!profile.trim()) {
+      return;
+    }
+
+    const nextStateMode = availableStateModes.length ? stateMode : null;
+
+    if (mode === "oauth") {
+      setOauthEvents([]);
+      setOauthError("");
+      addProfileOAuthMutation.mutate(
+        {
+          tool,
+          profile,
+          label: label || null,
+          stateMode: nextStateMode,
+        },
+        {
+          onSuccess: () => {
+            setProfile("");
+            setLabel("");
+          },
+          onError: (error) => {
+            setOauthError(error instanceof Error ? error.message : "OAuth capture failed.");
+          },
+        },
+      );
       return;
     }
 
@@ -101,6 +148,7 @@ export function ProfilesPanel({
               <option value="from_live">Import current login</option>
               <option value="from_env">Capture environment</option>
               <option value="api_key">API key via stdin</option>
+              <option value="oauth">Guided OAuth capture</option>
             </select>
           </label>
           {mode === "api_key" ? (
@@ -112,6 +160,23 @@ export function ProfilesPanel({
                 onChange={(event) => setApiKey(event.target.value)}
               />
             </label>
+          ) : null}
+          {mode === "from_env" ? (
+            <p className="inline-note">
+              Expected environment variable: <code>{expectedEnvVar(tool)}</code>
+            </p>
+          ) : null}
+          {mode === "oauth" ? (
+            <div className="diagnostic-card">
+              <h3>OAuth wizard</h3>
+              <p className="inline-note">
+                AISW Desktop will launch the tool&apos;s native login flow and stream progress from
+                <code> aisw add {tool} {profile || "<profile>"} --progress-json</code>.
+              </p>
+              <p className="inline-note">
+                Keep this window open while the browser or terminal login completes.
+              </p>
+            </div>
           ) : null}
           <label>
             State mode
@@ -128,11 +193,43 @@ export function ProfilesPanel({
               ))}
             </select>
           </label>
-          <button className="primary-button" type="submit" disabled={addProfileMutation.isPending}>
-            {addProfileMutation.isPending ? "Saving…" : "Add profile"}
+          <button
+            className="primary-button"
+            type="submit"
+            disabled={addProfileMutation.isPending || addProfileOAuthMutation.isPending}
+          >
+            {mode === "oauth"
+              ? addProfileOAuthMutation.isPending
+                ? "Waiting for OAuth…"
+                : "Start OAuth"
+              : addProfileMutation.isPending
+                ? "Saving…"
+                : "Add profile"}
           </button>
         </form>
         <div className="stack-list">
+          {mode === "oauth" ? (
+            <article className="diagnostic-card">
+              <h3>OAuth progress</h3>
+              {oauthEvents.length ? (
+                <div className="stack-list">
+                  {oauthEvents.map((event, index) => (
+                    <div key={`${event.seq ?? index}-${event.phase ?? event.type ?? "event"}`}>
+                      <p className="diagnostic-status">
+                        {formatOauthStep(event)}
+                      </p>
+                      {event.message ? <p className="inline-note">{event.message}</p> : null}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="inline-note">
+                  Start OAuth to stream steps such as browser launch, waiting for login, and profile save.
+                </p>
+              )}
+              {oauthError ? <p className="inline-note">{oauthError}</p> : null}
+            </article>
+          ) : null}
           {profiles.map((entry) => (
             <article key={entry.name} className="list-row">
               <div>
@@ -203,6 +300,37 @@ export function ProfilesPanel({
       </div>
     </SectionCard>
   );
+}
+
+function expectedEnvVar(tool: string) {
+  switch (tool) {
+    case "claude":
+      return "ANTHROPIC_API_KEY";
+    case "codex":
+      return "OPENAI_API_KEY";
+    case "gemini":
+      return "GEMINI_API_KEY";
+    default:
+      return "API_KEY";
+  }
+}
+
+function formatOauthStep(event: OAuthProgressEvent) {
+  const phase = event.phase ?? event.type ?? "progress";
+  switch (phase) {
+    case "starting_upstream_auth":
+      return "1. Starting upstream login";
+    case "waiting_for_user":
+      return "2. Waiting for login completion";
+    case "applying_changes":
+      return "3. Saving captured profile";
+    case "result":
+      return event.ok ? "4. Profile saved" : "4. OAuth failed";
+    case "started":
+      return "0. Starting OAuth";
+    default:
+      return titleCase(phase.replace(/_/g, " "));
+  }
 }
 
 function supportedStateModes(

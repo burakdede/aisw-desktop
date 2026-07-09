@@ -1,10 +1,10 @@
 use crate::errors::{DesktopError, GuiErrorKind};
 use crate::models::{
-    AddProfileMode, AddProfileRequest, BackupEntry, CapabilitiesInfo, ContextSummary, DoctorReport,
-    InitReport, ProjectBindingsReport, RepairReport, RepairRequest, RuntimeKind, ToolProfiles,
-    ToolStatus, UseAllProfilesRequest, UseContextRequest, UseProfileRequest, VerifyReport,
-    VersionInfo, WorkspaceBindRequest, WorkspaceBindTarget, WorkspaceStatusReport,
-    WorkspaceUnbindTarget,
+    AddOAuthProfileRequest, AddProfileMode, AddProfileRequest, BackupEntry, CapabilitiesInfo,
+    ContextSummary, DoctorReport, InitReport, ProjectBindingsReport, RepairReport, RepairRequest,
+    RuntimeKind, ToolProfiles, ToolStatus, UseAllProfilesRequest, UseContextRequest,
+    UseProfileRequest, VerifyReport, VersionInfo, WorkspaceBindRequest, WorkspaceBindTarget,
+    WorkspaceStatusReport, WorkspaceUnbindTarget,
 };
 use crate::redaction::redact_text;
 use async_trait::async_trait;
@@ -12,7 +12,7 @@ use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::path::PathBuf;
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
 use tracing::{debug, warn};
 
@@ -145,6 +145,151 @@ impl CliAiswBridge {
         let stderr = redact_text(&String::from_utf8_lossy(&output.stderr));
         warn!("aisw command `{command_name}` failed: {stderr}");
         Err(map_command_failure(command_name, &stderr))
+    }
+
+    pub async fn add_profile_oauth<F>(
+        &self,
+        req: AddOAuthProfileRequest,
+        mut on_event: F,
+    ) -> Result<serde_json::Value, DesktopError>
+    where
+        F: FnMut(serde_json::Value) + Send,
+    {
+        let binary = self.resolve_binary().await?;
+        let mut command = Command::new(binary);
+        let mut owned = vec![
+            "add".to_owned(),
+            req.tool.clone(),
+            req.profile.clone(),
+            "--progress-json".to_owned(),
+        ];
+        if let Some(label) = &req.label {
+            owned.push("--label".to_owned());
+            owned.push(label.clone());
+        }
+        if let Some(mode) = &req.state_mode {
+            owned.push("--state-mode".to_owned());
+            owned.push(mode.clone());
+        }
+        let args = owned.iter().map(String::as_str).collect::<Vec<_>>();
+        command.args(&args);
+        if let Some(home) = &self.aisw_home {
+            command.env("AISW_HOME", home);
+        }
+        command.stdout(std::process::Stdio::piped());
+        command.stderr(std::process::Stdio::piped());
+
+        debug!("running aisw command `add_oauth` with args {:?}", args);
+        let mut child = command.spawn().map_err(|_| DesktopError::AiswNotFound)?;
+
+        let stdout = child
+            .stdout
+            .take()
+            .ok_or_else(|| DesktopError::CommandFailed {
+                command: "add_oauth".to_owned(),
+                kind: GuiErrorKind::Unknown,
+                message: "OAuth progress stream was not available.".to_owned(),
+                remediation: None,
+            })?;
+        let stderr = child
+            .stderr
+            .take()
+            .ok_or_else(|| DesktopError::CommandFailed {
+                command: "add_oauth".to_owned(),
+                kind: GuiErrorKind::Unknown,
+                message: "OAuth stderr stream was not available.".to_owned(),
+                remediation: None,
+            })?;
+
+        let stdout_task = async move {
+            let mut reader = BufReader::new(stdout).lines();
+            let mut last_value: Option<serde_json::Value> = None;
+            while let Some(line) =
+                reader
+                    .next_line()
+                    .await
+                    .map_err(|err| DesktopError::CommandFailed {
+                        command: "add_oauth".to_owned(),
+                        kind: GuiErrorKind::Unknown,
+                        message: err.to_string(),
+                        remediation: None,
+                    })?
+            {
+                let trimmed = line.trim();
+                if trimmed.is_empty() {
+                    continue;
+                }
+                let value = serde_json::from_str::<serde_json::Value>(trimmed).map_err(|_| {
+                    DesktopError::InvalidJson {
+                        command: "add_oauth".to_owned(),
+                    }
+                })?;
+                on_event(value.clone());
+                last_value = Some(value);
+            }
+            Ok::<Option<serde_json::Value>, DesktopError>(last_value)
+        };
+
+        let stderr_task = async move {
+            let mut bytes = Vec::new();
+            let mut reader = BufReader::new(stderr);
+            reader
+                .read_to_end(&mut bytes)
+                .await
+                .map_err(|err| DesktopError::CommandFailed {
+                    command: "add_oauth".to_owned(),
+                    kind: GuiErrorKind::Unknown,
+                    message: err.to_string(),
+                    remediation: None,
+                })?;
+            Ok::<Vec<u8>, DesktopError>(bytes)
+        };
+
+        let (last_value, stderr_bytes) = tokio::join!(stdout_task, stderr_task);
+        let last_value = last_value?;
+        let stderr_bytes = stderr_bytes?;
+        let status = child
+            .wait()
+            .await
+            .map_err(|err| DesktopError::CommandFailed {
+                command: "add_oauth".to_owned(),
+                kind: GuiErrorKind::Unknown,
+                message: err.to_string(),
+                remediation: None,
+            })?;
+
+        if status.success() {
+            if let Some(result) = last_value
+                .as_ref()
+                .and_then(|value| value.get("result"))
+                .cloned()
+            {
+                return Ok(result);
+            }
+            return Err(DesktopError::InvalidJson {
+                command: "add_oauth".to_owned(),
+            });
+        }
+
+        if let Some(error) = last_value
+            .as_ref()
+            .and_then(|value| map_machine_failure("add_oauth", value))
+        {
+            return Err(error);
+        }
+
+        let stderr = redact_text(&String::from_utf8_lossy(&stderr_bytes));
+        if !stderr.trim().is_empty() {
+            warn!("aisw command `add_oauth` failed: {stderr}");
+            return Err(map_command_failure("add_oauth", &stderr));
+        }
+
+        Err(DesktopError::CommandFailed {
+            command: "add_oauth".to_owned(),
+            kind: GuiErrorKind::Unknown,
+            message: "OAuth capture failed without a machine-readable error.".to_owned(),
+            remediation: None,
+        })
     }
 }
 
@@ -528,12 +673,60 @@ fn map_command_failure(command: &str, stderr: &str) -> DesktopError {
     }
 }
 
+fn map_machine_failure(command: &str, value: &serde_json::Value) -> Option<DesktopError> {
+    if value.get("ok").and_then(|item| item.as_bool()) != Some(false) {
+        return None;
+    }
+
+    let error = value.get("error")?;
+    let kind_value = error
+        .get("kind")
+        .and_then(|item| item.as_str())
+        .unwrap_or("unknown");
+    let lower = kind_value.to_ascii_lowercase();
+    let kind = if lower.contains("not_found") || lower.contains("tool_missing") {
+        GuiErrorKind::ToolMissing
+    } else if lower.contains("duplicate") {
+        GuiErrorKind::DuplicateProfile
+    } else if lower.contains("keyring") {
+        GuiErrorKind::KeyringUnavailable
+    } else if lower.contains("permission") {
+        GuiErrorKind::PermissionDenied
+    } else if lower.contains("timeout") {
+        GuiErrorKind::OAuthTimeout
+    } else if lower.contains("lock") {
+        GuiErrorKind::ConfigLockTimeout
+    } else if lower.contains("state_mode") || lower.contains("invalid_state_mode") {
+        GuiErrorKind::InvalidStateMode
+    } else {
+        GuiErrorKind::Unknown
+    };
+
+    let remediation = error
+        .get("remediation")
+        .and_then(|item| item.get("command"))
+        .and_then(|item| item.as_str())
+        .map(str::to_owned);
+    let message = error
+        .get("message")
+        .and_then(|item| item.as_str())
+        .unwrap_or("OAuth capture failed.")
+        .to_owned();
+
+    Some(DesktopError::CommandFailed {
+        command: command.to_owned(),
+        kind,
+        message,
+        remediation,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::{AiswBridge, CliAiswBridge};
     use crate::models::{
-        AddProfileMode, AddProfileRequest, RuntimeKind, UseAllProfilesRequest,
-        WorkspaceBindRequest, WorkspaceBindTarget,
+        AddOAuthProfileRequest, AddProfileMode, AddProfileRequest, RuntimeKind,
+        UseAllProfilesRequest, WorkspaceBindRequest, WorkspaceBindTarget,
     };
     use std::fs;
     use std::os::unix::fs::PermissionsExt;
@@ -578,6 +771,42 @@ printf '{"version":"0.3.7","cli_api_version":1,"json_schema_version":1,"progress
             .unwrap();
 
         assert_eq!(response["received"], "sk-ant-api03-secret");
+    }
+
+    #[tokio::test]
+    async fn add_profile_oauth_streams_progress_and_returns_result() {
+        let path = write_fake_aisw(
+            r#"#!/bin/sh
+if [ "$1" = "add" ]; then
+  printf '%s\n' '{"type":"started","seq":1,"command":"add","tool":"claude","profile":"work"}'
+  printf '%s\n' '{"type":"info","seq":2,"command":"add","tool":"claude","profile":"work","phase":"starting_upstream_auth","message":"Launching login"}'
+  printf '%s\n' '{"type":"waiting_for_user","seq":3,"command":"add","tool":"claude","profile":"work","phase":"waiting_for_user","safe_to_cancel":true,"message":"Complete login"}'
+  printf '%s\n' '{"type":"result","seq":4,"command":"add","tool":"claude","profile":"work","ok":true,"result":{"tool":"claude","profile":"work","auth_method":"oauth"}}'
+  exit 0
+fi
+printf '{"version":"0.3.7","cli_api_version":1,"json_schema_version":1,"progress_schema_version":1}'
+"#,
+        );
+        let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
+        let mut events = Vec::new();
+        let response = bridge
+            .add_profile_oauth(
+                AddOAuthProfileRequest {
+                    tool: "claude".to_owned(),
+                    profile: "work".to_owned(),
+                    label: None,
+                    state_mode: Some("isolated".to_owned()),
+                },
+                |event| events.push(event),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(events.len(), 4);
+        assert_eq!(events[0]["type"], "started");
+        assert_eq!(events[2]["safe_to_cancel"], true);
+        assert_eq!(response["profile"], "work");
+        assert_eq!(response["auth_method"], "oauth");
     }
 
     #[tokio::test]

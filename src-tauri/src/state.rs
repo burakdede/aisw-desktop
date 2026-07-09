@@ -83,6 +83,30 @@ impl AppState {
         })
     }
 
+    pub async fn mutate_cli<F, Fut>(&self, command: &str, f: F) -> DesktopResult<MutationResponse>
+    where
+        F: FnOnce(CliAiswBridge) -> Fut,
+        Fut: std::future::Future<Output = Result<serde_json::Value, DesktopError>>,
+    {
+        let _guard = self.mutation_lock.lock().await;
+        let settings = self.load_settings().await.map_err(ErrorPayload::from)?;
+        let bridge = CliAiswBridge::new(
+            settings.runtime_kind.clone(),
+            settings.runtime_path.as_ref().map(PathBuf::from),
+            settings.aisw_home.as_ref().map(PathBuf::from),
+        );
+        let raw = f(bridge.clone()).await.map_err(ErrorPayload::from)?;
+        let snapshot = self
+            .fetch_snapshot(&bridge)
+            .await
+            .map_err(ErrorPayload::from)?;
+        Ok(MutationResponse {
+            command: command.to_owned(),
+            raw,
+            snapshot,
+        })
+    }
+
     fn bridge_from_settings(&self, settings: &DesktopSettings) -> Arc<dyn AiswBridge> {
         Arc::new(CliAiswBridge::new(
             settings.runtime_kind.clone(),

@@ -225,6 +225,14 @@ pub struct UpdateSettingsRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AddOAuthProfileRequest {
+    pub tool: String,
+    pub profile: String,
+    pub label: Option<String>,
+    pub state_mode: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AddProfileRequest {
     pub tool: String,
     pub profile: String,

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   addProfile,
+  addProfileOAuth,
   checkForUpdates,
   installUpdate,
   removeProfile,
@@ -33,6 +34,10 @@ export function useDesktopActions() {
   return {
     addProfileMutation: useMutation({
       mutationFn: addProfile,
+      onSuccess: invalidate,
+    }),
+    addProfileOAuthMutation: useMutation({
+      mutationFn: addProfileOAuth,
       onSuccess: invalidate,
     }),
     useProfileMutation: useMutation({

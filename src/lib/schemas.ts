@@ -135,6 +135,19 @@ export const shellHookGuidanceSchema = z.object({
   manual_apply_examples: z.array(z.string()),
   variants: z.array(shellHookVariantSchema),
 });
+export const oauthProgressEventSchema = z.object({
+  type: z.string().nullable().optional(),
+  seq: z.number().nullable().optional(),
+  command: z.string().nullable().optional(),
+  tool: z.string().nullable().optional(),
+  profile: z.string().nullable().optional(),
+  phase: z.string().nullable().optional(),
+  safe_to_cancel: z.boolean().nullable().optional(),
+  message: z.string().nullable().optional(),
+  ok: z.boolean().nullable().optional(),
+  result: z.record(z.unknown()).nullable().optional(),
+  error: z.record(z.unknown()).nullable().optional(),
+});
 
 export const mutationResponseSchema = z.object({
   command: z.string(),
@@ -153,3 +166,4 @@ export type InitReport = z.infer<typeof initReportSchema>;
 export type UpdateCheckReport = z.infer<typeof updateCheckReportSchema>;
 export type InstallUpdateReport = z.infer<typeof installUpdateReportSchema>;
 export type ShellHookGuidance = z.infer<typeof shellHookGuidanceSchema>;
+export type OAuthProgressEvent = z.infer<typeof oauthProgressEventSchema>;

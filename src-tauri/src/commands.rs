@@ -1,17 +1,18 @@
 use crate::bridge::{AiswBridge, CliAiswBridge};
 use crate::errors::{DesktopResult, ErrorPayload};
 use crate::models::{
-    AddProfileRequest, AppBootstrap, AppSnapshot, BackupEntry, DesktopSettings, DoctorReport,
-    InitReport, InstallUpdateReport, MutationResponse, ProjectBindingsReport, RepairReport,
-    RepairRequest, ShellHookGuidance, UpdateCheckReport, UpdateSettingsRequest,
-    UseAllProfilesRequest, UseContextRequest, UseProfileRequest, VerifyReport,
-    WorkspaceBindRequest, WorkspaceStatusReport, WorkspaceUnbindTarget,
+    AddOAuthProfileRequest, AddProfileRequest, AppBootstrap, AppSnapshot, BackupEntry,
+    DesktopSettings, DoctorReport, InitReport, InstallUpdateReport, MutationResponse,
+    ProjectBindingsReport, RepairReport, RepairRequest, ShellHookGuidance, UpdateCheckReport,
+    UpdateSettingsRequest, UseAllProfilesRequest, UseContextRequest, UseProfileRequest,
+    VerifyReport, WorkspaceBindRequest, WorkspaceStatusReport, WorkspaceUnbindTarget,
 };
 use crate::shell;
 use crate::state::{incompatible_runtime_error, AppState};
 use crate::tray;
 use crate::updater;
 use std::path::PathBuf;
+use tauri::Emitter;
 
 #[tauri::command]
 pub async fn get_bootstrap(state: tauri::State<'_, AppState>) -> DesktopResult<AppBootstrap> {
@@ -79,6 +80,27 @@ pub async fn add_profile(
     let result = state
         .mutate("add_profile", move |bridge| async move {
             bridge.add_profile(request).await
+        })
+        .await?;
+    let _ = tray::refresh_tray(&app, state.inner().clone()).await;
+    Ok(result)
+}
+
+#[tauri::command]
+pub async fn add_profile_oauth(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, AppState>,
+    request: AddOAuthProfileRequest,
+) -> DesktopResult<MutationResponse> {
+    ensure_compatible(&state).await?;
+    let app_handle = app.clone();
+    let result = state
+        .mutate_cli("add_profile_oauth", move |bridge| async move {
+            bridge
+                .add_profile_oauth(request, move |event| {
+                    let _ = app_handle.emit("oauth-progress", event);
+                })
+                .await
         })
         .await?;
     let _ = tray::refresh_tray(&app, state.inner().clone()).await;

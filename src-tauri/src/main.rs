@@ -38,6 +38,7 @@ fn main() {
             commands::update_settings,
             commands::run_init,
             commands::add_profile,
+            commands::add_profile_oauth,
             commands::use_profile,
             commands::use_all_profiles,
             commands::use_context,

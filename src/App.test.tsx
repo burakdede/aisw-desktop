@@ -83,6 +83,15 @@ function renderApp() {
 
 describe("App", () => {
   beforeEach(() => {
+    let oauthHandler: ((payload: unknown) => void) | undefined;
+    window.__AISW_DESKTOP_LISTEN__ = async (event, handler) => {
+      if (event === "oauth-progress") {
+        oauthHandler = handler as (payload: unknown) => void;
+      }
+      return () => {
+        oauthHandler = undefined;
+      };
+    };
     window.__AISW_DESKTOP_MOCK__ = {
       get_bootstrap: bootstrap,
       get_snapshot: bootstrap.snapshot,
@@ -129,6 +138,7 @@ describe("App", () => {
 
   afterEach(() => {
     delete window.__AISW_DESKTOP_MOCK__;
+    delete window.__AISW_DESKTOP_LISTEN__;
   });
 
   it("renders the overview from bootstrap data", async () => {
@@ -246,6 +256,108 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "restore_backup")).toBe(true);
       expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
+    });
+  });
+
+  it("runs guided OAuth capture from the profiles screen", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    let oauthHandler: ((payload: unknown) => void) | undefined;
+    window.__AISW_DESKTOP_LISTEN__ = async (event, handler) => {
+      if (event === "oauth-progress") {
+        oauthHandler = handler as (payload: unknown) => void;
+      }
+      return () => {
+        oauthHandler = undefined;
+      };
+    };
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "add_profile_oauth") {
+        oauthHandler?.({
+          type: "started",
+          seq: 1,
+          command: "add",
+          tool: "claude",
+          profile: "personal",
+        });
+        oauthHandler?.({
+          type: "info",
+          seq: 2,
+          command: "add",
+          tool: "claude",
+          profile: "personal",
+          phase: "starting_upstream_auth",
+          message: "Launching Claude login",
+        });
+        oauthHandler?.({
+          type: "waiting_for_user",
+          seq: 3,
+          command: "add",
+          tool: "claude",
+          profile: "personal",
+          phase: "waiting_for_user",
+          safe_to_cancel: true,
+          message: "Complete login in the browser or terminal",
+        });
+        oauthHandler?.({
+          type: "info",
+          seq: 4,
+          command: "add",
+          tool: "claude",
+          profile: "personal",
+          phase: "applying_changes",
+          message: "Saving captured credentials",
+        });
+        oauthHandler?.({
+          type: "result",
+          seq: 5,
+          command: "add",
+          tool: "claude",
+          profile: "personal",
+          ok: true,
+          result: {
+            tool: "claude",
+            profile: "personal",
+            auth_method: "oauth",
+          },
+        });
+        return { command, snapshot: bootstrap.snapshot };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    renderApp();
+    await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Profiles"));
+    fireEvent.change(screen.getByLabelText("Profile name"), {
+      target: { value: "personal" },
+    });
+    fireEvent.change(screen.getByLabelText("Import mode"), {
+      target: { value: "oauth" },
+    });
+    fireEvent.click(screen.getByText("Start OAuth"));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "add_profile_oauth")).toBe(true);
+      expect(screen.getByText("OAuth progress")).toBeInTheDocument();
+      expect(screen.getByText("0. Starting OAuth")).toBeInTheDocument();
+      expect(screen.getByText("1. Starting upstream login")).toBeInTheDocument();
+      expect(screen.getByText("2. Waiting for login completion")).toBeInTheDocument();
+      expect(screen.getByText("3. Saving captured profile")).toBeInTheDocument();
+      expect(screen.getByText("4. Profile saved")).toBeInTheDocument();
     });
   });
 

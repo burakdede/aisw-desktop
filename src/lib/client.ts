@@ -7,6 +7,7 @@ import {
   initReportSchema,
   installUpdateReportSchema,
   mutationResponseSchema,
+  oauthProgressEventSchema,
   projectBindingsReportSchema,
   repairReportSchema,
   type AppBootstrap,
@@ -16,6 +17,7 @@ import {
   type InstallUpdateReport,
   type InitReport,
   type MutationResponse,
+  type OAuthProgressEvent,
   type ShellHookGuidance,
   type UpdateCheckReport,
   shellHookGuidanceSchema,
@@ -34,6 +36,13 @@ export interface AddProfileInput {
     | { kind: "from_live" }
     | { kind: "from_env" }
     | { kind: "api_key"; value: string };
+}
+
+export interface AddOAuthProfileInput {
+  tool: string;
+  profile: string;
+  label?: string | null;
+  stateMode?: string | null;
 }
 
 export interface UseProfileInput {
@@ -107,6 +116,21 @@ export async function addProfile(input: AddProfileInput): Promise<MutationRespon
         label: input.label ?? null,
         state_mode: input.stateMode ?? null,
         import_mode: input.importMode,
+      },
+    }),
+  );
+}
+
+export async function addProfileOAuth(
+  input: AddOAuthProfileInput,
+): Promise<MutationResponse> {
+  return mutationResponseSchema.parse(
+    await invokeDesktop("add_profile_oauth", {
+      request: {
+        tool: input.tool,
+        profile: input.profile,
+        label: input.label ?? null,
+        state_mode: input.stateMode ?? null,
       },
     }),
   );
@@ -198,6 +222,10 @@ export async function getSettings(): Promise<DesktopSettings> {
 
 export async function getShellGuidance(): Promise<ShellHookGuidance> {
   return shellHookGuidanceSchema.parse(await invokeDesktop("get_shell_guidance"));
+}
+
+export function parseOAuthProgressEvent(payload: unknown): OAuthProgressEvent {
+  return oauthProgressEventSchema.parse(payload);
 }
 
 export async function checkForUpdates(): Promise<UpdateCheckReport> {
