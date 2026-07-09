@@ -117,6 +117,8 @@ test("warns before backup restore and re-activates the restored profile", async 
       "Restore replays the saved files only. It does not activate that profile again until you run a matching use action or choose restore and activate here.",
     ),
   ).toBeVisible();
+  await expect(page.getByText("Codex backup · 20260325T114502Z-codex-work")).toBeVisible();
+  await expect(page.getByText("Affects codex / work. Restore files only unless you explicitly re-activate this profile.")).toBeVisible();
 
   await page.getByRole("button", { name: "Restore and activate" }).click();
 

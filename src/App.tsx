@@ -185,7 +185,16 @@ export function App() {
             <WorkspacesPanel snapshot={resolvedSnapshot} settings={settings} />
           ) : null}
           {activeNav === "diagnostics" ? <DiagnosticsPanel settings={settings} /> : null}
-          {activeNav === "backups" ? <BackupsPanel /> : null}
+          {activeNav === "backups" ? (
+            <BackupsPanel
+              snapshot={resolvedSnapshot}
+              settings={settings}
+              onOpenProfiles={(tool, expandedProfile) => {
+                setProfilesRouteState({ tool, expandedProfile });
+                setActiveNav("profiles");
+              }}
+            />
+          ) : null}
           {activeNav === "settings" ? (
             <SettingsPanel settings={settings} runtimeStatus={runtimeStatus} />
           ) : null}

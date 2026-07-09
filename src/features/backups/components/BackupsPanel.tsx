@@ -1,13 +1,29 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
 import { listBackups } from "../../../lib/client";
+import { toolProfileDisplayLabel } from "../../../lib/profile-display";
+import { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
+import { titleCase } from "../../../lib/utils";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 
-export function BackupsPanel() {
+export function BackupsPanel({
+  snapshot,
+  settings,
+  onOpenProfiles,
+}: {
+  snapshot: AppSnapshot;
+  settings: DesktopSettings;
+  onOpenProfiles: (tool: string, expandedProfile?: string | null) => void;
+}) {
   const backups = useQuery({ queryKey: ["backups"], queryFn: listBackups });
   const { restoreBackupMutation, useProfileMutation, mutationLock } = useDesktopActions();
   const [copyMessage, setCopyMessage] = useState("");
+  const sortedBackups = useMemo(
+    () =>
+      [...(backups.data ?? [])].sort((left, right) => right.backup_id.localeCompare(left.backup_id)),
+    [backups.data],
+  );
 
   async function copyBackupId(backupId: string) {
     if (!navigator.clipboard?.writeText) {
@@ -25,17 +41,37 @@ export function BackupsPanel() {
         a matching <code>use</code> action or choose restore and activate here.
       </p>
       <div className="stack-list">
-        {backups.data?.map((entry) => (
+        {sortedBackups.map((entry) => {
+          const target = resolveBackupTarget(entry.tool, entry.profile);
+          const profileLabel = toolProfileDisplayLabel(
+            settings,
+            snapshot,
+            target.tool,
+            target.profile,
+          );
+
+          return (
           <article key={entry.backup_id} className="list-row">
             <div>
-              <strong>{entry.backup_id}</strong>
+              <strong>{profileLabel}</strong>
               <p className="inline-note">Created: {formatBackupTimestamp(entry.backup_id)}</p>
               <p>
-                {entry.tool} / {entry.profile}
+                {titleCase(target.tool)} backup · {entry.backup_id}
               </p>
-              <p className="inline-note">Restore files only unless you explicitly re-activate this profile.</p>
+              <p className="inline-note">
+                Affects {target.tool} / {target.profile}. Restore files only unless you explicitly
+                re-activate this profile.
+              </p>
             </div>
             <div className="button-row">
+              <button
+                className="ghost-button"
+                type="button"
+                disabled={mutationLock.isBusy}
+                onClick={() => onOpenProfiles(target.tool, target.profile)}
+              >
+                Open profile details
+              </button>
               <button
                 className="ghost-button"
                 type="button"
@@ -56,14 +92,10 @@ export function BackupsPanel() {
                 onClick={() => {
                   restoreBackupMutation.mutate(entry.backup_id, {
                     onSuccess: () => {
-                      const [tool, profile] = entry.profile.includes("/")
-                        ? entry.profile.split("/", 2)
-                        : [entry.tool, entry.profile];
-                      if (!tool || !profile) return;
                       useProfileMutation.mutate({
-                        tool,
-                        profile,
-                        stateMode: tool === "gemini" ? null : "isolated",
+                        tool: target.tool,
+                        profile: target.profile,
+                        stateMode: target.tool === "gemini" ? null : "isolated",
                       });
                     },
                   });
@@ -73,7 +105,7 @@ export function BackupsPanel() {
               </button>
             </div>
           </article>
-        ))}
+        )})}
         {!backups.data?.length ? (
           <p className="inline-note">{backups.isLoading ? "Loading backups…" : "No backups found."}</p>
         ) : null}
@@ -81,6 +113,16 @@ export function BackupsPanel() {
       </div>
     </SectionCard>
   );
+}
+
+function resolveBackupTarget(tool: string, profile: string) {
+  if (profile.includes("/")) {
+    const [resolvedTool, resolvedProfile] = profile.split("/", 2);
+    if (resolvedTool && resolvedProfile) {
+      return { tool: resolvedTool, profile: resolvedProfile };
+    }
+  }
+  return { tool, profile };
 }
 
 function formatBackupTimestamp(backupId: string) {

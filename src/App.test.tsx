@@ -1192,6 +1192,11 @@ describe("App", () => {
               tool: "claude",
               profile: "claude/work",
             },
+            {
+              backup_id: "20260326T094012Z-codex-personal",
+              tool: "codex",
+              profile: "codex/personal",
+            },
           ],
           get_settings: bootstrap.settings,
         } as Record<string, unknown>
@@ -1201,18 +1206,60 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Backups")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Backups"));
-    await waitFor(() => expect(screen.getByText("Restore and activate")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText("Restore and activate")).toHaveLength(2));
     expect(screen.getByText(/Restore replays the saved files only/)).toBeInTheDocument();
-    expect(screen.getByText(/Created:/)).toBeInTheDocument();
-    fireEvent.click(screen.getByText("Copy backup ID"));
+    expect(screen.getByText("Personal")).toBeInTheDocument();
+    expect(screen.getByText(/Affects codex \/ personal/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Created:/)).toHaveLength(2);
+    const backupsSection = screen.getByRole("heading", { name: "Backups" }).closest(".section-card");
+    const articles = backupsSection?.querySelectorAll(".list-row") ?? [];
+    expect(articles[0]?.textContent).toContain("Personal");
+    expect(articles[1]?.textContent).toContain("Work");
+    fireEvent.click(screen.getAllByText("Copy backup ID")[0]);
     await waitFor(() => {
-      expect(screen.getByText("Copied backup id 20260325T114502Z-claude-work.")).toBeInTheDocument();
+      expect(screen.getByText("Copied backup id 20260326T094012Z-codex-personal.")).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByText("Restore and activate"));
+    fireEvent.click(screen.getAllByText("Restore and activate")[0]);
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "restore_backup")).toBe(true);
       expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
+    });
+  });
+
+  it("opens profile details directly from a backup row", async () => {
+    window.__AISW_DESKTOP_MOCK__ = async (command) =>
+      (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [
+            {
+              backup_id: "20260325T114502Z-claude-work",
+              tool: "claude",
+              profile: "claude/work",
+            },
+          ],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Backups")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Backups"));
+    await waitFor(() => expect(screen.getByText("Open profile details")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Open profile details"));
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Profiles" })).toBeInTheDocument();
+      expect(screen.getByDisplayValue("Claude")).toBeInTheDocument();
+      expect(screen.getByText("Hide diagnostic details")).toBeInTheDocument();
     });
   });
 
