@@ -806,6 +806,33 @@ printf '{"version":"0.3.7","cli_api_version":1,"json_schema_version":1,"progress
     }
 
     #[tokio::test]
+    async fn add_profile_uses_from_env_flag() {
+        let path = write_fake_aisw(
+            r#"#!/bin/sh
+if [ "$1" = "add" ]; then
+  printf '{"command":"add","args":"%s %s %s %s %s"}' "$1" "$2" "$3" "$4" "$5"
+  exit 0
+fi
+printf '{"version":"0.3.7","cli_api_version":1,"json_schema_version":1,"progress_schema_version":1}'
+"#,
+        );
+        let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
+        let response = bridge
+            .add_profile(AddProfileRequest {
+                tool: "codex".to_owned(),
+                profile: "ci".to_owned(),
+                label: None,
+                state_mode: None,
+                import_mode: AddProfileMode::FromEnv,
+            })
+            .await
+            .unwrap();
+
+        assert_eq!(response["args"], "add codex ci --json --from-env");
+        assert_eq!(response["command"], "add");
+    }
+
+    #[tokio::test]
     async fn add_profile_oauth_streams_progress_and_returns_result() {
         let path = write_fake_aisw(
             r#"#!/bin/sh
