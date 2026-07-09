@@ -39,12 +39,16 @@ export function OverviewPanel({
   const [quickSwitch, setQuickSwitch] = useState("");
   const quickSwitchOptions = useMemo(() => {
     const counts = new Map<string, { count: number; label: string }>();
-    Object.values(snapshot.profiles).forEach((entry) => {
+    Object.entries(snapshot.profiles).forEach(([tool, entry]) => {
       entry.profiles.forEach((profile) => {
         const current = counts.get(profile.name);
         counts.set(profile.name, {
           count: (current?.count ?? 0) + 1,
-          label: current?.label ?? profile.label ?? titleCase(profile.name),
+          label:
+            current?.label ??
+            settings.profile_labels?.[tool]?.[profile.name] ??
+            profile.label ??
+            titleCase(profile.name),
         });
       });
     });
@@ -64,7 +68,7 @@ export function OverviewPanel({
         label: `Shared profile: ${profile.label}`,
       })),
     ];
-  }, [settings.profile_sets, snapshot.profiles]);
+  }, [settings.profile_labels, settings.profile_sets, snapshot.profiles]);
 
   const refresh = useMutation({
     mutationFn: async () => {

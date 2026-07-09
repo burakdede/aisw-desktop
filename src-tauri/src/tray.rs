@@ -332,21 +332,20 @@ fn shared_profile_entries(
     settings: Option<&DesktopSettings>,
     snapshot: &AppSnapshot,
 ) -> Vec<(String, String)> {
-    let mut counts = std::collections::HashMap::<String, (usize, String)>::new();
-    snapshot.profiles.iter().for_each(|(tool, entry)| {
+    let mut counts = std::collections::HashMap::<String, usize>::new();
+    snapshot.profiles.iter().for_each(|(_, entry)| {
         entry.profiles.iter().for_each(|profile| {
-            let current = counts.entry(profile.name.clone()).or_insert_with(|| {
-                (
-                    0,
-                    shared_profile_display_name_from_parts(settings, tool, profile),
-                )
-            });
-            current.0 += 1;
+            *counts.entry(profile.name.clone()).or_insert(0) += 1;
         });
     });
     let mut entries = counts
         .into_iter()
-        .filter_map(|(name, (count, label))| if count > 1 { Some((name, label)) } else { None })
+        .filter_map(|(name, count)| {
+            (count > 1).then(|| {
+                let label = shared_profile_display_name(settings, snapshot, &name);
+                (name, label)
+            })
+        })
         .collect::<Vec<_>>();
     entries.sort_by(|left, right| left.0.cmp(&right.0));
     entries
@@ -472,13 +471,30 @@ fn shared_profile_display_name(
     snapshot: &AppSnapshot,
     profile: &str,
 ) -> String {
-    snapshot
-        .profiles
-        .iter()
-        .find_map(|(tool, entry)| {
-            entry.profiles.iter().find_map(|candidate| {
-                (candidate.name == profile)
-                    .then(|| shared_profile_display_name_from_parts(settings, tool, candidate))
+    if let Some(label) = settings.and_then(|settings| {
+        let mut tools = settings.profile_labels.keys().collect::<Vec<_>>();
+        tools.sort();
+        tools.into_iter().find_map(|tool| {
+            settings
+                .profile_labels
+                .get(tool)
+                .and_then(|labels| labels.get(profile))
+                .and_then(|label| label.clone())
+        })
+    }) {
+        return label;
+    }
+
+    let mut tools = snapshot.profiles.keys().collect::<Vec<_>>();
+    tools.sort();
+    tools.into_iter()
+        .find_map(|tool| {
+            snapshot.profiles.get(tool).and_then(|entry| {
+                entry
+                    .profiles
+                    .iter()
+                    .find(|candidate| candidate.name == profile)
+                    .and_then(|candidate| candidate.label.clone())
             })
         })
         .unwrap_or_else(|| title_case(profile))
