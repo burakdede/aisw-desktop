@@ -55,6 +55,10 @@ export function ProfilesPanel({
   const apiKeyInputRef = useRef<HTMLInputElement | null>(null);
 
   const profiles = useMemo(() => snapshot.profiles[tool]?.profiles ?? [], [snapshot, tool]);
+  const normalizedProfileNames = useMemo(
+    () => new Set(profiles.map((entry) => entry.name.trim().toLowerCase())),
+    [profiles],
+  );
   const toolStatus = useMemo(
     () => snapshot.statuses.find((entry) => entry.tool === tool),
     [snapshot.statuses, tool],
@@ -64,6 +68,9 @@ export function ProfilesPanel({
     () => supportedStateModes(tool, toolCapabilities),
     [tool, toolCapabilities],
   );
+  const duplicateDraftName = profile.trim();
+  const hasDuplicateProfileName =
+    duplicateDraftName.length > 0 && normalizedProfileNames.has(duplicateDraftName.toLowerCase());
 
   useEffect(() => {
     if (!availableStateModes.length) {
@@ -104,7 +111,7 @@ export function ProfilesPanel({
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!profile.trim()) {
+    if (!profile.trim() || hasDuplicateProfileName) {
       return;
     }
 
@@ -186,6 +193,11 @@ export function ProfilesPanel({
             Profile name
             <input value={profile} onChange={(event) => setProfile(event.target.value)} />
           </label>
+          {hasDuplicateProfileName ? (
+            <p className="inline-note">
+              {duplicateWarning(tool, duplicateDraftName)}
+            </p>
+          ) : null}
           <label>
             Label
             <input value={label} onChange={(event) => setLabel(event.target.value)} />
@@ -253,7 +265,8 @@ export function ProfilesPanel({
               mutationLock.isBusy ||
               addProfileMutation.isPending ||
               addProfileOAuthMutation.isPending ||
-              apiKeyProfileAction.isPending
+              apiKeyProfileAction.isPending ||
+              hasDuplicateProfileName
             }
           >
             {mode === "oauth"
@@ -313,6 +326,10 @@ export function ProfilesPanel({
           ) : null}
           {profiles.map((entry) => {
             const latestBackup = latestBackupForProfile(tool, entry.name, backups.data);
+            const renameDraft = renameDrafts[entry.name] ?? "";
+            const renameDuplicate =
+              renameDraft.trim().length > 0 &&
+              isDuplicateProfileName(profiles, entry.name, renameDraft);
             return (
             <article key={entry.name} className="list-row">
               <div>
@@ -334,7 +351,7 @@ export function ProfilesPanel({
                   <input
                     aria-label={`rename ${entry.name}`}
                     placeholder="new name"
-                    value={renameDrafts[entry.name] ?? ""}
+                    value={renameDraft}
                     onChange={(event) =>
                       setRenameDrafts((current) => ({
                         ...current,
@@ -345,9 +362,9 @@ export function ProfilesPanel({
                   <button
                     className="ghost-button"
                     type="button"
-                    disabled={mutationLock.isBusy}
+                    disabled={mutationLock.isBusy || renameDuplicate}
                     onClick={() => {
-                      const newName = renameDrafts[entry.name]?.trim();
+                      const newName = renameDraft.trim();
                       if (!newName) return;
                       setPendingRemoval(null);
                       renameProfileMutation.mutate({
@@ -360,6 +377,11 @@ export function ProfilesPanel({
                     Rename
                   </button>
                 </div>
+                {renameDuplicate ? (
+                  <p className="inline-note">
+                    {duplicateWarning(tool, renameDraft.trim())}
+                  </p>
+                ) : null}
                 <div className="inline-form inline-form-compact">
                   <input
                     aria-label={`label ${entry.name}`}
@@ -687,6 +709,22 @@ function formatProfileWarning(
 ) {
   const detail = warning.message ?? warning.code ?? "Warning reported by aisw.";
   return warning.remediation ? `${detail} Remediation: ${warning.remediation}` : detail;
+}
+
+function duplicateWarning(tool: string, profile: string) {
+  return `${titleCase(tool)} already has a profile named ${profile}. Choose a different name or rename the existing profile first.`;
+}
+
+function isDuplicateProfileName(
+  profiles: AppSnapshot["profiles"][string]["profiles"],
+  currentName: string,
+  nextName: string,
+) {
+  const normalizedCurrent = currentName.trim().toLowerCase();
+  const normalizedNext = nextName.trim().toLowerCase();
+  return profiles.some(
+    (entry) => entry.name.trim().toLowerCase() === normalizedNext && entry.name.trim().toLowerCase() !== normalizedCurrent,
+  );
 }
 
 function supportedStateModes(

@@ -767,6 +767,42 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("warns before adding a duplicate profile name", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Profiles"));
+    fireEvent.change(screen.getByLabelText("Profile name"), {
+      target: { value: "work" },
+    });
+
+    expect(
+      screen.getByText(
+        "Claude already has a profile named work. Choose a different name or rename the existing profile first.",
+      ),
+    ).toBeInTheDocument();
+    expect(getProfilesSection().getByText("Add profile")).toBeDisabled();
+    expect(calls.some((entry) => entry.command === "add_profile")).toBe(false);
+  });
+
   it("surfaces duplicate profile failures in the profiles screen", async () => {
     window.__AISW_DESKTOP_MOCK__ = async (command) => {
       if (command === "add_profile") {
@@ -792,13 +828,71 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
     fireEvent.change(screen.getByLabelText("Profile name"), {
-      target: { value: "work" },
+      target: { value: "ops" },
     });
     fireEvent.click(getProfilesSection().getByText("Add profile"));
 
     await waitFor(() => {
       expect(screen.getByText("duplicate profile")).toBeInTheDocument();
     });
+  });
+
+  it("warns before renaming a profile to a duplicate name", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    const duplicateSnapshot = {
+      ...bootstrap.snapshot,
+      profiles: {
+        ...bootstrap.snapshot.profiles,
+        claude: {
+          active: "work",
+          profiles: [
+            { name: "work", auth: "oauth", label: "Work" },
+            { name: "personal", auth: "oauth", label: "Personal" },
+          ],
+        },
+      },
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      return (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            snapshot: duplicateSnapshot,
+          },
+          get_snapshot: duplicateSnapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Profiles"));
+    fireEvent.change(screen.getByLabelText("rename personal"), {
+      target: { value: "work" },
+    });
+
+    expect(
+      screen.getByText(
+        "Claude already has a profile named work. Choose a different name or rename the existing profile first.",
+      ),
+    ).toBeInTheDocument();
+    const renameInput = screen.getByLabelText("rename personal");
+    const renameRow = renameInput.closest(".list-row") as HTMLElement | null;
+    if (!renameRow) {
+      throw new Error("Rename row not found.");
+    }
+    expect(within(renameRow).getByText("Rename")).toBeDisabled();
+    expect(calls.some((entry) => entry.command === "rename_profile")).toBe(false);
   });
 
   it("shows remediation text for profile command failures", async () => {
