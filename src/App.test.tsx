@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, renderHook, screen, waitFor, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { App } from "./App";
 import { resetLastCommandResultsForTests } from "./features/shared/lastCommandResult";
@@ -104,6 +104,15 @@ async function renderApp() {
     );
     await Promise.resolve();
   });
+}
+
+function getProfilesSection() {
+  const kicker = screen.getByText("Provisioning");
+  const section = kicker.closest("section");
+  if (!section) {
+    throw new Error("Profiles section not found.");
+  }
+  return within(section);
 }
 
 describe("App", () => {
@@ -785,7 +794,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Profile name"), {
       target: { value: "work" },
     });
-    fireEvent.click(screen.getByText("Add profile"));
+    fireEvent.click(getProfilesSection().getByText("Add profile"));
 
     await waitFor(() => {
       expect(screen.getByText("duplicate profile")).toBeInTheDocument();
@@ -823,7 +832,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Profile name"), {
       target: { value: "ops" },
     });
-    fireEvent.click(screen.getByText("Add profile"));
+    fireEvent.click(getProfilesSection().getByText("Add profile"));
 
     await waitFor(() => {
       expect(
@@ -871,7 +880,7 @@ describe("App", () => {
     });
 
     expect(screen.getByText("OPENAI_API_KEY")).toBeInTheDocument();
-    fireEvent.click(screen.getByText("Add profile"));
+    fireEvent.click(getProfilesSection().getByText("Add profile"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "add_profile")).toBe(true);
@@ -935,7 +944,7 @@ describe("App", () => {
     });
     expect(apiKeyInput.value).toBe("sk-live-secret");
 
-    fireEvent.click(screen.getByText("Add profile"));
+    fireEvent.click(getProfilesSection().getByText("Add profile"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "add_profile")).toBe(true);
@@ -1617,9 +1626,9 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Diagnostics"));
 
     await waitFor(() => {
-      expect(screen.getByText("System keyring is locked.")).toBeInTheDocument();
-      expect(screen.getByText("AISW cannot write the active config path.")).toBeInTheDocument();
-      expect(screen.getByText("Upstream OAuth session timed out.")).toBeInTheDocument();
+      expect(screen.getAllByText("System keyring is locked.").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("AISW cannot write the active config path.").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Upstream OAuth session timed out.").length).toBeGreaterThan(0);
     });
     expect(screen.getByText("Unlock the system keychain and retry.")).toBeInTheDocument();
     expect(screen.getByText("Grant write access to ~/.aisw")).toBeInTheDocument();
@@ -1867,6 +1876,75 @@ describe("App", () => {
       expect(screen.getByText("Provisioning")).toBeInTheDocument();
       expect(screen.getByDisplayValue("Codex")).toBeInTheDocument();
     });
+  });
+
+  it("keeps setup visible while another installed tool still has no profile", async () => {
+    const partialSetupSnapshot = {
+      statuses: [
+        {
+          tool: "claude",
+          binary_found: true,
+          stored_profiles: 1,
+          active_profile: "work",
+          auth_method: "oauth",
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+          warnings: [],
+        },
+        {
+          tool: "codex",
+          binary_found: true,
+          stored_profiles: 0,
+          active_profile: null,
+          auth_method: null,
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: null,
+          credentials_present: false,
+          permissions_ok: true,
+          warnings: [],
+        },
+      ],
+      profiles: {
+        claude: {
+          active: "work",
+          profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+        },
+        codex: {
+          active: null,
+          profiles: [],
+        },
+      },
+      contexts: [],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      return (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            snapshot: partialSetupSnapshot,
+          },
+          get_snapshot: partialSetupSnapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
+    expect(screen.getAllByText("No live credentials detected").length).toBeGreaterThan(0);
+    expect(screen.getByLabelText("Add codex profile")).toBeInTheDocument();
   });
 
   it("opens diagnostics when the tray requests it", async () => {

@@ -45,8 +45,9 @@ test("switches shared profiles and recovers from live mismatch", async ({ page }
 
   await expect(page.getByText("Last result: Saved claude profile incident.")).toBeVisible();
 
-  await page.getByRole("combobox").first().selectOption("work");
-  await page.getByRole("button", { name: "Switch all" }).click();
+  const overview = page.locator(".section-card").filter({ hasText: "Control Center" });
+  await overview.getByRole("combobox").first().selectOption("work");
+  await overview.getByRole("button", { name: "Switch all" }).click();
 
   await expect(page.getByText("Last bulk result: Switched all tools to work.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "work" }).nth(1)).toBeVisible();
@@ -74,19 +75,20 @@ test("creates profiles from environment and API key modes", async ({ page }) => 
   await page.goto("/");
 
   await page.getByRole("button", { name: "Profiles" }).click();
+  const profilesSection = page.locator(".section-card").filter({ hasText: "Provisioning" });
 
   await page.getByLabel("Tool").selectOption("codex");
   await page.getByLabel("Profile name").fill("ci");
   await page.getByLabel("Import mode").selectOption("from_env");
   await expect(page.getByText("OPENAI_API_KEY")).toBeVisible();
-  await page.getByRole("button", { name: "Add profile" }).click();
+  await profilesSection.getByRole("button", { name: "Add profile" }).click();
   await expect(page.getByText("ci · api_key")).toBeVisible();
 
   await page.getByLabel("Tool").selectOption("claude");
   await page.getByLabel("Profile name").fill("ops");
   await page.getByLabel("Import mode").selectOption("api_key");
   await page.locator('input[type="password"]').fill("sk-ant-live-secret");
-  await page.getByRole("button", { name: "Add profile" }).click();
+  await profilesSection.getByRole("button", { name: "Add profile" }).click();
   await expect(page.getByText("ops · api_key")).toBeVisible();
 });
 

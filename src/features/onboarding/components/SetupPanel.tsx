@@ -54,6 +54,8 @@ export function SetupPanel({
     [bootstrap, snapshot, doctor.data],
   );
   const switchableProfiles = useMemo(() => findSharedProfiles(snapshot), [snapshot]);
+  const shouldShowSetup =
+    totalProfiles === 0 || liveAccounts.length > 0 || undetectedInstalledTools.length > 0;
 
   function submitImport(event: FormEvent<HTMLFormElement>, tool: string) {
     event.preventDefault();
@@ -68,7 +70,7 @@ export function SetupPanel({
     });
   }
 
-  if (totalProfiles > 0 && !liveAccounts.length) {
+  if (!shouldShowSetup) {
     return null;
   }
 
