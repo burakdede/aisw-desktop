@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SectionCard } from "../../../components/SectionCard";
-import { AppSnapshot, ToolStatus } from "../../../lib/schemas";
+import { AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import { runDoctor, runRepair, runVerify } from "../../../lib/client";
 import { openExternalGuide, installGuideUrlForTool } from "../../../lib/tool-guidance";
 import { useDesktop } from "../../shared/useDesktop";
@@ -16,11 +16,13 @@ import {
   type SummaryCardData,
 } from "../diagnostic-parsers";
 import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
+import { resolveWorkspaceActivationTarget } from "../../workspaces/workspace-activation";
 
-export function DiagnosticsPanel() {
+export function DiagnosticsPanel({ settings }: { settings: DesktopSettings }) {
   const { snapshot } = useDesktop();
   const queryClient = useQueryClient();
-  const { useProfileMutation, useContextMutation, mutationLock } = useDesktopActions();
+  const { useProfileMutation, useContextMutation, activateProfileSetMutation, mutationLock } =
+    useDesktopActions();
   const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor });
   const verify = useQuery({ queryKey: ["verify"], queryFn: runVerify });
   const repair = useQuery({
@@ -52,8 +54,10 @@ export function DiagnosticsPanel() {
     snapshot: snapshot.data,
     doctor: doctor.data,
     repair: repair.data,
+    settings,
     useProfile: useProfileMutation.mutate,
     useContext: useContextMutation.mutate,
+    activateProfileSet: activateProfileSetMutation.mutate,
     applyRepairFixes: (fixes) => applyRepair.mutate(fixes),
   });
 
@@ -206,15 +210,19 @@ function buildQuickFixes(
     snapshot,
     doctor,
     repair,
+    settings,
     useProfile,
     useContext,
+    activateProfileSet,
     applyRepairFixes,
   }: {
     snapshot: AppSnapshot | undefined;
     doctor: Record<string, unknown> | undefined;
     repair: Record<string, unknown> | undefined;
+    settings: DesktopSettings;
     useProfile: (request: { tool: string; profile: string; stateMode: string | null }) => void;
     useContext: (request: { context: string; stateMode: string | null }) => void;
+    activateProfileSet: (request: { name: string }) => void;
     applyRepairFixes: (fixes: string[]) => void;
   },
 ): QuickFixCard[] {
@@ -277,11 +285,17 @@ function buildQuickFixes(
       label: "Use expected context now",
       status: "warn",
       primary: true,
-      action: () =>
+      action: () => {
+        const target = resolveWorkspaceActivationTarget(workspace.expectedContext, settings, snapshot);
+        if (target.kind === "profile_set") {
+          activateProfileSet({ name: target.name });
+          return;
+        }
         useContext({
-          context: workspace.expectedContext,
+          context: target.name,
           stateMode: "isolated",
-        }),
+        });
+      },
     });
   }
 

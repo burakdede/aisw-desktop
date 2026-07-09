@@ -12,6 +12,7 @@ import {
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { titleCase } from "../../../lib/utils";
 import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
+import { resolveWorkspaceActivationTarget } from "../../workspaces/workspace-activation";
 
 export function OverviewPanel({
   snapshot,
@@ -131,12 +132,21 @@ export function OverviewPanel({
                 className="primary-button"
                 type="button"
                 disabled={mutationLock.isBusy}
-                onClick={() =>
+                onClick={() => {
+                  const target = resolveWorkspaceActivationTarget(
+                    workspaceStatus.expectedContext,
+                    settings,
+                    snapshot,
+                  );
+                  if (target.kind === "profile_set") {
+                    activateProfileSetMutation.mutate({ name: target.name });
+                    return;
+                  }
                   useContextMutation.mutate({
-                    context: workspaceStatus.expectedContext,
+                    context: target.name,
                     stateMode: "isolated",
-                  })
-                }
+                  });
+                }}
               >
                 Use expected context now
               </button>

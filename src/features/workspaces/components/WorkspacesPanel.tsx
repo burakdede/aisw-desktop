@@ -1,17 +1,27 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getProjectBindings, getWorkspaceStatus } from "../../../lib/client";
-import { AppSnapshot } from "../../../lib/schemas";
+import { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { SectionCard } from "../../../components/SectionCard";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import {
   parseWorkspaceBindings,
   parseWorkspaceStatus,
 } from "../workspace-parsers";
+import {
+  resolveWorkspaceActivationTarget,
+  workspaceBindingOptions,
+} from "../workspace-activation";
 
 type BindScope = "default" | "path" | "git_remote";
 
-export function WorkspacesPanel({ snapshot }: { snapshot: AppSnapshot }) {
+export function WorkspacesPanel({
+  snapshot,
+  settings,
+}: {
+  snapshot: AppSnapshot;
+  settings: DesktopSettings;
+}) {
   const bindings = useQuery({
     queryKey: ["project-bindings"],
     queryFn: getProjectBindings,
@@ -24,18 +34,19 @@ export function WorkspacesPanel({ snapshot }: { snapshot: AppSnapshot }) {
     workspaceBindMutation,
     workspaceUnbindMutation,
     workspaceGuardMutation,
+    activateProfileSetMutation,
     useContextMutation,
     mutationLock,
   } = useDesktopActions();
   const [scope, setScope] = useState<BindScope>("default");
-  const [context, setContext] = useState(snapshot.contexts[0]?.name ?? "");
+  const bindingOptions = useMemo(
+    () => workspaceBindingOptions(settings, snapshot),
+    [settings, snapshot],
+  );
+  const [context, setContext] = useState(bindingOptions[0]?.value ?? "");
   const [targetValue, setTargetValue] = useState("");
   const [workspaceOverrideDismissed, setWorkspaceOverrideDismissed] = useState(false);
 
-  const availableContexts = useMemo(
-    () => snapshot.contexts.map((entry) => entry.name),
-    [snapshot.contexts],
-  );
   const statusCard = parseWorkspaceStatus(workspaceStatus.data);
   const bindingsSummary = parseWorkspaceBindings(bindings.data);
   const hasWorkspaceMismatch =
@@ -46,6 +57,24 @@ export function WorkspacesPanel({ snapshot }: { snapshot: AppSnapshot }) {
   useEffect(() => {
     setWorkspaceOverrideDismissed(false);
   }, [statusCard.currentContext, statusCard.expectedContext, statusCard.status]);
+
+  useEffect(() => {
+    if (!bindingOptions.some((entry) => entry.value === context)) {
+      setContext(bindingOptions[0]?.value ?? "");
+    }
+  }, [bindingOptions, context]);
+
+  function activateExpectedWorkspaceTarget() {
+    const target = resolveWorkspaceActivationTarget(statusCard.expectedContext, settings, snapshot);
+    if (target.kind === "profile_set") {
+      activateProfileSetMutation.mutate({ name: target.name });
+      return;
+    }
+    useContextMutation.mutate({
+      context: target.name,
+      stateMode: "isolated",
+    });
+  }
 
   function submitBind(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -83,9 +112,9 @@ export function WorkspacesPanel({ snapshot }: { snapshot: AppSnapshot }) {
             Context
             <select value={context} onChange={(event) => setContext(event.target.value)}>
               <option value="">Select context</option>
-              {availableContexts.map((entry) => (
-                <option key={entry} value={entry}>
-                  {entry}
+              {bindingOptions.map((entry) => (
+                <option key={entry.value} value={entry.value}>
+                  {entry.label}
                 </option>
               ))}
             </select>
@@ -147,12 +176,7 @@ export function WorkspacesPanel({ snapshot }: { snapshot: AppSnapshot }) {
                   className="primary-button"
                   type="button"
                   disabled={mutationLock.isBusy}
-                  onClick={() =>
-                    useContextMutation.mutate({
-                      context: statusCard.expectedContext,
-                      stateMode: "isolated",
-                    })
-                  }
+                  onClick={activateExpectedWorkspaceTarget}
                 >
                   Use expected context now
                 </button>

@@ -1400,6 +1400,16 @@ describe("App", () => {
 
   it("renders structured workspace details and saves bindings", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
+    const settingsWithSet: DesktopSettings = {
+      ...bootstrap.settings,
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    };
     const workspaceStatus = {
       result: {
         status: "mismatch",
@@ -1434,13 +1444,14 @@ describe("App", () => {
     };
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
-      if (command === "workspace_bind" || command === "use_context") {
+      if (command === "workspace_bind" || command === "activate_profile_set") {
         return { command, snapshot: workspaceSnapshot };
       }
       return (
         {
           get_bootstrap: {
             ...bootstrap,
+            settings: settingsWithSet,
             snapshot: workspaceSnapshot,
           },
           get_snapshot: workspaceSnapshot,
@@ -1451,7 +1462,7 @@ describe("App", () => {
           get_workspace_status: workspaceStatus,
           get_project_bindings: projectBindings,
           list_backups: [],
-          get_settings: bootstrap.settings,
+          get_settings: settingsWithSet,
         } as Record<string, unknown>
       )[command];
     };
@@ -1474,7 +1485,7 @@ describe("App", () => {
 
     fireEvent.click(screen.getAllByText("Use expected context now")[0]);
     await waitFor(() => {
-      expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
+      expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
     });
 
     fireEvent.click(screen.getByText("Workspaces"));
@@ -1491,8 +1502,11 @@ describe("App", () => {
       expect(screen.queryByText("Workspace mismatch")).not.toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByDisplayValue("Default context"), {
+    fireEvent.change(screen.getByLabelText("Binding scope"), {
       target: { value: "path" },
+    });
+    fireEvent.change(screen.getByLabelText("Context"), {
+      target: { value: "client-acme" },
     });
     fireEvent.change(screen.getByLabelText("Path"), {
       target: { value: "/code/next" },
@@ -1502,6 +1516,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "workspace_bind")).toBe(true);
     });
+    expect(screen.getByRole("option", { name: "Profile set: Client Acme" })).toBeInTheDocument();
   });
 
   it("applies safe repairs from diagnostics", async () => {
@@ -1640,6 +1655,16 @@ describe("App", () => {
 
   it("offers direct diagnostic fixes for missing tools, live mismatch, and workspace mismatch", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
+    const settingsWithSet: DesktopSettings = {
+      ...bootstrap.settings,
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    };
     const diagnosticsSnapshot = {
       ...bootstrap.snapshot,
       statuses: [
@@ -1690,6 +1715,7 @@ describe("App", () => {
         {
           get_bootstrap: {
             ...bootstrap,
+            settings: settingsWithSet,
             snapshot: diagnosticsSnapshot,
           },
           get_snapshot: diagnosticsSnapshot,
@@ -1723,7 +1749,7 @@ describe("App", () => {
           get_workspace_status: diagnosticsSnapshot.workspace_status,
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
-          get_settings: bootstrap.settings,
+          get_settings: settingsWithSet,
         } as Record<string, unknown>
       )[command];
     };
@@ -1753,7 +1779,7 @@ describe("App", () => {
 
     fireEvent.click(screen.getByText("Use expected context now"));
     await waitFor(() => {
-      expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
+      expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
     });
   });
 
