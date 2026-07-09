@@ -50,6 +50,7 @@ export function App() {
 
   const { runtime_status: runtimeStatus, settings } = bootstrap.data;
   const resolvedSnapshot = snapshot.data ?? bootstrap.data.snapshot;
+  const toolCapabilities = runtimeStatus.capabilities?.tools ?? {};
 
   return (
     <AppFrame
@@ -80,8 +81,12 @@ export function App() {
       {resolvedSnapshot ? (
         <>
           <SetupPanel bootstrap={bootstrap.data} snapshot={resolvedSnapshot} initReport={init.data} />
-          {activeNav === "overview" ? <OverviewPanel snapshot={resolvedSnapshot} /> : null}
-          {activeNav === "profiles" ? <ProfilesPanel snapshot={resolvedSnapshot} /> : null}
+          {activeNav === "overview" ? (
+            <OverviewPanel snapshot={resolvedSnapshot} toolCapabilities={toolCapabilities} />
+          ) : null}
+          {activeNav === "profiles" ? (
+            <ProfilesPanel snapshot={resolvedSnapshot} toolCapabilities={toolCapabilities} />
+          ) : null}
           {activeNav === "contexts" ? <ContextsPanel snapshot={resolvedSnapshot} /> : null}
           {activeNav === "workspaces" ? <WorkspacesPanel snapshot={resolvedSnapshot} /> : null}
           {activeNav === "diagnostics" ? <DiagnosticsPanel /> : null}

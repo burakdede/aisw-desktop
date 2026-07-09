@@ -1,11 +1,17 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { AppSnapshot, ToolStatus } from "../../../lib/schemas";
+import { useEffect, useMemo, useState } from "react";
+import { AppBootstrap, AppSnapshot, ToolStatus } from "../../../lib/schemas";
 import { SectionCard } from "../../../components/SectionCard";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { titleCase } from "../../../lib/utils";
 
-export function OverviewPanel({ snapshot }: { snapshot: AppSnapshot }) {
+export function OverviewPanel({
+  snapshot,
+  toolCapabilities,
+}: {
+  snapshot: AppSnapshot;
+  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
+}) {
   const queryClient = useQueryClient();
   const { addProfileMutation, useProfileMutation, useAllProfilesMutation } = useDesktopActions();
   const [lastAction, setLastAction] = useState<string>("");
@@ -68,13 +74,14 @@ export function OverviewPanel({ snapshot }: { snapshot: AppSnapshot }) {
           <ToolCard
             key={status.tool}
             status={status}
-            onImport={(tool, profile) =>
+            stateModes={supportedStateModes(status.tool, toolCapabilities)}
+            onImport={(tool, profile, stateMode) =>
               addProfileMutation.mutate(
                 {
                   tool,
                   profile,
                   label: titleCase(profile),
-                  stateMode: tool === "gemini" ? null : "isolated",
+                  stateMode,
                   importMode: { kind: "from_live" },
                 },
                 {
@@ -82,9 +89,9 @@ export function OverviewPanel({ snapshot }: { snapshot: AppSnapshot }) {
                 },
               )
             }
-            onUse={(tool, profile) =>
+            onUse={(tool, profile, stateMode) =>
               useProfileMutation.mutate(
-                { tool, profile, stateMode: status.state_mode ?? "isolated" },
+                { tool, profile, stateMode },
                 {
                   onSuccess: () => setLastAction(`Switched ${tool} to ${profile}.`),
                 },
@@ -100,15 +107,27 @@ export function OverviewPanel({ snapshot }: { snapshot: AppSnapshot }) {
 
 function ToolCard({
   status,
+  stateModes,
   onImport,
   onUse,
 }: {
   status: ToolStatus;
-  onImport: (tool: string, profile: string) => void;
-  onUse: (tool: string, profile: string) => void;
+  stateModes: string[];
+  onImport: (tool: string, profile: string, stateMode: string | null) => void;
+  onUse: (tool: string, profile: string, stateMode: string | null) => void;
 }) {
   const activeState = status.active_profile_applied;
   const [importName, setImportName] = useState("");
+  const [stateMode, setStateMode] = useState(status.state_mode ?? stateModes[0] ?? "");
+
+  useEffect(() => {
+    if (!stateModes.length) {
+      return;
+    }
+    if (!stateModes.includes(stateMode)) {
+      setStateMode(stateModes[0]);
+    }
+  }, [stateMode, stateModes]);
 
   return (
     <article className="tool-card">
@@ -134,6 +153,18 @@ function ToolCard({
               : "mismatch"}
         </span>
       </div>
+      {stateModes.length ? (
+        <label className="stacked-form">
+          <span>State mode</span>
+          <select value={stateMode} onChange={(event) => setStateMode(event.target.value)}>
+            {stateModes.map((mode) => (
+              <option key={mode} value={mode}>
+                {titleCase(mode)}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       {!status.binary_found ? (
         <p className="inline-note">
           Install {titleCase(status.tool)} and refresh diagnostics to restore switching support.
@@ -159,7 +190,7 @@ function ToolCard({
               onClick={() => {
                 const profile = importName.trim();
                 if (!profile) return;
-                onImport(status.tool, profile);
+                onImport(status.tool, profile, stateModes.length ? stateMode : null);
                 setImportName("");
               }}
             >
@@ -171,11 +202,22 @@ function ToolCard({
       {status.active_profile ? (
         <button
           className="primary-button"
-          onClick={() => onUse(status.tool, status.active_profile!)}
+          onClick={() => onUse(status.tool, status.active_profile!, stateModes.length ? stateMode : null)}
         >
           Re-apply {status.active_profile}
         </button>
       ) : null}
     </article>
   );
+}
+
+function supportedStateModes(
+  tool: string,
+  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"],
+) {
+  const configured = toolCapabilities[tool]?.state_modes ?? [];
+  if (configured.length) {
+    return configured;
+  }
+  return tool === "gemini" ? [] : ["isolated", "shared"];
 }

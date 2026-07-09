@@ -1,12 +1,18 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
-import { AppSnapshot } from "../../../lib/schemas";
+import { AppBootstrap, AppSnapshot } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 
 const TOOLS = ["claude", "codex", "gemini"] as const;
 
-export function ProfilesPanel({ snapshot }: { snapshot: AppSnapshot }) {
+export function ProfilesPanel({
+  snapshot,
+  toolCapabilities,
+}: {
+  snapshot: AppSnapshot;
+  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
+}) {
   const {
     addProfileMutation,
     useProfileMutation,
@@ -18,9 +24,23 @@ export function ProfilesPanel({ snapshot }: { snapshot: AppSnapshot }) {
   const [label, setLabel] = useState("");
   const [mode, setMode] = useState<"from_live" | "from_env" | "api_key">("from_live");
   const [apiKey, setApiKey] = useState("");
+  const [stateMode, setStateMode] = useState("isolated");
   const [renameDrafts, setRenameDrafts] = useState<Record<string, string>>({});
 
   const profiles = useMemo(() => snapshot.profiles[tool]?.profiles ?? [], [snapshot, tool]);
+  const availableStateModes = useMemo(
+    () => supportedStateModes(tool, toolCapabilities),
+    [tool, toolCapabilities],
+  );
+
+  useEffect(() => {
+    if (!availableStateModes.length) {
+      return;
+    }
+    if (!availableStateModes.includes(stateMode)) {
+      setStateMode(availableStateModes[0]);
+    }
+  }, [availableStateModes, stateMode]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -40,7 +60,7 @@ export function ProfilesPanel({ snapshot }: { snapshot: AppSnapshot }) {
         tool,
         profile,
         label: label || null,
-        stateMode: tool === "gemini" ? null : "isolated",
+        stateMode: availableStateModes.length ? stateMode : null,
         importMode,
       },
       {
@@ -93,6 +113,21 @@ export function ProfilesPanel({ snapshot }: { snapshot: AppSnapshot }) {
               />
             </label>
           ) : null}
+          <label>
+            State mode
+            <select
+              value={availableStateModes.length ? stateMode : "n/a"}
+              onChange={(event) => setStateMode(event.target.value)}
+              disabled={!availableStateModes.length}
+            >
+              {!availableStateModes.length ? <option value="n/a">Not configurable</option> : null}
+              {availableStateModes.map((entry) => (
+                <option key={entry} value={entry}>
+                  {titleCase(entry)}
+                </option>
+              ))}
+            </select>
+          </label>
           <button className="primary-button" type="submit" disabled={addProfileMutation.isPending}>
             {addProfileMutation.isPending ? "Saving…" : "Add profile"}
           </button>
@@ -141,7 +176,7 @@ export function ProfilesPanel({ snapshot }: { snapshot: AppSnapshot }) {
                     useProfileMutation.mutate({
                       tool,
                       profile: entry.name,
-                      stateMode: tool === "gemini" ? null : "isolated",
+                      stateMode: availableStateModes.length ? stateMode : null,
                     })
                   }
                 >
@@ -168,4 +203,15 @@ export function ProfilesPanel({ snapshot }: { snapshot: AppSnapshot }) {
       </div>
     </SectionCard>
   );
+}
+
+function supportedStateModes(
+  tool: string,
+  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"],
+) {
+  const configured = toolCapabilities[tool]?.state_modes ?? [];
+  if (configured.length) {
+    return configured;
+  }
+  return tool === "gemini" ? [] : ["isolated", "shared"];
 }
