@@ -2,11 +2,17 @@ import { useQuery } from "@tanstack/react-query";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
 import { getShellGuidance, runDoctor } from "../../../lib/client";
-import { DesktopSettings } from "../../../lib/schemas";
+import { DesktopSettings, AppBootstrap } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 
-export function SettingsPanel({ settings }: { settings: DesktopSettings }) {
+export function SettingsPanel({
+  settings,
+  runtimeStatus,
+}: {
+  settings: DesktopSettings;
+  runtimeStatus: AppBootstrap["runtime_status"];
+}) {
   const { updateSettingsMutation, checkForUpdatesMutation, installUpdateMutation, mutationLock } =
     useDesktopActions();
   const [runtimeKind, setRuntimeKind] = useState(settings.runtime_kind);
@@ -89,6 +95,28 @@ export function SettingsPanel({ settings }: { settings: DesktopSettings }) {
             {updateSettingsMutation.isPending ? "Saving…" : "Save settings"}
           </button>
         </form>
+        <div className="stack-list diagnostics-body">
+          <article className="diagnostic-card">
+            <h3>Runtime detection</h3>
+            <p className="inline-note">
+              Current resolved path: {runtimeStatus.resolved_path ?? "No aisw runtime resolved"}
+            </p>
+            <p className="inline-note">
+              Bundled aisw: {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
+            </p>
+            <p className="inline-note">
+              System aisw: {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
+            </p>
+            {runtimeStatus.inventory.configured_path ? (
+              <p className="inline-note">
+                Configured custom path: {runtimeStatus.inventory.configured_path}
+              </p>
+            ) : null}
+            <p className="inline-note">
+              Selected backend: <strong>{titleCase(runtimeKind)}</strong>
+            </p>
+          </article>
+        </div>
       </SectionCard>
 
       <SectionCard title="Desktop updates" kicker="Signed app releases">

@@ -2000,4 +2000,24 @@ describe("App", () => {
       expect(screen.getByText("echo \"$AISW_SHELL_HOOK\"")).toBeInTheDocument();
     });
   });
+
+  it("shows runtime detection details in settings", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Settings"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Runtime detection")).toBeInTheDocument();
+      expect(
+        screen.getByText("Current resolved path: /Applications/AISW.app/Contents/Resources/aisw"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getAllByText("Bundled aisw: /Applications/AISW.app/Contents/Resources/aisw").length,
+      ).toBeGreaterThan(0);
+      expect(screen.getAllByText("System aisw: /opt/homebrew/bin/aisw").length).toBeGreaterThan(0);
+      expect(
+        screen.getByText((_, element) => element?.textContent?.trim() === "Selected backend: Bundled"),
+      ).toBeInTheDocument();
+    });
+  });
 });

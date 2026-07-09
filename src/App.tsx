@@ -172,7 +172,9 @@ export function App() {
           {activeNav === "workspaces" ? <WorkspacesPanel snapshot={resolvedSnapshot} /> : null}
           {activeNav === "diagnostics" ? <DiagnosticsPanel /> : null}
           {activeNav === "backups" ? <BackupsPanel /> : null}
-          {activeNav === "settings" ? <SettingsPanel settings={settings} /> : null}
+          {activeNav === "settings" ? (
+            <SettingsPanel settings={settings} runtimeStatus={runtimeStatus} />
+          ) : null}
         </>
       ) : (
         <SectionCard title="Waiting for snapshot" kicker="Bootstrap">
