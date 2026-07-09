@@ -118,6 +118,23 @@ export const installUpdateReportSchema = z.object({
   restart_requested: z.boolean(),
   message: z.string().nullable().optional(),
 });
+export const shellHookVariantSchema = z.object({
+  shell: z.string(),
+  title: z.string(),
+  config_path: z.string(),
+  alternate_config_path: z.string().nullable().optional(),
+  install_command: z.string(),
+  reload_command: z.string(),
+  verify_command: z.string(),
+  verify_expected: z.string(),
+});
+export const shellHookGuidanceSchema = z.object({
+  detected_shell: z.string().nullable().optional(),
+  capabilities: z.array(z.string()),
+  note: z.string(),
+  manual_apply_examples: z.array(z.string()),
+  variants: z.array(shellHookVariantSchema),
+});
 
 export const mutationResponseSchema = z.object({
   command: z.string(),
@@ -135,3 +152,4 @@ export type ToolProfiles = z.infer<typeof toolProfilesSchema>;
 export type InitReport = z.infer<typeof initReportSchema>;
 export type UpdateCheckReport = z.infer<typeof updateCheckReportSchema>;
 export type InstallUpdateReport = z.infer<typeof installUpdateReportSchema>;
+export type ShellHookGuidance = z.infer<typeof shellHookGuidanceSchema>;

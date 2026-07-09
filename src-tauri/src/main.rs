@@ -6,6 +6,7 @@ mod errors;
 mod models;
 mod redaction;
 mod settings;
+mod shell;
 mod state;
 mod tray;
 mod updater;
@@ -31,6 +32,7 @@ fn main() {
             commands::get_bootstrap,
             commands::get_snapshot,
             commands::get_settings,
+            commands::get_shell_guidance,
             commands::check_for_updates,
             commands::install_update,
             commands::update_settings,

@@ -16,7 +16,9 @@ import {
   type InstallUpdateReport,
   type InitReport,
   type MutationResponse,
+  type ShellHookGuidance,
   type UpdateCheckReport,
+  shellHookGuidanceSchema,
   updateCheckReportSchema,
   workspaceStatusReportSchema,
   verifyReportSchema,
@@ -192,6 +194,10 @@ export async function runRepair(request: { apply: boolean; fixes: string[] }) {
 
 export async function getSettings(): Promise<DesktopSettings> {
   return desktopSettingsSchema.parse(await invokeDesktop("get_settings"));
+}
+
+export async function getShellGuidance(): Promise<ShellHookGuidance> {
+  return shellHookGuidanceSchema.parse(await invokeDesktop("get_shell_guidance"));
 }
 
 export async function checkForUpdates(): Promise<UpdateCheckReport> {

@@ -3,10 +3,11 @@ use crate::errors::{DesktopResult, ErrorPayload};
 use crate::models::{
     AddProfileRequest, AppBootstrap, AppSnapshot, BackupEntry, DesktopSettings, DoctorReport,
     InitReport, InstallUpdateReport, MutationResponse, ProjectBindingsReport, RepairReport,
-    RepairRequest, UpdateCheckReport, UpdateSettingsRequest, UseAllProfilesRequest,
-    UseContextRequest, UseProfileRequest, VerifyReport, WorkspaceBindRequest,
-    WorkspaceStatusReport, WorkspaceUnbindTarget,
+    RepairRequest, ShellHookGuidance, UpdateCheckReport, UpdateSettingsRequest,
+    UseAllProfilesRequest, UseContextRequest, UseProfileRequest, VerifyReport,
+    WorkspaceBindRequest, WorkspaceStatusReport, WorkspaceUnbindTarget,
 };
+use crate::shell;
 use crate::state::{incompatible_runtime_error, AppState};
 use crate::tray;
 use crate::updater;
@@ -25,6 +26,11 @@ pub async fn get_snapshot(state: tauri::State<'_, AppState>) -> DesktopResult<Ap
 #[tauri::command]
 pub async fn get_settings(state: tauri::State<'_, AppState>) -> DesktopResult<DesktopSettings> {
     state.load_settings().await.map_err(ErrorPayload::from)
+}
+
+#[tauri::command]
+pub async fn get_shell_guidance() -> DesktopResult<ShellHookGuidance> {
+    Ok(shell::shell_hook_guidance())
 }
 
 #[tauri::command]

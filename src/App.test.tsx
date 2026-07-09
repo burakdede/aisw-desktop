@@ -94,6 +94,30 @@ describe("App", () => {
       get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
       list_backups: [],
       get_settings: bootstrap.settings,
+      get_shell_guidance: {
+        detected_shell: "zsh",
+        capabilities: [
+          "Apply CLAUDE_CONFIG_DIR, CODEX_HOME, and GEMINI_API_KEY into the current shell session when you run `aisw use` or `aisw context use`.",
+          "Enforce workspace guardrails before `claude`, `codex`, or `gemini` launch from that shell.",
+        ],
+        note: "Without the shell hook, `aisw use` still writes live credential files and updates `~/.aisw/config.json`. The hook is only required for current-shell exports and workspace checks.",
+        manual_apply_examples: [
+          'eval "$(aisw use claude work --emit-env)"',
+          'eval "$(aisw context use client-acme --emit-env)"',
+        ],
+        variants: [
+          {
+            shell: "zsh",
+            title: "Zsh",
+            config_path: "~/.zshrc",
+            alternate_config_path: null,
+            install_command: "echo 'eval \"$(aisw shell-hook zsh)\"' >> ~/.zshrc",
+            reload_command: "source ~/.zshrc",
+            verify_command: "echo \"$AISW_SHELL_HOOK\"",
+            verify_expected: "1",
+          },
+        ],
+      },
     };
   });
 
@@ -623,6 +647,21 @@ describe("App", () => {
       expect(screen.getByText("Update installed. Restart has been requested.")).toBeInTheDocument();
       expect(calls.some((entry) => entry.command === "check_for_updates")).toBe(true);
       expect(calls.some((entry) => entry.command === "install_update")).toBe(true);
+    });
+  });
+
+  it("shows explicit shell hook guidance in settings", async () => {
+    renderApp();
+    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Settings"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Shell hook")).toBeInTheDocument();
+      expect(screen.getByText(/Detected shell:/)).toBeInTheDocument();
+      expect(screen.getByText("Config file: ~/.zshrc")).toBeInTheDocument();
+      expect(screen.getByText("echo 'eval \"$(aisw shell-hook zsh)\"' >> ~/.zshrc")).toBeInTheDocument();
+      expect(screen.getByText("source ~/.zshrc")).toBeInTheDocument();
+      expect(screen.getByText("echo \"$AISW_SHELL_HOOK\"")).toBeInTheDocument();
     });
   });
 });

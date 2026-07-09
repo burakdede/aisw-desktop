@@ -162,6 +162,27 @@ pub struct InstallUpdateReport {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ShellHookVariant {
+    pub shell: String,
+    pub title: String,
+    pub config_path: String,
+    pub alternate_config_path: Option<String>,
+    pub install_command: String,
+    pub reload_command: String,
+    pub verify_command: String,
+    pub verify_expected: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ShellHookGuidance {
+    pub detected_shell: Option<String>,
+    pub capabilities: Vec<String>,
+    pub note: String,
+    pub manual_apply_examples: Vec<String>,
+    pub variants: Vec<ShellHookVariant>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BackupEntry {
     pub backup_id: String,
     pub tool: String,
