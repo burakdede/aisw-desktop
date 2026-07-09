@@ -1,14 +1,18 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { App } from "./App";
+import type { DesktopSettings } from "./lib/schemas";
+
+const bootstrapSettings: DesktopSettings = {
+  runtime_kind: "bundled",
+  runtime_path: null,
+  aisw_home: null,
+  update_channel: "stable",
+  profile_sets: [],
+};
 
 const bootstrap = {
-  settings: {
-    runtime_kind: "bundled",
-    runtime_path: null,
-    aisw_home: null,
-    update_channel: "stable",
-  },
+  settings: bootstrapSettings,
   runtime_status: {
     resolved_path: "/Applications/AISW.app/Contents/Resources/aisw",
     version: {
@@ -485,6 +489,77 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByText("Last applied repair")).toBeInTheDocument();
       expect(screen.getByText("1 actions applied")).toBeInTheDocument();
+    });
+  });
+
+  it("saves and activates a local profile set", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    let currentSettings: DesktopSettings = bootstrap.settings;
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "get_bootstrap") {
+        return {
+          ...bootstrap,
+          settings: currentSettings,
+        };
+      }
+      if (command === "update_settings") {
+        currentSettings = {
+          ...currentSettings,
+          profile_sets: [
+            {
+              name: "client-acme",
+              label: "Client Acme",
+              profiles: { claude: "work", codex: "work", gemini: null },
+            },
+          ],
+        };
+        return currentSettings;
+      }
+      if (command === "use_all_profiles") {
+        return { command, snapshot: bootstrap.snapshot };
+      }
+      return (
+        {
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    renderApp();
+    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Contexts"));
+    fireEvent.change(screen.getByLabelText("Profile set name"), {
+      target: { value: "client-acme" },
+    });
+    fireEvent.change(screen.getByLabelText("Label"), {
+      target: { value: "Client Acme" },
+    });
+    fireEvent.change(screen.getByLabelText("Claude"), {
+      target: { value: "work" },
+    });
+    fireEvent.change(screen.getByLabelText("Codex"), {
+      target: { value: "work" },
+    });
+    fireEvent.click(screen.getByText("Save profile set"));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
+      expect(screen.getByText("Client Acme")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("Activate set"));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
     });
   });
 });

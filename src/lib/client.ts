@@ -63,6 +63,11 @@ export interface UpdateSettingsInput {
   runtime_path?: string | null;
   aisw_home?: string | null;
   update_channel: string;
+  profile_sets: Array<{
+    name: string;
+    label?: string | null;
+    profiles: Record<string, string | null | undefined>;
+  }>;
 }
 
 export interface WorkspaceBindInput {

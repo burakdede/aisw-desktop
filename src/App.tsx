@@ -87,7 +87,9 @@ export function App() {
           {activeNav === "profiles" ? (
             <ProfilesPanel snapshot={resolvedSnapshot} toolCapabilities={toolCapabilities} />
           ) : null}
-          {activeNav === "contexts" ? <ContextsPanel snapshot={resolvedSnapshot} /> : null}
+          {activeNav === "contexts" ? (
+            <ContextsPanel snapshot={resolvedSnapshot} settings={settings} />
+          ) : null}
           {activeNav === "workspaces" ? <WorkspacesPanel snapshot={resolvedSnapshot} /> : null}
           {activeNav === "diagnostics" ? <DiagnosticsPanel /> : null}
           {activeNav === "backups" ? <BackupsPanel /> : null}
