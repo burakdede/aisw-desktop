@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import {
   addProfile,
   addProfileOAuth,
@@ -16,9 +17,12 @@ import {
   workspaceGuard,
   workspaceUnbind,
 } from "../../lib/client";
+import type { AddProfileInput } from "../../lib/client";
 
 export function useDesktopActions() {
   const queryClient = useQueryClient();
+  const [apiKeyProfilePending, setApiKeyProfilePending] = useState(false);
+  const [apiKeyProfileError, setApiKeyProfileError] = useState<Error | null>(null);
 
   const invalidate = async () => {
     await queryClient.invalidateQueries({ queryKey: ["bootstrap"] });
@@ -29,6 +33,23 @@ export function useDesktopActions() {
     await queryClient.invalidateQueries({ queryKey: ["init"] });
     await queryClient.invalidateQueries({ queryKey: ["workspace-status"] });
     await queryClient.invalidateQueries({ queryKey: ["project-bindings"] });
+  };
+
+  const submitApiKeyProfile = async (input: AddProfileInput) => {
+    setApiKeyProfilePending(true);
+    setApiKeyProfileError(null);
+    try {
+      const result = await addProfile(input);
+      await invalidate();
+      return result;
+    } catch (error) {
+      const resolved =
+        error instanceof Error ? error : new Error("Failed to add API key profile.");
+      setApiKeyProfileError(resolved);
+      throw resolved;
+    } finally {
+      setApiKeyProfilePending(false);
+    }
   };
 
   return {
@@ -90,5 +111,11 @@ export function useDesktopActions() {
       mutationFn: workspaceGuard,
       onSuccess: invalidate,
     }),
+    apiKeyProfileAction: {
+      submit: submitApiKeyProfile,
+      isPending: apiKeyProfilePending,
+      error: apiKeyProfileError,
+      clearError: () => setApiKeyProfileError(null),
+    },
   };
 }

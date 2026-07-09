@@ -29,6 +29,7 @@ export function ProfilesPanel({
     renameProfileMutation,
     removeProfileMutation,
     updateSettingsMutation,
+    apiKeyProfileAction,
   } = useDesktopActions();
   const [tool, setTool] = useState<(typeof TOOLS)[number]>("claude");
   const [profile, setProfile] = useState("");
@@ -109,32 +110,39 @@ export function ProfilesPanel({
       return;
     }
 
-    const apiKey = mode === "api_key" ? (apiKeyInputRef.current?.value ?? "") : "";
-    const importMode =
-      mode === "api_key"
-        ? { kind: "api_key" as const, value: apiKey }
-        : mode === "from_env"
-          ? { kind: "from_env" as const }
-          : { kind: "from_live" as const };
-
-    addProfileMutation.mutate(
-      {
-        tool,
-        profile,
-        label: label || null,
-        stateMode: availableStateModes.length ? stateMode : null,
-        importMode,
-      },
-      {
-        onSuccess: () => {
+    if (mode === "api_key") {
+      const apiKey = apiKeyInputRef.current?.value ?? "";
+      void apiKeyProfileAction
+        .submit({
+          tool,
+          profile,
+          label: label || null,
+          stateMode: availableStateModes.length ? stateMode : null,
+          importMode: { kind: "api_key", value: apiKey },
+        })
+        .then(() => {
           setProfile("");
           setLabel("");
           if (apiKeyInputRef.current) {
             apiKeyInputRef.current.value = "";
           }
-        },
-      },
-    );
+        })
+        .catch(() => undefined);
+      return;
+    }
+
+    const importMode =
+      mode === "from_env"
+        ? { kind: "from_env" as const }
+        : { kind: "from_live" as const };
+
+    addProfileMutation.mutate({
+      tool,
+      profile,
+      label: label || null,
+      stateMode: availableStateModes.length ? stateMode : null,
+      importMode,
+    });
   }
 
   return (
@@ -171,7 +179,16 @@ export function ProfilesPanel({
           {mode === "api_key" ? (
             <label>
               API key
-              <input ref={apiKeyInputRef} type="password" autoComplete="off" />
+              <input
+                ref={apiKeyInputRef}
+                type="password"
+                autoComplete="off"
+                onChange={() => {
+                  if (apiKeyProfileAction.error) {
+                    apiKeyProfileAction.clearError();
+                  }
+                }}
+              />
             </label>
           ) : null}
           {mode === "from_env" ? (
@@ -209,13 +226,21 @@ export function ProfilesPanel({
           <button
             className="primary-button"
             type="submit"
-            disabled={addProfileMutation.isPending || addProfileOAuthMutation.isPending}
+            disabled={
+              addProfileMutation.isPending ||
+              addProfileOAuthMutation.isPending ||
+              apiKeyProfileAction.isPending
+            }
           >
             {mode === "oauth"
               ? addProfileOAuthMutation.isPending
                 ? "Waiting for OAuth…"
                 : "Start OAuth"
-              : addProfileMutation.isPending
+              : mode === "api_key"
+                ? apiKeyProfileAction.isPending
+                  ? "Saving…"
+                  : "Add profile"
+                : addProfileMutation.isPending
                 ? "Saving…"
                 : "Add profile"}
           </button>
@@ -225,6 +250,7 @@ export function ProfilesPanel({
             renameProfileMutation.error,
             removeProfileMutation.error,
             useProfileMutation.error,
+            apiKeyProfileAction.error,
           ) ? (
             <p className="inline-note">
               {profileMutationError(
@@ -233,6 +259,7 @@ export function ProfilesPanel({
                 renameProfileMutation.error,
                 removeProfileMutation.error,
                 useProfileMutation.error,
+                apiKeyProfileAction.error,
               )}
             </p>
           ) : null}

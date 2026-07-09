@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { App } from "./App";
+import { useDesktopActions } from "./features/shared/useDesktopActions";
 import type { DesktopSettings } from "./lib/schemas";
 
 Object.assign(navigator, {
@@ -581,6 +583,46 @@ describe("App", () => {
       },
     });
     expect(apiKeyInput.value).toBe("");
+  });
+
+  it("does not store API keys in react-query mutation variables", async () => {
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "add_profile") {
+        return { command, snapshot: bootstrap.snapshot };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    const queryClient = new QueryClient();
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useDesktopActions(), { wrapper });
+    await act(async () => {
+      await result.current.apiKeyProfileAction.submit({
+        tool: "codex",
+        profile: "ops",
+        label: null,
+        stateMode: "isolated",
+        importMode: { kind: "api_key", value: "sk-live-secret" },
+      });
+    });
+
+    expect(result.current.addProfileMutation.variables).toBeUndefined();
   });
 
   it("restores and re-activates a backup through desktop commands", async () => {
