@@ -4,6 +4,7 @@ import { AppBootstrap, AppSnapshot, ToolStatus } from "../../../lib/schemas";
 import { SectionCard } from "../../../components/SectionCard";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { titleCase } from "../../../lib/utils";
+import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 
 export function OverviewPanel({
   snapshot,
@@ -17,6 +18,7 @@ export function OverviewPanel({
     addProfileMutation,
     useProfileMutation,
     useAllProfilesMutation,
+    useContextMutation,
     mutationLock,
     lastCommandResults,
   } = useDesktopActions();
@@ -39,6 +41,11 @@ export function OverviewPanel({
       await queryClient.invalidateQueries({ queryKey: ["snapshot"] });
     },
   });
+  const workspaceStatus = parseWorkspaceStatus(snapshot.workspace_status ?? undefined);
+  const showWorkspaceSummary = workspaceStatus.expectedContext !== "none";
+  const hasWorkspaceMismatch =
+    workspaceStatus.status === "mismatch" &&
+    workspaceStatus.expectedContext !== workspaceStatus.currentContext;
 
   return (
     <SectionCard
@@ -70,6 +77,37 @@ export function OverviewPanel({
         </div>
       }
     >
+      {showWorkspaceSummary ? (
+        <article className={`diagnostic-card ${hasWorkspaceMismatch ? "diagnostic-warn" : "diagnostic-pass"}`}>
+          <h3>{hasWorkspaceMismatch ? "Workspace wants a different context" : "Workspace match"}</h3>
+          <p className="inline-note">
+            Expected profile set: <strong>{workspaceStatus.expectedContext}</strong>
+          </p>
+          <p className="inline-note">
+            Current context: <strong>{workspaceStatus.currentContext}</strong>
+          </p>
+          <p className="inline-note">
+            Matched via {workspaceStatus.scope}: {workspaceStatus.target}
+          </p>
+          {hasWorkspaceMismatch ? (
+            <div className="button-row">
+              <button
+                className="primary-button"
+                type="button"
+                disabled={mutationLock.isBusy}
+                onClick={() =>
+                  useContextMutation.mutate({
+                    context: workspaceStatus.expectedContext,
+                    stateMode: "isolated",
+                  })
+                }
+              >
+                Use expected context now
+              </button>
+            </div>
+          ) : null}
+        </article>
+      ) : null}
       <div className="tool-grid">
         {snapshot.statuses.map((status) => (
           <ToolCard

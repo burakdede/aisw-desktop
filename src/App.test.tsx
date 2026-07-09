@@ -1253,46 +1253,56 @@ describe("App", () => {
 
   it("renders structured workspace details and saves bindings", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
+    const workspaceStatus = {
+      result: {
+        status: "mismatch",
+        current_context: "work",
+        expected_context: "client-acme",
+        matched_binding: {
+          scope: "path",
+          path: "/code/acme",
+          context: "client-acme",
+        },
+      },
+    };
+    const projectBindings = {
+      result: {
+        user_bindings: {
+          guard_mode: "warn",
+          default_context: "work",
+          items: [
+            {
+              scope: "path",
+              path: "/code/acme",
+              context: "client-acme",
+            },
+          ],
+        },
+      },
+    };
+    const workspaceSnapshot = {
+      ...bootstrap.snapshot,
+      workspace_status: workspaceStatus.result,
+      project_bindings: projectBindings.result,
+    };
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
       if (command === "workspace_bind" || command === "use_context") {
-        return { command, snapshot: bootstrap.snapshot };
+        return { command, snapshot: workspaceSnapshot };
       }
       return (
         {
-          get_bootstrap: bootstrap,
-          get_snapshot: bootstrap.snapshot,
+          get_bootstrap: {
+            ...bootstrap,
+            snapshot: workspaceSnapshot,
+          },
+          get_snapshot: workspaceSnapshot,
           run_init: { result: { live_accounts: [] } },
           run_doctor: { summary: { status: "pass" } },
           run_verify: { summary: { status: "pass" } },
           run_repair: { result: { mode: "dry_run" } },
-          get_workspace_status: {
-            result: {
-              status: "mismatch",
-              current_context: "work",
-              expected_context: "client-acme",
-              matched_binding: {
-                scope: "path",
-                path: "/code/acme",
-                context: "client-acme",
-              },
-            },
-          },
-          get_project_bindings: {
-            result: {
-              user_bindings: {
-                guard_mode: "warn",
-                default_context: "work",
-                items: [
-                  {
-                    scope: "path",
-                    path: "/code/acme",
-                    context: "client-acme",
-                  },
-                ],
-              },
-            },
-          },
+          get_workspace_status: workspaceStatus,
+          get_project_bindings: projectBindings,
           list_backups: [],
           get_settings: bootstrap.settings,
         } as Record<string, unknown>
@@ -1301,6 +1311,17 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByText("Workspaces")).toBeInTheDocument());
+    await waitFor(() => {
+      expect(screen.getByText("Workspace wants a different context")).toBeInTheDocument();
+      expect(screen.getByText("client-acme")).toBeInTheDocument();
+      expect(screen.getAllByText("work").length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getAllByText("Use expected context now")[0]);
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
+    });
+
     fireEvent.click(screen.getByText("Workspaces"));
     await waitFor(() => {
       expect(screen.getByText(/Current context:\s*work/)).toBeInTheDocument();
@@ -1308,11 +1329,6 @@ describe("App", () => {
       expect(screen.getByText(/Guard mode:\s*warn/)).toBeInTheDocument();
       expect(screen.getByText("path · /code/acme")).toBeInTheDocument();
       expect(screen.getByText("Workspace mismatch")).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByText("Use expected context now"));
-    await waitFor(() => {
-      expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
     });
 
     fireEvent.click(screen.getByText("Keep current context"));

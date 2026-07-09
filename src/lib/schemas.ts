@@ -89,10 +89,19 @@ export const contextSummarySchema = z.object({
   profiles: z.record(z.string().nullable().optional()),
 });
 
+export const workspaceStatusReportSchema = z.record(z.unknown());
+export const projectBindingsReportSchema = z.record(z.unknown());
+export const doctorReportSchema = z.record(z.unknown());
+export const verifyReportSchema = z.record(z.unknown());
+export const repairReportSchema = z.record(z.unknown());
+export const initReportSchema = z.record(z.unknown());
+
 export const appSnapshotSchema = z.object({
   statuses: z.array(toolStatusSchema),
   profiles: z.record(toolProfilesSchema),
   contexts: z.array(contextSummarySchema),
+  workspace_status: workspaceStatusReportSchema.nullable().optional(),
+  project_bindings: projectBindingsReportSchema.nullable().optional(),
 });
 
 export const runtimeStatusSchema = z.object({
@@ -114,13 +123,6 @@ export const backupEntrySchema = z.object({
   tool: z.string(),
   profile: z.string(),
 });
-
-export const doctorReportSchema = z.record(z.unknown());
-export const verifyReportSchema = z.record(z.unknown());
-export const repairReportSchema = z.record(z.unknown());
-export const initReportSchema = z.record(z.unknown());
-export const workspaceStatusReportSchema = z.record(z.unknown());
-export const projectBindingsReportSchema = z.record(z.unknown());
 export const updateInfoSchema = z.object({
   version: z.string(),
   current_version: z.string(),
