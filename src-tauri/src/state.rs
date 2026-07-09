@@ -39,7 +39,11 @@ impl AppState {
         let bridge = self.bridge_from_settings(&settings);
         let runtime_status = self.runtime_status(&*bridge).await;
         let snapshot = if runtime_status.compatible {
-            Some(self.fetch_snapshot(&*bridge).await.map_err(ErrorPayload::from)?)
+            Some(
+                self.fetch_snapshot(&*bridge)
+                    .await
+                    .map_err(ErrorPayload::from)?,
+            )
         } else {
             None
         };
@@ -54,7 +58,9 @@ impl AppState {
     pub async fn snapshot(&self) -> DesktopResult<AppSnapshot> {
         let settings = self.load_settings().await.map_err(ErrorPayload::from)?;
         let bridge = self.bridge_from_settings(&settings);
-        self.fetch_snapshot(&*bridge).await.map_err(ErrorPayload::from)
+        self.fetch_snapshot(&*bridge)
+            .await
+            .map_err(ErrorPayload::from)
     }
 
     pub async fn mutate<F, Fut>(&self, command: &str, f: F) -> DesktopResult<MutationResponse>
@@ -66,7 +72,10 @@ impl AppState {
         let settings = self.load_settings().await.map_err(ErrorPayload::from)?;
         let bridge = self.bridge_from_settings(&settings);
         let raw = f(bridge.clone()).await.map_err(ErrorPayload::from)?;
-        let snapshot = self.fetch_snapshot(&*bridge).await.map_err(ErrorPayload::from)?;
+        let snapshot = self
+            .fetch_snapshot(&*bridge)
+            .await
+            .map_err(ErrorPayload::from)?;
         Ok(MutationResponse {
             command: command.to_owned(),
             raw,
@@ -101,13 +110,20 @@ impl AppState {
         }
         if let Some(version) = &version {
             if version.cli_api_version != 1 || version.json_schema_version != 1 {
-                issues.push("aisw contract version is not supported by this desktop build".to_owned());
+                issues.push(
+                    "aisw contract version is not supported by this desktop build".to_owned(),
+                );
             }
         } else {
             issues.push("aisw version info is unavailable".to_owned());
         }
         if let Some(capabilities) = &capabilities {
-            if !capabilities.features.get("mutation_json").copied().unwrap_or(false) {
+            if !capabilities
+                .features
+                .get("mutation_json")
+                .copied()
+                .unwrap_or(false)
+            {
                 issues.push("aisw does not advertise mutation_json support".to_owned());
             }
         } else {
@@ -137,13 +153,19 @@ impl AppState {
 fn is_compatible(version: &VersionInfo, capabilities: &CapabilitiesInfo) -> bool {
     version.cli_api_version == 1
         && version.json_schema_version == 1
-        && capabilities.features.get("mutation_json").copied().unwrap_or(false)
+        && capabilities
+            .features
+            .get("mutation_json")
+            .copied()
+            .unwrap_or(false)
 }
 
 pub fn incompatible_runtime_error() -> ErrorPayload {
     ErrorPayload {
         kind: GuiErrorKind::AiswIncompatible,
         message: "The configured aisw runtime is not compatible with AISW Desktop.".to_owned(),
-        remediation: Some("Select a compatible aisw build or switch back to the bundled runtime.".to_owned()),
+        remediation: Some(
+            "Select a compatible aisw build or switch back to the bundled runtime.".to_owned(),
+        ),
     }
 }

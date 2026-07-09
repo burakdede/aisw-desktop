@@ -88,7 +88,10 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
     }
 }
 
-fn tray_menu<R: Runtime>(app: &AppHandle<R>, snapshot: Option<&AppSnapshot>) -> tauri::Result<Menu<R>> {
+fn tray_menu<R: Runtime>(
+    app: &AppHandle<R>,
+    snapshot: Option<&AppSnapshot>,
+) -> tauri::Result<Menu<R>> {
     let mut items: Vec<MenuItemKind<R>> = vec![
         MenuItem::with_id(
             app,
@@ -141,7 +144,11 @@ fn tray_menu<R: Runtime>(app: &AppHandle<R>, snapshot: Option<&AppSnapshot>) -> 
                     MenuItem::with_id(
                         app,
                         format!("profile:{tool}:{}", profile.name),
-                        format!("{}{}", profile.label.as_deref().unwrap_or(&profile.name), suffix),
+                        format!(
+                            "{}{}",
+                            profile.label.as_deref().unwrap_or(&profile.name),
+                            suffix
+                        ),
                         true,
                         None::<&str>,
                     )
@@ -163,7 +170,9 @@ fn tray_menu<R: Runtime>(app: &AppHandle<R>, snapshot: Option<&AppSnapshot>) -> 
     }
 
     items.push(MenuItem::with_id(app, OPEN_ID, "Open AISW Desktop", true, None::<&str>)?.kind());
-    items.push(MenuItem::with_id(app, DIAGNOSTICS_ID, "Open diagnostics", true, None::<&str>)?.kind());
+    items.push(
+        MenuItem::with_id(app, DIAGNOSTICS_ID, "Open diagnostics", true, None::<&str>)?.kind(),
+    );
     items.push(MenuItem::with_id(app, QUIT_ID, "Quit", true, None::<&str>)?.kind());
 
     let item_refs = items
@@ -252,10 +261,10 @@ mod tests {
             workspace_status: None,
             project_bindings: None,
         };
+        assert_eq!(active_summary(&snapshot), "claude=work, codex=personal");
         assert_eq!(
-            active_summary(&snapshot),
+            active_summary_or_default(Some(&snapshot)),
             "claude=work, codex=personal"
         );
-        assert_eq!(active_summary_or_default(Some(&snapshot)), "claude=work, codex=personal");
     }
 }

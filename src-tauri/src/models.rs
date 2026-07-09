@@ -134,6 +134,34 @@ pub struct ProjectBindingsReport {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateInfo {
+    pub version: String,
+    pub current_version: String,
+    pub target: String,
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateCheckReport {
+    pub configured: bool,
+    pub channel: String,
+    pub current_version: String,
+    pub endpoint: Option<String>,
+    pub update: Option<UpdateInfo>,
+    pub message: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InstallUpdateReport {
+    pub configured: bool,
+    pub channel: String,
+    pub current_version: String,
+    pub installed_version: Option<String>,
+    pub restart_requested: bool,
+    pub message: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BackupEntry {
     pub backup_id: String,
     pub tool: String,

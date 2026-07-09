@@ -5,6 +5,7 @@ import {
   desktopSettingsSchema,
   doctorReportSchema,
   initReportSchema,
+  installUpdateReportSchema,
   mutationResponseSchema,
   projectBindingsReportSchema,
   repairReportSchema,
@@ -12,8 +13,11 @@ import {
   type AppSnapshot,
   type BackupEntry,
   type DesktopSettings,
+  type InstallUpdateReport,
   type InitReport,
   type MutationResponse,
+  type UpdateCheckReport,
+  updateCheckReportSchema,
   workspaceStatusReportSchema,
   verifyReportSchema,
 } from "./schemas";
@@ -188,6 +192,14 @@ export async function runRepair(request: { apply: boolean; fixes: string[] }) {
 
 export async function getSettings(): Promise<DesktopSettings> {
   return desktopSettingsSchema.parse(await invokeDesktop("get_settings"));
+}
+
+export async function checkForUpdates(): Promise<UpdateCheckReport> {
+  return updateCheckReportSchema.parse(await invokeDesktop("check_for_updates"));
+}
+
+export async function installUpdate(): Promise<InstallUpdateReport> {
+  return installUpdateReportSchema.parse(await invokeDesktop("install_update"));
 }
 
 export async function getWorkspaceStatus() {

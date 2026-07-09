@@ -3,8 +3,8 @@ use crate::models::{
     AddProfileMode, AddProfileRequest, BackupEntry, CapabilitiesInfo, ContextSummary, DoctorReport,
     InitReport, ProjectBindingsReport, RepairReport, RepairRequest, RuntimeKind, ToolProfiles,
     ToolStatus, UseAllProfilesRequest, UseContextRequest, UseProfileRequest, VerifyReport,
-    VersionInfo,
-    WorkspaceBindRequest, WorkspaceBindTarget, WorkspaceStatusReport, WorkspaceUnbindTarget,
+    VersionInfo, WorkspaceBindRequest, WorkspaceBindTarget, WorkspaceStatusReport,
+    WorkspaceUnbindTarget,
 };
 use crate::redaction::redact_text;
 use async_trait::async_trait;
@@ -128,12 +128,15 @@ impl CliAiswBridge {
             }
         }
 
-        let output = child.wait_with_output().await.map_err(|err| DesktopError::CommandFailed {
-            command: command_name.to_owned(),
-            kind: GuiErrorKind::Unknown,
-            message: err.to_string(),
-            remediation: None,
-        })?;
+        let output = child
+            .wait_with_output()
+            .await
+            .map_err(|err| DesktopError::CommandFailed {
+                command: command_name.to_owned(),
+                kind: GuiErrorKind::Unknown,
+                message: err.to_string(),
+                remediation: None,
+            })?;
 
         if output.status.success() {
             return Ok(output.stdout);
@@ -173,7 +176,8 @@ impl AiswBridge for CliAiswBridge {
     }
 
     async fn capabilities(&self) -> Result<CapabilitiesInfo, DesktopError> {
-        self.run_json("capabilities", &["capabilities", "--json"], None).await
+        self.run_json("capabilities", &["capabilities", "--json"], None)
+            .await
     }
 
     async fn status(&self) -> Result<Vec<ToolStatus>, DesktopError> {
@@ -440,7 +444,10 @@ fn bundled_binary_candidates(current_exe: &std::path::Path) -> Vec<PathBuf> {
 }
 
 fn sidecar_names() -> Vec<String> {
-    let mut names = vec!["aisw".to_owned(), format!("aisw-{}", runtime_target_suffix())];
+    let mut names = vec![
+        "aisw".to_owned(),
+        format!("aisw-{}", runtime_target_suffix()),
+    ];
     if cfg!(windows) {
         names.push("aisw.exe".to_owned());
         names.push(format!("aisw-{}.exe", runtime_target_suffix()));
@@ -466,8 +473,11 @@ fn find_binary_in_path(name: &str, path_value: &OsStr) -> Option<PathBuf> {
     std::env::split_paths(path_value)
         .flat_map(|dir| {
             let base = dir.join(name);
-            std::iter::once(base.clone())
-                .chain(path_exts.iter().map(move |ext| dir.join(format!("{name}{ext}"))))
+            std::iter::once(base.clone()).chain(
+                path_exts
+                    .iter()
+                    .map(move |ext| dir.join(format!("{name}{ext}"))),
+            )
         })
         .find(|candidate| candidate.exists())
 }
@@ -522,8 +532,8 @@ fn map_command_failure(command: &str, stderr: &str) -> DesktopError {
 mod tests {
     use super::{AiswBridge, CliAiswBridge};
     use crate::models::{
-        AddProfileMode, AddProfileRequest, RuntimeKind, UseAllProfilesRequest, WorkspaceBindRequest,
-        WorkspaceBindTarget,
+        AddProfileMode, AddProfileRequest, RuntimeKind, UseAllProfilesRequest,
+        WorkspaceBindRequest, WorkspaceBindTarget,
     };
     use std::fs;
     use std::os::unix::fs::PermissionsExt;
@@ -607,7 +617,10 @@ printf '{}'
             .await
             .unwrap();
         assert_eq!(bound["command"], "workspace_bind");
-        assert_eq!(bound["args"], "workspace bind --default --context work --json");
+        assert_eq!(
+            bound["args"],
+            "workspace bind --default --context work --json"
+        );
 
         let switched = bridge
             .use_all_profiles(UseAllProfilesRequest {
@@ -632,9 +645,9 @@ printf '{}'
         fs::write(&bundled, "").unwrap();
 
         let candidates = super::bundled_binary_candidates(&exe_dir.join("aisw-desktop"));
-        assert!(candidates.iter().any(|candidate| candidate.ends_with(PathBuf::from(format!(
-            "Resources/{sidecar_name}"
-        )))));
+        assert!(candidates.iter().any(
+            |candidate| candidate.ends_with(PathBuf::from(format!("Resources/{sidecar_name}")))
+        ));
     }
 
     #[test]
@@ -649,7 +662,8 @@ printf '{}'
 
     #[tokio::test]
     async fn bundled_runtime_does_not_fall_back_to_plain_path() {
-        let bridge = CliAiswBridge::new(RuntimeKind::Bundled, Some(PathBuf::from("/missing")), None);
+        let bridge =
+            CliAiswBridge::new(RuntimeKind::Bundled, Some(PathBuf::from("/missing")), None);
         let resolved = bridge.resolve_binary().await;
         assert!(resolved.is_err());
     }

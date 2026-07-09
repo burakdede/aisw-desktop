@@ -53,12 +53,16 @@ impl From<DesktopError> for ErrorPayload {
             DesktopError::AiswNotFound => Self {
                 kind: GuiErrorKind::AiswNotFound,
                 message: value.to_string(),
-                remediation: Some("Select a valid bundled, system, or custom aisw binary.".to_owned()),
+                remediation: Some(
+                    "Select a valid bundled, system, or custom aisw binary.".to_owned(),
+                ),
             },
             DesktopError::InvalidJson { command } => Self {
                 kind: GuiErrorKind::CommandContractError,
                 message: format!("aisw returned invalid JSON for `{command}`."),
-                remediation: Some("Check aisw version compatibility and command contracts.".to_owned()),
+                remediation: Some(
+                    "Check aisw version compatibility and command contracts.".to_owned(),
+                ),
             },
             DesktopError::CommandFailed {
                 kind,
@@ -73,7 +77,9 @@ impl From<DesktopError> for ErrorPayload {
             DesktopError::SettingsIo(_) | DesktopError::Serialization(_) => Self {
                 kind: GuiErrorKind::Unknown,
                 message: "Desktop settings could not be loaded or saved.".to_owned(),
-                remediation: Some("Check filesystem permissions for the app settings directory.".to_owned()),
+                remediation: Some(
+                    "Check filesystem permissions for the app settings directory.".to_owned(),
+                ),
             },
         }
     }

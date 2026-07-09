@@ -8,6 +8,7 @@ mod redaction;
 mod settings;
 mod state;
 mod tray;
+mod updater;
 
 use settings::SettingsStore;
 use state::AppState;
@@ -20,6 +21,8 @@ fn main() {
     tauri::Builder::default()
         .manage(app_state)
         .setup(|app| {
+            app.handle()
+                .plugin(tauri_plugin_updater::Builder::new().build())?;
             let state = app.state::<AppState>().inner().clone();
             tray::build_tray(&app.handle().clone(), state)?.build(app)?;
             Ok(())
@@ -28,6 +31,8 @@ fn main() {
             commands::get_bootstrap,
             commands::get_snapshot,
             commands::get_settings,
+            commands::check_for_updates,
+            commands::install_update,
             commands::update_settings,
             commands::run_init,
             commands::add_profile,

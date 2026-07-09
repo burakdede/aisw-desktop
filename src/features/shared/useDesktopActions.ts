@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   addProfile,
+  checkForUpdates,
+  installUpdate,
   removeProfile,
   renameProfile,
   restoreBackup,
@@ -60,6 +62,12 @@ export function useDesktopActions() {
     updateSettingsMutation: useMutation({
       mutationFn: updateSettings,
       onSuccess: invalidate,
+    }),
+    checkForUpdatesMutation: useMutation({
+      mutationFn: checkForUpdates,
+    }),
+    installUpdateMutation: useMutation({
+      mutationFn: installUpdate,
     }),
     initMutation: useMutation({
       mutationFn: runInit,

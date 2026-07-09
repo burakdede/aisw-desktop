@@ -562,4 +562,67 @@ describe("App", () => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
     });
   });
+
+  it("checks and installs a signed desktop update", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "check_for_updates") {
+        return {
+          configured: true,
+          channel: "stable",
+          current_version: "0.1.0",
+          endpoint: "https://updates.example.com/stable.json",
+          update: {
+            version: "0.2.0",
+            current_version: "0.1.0",
+            target: "darwin-aarch64",
+            notes: "Faster switching and signed updater artifacts.",
+          },
+          message: null,
+        };
+      }
+      if (command === "install_update") {
+        return {
+          configured: true,
+          channel: "stable",
+          current_version: "0.1.0",
+          installed_version: "0.2.0",
+          restart_requested: true,
+          message: "Update installed. Restart has been requested.",
+        };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    renderApp();
+    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Settings"));
+    fireEvent.click(screen.getByText("Check for updates"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Update available: 0.2.0")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("Install update"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Update installed. Restart has been requested.")).toBeInTheDocument();
+      expect(calls.some((entry) => entry.command === "check_for_updates")).toBe(true);
+      expect(calls.some((entry) => entry.command === "install_update")).toBe(true);
+    });
+  });
 });

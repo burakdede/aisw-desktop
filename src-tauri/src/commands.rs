@@ -2,12 +2,14 @@ use crate::bridge::{AiswBridge, CliAiswBridge};
 use crate::errors::{DesktopResult, ErrorPayload};
 use crate::models::{
     AddProfileRequest, AppBootstrap, AppSnapshot, BackupEntry, DesktopSettings, DoctorReport,
-    InitReport, MutationResponse, ProjectBindingsReport, RepairReport, RepairRequest,
-    UpdateSettingsRequest, UseAllProfilesRequest, UseContextRequest, UseProfileRequest, VerifyReport,
-    WorkspaceBindRequest, WorkspaceStatusReport, WorkspaceUnbindTarget,
+    InitReport, InstallUpdateReport, MutationResponse, ProjectBindingsReport, RepairReport,
+    RepairRequest, UpdateCheckReport, UpdateSettingsRequest, UseAllProfilesRequest,
+    UseContextRequest, UseProfileRequest, VerifyReport, WorkspaceBindRequest,
+    WorkspaceStatusReport, WorkspaceUnbindTarget,
 };
 use crate::state::{incompatible_runtime_error, AppState};
 use crate::tray;
+use crate::updater;
 use std::path::PathBuf;
 
 #[tauri::command]
@@ -26,12 +28,37 @@ pub async fn get_settings(state: tauri::State<'_, AppState>) -> DesktopResult<De
 }
 
 #[tauri::command]
+pub async fn check_for_updates(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, AppState>,
+) -> DesktopResult<UpdateCheckReport> {
+    let settings = state.load_settings().await.map_err(ErrorPayload::from)?;
+    updater::check_for_updates(&app, &settings.update_channel)
+        .await
+        .map_err(ErrorPayload::from)
+}
+
+#[tauri::command]
+pub async fn install_update(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, AppState>,
+) -> DesktopResult<InstallUpdateReport> {
+    let settings = state.load_settings().await.map_err(ErrorPayload::from)?;
+    updater::install_update(&app, &settings.update_channel)
+        .await
+        .map_err(ErrorPayload::from)
+}
+
+#[tauri::command]
 pub async fn update_settings(
     app: tauri::AppHandle,
     state: tauri::State<'_, AppState>,
     request: UpdateSettingsRequest,
 ) -> DesktopResult<DesktopSettings> {
-    let settings = state.update_settings(request).await.map_err(ErrorPayload::from)?;
+    let settings = state
+        .update_settings(request)
+        .await
+        .map_err(ErrorPayload::from)?;
     let _ = tray::refresh_tray(&app, state.inner().clone()).await;
     Ok(settings)
 }
@@ -44,7 +71,9 @@ pub async fn add_profile(
 ) -> DesktopResult<MutationResponse> {
     ensure_compatible(&state).await?;
     let result = state
-        .mutate("add_profile", move |bridge| async move { bridge.add_profile(request).await })
+        .mutate("add_profile", move |bridge| async move {
+            bridge.add_profile(request).await
+        })
         .await?;
     let _ = tray::refresh_tray(&app, state.inner().clone()).await;
     Ok(result)
@@ -58,7 +87,9 @@ pub async fn use_profile(
 ) -> DesktopResult<MutationResponse> {
     ensure_compatible(&state).await?;
     let result = state
-        .mutate("use_profile", move |bridge| async move { bridge.use_profile(request).await })
+        .mutate("use_profile", move |bridge| async move {
+            bridge.use_profile(request).await
+        })
         .await?;
     let _ = tray::refresh_tray(&app, state.inner().clone()).await;
     Ok(result)
@@ -88,7 +119,9 @@ pub async fn use_context(
 ) -> DesktopResult<MutationResponse> {
     ensure_compatible(&state).await?;
     let result = state
-        .mutate("use_context", move |bridge| async move { bridge.use_context(request).await })
+        .mutate("use_context", move |bridge| async move {
+            bridge.use_context(request).await
+        })
         .await?;
     let _ = tray::refresh_tray(&app, state.inner().clone()).await;
     Ok(result)
@@ -229,7 +262,9 @@ pub async fn workspace_bind(
 ) -> DesktopResult<MutationResponse> {
     ensure_compatible(&state).await?;
     let result = state
-        .mutate("workspace_bind", move |bridge| async move { bridge.workspace_bind(request).await })
+        .mutate("workspace_bind", move |bridge| async move {
+            bridge.workspace_bind(request).await
+        })
         .await?;
     let _ = tray::refresh_tray(&app, state.inner().clone()).await;
     Ok(result)
@@ -243,7 +278,9 @@ pub async fn workspace_unbind(
 ) -> DesktopResult<MutationResponse> {
     ensure_compatible(&state).await?;
     let result = state
-        .mutate("workspace_unbind", move |bridge| async move { bridge.workspace_unbind(target).await })
+        .mutate("workspace_unbind", move |bridge| async move {
+            bridge.workspace_unbind(target).await
+        })
         .await?;
     let _ = tray::refresh_tray(&app, state.inner().clone()).await;
     Ok(result)
@@ -257,7 +294,9 @@ pub async fn workspace_guard(
 ) -> DesktopResult<MutationResponse> {
     ensure_compatible(&state).await?;
     let result = state
-        .mutate("workspace_guard", move |bridge| async move { bridge.workspace_guard(mode).await })
+        .mutate("workspace_guard", move |bridge| async move {
+            bridge.workspace_guard(mode).await
+        })
         .await?;
     let _ = tray::refresh_tray(&app, state.inner().clone()).await;
     Ok(result)

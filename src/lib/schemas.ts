@@ -96,6 +96,28 @@ export const repairReportSchema = z.record(z.unknown());
 export const initReportSchema = z.record(z.unknown());
 export const workspaceStatusReportSchema = z.record(z.unknown());
 export const projectBindingsReportSchema = z.record(z.unknown());
+export const updateInfoSchema = z.object({
+  version: z.string(),
+  current_version: z.string(),
+  target: z.string(),
+  notes: z.string().nullable().optional(),
+});
+export const updateCheckReportSchema = z.object({
+  configured: z.boolean(),
+  channel: z.string(),
+  current_version: z.string(),
+  endpoint: z.string().nullable().optional(),
+  update: updateInfoSchema.nullable().optional(),
+  message: z.string().nullable().optional(),
+});
+export const installUpdateReportSchema = z.object({
+  configured: z.boolean(),
+  channel: z.string(),
+  current_version: z.string(),
+  installed_version: z.string().nullable().optional(),
+  restart_requested: z.boolean(),
+  message: z.string().nullable().optional(),
+});
 
 export const mutationResponseSchema = z.object({
   command: z.string(),
@@ -111,3 +133,5 @@ export type MutationResponse = z.infer<typeof mutationResponseSchema>;
 export type ToolStatus = z.infer<typeof toolStatusSchema>;
 export type ToolProfiles = z.infer<typeof toolProfilesSchema>;
 export type InitReport = z.infer<typeof initReportSchema>;
+export type UpdateCheckReport = z.infer<typeof updateCheckReportSchema>;
+export type InstallUpdateReport = z.infer<typeof installUpdateReportSchema>;

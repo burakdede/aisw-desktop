@@ -21,9 +21,7 @@ fn redact_token_family(line: &str, marker: &str) -> String {
     while let Some(index) = remainder.find(marker) {
         result.push_str(&remainder[..index]);
         let token = &remainder[index..];
-        let end = token
-            .find(char::is_whitespace)
-            .unwrap_or(token.len());
+        let end = token.find(char::is_whitespace).unwrap_or(token.len());
         result.push_str("[REDACTED]");
         remainder = &token[end..];
     }
