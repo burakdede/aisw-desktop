@@ -51,7 +51,7 @@ test("switches shared profiles and recovers from live mismatch", async ({ page }
   await overview.getByRole("button", { name: "Switch all" }).click();
 
   await expect(page.getByText("Last bulk result: Switched all tools to work.")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "work" }).nth(1)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Work" }).nth(1)).toBeVisible();
 
   await page.getByRole("button", { name: "Profiles" }).click();
   await expect(page.getByText("incident · oauth")).toBeVisible();
@@ -64,9 +64,9 @@ test("switches one tool directly from overview and refreshes the active profile 
 
   const codexCard = page.locator(".tool-card").filter({ hasText: "Codex" });
   await codexCard.getByLabel("Switch codex profile").selectOption("work");
-  await codexCard.getByRole("button", { name: "Switch to work" }).click();
+  await codexCard.getByRole("button", { name: "Switch to Work" }).click();
 
-  await expect(codexCard.getByRole("heading", { name: "work" })).toBeVisible();
+  await expect(codexCard.getByRole("heading", { name: "Work" })).toBeVisible();
   await expect(codexCard.getByText("Last result: Switched codex to work.")).toBeVisible();
 });
 
@@ -80,7 +80,7 @@ test("activates a local profile set from overview quick switch", async ({ page }
   await overview.getByRole("button", { name: "Switch all" }).click();
 
   await expect(page.getByText("Last bulk result: Activated profile set client-acme.")).toBeVisible();
-  await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "work" })).toBeVisible();
+  await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "Work" })).toBeVisible();
 });
 
 test("creates profiles from environment and API key modes", async ({ page }) => {
@@ -123,7 +123,7 @@ test("warns before backup restore and re-activates the restored profile", async 
   await page.getByRole("button", { name: "Restore and activate" }).click();
 
   await page.getByRole("button", { name: "Overview" }).click();
-  await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "work" })).toBeVisible();
+  await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "Work" })).toBeVisible();
 });
 
 async function installDesktopMock(page: Page, scenario: ScenarioName) {

@@ -10,7 +10,7 @@ import {
   toolBinaryName,
 } from "../../../lib/tool-guidance";
 import { useDesktopActions } from "../../shared/useDesktopActions";
-import { sharedProfileEntries } from "../../../lib/profile-display";
+import { sharedProfileEntries, toolProfileDisplayLabel } from "../../../lib/profile-display";
 import { titleCase } from "../../../lib/utils";
 import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 import { resolveWorkspaceActivationTarget } from "../../workspaces/workspace-activation";
@@ -154,6 +154,8 @@ export function OverviewPanel({
             mutationLocked={mutationLock.isBusy}
             onRefresh={() => refresh.mutate()}
             stateModes={supportedStateModes(status.tool, toolCapabilities)}
+            settings={settings}
+            snapshot={snapshot}
             onImport={(tool, profile, stateMode) =>
               addProfileMutation.mutate({
                 tool,
@@ -203,6 +205,8 @@ function ToolCard({
   mutationLocked,
   onRefresh,
   stateModes,
+  settings,
+  snapshot,
   onImport,
   onUse,
   onAddProfile,
@@ -219,6 +223,8 @@ function ToolCard({
   mutationLocked: boolean;
   onRefresh: () => void;
   stateModes: string[];
+  settings: DesktopSettings;
+  snapshot: AppSnapshot;
   onImport: (tool: string, profile: string, stateMode: string | null) => void;
   onUse: (tool: string, profile: string, stateMode: string | null) => void;
   onAddProfile: (tool: string) => void;
@@ -230,6 +236,12 @@ function ToolCard({
   const [selectedProfile, setSelectedProfile] = useState(
     status.active_profile ?? profiles[0]?.name ?? "",
   );
+  const activeProfileLabel = status.active_profile
+    ? toolProfileDisplayLabel(settings, snapshot, status.tool, status.active_profile)
+    : null;
+  const selectedProfileLabel = selectedProfile
+    ? toolProfileDisplayLabel(settings, snapshot, status.tool, selectedProfile)
+    : null;
 
   useEffect(() => {
     if (!stateModes.length) {
@@ -253,7 +265,7 @@ function ToolCard({
       <header>
         <div>
           <p className="card-kicker">{titleCase(status.tool)}</p>
-          <h3>{status.active_profile ?? "No active profile"}</h3>
+          <h3>{activeProfileLabel ?? "No active profile"}</h3>
         </div>
         <span className={`pill ${status.binary_found ? "pill-ok" : "pill-warn"}`}>
           {status.binary_found ? "Installed" : "Missing"}
@@ -350,7 +362,7 @@ function ToolCard({
             >
               {profiles.map((profile) => (
                 <option key={profile.name} value={profile.name}>
-                  {profile.name}
+                  {toolProfileDisplayLabel(settings, snapshot, status.tool, profile.name)}
                 </option>
               ))}
             </select>
@@ -361,9 +373,9 @@ function ToolCard({
             onClick={() => onUse(status.tool, selectedProfile, stateModes.length ? stateMode : null)}
           >
             {selectedProfile && selectedProfile === status.active_profile
-              ? `Re-apply ${selectedProfile}`
-              : selectedProfile
-                ? `Switch to ${selectedProfile}`
+              ? `Re-apply ${selectedProfileLabel}`
+              : selectedProfileLabel
+                ? `Switch to ${selectedProfileLabel}`
                 : "Switch profile"}
           </button>
         </div>

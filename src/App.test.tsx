@@ -187,7 +187,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByText("Control Center")).toBeInTheDocument();
     });
-    expect(screen.getByText("Re-apply work")).toBeInTheDocument();
+    expect(screen.getByText("Re-apply Work")).toBeInTheDocument();
     expect(screen.getByText("Active set: Work")).toBeInTheDocument();
     expect(screen.getByText("Runtime ready")).toBeInTheDocument();
     expect(screen.getByText("First-run setup")).toBeInTheDocument();
@@ -478,14 +478,14 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getAllByRole("heading", { name: "work" }).length).toBeGreaterThan(0));
+    await waitFor(() => expect(screen.getAllByRole("heading", { name: "Work" }).length).toBeGreaterThan(0));
     fireEvent.change(screen.getByDisplayValue("Switch profile set or shared profile…"), {
       target: { value: "profile:work" },
     });
     fireEvent.click(screen.getByText("Switch all"));
 
     await waitFor(() => {
-      expect(screen.getAllByRole("heading", { name: "personal" }).length).toBeGreaterThan(0);
+      expect(screen.getAllByRole("heading", { name: "Personal" }).length).toBeGreaterThan(0);
     });
     expect(screen.getByText("Last bulk result: switch failed")).toBeInTheDocument();
   });
@@ -515,7 +515,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Re-apply work"));
+    fireEvent.click(screen.getByText("Re-apply Work"));
 
     await waitFor(() => {
       expect(screen.getByText("Last result: Switched claude to work.")).toBeInTheDocument();
@@ -584,7 +584,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch codex profile"), {
       target: { value: "work" },
     });
-    fireEvent.click(screen.getByText("Switch to work"));
+    fireEvent.click(screen.getByText("Switch to Work"));
 
     await waitFor(() => {
       expect(
@@ -2594,7 +2594,8 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
     expect(screen.getByText("Active set: Office")).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "Office" })).toBeInTheDocument();
+    const firstSwitchSelect = screen.getByLabelText("First switch profile");
+    expect(within(firstSwitchSelect).getByRole("option", { name: "Office" })).toBeInTheDocument();
   });
 
   it("uses profile labels in context profile-set editing and summaries", async () => {
