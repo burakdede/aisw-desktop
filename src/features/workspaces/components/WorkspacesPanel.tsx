@@ -1,12 +1,13 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  getProjectBindings,
-  getWorkspaceStatus,
-} from "../../../lib/client";
+import { getProjectBindings, getWorkspaceStatus } from "../../../lib/client";
 import { AppSnapshot } from "../../../lib/schemas";
 import { SectionCard } from "../../../components/SectionCard";
 import { useDesktopActions } from "../../shared/useDesktopActions";
+import {
+  parseWorkspaceBindings,
+  parseWorkspaceStatus,
+} from "../workspace-parsers";
 
 type BindScope = "default" | "path" | "git_remote";
 
@@ -19,11 +20,8 @@ export function WorkspacesPanel({ snapshot }: { snapshot: AppSnapshot }) {
     queryKey: ["workspace-status"],
     queryFn: getWorkspaceStatus,
   });
-  const {
-    workspaceBindMutation,
-    workspaceUnbindMutation,
-    workspaceGuardMutation,
-  } = useDesktopActions();
+  const { workspaceBindMutation, workspaceUnbindMutation, workspaceGuardMutation } =
+    useDesktopActions();
   const [scope, setScope] = useState<BindScope>("default");
   const [context, setContext] = useState(snapshot.contexts[0]?.name ?? "");
   const [targetValue, setTargetValue] = useState("");
@@ -32,6 +30,8 @@ export function WorkspacesPanel({ snapshot }: { snapshot: AppSnapshot }) {
     () => snapshot.contexts.map((entry) => entry.name),
     [snapshot.contexts],
   );
+  const statusCard = parseWorkspaceStatus(workspaceStatus.data);
+  const bindingsSummary = parseWorkspaceBindings(bindings.data);
 
   function submitBind(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -113,15 +113,45 @@ export function WorkspacesPanel({ snapshot }: { snapshot: AppSnapshot }) {
             </button>
           </div>
         </form>
+
         <div className="stack-list">
           <article className="diagnostic-card">
-            <h3>Resolved workspace status</h3>
-            <pre>{JSON.stringify(workspaceStatus.data, null, 2)}</pre>
+            <h3>Resolved workspace</h3>
+            <p className="diagnostic-status">{statusCard.status}</p>
+            <p className="inline-note">Current context: {statusCard.currentContext}</p>
+            <p className="inline-note">Expected context: {statusCard.expectedContext}</p>
+            <p className="inline-note">Matched scope: {statusCard.scope}</p>
+            <p className="inline-note">Matched target: {statusCard.target}</p>
           </article>
+
           <article className="diagnostic-card">
-            <h3>Project bindings snapshot</h3>
-            <pre>{JSON.stringify(bindings.data, null, 2)}</pre>
+            <h3>Workspace guard</h3>
+            <p className="inline-note">Guard mode: {bindingsSummary.guardMode}</p>
+            <p className="inline-note">Default context: {bindingsSummary.defaultContext}</p>
           </article>
+
+          <div className="stack-list">
+            <h3>Explicit bindings</h3>
+            {bindingsSummary.bindings.map((binding) => (
+              <article
+                key={`${binding.scope}-${binding.target}-${binding.context}`}
+                className="list-row"
+              >
+                <div>
+                  <strong>{binding.context}</strong>
+                  <p>
+                    {binding.scope} · {binding.target}
+                  </p>
+                </div>
+              </article>
+            ))}
+            {!bindingsSummary.bindings.length ? (
+              <p className="inline-note">
+                No explicit workspace bindings are configured yet. Save one from the form to attach
+                a context to a default scope, path prefix, or git remote pattern.
+              </p>
+            ) : null}
+          </div>
         </div>
       </div>
     </SectionCard>

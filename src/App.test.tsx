@@ -339,6 +339,77 @@ describe("App", () => {
     });
   });
 
+  it("renders structured workspace details and saves bindings", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "workspace_bind") {
+        return { command, snapshot: bootstrap.snapshot };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: {
+            result: {
+              status: "mismatch",
+              current_context: "work",
+              expected_context: "client-acme",
+              matched_binding: {
+                scope: "path",
+                path: "/code/acme",
+                context: "client-acme",
+              },
+            },
+          },
+          get_project_bindings: {
+            result: {
+              user_bindings: {
+                guard_mode: "warn",
+                default_context: "work",
+                items: [
+                  {
+                    scope: "path",
+                    path: "/code/acme",
+                    context: "client-acme",
+                  },
+                ],
+              },
+            },
+          },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    renderApp();
+    await waitFor(() => expect(screen.getByText("Workspaces")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Workspaces"));
+    await waitFor(() => {
+      expect(screen.getByText(/Current context:\s*work/)).toBeInTheDocument();
+      expect(screen.getByText(/Expected context:\s*client-acme/)).toBeInTheDocument();
+      expect(screen.getByText(/Guard mode:\s*warn/)).toBeInTheDocument();
+      expect(screen.getByText("path · /code/acme")).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByDisplayValue("Default context"), {
+      target: { value: "path" },
+    });
+    fireEvent.change(screen.getByLabelText("Path"), {
+      target: { value: "/code/next" },
+    });
+    fireEvent.click(screen.getByText("Save binding"));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "workspace_bind")).toBe(true);
+    });
+  });
+
   it("applies safe repairs from diagnostics", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
