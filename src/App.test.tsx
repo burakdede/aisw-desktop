@@ -174,6 +174,59 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows install and PATH guidance when a tool binary is missing", async () => {
+    window.__AISW_DESKTOP_MOCK__ = {
+      ...window.__AISW_DESKTOP_MOCK__,
+      get_bootstrap: {
+        ...bootstrap,
+        snapshot: {
+          ...bootstrap.snapshot,
+          statuses: [
+            ...bootstrap.snapshot.statuses,
+            {
+              tool: "gemini",
+              binary_found: false,
+              stored_profiles: 0,
+              active_profile: null,
+              auth_method: null,
+              credential_backend: null,
+              state_mode: null,
+              active_profile_applied: null,
+              credentials_present: false,
+              permissions_ok: true,
+            },
+          ],
+        },
+      },
+      get_snapshot: {
+        ...bootstrap.snapshot,
+        statuses: [
+          ...bootstrap.snapshot.statuses,
+          {
+            tool: "gemini",
+            binary_found: false,
+            stored_profiles: 0,
+            active_profile: null,
+            auth_method: null,
+            credential_backend: null,
+            state_mode: null,
+            active_profile_applied: null,
+            credentials_present: false,
+            permissions_ok: true,
+          },
+        ],
+      },
+    };
+
+    renderApp();
+    await waitFor(() => {
+      expect(screen.getByText("Gemini is not available on PATH, so AISW Desktop cannot switch or verify that tool yet.")).toBeInTheDocument();
+    });
+    expect(screen.getByText("npm install -g @google/gemini-cli")).toBeInTheDocument();
+    expect(screen.getByText("gemini --version")).toBeInTheDocument();
+    expect(screen.getByText("which gemini")).toBeInTheDocument();
+  });
+
   it("renames and removes a profile through desktop commands", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {

@@ -166,9 +166,7 @@ function ToolCard({
         </label>
       ) : null}
       {!status.binary_found ? (
-        <p className="inline-note">
-          Install {titleCase(status.tool)} and refresh diagnostics to restore switching support.
-        </p>
+        <MissingBinaryGuidance tool={status.tool} />
       ) : null}
       {activeState === false ? (
         <div className="stack-list">
@@ -211,6 +209,34 @@ function ToolCard({
   );
 }
 
+function MissingBinaryGuidance({ tool }: { tool: string }) {
+  const binary = toolBinaryName(tool);
+  const verifyCommand = commandForCurrentPlatform(binary, "verify");
+  const pathCommand = commandForCurrentPlatform(binary, "path");
+  const installCommand = installCommandForTool(tool);
+
+  return (
+    <div className="stack-list">
+      <p className="inline-note">
+        {titleCase(tool)} is not available on PATH, so AISW Desktop cannot switch or verify that
+        tool yet.
+      </p>
+      <p className="inline-note">
+        Install: <code>{installCommand}</code>
+      </p>
+      <p className="inline-note">
+        Verify binary: <code>{verifyCommand}</code>
+      </p>
+      <p className="inline-note">
+        Check PATH: <code>{pathCommand}</code>
+      </p>
+      <p className="inline-note">
+        Refresh state after the CLI is installed or after you update your shell PATH.
+      </p>
+    </div>
+  );
+}
+
 function supportedStateModes(
   tool: string,
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"],
@@ -220,4 +246,39 @@ function supportedStateModes(
     return configured;
   }
   return tool === "gemini" ? [] : ["isolated", "shared"];
+}
+
+function installCommandForTool(tool: string) {
+  switch (tool) {
+    case "claude":
+      return "npm install -g @anthropic-ai/claude-code";
+    case "codex":
+      return "npm install -g @openai/codex";
+    case "gemini":
+      return "npm install -g @google/gemini-cli";
+    default:
+      return `install ${tool}`;
+  }
+}
+
+function toolBinaryName(tool: string) {
+  switch (tool) {
+    case "claude":
+      return "claude";
+    case "codex":
+      return "codex";
+    case "gemini":
+      return "gemini";
+    default:
+      return tool;
+  }
+}
+
+function commandForCurrentPlatform(binary: string, kind: "verify" | "path") {
+  const platform = typeof navigator === "undefined" ? "" : `${navigator.userAgent} ${navigator.platform}`;
+  const isWindows = /Windows/i.test(platform);
+  if (kind === "verify") {
+    return `${binary} --version`;
+  }
+  return isWindows ? `where ${binary}` : `which ${binary}`;
 }
