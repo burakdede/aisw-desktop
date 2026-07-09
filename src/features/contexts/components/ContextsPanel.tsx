@@ -62,6 +62,7 @@ export function ContextsPanel({
         runtime_path: settings.runtime_path ?? null,
         aisw_home: settings.aisw_home ?? null,
         update_channel: settings.update_channel,
+        profile_labels: settings.profile_labels ?? {},
         profile_sets: nextSets,
       },
       {
@@ -108,6 +109,7 @@ export function ContextsPanel({
       runtime_path: settings.runtime_path ?? null,
       aisw_home: settings.aisw_home ?? null,
       update_channel: settings.update_channel,
+      profile_labels: settings.profile_labels ?? {},
       profile_sets: localSets.filter((entry) => entry.name !== name),
     });
   }

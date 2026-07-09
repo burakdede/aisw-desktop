@@ -14,6 +14,7 @@ const bootstrapSettings: DesktopSettings = {
   runtime_path: null,
   aisw_home: null,
   update_channel: "stable",
+  profile_labels: {},
   profile_sets: [],
 };
 
@@ -359,6 +360,67 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "rename_profile")).toBe(true);
       expect(calls.some((entry) => entry.command === "remove_profile")).toBe(true);
+    });
+  });
+
+  it("stores a relabel override for an existing profile", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "update_settings") {
+        return {
+          ...bootstrap.settings,
+          profile_labels: {
+            claude: {
+              work: "Acme Work",
+            },
+          },
+        };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    renderApp();
+    await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Profiles"));
+    fireEvent.change(screen.getByLabelText("label work"), {
+      target: { value: "Acme Work" },
+    });
+    fireEvent.click(screen.getByText("Relabel"));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
+    });
+
+    expect(calls).toContainEqual({
+      command: "update_settings",
+      args: {
+        request: {
+          runtime_kind: "bundled",
+          runtime_path: null,
+          aisw_home: null,
+          update_channel: "stable",
+          profile_labels: {
+            claude: {
+              work: "Acme Work",
+            },
+          },
+          profile_sets: [],
+        },
+      },
     });
   });
 

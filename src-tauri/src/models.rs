@@ -18,6 +18,8 @@ pub struct DesktopSettings {
     pub aisw_home: Option<String>,
     pub update_channel: String,
     #[serde(default)]
+    pub profile_labels: HashMap<ToolId, HashMap<String, Option<String>>>,
+    #[serde(default)]
     pub profile_sets: Vec<ProfileSet>,
 }
 
@@ -28,6 +30,7 @@ impl Default for DesktopSettings {
             runtime_path: None,
             aisw_home: None,
             update_channel: "stable".to_owned(),
+            profile_labels: HashMap::new(),
             profile_sets: Vec::new(),
         }
     }
@@ -220,6 +223,8 @@ pub struct UpdateSettingsRequest {
     pub runtime_path: Option<String>,
     pub aisw_home: Option<String>,
     pub update_channel: String,
+    #[serde(default)]
+    pub profile_labels: HashMap<ToolId, HashMap<String, Option<String>>>,
     #[serde(default)]
     pub profile_sets: Vec<ProfileSet>,
 }

@@ -39,6 +39,7 @@ export function SettingsPanel({ settings }: { settings: DesktopSettings }) {
       runtime_path: runtimePath || null,
       aisw_home: aiswHome || null,
       update_channel: updateChannel,
+      profile_labels: settings.profile_labels ?? {},
       profile_sets: settings.profile_sets,
     });
   }

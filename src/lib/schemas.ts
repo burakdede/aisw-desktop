@@ -24,6 +24,7 @@ export const desktopSettingsSchema = z.object({
   runtime_path: z.string().nullable().optional(),
   aisw_home: z.string().nullable().optional(),
   update_channel: z.string(),
+  profile_labels: z.record(z.record(z.string().nullable().optional())).default({}),
   profile_sets: z
     .array(
       z.object({

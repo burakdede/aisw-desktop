@@ -1,6 +1,11 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
-import { AppBootstrap, AppSnapshot, type OAuthProgressEvent } from "../../../lib/schemas";
+import {
+  AppBootstrap,
+  AppSnapshot,
+  DesktopSettings,
+  type OAuthProgressEvent,
+} from "../../../lib/schemas";
 import { listenDesktopEvent } from "../../../lib/tauri";
 import { parseOAuthProgressEvent } from "../../../lib/client";
 import { titleCase } from "../../../lib/utils";
@@ -10,9 +15,11 @@ const TOOLS = ["claude", "codex", "gemini"] as const;
 
 export function ProfilesPanel({
   snapshot,
+  settings,
   toolCapabilities,
 }: {
   snapshot: AppSnapshot;
+  settings: DesktopSettings;
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
 }) {
   const {
@@ -21,6 +28,7 @@ export function ProfilesPanel({
     useProfileMutation,
     renameProfileMutation,
     removeProfileMutation,
+    updateSettingsMutation,
   } = useDesktopActions();
   const [tool, setTool] = useState<(typeof TOOLS)[number]>("claude");
   const [profile, setProfile] = useState("");
@@ -28,6 +36,7 @@ export function ProfilesPanel({
   const [mode, setMode] = useState<"from_live" | "from_env" | "api_key" | "oauth">("from_live");
   const [stateMode, setStateMode] = useState("isolated");
   const [renameDrafts, setRenameDrafts] = useState<Record<string, string>>({});
+  const [labelDrafts, setLabelDrafts] = useState<Record<string, string>>({});
   const [oauthEvents, setOauthEvents] = useState<OAuthProgressEvent[]>([]);
   const [oauthError, setOauthError] = useState("");
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
@@ -254,7 +263,7 @@ export function ProfilesPanel({
           {profiles.map((entry) => (
             <article key={entry.name} className="list-row">
               <div>
-                <strong>{entry.label ?? entry.name}</strong>
+                <strong>{effectiveLabel(tool, entry.name, entry.label, settings) ?? entry.name}</strong>
                 <p>
                   {entry.name} · {entry.auth}
                 </p>
@@ -295,6 +304,37 @@ export function ProfilesPanel({
                     }}
                   >
                     Rename
+                  </button>
+                </div>
+                <div className="inline-form inline-form-compact">
+                  <input
+                    aria-label={`label ${entry.name}`}
+                    placeholder="display label"
+                    value={labelDrafts[entry.name] ?? effectiveLabel(tool, entry.name, entry.label, settings) ?? ""}
+                    onChange={(event) =>
+                      setLabelDrafts((current) => ({
+                        ...current,
+                        [entry.name]: event.target.value,
+                      }))
+                    }
+                  />
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    onClick={() => {
+                      const nextLabel = labelDrafts[entry.name]?.trim() ?? "";
+                      setPendingRemoval(null);
+                      updateSettingsMutation.mutate({
+                        runtime_kind: settings.runtime_kind,
+                        runtime_path: settings.runtime_path ?? null,
+                        aisw_home: settings.aisw_home ?? null,
+                        update_channel: settings.update_channel,
+                        profile_sets: settings.profile_sets,
+                        profile_labels: mergeProfileLabel(settings, tool, entry.name, nextLabel || null),
+                      });
+                    }}
+                  >
+                    Relabel
                   </button>
                 </div>
               </div>
@@ -369,6 +409,37 @@ export function ProfilesPanel({
       </div>
     </SectionCard>
   );
+}
+
+function effectiveLabel(
+  tool: string,
+  profile: string,
+  currentLabel: string | null | undefined,
+  settings: DesktopSettings,
+) {
+  const override = settings.profile_labels?.[tool]?.[profile];
+  return override ?? currentLabel ?? null;
+}
+
+function mergeProfileLabel(
+  settings: DesktopSettings,
+  tool: string,
+  profile: string,
+  label: string | null,
+) {
+  const next = {
+    ...(settings.profile_labels ?? {}),
+    [tool]: {
+      ...(settings.profile_labels?.[tool] ?? {}),
+      [profile]: label,
+    },
+  };
+
+  if (label === null && Object.values(next[tool]).every((value) => value == null)) {
+    delete next[tool];
+  }
+
+  return next;
 }
 
 function expectedEnvVar(tool: string) {

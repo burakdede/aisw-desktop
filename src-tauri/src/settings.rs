@@ -38,6 +38,7 @@ impl SettingsStore {
             runtime_path: request.runtime_path,
             aisw_home: request.aisw_home,
             update_channel: request.update_channel,
+            profile_labels: request.profile_labels,
             profile_sets: request.profile_sets,
         };
         let bytes = serde_json::to_vec_pretty(&settings)?;
@@ -63,6 +64,10 @@ mod tests {
                 runtime_path: Some("/tmp/aisw".to_owned()),
                 aisw_home: Some("/tmp/home".to_owned()),
                 update_channel: "beta".to_owned(),
+                profile_labels: HashMap::from([(
+                    "claude".to_owned(),
+                    HashMap::from([("work".to_owned(), Some("Work".to_owned()))]),
+                )]),
                 profile_sets: vec![ProfileSet {
                     name: "work".to_owned(),
                     label: Some("Work".to_owned()),
@@ -76,6 +81,14 @@ mod tests {
         assert_eq!(saved.profile_sets.len(), 1);
         let loaded = store.load().await.unwrap();
         assert_eq!(loaded.runtime_path.as_deref(), Some("/tmp/aisw"));
+        assert_eq!(
+            loaded
+                .profile_labels
+                .get("claude")
+                .and_then(|items| items.get("work"))
+                .and_then(|value| value.as_deref()),
+            Some("Work")
+        );
         assert_eq!(loaded.profile_sets[0].name, "work");
     }
 }
