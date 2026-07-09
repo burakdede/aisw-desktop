@@ -1238,7 +1238,7 @@ describe("App", () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
-      if (command === "workspace_bind") {
+      if (command === "workspace_bind" || command === "use_context") {
         return { command, snapshot: bootstrap.snapshot };
       }
       return (
@@ -1290,6 +1290,17 @@ describe("App", () => {
       expect(screen.getByText(/Expected context:\s*client-acme/)).toBeInTheDocument();
       expect(screen.getByText(/Guard mode:\s*warn/)).toBeInTheDocument();
       expect(screen.getByText("path · /code/acme")).toBeInTheDocument();
+      expect(screen.getByText("Workspace mismatch")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("Use expected context now"));
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
+    });
+
+    fireEvent.click(screen.getByText("Keep current context"));
+    await waitFor(() => {
+      expect(screen.queryByText("Workspace mismatch")).not.toBeInTheDocument();
     });
 
     fireEvent.change(screen.getByDisplayValue("Default context"), {

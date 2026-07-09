@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getProjectBindings, getWorkspaceStatus } from "../../../lib/client";
 import { AppSnapshot } from "../../../lib/schemas";
@@ -24,11 +24,13 @@ export function WorkspacesPanel({ snapshot }: { snapshot: AppSnapshot }) {
     workspaceBindMutation,
     workspaceUnbindMutation,
     workspaceGuardMutation,
+    useContextMutation,
     mutationLock,
   } = useDesktopActions();
   const [scope, setScope] = useState<BindScope>("default");
   const [context, setContext] = useState(snapshot.contexts[0]?.name ?? "");
   const [targetValue, setTargetValue] = useState("");
+  const [workspaceOverrideDismissed, setWorkspaceOverrideDismissed] = useState(false);
 
   const availableContexts = useMemo(
     () => snapshot.contexts.map((entry) => entry.name),
@@ -36,6 +38,14 @@ export function WorkspacesPanel({ snapshot }: { snapshot: AppSnapshot }) {
   );
   const statusCard = parseWorkspaceStatus(workspaceStatus.data);
   const bindingsSummary = parseWorkspaceBindings(bindings.data);
+  const hasWorkspaceMismatch =
+    statusCard.status === "mismatch" &&
+    statusCard.expectedContext !== "none" &&
+    statusCard.expectedContext !== statusCard.currentContext;
+
+  useEffect(() => {
+    setWorkspaceOverrideDismissed(false);
+  }, [statusCard.currentContext, statusCard.expectedContext, statusCard.status]);
 
   function submitBind(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -122,6 +132,41 @@ export function WorkspacesPanel({ snapshot }: { snapshot: AppSnapshot }) {
         </form>
 
         <div className="stack-list">
+          {hasWorkspaceMismatch && !workspaceOverrideDismissed ? (
+            <article className="diagnostic-card diagnostic-warn">
+              <h3>Workspace mismatch</h3>
+              <p className="inline-note">
+                This folder matches <strong>{statusCard.expectedContext}</strong>, but the current
+                active context is <strong>{statusCard.currentContext}</strong>.
+              </p>
+              <p className="inline-note">
+                Matched from {statusCard.scope} binding: {statusCard.target}
+              </p>
+              <div className="button-row">
+                <button
+                  className="primary-button"
+                  type="button"
+                  disabled={mutationLock.isBusy}
+                  onClick={() =>
+                    useContextMutation.mutate({
+                      context: statusCard.expectedContext,
+                      stateMode: "isolated",
+                    })
+                  }
+                >
+                  Use expected context now
+                </button>
+                <button
+                  className="ghost-button"
+                  type="button"
+                  onClick={() => setWorkspaceOverrideDismissed(true)}
+                >
+                  Keep current context
+                </button>
+              </div>
+            </article>
+          ) : null}
+
           <article className="diagnostic-card">
             <h3>Resolved workspace</h3>
             <p className="diagnostic-status">{statusCard.status}</p>
