@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { SectionCard } from "../../../components/SectionCard";
 import {
   AppBootstrap,
@@ -8,7 +9,7 @@ import {
 } from "../../../lib/schemas";
 import { DesktopCommandError } from "../../../lib/tauri";
 import { listenDesktopEvent } from "../../../lib/tauri";
-import { parseOAuthProgressEvent } from "../../../lib/client";
+import { listBackups, parseOAuthProgressEvent } from "../../../lib/client";
 import { titleCase } from "../../../lib/utils";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 
@@ -29,6 +30,7 @@ export function ProfilesPanel({
     useProfileMutation,
     renameProfileMutation,
     removeProfileMutation,
+    restoreBackupMutation,
     updateSettingsMutation,
     apiKeyProfileAction,
   } = useDesktopActions();
@@ -50,6 +52,7 @@ export function ProfilesPanel({
     () => snapshot.statuses.find((entry) => entry.tool === tool),
     [snapshot.statuses, tool],
   );
+  const backups = useQuery({ queryKey: ["backups"], queryFn: listBackups });
   const availableStateModes = useMemo(
     () => supportedStateModes(tool, toolCapabilities),
     [tool, toolCapabilities],
@@ -289,7 +292,9 @@ export function ProfilesPanel({
               {oauthError ? <p className="inline-note">{oauthError}</p> : null}
             </article>
           ) : null}
-          {profiles.map((entry) => (
+          {profiles.map((entry) => {
+            const latestBackup = latestBackupForProfile(tool, entry.name, backups.data);
+            return (
             <article key={entry.name} className="list-row">
               <div>
                 <strong>{effectiveLabel(tool, entry.name, entry.label, settings) ?? entry.name}</strong>
@@ -445,6 +450,34 @@ export function ProfilesPanel({
                 >
                   {expandedDetails === entry.name ? "Hide diagnostic details" : "View diagnostic details"}
                 </button>
+                {latestBackup ? (
+                  <>
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      onClick={() => restoreBackupMutation.mutate(latestBackup.backup_id)}
+                    >
+                      Restore latest
+                    </button>
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      onClick={() => {
+                        restoreBackupMutation.mutate(latestBackup.backup_id, {
+                          onSuccess: () => {
+                            useProfileMutation.mutate({
+                              tool,
+                              profile: entry.name,
+                              stateMode: tool === "gemini" ? null : "isolated",
+                            });
+                          },
+                        });
+                      }}
+                    >
+                      Restore latest + activate
+                    </button>
+                  </>
+                ) : null}
                 {snapshot.profiles[tool]?.active === entry.name ? (
                   pendingRemoval === entry.name ? (
                     <>
@@ -497,7 +530,8 @@ export function ProfilesPanel({
                 )}
               </div>
             </article>
-          ))}
+            );
+          })}
           {!profiles.length ? <p className="inline-note">No profiles stored for this tool yet.</p> : null}
         </div>
       </div>
@@ -534,6 +568,18 @@ function mergeProfileLabel(
   }
 
   return next;
+}
+
+function latestBackupForProfile(
+  tool: string,
+  profile: string,
+  backups: Array<{ backup_id: string; tool: string; profile: string }> | undefined,
+) {
+  return backups?.find(
+    (entry) =>
+      entry.tool === tool &&
+      (entry.profile === profile || entry.profile === `${tool}/${profile}`),
+  );
 }
 
 function expectedEnvVar(tool: string) {
