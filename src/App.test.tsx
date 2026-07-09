@@ -1313,8 +1313,16 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("Workspaces")).toBeInTheDocument());
     await waitFor(() => {
       expect(screen.getByText("Workspace wants a different context")).toBeInTheDocument();
-      expect(screen.getByText("client-acme")).toBeInTheDocument();
-      expect(screen.getAllByText("work").length).toBeGreaterThan(0);
+      expect(
+        screen.getByText((_, element) =>
+          element?.tagName === "P" && element.textContent?.trim() === "Expected profile set: client-acme",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText((_, element) =>
+          element?.tagName === "P" && element.textContent?.trim() === "Current context: work",
+        ),
+      ).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getAllByText("Use expected context now")[0]);
