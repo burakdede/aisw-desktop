@@ -9,6 +9,18 @@ const DIAGNOSTICS_ID: &str = "diagnostics";
 const QUIT_ID: &str = "quit";
 const SWITCH_ALL_PREFIX: &str = "switch-all:";
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct TraySection {
+    title: String,
+    items: Vec<TrayEntry>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct TrayEntry {
+    id: String,
+    label: String,
+}
+
 pub fn build_tray<R: Runtime>(
     app: &AppHandle<R>,
     state: AppState,
@@ -119,89 +131,26 @@ fn tray_menu<R: Runtime>(
     ];
 
     if let Some(snapshot) = snapshot {
-        let shared_profiles = shared_profile_names(snapshot);
-        if !shared_profiles.is_empty() {
-            let switch_all_items = shared_profiles
+        for section in tray_sections(snapshot) {
+            let submenu_items = section
+                .items
                 .iter()
-                .map(|profile| {
+                .map(|entry| {
                     MenuItem::with_id(
                         app,
-                        format!("{SWITCH_ALL_PREFIX}{profile}"),
-                        profile.clone(),
+                        entry.id.clone(),
+                        entry.label.clone(),
                         true,
                         None::<&str>,
                     )
                     .map(|item| item.kind())
                 })
                 .collect::<tauri::Result<Vec<_>>>()?;
-            let switch_all_refs = switch_all_items
+            let submenu_refs = submenu_items
                 .iter()
                 .map(|item| item as &dyn IsMenuItem<R>)
                 .collect::<Vec<_>>();
-            let switch_all = Submenu::with_items(app, "Switch all", true, &switch_all_refs)?;
-            items.push(switch_all.kind());
-        }
-
-        if !snapshot.contexts.is_empty() {
-            let context_items = snapshot
-                .contexts
-                .iter()
-                .map(|context| {
-                    MenuItem::with_id(
-                        app,
-                        format!("context:{}", context.name),
-                        context.name.clone(),
-                        true,
-                        None::<&str>,
-                    )
-                    .map(|item| item.kind())
-                })
-                .collect::<tauri::Result<Vec<_>>>()?;
-            let context_refs = context_items
-                .iter()
-                .map(|item| item as &dyn IsMenuItem<R>)
-                .collect::<Vec<_>>();
-            let contexts = Submenu::with_items(app, "Switch Context", true, &context_refs)?;
-            items.push(contexts.kind());
-        }
-
-        for (tool, entry) in &snapshot.profiles {
-            if entry.profiles.is_empty() {
-                continue;
-            }
-            let profile_items = entry
-                .profiles
-                .iter()
-                .map(|profile| {
-                    let suffix = if entry.active.as_deref() == Some(profile.name.as_str()) {
-                        " ✓"
-                    } else {
-                        ""
-                    };
-                    MenuItem::with_id(
-                        app,
-                        format!("profile:{tool}:{}", profile.name),
-                        format!(
-                            "{}{}",
-                            profile.label.as_deref().unwrap_or(&profile.name),
-                            suffix
-                        ),
-                        true,
-                        None::<&str>,
-                    )
-                    .map(|item| item.kind())
-                })
-                .collect::<tauri::Result<Vec<_>>>()?;
-            let profile_refs = profile_items
-                .iter()
-                .map(|item| item as &dyn IsMenuItem<R>)
-                .collect::<Vec<_>>();
-            let submenu = Submenu::with_items(
-                app,
-                format!("{} profiles", title_case(tool)),
-                true,
-                &profile_refs,
-            )?;
+            let submenu = Submenu::with_items(app, section.title, true, &submenu_refs)?;
             items.push(submenu.kind());
         }
     }
@@ -281,6 +230,71 @@ fn shared_profile_names(snapshot: &AppSnapshot) -> Vec<String> {
     names
 }
 
+fn tray_sections(snapshot: &AppSnapshot) -> Vec<TraySection> {
+    let mut sections = Vec::new();
+
+    let shared_profiles = shared_profile_names(snapshot);
+    if !shared_profiles.is_empty() {
+        sections.push(TraySection {
+            title: "Switch all".to_owned(),
+            items: shared_profiles
+                .into_iter()
+                .map(|profile| TrayEntry {
+                    id: format!("{SWITCH_ALL_PREFIX}{profile}"),
+                    label: profile,
+                })
+                .collect(),
+        });
+    }
+
+    if !snapshot.contexts.is_empty() {
+        sections.push(TraySection {
+            title: "Switch Context".to_owned(),
+            items: snapshot
+                .contexts
+                .iter()
+                .map(|context| TrayEntry {
+                    id: format!("context:{}", context.name),
+                    label: context.name.clone(),
+                })
+                .collect(),
+        });
+    }
+
+    let mut profile_tools = snapshot.profiles.iter().collect::<Vec<_>>();
+    profile_tools.sort_by(|left, right| left.0.cmp(right.0));
+
+    for (tool, entry) in profile_tools {
+        if entry.profiles.is_empty() {
+            continue;
+        }
+        sections.push(TraySection {
+            title: format!("{} profiles", title_case(tool)),
+            items: entry
+                .profiles
+                .iter()
+                .map(|profile| {
+                    let suffix = if entry.active.as_deref() == Some(profile.name.as_str()) {
+                        " ✓"
+                    } else {
+                        ""
+                    };
+                    TrayEntry {
+                        id: format!("profile:{tool}:{}", profile.name),
+                        label: format!(
+                            "{}{}",
+                            profile.label.as_deref().unwrap_or(&profile.name),
+                            suffix
+                        ),
+                    }
+                })
+                .collect(),
+        });
+    }
+
+    sections
+}
+
 fn title_case(value: &str) -> String {
     let mut chars = value.chars();
     match chars.next() {
@@ -293,8 +307,9 @@ fn title_case(value: &str) -> String {
 mod tests {
     use super::{
         active_set_label, active_summary, active_summary_or_default, shared_profile_names,
+        tray_sections, TrayEntry, TraySection,
     };
-    use crate::models::{AppSnapshot, ToolProfileSummary, ToolProfiles, ToolStatus};
+    use crate::models::{AppSnapshot, ContextSummary, ToolProfileSummary, ToolProfiles, ToolStatus};
     use std::collections::HashMap;
 
     #[test]
@@ -431,5 +446,89 @@ mod tests {
             project_bindings: None,
         };
         assert_eq!(shared_profile_names(&snapshot), vec!["work".to_owned()]);
+    }
+
+    #[test]
+    fn tray_sections_include_switch_all_contexts_and_active_markers() {
+        let snapshot = AppSnapshot {
+            statuses: vec![],
+            profiles: HashMap::from([
+                (
+                    "claude".to_owned(),
+                    ToolProfiles {
+                        active: Some("work".to_owned()),
+                        profiles: vec![
+                            ToolProfileSummary {
+                                name: "work".to_owned(),
+                                auth: "oauth".to_owned(),
+                                label: Some("Work".to_owned()),
+                            },
+                            ToolProfileSummary {
+                                name: "personal".to_owned(),
+                                auth: "oauth".to_owned(),
+                                label: Some("Personal".to_owned()),
+                            },
+                        ],
+                    },
+                ),
+                (
+                    "codex".to_owned(),
+                    ToolProfiles {
+                        active: Some("work".to_owned()),
+                        profiles: vec![ToolProfileSummary {
+                            name: "work".to_owned(),
+                            auth: "api_key".to_owned(),
+                            label: Some("Work".to_owned()),
+                        }],
+                    },
+                ),
+            ]),
+            contexts: vec![ContextSummary {
+                name: "client-acme".to_owned(),
+                profiles: HashMap::from([("claude".to_owned(), Some("work".to_owned()))]),
+            }],
+            workspace_status: None,
+            project_bindings: None,
+        };
+
+        assert_eq!(
+            tray_sections(&snapshot),
+            vec![
+                TraySection {
+                    title: "Switch all".to_owned(),
+                    items: vec![TrayEntry {
+                        id: "switch-all:work".to_owned(),
+                        label: "work".to_owned(),
+                    }],
+                },
+                TraySection {
+                    title: "Switch Context".to_owned(),
+                    items: vec![TrayEntry {
+                        id: "context:client-acme".to_owned(),
+                        label: "client-acme".to_owned(),
+                    }],
+                },
+                TraySection {
+                    title: "Claude profiles".to_owned(),
+                    items: vec![
+                        TrayEntry {
+                            id: "profile:claude:work".to_owned(),
+                            label: "Work ✓".to_owned(),
+                        },
+                        TrayEntry {
+                            id: "profile:claude:personal".to_owned(),
+                            label: "Personal".to_owned(),
+                        },
+                    ],
+                },
+                TraySection {
+                    title: "Codex profiles".to_owned(),
+                    items: vec![TrayEntry {
+                        id: "profile:codex:work".to_owned(),
+                        label: "Work ✓".to_owned(),
+                    }],
+                },
+            ]
+        );
     }
 }
