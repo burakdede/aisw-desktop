@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { App } from "./App";
 
 const bootstrap = {
@@ -122,5 +122,80 @@ describe("App", () => {
     expect(
       screen.getByText("aisw does not advertise mutation_json support"),
     ).toBeInTheDocument();
+  });
+
+  it("renames and removes a profile through desktop commands", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "rename_profile" || command === "remove_profile") {
+        return { command, snapshot: bootstrap.snapshot };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    renderApp();
+    await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Profiles"));
+    fireEvent.change(screen.getByLabelText("rename work"), {
+      target: { value: "client-acme" },
+    });
+    fireEvent.click(screen.getByText("Rename"));
+    fireEvent.click(screen.getByText("Remove"));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "rename_profile")).toBe(true);
+      expect(calls.some((entry) => entry.command === "remove_profile")).toBe(true);
+    });
+  });
+
+  it("restores and re-activates a backup through desktop commands", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "restore_backup" || command === "use_profile") {
+        return { command, snapshot: bootstrap.snapshot };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [
+            { backup_id: "b1", tool: "claude", profile: "claude/work" },
+          ],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    renderApp();
+    await waitFor(() => expect(screen.getByText("Backups")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Backups"));
+    await waitFor(() => expect(screen.getByText("Restore and activate")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Restore and activate"));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "restore_backup")).toBe(true);
+      expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
+    });
   });
 });

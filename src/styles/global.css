@@ -286,6 +286,11 @@ body {
   color: rgba(244, 247, 251, 0.82);
 }
 
+.danger-button {
+  color: #ffc5c5;
+  background: rgba(170, 33, 33, 0.18);
+}
+
 .inline-note {
   margin: 0;
   color: rgba(244, 247, 251, 0.72);
@@ -321,6 +326,15 @@ body {
   display: flex;
   gap: 10px;
   align-items: center;
+}
+
+.inline-form-compact {
+  margin-top: 10px;
+}
+
+.button-row-column {
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .inline-form input {

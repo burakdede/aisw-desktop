@@ -41,6 +41,18 @@ export interface UseContextInput {
   stateMode?: string | null;
 }
 
+export interface RenameProfileInput {
+  tool: string;
+  oldName: string;
+  newName: string;
+}
+
+export interface RemoveProfileInput {
+  tool: string;
+  profile: string;
+  force: boolean;
+}
+
 export interface UpdateSettingsInput {
   runtime_kind: "bundled" | "system" | "custom";
   runtime_path?: string | null;
@@ -107,6 +119,30 @@ export async function useContext(input: UseContextInput): Promise<MutationRespon
   );
 }
 
+export async function renameProfile(
+  input: RenameProfileInput,
+): Promise<MutationResponse> {
+  return mutationResponseSchema.parse(
+    await invokeDesktop("rename_profile", {
+      tool: input.tool,
+      old_name: input.oldName,
+      new_name: input.newName,
+    }),
+  );
+}
+
+export async function removeProfile(
+  input: RemoveProfileInput,
+): Promise<MutationResponse> {
+  return mutationResponseSchema.parse(
+    await invokeDesktop("remove_profile", {
+      tool: input.tool,
+      profile: input.profile,
+      force: input.force,
+    }),
+  );
+}
+
 export async function listBackups(): Promise<BackupEntry[]> {
   return backupEntrySchema.array().parse(await invokeDesktop("list_backups"));
 }
@@ -153,6 +189,12 @@ export async function workspaceUnbind(
 
 export async function workspaceGuard(mode: "warn" | "strict"): Promise<MutationResponse> {
   return mutationResponseSchema.parse(await invokeDesktop("workspace_guard", { mode }));
+}
+
+export async function restoreBackup(backupId: string): Promise<MutationResponse> {
+  return mutationResponseSchema.parse(
+    await invokeDesktop("restore_backup", { backup_id: backupId }),
+  );
 }
 
 export async function updateSettings(

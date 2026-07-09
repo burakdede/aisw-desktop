@@ -7,12 +7,18 @@ import { useDesktopActions } from "../../shared/useDesktopActions";
 const TOOLS = ["claude", "codex", "gemini"] as const;
 
 export function ProfilesPanel({ snapshot }: { snapshot: AppSnapshot }) {
-  const { addProfileMutation, useProfileMutation } = useDesktopActions();
+  const {
+    addProfileMutation,
+    useProfileMutation,
+    renameProfileMutation,
+    removeProfileMutation,
+  } = useDesktopActions();
   const [tool, setTool] = useState<(typeof TOOLS)[number]>("claude");
   const [profile, setProfile] = useState("");
   const [label, setLabel] = useState("");
   const [mode, setMode] = useState<"from_live" | "from_env" | "api_key">("from_live");
   const [apiKey, setApiKey] = useState("");
+  const [renameDrafts, setRenameDrafts] = useState<Record<string, string>>({});
 
   const profiles = useMemo(() => snapshot.profiles[tool]?.profiles ?? [], [snapshot, tool]);
 
@@ -99,19 +105,62 @@ export function ProfilesPanel({ snapshot }: { snapshot: AppSnapshot }) {
                 <p>
                   {entry.name} · {entry.auth}
                 </p>
+                <div className="inline-form inline-form-compact">
+                  <input
+                    aria-label={`rename ${entry.name}`}
+                    placeholder="new name"
+                    value={renameDrafts[entry.name] ?? ""}
+                    onChange={(event) =>
+                      setRenameDrafts((current) => ({
+                        ...current,
+                        [entry.name]: event.target.value,
+                      }))
+                    }
+                  />
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    onClick={() => {
+                      const newName = renameDrafts[entry.name]?.trim();
+                      if (!newName) return;
+                      renameProfileMutation.mutate({
+                        tool,
+                        oldName: entry.name,
+                        newName,
+                      });
+                    }}
+                  >
+                    Rename
+                  </button>
+                </div>
               </div>
-              <button
-                className="ghost-button"
-                onClick={() =>
-                  useProfileMutation.mutate({
-                    tool,
-                    profile: entry.name,
-                    stateMode: tool === "gemini" ? null : "isolated",
-                  })
-                }
-              >
-                Activate
-              </button>
+              <div className="button-row button-row-column">
+                <button
+                  className="ghost-button"
+                  onClick={() =>
+                    useProfileMutation.mutate({
+                      tool,
+                      profile: entry.name,
+                      stateMode: tool === "gemini" ? null : "isolated",
+                    })
+                  }
+                >
+                  Activate
+                </button>
+                <button
+                  className="ghost-button danger-button"
+                  type="button"
+                  onClick={() =>
+                    removeProfileMutation.mutate({
+                      tool,
+                      profile: entry.name,
+                      force: true,
+                    })
+                  }
+                >
+                  Remove
+                </button>
+              </div>
             </article>
           ))}
           {!profiles.length ? <p className="inline-note">No profiles stored for this tool yet.</p> : null}
