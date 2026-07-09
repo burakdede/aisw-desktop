@@ -1,8 +1,9 @@
 use crate::bridge::{AiswBridge, CliAiswBridge};
 use crate::errors::{DesktopError, DesktopResult, ErrorPayload, GuiErrorKind};
 use crate::models::{
-    AppBootstrap, AppSnapshot, CapabilitiesInfo, DesktopSettings, MutationResponse, RuntimeStatus,
-    UpdateSettingsRequest, VersionInfo,
+    AppBootstrap, AppSnapshot, CapabilitiesInfo, DesktopSettings, MutationResponse, ProfileSet,
+    RuntimeStatus, UpdateSettingsRequest, UseAllProfilesRequest, UseContextRequest,
+    UseProfileRequest, VersionInfo,
 };
 use crate::settings::SettingsStore;
 use std::path::PathBuf;
@@ -107,6 +108,37 @@ impl AppState {
         })
     }
 
+    pub async fn activate_profile_set(&self, name: &str) -> DesktopResult<MutationResponse> {
+        let _guard = self.mutation_lock.lock().await;
+        let settings = self.load_settings().await.map_err(ErrorPayload::from)?;
+        let bridge = self.bridge_from_settings(&settings);
+        let set = settings
+            .profile_sets
+            .iter()
+            .find(|entry| entry.name == name)
+            .cloned()
+            .ok_or_else(|| ErrorPayload {
+                kind: GuiErrorKind::ContextMissing,
+                message: format!("Profile set {name} no longer exists."),
+                remediation: Some(
+                    "Refresh settings or recreate the profile set before trying again."
+                        .to_owned(),
+                ),
+            })?;
+
+        let contexts = bridge.list_contexts().await.unwrap_or_default();
+        let raw = activate_profile_set_on_bridge(&*bridge, &set, &contexts).await?;
+        let snapshot = self
+            .fetch_snapshot(&*bridge)
+            .await
+            .map_err(ErrorPayload::from)?;
+        Ok(MutationResponse {
+            command: "activate_profile_set".to_owned(),
+            raw,
+            snapshot,
+        })
+    }
+
     fn bridge_from_settings(&self, settings: &DesktopSettings) -> Arc<dyn AiswBridge> {
         Arc::new(CliAiswBridge::new(
             settings.runtime_kind.clone(),
@@ -194,4 +226,91 @@ pub fn incompatible_runtime_error() -> ErrorPayload {
             "Select a compatible aisw build or switch back to the bundled runtime.".to_owned(),
         ),
     }
+}
+
+async fn activate_profile_set_on_bridge(
+    bridge: &dyn AiswBridge,
+    set: &ProfileSet,
+    contexts: &[crate::models::ContextSummary],
+) -> Result<serde_json::Value, ErrorPayload> {
+    if contexts.iter().any(|context| context.name == set.name) {
+        return bridge
+            .use_context(UseContextRequest {
+                context: set.name.clone(),
+                state_mode: Some("isolated".to_owned()),
+            })
+            .await
+            .map(|raw| {
+                serde_json::json!({
+                    "strategy": "context",
+                    "name": set.name,
+                    "raw": raw,
+                })
+            })
+            .map_err(ErrorPayload::from);
+    }
+
+    let selected = set
+        .profiles
+        .iter()
+        .filter_map(|(tool, profile)| profile.as_ref().map(|profile| (tool.clone(), profile.clone())))
+        .collect::<Vec<_>>();
+
+    if selected.is_empty() {
+        return Ok(serde_json::json!({
+            "strategy": "noop",
+            "name": set.name,
+            "reason": "no_profiles_selected",
+        }));
+    }
+
+    let unique_profiles = selected
+        .iter()
+        .map(|(_, profile)| profile.clone())
+        .collect::<std::collections::BTreeSet<_>>();
+    if unique_profiles.len() == 1 && selected.len() > 1 {
+        let profile = unique_profiles.into_iter().next().unwrap_or_default();
+        return bridge
+            .use_all_profiles(UseAllProfilesRequest {
+                profile: profile.clone(),
+                state_mode: Some("isolated".to_owned()),
+            })
+            .await
+            .map(|raw| {
+                serde_json::json!({
+                    "strategy": "switch_all",
+                    "name": set.name,
+                    "profile": profile,
+                    "raw": raw,
+                })
+            })
+            .map_err(ErrorPayload::from);
+    }
+
+    let mut operations = Vec::with_capacity(selected.len());
+    for (tool, profile) in selected {
+        let raw = bridge
+            .use_profile(UseProfileRequest {
+                tool: tool.clone(),
+                profile: profile.clone(),
+                state_mode: if tool == "gemini" {
+                    None
+                } else {
+                    Some("isolated".to_owned())
+                },
+            })
+            .await
+            .map_err(ErrorPayload::from)?;
+        operations.push(serde_json::json!({
+            "tool": tool,
+            "profile": profile,
+            "raw": raw,
+        }));
+    }
+
+    Ok(serde_json::json!({
+        "strategy": "per_tool",
+        "name": set.name,
+        "operations": operations,
+    }))
 }
