@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppFrame } from "./components/AppFrame";
 import { SectionCard } from "./components/SectionCard";
 import { BackupsPanel } from "./features/backups/components/BackupsPanel";
@@ -10,6 +10,7 @@ import { ProfilesPanel } from "./features/profiles/components/ProfilesPanel";
 import { SettingsPanel } from "./features/settings/components/SettingsPanel";
 import { useDesktop } from "./features/shared/useDesktop";
 import { WorkspacesPanel } from "./features/workspaces/components/WorkspacesPanel";
+import { listenDesktopEvent } from "./lib/tauri";
 
 const NAV = [
   { id: "overview", label: "Overview" },
@@ -24,6 +25,23 @@ const NAV = [
 export function App() {
   const [activeNav, setActiveNav] = useState<(typeof NAV)[number]["id"]>("overview");
   const { bootstrap, snapshot, init } = useDesktop();
+
+  useEffect(() => {
+    let active = true;
+    let unlisten: (() => void) | undefined;
+
+    void listenDesktopEvent("tray-open-diagnostics", () => {
+      if (!active) return;
+      setActiveNav("diagnostics");
+    }).then((dispose) => {
+      unlisten = typeof dispose === "function" ? dispose : undefined;
+    });
+
+    return () => {
+      active = false;
+      unlisten?.();
+    };
+  }, []);
 
   if (bootstrap.isLoading) {
     return (

@@ -87,13 +87,11 @@ function renderApp() {
 
 describe("App", () => {
   beforeEach(() => {
-    let oauthHandler: ((payload: unknown) => void) | undefined;
+    const eventHandlers: Record<string, ((payload: unknown) => void) | undefined> = {};
     window.__AISW_DESKTOP_LISTEN__ = async (event, handler) => {
-      if (event === "oauth-progress") {
-        oauthHandler = handler as (payload: unknown) => void;
-      }
+      eventHandlers[event] = handler as (payload: unknown) => void;
       return () => {
-        oauthHandler = undefined;
+        delete eventHandlers[event];
       };
     };
     window.__AISW_DESKTOP_MOCK__ = {
@@ -138,10 +136,12 @@ describe("App", () => {
         ],
       },
     };
+    Object.assign(window, { __AISW_DESKTOP_EVENT_HANDLERS__: eventHandlers });
   });
 
   afterEach(() => {
     resetMutationQueueForTests();
+    delete (window as typeof window & { __AISW_DESKTOP_EVENT_HANDLERS__?: unknown }).__AISW_DESKTOP_EVENT_HANDLERS__;
     delete window.__AISW_DESKTOP_MOCK__;
     delete window.__AISW_DESKTOP_LISTEN__;
   });
@@ -1451,6 +1451,23 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByText("detected · oauth")).toBeInTheDocument();
       expect(initCalls).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  it("opens diagnostics when the tray requests it", async () => {
+    renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["tray-open-diagnostics"]?.({});
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Doctor · Verify · Repair")).toBeInTheDocument();
     });
   });
 

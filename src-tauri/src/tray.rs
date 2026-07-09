@@ -1,13 +1,14 @@
 use crate::models::{AppSnapshot, UseAllProfilesRequest, UseContextRequest, UseProfileRequest};
 use crate::state::AppState;
 use tauri::menu::{IsMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem, Submenu};
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Emitter, Manager, Runtime};
 
 const TRAY_ID: &str = "main-tray";
 const OPEN_ID: &str = "open";
 const DIAGNOSTICS_ID: &str = "diagnostics";
 const QUIT_ID: &str = "quit";
 const SWITCH_ALL_PREFIX: &str = "switch-all:";
+const OPEN_DIAGNOSTICS_EVENT: &str = "tray-open-diagnostics";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct TraySection {
@@ -53,8 +54,12 @@ pub async fn refresh_tray<R: Runtime>(app: &AppHandle<R>, state: AppState) -> ta
 
 fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String) {
     match id.as_str() {
-        OPEN_ID | DIAGNOSTICS_ID => {
+        OPEN_ID => {
             show_main_window(app);
+        }
+        DIAGNOSTICS_ID => {
+            show_main_window(app);
+            let _ = app.emit(OPEN_DIAGNOSTICS_EVENT, ());
         }
         QUIT_ID => {
             app.exit(0);
