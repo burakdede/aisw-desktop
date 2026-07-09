@@ -55,25 +55,17 @@ test("switches shared profiles and recovers from live mismatch", async ({ page }
   await expect(page.getByText("incident · oauth")).toBeVisible();
 });
 
-test("switches one tool and refreshes the active profile state", async ({ page }) => {
+test("switches one tool directly from overview and refreshes the active profile state", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
 
-  await page.getByRole("button", { name: "Profiles" }).click();
-  await page.getByLabel("Tool").selectOption("codex");
+  const codexCard = page.locator(".tool-card").filter({ hasText: "Codex" });
+  await codexCard.getByLabel("Switch codex profile").selectOption("work");
+  await codexCard.getByRole("button", { name: "Switch to work" }).click();
 
-  await expect(page.getByText("Active: no")).toBeVisible();
-  await page
-    .locator(".list-row")
-    .filter({ hasText: "work · api_key" })
-    .getByRole("button", { name: /^Activate$/ })
-    .click();
-
-  await expect(page.getByText("Active: yes · Backend: system_keyring")).toBeVisible();
-
-  await page.getByRole("button", { name: "Overview" }).click();
-  await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "work" })).toBeVisible();
+  await expect(codexCard.getByRole("heading", { name: "work" })).toBeVisible();
+  await expect(codexCard.getByText("Last result: Switched codex to work.")).toBeVisible();
 });
 
 test("creates profiles from environment and API key modes", async ({ page }) => {

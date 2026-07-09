@@ -122,6 +122,7 @@ export function OverviewPanel({
           <ToolCard
             key={status.tool}
             status={status}
+            profiles={snapshot.profiles[status.tool]?.profiles ?? []}
             lastResult={lastCommandResults.tool[status.tool]}
             mutationLocked={mutationLock.isBusy}
             onRefresh={() => refresh.mutate()}
@@ -161,6 +162,7 @@ export function OverviewPanel({
 
 function ToolCard({
   status,
+  profiles,
   lastResult,
   mutationLocked,
   onRefresh,
@@ -171,6 +173,7 @@ function ToolCard({
   onOpenDetails,
 }: {
   status: ToolStatus;
+  profiles: AppSnapshot["profiles"][string]["profiles"];
   lastResult?: {
     label: string;
     status: "success" | "error";
@@ -188,6 +191,9 @@ function ToolCard({
   const activeState = status.active_profile_applied;
   const [importName, setImportName] = useState("");
   const [stateMode, setStateMode] = useState(status.state_mode ?? stateModes[0] ?? "");
+  const [selectedProfile, setSelectedProfile] = useState(
+    status.active_profile ?? profiles[0]?.name ?? "",
+  );
 
   useEffect(() => {
     if (!stateModes.length) {
@@ -197,6 +203,14 @@ function ToolCard({
       setStateMode(stateModes[0]);
     }
   }, [stateMode, stateModes]);
+
+  useEffect(() => {
+    const availableProfiles = profiles.map((profile) => profile.name);
+    const nextProfile = status.active_profile ?? availableProfiles[0] ?? "";
+    if (!selectedProfile || !availableProfiles.includes(selectedProfile)) {
+      setSelectedProfile(nextProfile);
+    }
+  }, [profiles, selectedProfile, status.active_profile]);
 
   return (
     <article className="tool-card">
@@ -289,14 +303,34 @@ function ToolCard({
           </div>
         </div>
       ) : null}
-      {status.active_profile ? (
-        <button
-          className="primary-button"
-          disabled={mutationLocked}
-          onClick={() => onUse(status.tool, status.active_profile!, stateModes.length ? stateMode : null)}
-        >
-          Re-apply {status.active_profile}
-        </button>
+      {profiles.length ? (
+        <div className="stack-list">
+          <label className="stacked-form">
+            <span>Switch profile</span>
+            <select
+              aria-label={`Switch ${status.tool} profile`}
+              value={selectedProfile}
+              onChange={(event) => setSelectedProfile(event.target.value)}
+            >
+              {profiles.map((profile) => (
+                <option key={profile.name} value={profile.name}>
+                  {profile.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            className="primary-button"
+            disabled={mutationLocked || !selectedProfile}
+            onClick={() => onUse(status.tool, selectedProfile, stateModes.length ? stateMode : null)}
+          >
+            {selectedProfile && selectedProfile === status.active_profile
+              ? `Re-apply ${selectedProfile}`
+              : selectedProfile
+                ? `Switch to ${selectedProfile}`
+                : "Switch profile"}
+          </button>
+        </div>
       ) : null}
       <div className="button-row">
         {status.binary_found ? (
