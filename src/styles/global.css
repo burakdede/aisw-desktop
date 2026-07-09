@@ -1,0 +1,76 @@
+:root {
+  color-scheme: dark;
+  font-family: "SF Pro Display", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(235, 115, 52, 0.22), transparent 24%),
+    radial-gradient(circle at top right, rgba(40, 106, 185, 0.28), transparent 32%),
+    linear-gradient(160deg, #0a1018 0%, #101826 45%, #152338 100%);
+  color: #f4f7fb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 48px;
+  display: grid;
+  place-items: center;
+}
+
+.hero-card {
+  width: min(760px, 100%);
+  padding: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 28px;
+  background: rgba(8, 12, 18, 0.72);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.35);
+}
+
+.eyebrow {
+  margin: 0 0 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.76rem;
+  color: #7fa0c8;
+}
+
+.hero-card h1 {
+  margin: 0;
+  font-size: clamp(2.4rem, 5vw, 4.5rem);
+  line-height: 0.98;
+}
+
+.lede {
+  margin: 20px 0 0;
+  max-width: 52ch;
+  color: rgba(244, 247, 251, 0.75);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    padding: 24px;
+  }
+
+  .hero-card {
+    padding: 28px;
+    border-radius: 22px;
+  }
+}
