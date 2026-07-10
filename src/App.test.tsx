@@ -782,7 +782,86 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Re-apply Work"));
 
     await waitFor(() => {
-      expect(screen.getByText("Last result: Switched claude to work.")).toBeInTheDocument();
+      expect(screen.getByText("Last result: Switched Claude to Work.")).toBeInTheDocument();
+    });
+    expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
+  });
+
+  it("uses saved profile labels in overview switch results", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    const settingsWithLabels: DesktopSettings = {
+      ...bootstrap.settings,
+      profile_labels: {
+        codex: {
+          work: "Code Work",
+        },
+      },
+    };
+    const codexSnapshot = {
+      ...bootstrap.snapshot,
+      statuses: [
+        ...bootstrap.snapshot.statuses,
+        {
+          tool: "codex",
+          binary_found: true,
+          stored_profiles: 1,
+          active_profile: "personal",
+          auth_method: "api_key",
+          credential_backend: "file",
+          state_mode: "shared",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+          warnings: [],
+        },
+      ],
+      profiles: {
+        ...bootstrap.snapshot.profiles,
+        codex: {
+          active: "personal",
+          profiles: [
+            { name: "work", auth: "api_key", label: "Work" },
+            { name: "personal", auth: "api_key", label: "Personal" },
+          ],
+        },
+      },
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "use_profile") {
+        return { command, snapshot: codexSnapshot };
+      }
+      return (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            settings: settingsWithLabels,
+            snapshot: codexSnapshot,
+          },
+          get_snapshot: codexSnapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: settingsWithLabels,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+
+    fireEvent.change(screen.getByLabelText("Switch codex profile"), {
+      target: { value: "work" },
+    });
+    fireEvent.click(screen.getByText("Switch to Code Work"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Last result: Switched Codex to Code Work.")).toBeInTheDocument();
     });
     expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
   });

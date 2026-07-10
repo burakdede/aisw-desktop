@@ -400,7 +400,12 @@ function buildQuickFixes(
     doctor: Record<string, unknown> | undefined;
     repair: Record<string, unknown> | undefined;
     settings: DesktopSettings;
-    useProfile: (request: { tool: string; profile: string; stateMode: string | null }) => void;
+    useProfile: (request: {
+      tool: string;
+      profile: string;
+      stateMode: string | null;
+      label?: string;
+    }) => void;
     useContext: (request: { context: string; stateMode: string | null }) => void;
     activateProfileSet: (request: { name: string }) => void;
     activateWorkspaceTarget: (request: {
@@ -494,6 +499,7 @@ function buildQuickFixes(
             tool: status.tool,
             profile: status.active_profile!,
             stateMode: resolveStateMode(status),
+            label: profileLabel,
           }),
       });
     }

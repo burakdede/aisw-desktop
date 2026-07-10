@@ -525,6 +525,7 @@ export function ProfilesPanel({
                       tool,
                       profile: entry.name,
                       stateMode: availableStateModes.length ? stateMode : null,
+                      label: profileDisplay,
                     })
                   }
                 >
@@ -590,6 +591,7 @@ export function ProfilesPanel({
                                   tool,
                                   profile: entry.name,
                                   stateMode: resolveStateModeRequest(tool, toolCapabilities, stateMode),
+                                  label: profileDisplay,
                                 });
                               },
                             })

@@ -220,7 +220,7 @@ test("runs the onboarding first switch flow", async ({ page }) => {
   await page.getByLabel("First switch profile").selectOption("work");
   await page.getByRole("button", { name: "Switch now" }).click();
 
-  await expect(page.getByText("Last bulk result: Switched all tools to work.")).toBeVisible();
+  await expect(page.getByText("Last bulk result: Switched all tools to Office.")).toBeVisible();
   await expect(page.getByText("Shell guidance")).toBeVisible();
   await expect(page.getByText("AISW runtime contract")).toBeVisible();
 });
@@ -251,7 +251,7 @@ test("keeps Gemini state mode non-configurable when runtime capabilities are sta
   await expect(geminiCard.locator("select")).toHaveCount(1);
 
   await geminiCard.getByRole("button", { name: "Re-apply Travel" }).click();
-  await expect(geminiCard.getByText("Last result: Switched gemini to travel.")).toBeVisible();
+  await expect(geminiCard.getByText("Last result: Switched Gemini to Travel.")).toBeVisible();
   await expect(geminiCard.getByText("State mode: n/a")).toBeVisible();
 });
 
@@ -269,7 +269,7 @@ test("switches shared profiles and recovers from live mismatch", async ({ page }
   await overview.getByRole("combobox").first().selectOption("profile:work");
   await overview.getByRole("button", { name: "Switch all" }).click();
 
-  await expect(page.getByText("Last bulk result: Switched all tools to work.")).toBeVisible();
+  await expect(page.getByText("Last bulk result: Switched all tools to Work.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Work" }).nth(1)).toBeVisible();
 
   await page.getByRole("button", { name: "Profiles" }).click();
@@ -808,7 +808,19 @@ test("switches one tool directly from overview and refreshes the active profile 
   await codexCard.getByRole("button", { name: "Switch to Work" }).click();
 
   await expect(codexCard.getByRole("heading", { name: "Work" })).toBeVisible();
-  await expect(codexCard.getByText("Last result: Switched codex to work.")).toBeVisible();
+  await expect(codexCard.getByText("Last result: Switched Codex to Work.")).toBeVisible();
+});
+
+test("uses saved profile labels in overview switch results", async ({ page }) => {
+  await installDesktopMock(page, "labelOverrides");
+
+  await page.goto("/");
+
+  const codexCard = page.locator(".tool-card").filter({ hasText: "Codex" });
+  await codexCard.getByLabel("Switch codex profile").selectOption("work");
+  await codexCard.getByRole("button", { name: /Code Work/ }).click();
+
+  await expect(codexCard.getByText("Last result: Switched Codex to Code Work.")).toBeVisible();
 });
 
 test("activates a local profile set from overview quick switch", async ({ page }) => {

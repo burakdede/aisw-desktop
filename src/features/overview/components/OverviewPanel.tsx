@@ -45,8 +45,8 @@ export function OverviewPanel({
     lastCommandResults,
   } = useDesktopActions();
   const [quickSwitch, setQuickSwitch] = useState("");
+  const sharedProfiles = useMemo(() => sharedProfileEntries(settings, snapshot), [settings, snapshot]);
   const quickSwitchOptions = useMemo(() => {
-    const sharedProfiles = sharedProfileEntries(settings, snapshot);
     const profileSets = [...(settings.profile_sets ?? [])]
       .filter(profileSetHasSelections)
       .sort((left, right) => left.name.localeCompare(right.name))
@@ -61,7 +61,7 @@ export function OverviewPanel({
         label: `Shared profile: ${profile.label}`,
       })),
     ];
-  }, [settings, snapshot]);
+  }, [settings, sharedProfiles, snapshot]);
 
   const refresh = useMutation({
     mutationFn: async () => {
@@ -113,9 +113,12 @@ export function OverviewPanel({
                 return;
               }
               if (quickSwitch.startsWith("profile:")) {
+                const profileName = quickSwitch.slice("profile:".length);
+                const sharedProfile = sharedProfiles.find((profile) => profile.name === profileName);
                 useAllProfilesMutation.mutate({
-                  profile: quickSwitch.slice("profile:".length),
+                  profile: profileName,
                   stateMode: resolveGlobalStateMode(snapshot),
+                  label: sharedProfile?.label,
                 });
               }
             }}
@@ -191,7 +194,12 @@ export function OverviewPanel({
               })
             }
             onUse={(tool, profile, stateMode) =>
-              useProfileMutation.mutate({ tool, profile, stateMode })
+              useProfileMutation.mutate({
+                tool,
+                profile,
+                stateMode,
+                label: toolProfileDisplayLabel(settings, snapshot, tool, profile),
+              })
             }
             onAddProfile={(tool) => onOpenProfiles(tool)}
             onOpenDetails={(tool, profile) => onOpenProfiles(tool, profile)}

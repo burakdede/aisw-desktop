@@ -51,11 +51,13 @@ export interface UseProfileInput {
   tool: string;
   profile: string;
   stateMode?: string | null;
+  label?: string;
 }
 
 export interface UseAllProfilesInput {
   profile: string;
   stateMode?: string | null;
+  label?: string;
 }
 
 export interface UseContextInput {

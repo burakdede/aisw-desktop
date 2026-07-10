@@ -45,6 +45,7 @@ export function BackupsPanel({
 
   function confirmRestore(entry: { backup_id: string; tool: string; profile: string }, mode: "files" | "activate") {
     const target = resolveBackupTarget(entry.tool, entry.profile);
+    const profileLabel = toolProfileDisplayLabel(settings, snapshot, target.tool, target.profile);
     const preferredStateMode =
       snapshot.statuses.find((status) => status.tool === target.tool)?.state_mode ?? null;
     restoreBackupMutation.mutate(entry.backup_id, {
@@ -55,6 +56,7 @@ export function BackupsPanel({
             tool: target.tool,
             profile: target.profile,
             stateMode: resolveStateModeRequest(target.tool, toolCapabilities, preferredStateMode),
+            label: profileLabel,
           });
         }
       },

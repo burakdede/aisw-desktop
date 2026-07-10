@@ -28,6 +28,7 @@ import {
 } from "./lastCommandResult";
 import { enqueueMutation, useMutationQueueState } from "./mutationQueue";
 import { invalidatePostMutationQueries } from "./postMutationRefresh";
+import { titleCase } from "../../lib/utils";
 
 type WorkspaceTargetInput =
   | {
@@ -196,7 +197,7 @@ export function useDesktopActions() {
         "Switch profile",
         useProfile,
         (variables) => ({ type: "tool", tool: variables.tool }),
-        (variables) => `Switched ${variables.tool} to ${variables.profile}.`,
+        (variables) => `Switched ${titleCase(variables.tool)} to ${variables.label ?? variables.profile}.`,
       ),
       onSettled: invalidate,
     }),
@@ -205,7 +206,7 @@ export function useDesktopActions() {
         "Switch all profiles",
         useAllProfiles,
         () => ({ type: "global", id: "switch-all" }),
-        (variables) => `Switched all tools to ${variables.profile}.`,
+        (variables) => `Switched all tools to ${variables.label ?? variables.profile}.`,
       ),
       onSettled: invalidate,
     }),

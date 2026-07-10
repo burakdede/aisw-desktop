@@ -285,6 +285,9 @@ export function SetupPanel({
                 useAllProfilesMutation.mutate({
                   profile: firstSwitchProfile,
                   stateMode: resolveGlobalStateMode(snapshot),
+                  label:
+                    switchableProfiles.find((profile) => profile.name === firstSwitchProfile)?.label ??
+                    undefined,
                 })
               }
             >
