@@ -170,6 +170,7 @@ Acceptance criteria:
 - Tray supports shared profile, per-tool switching, and open-app actions.
 - Labels honor saved overrides and active markers.
 - Tray context entries use the same saved profile-set labels as the main window surfaces.
+- Tray prefers native CLI context entries over duplicate profile-set actions when both refer to the same saved context.
 - Tray refreshes after successful mutations.
 
 Test cases:
@@ -177,6 +178,7 @@ Test cases:
 - Marks active set and active tool profiles correctly.
 - Uses label overrides in tray sections.
 - Uses saved profile-set labels and active markers in tray context entries.
+- Omits duplicate profile-set tray entries when a matching native CLI context already exists.
 - Invokes matching mutations from tray actions.
 
 ### 9. Settings and Shell Guidance

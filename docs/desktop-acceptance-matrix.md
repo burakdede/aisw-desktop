@@ -231,6 +231,13 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src-tauri/src/tray.rs` derives tray context entry labels from saved profile-set labels and appends the active marker when `workspace_status.current_context` matches that context.
   - `src-tauri/src/tray.rs` unit tests verify `client-acme` renders as `Client Acme ✓` in the tray context section while unmatched raw context ids stay unchanged.
 
+### 30. Tray prefers native CLI contexts over duplicate profile-set entries
+
+- Status: implemented
+- Evidence:
+  - `src-tauri/src/tray.rs` filters profile-set tray entries when a saved profile set already matches an available CLI context id, so the tray does not render duplicate `client-acme` actions in both sections.
+  - `src-tauri/src/tray.rs` unit tests verify matching `client-acme` profile sets are omitted from the tray profile-set section while unrelated profile sets still remain available.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:
