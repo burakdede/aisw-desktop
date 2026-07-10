@@ -32,6 +32,7 @@ type WorkspaceTargetInput =
   | {
       kind: "profile_set";
       name: string;
+      label?: string;
       matchedTarget: string;
     }
   | {
@@ -136,7 +137,9 @@ export function useDesktopActions() {
           ? activateProfileSet({ name: variables.name })
           : useContext({ context: variables.name, stateMode: "isolated" }),
       );
-      const message = `Switched to ${variables.name} for ${variables.matchedTarget}.`;
+      const targetLabel =
+        variables.kind === "profile_set" ? variables.label ?? variables.name : variables.name;
+      const message = `Switched to ${targetLabel} for ${variables.matchedTarget}.`;
       recordCommandResult(
         { type: "global", id: "workspace" },
         {
@@ -224,7 +227,7 @@ export function useDesktopActions() {
         "Activate profile set",
         activateProfileSet,
         () => ({ type: "global", id: "profile-set" }),
-        (variables) => `Activated profile set ${variables.name}.`,
+        (variables) => `Activated profile set ${variables.label ?? variables.name}.`,
       ),
       onSettled: invalidate,
     }),

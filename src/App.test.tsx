@@ -1968,11 +1968,11 @@ describe("App", () => {
       expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
     });
     expect(
-      screen.getByText("Last workspace result: Switched to client-acme for /code/acme."),
+      screen.getByText("Last workspace result: Switched to Client Acme for /code/acme."),
     ).toBeInTheDocument();
     expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
       title: "Workspace switch",
-      body: "Switched to client-acme for /code/acme.",
+      body: "Switched to Client Acme for /code/acme.",
     });
 
     fireEvent.click(screen.getByText("Workspaces"));
@@ -2598,7 +2598,7 @@ describe("App", () => {
     });
     expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
       title: "Workspace switch",
-      body: "Switched to client-acme for /code/acme.",
+      body: "Switched to Client Acme for /code/acme.",
     });
   });
 
@@ -3405,7 +3405,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
       expect(screen.getAllByText(/Client Acme/).length).toBeGreaterThan(0);
-      expect(screen.getByText("Saved profile set client-acme.")).toBeInTheDocument();
+      expect(screen.getByText("Saved profile set Client Acme.")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Active set" })).toBeDisabled();
     });
   });
@@ -3463,7 +3463,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
-      expect(screen.getByText("Deleted profile set client-acme.")).toBeInTheDocument();
+      expect(screen.getByText("Deleted profile set Client Acme.")).toBeInTheDocument();
     });
     expect(screen.queryByText("Client Acme")).not.toBeInTheDocument();
   });
@@ -3531,7 +3531,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
       expect(screen.getByText("Client Acme Prime")).toBeInTheDocument();
-      expect(screen.getByText("Updated profile set client-acme.")).toBeInTheDocument();
+      expect(screen.getByText("Updated profile set Client Acme Prime.")).toBeInTheDocument();
     });
   });
 

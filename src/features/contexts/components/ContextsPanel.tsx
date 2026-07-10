@@ -84,7 +84,9 @@ export function ContextsPanel({
       },
       {
         onSuccess: () => {
-          setLastAction(`${isEditingExistingSet ? "Updated" : "Saved"} profile set ${name}.`);
+          setLastAction(
+            `${isEditingExistingSet ? "Updated" : "Saved"} profile set ${draft.label.trim() || name}.`,
+          );
           setDraft({
             name: "",
             label: "",
@@ -96,11 +98,17 @@ export function ContextsPanel({
   }
 
   async function activateProfileSet(set: DesktopSettings["profile_sets"][number]) {
-    await activateProfileSetMutation.mutateAsync({ name: set.name });
-    setLastAction(`Activated profile set ${set.name}.`);
+    await activateProfileSetMutation.mutateAsync({
+      name: set.name,
+      label: profileSetDisplayLabel(set),
+    });
+    setLastAction(`Activated profile set ${profileSetDisplayLabel(set)}.`);
   }
 
   function deleteProfileSet(name: string) {
+    const label = profileSetDisplayLabel(
+      localSets.find((entry) => entry.name === name) ?? { name, label: null, profiles: {} },
+    );
     updateSettingsMutation.mutate(
       {
         runtime_kind: settings.runtime_kind,
@@ -111,7 +119,7 @@ export function ContextsPanel({
         profile_sets: localSets.filter((entry) => entry.name !== name),
       },
       {
-        onSuccess: () => setLastAction(`Deleted profile set ${name}.`),
+        onSuccess: () => setLastAction(`Deleted profile set ${label}.`),
       },
     );
   }

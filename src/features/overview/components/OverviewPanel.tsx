@@ -101,8 +101,11 @@ export function OverviewPanel({
             onClick={() => {
               if (!quickSwitch) return;
               if (quickSwitch.startsWith("set:")) {
+                const name = quickSwitch.slice("set:".length);
+                const profileSet = settings.profile_sets?.find((set) => set.name === name);
                 activateProfileSetMutation.mutate({
-                  name: quickSwitch.slice("set:".length),
+                  name,
+                  label: profileSet?.label ?? profileSet?.name,
                 });
                 return;
               }

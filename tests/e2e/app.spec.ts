@@ -321,7 +321,7 @@ test("offers direct diagnostic fixes for missing tools, live mismatch, and works
     )
     .toContainEqual({
       title: "Workspace switch",
-      body: "Switched to client-acme for /code/acme.",
+      body: "Switched to Client Acme for /code/acme.",
     });
 });
 
@@ -539,7 +539,7 @@ test("activates a local profile set from overview quick switch", async ({ page }
   await overview.getByRole("combobox").first().selectOption("set:client-acme");
   await overview.getByRole("button", { name: "Switch all" }).click();
 
-  await expect(page.getByText("Last bulk result: Activated profile set client-acme.")).toBeVisible();
+  await expect(page.getByText("Last bulk result: Activated profile set Client Acme.")).toBeVisible();
   await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "Work" })).toBeVisible();
 });
 
@@ -556,12 +556,12 @@ test("saves and deletes a local profile set from contexts", async ({ page }) => 
   await contextsForm.getByLabel("Codex").selectOption("work");
   await contextsForm.getByRole("button", { name: "Save profile set" }).click();
 
-  await expect(page.getByText("Saved profile set focus-mode.")).toBeVisible();
-  await expect(page.getByText("Focus Mode")).toBeVisible();
-
-  await page.locator(".list-row").filter({ hasText: "Focus Mode" }).getByRole("button", { name: "Delete" }).click();
-  await expect(page.getByText("Deleted profile set focus-mode.")).toBeVisible();
-  await expect(page.getByText("Focus Mode")).not.toBeVisible();
+  await expect(page.getByText("Saved profile set Focus Mode.")).toBeVisible();
+  const focusModeRow = page.locator(".list-row").filter({ hasText: "Focus Mode" });
+  await expect(focusModeRow).toHaveCount(1);
+  await focusModeRow.getByRole("button", { name: "Delete" }).click();
+  await expect(page.getByText("Deleted profile set Focus Mode.")).toBeVisible();
+  await expect(focusModeRow).toHaveCount(0);
 });
 
 test("edits a local profile set from contexts", async ({ page }) => {
@@ -579,8 +579,8 @@ test("edits a local profile set from contexts", async ({ page }) => {
   await contextsForm.getByLabel("Label").fill("Client Acme Prime");
   await contextsForm.getByRole("button", { name: "Update profile set" }).click();
 
-  await expect(page.getByText("Updated profile set client-acme.")).toBeVisible();
-  await expect(page.getByText("Client Acme Prime")).toBeVisible();
+  await expect(page.getByText("Updated profile set Client Acme Prime.")).toBeVisible();
+  await expect(page.locator(".list-row").filter({ hasText: "Client Acme Prime" })).toHaveCount(1);
 });
 
 test("activates a local profile set from contexts", async ({ page }) => {
@@ -591,7 +591,7 @@ test("activates a local profile set from contexts", async ({ page }) => {
 
   await page.locator(".list-row").filter({ hasText: "Client Acme" }).getByRole("button", { name: "Activate set" }).click();
 
-  await expect(page.getByText("Activated profile set client-acme.")).toBeVisible();
+  await expect(page.getByText("Activated profile set Client Acme.")).toBeVisible();
   await expect(page.getByText("Client Acme ✓")).toBeVisible();
   await expect(
     page.locator(".list-row").filter({ hasText: "Client Acme ✓" }).getByRole("button", { name: "Active set" }),
@@ -607,7 +607,7 @@ test("uses native profile-set activation when a matching CLI context exists", as
   await page.getByRole("button", { name: "Contexts" }).click();
   await page.locator(".list-row").filter({ hasText: "Client Acme" }).getByRole("button", { name: "Activate set" }).click();
 
-  await expect(page.getByText("Activated profile set client-acme.")).toBeVisible();
+  await expect(page.getByText("Activated profile set Client Acme.")).toBeVisible();
   await expect(page.getByText("Client Acme ✓")).toBeVisible();
   await expect
     .poll(() =>
@@ -675,7 +675,7 @@ test("binds and resolves workspace context from the workspaces panel", async ({ 
   await expect(page.getByText("path · /code/acme")).toBeVisible();
 
   await page.getByRole("button", { name: "Use expected context now" }).click();
-  await expect(page.getByText("Last workspace result: Switched to client-acme for /code/acme.")).toBeVisible();
+  await expect(page.getByText("Last workspace result: Switched to Client Acme for /code/acme.")).toBeVisible();
   await expect(page.getByText("Current context: Client Acme")).toBeVisible();
   await expect(page.getByText("Expected context: Client Acme")).toBeVisible();
   await expect
@@ -689,7 +689,7 @@ test("binds and resolves workspace context from the workspaces panel", async ({ 
     )
     .toContainEqual({
       title: "Workspace switch",
-      body: "Switched to client-acme for /code/acme.",
+      body: "Switched to Client Acme for /code/acme.",
     });
 
   const workspacesForm = page.locator("form.stacked-form");

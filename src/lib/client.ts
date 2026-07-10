@@ -63,6 +63,7 @@ export interface UseContextInput {
 
 export interface ActivateProfileSetInput {
   name: string;
+  label?: string;
 }
 
 export interface RenameProfileInput {

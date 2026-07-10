@@ -1,7 +1,7 @@
 import { AppSnapshot, DesktopSettings } from "../../lib/schemas";
 
 export type WorkspaceActivationTarget =
-  | { kind: "profile_set"; name: string }
+  | { kind: "profile_set"; name: string; label: string }
   | { kind: "context"; name: string };
 
 export function resolveWorkspaceActivationTarget(
@@ -9,8 +9,9 @@ export function resolveWorkspaceActivationTarget(
   settings: DesktopSettings,
   snapshot: AppSnapshot,
 ): WorkspaceActivationTarget {
-  if (settings.profile_sets?.some((set) => set.name === expectedContext)) {
-    return { kind: "profile_set", name: expectedContext };
+  const profileSet = settings.profile_sets?.find((set) => set.name === expectedContext);
+  if (profileSet) {
+    return { kind: "profile_set", name: expectedContext, label: profileSet.label ?? profileSet.name };
   }
   if (snapshot.contexts.some((context) => context.name === expectedContext)) {
     return { kind: "context", name: expectedContext };
