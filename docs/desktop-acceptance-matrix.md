@@ -189,6 +189,13 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src/features/overview/components/OverviewPanel.tsx`, `src/features/profiles/components/ProfilesPanel.tsx`, `src/features/backups/components/BackupsPanel.tsx`, `src/features/diagnostics/components/DiagnosticsPanel.tsx`, and `src/features/onboarding/components/SetupPanel.tsx` pass saved labels into switch mutations from each desktop entry point.
   - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify result strings such as `Switched Codex to Code Work.` and `Switched all tools to Office.` while tray-result payloads keep the backend event contract.
 
+### 24. Nonessential onboarding and settings reads pause while mutations are running
+
+- Status: implemented
+- Evidence:
+  - `src/features/onboarding/components/SetupPanel.tsx` and `src/features/settings/components/SettingsPanel.tsx` gate `shell-guidance` reads behind `useMutationAwareQueryEnabled`, matching the same queue-aware read policy already used for doctor, verify, repair, backups, and workspace reads.
+  - `src/App.test.tsx` verifies shell guidance does not query while the desktop mutation queue is busy, then automatically loads after the queued mutation settles in both onboarding and settings surfaces.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:
