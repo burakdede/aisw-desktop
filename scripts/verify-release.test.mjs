@@ -191,6 +191,7 @@ Backup restore warnings and confirmations use saved profile labels
 CLI context activation results prefer matching saved profile-set labels
 In-window switch results prefer saved profile labels over raw ids
 Nonessential onboarding and settings reads pause while mutations are running
+CLI context lists prefer saved profile-set labels while preserving raw context ids
 ## Verification Matrix
 npm test
 `,

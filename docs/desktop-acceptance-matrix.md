@@ -196,6 +196,13 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src/features/onboarding/components/SetupPanel.tsx` and `src/features/settings/components/SettingsPanel.tsx` gate `shell-guidance` reads behind `useMutationAwareQueryEnabled`, matching the same queue-aware read policy already used for doctor, verify, repair, backups, and workspace reads.
   - `src/App.test.tsx` verifies shell guidance does not query while the desktop mutation queue is busy, then automatically loads after the queued mutation settles in both onboarding and settings surfaces.
 
+### 25. CLI context lists prefer saved profile-set labels while preserving raw context ids
+
+- Status: implemented
+- Evidence:
+  - `src/features/contexts/components/ContextsPanel.tsx` renders CLI contexts with `contextDisplayLabel(settings, context.name)` in the primary heading, but still shows `CLI context id: ...` whenever the saved display label differs from the backend context id.
+  - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify the Contexts screen shows `Client Acme` alongside `CLI context id: client-acme`, while activation results and workspace summaries continue to use the same saved label.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:

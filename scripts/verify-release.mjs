@@ -138,6 +138,7 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         acceptanceMatrix.includes("CLI context activation results prefer matching saved profile-set labels") &&
         acceptanceMatrix.includes("In-window switch results prefer saved profile labels over raw ids") &&
         acceptanceMatrix.includes("Nonessential onboarding and settings reads pause while mutations are running") &&
+        acceptanceMatrix.includes("CLI context lists prefer saved profile-set labels while preserving raw context ids") &&
         acceptanceMatrix.includes("does not replace the local-only product spec"),
     },
     {
