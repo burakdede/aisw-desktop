@@ -641,7 +641,8 @@ fn profile_set_entries(settings: &DesktopSettings, snapshot: &AppSnapshot) -> Ve
     sets.sort_by(|left, right| left.name.cmp(&right.name));
     sets.into_iter()
         .filter(|set| {
-            profile_set_has_selections(set) && !has_matching_cli_context(snapshot, &set.name)
+            profile_set_has_usable_selections(set, snapshot)
+                && !has_matching_cli_context(snapshot, &set.name)
         })
         .map(|set| TrayEntry {
             id: format!("{PROFILE_SET_PREFIX}{}", set.name),
@@ -675,6 +676,27 @@ fn profile_set_has_selections(set: &ProfileSet) -> bool {
     set.profiles
         .values()
         .any(|profile| profile.as_deref().is_some_and(|value| !value.trim().is_empty()))
+}
+
+fn profile_set_has_usable_selections(set: &ProfileSet, snapshot: &AppSnapshot) -> bool {
+    profile_set_has_selections(set)
+        && set
+            .profiles
+            .iter()
+            .filter_map(|(tool, profile)| {
+                profile
+                    .as_deref()
+                    .map(str::trim)
+                    .filter(|value| !value.is_empty())
+                    .map(|value| (tool.as_str(), value))
+            })
+            .all(|(tool, profile)| {
+                snapshot
+                    .profiles
+                    .get(tool)
+                    .map(|entry| entry.profiles.iter().any(|candidate| candidate.name == profile))
+                    .unwrap_or(false)
+            })
 }
 
 fn has_matching_cli_context(snapshot: &AppSnapshot, name: &str) -> bool {
@@ -1385,7 +1407,30 @@ mod tests {
                     warnings: vec![],
                 },
             ],
-            profiles: HashMap::new(),
+            profiles: HashMap::from([
+                (
+                    "claude".to_owned(),
+                    ToolProfiles {
+                        active: Some("work".to_owned()),
+                        profiles: vec![ToolProfileSummary {
+                            name: "work".to_owned(),
+                            auth: "oauth".to_owned(),
+                            label: Some("Work".to_owned()),
+                        }],
+                    },
+                ),
+                (
+                    "codex".to_owned(),
+                    ToolProfiles {
+                        active: Some("work".to_owned()),
+                        profiles: vec![ToolProfileSummary {
+                            name: "work".to_owned(),
+                            auth: "api_key".to_owned(),
+                            label: Some("Work".to_owned()),
+                        }],
+                    },
+                ),
+            ]),
             contexts: vec![ContextSummary {
                 name: "client-acme".to_owned(),
                 profiles: HashMap::from([
@@ -1417,6 +1462,14 @@ mod tests {
                     profiles: HashMap::from([
                         ("claude".to_owned(), Some("work".to_owned())),
                         ("codex".to_owned(), Some("work".to_owned())),
+                    ]),
+                },
+                ProfileSet {
+                    name: "stale-set".to_owned(),
+                    label: Some("Stale Set".to_owned()),
+                    profiles: HashMap::from([
+                        ("claude".to_owned(), Some("work".to_owned())),
+                        ("codex".to_owned(), Some("missing".to_owned())),
                     ]),
                 },
             ],
