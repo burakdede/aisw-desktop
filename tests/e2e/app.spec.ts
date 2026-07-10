@@ -248,6 +248,18 @@ test("binds and resolves workspace context from the workspaces panel", async ({ 
   await expect(page.getByText("path · /code/acme")).not.toBeVisible();
 });
 
+test("dedupes workspace binding targets when a profile set matches a CLI context", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Workspaces" }).click();
+
+  await expect(page.getByRole("option", { name: "Profile set: Client Acme" })).toHaveCount(1);
+  await expect(page.getByRole("option", { name: "CLI context: client-acme" })).toHaveCount(0);
+});
+
 test("labels workspace summary as a CLI context when no profile set matches", async ({ page }) => {
   await installDesktopMock(page, "workspaceContext");
 

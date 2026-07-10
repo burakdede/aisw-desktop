@@ -2060,6 +2060,58 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("excludes duplicate CLI workspace bindings when a matching profile set already exists", async () => {
+    const settingsWithSet: DesktopSettings = {
+      ...bootstrap.settings,
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    };
+    const workspaceSnapshot = {
+      ...bootstrap.snapshot,
+      contexts: [
+        {
+          name: "client-acme",
+          profiles: {
+            claude: "work",
+            codex: "work",
+          },
+        },
+      ],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) =>
+      (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            settings: settingsWithSet,
+            snapshot: workspaceSnapshot,
+          },
+          get_snapshot: workspaceSnapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match", current_context: "client-acme" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: settingsWithSet,
+        } as Record<string, unknown>
+      )[command];
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Workspaces")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Workspaces"));
+
+    expect(screen.getByRole("option", { name: "Profile set: Client Acme" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "CLI context: client-acme" })).not.toBeInTheDocument();
+  });
+
   it("applies safe repairs from diagnostics", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
