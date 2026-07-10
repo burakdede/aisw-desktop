@@ -55,7 +55,11 @@ pub struct VersionInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ToolCapabilities {
     #[serde(default)]
+    pub auth_methods: Vec<String>,
+    #[serde(default)]
     pub state_modes: Vec<String>,
+    #[serde(default)]
+    pub credential_backends: Vec<String>,
     #[serde(default)]
     pub fail_closed_keyring_identity: bool,
 }

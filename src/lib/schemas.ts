@@ -13,7 +13,9 @@ export const capabilitiesInfoSchema = z.object({
   features: z.record(z.boolean()),
   tools: z.record(
     z.object({
+      auth_methods: z.array(z.string()).default([]),
       state_modes: z.array(z.string()).default([]),
+      credential_backends: z.array(z.string()).default([]),
       fail_closed_keyring_identity: z.boolean().default(false),
     }),
   ),

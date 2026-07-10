@@ -1866,6 +1866,83 @@ describe("App", () => {
     });
   });
 
+  it("derives profile setup modes and backends from runtime capabilities", async () => {
+    const capabilityBootstrap = {
+      ...bootstrap,
+      runtime_status: {
+        ...bootstrap.runtime_status,
+        capabilities: {
+          features: {
+            mutation_json: true,
+          },
+          tools: {
+            claude: {
+              auth_methods: ["from_env", "api_key"],
+              state_modes: ["isolated", "shared"],
+              credential_backends: ["file"],
+              fail_closed_keyring_identity: false,
+            },
+          },
+        },
+      },
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = {
+      get_bootstrap: capabilityBootstrap,
+      get_snapshot: capabilityBootstrap.snapshot,
+      run_init: { result: { live_accounts: [] } },
+      run_doctor: { summary: { status: "pass" } },
+      run_verify: { summary: { status: "pass" } },
+      run_repair: { result: { mode: "dry_run" } },
+      get_workspace_status: { result: { status: "match" } },
+      get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+      list_backups: [],
+      get_settings: capabilityBootstrap.settings,
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Profiles"));
+
+    const importModeSelect = screen.getByLabelText("Import mode");
+    expect(within(importModeSelect).getByRole("option", { name: "Capture environment" })).toBeInTheDocument();
+    expect(within(importModeSelect).getByRole("option", { name: "API key via stdin" })).toBeInTheDocument();
+    expect(
+      within(importModeSelect).queryByRole("option", { name: "Import current login" }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(importModeSelect).queryByRole("option", { name: "Guided OAuth capture" }),
+    ).not.toBeInTheDocument();
+
+    const backendSelect = screen.getByLabelText("Credential backend");
+    expect(backendSelect).toBeDisabled();
+    expect(backendSelect).toHaveValue("file");
+    expect(
+      screen.getByText("Claude profiles are always stored with file-backed credentials."),
+    ).toBeInTheDocument();
+  });
+
+  it("falls back to legacy profile setup options when capability metadata is absent", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Profiles"));
+    fireEvent.change(screen.getByLabelText("Tool"), {
+      target: { value: "codex" },
+    });
+
+    const importModeSelect = screen.getByLabelText("Import mode");
+    expect(within(importModeSelect).getByRole("option", { name: "Import current login" })).toBeInTheDocument();
+    expect(within(importModeSelect).getByRole("option", { name: "Capture environment" })).toBeInTheDocument();
+    expect(within(importModeSelect).getByRole("option", { name: "API key via stdin" })).toBeInTheDocument();
+    expect(within(importModeSelect).getByRole("option", { name: "Guided OAuth capture" })).toBeInTheDocument();
+
+    const backendSelect = screen.getByLabelText("Credential backend");
+    expect(backendSelect).not.toBeDisabled();
+    expect(within(backendSelect).getByRole("option", { name: "Automatic" })).toBeInTheDocument();
+    expect(within(backendSelect).getByRole("option", { name: "System keyring" })).toBeInTheDocument();
+    expect(within(backendSelect).getByRole("option", { name: "File-backed" })).toBeInTheDocument();
+  });
+
   it("submits API keys via stdin payload and clears the field after save", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {

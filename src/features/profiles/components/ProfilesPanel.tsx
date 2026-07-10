@@ -12,6 +12,13 @@ import { DesktopCommandError } from "../../../lib/tauri";
 import { listenDesktopEvent } from "../../../lib/tauri";
 import { listBackups, parseOAuthProgressEvent } from "../../../lib/client";
 import { titleCase } from "../../../lib/utils";
+import {
+  resolveCredentialBackendRequest,
+  supportedCredentialBackends,
+  supportedProfileImportModes,
+  type ProfileCredentialBackend,
+  type ProfileImportMode,
+} from "../../shared/profile-capabilities";
 import { resolveStateModeRequest, supportedStateModes } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
@@ -33,7 +40,7 @@ export function ProfilesPanel({
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
   initialTool?: string;
   initialExpandedProfile?: string | null;
-  initialMode?: "from_live" | "from_env" | "api_key" | "oauth";
+  initialMode?: ProfileImportMode;
   initialCredentialBackend?: "file" | "system-keyring" | null;
 }) {
   const {
@@ -52,10 +59,10 @@ export function ProfilesPanel({
   );
   const [profile, setProfile] = useState("");
   const [label, setLabel] = useState("");
-  const [mode, setMode] = useState<"from_live" | "from_env" | "api_key" | "oauth">(
+  const [mode, setMode] = useState<ProfileImportMode>(
     initialMode ?? "from_live",
   );
-  const [credentialBackend, setCredentialBackend] = useState<"auto" | "file" | "system-keyring">(
+  const [credentialBackend, setCredentialBackend] = useState<ProfileCredentialBackend>(
     initialCredentialBackend ?? "auto",
   );
   const [stateMode, setStateMode] = useState("isolated");
@@ -87,8 +94,12 @@ export function ProfilesPanel({
     [tool, toolCapabilities],
   );
   const availableCredentialBackends = useMemo(
-    () => supportedCredentialBackends(tool),
-    [tool],
+    () => supportedCredentialBackends(tool, toolCapabilities),
+    [tool, toolCapabilities],
+  );
+  const availableImportModes = useMemo(
+    () => supportedProfileImportModes(tool, toolCapabilities),
+    [tool, toolCapabilities],
   );
   const duplicateDraftName = profile.trim();
   const hasDuplicateProfileName =
@@ -122,15 +133,22 @@ export function ProfilesPanel({
   }, [initialMode]);
 
   useEffect(() => {
+    if (availableImportModes.includes(mode)) {
+      return;
+    }
+    setMode(availableImportModes[0] ?? "from_live");
+  }, [availableImportModes, mode]);
+
+  useEffect(() => {
     const next = initialCredentialBackend ?? "auto";
     setCredentialBackend(next);
   }, [initialCredentialBackend]);
 
   useEffect(() => {
-    if (availableCredentialBackends.some((entry) => entry.value === credentialBackend)) {
+    if (availableCredentialBackends.includes(credentialBackend)) {
       return;
     }
-    setCredentialBackend(availableCredentialBackends[0]?.value ?? "auto");
+    setCredentialBackend(availableCredentialBackends[0] ?? "auto");
   }, [availableCredentialBackends, credentialBackend]);
 
   useEffect(() => {
@@ -259,10 +277,11 @@ export function ProfilesPanel({
           <label>
             Import mode
             <select value={mode} onChange={(event) => setMode(event.target.value as typeof mode)}>
-              <option value="from_live">Import current login</option>
-              <option value="from_env">Capture environment</option>
-              <option value="api_key">API key via stdin</option>
-              <option value="oauth">Guided OAuth capture</option>
+              {availableImportModes.map((entry) => (
+                <option key={entry} value={entry}>
+                  {profileImportModeLabel(entry)}
+                </option>
+              ))}
             </select>
           </label>
           <label>
@@ -275,15 +294,15 @@ export function ProfilesPanel({
               disabled={availableCredentialBackends.length === 1}
             >
               {availableCredentialBackends.map((entry) => (
-                <option key={entry.value} value={entry.value}>
-                  {entry.label}
+                <option key={entry} value={entry}>
+                  {profileCredentialBackendLabel(entry)}
                 </option>
               ))}
             </select>
           </label>
-          {tool === "gemini" ? (
+          {availableCredentialBackends.length === 1 && availableCredentialBackends[0] === "file" ? (
             <p className="inline-note">
-              Gemini profiles are always stored with file-backed credentials.
+              {titleCase(tool)} profiles are always stored with file-backed credentials.
             </p>
           ) : null}
           {mode === "api_key" ? (
@@ -757,21 +776,28 @@ function isSupportedTool(tool: string | undefined): tool is (typeof TOOLS)[numbe
   return Boolean(tool && TOOLS.includes(tool as (typeof TOOLS)[number]));
 }
 
-function supportedCredentialBackends(tool: (typeof TOOLS)[number]) {
-  if (tool === "gemini") {
-    return [{ value: "file" as const, label: "File-backed only" }];
+function profileImportModeLabel(mode: ProfileImportMode) {
+  switch (mode) {
+    case "from_live":
+      return "Import current login";
+    case "from_env":
+      return "Capture environment";
+    case "api_key":
+      return "API key via stdin";
+    case "oauth":
+      return "Guided OAuth capture";
   }
-  return [
-    { value: "auto" as const, label: "Automatic" },
-    { value: "system-keyring" as const, label: "System keyring" },
-    { value: "file" as const, label: "File-backed" },
-  ];
 }
 
-function resolveCredentialBackendRequest(
-  backend: "auto" | "file" | "system-keyring",
-): string | null {
-  return backend === "auto" ? null : backend;
+function profileCredentialBackendLabel(backend: ProfileCredentialBackend) {
+  switch (backend) {
+    case "auto":
+      return "Automatic";
+    case "system-keyring":
+      return "System keyring";
+    case "file":
+      return "File-backed";
+  }
 }
 
 function effectiveLabel(
