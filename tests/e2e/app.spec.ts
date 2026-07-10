@@ -12,6 +12,7 @@ type ScenarioName =
   | "missingTool"
   | "partialSetup"
   | "updaterError"
+  | "updaterInstallError"
   | "customRuntime";
 
 const toolCapabilities = {
@@ -434,6 +435,25 @@ test("shows remediation when the updater configuration is invalid", async ({ pag
 
   await expect(page.getByRole("heading", { name: "Update check failed" })).toBeVisible();
   await expect(page.getByText("Desktop update failed: invalid endpoint")).toBeVisible();
+  await expect(
+    page.getByText(
+      "Verify the updater endpoint, signing key, and generated updater artifacts for this release.",
+    ),
+  ).toBeVisible();
+});
+
+test("shows remediation when update install fails", async ({ page }) => {
+  await installDesktopMock(page, "updaterInstallError");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Check for updates" }).click();
+
+  await expect(page.getByText("Update available: 0.2.0")).toBeVisible();
+  await page.getByRole("button", { name: "Install update" }).click();
+
+  await expect(page.getByText("Update install failed")).toBeVisible();
+  await expect(page.getByText("Desktop update failed: signature mismatch")).toBeVisible();
   await expect(
     page.getByText(
       "Verify the updater endpoint, signing key, and generated updater artifacts for this release.",
@@ -1367,6 +1387,53 @@ async function installDesktopMock(
             },
           },
         },
+        updaterInstallError: {
+          settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "api_key",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+              codex: {
+                active: "work",
+                profiles: [{ name: "work", auth: "api_key", label: "Work" }],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
       };
 
       const scenarioState = scenarios[activeScenario];
@@ -1586,6 +1653,13 @@ async function installDesktopMock(
           };
         }
         if (command === "install_update") {
+          if (activeScenario === "updaterInstallError") {
+            throw {
+              message: "Desktop update failed: signature mismatch",
+              remediation:
+                "Verify the updater endpoint, signing key, and generated updater artifacts for this release.",
+            };
+          }
           return {
             configured: true,
             channel: state.settings.update_channel,
