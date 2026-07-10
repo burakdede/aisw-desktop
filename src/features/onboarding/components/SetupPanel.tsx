@@ -1,7 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SectionCard } from "../../../components/SectionCard";
-import { runDoctor } from "../../../lib/client";
+import { getShellGuidance, runDoctor } from "../../../lib/client";
 import { sharedProfileEntries } from "../../../lib/profile-display";
 import { AppBootstrap, AppSnapshot, InitReport } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
@@ -25,16 +25,19 @@ export function SetupPanel({
   snapshot,
   initReport,
   onOpenProfiles,
+  onOpenSettings,
 }: {
   bootstrap: AppBootstrap;
   snapshot: AppSnapshot;
   initReport: InitReport | undefined;
   onOpenProfiles: (tool: string) => void;
+  onOpenSettings: () => void;
 }) {
   const settings = bootstrap.settings;
   const { initMutation, addProfileMutation, useAllProfilesMutation, mutationLock } =
     useDesktopActions();
   const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor });
+  const shellGuidance = useQuery({ queryKey: ["shell-guidance"], queryFn: getShellGuidance });
   const [profileNames, setProfileNames] = useState<Record<string, string>>({});
   const [firstSwitchProfile, setFirstSwitchProfile] = useState("");
 
@@ -252,6 +255,11 @@ export function SetupPanel({
 
           <div className="diagnostic-card">
             <h4>Shell guidance</h4>
+            {shellGuidance.data?.detected_shell ? (
+              <p className="inline-note">
+                Detected shell: <strong>{titleCase(shellGuidance.data.detected_shell)}</strong>
+              </p>
+            ) : null}
             <p className="inline-note">
               AISW Desktop writes live credential files directly. Existing terminal sessions only
               receive immediate environment exports such as <code>CLAUDE_CONFIG_DIR</code> and{" "}
@@ -261,6 +269,11 @@ export function SetupPanel({
               Shell files should only be updated explicitly from the CLI or a future guided setup
               action, never silently.
             </p>
+            <div className="button-row">
+              <button className="ghost-button" type="button" onClick={onOpenSettings}>
+                Open shell setup
+              </button>
+            </div>
           </div>
         </div>
       </div>

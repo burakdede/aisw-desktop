@@ -2370,6 +2370,19 @@ describe("App", () => {
     expect(screen.getByLabelText("Add codex profile")).toBeInTheDocument();
   });
 
+  it("opens full shell setup guidance from onboarding", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
+
+    expect(screen.getByText("Detected shell:")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Open shell setup"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Shell hook")).toBeInTheDocument();
+      expect(screen.getByText("Config file: ~/.zshrc")).toBeInTheDocument();
+    });
+  });
+
   it("opens diagnostics when the tray requests it", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
@@ -2811,7 +2824,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Shell hook")).toBeInTheDocument();
-      expect(screen.getByText(/Detected shell:/)).toBeInTheDocument();
+      expect(screen.getAllByText(/Detected shell:/).length).toBeGreaterThan(0);
       expect(screen.getByText("Config file: ~/.zshrc")).toBeInTheDocument();
       expect(screen.getByText("echo 'eval \"$(aisw shell-hook zsh)\"' >> ~/.zshrc")).toBeInTheDocument();
       expect(screen.getByText("source ~/.zshrc")).toBeInTheDocument();

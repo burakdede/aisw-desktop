@@ -36,6 +36,18 @@ test("imports detected Claude, Codex, and Gemini accounts during onboarding", as
   await expect(page.locator(".list-row strong").filter({ hasText: "Travel" })).toBeVisible();
 });
 
+test("opens shell setup from onboarding", async ({ page }) => {
+  await installDesktopMock(page, "onboarding");
+
+  await page.goto("/");
+
+  await expect(page.getByText("Detected shell:")).toBeVisible();
+  await page.getByRole("button", { name: "Open shell setup" }).click();
+
+  await expect(page.getByRole("heading", { name: "Shell hook" })).toBeVisible();
+  await expect(page.getByText("Config file: ~/.zshrc")).toBeVisible();
+});
+
 test("switches shared profiles and recovers from live mismatch", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -486,10 +498,24 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
         if (command === "get_shell_guidance") {
           return {
             detected_shell: "zsh",
-            capabilities: [],
-            note: "",
-            manual_apply_examples: [],
-            variants: [],
+            capabilities: [
+              "Apply CLAUDE_CONFIG_DIR, CODEX_HOME, and GEMINI_API_KEY into the current shell session.",
+            ],
+            note:
+              "Without the shell hook, aisw use still writes live credential files and updates ~/.aisw/config.json.",
+            manual_apply_examples: ['eval "$(aisw use claude work --emit-env)"'],
+            variants: [
+              {
+                shell: "zsh",
+                title: "Zsh",
+                config_path: "~/.zshrc",
+                alternate_config_path: null,
+                install_command: "echo 'eval \"$(aisw shell-hook zsh)\"' >> ~/.zshrc",
+                reload_command: "source ~/.zshrc",
+                verify_command: 'echo "$AISW_SHELL_HOOK"',
+                verify_expected: "1",
+              },
+            ],
           };
         }
         if (command === "add_profile") {

@@ -157,6 +157,7 @@ export function App() {
               setProfilesRouteState({ tool, expandedProfile: null });
               setActiveNav("profiles");
             }}
+            onOpenSettings={() => setActiveNav("settings")}
           />
           {activeNav === "overview" ? (
             <OverviewPanel
