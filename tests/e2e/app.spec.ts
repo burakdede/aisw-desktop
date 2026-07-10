@@ -259,7 +259,7 @@ test("runs the onboarding first switch flow", async ({ page }) => {
 
   await expect(page.getByText("Last bulk result: Switched all tools to Office.")).toBeVisible();
   await expect(page.getByText("Shell guidance")).toBeVisible();
-  await expect(page.getByText("AISW runtime contract")).toBeVisible();
+  await expect(page.getByText("Runtime compatibility")).toBeVisible();
 });
 
 test("keeps Gemini state mode non-configurable when runtime capabilities are stale", async ({

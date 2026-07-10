@@ -3220,7 +3220,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
       expect(screen.getByText("Shell guidance")).toBeInTheDocument();
-      expect(screen.getByText(/AISW runtime contract/)).toBeInTheDocument();
+      expect(screen.getByText(/Runtime compatibility/)).toBeInTheDocument();
     });
   });
 
@@ -6625,7 +6625,7 @@ describe("App", () => {
       expect(
         screen.getByText("Current resolved path: /Applications/AISW.app/Contents/Resources/aisw"),
       ).toBeInTheDocument();
-      expect(screen.getByText("Effective app data home: ~/.aisw")).toBeInTheDocument();
+      expect(screen.getByText("Effective local data folder: ~/.aisw")).toBeInTheDocument();
       expect(
         screen.getAllByText("Bundled runtime: /Applications/AISW.app/Contents/Resources/aisw").length,
       ).toBeGreaterThan(0);

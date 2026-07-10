@@ -163,7 +163,7 @@ export function SetupPanel({
             Resolved path: {bootstrap.runtime_status.resolved_path ?? "No runtime resolved"}
           </p>
           <p className="inline-note">
-            App data home: {bootstrap.settings.aisw_home ?? "~/.aisw"}
+            Local data folder: {bootstrap.settings.aisw_home ?? "~/.aisw"}
           </p>
           <p className="inline-note">
             Runtime version: {bootstrap.runtime_status.version?.version ?? "unknown"}
@@ -401,7 +401,7 @@ function buildHealthItems(
     : [];
   const items: HealthItem[] = [
     {
-      label: "AISW runtime contract",
+      label: "Runtime compatibility",
       status: bootstrap.runtime_status.compatible ? "pass" : "fail",
       detail: bootstrap.runtime_status.compatible
         ? bootstrap.settings.runtime_kind === "bundled"

@@ -543,7 +543,7 @@ function buildQuickFixes(
       const profileLabel = toolProfileDisplayLabel(settings, snapshot, status.tool, status.active_profile);
       fixes.push({
         title: `${status.tool} live mismatch`,
-        detail: `Re-apply ${profileLabel} so the live credentials match AISW again.`,
+        detail: `Re-apply ${profileLabel} so the live credentials match AI Switch again.`,
         label: `Re-apply ${profileLabel}`,
         status: "fail",
         profileTarget: {
@@ -632,7 +632,7 @@ function repairableDoctorIssues(
     .filter((check): check is Record<string, unknown> => Boolean(check))
     .flatMap((check) => {
       const name = asStringValue(check.name)?.toLowerCase() ?? "";
-      const detail = asStringValue(check.detail) ?? "AISW reported an issue.";
+      const detail = asStringValue(check.detail) ?? "AI Switch reported an issue.";
       const status = (asStringValue(check.status) as "warn" | "fail" | undefined) ?? "warn";
 
       if (name.includes("keyring")) {

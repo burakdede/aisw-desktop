@@ -1073,12 +1073,12 @@ function buildOauthWizardSteps(
     {
       id: "capture" as const,
       label: "4. Waiting for credential capture",
-      fallback: "AISW waits for the upstream tool to persist the captured credentials.",
+      fallback: "AI Switch waits for the upstream tool to persist the captured credentials.",
     },
     {
       id: "saved" as const,
       label: "5. Profile saved",
-      fallback: "AISW stores the captured profile and refreshes desktop state.",
+      fallback: "AI Switch stores the captured profile and refreshes desktop state.",
     },
   ];
 
@@ -1201,7 +1201,7 @@ function formatProfileTokenWarning(
 function formatProfileWarning(
   warning: NonNullable<AppSnapshot["statuses"][number]["warnings"]>[number],
 ) {
-  const detail = warning.message ?? warning.code ?? "Warning reported by aisw.";
+  const detail = warning.message ?? warning.code ?? "Warning reported by AI Switch.";
   return warning.remediation ? `${detail} Remediation: ${warning.remediation}` : detail;
 }
 

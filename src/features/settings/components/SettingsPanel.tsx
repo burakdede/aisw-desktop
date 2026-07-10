@@ -192,7 +192,7 @@ export function SettingsPanel({
                     disabled={runtimeKind !== "custom"}
                     placeholder={
                       runtimeKind === "custom"
-                        ? "/path/to/aisw"
+                        ? "/path/to/runtime"
                         : "Only used for custom runtime"
                     }
                     onChange={(event) => setRuntimePath(event.target.value)}
@@ -254,7 +254,7 @@ export function SettingsPanel({
                 Current resolved path: {runtimeStatus.resolved_path ?? "No runtime resolved"}
               </p>
               <p className="inline-note">
-                Effective app data home: {settings.aisw_home ?? "~/.aisw"}
+                Effective local data folder: {settings.aisw_home ?? "~/.aisw"}
               </p>
               <p className="inline-note">
                 Bundled runtime: {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
