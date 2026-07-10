@@ -10,6 +10,19 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
+const REQUIRED_RUNTIME_FEATURES: &[&str] = &[
+    "api_key_stdin",
+    "mutation_json",
+    "progress_json",
+    "non_prompting_init",
+    "detect_live_init",
+    "verify",
+    "repair",
+    "contexts",
+    "workspace_bindings",
+    "project_bindings_alias",
+];
+
 #[derive(Clone)]
 pub struct AppState {
     settings: SettingsStore,
@@ -196,13 +209,8 @@ impl AppState {
             issues.push("aisw version info is unavailable".to_owned());
         }
         if let Some(capabilities) = &capabilities {
-            if !capabilities
-                .features
-                .get("mutation_json")
-                .copied()
-                .unwrap_or(false)
-            {
-                issues.push("aisw does not advertise mutation_json support".to_owned());
+            for feature in missing_required_features(capabilities) {
+                issues.push(format!("aisw does not advertise {feature} support"));
             }
         } else {
             issues.push("aisw capabilities info is unavailable".to_owned());
@@ -241,11 +249,15 @@ impl AppState {
 fn is_compatible(version: &VersionInfo, capabilities: &CapabilitiesInfo) -> bool {
     version.cli_api_version == 1
         && version.json_schema_version == 1
-        && capabilities
-            .features
-            .get("mutation_json")
-            .copied()
-            .unwrap_or(false)
+        && missing_required_features(capabilities).is_empty()
+}
+
+fn missing_required_features(capabilities: &CapabilitiesInfo) -> Vec<&'static str> {
+    REQUIRED_RUNTIME_FEATURES
+        .iter()
+        .copied()
+        .filter(|feature| !capabilities.features.get(*feature).copied().unwrap_or(false))
+        .collect()
 }
 
 pub fn incompatible_runtime_error() -> ErrorPayload {
@@ -386,8 +398,11 @@ pub(crate) fn preferred_tool_state_mode(
 
 #[cfg(test)]
 mod tests {
-    use super::{preferred_global_state_mode, preferred_tool_state_mode};
-    use crate::models::{AppSnapshot, ToolStatus};
+    use super::{
+        is_compatible, missing_required_features, preferred_global_state_mode,
+        preferred_tool_state_mode,
+    };
+    use crate::models::{AppSnapshot, CapabilitiesInfo, ToolCapabilities, ToolStatus, VersionInfo};
     use crate::settings::SettingsStore;
     use std::collections::HashMap;
     use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -418,6 +433,78 @@ mod tests {
             workspace_status: None,
             project_bindings: None,
         }
+    }
+
+    fn version() -> VersionInfo {
+        VersionInfo {
+            version: "0.4.0".to_owned(),
+            cli_api_version: 1,
+            json_schema_version: 1,
+            progress_schema_version: 1,
+        }
+    }
+
+    fn capabilities_with_features(features: &[&str]) -> CapabilitiesInfo {
+        let feature_flags = features
+            .iter()
+            .map(|feature| ((*feature).to_owned(), true))
+            .collect::<HashMap<_, _>>();
+        let tools = ["claude", "codex", "gemini"]
+            .into_iter()
+            .map(|tool| {
+                (
+                    tool.to_owned(),
+                    ToolCapabilities {
+                        auth_methods: vec![],
+                        state_modes: vec![],
+                        credential_backends: vec![],
+                        fail_closed_keyring_identity: false,
+                    },
+                )
+            })
+            .collect::<HashMap<_, _>>();
+
+        CapabilitiesInfo {
+            features: feature_flags,
+            tools,
+        }
+    }
+
+    #[test]
+    fn compatible_runtime_requires_full_desktop_feature_set() {
+        let capabilities = capabilities_with_features(super::REQUIRED_RUNTIME_FEATURES);
+        assert!(is_compatible(&version(), &capabilities));
+
+        let missing_progress = capabilities_with_features(&[
+            "api_key_stdin",
+            "mutation_json",
+            "non_prompting_init",
+            "detect_live_init",
+            "verify",
+            "repair",
+            "contexts",
+            "workspace_bindings",
+            "project_bindings_alias",
+        ]);
+        assert!(!is_compatible(&version(), &missing_progress));
+    }
+
+    #[test]
+    fn missing_required_features_reports_every_missing_runtime_capability() {
+        let capabilities = capabilities_with_features(&["mutation_json", "verify"]);
+        assert_eq!(
+            missing_required_features(&capabilities),
+            vec![
+                "api_key_stdin",
+                "progress_json",
+                "non_prompting_init",
+                "detect_live_init",
+                "repair",
+                "contexts",
+                "workspace_bindings",
+                "project_bindings_alias",
+            ]
+        );
     }
 
     #[test]
