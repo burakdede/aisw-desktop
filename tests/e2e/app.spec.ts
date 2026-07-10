@@ -12,6 +12,7 @@ type ScenarioName =
   | "profiles"
   | "backupCatalog"
   | "staleProfile"
+  | "profileCommandError"
   | "missingTool"
   | "partialSetup"
   | "updaterError"
@@ -776,6 +777,36 @@ test("shows missing-profile remediation when a stale profile is re-applied", asy
   ).toBeVisible();
 });
 
+test("warns before renaming a profile to a duplicate name", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  const personalRow = page.locator(".list-row").filter({ hasText: "personal · oauth" });
+  await personalRow.getByLabel("rename personal").fill("work");
+  await expect(
+    page.getByText(
+      "Claude already has a profile named work. Choose a different name or rename the existing profile first.",
+    ),
+  ).toBeVisible();
+  await expect(personalRow.getByRole("button", { name: "Rename" })).toBeDisabled();
+});
+
+test("shows remediation text for profile command failures", async ({ page }) => {
+  await installDesktopMock(page, "profileCommandError");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  await page.getByLabel("Profile name").fill("ops");
+  await page.getByRole("button", { name: "Add profile" }).click();
+
+  await expect(
+    page.getByText("keyring unavailable Remediation: Unlock the system keychain and retry."),
+  ).toBeVisible();
+});
+
 test("renames, relabels, and removes profiles from the profiles screen", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -1531,6 +1562,37 @@ async function installDesktopMock(
             },
           },
         },
+        profileCommandError: {
+          settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
         customRuntime: {
           settings: {
             ...bootstrapSettings,
@@ -2172,6 +2234,13 @@ async function installDesktopMock(
         }
         if (command === "add_profile") {
           const request = args.request;
+          if (activeScenario === "profileCommandError") {
+            throw {
+              kind: "KeyringUnavailable",
+              message: "keyring unavailable",
+              remediation: "Unlock the system keychain and retry.",
+            };
+          }
           ensureToolEntry(request.tool);
           const auth = request.import_mode.kind === "from_live" ? "oauth" : "api_key";
           state.snapshot.profiles[request.tool].profiles.push({
