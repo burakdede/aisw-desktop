@@ -283,6 +283,14 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `scripts/prepare-updater.mjs` rejects non-HTTPS release-channel endpoints before they are written into `src-tauri/tauri.conf.json`, while `scripts/verify-release.mjs` fails release verification if staged updater channels or fallback endpoints drift to non-HTTPS URLs.
   - `scripts/prepare-updater.test.mjs`, `scripts/verify-release.test.mjs`, and `src-tauri/src/updater.rs` unit tests verify both build-time and runtime rejection paths.
 
+### 37. Local release-bundle smoke builds succeed without release signing secrets
+
+- Status: implemented
+- Evidence:
+  - `scripts/build-local-bundle.mjs` stages a temporary Tauri config override with updater artifact generation disabled and then runs `tauri build`, preserving the normal signed-release `tauri:build` path while giving developers a reliable unsigned local bundle flow.
+  - `package.json`, `scripts/build-local-bundle.test.mjs`, and `scripts/verify-release.mjs` expose and verify the `tauri:bundle-local` contract, including cleanup of temporary config overrides and release-runbook coverage.
+  - A real local `npm run tauri:bundle-local` build produced `/Users/burakdede/Projects/aisw-desktop/src-tauri/target/release/bundle/macos/AISW Desktop.app` and `/Users/burakdede/Projects/aisw-desktop/src-tauri/target/release/bundle/dmg/AISW Desktop_0.1.0_aarch64.dmg` without requiring `TAURI_SIGNING_PRIVATE_KEY`.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:

@@ -41,6 +41,14 @@ cargo check --manifest-path src-tauri/Cargo.toml
 4. Build the desktop bundle:
 
 ```sh
+npm run tauri:bundle-local
+```
+
+This local smoke-build path keeps the sidecar contract intact but disables updater artifact generation, so it succeeds without `TAURI_SIGNING_PRIVATE_KEY` while still producing a launchable packaged app bundle.
+
+5. Build the signed release bundle after staging updater channels and signing secrets:
+
+```sh
 npm run tauri:build
 ```
 
@@ -57,7 +65,8 @@ npm run tauri:build
 ## Release test cases
 
 - Positive:
-  - Prepare a valid host `aisw` binary and confirm `npm run tauri:build` succeeds.
+  - Prepare a valid host `aisw` binary and confirm `npm run tauri:bundle-local` succeeds without signing secrets.
+  - After staging updater channels and signing secrets, confirm `npm run tauri:build` succeeds.
   - Launch the packaged app in `Bundled` mode and confirm runtime status resolves the embedded binary path.
   - Switch a profile from the packaged app and confirm tray state updates immediately.
 - Negative:
@@ -106,6 +115,7 @@ npm run tauri:build
 - Stage the correct `aisw` sidecar for the target with `npm run prepare:sidecar`.
 - Pass the standard verification matrix:
   `npm test`, `npm run build`, `npm run test:e2e`, `npm run verify:release`, `cargo test --manifest-path src-tauri/Cargo.toml`, `cargo check --manifest-path src-tauri/Cargo.toml`.
+- Run `npm run tauri:bundle-local` to smoke-test an unsigned local bundle before release signing.
 - Build the desktop bundle with `npm run tauri:build`.
 - Launch the packaged app in `Bundled` mode and confirm the embedded `aisw` path resolves in runtime status.
 - Switch a profile in the packaged app and confirm the tray summary refreshes immediately.

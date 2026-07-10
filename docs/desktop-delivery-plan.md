@@ -211,12 +211,13 @@ Test cases:
 
 Acceptance criteria:
 - Sidecar preparation is deterministic for local and CI builds.
+- Local bundle smoke builds succeed without release signing secrets while preserving signed updater artifacts for real release builds.
 - Release builds package the correct sidecar per target.
 - macOS signing/notarization path is documented and repeatable.
 - Release verification is captured in a runbook.
 
 Test cases:
-- Local sidecar build path produces a launchable app bundle.
+- Local sidecar build path produces a launchable app bundle without requiring updater signing keys.
 - CI release artifacts include app bundle and bundled sidecar.
 - Update feed configuration resolves per channel.
 - Release checklist passes before distribution.
