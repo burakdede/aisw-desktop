@@ -5,6 +5,7 @@ import { App } from "./App";
 import { resetLastCommandResultsForTests } from "./features/shared/lastCommandResult";
 import { useDesktopActions } from "./features/shared/useDesktopActions";
 import { resetMutationQueueForTests } from "./features/shared/mutationQueue";
+import { SettingsPanel } from "./features/settings/components/SettingsPanel";
 import type { DesktopSettings } from "./lib/schemas";
 
 Object.assign(navigator, {
@@ -104,6 +105,35 @@ async function renderApp() {
     );
     await Promise.resolve();
   });
+}
+
+async function renderSettingsPanel(settings: DesktopSettings) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  let rendered: ReturnType<typeof render> | undefined;
+  await act(async () => {
+    rendered = render(
+      <QueryClientProvider client={queryClient}>
+        <SettingsPanel settings={settings} runtimeStatus={bootstrap.runtime_status} />
+      </QueryClientProvider>,
+    );
+    await Promise.resolve();
+  });
+
+  if (!rendered) {
+    throw new Error("Settings panel failed to render.");
+  }
+
+  return {
+    ...rendered,
+    queryClient,
+  };
 }
 
 function getProfilesSection() {
@@ -3013,6 +3043,69 @@ describe("App", () => {
       expect(
         screen.getByText((_, element) => element?.textContent?.trim() === "Selected backend: Bundled"),
       ).toBeInTheDocument();
+    });
+  });
+
+  it("resyncs settings inputs when persisted settings change", async () => {
+    window.__AISW_DESKTOP_MOCK__ = {
+      run_doctor: { summary: { status: "pass" }, checks: [] },
+      get_shell_guidance: {
+        detected_shell: "zsh",
+        capabilities: [],
+        note: "Shell hook guidance",
+        manual_apply_examples: [],
+        variants: [
+          {
+            shell: "zsh",
+            title: "Zsh",
+            config_path: "~/.zshrc",
+            alternate_config_path: null,
+            install_command: "echo install",
+            reload_command: "source ~/.zshrc",
+            verify_command: 'echo "$AISW_SHELL_HOOK"',
+            verify_expected: "1",
+          },
+        ],
+      },
+    };
+
+    const firstSettings: DesktopSettings = {
+      ...bootstrap.settings,
+      runtime_kind: "bundled",
+      runtime_path: null,
+      aisw_home: null,
+      update_channel: "stable",
+    };
+    const nextSettings: DesktopSettings = {
+      ...bootstrap.settings,
+      runtime_kind: "custom",
+      runtime_path: "/opt/aisw/bin/aisw",
+      aisw_home: "/tmp/aisw-home",
+      update_channel: "beta",
+    };
+
+    const rendered = await renderSettingsPanel(firstSettings);
+    await waitFor(() => {
+      expect(screen.getByText("Settings")).toBeInTheDocument();
+    });
+
+    expect(screen.getByDisplayValue("Bundled aisw")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Stable")).toBeInTheDocument();
+
+    await act(async () => {
+      rendered.rerender(
+        <QueryClientProvider client={rendered.queryClient}>
+          <SettingsPanel settings={nextSettings} runtimeStatus={bootstrap.runtime_status} />
+        </QueryClientProvider>,
+      );
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("Custom path")).toBeInTheDocument();
+      expect(screen.getByDisplayValue("/opt/aisw/bin/aisw")).toBeInTheDocument();
+      expect(screen.getByDisplayValue("/tmp/aisw-home")).toBeInTheDocument();
+      expect(screen.getByDisplayValue("Beta")).toBeInTheDocument();
     });
   });
 });

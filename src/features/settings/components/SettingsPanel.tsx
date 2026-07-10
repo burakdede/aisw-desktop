@@ -40,6 +40,18 @@ export function SettingsPanel({
     setSelectedShell((current) => current || next);
   }, [shellGuidance.data]);
 
+  useEffect(() => {
+    setRuntimeKind(settings.runtime_kind);
+    setRuntimePath(settings.runtime_path ?? "");
+    setAiswHome(settings.aisw_home ?? "");
+    setUpdateChannel(settings.update_channel);
+  }, [
+    settings.runtime_kind,
+    settings.runtime_path,
+    settings.aisw_home,
+    settings.update_channel,
+  ]);
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     updateSettingsMutation.mutate({
