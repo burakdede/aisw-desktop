@@ -91,7 +91,9 @@ jobs:
           npm run build
 
       - name: Verify Rust
-        run: cargo test --manifest-path src-tauri/Cargo.toml
+        run: |
+          cargo test --manifest-path src-tauri/Cargo.toml
+          cargo check --manifest-path src-tauri/Cargo.toml
 
       - uses: tauri-apps/tauri-action@v1
         env:

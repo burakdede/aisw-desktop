@@ -30,7 +30,9 @@ npm run prepare:sidecar -- --target x86_64-apple-darwin /absolute/path/to/aisw
 ```sh
 npm test
 npm run build
+npm run test:e2e
 cargo test --manifest-path src-tauri/Cargo.toml
+cargo check --manifest-path src-tauri/Cargo.toml
 ```
 
 4. Build the desktop bundle:
@@ -46,6 +48,7 @@ npm run tauri:build
 - `Bundled` runtime mode reports blocked when no packaged sidecar exists.
 - `System` runtime mode resolves `aisw` from `PATH` without relying on bundled paths.
 - The standard frontend and Rust test suites pass before packaging.
+- CI and publish workflows enforce the same verification matrix used for local release checks.
 
 ## Release test cases
 
