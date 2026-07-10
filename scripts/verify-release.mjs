@@ -126,6 +126,7 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         acceptanceMatrix.includes("least-privilege capability") &&
         acceptanceMatrix.includes("validates target-compatible binary formats") &&
         acceptanceMatrix.includes("API key never appears in logs") &&
+        acceptanceMatrix.includes("Remediation actions land on targeted settings guidance") &&
         acceptanceMatrix.includes("does not replace the local-only product spec"),
     },
     {

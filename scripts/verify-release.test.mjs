@@ -179,6 +179,7 @@ validates target-compatible binary formats
 least-privilege capability
 ## Acceptance Criteria
 API key never appears in logs
+Remediation actions land on targeted settings guidance
 ## Verification Matrix
 npm test
 `,

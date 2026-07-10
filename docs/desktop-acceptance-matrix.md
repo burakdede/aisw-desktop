@@ -111,6 +111,13 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src-tauri/src/state.rs` serializes init, CLI mutations, profile-set activation, and bridge-backed write commands through a shared mutation lock.
   - `src-tauri/src/state.rs` includes a concurrency test proving later operations cannot enter the critical section before the active mutation exits.
 
+### 13. Remediation actions land on targeted settings guidance
+
+- Status: implemented
+- Evidence:
+  - `tests/e2e/app.spec.ts` verifies onboarding and diagnostics remediation actions open the correct shell/keyring settings section.
+  - `src/App.test.tsx` verifies focused settings shortcuts are selected for shell-hook and keyring remediation flows.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:
