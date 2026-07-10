@@ -5,6 +5,13 @@ import { getShellGuidance, runDoctor } from "../../../lib/client";
 import { sharedProfileEntries } from "../../../lib/profile-display";
 import { AppBootstrap, AppSnapshot, InitReport } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
+import {
+  commandForCurrentPlatform,
+  installCommandForTool,
+  installGuideUrlForTool,
+  openExternalGuide,
+  toolBinaryName,
+} from "../../../lib/tool-guidance";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 
 type LiveAccount = {
@@ -54,6 +61,10 @@ export function SetupPanel({
       ),
     [liveAccountTools, snapshot.statuses],
   );
+  const missingTools = useMemo(
+    () => snapshot.statuses.filter((status) => !status.binary_found),
+    [snapshot.statuses],
+  );
   const healthItems = useMemo(
     () => buildHealthItems(bootstrap, snapshot, doctor.data),
     [bootstrap, snapshot, doctor.data],
@@ -63,7 +74,10 @@ export function SetupPanel({
     [settings, snapshot],
   );
   const shouldShowSetup =
-    totalProfiles === 0 || liveAccounts.length > 0 || undetectedInstalledTools.length > 0;
+    totalProfiles === 0 ||
+    liveAccounts.length > 0 ||
+    undetectedInstalledTools.length > 0 ||
+    missingTools.length > 0;
 
   function submitImport(event: FormEvent<HTMLFormElement>, tool: string) {
     event.preventDefault();
@@ -205,8 +219,34 @@ export function SetupPanel({
               </div>
             </article>
           ))}
+          {missingTools.map((status) => {
+            const binary = toolBinaryName(status.tool);
+            return (
+              <article key={status.tool} className="diagnostic-card diagnostic-warn">
+                <h4>{titleCase(status.tool)} is not installed</h4>
+                <p className="inline-note">
+                  AISW Desktop cannot detect or switch {titleCase(status.tool)} until the{" "}
+                  <code>{binary}</code> CLI is available on PATH.
+                </p>
+                <div className="diagnostic-remediation">
+                  <code>{installCommandForTool(status.tool)}</code>
+                  <code>{commandForCurrentPlatform(binary, "verify")}</code>
+                  <code>{commandForCurrentPlatform(binary, "path")}</code>
+                </div>
+                <div className="button-row">
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    onClick={() => openExternalGuide(installGuideUrlForTool(status.tool))}
+                  >
+                    Open installation guide
+                  </button>
+                </div>
+              </article>
+            );
+          })}
           {!liveAccounts.length ? (
-            undetectedInstalledTools.length ? null : (
+            undetectedInstalledTools.length || missingTools.length ? null : (
               <p className="inline-note">
                 Run the setup scan to detect live Claude, Codex, and Gemini accounts.
               </p>

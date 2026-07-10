@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 type ScenarioName =
   | "onboarding"
+  | "onboardingMissingTool"
   | "switching"
   | "workspaceContext"
   | "profiles"
@@ -77,6 +78,27 @@ test("keeps onboarding usable when another installed tool has no live credential
 
   await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
   await expect(page.getByLabel("Tool")).toHaveValue("codex");
+});
+
+test("shows missing-tool install guidance during onboarding", async ({ page }) => {
+  await installDesktopMock(page, "onboardingMissingTool");
+
+  await page.goto("/");
+
+  const setup = page.locator(".section-card").filter({ hasText: "First-run setup" });
+  await expect(setup.getByRole("heading", { name: "First-run setup" })).toBeVisible();
+  await expect(setup.getByText("Gemini is not installed")).toBeVisible();
+  await expect(setup.getByText("npm install -g @google/gemini-cli")).toBeVisible();
+  await expect(setup.getByText("gemini --version")).toBeVisible();
+  await expect(setup.getByText(/(which|where) gemini/)).toBeVisible();
+
+  await setup.getByRole("button", { name: "Open installation guide" }).click();
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => (window as typeof window & { __AISW_OPENED_GUIDES__?: string[] }).__AISW_OPENED_GUIDES__ ?? []),
+    )
+    .toContain("https://www.npmjs.com/package/@google/gemini-cli");
 });
 
 test("switches shared profiles and recovers from live mismatch", async ({ page }) => {
@@ -203,14 +225,13 @@ test("shows missing-tool guidance and opens the install guide from diagnostics",
 
   await page.goto("/");
 
-  await expect(
-    page.getByText(
-      "Gemini is not available on PATH, so AISW Desktop cannot switch or verify that tool yet.",
-    ),
-  ).toBeVisible();
-  await expect(page.getByText("npm install -g @google/gemini-cli")).toBeVisible();
-  await expect(page.getByText("gemini --version")).toBeVisible();
-  await expect(page.getByText(/(which|where) gemini/)).toBeVisible();
+  const geminiCard = page.locator(".tool-card").filter({
+    hasText: "Gemini is not available on PATH, so AISW Desktop cannot switch or verify that tool yet.",
+  });
+  await expect(geminiCard).toBeVisible();
+  await expect(geminiCard.getByText("npm install -g @google/gemini-cli")).toBeVisible();
+  await expect(geminiCard.getByText("gemini --version")).toBeVisible();
+  await expect(geminiCard.getByText(/(which|where) gemini/)).toBeVisible();
 
   await page.getByRole("button", { name: "Diagnostics" }).click();
   const missingToolCard = page.locator(".diagnostic-card").filter({ hasText: "gemini is missing" });
@@ -501,6 +522,52 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
                 profiles: [{ name: "work", auth: "oauth", label: "Work" }],
               },
               codex: {
+                active: null,
+                profiles: [],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
+        onboardingMissingTool: {
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 0,
+                active_profile: null,
+                auth_method: null,
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: null,
+                credentials_present: false,
+                permissions_ok: true,
+              },
+              {
+                tool: "gemini",
+                binary_found: false,
+                stored_profiles: 0,
+                active_profile: null,
+                auth_method: null,
+                credential_backend: null,
+                state_mode: null,
+                active_profile_applied: null,
+                credentials_present: false,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: null,
+                profiles: [],
+              },
+              gemini: {
                 active: null,
                 profiles: [],
               },

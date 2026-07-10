@@ -295,11 +295,18 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByText("Gemini is not available on PATH, so AISW Desktop cannot switch or verify that tool yet.")).toBeInTheDocument();
     });
-    expect(screen.getByText("npm install -g @google/gemini-cli")).toBeInTheDocument();
-    expect(screen.getByText("gemini --version")).toBeInTheDocument();
-    expect(screen.getByText("which gemini")).toBeInTheDocument();
+    const overviewCard = screen
+      .getByText("Gemini is not available on PATH, so AISW Desktop cannot switch or verify that tool yet.")
+      .closest(".tool-card");
+    if (!(overviewCard instanceof HTMLElement)) {
+      throw new Error("Missing Gemini overview card.");
+    }
+    const overview = within(overviewCard);
+    expect(overview.getByText("npm install -g @google/gemini-cli")).toBeInTheDocument();
+    expect(overview.getByText("gemini --version")).toBeInTheDocument();
+    expect(overview.getByText("which gemini")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("Open installation guide"));
+    fireEvent.click(overview.getByText("Open installation guide"));
     expect(window.open).toHaveBeenCalledWith(
       "https://www.npmjs.com/package/@google/gemini-cli",
       "_blank",
@@ -2062,7 +2069,11 @@ describe("App", () => {
       expect(screen.getByText("Workspace context mismatch")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("Open installation guide"));
+    const missingToolCard = screen.getByText("codex is missing").closest(".diagnostic-card");
+    if (!(missingToolCard instanceof HTMLElement)) {
+      throw new Error("Missing diagnostics tool card.");
+    }
+    fireEvent.click(within(missingToolCard).getByText("Open installation guide"));
     expect(window.open).toHaveBeenCalledWith(
       "https://www.npmjs.com/package/@openai/codex",
       "_blank",
@@ -2499,6 +2510,89 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
     expect(screen.getAllByText("No live credentials detected").length).toBeGreaterThan(0);
     expect(screen.getByLabelText("Add codex profile")).toBeInTheDocument();
+  });
+
+  it("shows missing-tool install guidance during onboarding", async () => {
+    const firstRunSnapshot = {
+      statuses: [
+        {
+          tool: "claude",
+          binary_found: true,
+          stored_profiles: 0,
+          active_profile: null,
+          auth_method: null,
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: null,
+          credentials_present: false,
+          permissions_ok: true,
+          warnings: [],
+        },
+        {
+          tool: "gemini",
+          binary_found: false,
+          stored_profiles: 0,
+          active_profile: null,
+          auth_method: null,
+          credential_backend: null,
+          state_mode: null,
+          active_profile_applied: null,
+          credentials_present: false,
+          permissions_ok: true,
+          warnings: [],
+        },
+      ],
+      profiles: {
+        claude: {
+          active: null,
+          profiles: [],
+        },
+        gemini: {
+          active: null,
+          profiles: [],
+        },
+      },
+      contexts: [],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      return (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            snapshot: firstRunSnapshot,
+          },
+          get_snapshot: firstRunSnapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
+    const setupSection = screen.getByRole("heading", { name: "First-run setup" }).closest(".section-card");
+    if (!(setupSection instanceof HTMLElement)) {
+      throw new Error("Missing onboarding section.");
+    }
+    const setup = within(setupSection);
+    expect(setup.getByText("Gemini is not installed")).toBeInTheDocument();
+    expect(setup.getByText("npm install -g @google/gemini-cli")).toBeInTheDocument();
+    expect(setup.getByText("gemini --version")).toBeInTheDocument();
+    expect(setup.getByText("which gemini")).toBeInTheDocument();
+
+    fireEvent.click(setup.getByText("Open installation guide"));
+    expect(window.open).toHaveBeenCalledWith(
+      "https://www.npmjs.com/package/@google/gemini-cli",
+      "_blank",
+      "noopener,noreferrer",
+    );
   });
 
   it("opens full shell setup guidance from onboarding", async () => {
