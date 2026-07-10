@@ -15,6 +15,7 @@ import {
 import { resolveGlobalStateMode } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
+import type { SettingsSection } from "../../settings/components/SettingsPanel";
 
 type LiveAccount = {
   tool: string;
@@ -40,7 +41,7 @@ export function SetupPanel({
   snapshot: AppSnapshot;
   initReport: InitReport | undefined;
   onOpenProfiles: (tool: string) => void;
-  onOpenSettings: () => void;
+  onOpenSettings: (section?: SettingsSection) => void;
 }) {
   const settings = bootstrap.settings;
   const { initMutation, addProfileMutation, useAllProfilesMutation, mutationLock } =
@@ -320,7 +321,7 @@ export function SetupPanel({
               action, never silently.
             </p>
             <div className="button-row">
-              <button className="ghost-button" type="button" onClick={onOpenSettings}>
+              <button className="ghost-button" type="button" onClick={() => onOpenSettings("shell")}>
                 Open shell setup
               </button>
             </div>

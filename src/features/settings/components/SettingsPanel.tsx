@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
 import { getShellGuidance, runDoctor } from "../../../lib/client";
 import { DesktopCommandError } from "../../../lib/tauri";
@@ -8,12 +8,17 @@ import { titleCase } from "../../../lib/utils";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 
+export const SETTINGS_SECTIONS = ["runtime", "updates", "shell", "keyring"] as const;
+export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
+
 export function SettingsPanel({
   settings,
   runtimeStatus,
+  initialSection,
 }: {
   settings: DesktopSettings;
   runtimeStatus: AppBootstrap["runtime_status"];
+  initialSection?: SettingsSection;
 }) {
   const { updateSettingsMutation, checkForUpdatesMutation, installUpdateMutation, mutationLock } =
     useDesktopActions();
@@ -26,6 +31,13 @@ export function SettingsPanel({
   const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor, enabled: readEnabled });
   const [selectedShell, setSelectedShell] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
+  const [selectedSection, setSelectedSection] = useState<SettingsSection>(
+    initialSection ?? "runtime",
+  );
+  const runtimeRef = useRef<HTMLDivElement | null>(null);
+  const updatesRef = useRef<HTMLDivElement | null>(null);
+  const shellRef = useRef<HTMLDivElement | null>(null);
+  const keyringRef = useRef<HTMLDivElement | null>(null);
 
   const shellCheck = useMemo(() => findShellHookCheck(doctor.data), [doctor.data]);
   const selectedVariant = useMemo(() => {
@@ -73,6 +85,24 @@ export function SettingsPanel({
     settings.update_channel,
   ]);
 
+  useEffect(() => {
+    setSelectedSection(initialSection ?? "runtime");
+  }, [initialSection]);
+
+  useEffect(() => {
+    const target =
+      selectedSection === "runtime"
+        ? runtimeRef.current
+        : selectedSection === "updates"
+          ? updatesRef.current
+          : selectedSection === "shell"
+            ? shellRef.current
+            : keyringRef.current;
+    if (target && typeof target.scrollIntoView === "function") {
+      target.scrollIntoView({ block: "start", behavior: "smooth" });
+    }
+  }, [selectedSection]);
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     updateSettingsMutation.mutate({
@@ -96,8 +126,22 @@ export function SettingsPanel({
 
   return (
     <>
-      <SectionCard title="Settings" kicker="Runtime and home directory">
-        <form className="stacked-form settings-form" onSubmit={submit}>
+      <div ref={runtimeRef}>
+        <SectionCard title="Settings" kicker="Runtime and home directory">
+          <div className="button-row">
+            {SETTINGS_SECTIONS.map((section) => (
+              <button
+                key={section}
+                className={selectedSection === section ? "primary-button" : "ghost-button"}
+                type="button"
+                aria-pressed={selectedSection === section}
+                onClick={() => setSelectedSection(section)}
+              >
+                {sectionLabel(section)}
+              </button>
+            ))}
+          </div>
+          <form className="stacked-form settings-form" onSubmit={submit}>
           <label>
             Runtime selection
             <select value={runtimeKind} onChange={(event) => setRuntimeKind(event.target.value as typeof runtimeKind)}>
@@ -133,249 +177,256 @@ export function SettingsPanel({
           >
             {updateSettingsMutation.isPending ? "Saving…" : "Save settings"}
           </button>
-        </form>
-        {updateSettingsMutation.error ? (
-          <MutationErrorCard
-            title="Settings could not be saved"
-            error={updateSettingsMutation.error}
-          />
-        ) : null}
-        <div className="stack-list diagnostics-body">
-          <article className="diagnostic-card">
-            <h3>Runtime detection</h3>
-            <p className="inline-note">
-              Current resolved path: {runtimeStatus.resolved_path ?? "No aisw runtime resolved"}
-            </p>
-            <p className="inline-note">
-              Effective AISW home: {settings.aisw_home ?? "~/.aisw"}
-            </p>
-            <p className="inline-note">
-              Bundled aisw: {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
-            </p>
-            <p className="inline-note">
-              System aisw: {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
-            </p>
-            {runtimeStatus.inventory.configured_path ? (
-              <p className="inline-note">
-                Configured custom path: {runtimeStatus.inventory.configured_path}
-              </p>
-            ) : null}
-            <p className="inline-note">
-              Selected update channel: <strong>{titleCase(updateChannel)}</strong>
-            </p>
-            <p className="inline-note">
-              Selected backend: <strong>{titleCase(runtimeKind)}</strong>
-            </p>
-            <p className="inline-note">
-              Runtime version: {runtimeStatus.version?.version ?? "unknown"}
-            </p>
-            {runtimeStatus.version ? (
-              <p className="inline-note">
-                CLI API {runtimeStatus.version.cli_api_version} · JSON schema{" "}
-                {runtimeStatus.version.json_schema_version} · Progress schema{" "}
-                {runtimeStatus.version.progress_schema_version}
-              </p>
-            ) : null}
-          </article>
-        </div>
-      </SectionCard>
-
-      <SectionCard title="Desktop updates" kicker="Signed app releases">
-        <div className="stack-list">
-          <p className="inline-note">
-            Check for a signed AISW Desktop release on the selected {updateChannel} channel.
-          </p>
-          <div className="button-row">
-            <button
-              className="primary-button"
-              type="button"
-              disabled={
-                mutationLock.isBusy ||
-                checkForUpdatesMutation.isPending ||
-                hasPendingSettingsChanges
-              }
-              onClick={() => checkForUpdatesMutation.mutate()}
-            >
-              {checkForUpdatesMutation.isPending ? "Checking…" : "Check for updates"}
-            </button>
-            <button
-              type="button"
-              disabled={
-                mutationLock.isBusy ||
-                hasPendingSettingsChanges ||
-                installUpdateMutation.isPending ||
-                !checkForUpdatesMutation.data?.update
-              }
-              onClick={() => installUpdateMutation.mutate()}
-            >
-              {installUpdateMutation.isPending ? "Installing…" : "Install update"}
-            </button>
-          </div>
-          {hasPendingSettingsChanges ? (
-            <p className="inline-note">
-              Save settings before checking for updates so the runtime and channel selection match
-              the persisted desktop configuration.
-            </p>
+          </form>
+          {updateSettingsMutation.error ? (
+            <MutationErrorCard
+              title="Settings could not be saved"
+              error={updateSettingsMutation.error}
+            />
           ) : null}
-          {checkForUpdatesMutation.data ? (
-            <div className="stack-list">
-              <p className="inline-note">Current app version: {checkForUpdatesMutation.data.current_version}</p>
-              <p className="inline-note">Channel: {checkForUpdatesMutation.data.channel}</p>
-              {checkForUpdatesMutation.data.endpoint ? (
-                <p className="inline-note">Endpoint: {checkForUpdatesMutation.data.endpoint}</p>
-              ) : null}
-              {checkForUpdatesMutation.data.update ? (
-                <>
-                  <p className="inline-note">Update available: {checkForUpdatesMutation.data.update.version}</p>
-                  {checkForUpdatesMutation.data.update.notes ? (
-                    <p className="inline-note">{checkForUpdatesMutation.data.update.notes}</p>
-                  ) : null}
-                </>
-              ) : (
+          <div className="stack-list diagnostics-body">
+            <article className="diagnostic-card">
+              <h3>Runtime detection</h3>
+              <p className="inline-note">
+                Current resolved path: {runtimeStatus.resolved_path ?? "No aisw runtime resolved"}
+              </p>
+              <p className="inline-note">
+                Effective AISW home: {settings.aisw_home ?? "~/.aisw"}
+              </p>
+              <p className="inline-note">
+                Bundled aisw: {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
+              </p>
+              <p className="inline-note">
+                System aisw: {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
+              </p>
+              {runtimeStatus.inventory.configured_path ? (
                 <p className="inline-note">
-                  {checkForUpdatesMutation.data.message ?? "No update is currently available."}
+                  Configured custom path: {runtimeStatus.inventory.configured_path}
                 </p>
-              )}
-            </div>
-          ) : null}
-          {checkForUpdatesMutation.error ? (
-            <MutationErrorCard
-              title="Update check failed"
-              error={checkForUpdatesMutation.error}
-            />
-          ) : null}
-          {installUpdateMutation.data ? (
-            <p className="inline-note">
-              {installUpdateMutation.data.message ??
-                (installUpdateMutation.data.installed_version
-                  ? `Installed ${installUpdateMutation.data.installed_version}`
-                  : "No update installed.")}
-            </p>
-          ) : null}
-          {installUpdateMutation.error ? (
-            <MutationErrorCard
-              title="Update install failed"
-              error={installUpdateMutation.error}
-            />
-          ) : null}
-        </div>
-      </SectionCard>
+              ) : null}
+              <p className="inline-note">
+                Selected update channel: <strong>{titleCase(updateChannel)}</strong>
+              </p>
+              <p className="inline-note">
+                Selected backend: <strong>{titleCase(runtimeKind)}</strong>
+              </p>
+              <p className="inline-note">
+                Runtime version: {runtimeStatus.version?.version ?? "unknown"}
+              </p>
+              {runtimeStatus.version ? (
+                <p className="inline-note">
+                  CLI API {runtimeStatus.version.cli_api_version} · JSON schema{" "}
+                  {runtimeStatus.version.json_schema_version} · Progress schema{" "}
+                  {runtimeStatus.version.progress_schema_version}
+                </p>
+              ) : null}
+            </article>
+          </div>
+        </SectionCard>
+      </div>
 
-      <SectionCard title="Shell hook" kicker="Explicit shell guidance">
-        <div className="stack-list">
-          <p className="inline-note">
-            The shell hook is optional, but recommended when you want immediate environment exports
-            in the current terminal session and workspace guardrails before agent launch.
-          </p>
-          {shellCheck ? (
-            <p className={`diagnostic-status diagnostic-status-${shellCheck.status}`}>
-              {shellCheck.status === "pass" ? "✓" : shellCheck.status === "warn" ? "!" : "✕"} Shell hook{" "}
-              {shellCheck.status}
-              {shellCheck.detail ? ` · ${shellCheck.detail}` : ""}
+      <div ref={updatesRef}>
+        <SectionCard title="Desktop updates" kicker="Signed app releases">
+          <div className="stack-list">
+            <p className="inline-note">
+              Check for a signed AISW Desktop release on the selected {updateChannel} channel.
             </p>
-          ) : (
-            <p className="inline-note">Run diagnostics to verify whether the shell hook is active.</p>
-          )}
-          <p className="inline-note">
-            Detected shell:{" "}
-            <strong>{shellGuidance.data?.detected_shell ? titleCase(shellGuidance.data.detected_shell) : "Unknown"}</strong>
-          </p>
-          {shellGuidance.data ? (
-            <>
+            <div className="button-row">
+              <button
+                className="primary-button"
+                type="button"
+                disabled={
+                  mutationLock.isBusy ||
+                  checkForUpdatesMutation.isPending ||
+                  hasPendingSettingsChanges
+                }
+                onClick={() => checkForUpdatesMutation.mutate()}
+              >
+                {checkForUpdatesMutation.isPending ? "Checking…" : "Check for updates"}
+              </button>
+              <button
+                type="button"
+                disabled={
+                  mutationLock.isBusy ||
+                  hasPendingSettingsChanges ||
+                  installUpdateMutation.isPending ||
+                  !checkForUpdatesMutation.data?.update
+                }
+                onClick={() => installUpdateMutation.mutate()}
+              >
+                {installUpdateMutation.isPending ? "Installing…" : "Install update"}
+              </button>
+            </div>
+            {hasPendingSettingsChanges ? (
+              <p className="inline-note">
+                Save settings before checking for updates so the runtime and channel selection match
+                the persisted desktop configuration.
+              </p>
+            ) : null}
+            {checkForUpdatesMutation.data ? (
               <div className="stack-list">
-                {shellGuidance.data.capabilities.map((item) => (
-                  <p key={item} className="inline-note">
-                    {item}
+                <p className="inline-note">Current app version: {checkForUpdatesMutation.data.current_version}</p>
+                <p className="inline-note">Channel: {checkForUpdatesMutation.data.channel}</p>
+                {checkForUpdatesMutation.data.endpoint ? (
+                  <p className="inline-note">Endpoint: {checkForUpdatesMutation.data.endpoint}</p>
+                ) : null}
+                {checkForUpdatesMutation.data.update ? (
+                  <>
+                    <p className="inline-note">Update available: {checkForUpdatesMutation.data.update.version}</p>
+                    {checkForUpdatesMutation.data.update.notes ? (
+                      <p className="inline-note">{checkForUpdatesMutation.data.update.notes}</p>
+                    ) : null}
+                  </>
+                ) : (
+                  <p className="inline-note">
+                    {checkForUpdatesMutation.data.message ?? "No update is currently available."}
+                  </p>
+                )}
+              </div>
+            ) : null}
+            {checkForUpdatesMutation.error ? (
+              <MutationErrorCard
+                title="Update check failed"
+                error={checkForUpdatesMutation.error}
+              />
+            ) : null}
+            {installUpdateMutation.data ? (
+              <p className="inline-note">
+                {installUpdateMutation.data.message ??
+                  (installUpdateMutation.data.installed_version
+                    ? `Installed ${installUpdateMutation.data.installed_version}`
+                    : "No update installed.")}
+              </p>
+            ) : null}
+            {installUpdateMutation.error ? (
+              <MutationErrorCard
+                title="Update install failed"
+                error={installUpdateMutation.error}
+              />
+            ) : null}
+          </div>
+        </SectionCard>
+      </div>
+
+      <div ref={shellRef}>
+        <SectionCard title="Shell hook" kicker="Explicit shell guidance">
+          <div className="stack-list">
+            <p className="inline-note">
+              The shell hook is optional, but recommended when you want immediate environment exports
+              in the current terminal session and workspace guardrails before agent launch.
+            </p>
+            {shellCheck ? (
+              <p className={`diagnostic-status diagnostic-status-${shellCheck.status}`}>
+                {shellCheck.status === "pass" ? "✓" : shellCheck.status === "warn" ? "!" : "✕"} Shell hook{" "}
+                {shellCheck.status}
+                {shellCheck.detail ? ` · ${shellCheck.detail}` : ""}
+              </p>
+            ) : (
+              <p className="inline-note">Run diagnostics to verify whether the shell hook is active.</p>
+            )}
+            <p className="inline-note">
+              Detected shell:{" "}
+              <strong>{shellGuidance.data?.detected_shell ? titleCase(shellGuidance.data.detected_shell) : "Unknown"}</strong>
+            </p>
+            {shellGuidance.data ? (
+              <>
+                <div className="stack-list">
+                  {shellGuidance.data.capabilities.map((item) => (
+                    <p key={item} className="inline-note">
+                      {item}
+                    </p>
+                  ))}
+                </div>
+                <label>
+                  Guidance for shell
+                  <select value={selectedVariant?.shell ?? ""} onChange={(event) => setSelectedShell(event.target.value)}>
+                    {shellGuidance.data.variants.map((variant) => (
+                      <option key={variant.shell} value={variant.shell}>
+                        {variant.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </>
+            ) : (
+              <p className="inline-note">{shellGuidance.isLoading ? "Loading shell guidance…" : "Shell guidance is unavailable."}</p>
+            )}
+            {selectedVariant ? (
+              <article className="diagnostic-card">
+                <h3>{selectedVariant.title}</h3>
+                <p className="inline-note">Config file: {selectedVariant.config_path}</p>
+                {selectedVariant.alternate_config_path ? (
+                  <p className="inline-note">Alternative: {selectedVariant.alternate_config_path}</p>
+                ) : null}
+                <div className="stack-list">
+                  <div>
+                    <p className="inline-note">Install</p>
+                    <pre>{selectedVariant.install_command}</pre>
+                    <div className="button-row">
+                      <button type="button" className="ghost-button" onClick={() => void copyText(selectedVariant.install_command, "install")}>
+                        Copy install command
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="inline-note">Reload</p>
+                    <pre>{selectedVariant.reload_command}</pre>
+                    <div className="button-row">
+                      <button type="button" className="ghost-button" onClick={() => void copyText(selectedVariant.reload_command, "reload")}>
+                        Copy reload command
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="inline-note">Verify</p>
+                    <pre>{selectedVariant.verify_command}</pre>
+                    <p className="inline-note">Expected output: {selectedVariant.verify_expected}</p>
+                    <div className="button-row">
+                      <button type="button" className="ghost-button" onClick={() => void copyText(selectedVariant.verify_command, "verify")}>
+                        Copy verify command
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ) : null}
+            {shellGuidance.data ? (
+              <article className="diagnostic-card">
+                <h3>Without the hook</h3>
+                <p className="inline-note">{shellGuidance.data.note}</p>
+                {shellGuidance.data.manual_apply_examples.map((example) => (
+                  <pre key={example}>{example}</pre>
+                ))}
+              </article>
+            ) : null}
+            {copyMessage ? <p className="inline-note">{copyMessage}</p> : null}
+          </div>
+        </SectionCard>
+      </div>
+
+      <div ref={keyringRef}>
+        <SectionCard title="Keyring setup" kicker="Local credential backends">
+          <div className="stack-list">
+            <p className="inline-note">
+              AISW Desktop keeps credentials on this machine. When diagnostics report a keyring
+              failure, use the guidance below to restore the OS-native secret store before retrying.
+            </p>
+
+            {KEYRING_GUIDES.map((guide) => (
+              <article key={guide.platform} className="diagnostic-card">
+                <h3>{guide.title}</h3>
+                <p className="inline-note">Expected backend: {guide.backend}</p>
+                {guide.steps.map((step) => (
+                  <p key={step} className="inline-note">
+                    {step}
                   </p>
                 ))}
-              </div>
-              <label>
-                Guidance for shell
-                <select value={selectedVariant?.shell ?? ""} onChange={(event) => setSelectedShell(event.target.value)}>
-                  {shellGuidance.data.variants.map((variant) => (
-                    <option key={variant.shell} value={variant.shell}>
-                      {variant.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </>
-          ) : (
-            <p className="inline-note">{shellGuidance.isLoading ? "Loading shell guidance…" : "Shell guidance is unavailable."}</p>
-          )}
-          {selectedVariant ? (
-            <article className="diagnostic-card">
-              <h3>{selectedVariant.title}</h3>
-              <p className="inline-note">Config file: {selectedVariant.config_path}</p>
-              {selectedVariant.alternate_config_path ? (
-                <p className="inline-note">Alternative: {selectedVariant.alternate_config_path}</p>
-              ) : null}
-              <div className="stack-list">
-                <div>
-                  <p className="inline-note">Install</p>
-                  <pre>{selectedVariant.install_command}</pre>
-                  <div className="button-row">
-                    <button type="button" className="ghost-button" onClick={() => void copyText(selectedVariant.install_command, "install")}>
-                      Copy install command
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <p className="inline-note">Reload</p>
-                  <pre>{selectedVariant.reload_command}</pre>
-                  <div className="button-row">
-                    <button type="button" className="ghost-button" onClick={() => void copyText(selectedVariant.reload_command, "reload")}>
-                      Copy reload command
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <p className="inline-note">Verify</p>
-                  <pre>{selectedVariant.verify_command}</pre>
-                  <p className="inline-note">Expected output: {selectedVariant.verify_expected}</p>
-                  <div className="button-row">
-                    <button type="button" className="ghost-button" onClick={() => void copyText(selectedVariant.verify_command, "verify")}>
-                      Copy verify command
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </article>
-          ) : null}
-          {shellGuidance.data ? (
-            <article className="diagnostic-card">
-              <h3>Without the hook</h3>
-              <p className="inline-note">{shellGuidance.data.note}</p>
-              {shellGuidance.data.manual_apply_examples.map((example) => (
-                <pre key={example}>{example}</pre>
-              ))}
-            </article>
-          ) : null}
-          {copyMessage ? <p className="inline-note">{copyMessage}</p> : null}
-        </div>
-      </SectionCard>
-
-      <SectionCard title="Keyring setup" kicker="Local credential backends">
-        <div className="stack-list">
-          <p className="inline-note">
-            AISW Desktop keeps credentials on this machine. When diagnostics report a keyring
-            failure, use the guidance below to restore the OS-native secret store before retrying.
-          </p>
-
-          {KEYRING_GUIDES.map((guide) => (
-            <article key={guide.platform} className="diagnostic-card">
-              <h3>{guide.title}</h3>
-              <p className="inline-note">Expected backend: {guide.backend}</p>
-              {guide.steps.map((step) => (
-                <p key={step} className="inline-note">
-                  {step}
-                </p>
-              ))}
-              <p className="inline-note">Verify: {guide.verify}</p>
-            </article>
-          ))}
-        </div>
-      </SectionCard>
+                <p className="inline-note">Verify: {guide.verify}</p>
+              </article>
+            ))}
+          </div>
+        </SectionCard>
+      </div>
     </>
   );
 }
@@ -468,4 +519,17 @@ function effectiveRuntimePath(runtimeKind: DesktopSettings["runtime_kind"], runt
     return "";
   }
   return runtimePath;
+}
+
+function sectionLabel(section: SettingsSection) {
+  switch (section) {
+    case "runtime":
+      return "Runtime";
+    case "updates":
+      return "Updates";
+    case "shell":
+      return "Shell hook";
+    case "keyring":
+      return "Keyring setup";
+  }
 }

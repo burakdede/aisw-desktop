@@ -10,7 +10,10 @@ import { SetupPanel } from "./features/onboarding/components/SetupPanel";
 import { OverviewPanel } from "./features/overview/components/OverviewPanel";
 import { ProfilesPanel } from "./features/profiles/components/ProfilesPanel";
 import { invalidatePostMutationQueries } from "./features/shared/postMutationRefresh";
-import { SettingsPanel } from "./features/settings/components/SettingsPanel";
+import {
+  SettingsPanel,
+  type SettingsSection,
+} from "./features/settings/components/SettingsPanel";
 import { useDesktop } from "./features/shared/useDesktop";
 import { WorkspacesPanel } from "./features/workspaces/components/WorkspacesPanel";
 import { notifyDesktop } from "./lib/notifications";
@@ -41,11 +44,21 @@ type ProfilesRouteState = {
   expandedProfile?: string | null;
 };
 
+type SettingsRouteState = {
+  section?: SettingsSection;
+};
+
 export function App() {
   const queryClient = useQueryClient();
   const [activeNav, setActiveNav] = useState<(typeof NAV)[number]["id"]>("overview");
   const [profilesRouteState, setProfilesRouteState] = useState<ProfilesRouteState>({});
+  const [settingsRouteState, setSettingsRouteState] = useState<SettingsRouteState>({});
   const { bootstrap, snapshot, init } = useDesktop();
+
+  function openSettings(section?: SettingsSection) {
+    setSettingsRouteState({ section });
+    setActiveNav("settings");
+  }
 
   useEffect(() => {
     let active = true;
@@ -202,7 +215,7 @@ export function App() {
               setProfilesRouteState({ tool, expandedProfile: null });
               setActiveNav("profiles");
             }}
-            onOpenSettings={() => setActiveNav("settings")}
+            onOpenSettings={openSettings}
           />
           {activeSection === "overview" ? (
             <OverviewPanel
@@ -234,7 +247,7 @@ export function App() {
             <DiagnosticsPanel
               settings={settings}
               snapshot={resolvedSnapshot}
-              onOpenSettings={() => setActiveNav("settings")}
+              onOpenSettings={openSettings}
               onOpenProfiles={(tool, expandedProfile) => {
                 setProfilesRouteState({ tool, expandedProfile });
                 setActiveNav("profiles");
@@ -253,7 +266,11 @@ export function App() {
             />
           ) : null}
           {activeSection === "settings" ? (
-            <SettingsPanel settings={settings} runtimeStatus={runtimeStatus} />
+            <SettingsPanel
+              settings={settings}
+              runtimeStatus={runtimeStatus}
+              initialSection={settingsRouteState.section}
+            />
           ) : null}
         </>
       ) : (

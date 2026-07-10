@@ -21,6 +21,7 @@ import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 import { resolveWorkspaceActivationTarget } from "../../workspaces/workspace-activation";
 import { contextDisplayLabel, toolProfileDisplayLabel } from "../../../lib/profile-display";
 import { titleCase } from "../../../lib/utils";
+import type { SettingsSection } from "../../settings/components/SettingsPanel";
 
 const SUPPORTED_TOOLS = new Set(["claude", "codex", "gemini"]);
 
@@ -33,7 +34,7 @@ export function DiagnosticsPanel({
   settings: DesktopSettings;
   snapshot: AppSnapshot;
   onOpenProfiles: (tool: string, expandedProfile?: string | null) => void;
-  onOpenSettings: () => void;
+  onOpenSettings: (section?: SettingsSection) => void;
 }) {
   const queryClient = useQueryClient();
   const {
@@ -398,7 +399,7 @@ function buildQuickFixes(
       stateMode: string | null;
     }) => void;
     applyRepairFixes: (fixes: string[]) => void;
-    onOpenSettings: () => void;
+    onOpenSettings: (section?: SettingsSection) => void;
   },
 ): QuickFixCard[] {
   const fixes: QuickFixCard[] = [];
@@ -422,7 +423,7 @@ function buildQuickFixes(
       detail: shellHookIssue.detail,
       label: "Open shell setup",
       status: shellHookIssue.status,
-      action: onOpenSettings,
+      action: () => onOpenSettings("shell"),
     });
   }
 
@@ -433,7 +434,7 @@ function buildQuickFixes(
       detail: "Review the supported local keyring services for macOS, Windows, and Linux.",
       label: "Show keyring setup",
       status: keyringIssue.status,
-      action: onOpenSettings,
+      action: () => onOpenSettings("keyring"),
     });
   }
 

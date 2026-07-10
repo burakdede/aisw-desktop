@@ -88,6 +88,7 @@ test("opens shell setup from onboarding", async ({ page }) => {
 
   await expect(page.getByRole("heading", { name: "Shell hook" })).toBeVisible();
   await expect(page.getByText("Config file: ~/.zshrc")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Shell hook", pressed: true })).toBeVisible();
 });
 
 test("opens profile setup from onboarding when first-switch options are missing", async ({ page }) => {
@@ -724,6 +725,7 @@ test("shows doctor remediations and targeted repair actions in diagnostics", asy
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Keyring setup" })).toBeVisible();
   await expect(page.getByText("Linux Secret Service")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Keyring setup", pressed: true })).toBeVisible();
 });
 
 test("opens shell setup from diagnostics when doctor reports the shell hook is inactive", async ({
@@ -742,6 +744,7 @@ test("opens shell setup from diagnostics when doctor reports the shell hook is i
 
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Shell hook" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Shell hook", pressed: true })).toBeVisible();
 });
 
 test("switches one tool directly from overview and refreshes the active profile state", async ({ page }) => {

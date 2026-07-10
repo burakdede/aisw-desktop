@@ -107,7 +107,10 @@ async function renderApp() {
   });
 }
 
-async function renderSettingsPanel(settings: DesktopSettings) {
+async function renderSettingsPanel(
+  settings: DesktopSettings,
+  initialSection?: "runtime" | "updates" | "shell" | "keyring",
+) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -120,7 +123,11 @@ async function renderSettingsPanel(settings: DesktopSettings) {
   await act(async () => {
     rendered = render(
       <QueryClientProvider client={queryClient}>
-        <SettingsPanel settings={settings} runtimeStatus={bootstrap.runtime_status} />
+        <SettingsPanel
+          settings={settings}
+          runtimeStatus={bootstrap.runtime_status}
+          initialSection={initialSection}
+        />
       </QueryClientProvider>,
     );
     await Promise.resolve();
@@ -3634,6 +3641,7 @@ describe("App", () => {
       expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
       expect(screen.getByRole("heading", { name: "Keyring setup" })).toBeInTheDocument();
       expect(screen.getByText("Linux Secret Service")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Keyring setup" })).toHaveAttribute("aria-pressed", "true");
     });
   });
 
@@ -3916,8 +3924,9 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Open shell setup"));
 
     await waitFor(() => {
-      expect(screen.getByText("Shell hook")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Shell hook" })).toBeInTheDocument();
       expect(screen.getByText("Config file: ~/.zshrc")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Shell hook" })).toHaveAttribute("aria-pressed", "true");
     });
   });
 
@@ -5377,7 +5386,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Settings"));
 
     await waitFor(() => {
-      expect(screen.getByText("Shell hook")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Shell hook" })).toBeInTheDocument();
       expect(screen.getAllByText(/Detected shell:/).length).toBeGreaterThan(0);
       expect(screen.getByText("Config file: ~/.zshrc")).toBeInTheDocument();
       expect(screen.getByText("echo 'eval \"$(aisw shell-hook zsh)\"' >> ~/.zshrc")).toBeInTheDocument();
