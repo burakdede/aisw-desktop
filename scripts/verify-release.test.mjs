@@ -137,6 +137,13 @@ run: |
   npm run verify:release
   cargo test --manifest-path src-tauri/Cargo.toml
   cargo check --manifest-path src-tauri/Cargo.toml
+runs-on: \${{ matrix.platform }}
+strategy:
+  matrix:
+    platform:
+      - macos-latest
+      - ubuntu-22.04
+      - windows-latest
 `,
   );
   writeFixture(
@@ -237,6 +244,10 @@ describe("verify-release", () => {
         expect.objectContaining({ ok: true, label: "publish workflow covers every supported release target" }),
         expect.objectContaining({
           ok: true,
+          label: "CI workflow keeps cross-platform desktop smoke coverage",
+        }),
+        expect.objectContaining({
+          ok: true,
           label: "tauri main window capability stays least-privilege",
         }),
         expect.objectContaining({
@@ -281,6 +292,30 @@ Complete platform signing checks
     expect(result.checks).toContainEqual(
       expect.objectContaining({
         label: "publish workflow enforces verification matrix",
+        ok: false,
+      }),
+    );
+  });
+
+  it("fails when the CI workflow drops required desktop platforms", () => {
+    const root = createReleaseFixture({
+      ciWorkflow: `
+run: |
+  npm test
+  npm run test:e2e
+  npm run build
+  npm run verify:release
+  cargo test --manifest-path src-tauri/Cargo.toml
+  cargo check --manifest-path src-tauri/Cargo.toml
+runs-on: ubuntu-22.04
+`,
+    });
+
+    const result = verifyReleaseContract(root);
+    expect(result.ok).toBe(false);
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        label: "CI workflow keeps cross-platform desktop smoke coverage",
         ok: false,
       }),
     );

@@ -184,6 +184,16 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         ciWorkflow.includes("cargo check --manifest-path src-tauri/Cargo.toml"),
     },
     {
+      label: "CI workflow keeps cross-platform desktop smoke coverage",
+      ok:
+        ciWorkflow.includes("strategy:") &&
+        ciWorkflow.includes("matrix:") &&
+        ciWorkflow.includes("macos-latest") &&
+        ciWorkflow.includes("ubuntu-22.04") &&
+        ciWorkflow.includes("windows-latest") &&
+        ciWorkflow.includes("runs-on: ${{ matrix.platform }}"),
+    },
+    {
       label: "publish workflow stages a target-specific sidecar",
       ok:
         publishWorkflow.includes("npm run prepare:sidecar -- --target ${{ matrix.target }}") &&
