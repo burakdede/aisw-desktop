@@ -422,6 +422,32 @@ button {
   gap: 12px;
 }
 
+.overview-summary-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.9fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.overview-tools-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.overview-tools-header h3 {
+  margin: 2px 0 0;
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.overview-tools-header .inline-note {
+  max-width: 48ch;
+  text-align: right;
+}
+
 .overview-current-set {
   display: flex;
   justify-content: space-between;
@@ -952,6 +978,19 @@ button {
 
   .overview-current-set {
     flex-direction: column;
+  }
+
+  .overview-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-tools-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .overview-tools-header .inline-note {
+    text-align: left;
   }
 
   .overview-current-set-grid {

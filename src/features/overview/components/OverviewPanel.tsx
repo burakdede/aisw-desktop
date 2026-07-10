@@ -109,10 +109,14 @@ export function OverviewPanel({
   return (
     <SectionCard
       title="Control Center"
-      kicker="Overview"
+      kicker="Safety and switching"
       actions={
         <div className="button-row">
-          <select value={quickSwitch} onChange={(event) => setQuickSwitch(event.target.value)}>
+          <select
+            aria-label="Quick Switch"
+            value={quickSwitch}
+            onChange={(event) => setQuickSwitch(event.target.value)}
+          >
             <option value="">Switch profile set or shared profile…</option>
             {quickSwitchOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -122,6 +126,7 @@ export function OverviewPanel({
           </select>
           <button
             className="primary-button"
+            aria-label="Switch all"
             disabled={mutationLock.isBusy}
             onClick={() => {
               if (!quickSwitch) return;
@@ -145,146 +150,163 @@ export function OverviewPanel({
               }
             }}
           >
-            Switch all
+            Apply selection
           </button>
           <button
             className="ghost-button"
+            aria-label="Refresh state"
             disabled={mutationLock.isBusy || refresh.isPending}
             onClick={() => refresh.mutate()}
           >
-            Refresh state
+            Refresh
           </button>
         </div>
       }
     >
       <div className="overview-stack">
-      {currentSetLabel || quickSwitchOptions.length ? (
-        <article className="overview-current-set">
-          <div className="overview-current-set-copy">
-            <p className="card-kicker">Current set</p>
-            <h3>{currentSetLabel ?? "No shared set active"}</h3>
-            <div className="overview-current-set-grid">
-              {currentSetProfiles.map((entry) => (
-                <p key={entry.tool} className="inline-note">
-                  <strong>{titleCase(entry.tool)}:</strong> {entry.label ?? "Not configured"}
+        <div className="overview-summary-grid">
+          {currentSetLabel || quickSwitchOptions.length ? (
+            <article className="overview-current-set">
+              <div className="overview-current-set-copy">
+                <p className="card-kicker">Current set</p>
+                <h3>{currentSetLabel ?? "No shared set active"}</h3>
+                <p className="inline-note">
+                  {snapshot.statuses.filter((status) => status.active_profile).length} of{" "}
+                  {snapshot.statuses.length} tools are ready to switch.
                 </p>
-              ))}
-            </div>
-          </div>
-          <div className="overview-current-set-actions">
-            <button
-              className="ghost-button"
-              type="button"
-              disabled={mutationLock.isBusy}
-              onClick={() => {
-                if (!quickSwitch) {
-                  return;
-                }
-                if (quickSwitch.startsWith("set:")) {
-                  const name = quickSwitch.slice("set:".length);
-                  const profileSet = settings.profile_sets?.find((set) => set.name === name);
-                  activateProfileSetMutation.mutate({
-                    name,
-                    label: profileSet?.label ?? profileSet?.name,
-                  });
-                  return;
-                }
-                if (quickSwitch.startsWith("profile:")) {
-                  const profileName = quickSwitch.slice("profile:".length);
-                  const sharedProfile = sharedProfiles.find((profile) => profile.name === profileName);
-                  useAllProfilesMutation.mutate({
-                    profile: profileName,
-                    stateMode: resolveGlobalStateMode(snapshot),
-                    label: sharedProfile?.label,
-                  });
-                }
-              }}
-            >
-              Switch set…
-            </button>
-          </div>
-        </article>
-      ) : null}
-      {showWorkspaceSummary ? (
-        <article className={`diagnostic-card ${hasWorkspaceMismatch ? "diagnostic-warn" : "diagnostic-pass"}`}>
-          <h3>{hasWorkspaceMismatch ? "Workspace wants a different set" : "Workspace match"}</h3>
-          <p className="inline-note">
-            {workspaceSummaryLabel}: <strong>{expectedWorkspaceDisplay}</strong>
-          </p>
-          <p className="inline-note">
-            Current set: <strong>{currentWorkspaceDisplay}</strong>
-          </p>
-          <p className="inline-note">
-            Matched via {workspaceStatus.scope}: {workspaceStatus.target}
-          </p>
-          {hasWorkspaceMismatch ? (
-            <div className="button-row">
-              <button
-                className="primary-button"
-                type="button"
-                disabled={mutationLock.isBusy}
-                onClick={() => {
-                  const target = resolveWorkspaceActivationTarget(
-                    workspaceStatus.expectedContext,
-                    settings,
-                    snapshot,
-                  );
-                  if (!target) {
-                    onOpenContexts();
-                    return;
-                  }
-                  activateWorkspaceTargetMutation.mutate({
-                    ...target,
-                    matchedTarget: workspaceStatus.target,
-                  });
-                }}
-              >
-                {expectedWorkspaceTarget ? "Use expected set now" : "Open sets"}
-              </button>
-            </div>
+                <div className="overview-current-set-grid">
+                  {currentSetProfiles.map((entry) => (
+                    <p key={entry.tool} className="inline-note">
+                      <strong>{titleCase(entry.tool)}:</strong> {entry.label ?? "Not configured"}
+                    </p>
+                  ))}
+                </div>
+              </div>
+              <div className="overview-current-set-actions">
+                <button
+                  className="ghost-button"
+                  type="button"
+                  disabled={mutationLock.isBusy}
+                  onClick={() => {
+                    if (!quickSwitch) {
+                      return;
+                    }
+                    if (quickSwitch.startsWith("set:")) {
+                      const name = quickSwitch.slice("set:".length);
+                      const profileSet = settings.profile_sets?.find((set) => set.name === name);
+                      activateProfileSetMutation.mutate({
+                        name,
+                        label: profileSet?.label ?? profileSet?.name,
+                      });
+                      return;
+                    }
+                    if (quickSwitch.startsWith("profile:")) {
+                      const profileName = quickSwitch.slice("profile:".length);
+                      const sharedProfile = sharedProfiles.find((profile) => profile.name === profileName);
+                      useAllProfilesMutation.mutate({
+                        profile: profileName,
+                        stateMode: resolveGlobalStateMode(snapshot),
+                        label: sharedProfile?.label,
+                      });
+                    }
+                  }}
+                >
+                  Switch set…
+                </button>
+              </div>
+            </article>
           ) : null}
-        </article>
-      ) : null}
-      <div className="tool-grid overview-tool-grid">
-        {snapshot.statuses.map((status) => (
-          <ToolCard
-            key={status.tool}
-            status={status}
-            profiles={snapshot.profiles[status.tool]?.profiles ?? []}
-            lastResult={lastCommandResults.tool[status.tool]}
-            mutationLocked={mutationLock.isBusy}
-            refreshLocked={mutationLock.isBusy || refresh.isPending}
-            onRefresh={() => refresh.mutate()}
-            stateModes={supportedStateModes(status.tool, toolCapabilities)}
-            settings={settings}
-            snapshot={snapshot}
-            onImport={(tool, profile, stateMode) =>
-              supportsProfileImportMode(tool, toolCapabilities, "from_live")
-                ? addProfileMutation.mutate({
-                    tool,
-                    profile,
-                    label: titleCase(profile),
-                    stateMode,
-                    importMode: { kind: "from_live" },
-                  })
-                : onOpenProfiles(tool, null, {
-                    mode: preferredProfileImportMode(tool, toolCapabilities, "from_live"),
-                  })
-            }
-            onUse={(tool, profile, stateMode) =>
-              useProfileMutation.mutate({
-                tool,
-                profile,
-                stateMode,
-                label: toolProfileDisplayLabel(settings, snapshot, tool, profile),
-              })
-            }
-            onAddProfile={(tool) => onOpenProfiles(tool)}
-            onOpenDetails={(tool, profile) => onOpenProfiles(tool, profile)}
-            toolCapabilities={toolCapabilities}
-          />
-        ))}
-      </div>
+          {showWorkspaceSummary ? (
+            <article className={`diagnostic-card ${hasWorkspaceMismatch ? "diagnostic-warn" : "diagnostic-pass"}`}>
+              <h3>{hasWorkspaceMismatch ? "Workspace wants a different set" : "Workspace match"}</h3>
+              <p className="inline-note">
+                {workspaceSummaryLabel}: <strong>{expectedWorkspaceDisplay}</strong>
+              </p>
+              <p className="inline-note">
+                Current set: <strong>{currentWorkspaceDisplay}</strong>
+              </p>
+              <p className="inline-note">
+                Matched via {workspaceStatus.scope}: {workspaceStatus.target}
+              </p>
+              {hasWorkspaceMismatch ? (
+                <div className="button-row">
+                  <button
+                    className="primary-button"
+                    type="button"
+                    disabled={mutationLock.isBusy}
+                    onClick={() => {
+                      const target = resolveWorkspaceActivationTarget(
+                        workspaceStatus.expectedContext,
+                        settings,
+                        snapshot,
+                      );
+                      if (!target) {
+                        onOpenContexts();
+                        return;
+                      }
+                      activateWorkspaceTargetMutation.mutate({
+                        ...target,
+                        matchedTarget: workspaceStatus.target,
+                      });
+                    }}
+                  >
+                    {expectedWorkspaceTarget ? "Use expected set now" : "Open sets"}
+                  </button>
+                </div>
+              ) : null}
+            </article>
+          ) : null}
+        </div>
+
+        <div className="overview-tools-header">
+          <div>
+            <p className="card-kicker">Tools</p>
+            <h3>Live account state</h3>
+          </div>
+          <p className="inline-note">
+            Active profile, live match, storage backend, and drift warnings are surfaced here first.
+          </p>
+        </div>
+        <div className="tool-grid overview-tool-grid">
+          {snapshot.statuses.map((status) => (
+            <ToolCard
+              key={status.tool}
+              status={status}
+              profiles={snapshot.profiles[status.tool]?.profiles ?? []}
+              lastResult={lastCommandResults.tool[status.tool]}
+              mutationLocked={mutationLock.isBusy}
+              refreshLocked={mutationLock.isBusy || refresh.isPending}
+              onRefresh={() => refresh.mutate()}
+              stateModes={supportedStateModes(status.tool, toolCapabilities)}
+              settings={settings}
+              snapshot={snapshot}
+              onImport={(tool, profile, stateMode) =>
+                supportsProfileImportMode(tool, toolCapabilities, "from_live")
+                  ? addProfileMutation.mutate({
+                      tool,
+                      profile,
+                      label: titleCase(profile),
+                      stateMode,
+                      importMode: { kind: "from_live" },
+                    })
+                  : onOpenProfiles(tool, null, {
+                      mode: preferredProfileImportMode(tool, toolCapabilities, "from_live"),
+                    })
+              }
+              onUse={(tool, profile, stateMode) =>
+                useProfileMutation.mutate({
+                  tool,
+                  profile,
+                  stateMode,
+                  label: toolProfileDisplayLabel(settings, snapshot, tool, profile),
+                })
+              }
+              onAddProfile={(tool) => onOpenProfiles(tool)}
+              onOpenDetails={(tool, profile) => onOpenProfiles(tool, profile)}
+              toolCapabilities={toolCapabilities}
+            />
+          ))}
+        </div>
       </div>
       {lastCommandResults.global["switch-all"] || lastCommandResults.global["profile-set"] ? (
         <p
@@ -399,12 +421,16 @@ function ToolCard({
         </div>
         <div className="overview-tool-status">
           <span className={`health-dot health-dot-${resolveCardState(status)}`} aria-hidden="true" />
-          <span className={`pill ${status.binary_found ? "pill-ok" : "pill-warn"}`}>
-            {status.binary_found ? "Installed" : "Missing"}
+          <span className={`pill ${pillClassForStatus(status)}`}>
+            {statusPillLabel(status)}
           </span>
         </div>
       </header>
       <dl className="overview-tool-facts">
+        <div>
+          <dt>Active</dt>
+          <dd>{activeProfileLabel ?? "Not configured"}</dd>
+        </div>
         <div>
           <dt>Live match</dt>
           <dd>
@@ -644,4 +670,33 @@ function resolveCardState(status: ToolStatus) {
     return "neutral";
   }
   return "ok";
+}
+
+function statusPillLabel(status: ToolStatus) {
+  if (!status.binary_found) {
+    return "Missing";
+  }
+  if (!status.active_profile) {
+    return "Not configured";
+  }
+  if (status.active_profile_applied === false) {
+    return "Live mismatch";
+  }
+  if (status.token_warning || status.warnings.length) {
+    return "Needs review";
+  }
+  return "Live match";
+}
+
+function pillClassForStatus(status: ToolStatus) {
+  if (!status.binary_found) {
+    return "pill-soft";
+  }
+  if (!status.active_profile) {
+    return "pill-soft";
+  }
+  if (status.active_profile_applied === false || status.token_warning || status.warnings.length) {
+    return "pill-warn";
+  }
+  return "pill-ok";
 }

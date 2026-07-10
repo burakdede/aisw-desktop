@@ -77,7 +77,7 @@ test("uses saved profile labels across onboarding and overview", async ({ page }
 
   await page.goto("/");
 
-  await expect(page.getByText("Active set: Client Acme")).toBeVisible();
+  await expect(page.getByText("Current set: Client Acme")).toBeVisible();
   await expect(page.getByLabel("First switch profile").getByRole("option", { name: "Office" })).toHaveCount(1);
   const overview = page.locator(".section-card").filter({ hasText: "Control Center" });
   await expect(overview.getByRole("option", { name: "Shared profile: Office" })).toHaveCount(1);

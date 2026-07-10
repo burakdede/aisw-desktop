@@ -896,7 +896,7 @@ describe("App", () => {
     fireEvent.change(screen.getByDisplayValue("Switch profile set or shared profile…"), {
       target: { value: "profile:work" },
     });
-    fireEvent.click(screen.getByText("Switch all"));
+    fireEvent.click(screen.getByRole("button", { name: "Switch all" }));
 
     await waitFor(() => {
       expect(screen.getAllByRole("heading", { name: "Personal" }).length).toBeGreaterThan(0);
@@ -3099,11 +3099,11 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Switch all")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Switch all" })).toBeInTheDocument());
     fireEvent.change(screen.getByDisplayValue("Switch profile set or shared profile…"), {
       target: { value: "profile:work" },
     });
-    fireEvent.click(screen.getByText("Switch all"));
+    fireEvent.click(screen.getByRole("button", { name: "Switch all" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
@@ -3167,11 +3167,11 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Switch all")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Switch all" })).toBeInTheDocument());
     fireEvent.change(screen.getByDisplayValue("Switch profile set or shared profile…"), {
       target: { value: "profile:work" },
     });
-    fireEvent.click(screen.getByText("Switch all"));
+    fireEvent.click(screen.getByRole("button", { name: "Switch all" }));
 
     await waitFor(() => {
       expect(
@@ -6108,11 +6108,11 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Switch all")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Switch all" })).toBeInTheDocument());
     fireEvent.change(screen.getByDisplayValue("Switch profile set or shared profile…"), {
       target: { value: "set:client-acme" },
     });
-    fireEvent.click(screen.getByText("Switch all"));
+    fireEvent.click(screen.getByRole("button", { name: "Switch all" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
@@ -6150,7 +6150,7 @@ describe("App", () => {
       )[command];
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Switch all")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Switch all" })).toBeInTheDocument());
     expect(screen.getByRole("option", { name: "Shared profile: Office" })).toBeInTheDocument();
   });
 
