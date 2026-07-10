@@ -578,7 +578,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
                 .iter()
                 .map(|context| TrayEntry {
                     id: format!("context:{}", context.name),
-                    label: context.name.clone(),
+                    label: tray_context_entry_label(settings, snapshot, &context.name),
                 })
                 .collect(),
         });
@@ -687,6 +687,28 @@ fn tray_context_display_label(settings: Option<&DesktopSettings>, context: &str)
         .unwrap_or_else(|| context.to_owned())
 }
 
+fn tray_context_entry_label(
+    settings: Option<&DesktopSettings>,
+    snapshot: &AppSnapshot,
+    context: &str,
+) -> String {
+    let label = tray_context_display_label(settings, context);
+    if active_context_name(snapshot) == Some(context) {
+        format!("{label} ✓")
+    } else {
+        label
+    }
+}
+
+fn active_context_name(snapshot: &AppSnapshot) -> Option<&str> {
+    snapshot
+        .workspace_status
+        .as_ref()
+        .and_then(|status| status.raw.get("current_context"))
+        .and_then(|value| value.as_str())
+        .filter(|value| !value.trim().is_empty() && *value != "none")
+}
+
 fn shared_profile_display_name(
     settings: Option<&DesktopSettings>,
     snapshot: &AppSnapshot,
@@ -775,7 +797,8 @@ mod tests {
     use super::{
         active_set_label, active_summary, active_summary_or_default, build_tray_command_result_event,
         parse_tray_action, profile_set_entries, profile_set_is_active, shared_profile_entries,
-        tray_context_display_label, tray_menu_model, tray_profile_display_name,
+        tray_context_display_label, tray_context_entry_label, tray_menu_model,
+        tray_profile_display_name,
         tray_runtime_notice, tray_sections, tray_status_label,
         tray_use_all_profiles_request, tray_use_context_request, tray_use_profile_request,
         TrayAction, TrayCommandScope, TrayEntry, TraySection,
@@ -975,7 +998,13 @@ mod tests {
                 name: "client-acme".to_owned(),
                 profiles: HashMap::from([("claude".to_owned(), Some("work".to_owned()))]),
             }],
-            workspace_status: None,
+            workspace_status: Some(crate::models::WorkspaceStatusReport {
+                raw: serde_json::json!({
+                    "status": "match",
+                    "current_context": "client-acme",
+                    "expected_context": "client-acme",
+                }),
+            }),
             project_bindings: None,
         };
 
@@ -1020,7 +1049,7 @@ mod tests {
                     title: "Switch Context".to_owned(),
                     items: vec![TrayEntry {
                         id: "context:client-acme".to_owned(),
-                        label: "client-acme".to_owned(),
+                        label: "Client Acme ✓".to_owned(),
                     }],
                 },
                 TraySection {
@@ -1527,6 +1556,46 @@ mod tests {
         );
         assert_eq!(
             tray_context_display_label(Some(&settings), "raw-context"),
+            "raw-context"
+        );
+    }
+
+    #[test]
+    fn tray_context_entry_label_marks_the_active_context() {
+        let settings = DesktopSettings {
+            runtime_kind: RuntimeKind::Bundled,
+            runtime_path: None,
+            aisw_home: None,
+            update_channel: "stable".to_owned(),
+            profile_labels: HashMap::new(),
+            profile_sets: vec![ProfileSet {
+                name: "client-acme".to_owned(),
+                label: Some("Client Acme".to_owned()),
+                profiles: HashMap::new(),
+            }],
+        };
+        let snapshot = AppSnapshot {
+            statuses: vec![],
+            profiles: HashMap::new(),
+            contexts: vec![ContextSummary {
+                name: "client-acme".to_owned(),
+                profiles: HashMap::new(),
+            }],
+            workspace_status: Some(crate::models::WorkspaceStatusReport {
+                raw: serde_json::json!({
+                    "status": "match",
+                    "current_context": "client-acme",
+                }),
+            }),
+            project_bindings: None,
+        };
+
+        assert_eq!(
+            tray_context_entry_label(Some(&settings), &snapshot, "client-acme"),
+            "Client Acme ✓"
+        );
+        assert_eq!(
+            tray_context_entry_label(Some(&settings), &snapshot, "raw-context"),
             "raw-context"
         );
     }
