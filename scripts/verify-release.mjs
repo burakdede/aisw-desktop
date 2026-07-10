@@ -17,6 +17,10 @@ export function verifyReleaseContract(rootDir = repoRoot) {
   );
   const ciWorkflow = readFileSync(resolve(rootDir, ".github/workflows/ci.yml"), "utf8");
   const publishWorkflow = readFileSync(resolve(rootDir, ".github/workflows/publish.yml"), "utf8");
+  const acceptanceMatrix = readFileSync(
+    resolve(rootDir, "docs/desktop-acceptance-matrix.md"),
+    "utf8",
+  );
   const runbook = readFileSync(resolve(rootDir, "docs/release-runbook.md"), "utf8");
   const expectedDesktopCommands = [
     "get_bootstrap",
@@ -111,6 +115,16 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         runbook.includes("npm run prepare:sidecar -- /absolute/path/to/aisw") &&
         runbook.includes("npm run tauri:build") &&
         runbook.includes("npm run prepare:updater"),
+    },
+    {
+      label: "acceptance matrix tracks architecture, security, and verification evidence",
+      ok:
+        acceptanceMatrix.includes("## Architecture Summary") &&
+        acceptanceMatrix.includes("## Acceptance Criteria") &&
+        acceptanceMatrix.includes("## Verification Matrix") &&
+        acceptanceMatrix.includes("least-privilege capability") &&
+        acceptanceMatrix.includes("API key never appears in logs") &&
+        acceptanceMatrix.includes("does not replace the local-only product spec"),
     },
     {
       label: "runbook captures verification matrix",

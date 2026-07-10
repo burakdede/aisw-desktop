@@ -170,6 +170,20 @@ TAURI_SIGNING_PUBLIC_KEY
   );
   writeFixture(
     root,
+    "docs/desktop-acceptance-matrix.md",
+    overrides.acceptanceMatrix ??
+      `
+This does not replace the local-only product spec.
+## Architecture Summary
+least-privilege capability
+## Acceptance Criteria
+API key never appears in logs
+## Verification Matrix
+npm test
+`,
+  );
+  writeFixture(
+    root,
     "docs/release-runbook.md",
     overrides.runbook ??
       `
@@ -209,6 +223,10 @@ describe("verify-release", () => {
         expect.objectContaining({
           ok: true,
           label: "tauri main window capability stays least-privilege",
+        }),
+        expect.objectContaining({
+          ok: true,
+          label: "acceptance matrix tracks architecture, security, and verification evidence",
         }),
       ]),
     });
@@ -400,6 +418,24 @@ Validate the generated \`.deb\`, \`.rpm\`, and AppImage artifacts
     expect(result.checks).toContainEqual(
       expect.objectContaining({
         label: "runbook includes a release checklist",
+        ok: false,
+      }),
+    );
+  });
+
+  it("fails when the acceptance matrix drops the delivery evidence", () => {
+    const root = createReleaseFixture({
+      acceptanceMatrix: `
+## Architecture Summary
+## Acceptance Criteria
+`,
+    });
+
+    const result = verifyReleaseContract(root);
+    expect(result.ok).toBe(false);
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        label: "acceptance matrix tracks architecture, security, and verification evidence",
         ok: false,
       }),
     );
