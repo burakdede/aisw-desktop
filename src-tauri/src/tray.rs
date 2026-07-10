@@ -125,11 +125,13 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
         }
         TrayAction::UseContext(context) => {
             let app_handle = app.clone();
-            let context_label = context.clone();
             tauri::async_runtime::spawn(async move {
+                let bootstrap = state.bootstrap().await.ok();
+                let settings = bootstrap.as_ref().map(|entry| &entry.settings);
+                let context_label = tray_context_display_label(settings, &context);
                 let result = match ensure_tray_runtime_compatible(&state).await {
                     Ok(()) => {
-                        let snapshot = state.bootstrap().await.ok().and_then(|entry| entry.snapshot);
+                        let snapshot = bootstrap.as_ref().and_then(|entry| entry.snapshot.clone());
                         state
                             .mutate("tray_use_context", move |bridge| async move {
                                 bridge
@@ -154,11 +156,16 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
         }
         TrayAction::UseAllProfiles(profile) => {
             let app_handle = app.clone();
-            let profile_label = profile.clone();
             tauri::async_runtime::spawn(async move {
+                let bootstrap = state.bootstrap().await.ok();
+                let settings = bootstrap.as_ref().map(|entry| &entry.settings);
+                let snapshot = bootstrap.as_ref().and_then(|entry| entry.snapshot.clone());
+                let profile_label = snapshot
+                    .as_ref()
+                    .map(|snapshot| shared_profile_display_name(settings, snapshot, &profile))
+                    .unwrap_or_else(|| title_case(&profile));
                 let result = match ensure_tray_runtime_compatible(&state).await {
                     Ok(()) => {
-                        let snapshot = state.bootstrap().await.ok().and_then(|entry| entry.snapshot);
                         state
                             .mutate("tray_use_all_profiles", move |bridge| async move {
                                 bridge
@@ -184,6 +191,9 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
         TrayAction::ActivateProfileSet(profile_set) => {
             let app_handle = app.clone();
             tauri::async_runtime::spawn(async move {
+                let bootstrap = state.bootstrap().await.ok();
+                let settings = bootstrap.as_ref().map(|entry| &entry.settings);
+                let profile_set_label = tray_context_display_label(settings, &profile_set);
                 let result = match ensure_tray_runtime_compatible(&state).await {
                     Ok(()) => state.activate_profile_set(&profile_set).await,
                     Err(error) => Err(error),
@@ -195,19 +205,24 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
                         id: "profile-set".to_owned(),
                     },
                     "Activate profile set",
-                    format!("Activated profile set {profile_set}."),
+                    format!("Activated profile set {profile_set_label}."),
                 );
                 let _ = refresh_tray(&app_handle, state).await;
             });
         }
         TrayAction::UseProfile { tool, profile } => {
             let app_handle = app.clone();
-            let tool_label = tool.clone();
-            let profile_label = profile.clone();
             tauri::async_runtime::spawn(async move {
+                let bootstrap = state.bootstrap().await.ok();
+                let settings = bootstrap.as_ref().map(|entry| &entry.settings);
+                let snapshot = bootstrap.as_ref().and_then(|entry| entry.snapshot.clone());
+                let tool_label = tool.clone();
+                let profile_label = snapshot
+                    .as_ref()
+                    .map(|snapshot| tray_profile_display_name(settings, snapshot, &tool, &profile))
+                    .unwrap_or_else(|| title_case(&profile));
                 let result = match ensure_tray_runtime_compatible(&state).await {
                     Ok(()) => {
-                        let snapshot = state.bootstrap().await.ok().and_then(|entry| entry.snapshot);
                         state
                             .mutate("tray_use_profile", move |bridge| async move {
                                 bridge
@@ -660,6 +675,18 @@ fn profile_set_has_selections(set: &ProfileSet) -> bool {
         .any(|profile| profile.as_deref().is_some_and(|value| !value.trim().is_empty()))
 }
 
+fn tray_context_display_label(settings: Option<&DesktopSettings>, context: &str) -> String {
+    settings
+        .and_then(|settings| {
+            settings
+                .profile_sets
+                .iter()
+                .find(|set| set.name == context)
+                .map(|set| set.label.clone().unwrap_or_else(|| set.name.clone()))
+        })
+        .unwrap_or_else(|| context.to_owned())
+}
+
 fn shared_profile_display_name(
     settings: Option<&DesktopSettings>,
     snapshot: &AppSnapshot,
@@ -683,6 +710,28 @@ fn shared_profile_display_name(
     tools.sort();
     tools.into_iter()
         .find_map(|tool| {
+            snapshot.profiles.get(tool).and_then(|entry| {
+                entry
+                    .profiles
+                    .iter()
+                    .find(|candidate| candidate.name == profile)
+                    .and_then(|candidate| candidate.label.clone())
+            })
+        })
+        .unwrap_or_else(|| title_case(profile))
+}
+
+fn tray_profile_display_name(
+    settings: Option<&DesktopSettings>,
+    snapshot: &AppSnapshot,
+    tool: &str,
+    profile: &str,
+) -> String {
+    settings
+        .and_then(|settings| settings.profile_labels.get(tool))
+        .and_then(|labels| labels.get(profile))
+        .and_then(|label| label.clone())
+        .or_else(|| {
             snapshot.profiles.get(tool).and_then(|entry| {
                 entry
                     .profiles
@@ -726,8 +775,8 @@ mod tests {
     use super::{
         active_set_label, active_summary, active_summary_or_default, build_tray_command_result_event,
         parse_tray_action, profile_set_entries, profile_set_is_active, shared_profile_entries,
-        tray_menu_model, tray_runtime_notice, tray_sections,
-        tray_status_label,
+        tray_context_display_label, tray_menu_model, tray_profile_display_name,
+        tray_runtime_notice, tray_sections, tray_status_label,
         tray_use_all_profiles_request, tray_use_context_request, tray_use_profile_request,
         TrayAction, TrayCommandScope, TrayEntry, TraySection,
     };
@@ -1455,6 +1504,76 @@ mod tests {
         assert_eq!(payload.status, "success");
         assert!(payload.kind.is_none());
         assert_eq!(payload.message, "Switched all tools to work.");
+    }
+
+    #[test]
+    fn tray_context_display_label_prefers_profile_set_label() {
+        let settings = DesktopSettings {
+            runtime_kind: RuntimeKind::Bundled,
+            runtime_path: None,
+            aisw_home: None,
+            update_channel: "stable".to_owned(),
+            profile_labels: HashMap::new(),
+            profile_sets: vec![ProfileSet {
+                name: "client-acme".to_owned(),
+                label: Some("Client Acme".to_owned()),
+                profiles: HashMap::new(),
+            }],
+        };
+
+        assert_eq!(
+            tray_context_display_label(Some(&settings), "client-acme"),
+            "Client Acme"
+        );
+        assert_eq!(
+            tray_context_display_label(Some(&settings), "raw-context"),
+            "raw-context"
+        );
+    }
+
+    #[test]
+    fn tray_profile_display_label_prefers_saved_overrides() {
+        let settings = DesktopSettings {
+            runtime_kind: RuntimeKind::Bundled,
+            runtime_path: None,
+            aisw_home: None,
+            update_channel: "stable".to_owned(),
+            profile_labels: HashMap::from([(
+                "claude".to_owned(),
+                HashMap::from([("work".to_owned(), Some("Work Laptop".to_owned()))]),
+            )]),
+            profile_sets: vec![],
+        };
+        let snapshot = AppSnapshot {
+            statuses: vec![],
+            profiles: HashMap::from([(
+                "claude".to_owned(),
+                ToolProfiles {
+                    active: Some("work".to_owned()),
+                    profiles: vec![ToolProfileSummary {
+                        name: "work".to_owned(),
+                        auth: "oauth".to_owned(),
+                        label: Some("Work".to_owned()),
+                    }],
+                },
+            )]),
+            contexts: vec![],
+            workspace_status: None,
+            project_bindings: None,
+        };
+
+        assert_eq!(
+            tray_profile_display_name(Some(&settings), &snapshot, "claude", "work"),
+            "Work Laptop"
+        );
+        assert_eq!(
+            tray_profile_display_name(None, &snapshot, "claude", "work"),
+            "Work"
+        );
+        assert_eq!(
+            tray_profile_display_name(None, &snapshot, "claude", "personal"),
+            "Personal"
+        );
     }
 
     #[test]
