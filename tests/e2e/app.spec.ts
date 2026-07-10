@@ -1353,6 +1353,27 @@ test("warns before restoring the latest profile backup from profiles", async ({ 
   await expect(page.locator(".list-row p").filter({ hasText: "work · api_key" }).first()).toBeVisible();
 });
 
+test("passes the selected state mode when restoring and re-activating from profiles", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+  await page.getByLabel("Tool").selectOption("codex");
+  await page.getByLabel("State mode").selectOption("shared");
+  await page.getByRole("button", { name: "Restore latest + activate" }).click();
+  await page.getByRole("button", { name: "Confirm restore latest and activate" }).click();
+
+  await expect
+    .poll(async () =>
+      page.evaluate(() => {
+        const log = window.__AISW_COMMAND_LOG__ ?? [];
+        const matching = [...log].reverse().find((entry) => entry.command === "use_profile");
+        return matching?.args?.request?.state_mode;
+      }),
+    )
+    .toBe("shared");
+});
+
 test("restores the latest profile backup without re-activating it", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
