@@ -39,6 +39,7 @@ jobs:
       SIDE_CAR_URL: ${{ secrets[matrix.sidecar_url_secret] }}
       AISW_DESKTOP_UPDATER_ENDPOINT_STABLE: ${{ secrets.AISW_DESKTOP_UPDATER_ENDPOINT_STABLE }}
       AISW_DESKTOP_UPDATER_ENDPOINT_BETA: ${{ secrets.AISW_DESKTOP_UPDATER_ENDPOINT_BETA }}
+      TAURI_SIGNING_PUBLIC_KEY: ${{ secrets.TAURI_SIGNING_PUBLIC_KEY }}
     steps:
       - uses: actions/checkout@v4
 

@@ -73,7 +73,7 @@ npm run tauri:build
 ### macOS
 
 1. Export signing inputs before running `npm run tauri:build`:
-   `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`, `TAURI_SIGNING_PRIVATE_KEY`, and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
+   `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`, `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, and `TAURI_SIGNING_PUBLIC_KEY`.
 2. Configure `plugins.updater.channels` in `src-tauri/tauri.conf.json` for every release channel you intend to ship, or provide `AISW_DESKTOP_UPDATER_ENDPOINT[_CHANNEL]` overrides for a non-production build.
    CI release builds do this with `npm run prepare:updater`.
 3. Build with the target-specific sidecar staged:
@@ -83,7 +83,7 @@ npm run tauri:build
 
 ### Windows
 
-1. Export `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
+1. Export `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, and `TAURI_SIGNING_PUBLIC_KEY`.
 2. Configure `plugins.updater.channels` in `src-tauri/tauri.conf.json` for the Windows release channels you publish.
    CI release builds do this with `npm run prepare:updater`.
 3. Build the Windows target after staging the matching sidecar.
@@ -121,11 +121,12 @@ The repository workflow at `.github/workflows/publish.yml` expects these secrets
 - `AISW_SIDECAR_URL_WINDOWS_X64`
 - `AISW_DESKTOP_UPDATER_ENDPOINT_STABLE`
 - `AISW_DESKTOP_UPDATER_ENDPOINT_BETA`
+- `TAURI_SIGNING_PUBLIC_KEY`
 - `TAURI_SIGNING_PRIVATE_KEY`
 - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
 
-The private key must match the updater public key committed in `src-tauri/tauri.conf.json`.
-Release channel endpoints live in `plugins.updater.channels` in `src-tauri/tauri.conf.json`.
+The private key must match the public key staged into `src-tauri/tauri.conf.json` by `npm run prepare:updater`.
+Release channel endpoints and updater public key are staged into `plugins.updater` in `src-tauri/tauri.conf.json`.
 
 Optional signing secrets:
 

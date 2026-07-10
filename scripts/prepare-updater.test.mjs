@@ -30,7 +30,7 @@ function createWorkspace() {
           updater: {
             channels: {},
             endpoints: [],
-            pubkey: "pubkey",
+            pubkey: "",
           },
         },
       },
@@ -47,6 +47,7 @@ describe("prepare-updater", () => {
     const result = prepareUpdaterConfig(root, {
       AISW_DESKTOP_UPDATER_ENDPOINT_STABLE: "https://updates.example.com/stable.json",
       AISW_DESKTOP_UPDATER_ENDPOINT_BETA: "https://updates.example.com/beta.json",
+      TAURI_SIGNING_PUBLIC_KEY: "minisign-pubkey",
     });
 
     expect(result.channels).toEqual({
@@ -56,12 +57,28 @@ describe("prepare-updater", () => {
 
     const tauriConfig = JSON.parse(readFileSync(resolve(root, "src-tauri/tauri.conf.json"), "utf8"));
     expect(tauriConfig.plugins.updater.channels).toEqual(result.channels);
+    expect(tauriConfig.plugins.updater.pubkey).toBe("minisign-pubkey");
   });
 
   it("fails when no updater channel env vars are provided", () => {
     const root = createWorkspace();
-    expect(() => prepareUpdaterConfig(root, {})).toThrow(
+    expect(() =>
+      prepareUpdaterConfig(root, {
+        TAURI_SIGNING_PUBLIC_KEY: "minisign-pubkey",
+      }),
+    ).toThrow(
       "Provide at least one AISW_DESKTOP_UPDATER_ENDPOINT_<CHANNEL> value before preparing updater channels.",
+    );
+  });
+
+  it("fails when the updater public key is missing", () => {
+    const root = createWorkspace();
+    expect(() =>
+      prepareUpdaterConfig(root, {
+        AISW_DESKTOP_UPDATER_ENDPOINT_STABLE: "https://updates.example.com/stable.json",
+      }),
+    ).toThrow(
+      "Provide TAURI_SIGNING_PUBLIC_KEY or AISW_DESKTOP_UPDATER_PUBKEY before preparing updater channels.",
     );
   });
 });

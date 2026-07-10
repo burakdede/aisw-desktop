@@ -4,6 +4,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 const CHANNEL_PREFIX = "AISW_DESKTOP_UPDATER_ENDPOINT_";
+const PUBKEY_ENV_KEYS = ["TAURI_SIGNING_PUBLIC_KEY", "AISW_DESKTOP_UPDATER_PUBKEY"];
 
 function collectUpdaterChannels(env = process.env) {
   return Object.entries(env)
@@ -23,17 +24,25 @@ export function prepareUpdaterConfig(rootDir = process.cwd(), env = process.env)
       "Provide at least one AISW_DESKTOP_UPDATER_ENDPOINT_<CHANNEL> value before preparing updater channels.",
     );
   }
+  const pubkey = PUBKEY_ENV_KEYS.map((key) => env[key]).find((value) => typeof value === "string" && value.length > 0);
+  if (!pubkey) {
+    throw new Error(
+      "Provide TAURI_SIGNING_PUBLIC_KEY or AISW_DESKTOP_UPDATER_PUBKEY before preparing updater channels.",
+    );
+  }
 
   const tauriConfigPath = resolve(rootDir, "src-tauri/tauri.conf.json");
   const tauriConfig = JSON.parse(readFileSync(tauriConfigPath, "utf8"));
   tauriConfig.plugins ??= {};
   tauriConfig.plugins.updater ??= {};
   tauriConfig.plugins.updater.channels = channels;
+  tauriConfig.plugins.updater.pubkey = pubkey;
   writeFileSync(tauriConfigPath, `${JSON.stringify(tauriConfig, null, 2)}\n`);
 
   return {
     tauriConfigPath,
     channels,
+    pubkey,
   };
 }
 

@@ -38,7 +38,6 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       label: "tauri declares updater plugin config for bundling",
       ok:
         typeof tauriConfig.plugins?.updater?.pubkey === "string" &&
-        tauriConfig.plugins.updater.pubkey.length > 0 &&
         tauriConfig.plugins.updater.channels &&
         typeof tauriConfig.plugins.updater.channels === "object" &&
         Array.isArray(tauriConfig.plugins.updater.endpoints),
@@ -103,7 +102,8 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       ok:
         publishWorkflow.includes("npm run prepare:updater") &&
         publishWorkflow.includes("AISW_DESKTOP_UPDATER_ENDPOINT_STABLE") &&
-        publishWorkflow.includes("AISW_DESKTOP_UPDATER_ENDPOINT_BETA"),
+        publishWorkflow.includes("AISW_DESKTOP_UPDATER_ENDPOINT_BETA") &&
+        publishWorkflow.includes("TAURI_SIGNING_PUBLIC_KEY"),
     },
     {
       label: "publish workflow covers every supported release target",
