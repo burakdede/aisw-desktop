@@ -291,6 +291,14 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `package.json`, `scripts/build-local-bundle.test.mjs`, and `scripts/verify-release.mjs` expose and verify the `tauri:bundle-local` contract, including cleanup of temporary config overrides and release-runbook coverage.
   - A real local `npm run tauri:bundle-local` build produced `/Users/burakdede/Projects/aisw-desktop/src-tauri/target/release/bundle/macos/AISW Desktop.app` and `/Users/burakdede/Projects/aisw-desktop/src-tauri/target/release/bundle/dmg/AISW Desktop_0.1.0_aarch64.dmg` without requiring `TAURI_SIGNING_PRIVATE_KEY`.
 
+### 38. Workspace mismatch recovery skips empty same-named profile sets
+
+- Status: implemented
+- Evidence:
+  - `src/features/workspaces/workspace-activation.ts` now treats only non-empty saved profile sets as valid workspace activation targets, so mismatch recovery falls back to the matching CLI context when a same-named saved set has no mapped profiles.
+  - `src/features/workspaces/workspace-activation.test.ts` verifies both branches: a non-empty saved profile set still wins, while an empty same-named set defers to the CLI context and preserves the resolved shared state mode.
+  - `tests/e2e/app.spec.ts` verifies the Workspaces mismatch action uses `use_context` and refreshes the UI to `Current context: Client Acme` instead of trying to activate an empty saved profile set.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:
