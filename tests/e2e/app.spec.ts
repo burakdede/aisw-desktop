@@ -238,6 +238,25 @@ test("saves and deletes a local profile set from contexts", async ({ page }) => 
   await expect(page.getByText("Focus Mode")).not.toBeVisible();
 });
 
+test("edits a local profile set from contexts", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Contexts" }).click();
+
+  await page.locator(".list-row").filter({ hasText: "Client Acme" }).getByRole("button", { name: "Edit" }).click();
+
+  const contextsForm = page.locator("form.stacked-form");
+  await expect(contextsForm.getByLabel("Profile set name")).toHaveValue("client-acme");
+  await expect(contextsForm.getByRole("button", { name: "Update profile set" })).toBeVisible();
+
+  await contextsForm.getByLabel("Label").fill("Client Acme Prime");
+  await contextsForm.getByRole("button", { name: "Update profile set" }).click();
+
+  await expect(page.getByText("Updated profile set client-acme.")).toBeVisible();
+  await expect(page.getByText("Client Acme Prime")).toBeVisible();
+});
+
 test("binds and resolves workspace context from the workspaces panel", async ({ page }) => {
   await installDesktopMock(page, "switching");
 

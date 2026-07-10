@@ -3268,6 +3268,73 @@ describe("App", () => {
     expect(screen.queryByText("Client Acme")).not.toBeInTheDocument();
   });
 
+  it("edits a local profile set and reports the result", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    let currentSettings: DesktopSettings = {
+      ...bootstrap.settings,
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    };
+    const snapshotWithoutCliContexts = {
+      ...bootstrap.snapshot,
+      contexts: [],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "get_bootstrap") {
+        return {
+          ...bootstrap,
+          settings: currentSettings,
+          snapshot: snapshotWithoutCliContexts,
+        };
+      }
+      if (command === "update_settings") {
+        const request = (args as { request?: DesktopSettings })?.request;
+        currentSettings = request ?? currentSettings;
+        return currentSettings;
+      }
+      return (
+        {
+          get_snapshot: snapshotWithoutCliContexts,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: currentSettings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Contexts"));
+    fireEvent.click(screen.getByText("Edit"));
+
+    expect(screen.getByDisplayValue("client-acme")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Client Acme")).toBeInTheDocument();
+    expect(screen.getByText("Update profile set")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Label"), {
+      target: { value: "Client Acme Prime" },
+    });
+    fireEvent.click(screen.getByText("Update profile set"));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
+      expect(screen.getByText("Client Acme Prime")).toBeInTheDocument();
+      expect(screen.getByText("Updated profile set client-acme.")).toBeInTheDocument();
+    });
+  });
+
   it("prefers the native CLI context when a profile set matches it", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     const contextSnapshot = {

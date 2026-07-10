@@ -34,6 +34,9 @@ export function ContextsPanel({
   const [lastAction, setLastAction] = useState("");
 
   const localSets = settings.profile_sets ?? [];
+  const trimmedDraftName = draft.name.trim();
+  const isEditingExistingSet =
+    trimmedDraftName.length > 0 && localSets.some((entry) => entry.name === trimmedDraftName);
   const profileOptions = useMemo(
     () =>
       Object.fromEntries(
@@ -50,7 +53,7 @@ export function ContextsPanel({
 
   function saveProfileSet(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const name = draft.name.trim();
+    const name = trimmedDraftName;
     if (!name) return;
 
     const nextSets = [
@@ -75,7 +78,7 @@ export function ContextsPanel({
       },
       {
         onSuccess: () => {
-          setLastAction(`Saved profile set ${name}.`);
+          setLastAction(`${isEditingExistingSet ? "Updated" : "Saved"} profile set ${name}.`);
           setDraft({
             name: "",
             label: "",
@@ -150,7 +153,7 @@ export function ContextsPanel({
             </label>
           ))}
           <button className="primary-button" type="submit" disabled={mutationLock.isBusy}>
-            Save profile set
+            {isEditingExistingSet ? "Update profile set" : "Save profile set"}
           </button>
         </form>
 
