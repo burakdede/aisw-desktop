@@ -44,6 +44,11 @@ export function useMutationQueueState() {
   return useSyncExternalStore(subscribe, snapshot, snapshot);
 }
 
+export function useMutationAwareQueryEnabled(enabled = true) {
+  const state = useMutationQueueState();
+  return enabled && !state.isBusy;
+}
+
 export function enqueueMutation<T>(label: string, task: () => Promise<T>): Promise<T> {
   queuedCount += 1;
   emitChange();

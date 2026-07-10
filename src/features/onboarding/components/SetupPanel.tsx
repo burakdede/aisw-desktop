@@ -14,6 +14,7 @@ import {
 } from "../../../lib/tool-guidance";
 import { resolveGlobalStateMode } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
+import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 
 type LiveAccount = {
   tool: string;
@@ -44,7 +45,8 @@ export function SetupPanel({
   const settings = bootstrap.settings;
   const { initMutation, addProfileMutation, useAllProfilesMutation, mutationLock } =
     useDesktopActions();
-  const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor });
+  const readEnabled = useMutationAwareQueryEnabled();
+  const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor, enabled: readEnabled });
   const shellGuidance = useQuery({ queryKey: ["shell-guidance"], queryFn: getShellGuidance });
   const [profileNames, setProfileNames] = useState<Record<string, string>>({});
   const [firstSwitchProfile, setFirstSwitchProfile] = useState("");

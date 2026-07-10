@@ -14,6 +14,7 @@ import { listBackups, parseOAuthProgressEvent } from "../../../lib/client";
 import { titleCase } from "../../../lib/utils";
 import { resolveStateModeRequest, supportedStateModes } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
+import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 
 const TOOLS = ["claude", "codex", "gemini"] as const;
 
@@ -69,7 +70,8 @@ export function ProfilesPanel({
     () => snapshot.statuses.find((entry) => entry.tool === tool),
     [snapshot.statuses, tool],
   );
-  const backups = useQuery({ queryKey: ["backups"], queryFn: listBackups });
+  const readEnabled = useMutationAwareQueryEnabled();
+  const backups = useQuery({ queryKey: ["backups"], queryFn: listBackups, enabled: readEnabled });
   const availableStateModes = useMemo(
     () => supportedStateModes(tool, toolCapabilities),
     [tool, toolCapabilities],

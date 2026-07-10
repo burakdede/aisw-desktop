@@ -6,6 +6,7 @@ import { DesktopCommandError } from "../../../lib/tauri";
 import { DesktopSettings, AppBootstrap } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
 import { useDesktopActions } from "../../shared/useDesktopActions";
+import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 
 export function SettingsPanel({
   settings,
@@ -20,8 +21,9 @@ export function SettingsPanel({
   const [runtimePath, setRuntimePath] = useState(settings.runtime_path ?? "");
   const [aiswHome, setAiswHome] = useState(settings.aisw_home ?? "");
   const [updateChannel, setUpdateChannel] = useState(settings.update_channel);
+  const readEnabled = useMutationAwareQueryEnabled();
   const shellGuidance = useQuery({ queryKey: ["shell-guidance"], queryFn: getShellGuidance });
-  const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor });
+  const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor, enabled: readEnabled });
   const [selectedShell, setSelectedShell] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
 

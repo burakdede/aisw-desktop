@@ -6,6 +6,7 @@ import { exportDiagnosticBundle, runDoctor, runRepair, runVerify } from "../../.
 import { openExternalGuide, installGuideUrlForTool } from "../../../lib/tool-guidance";
 import { useLastCommandResults } from "../../shared/lastCommandResult";
 import { useDesktopActions } from "../../shared/useDesktopActions";
+import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import {
   parseDoctorIssues,
   parseDoctorSummary,
@@ -45,11 +46,13 @@ export function DiagnosticsPanel({
   } =
     useDesktopActions();
   const lastCommandResults = useLastCommandResults();
-  const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor });
-  const verify = useQuery({ queryKey: ["verify"], queryFn: runVerify });
+  const readEnabled = useMutationAwareQueryEnabled();
+  const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor, enabled: readEnabled });
+  const verify = useQuery({ queryKey: ["verify"], queryFn: runVerify, enabled: readEnabled });
   const repair = useQuery({
     queryKey: ["repair", "dry-run"],
     queryFn: () => runRepair({ apply: false, fixes: [] }),
+    enabled: readEnabled,
   });
   const [importDrafts, setImportDrafts] = useState<Record<string, string>>({});
   const [bundleCopyMessage, setBundleCopyMessage] = useState("");
@@ -99,6 +102,7 @@ export function DiagnosticsPanel({
         <div className="button-row">
           <button
             className="ghost-button"
+            disabled={mutationLock.isBusy}
             onClick={() => {
               void doctor.refetch();
               void verify.refetch();

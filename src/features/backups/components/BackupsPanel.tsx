@@ -8,6 +8,7 @@ import { AppBootstrap, AppSnapshot, DesktopSettings } from "../../../lib/schemas
 import { titleCase } from "../../../lib/utils";
 import { resolveStateModeRequest } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
+import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 
 export function BackupsPanel({
   snapshot,
@@ -20,7 +21,8 @@ export function BackupsPanel({
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
   onOpenProfiles: (tool: string, expandedProfile?: string | null) => void;
 }) {
-  const backups = useQuery({ queryKey: ["backups"], queryFn: listBackups });
+  const readEnabled = useMutationAwareQueryEnabled();
+  const backups = useQuery({ queryKey: ["backups"], queryFn: listBackups, enabled: readEnabled });
   const { restoreBackupMutation, useProfileMutation, mutationLock } = useDesktopActions();
   const [copyMessage, setCopyMessage] = useState("");
   const [pendingRestore, setPendingRestore] = useState<{

@@ -3972,6 +3972,107 @@ describe("App", () => {
     });
   });
 
+  it("defers diagnostics refetches until an active mutation completes", async () => {
+    let doctorRuns = 0;
+    let verifyRuns = 0;
+    let repairRuns = 0;
+    let resolveUseProfile: ((value: unknown) => void) | undefined;
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "use_profile") {
+        return await new Promise((resolve) => {
+          resolveUseProfile = resolve;
+        });
+      }
+      if (command === "run_doctor") {
+        doctorRuns += 1;
+        return { checks: [], summary: { status: "pass" } };
+      }
+      if (command === "run_verify") {
+        verifyRuns += 1;
+        return { summary: { status: "pass" }, tools: [] };
+      }
+      if (command === "run_repair") {
+        repairRuns += 1;
+        return {
+          result: {
+            summary: {
+              status: "pass",
+              actions_planned: 0,
+              actions_applied: 0,
+              issues_remaining: 0,
+            },
+            actions: [],
+          },
+        };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+          get_shell_guidance: {
+            detected_shell: "zsh",
+            capabilities: [],
+            note: "Without the shell hook, aisw use still writes live credential files.",
+            manual_apply_examples: [],
+            variants: [
+              {
+                shell: "zsh",
+                title: "Zsh",
+                config_path: "~/.zshrc",
+                alternate_config_path: null,
+                install_command: "echo 'eval \"$(aisw shell-hook zsh)\"' >> ~/.zshrc",
+                reload_command: "source ~/.zshrc",
+                verify_command: 'echo \"$AISW_SHELL_HOOK\"',
+                verify_expected: "1",
+              },
+            ],
+          },
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    expect(doctorRuns).toBe(1);
+
+    fireEvent.click(screen.getByText("Re-apply Work"));
+    await waitFor(() => {
+      expect(resolveUseProfile).toBeDefined();
+    });
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["tray-run-diagnostics"]?.({});
+    });
+
+    await waitFor(() => expect(screen.getByText("Doctor · Verify · Repair")).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Refresh diagnostics" })).toBeDisabled();
+    expect(doctorRuns).toBe(1);
+    expect(verifyRuns).toBe(0);
+    expect(repairRuns).toBe(0);
+
+    await act(async () => {
+      resolveUseProfile?.({ command: "use_profile", snapshot: bootstrap.snapshot });
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(doctorRuns).toBeGreaterThan(1);
+      expect(verifyRuns).toBeGreaterThan(0);
+      expect(repairRuns).toBeGreaterThan(0);
+    });
+    expect(screen.getByRole("button", { name: "Refresh diagnostics" })).toBeEnabled();
+  });
+
   it("records tray command results and shows a desktop notification", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());

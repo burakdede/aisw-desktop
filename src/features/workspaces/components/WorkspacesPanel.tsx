@@ -14,6 +14,7 @@ import {
   workspaceBindingOptions,
 } from "../workspace-activation";
 import type { WorkspaceUnbindInput } from "../../../lib/client";
+import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 
 type BindScope = "default" | "path" | "git_remote";
 
@@ -24,13 +25,16 @@ export function WorkspacesPanel({
   snapshot: AppSnapshot;
   settings: DesktopSettings;
 }) {
+  const readEnabled = useMutationAwareQueryEnabled();
   const bindings = useQuery({
     queryKey: ["project-bindings"],
     queryFn: getProjectBindings,
+    enabled: readEnabled,
   });
   const workspaceStatus = useQuery({
     queryKey: ["workspace-status"],
     queryFn: getWorkspaceStatus,
+    enabled: readEnabled,
   });
   const {
     workspaceBindMutation,
