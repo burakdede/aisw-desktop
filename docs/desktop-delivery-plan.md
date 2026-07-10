@@ -169,12 +169,14 @@ Acceptance criteria:
 - Tray shows active set summary.
 - Tray supports shared profile, per-tool switching, and open-app actions.
 - Labels honor saved overrides and active markers.
+- Tray context entries use the same saved profile-set labels as the main window surfaces.
 - Tray refreshes after successful mutations.
 
 Test cases:
 - Builds shared profile section without duplicates.
 - Marks active set and active tool profiles correctly.
 - Uses label overrides in tray sections.
+- Uses saved profile-set labels and active markers in tray context entries.
 - Invokes matching mutations from tray actions.
 
 ### 9. Settings and Shell Guidance

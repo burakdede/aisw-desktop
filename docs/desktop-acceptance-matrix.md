@@ -224,6 +224,13 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src/features/workspaces/components/WorkspacesPanel.tsx` derives the current matched binding from workspace status and annotates the matching explicit binding row with `Matched binding ✓`.
   - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify the matched-binding marker appears for the active `/code/acme` workspace binding.
 
+### 29. Tray context entries prefer saved labels and mark the active context
+
+- Status: implemented
+- Evidence:
+  - `src-tauri/src/tray.rs` derives tray context entry labels from saved profile-set labels and appends the active marker when `workspace_status.current_context` matches that context.
+  - `src-tauri/src/tray.rs` unit tests verify `client-acme` renders as `Client Acme ✓` in the tray context section while unmatched raw context ids stay unchanged.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:
