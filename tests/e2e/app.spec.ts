@@ -657,6 +657,27 @@ test("creates profiles from environment and API key modes", async ({ page }) => 
   await expect(page.getByText("ops · api_key")).toBeVisible();
 });
 
+test("renames, relabels, and removes profiles from the profiles screen", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  const workRow = page.locator(".list-row").filter({ hasText: "work · oauth" });
+  await workRow.getByLabel("rename work").fill("client-acme");
+  await workRow.getByRole("button", { name: "Rename" }).click();
+  await expect(page.getByText("client-acme · oauth")).toBeVisible();
+
+  const renamedRow = page.locator(".list-row").filter({ hasText: "client-acme · oauth" });
+  await renamedRow.getByLabel("label client-acme").fill("Client Acme");
+  await renamedRow.getByRole("button", { name: "Relabel" }).click();
+  await expect(renamedRow.getByText("Client Acme")).toBeVisible();
+
+  await renamedRow.getByRole("button", { name: "Remove active…" }).click();
+  await renamedRow.getByRole("button", { name: "Confirm remove active" }).click();
+  await expect(page.getByText("client-acme · oauth")).not.toBeVisible();
+});
+
 test("warns before backup restore and re-activates the restored profile", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -2011,6 +2032,51 @@ async function installDesktopMock(
             statusEntry.active_profile_applied = true;
             statusEntry.credentials_present = true;
             statusEntry.state_mode = request.state_mode ?? statusEntry.state_mode;
+          }
+          syncStoredProfiles(request.tool);
+          return { command, snapshot: cloneSnapshot() };
+        }
+        if (command === "rename_profile") {
+          const request = args;
+          const profileEntry = state.snapshot.profiles[request.tool];
+          const statusEntry = state.snapshot.statuses.find((entry) => entry.tool === request.tool);
+          const match = profileEntry?.profiles.find((profile) => profile.name === request.old_name);
+          if (match) {
+            match.name = request.new_name;
+          }
+          if (profileEntry?.active === request.old_name) {
+            profileEntry.active = request.new_name;
+          }
+          if (statusEntry?.active_profile === request.old_name) {
+            statusEntry.active_profile = request.new_name;
+          }
+          const toolLabels = state.settings.profile_labels?.[request.tool];
+          if (toolLabels && Object.prototype.hasOwnProperty.call(toolLabels, request.old_name)) {
+            toolLabels[request.new_name] = toolLabels[request.old_name];
+            delete toolLabels[request.old_name];
+          }
+          return { command, snapshot: cloneSnapshot() };
+        }
+        if (command === "remove_profile") {
+          const request = args;
+          const profileEntry = state.snapshot.profiles[request.tool];
+          const statusEntry = state.snapshot.statuses.find((entry) => entry.tool === request.tool);
+          if (profileEntry) {
+            profileEntry.profiles = profileEntry.profiles.filter(
+              (profile) => profile.name !== request.profile,
+            );
+            if (profileEntry.active === request.profile) {
+              profileEntry.active = null;
+            }
+          }
+          if (statusEntry?.active_profile === request.profile) {
+            statusEntry.active_profile = null;
+            statusEntry.active_profile_applied = null;
+            statusEntry.credentials_present = false;
+          }
+          const toolLabels = state.settings.profile_labels?.[request.tool];
+          if (toolLabels) {
+            delete toolLabels[request.profile];
           }
           syncStoredProfiles(request.tool);
           return { command, snapshot: cloneSnapshot() };
