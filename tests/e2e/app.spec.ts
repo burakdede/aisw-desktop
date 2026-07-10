@@ -211,6 +211,22 @@ test("switches shared profiles and recovers from live mismatch", async ({ page }
   await expect(page.getByText("incident · oauth")).toBeVisible();
 });
 
+test("opens the profiles screen from overview details actions", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+
+  const codexCard = page.locator(".tool-card").filter({ hasText: "Codex" });
+  await codexCard.getByRole("button", { name: "Open details" }).click();
+
+  await expect(page.getByText("Provisioning")).toBeVisible();
+  await expect(page.getByLabel("Tool")).toHaveValue("codex");
+  await expect(page.getByRole("heading", { name: "Diagnostic details" })).toBeVisible();
+  await expect(
+    page.getByText("No additional token or runtime warnings are currently reported for this tool."),
+  ).toBeVisible();
+});
+
 test("refreshes state after a failed switch-all to show the rolled-back profiles", async ({ page }) => {
   await installDesktopMock(page, "failedBulkSwitch");
 
