@@ -217,6 +217,27 @@ test("activates a local profile set from overview quick switch", async ({ page }
   await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "Work" })).toBeVisible();
 });
 
+test("saves and deletes a local profile set from contexts", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Contexts" }).click();
+
+  const contextsForm = page.locator("form.stacked-form");
+  await contextsForm.getByLabel("Profile set name").fill("focus-mode");
+  await contextsForm.getByLabel("Label").fill("Focus Mode");
+  await contextsForm.getByLabel("Claude").selectOption("work");
+  await contextsForm.getByLabel("Codex").selectOption("work");
+  await contextsForm.getByRole("button", { name: "Save profile set" }).click();
+
+  await expect(page.getByText("Saved profile set focus-mode.")).toBeVisible();
+  await expect(page.getByText("Focus Mode")).toBeVisible();
+
+  await page.locator(".list-row").filter({ hasText: "Focus Mode" }).getByRole("button", { name: "Delete" }).click();
+  await expect(page.getByText("Deleted profile set focus-mode.")).toBeVisible();
+  await expect(page.getByText("Focus Mode")).not.toBeVisible();
+});
+
 test("binds and resolves workspace context from the workspaces panel", async ({ page }) => {
   await installDesktopMock(page, "switching");
 

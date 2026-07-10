@@ -75,6 +75,7 @@ export function ContextsPanel({
       },
       {
         onSuccess: () => {
+          setLastAction(`Saved profile set ${name}.`);
           setDraft({
             name: "",
             label: "",
@@ -91,14 +92,19 @@ export function ContextsPanel({
   }
 
   function deleteProfileSet(name: string) {
-    updateSettingsMutation.mutate({
-      runtime_kind: settings.runtime_kind,
-      runtime_path: settings.runtime_path ?? null,
-      aisw_home: settings.aisw_home ?? null,
-      update_channel: settings.update_channel,
-      profile_labels: settings.profile_labels ?? {},
-      profile_sets: localSets.filter((entry) => entry.name !== name),
-    });
+    updateSettingsMutation.mutate(
+      {
+        runtime_kind: settings.runtime_kind,
+        runtime_path: settings.runtime_path ?? null,
+        aisw_home: settings.aisw_home ?? null,
+        update_channel: settings.update_channel,
+        profile_labels: settings.profile_labels ?? {},
+        profile_sets: localSets.filter((entry) => entry.name !== name),
+      },
+      {
+        onSuccess: () => setLastAction(`Deleted profile set ${name}.`),
+      },
+    );
   }
 
   return (
