@@ -133,6 +133,36 @@ test("activates a local profile set from overview quick switch", async ({ page }
   await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "Work" })).toBeVisible();
 });
 
+test("binds and resolves workspace context from the workspaces panel", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Workspaces" }).click();
+
+  await expect(page.getByRole("heading", { name: "Workspace mismatch" })).toBeVisible();
+  await expect(page.getByText("Current context: work")).toBeVisible();
+  await expect(page.getByText("Expected context: client-acme")).toBeVisible();
+  await expect(page.getByText("path · /code/acme")).toBeVisible();
+
+  await page.getByRole("button", { name: "Use expected context now" }).click();
+  await expect(page.getByText("Current context: client-acme")).toBeVisible();
+  await expect(page.getByText("Expected context: client-acme")).toBeVisible();
+
+  const workspacesForm = page.locator("form.stacked-form");
+  await workspacesForm.getByLabel("Binding scope").selectOption("path");
+  await workspacesForm.locator("select").nth(1).selectOption("client-acme");
+  await workspacesForm.getByRole("textbox").fill("/code/next");
+  await workspacesForm.getByRole("button", { name: "Save binding" }).click();
+
+  await expect(page.getByText("path · /code/next")).toBeVisible();
+
+  await page.getByRole("button", { name: "Guard strict" }).click();
+  await expect(page.getByText("Guard mode: strict")).toBeVisible();
+
+  await page.getByRole("button", { name: "Remove this binding" }).first().click();
+  await expect(page.getByText("path · /code/acme")).not.toBeVisible();
+});
+
 test("creates profiles from environment and API key modes", async ({ page }) => {
   await installDesktopMock(page, "profiles");
 
@@ -430,7 +460,82 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
         settings: deepClone(scenarioState.settings ?? bootstrapSettings),
       };
 
-      const cloneSnapshot = () => deepClone(state.snapshot);
+      const stateWorkspace = {
+        current_path: "/code/acme",
+        current_remote: "git@github.com:acme/desktop.git",
+        current_context: activeScenario === "switching" ? "work" : "none",
+        guard_mode: "warn",
+        default_context: activeScenario === "switching" ? "work" : "none",
+        items:
+          activeScenario === "switching"
+            ? [{ scope: "path", path: "/code/acme", context: "client-acme" }]
+            : [],
+      };
+
+      const cloneBinding = (binding) => deepClone(binding);
+
+      const findMatchedBinding = () => {
+        const pathBindings = stateWorkspace.items
+          .filter((binding) => binding.scope === "path")
+          .sort((left, right) => right.path.length - left.path.length);
+        const pathMatch = pathBindings.find((binding) =>
+          stateWorkspace.current_path.startsWith(binding.path),
+        );
+        if (pathMatch) {
+          return cloneBinding(pathMatch);
+        }
+
+        const remoteBindings = stateWorkspace.items.filter((binding) => binding.scope === "git_remote");
+        const remoteMatch = remoteBindings.find((binding) =>
+          stateWorkspace.current_remote.includes(binding.pattern),
+        );
+        if (remoteMatch) {
+          return cloneBinding(remoteMatch);
+        }
+
+        if (stateWorkspace.default_context !== "none") {
+          return {
+            scope: "default",
+            target: "default",
+            context: stateWorkspace.default_context,
+          };
+        }
+
+        return null;
+      };
+
+      const workspaceStatusResult = () => {
+        const matchedBinding = findMatchedBinding();
+        if (!matchedBinding) {
+          return {
+            status: "unbound",
+            current_context: stateWorkspace.current_context,
+            expected_context: "none",
+          };
+        }
+
+        return {
+          status:
+            matchedBinding.context === stateWorkspace.current_context ? "match" : "mismatch",
+          current_context: stateWorkspace.current_context,
+          expected_context: matchedBinding.context,
+          matched_binding: matchedBinding,
+        };
+      };
+
+      const projectBindingsResult = () => ({
+        user_bindings: {
+          guard_mode: stateWorkspace.guard_mode,
+          default_context: stateWorkspace.default_context,
+          items: stateWorkspace.items.map((binding) => cloneBinding(binding)),
+        },
+      });
+
+      const cloneSnapshot = () => ({
+        ...deepClone(state.snapshot),
+        workspace_status: workspaceStatusResult(),
+        project_bindings: projectBindingsResult(),
+      });
       const listeners = new Map();
 
       const ensureToolEntry = (tool) => {
@@ -486,10 +591,10 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
           return deepClone(state.initReport);
         }
         if (command === "get_workspace_status") {
-          return { result: { status: "match" } };
+          return { result: workspaceStatusResult() };
         }
         if (command === "get_project_bindings") {
-          return { result: { user_bindings: { guard_mode: "warn" } } };
+          return { result: projectBindingsResult() };
         }
         if (command === "list_backups") {
           if (activeScenario === "switching") {
@@ -587,6 +692,12 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
               statusEntry.state_mode = tool === "gemini" ? null : "isolated";
             }
           });
+          stateWorkspace.current_context = args.name;
+          return { command, snapshot: cloneSnapshot() };
+        }
+        if (command === "use_context") {
+          const request = args.request;
+          stateWorkspace.current_context = request.context;
           return { command, snapshot: cloneSnapshot() };
         }
         if (command === "use_profile") {
@@ -601,6 +712,52 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
             statusEntry.active_profile_applied = true;
             statusEntry.state_mode = request.state_mode ?? statusEntry.state_mode;
           }
+          return { command, snapshot: cloneSnapshot() };
+        }
+        if (command === "workspace_bind") {
+          const request = args.request;
+          if (request.target.scope === "default") {
+            stateWorkspace.default_context = request.context;
+          } else if (request.target.scope === "path") {
+            stateWorkspace.items = stateWorkspace.items.filter(
+              (binding) => !(binding.scope === "path" && binding.path === request.target.path),
+            );
+            stateWorkspace.items.push({
+              scope: "path",
+              path: request.target.path,
+              context: request.context,
+            });
+          } else {
+            stateWorkspace.items = stateWorkspace.items.filter(
+              (binding) =>
+                !(binding.scope === "git_remote" && binding.pattern === request.target.pattern),
+            );
+            stateWorkspace.items.push({
+              scope: "git_remote",
+              pattern: request.target.pattern,
+              context: request.context,
+            });
+          }
+          return { command, snapshot: cloneSnapshot() };
+        }
+        if (command === "workspace_unbind") {
+          const target = args.target;
+          if (target.scope === "default") {
+            stateWorkspace.default_context = "none";
+          } else if (target.scope === "path") {
+            stateWorkspace.items = stateWorkspace.items.filter(
+              (binding) => !(binding.scope === "path" && binding.path === target.path),
+            );
+          } else {
+            stateWorkspace.items = stateWorkspace.items.filter(
+              (binding) =>
+                !(binding.scope === "git_remote" && binding.pattern === target.pattern),
+            );
+          }
+          return { command, snapshot: cloneSnapshot() };
+        }
+        if (command === "workspace_guard") {
+          stateWorkspace.guard_mode = args.mode;
           return { command, snapshot: cloneSnapshot() };
         }
         if (command === "restore_backup") {
