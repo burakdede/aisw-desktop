@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-type ScenarioName = "onboarding" | "switching" | "profiles" | "missingTool";
+type ScenarioName = "onboarding" | "switching" | "profiles" | "missingTool" | "partialSetup";
 
 const toolCapabilities = {
   claude: { state_modes: ["isolated", "shared"] },
@@ -57,6 +57,18 @@ test("opens profile setup from onboarding when first-switch options are missing"
 
   await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
   await expect(page.getByLabel("Tool")).toHaveValue("claude");
+});
+
+test("keeps onboarding usable when another installed tool has no live credentials", async ({ page }) => {
+  await installDesktopMock(page, "partialSetup");
+
+  await page.goto("/");
+
+  await expect(page.getByText("No live credentials detected").first()).toBeVisible();
+  await page.getByLabel("Add codex profile").click();
+
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(page.getByLabel("Tool")).toHaveValue("codex");
 });
 
 test("switches shared profiles and recovers from live mismatch", async ({ page }) => {
@@ -336,6 +348,53 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
                 { tool: "codex", outcome: "detected", auth_method: "oauth" },
                 { tool: "gemini", outcome: "detected", auth_method: "oauth" },
               ],
+            },
+          },
+        },
+        partialSetup: {
+          settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 0,
+                active_profile: null,
+                auth_method: null,
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: null,
+                credentials_present: false,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+              codex: {
+                active: null,
+                profiles: [],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
             },
           },
         },
