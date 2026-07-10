@@ -188,6 +188,7 @@ Acceptance criteria:
 - Labels honor saved overrides and active markers.
 - Tray context entries use the same saved profile-set labels as the main window surfaces.
 - Tray prefers native CLI context entries over duplicate profile-set actions when both refer to the same saved context.
+- Tray excludes stale saved profile sets whose mapped profiles no longer exist, matching the fail-closed main-window activation surfaces.
 - Tray refreshes after successful mutations.
 
 Test cases:
@@ -196,6 +197,7 @@ Test cases:
 - Uses label overrides in tray sections.
 - Uses saved profile-set labels and active markers in tray context entries.
 - Omits duplicate profile-set tray entries when a matching native CLI context already exists.
+- Omits stale profile-set tray entries when any mapped profile no longer exists in the live snapshot.
 - Invokes matching mutations from tray actions.
 
 ### 9. Settings and Shell Guidance
