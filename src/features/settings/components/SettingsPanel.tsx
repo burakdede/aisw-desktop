@@ -145,6 +145,9 @@ export function SettingsPanel({
               Current resolved path: {runtimeStatus.resolved_path ?? "No aisw runtime resolved"}
             </p>
             <p className="inline-note">
+              Effective AISW home: {settings.aisw_home ?? "~/.aisw"}
+            </p>
+            <p className="inline-note">
               Bundled aisw: {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
             </p>
             <p className="inline-note">
@@ -158,6 +161,16 @@ export function SettingsPanel({
             <p className="inline-note">
               Selected backend: <strong>{titleCase(runtimeKind)}</strong>
             </p>
+            <p className="inline-note">
+              Runtime version: {runtimeStatus.version?.version ?? "unknown"}
+            </p>
+            {runtimeStatus.version ? (
+              <p className="inline-note">
+                CLI API {runtimeStatus.version.cli_api_version} · JSON schema{" "}
+                {runtimeStatus.version.json_schema_version} · Progress schema{" "}
+                {runtimeStatus.version.progress_schema_version}
+              </p>
+            ) : null}
           </article>
         </div>
       </SectionCard>

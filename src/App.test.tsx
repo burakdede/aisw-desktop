@@ -4081,6 +4081,7 @@ describe("App", () => {
       expect(
         screen.getByText("Current resolved path: /Applications/AISW.app/Contents/Resources/aisw"),
       ).toBeInTheDocument();
+      expect(screen.getByText("Effective AISW home: ~/.aisw")).toBeInTheDocument();
       expect(
         screen.getAllByText("Bundled aisw: /Applications/AISW.app/Contents/Resources/aisw").length,
       ).toBeGreaterThan(0);
@@ -4088,6 +4089,8 @@ describe("App", () => {
       expect(
         screen.getByText((_, element) => element?.textContent?.trim() === "Selected backend: Bundled"),
       ).toBeInTheDocument();
+      expect(screen.getByText("Runtime version: 0.3.7")).toBeInTheDocument();
+      expect(screen.getByText("CLI API 1 · JSON schema 1 · Progress schema 1")).toBeInTheDocument();
     });
   });
 
