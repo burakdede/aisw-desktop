@@ -25,6 +25,7 @@ type ScenarioName =
   | "updaterError"
   | "updaterInstallError"
   | "customRuntime"
+  | "sharedWorkspaceContext"
   | "bootstrapError";
 
 const toolCapabilities = {
@@ -798,6 +799,25 @@ test("activates a CLI context from contexts", async ({ page }) => {
   await page.getByRole("button", { name: "Workspaces" }).click();
   await expect(page.getByText("Current context: client-acme")).toBeVisible();
   await expect(page.getByText("Expected context: client-acme")).toBeVisible();
+});
+
+test("preserves shared state mode when activating a CLI context", async ({ page }) => {
+  await installDesktopMock(page, "sharedWorkspaceContext");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Contexts" }).click();
+
+  await page.locator(".list-row").filter({ hasText: "client-acme" }).getByRole("button", { name: "Activate CLI context" }).click();
+
+  await expect
+    .poll(async () =>
+      page.evaluate(() => {
+        const log = window.__AISW_COMMAND_LOG__ ?? [];
+        const matching = [...log].reverse().find((entry) => entry.command === "use_context");
+        return matching?.args?.request?.state_mode;
+      }),
+    )
+    .toBe("shared");
 });
 
 test("uses saved profile labels in context summaries and selectors", async ({ page }) => {
@@ -2209,6 +2229,61 @@ async function installDesktopMock(
                 auth_method: "api_key",
                 credential_backend: "system_keyring",
                 state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+              codex: {
+                active: "work",
+                profiles: [{ name: "work", auth: "api_key", label: "Work" }],
+              },
+            },
+            contexts: [
+              {
+                name: "client-acme",
+                profiles: {
+                  claude: "work",
+                  codex: "work",
+                },
+              },
+            ],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
+        sharedWorkspaceContext: {
+          settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "shared",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "api_key",
+                credential_backend: "system_keyring",
+                state_mode: "shared",
                 active_profile_applied: true,
                 credentials_present: true,
                 permissions_ok: true,

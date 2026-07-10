@@ -1,8 +1,9 @@
 import { AppSnapshot, DesktopSettings } from "../../lib/schemas";
+import { resolveGlobalStateMode } from "../shared/state-modes";
 
 export type WorkspaceActivationTarget =
   | { kind: "profile_set"; name: string; label: string }
-  | { kind: "context"; name: string };
+  | { kind: "context"; name: string; stateMode: string | null };
 
 export function resolveWorkspaceActivationTarget(
   expectedContext: string,
@@ -14,9 +15,17 @@ export function resolveWorkspaceActivationTarget(
     return { kind: "profile_set", name: expectedContext, label: profileSet.label ?? profileSet.name };
   }
   if (snapshot.contexts.some((context) => context.name === expectedContext)) {
-    return { kind: "context", name: expectedContext };
+    return {
+      kind: "context",
+      name: expectedContext,
+      stateMode: resolveGlobalStateMode(snapshot),
+    };
   }
-  return { kind: "context", name: expectedContext };
+  return {
+    kind: "context",
+    name: expectedContext,
+    stateMode: resolveGlobalStateMode(snapshot),
+  };
 }
 
 export function workspaceBindingOptions(

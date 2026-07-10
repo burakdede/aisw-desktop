@@ -9,7 +9,7 @@ import {
   openExternalGuide,
   toolBinaryName,
 } from "../../../lib/tool-guidance";
-import { supportedStateModes } from "../../shared/state-modes";
+import { resolveGlobalStateMode, supportedStateModes } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import {
   contextDisplayLabel,
@@ -112,7 +112,7 @@ export function OverviewPanel({
               if (quickSwitch.startsWith("profile:")) {
                 useAllProfilesMutation.mutate({
                   profile: quickSwitch.slice("profile:".length),
-                  stateMode: "isolated",
+                  stateMode: resolveGlobalStateMode(snapshot),
                 });
               }
             }}

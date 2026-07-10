@@ -7,6 +7,7 @@ import {
 } from "../../../lib/profile-display";
 import { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
+import { resolveGlobalStateMode } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 
 const TOOLS = ["claude", "codex", "gemini"] as const;
@@ -250,7 +251,10 @@ export function ContextsPanel({
                   type="button"
                   disabled={mutationLock.isBusy}
                   onClick={() =>
-                    useContextMutation.mutate({ context: context.name, stateMode: "isolated" })
+                    useContextMutation.mutate({
+                      context: context.name,
+                      stateMode: resolveGlobalStateMode(snapshot),
+                    })
                   }
                 >
                   Activate CLI context

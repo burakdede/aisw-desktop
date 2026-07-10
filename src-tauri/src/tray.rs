@@ -3,7 +3,9 @@ use crate::models::{
     AppBootstrap, AppSnapshot, DesktopSettings, ProfileSet, UseAllProfilesRequest,
     UseContextRequest, UseProfileRequest,
 };
-use crate::state::{incompatible_runtime_error, AppState};
+use crate::state::{
+    incompatible_runtime_error, preferred_global_state_mode, preferred_tool_state_mode, AppState,
+};
 use serde::Serialize;
 use tauri::menu::{IsMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Emitter, Manager, Runtime};
@@ -119,9 +121,12 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
             tauri::async_runtime::spawn(async move {
                 let result = match ensure_tray_runtime_compatible(&state).await {
                     Ok(()) => {
+                        let snapshot = state.bootstrap().await.ok().and_then(|entry| entry.snapshot);
                         state
                             .mutate("tray_use_context", move |bridge| async move {
-                                bridge.use_context(tray_use_context_request(context.clone())).await
+                                bridge
+                                    .use_context(tray_use_context_request(context.clone(), snapshot.as_ref()))
+                                    .await
                             })
                             .await
                     }
@@ -145,10 +150,11 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
             tauri::async_runtime::spawn(async move {
                 let result = match ensure_tray_runtime_compatible(&state).await {
                     Ok(()) => {
+                        let snapshot = state.bootstrap().await.ok().and_then(|entry| entry.snapshot);
                         state
                             .mutate("tray_use_all_profiles", move |bridge| async move {
                                 bridge
-                                    .use_all_profiles(tray_use_all_profiles_request(profile.clone()))
+                                    .use_all_profiles(tray_use_all_profiles_request(profile.clone(), snapshot.as_ref()))
                                     .await
                             })
                             .await
@@ -193,10 +199,11 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
             tauri::async_runtime::spawn(async move {
                 let result = match ensure_tray_runtime_compatible(&state).await {
                     Ok(()) => {
+                        let snapshot = state.bootstrap().await.ok().and_then(|entry| entry.snapshot);
                         state
                             .mutate("tray_use_profile", move |bridge| async move {
                                 bridge
-                                    .use_profile(tray_use_profile_request(tool.clone(), profile.clone()))
+                                    .use_profile(tray_use_profile_request(tool.clone(), profile.clone(), snapshot.as_ref()))
                                     .await
                             })
                             .await
@@ -256,29 +263,35 @@ fn build_tray_command_result_event(
     }
 }
 
-fn tray_use_profile_request(tool: String, profile: String) -> UseProfileRequest {
+fn tray_use_profile_request(
+    tool: String,
+    profile: String,
+    snapshot: Option<&AppSnapshot>,
+) -> UseProfileRequest {
     UseProfileRequest {
-        state_mode: if tool == "gemini" {
-            None
-        } else {
-            Some("isolated".to_owned())
-        },
+        state_mode: preferred_tool_state_mode(&tool, snapshot),
         tool,
         profile,
     }
 }
 
-fn tray_use_context_request(context: String) -> UseContextRequest {
+fn tray_use_context_request(
+    context: String,
+    snapshot: Option<&AppSnapshot>,
+) -> UseContextRequest {
     UseContextRequest {
         context,
-        state_mode: Some("isolated".to_owned()),
+        state_mode: preferred_global_state_mode(snapshot),
     }
 }
 
-fn tray_use_all_profiles_request(profile: String) -> UseAllProfilesRequest {
+fn tray_use_all_profiles_request(
+    profile: String,
+    snapshot: Option<&AppSnapshot>,
+) -> UseAllProfilesRequest {
     UseAllProfilesRequest {
         profile,
-        state_mode: Some("isolated".to_owned()),
+        state_mode: preferred_global_state_mode(snapshot),
     }
 }
 
@@ -1106,12 +1119,32 @@ mod tests {
 
     #[test]
     fn tray_profile_requests_respect_tool_state_modes() {
-        let claude = tray_use_profile_request("claude".to_owned(), "work".to_owned());
+        let snapshot = AppSnapshot {
+            statuses: vec![ToolStatus {
+                tool: "claude".to_owned(),
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: Some("work".to_owned()),
+                auth_method: None,
+                credential_backend: None,
+                state_mode: Some("shared".to_owned()),
+                active_profile_applied: None,
+                credentials_present: None,
+                permissions_ok: None,
+                token_warning: None,
+                warnings: vec![],
+            }],
+            profiles: HashMap::new(),
+            contexts: vec![],
+            workspace_status: None,
+            project_bindings: None,
+        };
+        let claude = tray_use_profile_request("claude".to_owned(), "work".to_owned(), Some(&snapshot));
         assert_eq!(claude.tool, "claude");
         assert_eq!(claude.profile, "work");
-        assert_eq!(claude.state_mode.as_deref(), Some("isolated"));
+        assert_eq!(claude.state_mode.as_deref(), Some("shared"));
 
-        let gemini = tray_use_profile_request("gemini".to_owned(), "travel".to_owned());
+        let gemini = tray_use_profile_request("gemini".to_owned(), "travel".to_owned(), Some(&snapshot));
         assert_eq!(gemini.tool, "gemini");
         assert_eq!(gemini.profile, "travel");
         assert_eq!(gemini.state_mode, None);
@@ -1195,14 +1228,53 @@ mod tests {
     }
 
     #[test]
-    fn tray_global_requests_use_isolated_mode() {
-        let context = tray_use_context_request("client-acme".to_owned());
+    fn tray_global_requests_preserve_current_mode() {
+        let shared_snapshot = AppSnapshot {
+            statuses: vec![
+                ToolStatus {
+                    tool: "claude".to_owned(),
+                    binary_found: true,
+                    stored_profiles: 1,
+                    active_profile: Some("work".to_owned()),
+                    auth_method: None,
+                    credential_backend: None,
+                    state_mode: Some("shared".to_owned()),
+                    active_profile_applied: None,
+                    credentials_present: None,
+                    permissions_ok: None,
+                    token_warning: None,
+                    warnings: vec![],
+                },
+                ToolStatus {
+                    tool: "codex".to_owned(),
+                    binary_found: true,
+                    stored_profiles: 1,
+                    active_profile: Some("work".to_owned()),
+                    auth_method: None,
+                    credential_backend: None,
+                    state_mode: Some("shared".to_owned()),
+                    active_profile_applied: None,
+                    credentials_present: None,
+                    permissions_ok: None,
+                    token_warning: None,
+                    warnings: vec![],
+                },
+            ],
+            profiles: HashMap::new(),
+            contexts: vec![],
+            workspace_status: None,
+            project_bindings: None,
+        };
+        let context = tray_use_context_request("client-acme".to_owned(), Some(&shared_snapshot));
         assert_eq!(context.context, "client-acme");
-        assert_eq!(context.state_mode.as_deref(), Some("isolated"));
+        assert_eq!(context.state_mode.as_deref(), Some("shared"));
 
-        let switch_all = tray_use_all_profiles_request("work".to_owned());
+        let switch_all = tray_use_all_profiles_request("work".to_owned(), Some(&shared_snapshot));
         assert_eq!(switch_all.profile, "work");
-        assert_eq!(switch_all.state_mode.as_deref(), Some("isolated"));
+        assert_eq!(switch_all.state_mode.as_deref(), Some("shared"));
+
+        let isolated = tray_use_context_request("client-acme".to_owned(), None);
+        assert_eq!(isolated.state_mode.as_deref(), Some("isolated"));
     }
 
     #[test]

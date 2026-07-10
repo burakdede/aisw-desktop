@@ -127,7 +127,11 @@ impl AppState {
             })?;
 
         let contexts = bridge.list_contexts().await.unwrap_or_default();
-        let raw = activate_profile_set_on_bridge(&*bridge, &set, &contexts).await?;
+        let current_snapshot = self
+            .fetch_snapshot(&*bridge)
+            .await
+            .map_err(ErrorPayload::from)?;
+        let raw = activate_profile_set_on_bridge(&*bridge, &set, &contexts, &current_snapshot).await?;
         let snapshot = self
             .fetch_snapshot(&*bridge)
             .await
@@ -232,12 +236,13 @@ async fn activate_profile_set_on_bridge(
     bridge: &dyn AiswBridge,
     set: &ProfileSet,
     contexts: &[crate::models::ContextSummary],
+    snapshot: &AppSnapshot,
 ) -> Result<serde_json::Value, ErrorPayload> {
     if contexts.iter().any(|context| context.name == set.name) {
         return bridge
             .use_context(UseContextRequest {
                 context: set.name.clone(),
-                state_mode: Some("isolated".to_owned()),
+                state_mode: preferred_global_state_mode(Some(snapshot)),
             })
             .await
             .map(|raw| {
@@ -273,7 +278,7 @@ async fn activate_profile_set_on_bridge(
         return bridge
             .use_all_profiles(UseAllProfilesRequest {
                 profile: profile.clone(),
-                state_mode: Some("isolated".to_owned()),
+                state_mode: preferred_global_state_mode(Some(snapshot)),
             })
             .await
             .map(|raw| {
@@ -293,11 +298,7 @@ async fn activate_profile_set_on_bridge(
             .use_profile(UseProfileRequest {
                 tool: tool.clone(),
                 profile: profile.clone(),
-                state_mode: if tool == "gemini" {
-                    None
-                } else {
-                    Some("isolated".to_owned())
-                },
+                state_mode: preferred_tool_state_mode(&tool, Some(snapshot)),
             })
             .await
             .map_err(ErrorPayload::from)?;
@@ -313,4 +314,107 @@ async fn activate_profile_set_on_bridge(
         "name": set.name,
         "operations": operations,
     }))
+}
+
+pub(crate) fn preferred_global_state_mode(snapshot: Option<&AppSnapshot>) -> Option<String> {
+    let Some(snapshot) = snapshot else {
+        return Some("isolated".to_owned());
+    };
+
+    let editable_statuses = snapshot
+        .statuses
+        .iter()
+        .filter(|status| status.tool != "gemini")
+        .collect::<Vec<_>>();
+
+    if editable_statuses.is_empty() {
+        return Some("isolated".to_owned());
+    }
+
+    if editable_statuses
+        .iter()
+        .all(|status| status.state_mode.as_deref() == Some("shared"))
+    {
+        Some("shared".to_owned())
+    } else {
+        Some("isolated".to_owned())
+    }
+}
+
+pub(crate) fn preferred_tool_state_mode(
+    tool: &str,
+    snapshot: Option<&AppSnapshot>,
+) -> Option<String> {
+    if tool == "gemini" {
+        return None;
+    }
+
+    match snapshot
+        .and_then(|entry| entry.statuses.iter().find(|status| status.tool == tool))
+        .and_then(|status| status.state_mode.as_deref())
+    {
+        Some("shared") => Some("shared".to_owned()),
+        _ => Some("isolated".to_owned()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{preferred_global_state_mode, preferred_tool_state_mode};
+    use crate::models::{AppSnapshot, ToolStatus};
+    use std::collections::HashMap;
+
+    fn status(tool: &str, state_mode: Option<&str>) -> ToolStatus {
+        ToolStatus {
+            tool: tool.to_owned(),
+            binary_found: true,
+            stored_profiles: 1,
+            active_profile: Some("work".to_owned()),
+            auth_method: None,
+            credential_backend: None,
+            state_mode: state_mode.map(str::to_owned),
+            active_profile_applied: None,
+            credentials_present: None,
+            permissions_ok: None,
+            token_warning: None,
+            warnings: vec![],
+        }
+    }
+
+    fn snapshot(statuses: Vec<ToolStatus>) -> AppSnapshot {
+        AppSnapshot {
+            statuses,
+            profiles: HashMap::new(),
+            contexts: vec![],
+            workspace_status: None,
+            project_bindings: None,
+        }
+    }
+
+    #[test]
+    fn preferred_global_state_mode_preserves_shared_when_all_editable_tools_match() {
+        let snapshot = snapshot(vec![status("claude", Some("shared")), status("codex", Some("shared"))]);
+        assert_eq!(preferred_global_state_mode(Some(&snapshot)).as_deref(), Some("shared"));
+    }
+
+    #[test]
+    fn preferred_global_state_mode_falls_back_to_isolated_for_missing_or_mixed_modes() {
+        let mixed = snapshot(vec![status("claude", Some("shared")), status("codex", Some("isolated"))]);
+        assert_eq!(preferred_global_state_mode(Some(&mixed)).as_deref(), Some("isolated"));
+
+        let missing = snapshot(vec![status("claude", None), status("gemini", None)]);
+        assert_eq!(preferred_global_state_mode(Some(&missing)).as_deref(), Some("isolated"));
+        assert_eq!(preferred_global_state_mode(None).as_deref(), Some("isolated"));
+    }
+
+    #[test]
+    fn preferred_tool_state_mode_preserves_shared_for_supported_tools_only() {
+        let snapshot = snapshot(vec![status("claude", Some("shared")), status("gemini", None)]);
+        assert_eq!(
+            preferred_tool_state_mode("claude", Some(&snapshot)).as_deref(),
+            Some("shared")
+        );
+        assert_eq!(preferred_tool_state_mode("codex", Some(&snapshot)).as_deref(), Some("isolated"));
+        assert_eq!(preferred_tool_state_mode("gemini", Some(&snapshot)), None);
+    }
 }

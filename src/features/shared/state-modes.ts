@@ -1,4 +1,4 @@
-import { AppBootstrap } from "../../lib/schemas";
+import { AppBootstrap, AppSnapshot } from "../../lib/schemas";
 
 const EDITABLE_STATE_MODES = new Set(["isolated", "shared"]);
 
@@ -35,4 +35,14 @@ export function resolveStateModeRequest(
     return preferred;
   }
   return modes[0] ?? null;
+}
+
+export function resolveGlobalStateMode(snapshot: AppSnapshot) {
+  const editableStatuses = snapshot.statuses.filter((status) => status.tool !== "gemini");
+  if (!editableStatuses.length) {
+    return "isolated";
+  }
+  return editableStatuses.every((status) => status.state_mode === "shared")
+    ? "shared"
+    : "isolated";
 }

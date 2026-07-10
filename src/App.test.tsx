@@ -2225,6 +2225,81 @@ describe("App", () => {
     });
   });
 
+  it("preserves shared state mode when switching all tools from overview", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    const sharedBootstrap = {
+      ...bootstrap,
+      snapshot: {
+        ...bootstrap.snapshot,
+        statuses: [
+          {
+            ...bootstrap.snapshot.statuses[0],
+            state_mode: "shared",
+          },
+          {
+            tool: "codex",
+            binary_found: true,
+            stored_profiles: 1,
+            active_profile: "work",
+            auth_method: "api_key",
+            credential_backend: "file",
+            state_mode: "shared",
+            active_profile_applied: true,
+            credentials_present: true,
+            permissions_ok: true,
+            warnings: [],
+          },
+        ],
+        profiles: {
+          ...bootstrap.snapshot.profiles,
+          codex: {
+            active: "work",
+            profiles: [{ name: "work", auth: "api_key", label: "Work" }],
+          },
+        },
+      },
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "use_all_profiles") {
+        return { command, snapshot: sharedBootstrap.snapshot };
+      }
+      return (
+        {
+          get_bootstrap: sharedBootstrap,
+          get_snapshot: sharedBootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: sharedBootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Switch all")).toBeInTheDocument());
+    fireEvent.change(screen.getByDisplayValue("Switch profile set or shared profile…"), {
+      target: { value: "profile:work" },
+    });
+    fireEvent.click(screen.getByText("Switch all"));
+
+    await waitFor(() => {
+      expect(
+        calls.some(
+          (entry) =>
+            entry.command === "use_all_profiles" &&
+            (entry.args as { request?: { state_mode?: string | null } })?.request?.state_mode ===
+              "shared",
+        ),
+      ).toBe(true);
+    });
+  });
+
   it("runs the onboarding first switch flow", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
@@ -2543,6 +2618,32 @@ describe("App", () => {
     let currentContext = "work";
     const workspaceSnapshot = {
       ...bootstrap.snapshot,
+      statuses: [
+        {
+          ...bootstrap.snapshot.statuses[0],
+          state_mode: "shared",
+        },
+        {
+          tool: "codex",
+          binary_found: true,
+          stored_profiles: 1,
+          active_profile: "work",
+          auth_method: "api_key",
+          credential_backend: "file",
+          state_mode: "shared",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+          warnings: [],
+        },
+      ],
+      profiles: {
+        ...bootstrap.snapshot.profiles,
+        codex: {
+          active: "work",
+          profiles: [{ name: "work", auth: "api_key", label: "Work" }],
+        },
+      },
       contexts: [
         {
           name: "client-acme",
@@ -2631,6 +2732,14 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
     });
+    expect(
+      calls.some(
+        (entry) =>
+          entry.command === "use_context" &&
+          (entry.args as { request?: { state_mode?: string | null } })?.request?.state_mode ===
+            "shared",
+      ),
+    ).toBe(true);
     expect(
       screen.getByText("Last workspace result: Switched to client-acme for /code/acme."),
     ).toBeInTheDocument();

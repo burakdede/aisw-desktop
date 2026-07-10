@@ -12,6 +12,7 @@ import {
   openExternalGuide,
   toolBinaryName,
 } from "../../../lib/tool-guidance";
+import { resolveGlobalStateMode } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 
 type LiveAccount = {
@@ -280,7 +281,7 @@ export function SetupPanel({
               onClick={() =>
                 useAllProfilesMutation.mutate({
                   profile: firstSwitchProfile,
-                  stateMode: "isolated",
+                  stateMode: resolveGlobalStateMode(snapshot),
                 })
               }
             >

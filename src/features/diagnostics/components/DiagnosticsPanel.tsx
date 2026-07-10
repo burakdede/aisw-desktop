@@ -384,9 +384,14 @@ function buildQuickFixes(
     useContext: (request: { context: string; stateMode: string | null }) => void;
     activateProfileSet: (request: { name: string }) => void;
     activateWorkspaceTarget: (request: {
-      kind: "profile_set" | "context";
+      kind: "profile_set";
       name: string;
       matchedTarget: string;
+    } | {
+      kind: "context";
+      name: string;
+      matchedTarget: string;
+      stateMode: string | null;
     }) => void;
     applyRepairFixes: (fixes: string[]) => void;
     onOpenSettings: () => void;

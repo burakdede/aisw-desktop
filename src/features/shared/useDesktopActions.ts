@@ -39,6 +39,7 @@ type WorkspaceTargetInput =
       kind: "context";
       name: string;
       matchedTarget: string;
+      stateMode: string | null;
     };
 
 export function useDesktopActions() {
@@ -137,7 +138,7 @@ export function useDesktopActions() {
       const result = await enqueueMutation(label, () =>
         variables.kind === "profile_set"
           ? activateProfileSet({ name: variables.name })
-          : useContext({ context: variables.name, stateMode: "isolated" }),
+          : useContext({ context: variables.name, stateMode: variables.stateMode }),
       );
       const targetLabel =
         variables.kind === "profile_set" ? variables.label ?? variables.name : variables.name;
