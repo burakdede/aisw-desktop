@@ -863,7 +863,7 @@ describe("App", () => {
     });
   });
 
-  it("shows profile diagnostic details from the current tool status", async () => {
+  it("shows active profile diagnostic details from the current tool status", async () => {
     window.__AISW_DESKTOP_MOCK__ = {
       ...window.__AISW_DESKTOP_MOCK__,
       get_bootstrap: {
@@ -931,6 +931,99 @@ describe("App", () => {
         "Warning: Keyring access failed. Remediation: Unlock the local credential store and retry.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("limits live runtime diagnostics to the active profile details", async () => {
+    window.__AISW_DESKTOP_MOCK__ = {
+      ...window.__AISW_DESKTOP_MOCK__,
+      get_bootstrap: {
+        ...bootstrap,
+        snapshot: {
+          ...bootstrap.snapshot,
+          statuses: [
+            {
+              ...bootstrap.snapshot.statuses[0],
+              credentials_present: false,
+              permissions_ok: false,
+              token_warning: {
+                summary: "Claude session expires soon",
+                expires_in_days: 1,
+              },
+              warnings: [
+                {
+                  message: "Keyring access failed.",
+                  remediation: "Unlock the local credential store and retry.",
+                },
+              ],
+            },
+          ],
+          profiles: {
+            ...bootstrap.snapshot.profiles,
+            claude: {
+              active: "work",
+              profiles: [
+                { name: "work", auth: "oauth", label: "Work" },
+                { name: "personal", auth: "oauth", label: "Personal" },
+              ],
+            },
+          },
+        },
+      },
+      get_snapshot: {
+        ...bootstrap.snapshot,
+        statuses: [
+          {
+            ...bootstrap.snapshot.statuses[0],
+            credentials_present: false,
+            permissions_ok: false,
+            token_warning: {
+              summary: "Claude session expires soon",
+              expires_in_days: 1,
+            },
+            warnings: [
+              {
+                message: "Keyring access failed.",
+                remediation: "Unlock the local credential store and retry.",
+              },
+            ],
+          },
+        ],
+        profiles: {
+          ...bootstrap.snapshot.profiles,
+          claude: {
+            active: "work",
+            profiles: [
+              { name: "work", auth: "oauth", label: "Work" },
+              { name: "personal", auth: "oauth", label: "Personal" },
+            ],
+          },
+        },
+      },
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Profiles"));
+
+    const personalRow = screen
+      .getByText("personal · oauth")
+      .closest(".list-row") as HTMLElement | null;
+    expect(personalRow).not.toBeNull();
+    fireEvent.click(within(personalRow!).getByText("View diagnostic details"));
+
+    await waitFor(() => {
+      expect(within(personalRow!).getByText("Diagnostic details")).toBeInTheDocument();
+    });
+    expect(within(personalRow!).getByText("Auth method: oauth")).toBeInTheDocument();
+    expect(within(personalRow!).getByText("Desktop active: no")).toBeInTheDocument();
+    expect(
+      within(personalRow!).getByText(
+        "Live runtime diagnostics are only available for the active profile. Activate this profile to verify backend, live-match, token, and permission state.",
+      ),
+    ).toBeInTheDocument();
+    expect(within(personalRow!).queryByText(/Credential backend:/)).not.toBeInTheDocument();
+    expect(within(personalRow!).queryByText(/Live match:/)).not.toBeInTheDocument();
+    expect(within(personalRow!).queryByText(/Token warning:/)).not.toBeInTheDocument();
   });
 
   it("warns before adding a duplicate profile name", async () => {

@@ -1380,6 +1380,28 @@ test("shows token and runtime warnings in profile diagnostic details", async ({ 
   ).toBeVisible();
 });
 
+test("limits live runtime diagnostics to the active profile details", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  const personalRow = page.locator(".list-row").filter({ hasText: "personal · oauth" });
+  await personalRow.getByRole("button", { name: "View diagnostic details" }).click();
+
+  await expect(personalRow.getByRole("heading", { name: "Diagnostic details" })).toBeVisible();
+  await expect(personalRow.getByText("Auth method: oauth")).toBeVisible();
+  await expect(personalRow.getByText("Desktop active: no")).toBeVisible();
+  await expect(
+    personalRow.getByText(
+      "Live runtime diagnostics are only available for the active profile. Activate this profile to verify backend, live-match, token, and permission state.",
+    ),
+  ).toBeVisible();
+  await expect(personalRow.getByText("Credential backend: system_keyring")).toHaveCount(0);
+  await expect(personalRow.getByText(/^Live match:/)).toHaveCount(0);
+  await expect(personalRow.getByText(/^Token warning:/)).toHaveCount(0);
+});
+
 test("shows missing-profile remediation when a stale profile is re-applied", async ({ page }) => {
   await installDesktopMock(page, "staleProfile");
 

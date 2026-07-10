@@ -435,56 +435,76 @@ export function ProfilesPanel({
                   <article className="diagnostic-card">
                     <h4>Diagnostic details</h4>
                     <p className="inline-note">
-                      Credential backend: {toolStatus?.credential_backend ?? "unknown"}
+                      Auth method: {entry.auth}
                     </p>
                     <p className="inline-note">
-                      Live match:{" "}
-                      {toolStatus?.active_profile_applied === undefined ||
-                      toolStatus?.active_profile_applied === null
-                        ? "unknown"
-                        : toolStatus.active_profile_applied
-                          ? "yes"
-                          : "no"}
+                      Desktop active: {snapshot.profiles[tool]?.active === entry.name ? "yes" : "no"}
                     </p>
-                    <p className="inline-note">
-                      Credentials present:{" "}
-                      {toolStatus?.credentials_present === undefined ||
-                      toolStatus?.credentials_present === null
-                        ? "unknown"
-                        : toolStatus.credentials_present
-                          ? "yes"
-                          : "no"}
-                    </p>
-                    <p className="inline-note">
-                      Permissions OK:{" "}
-                      {toolStatus?.permissions_ok === undefined || toolStatus?.permissions_ok === null
-                        ? "unknown"
-                        : toolStatus.permissions_ok
-                          ? "yes"
-                          : "no"}
-                    </p>
-                    {toolStatus?.token_warning ? (
+                    {latestBackup ? (
                       <p className="inline-note">
-                        Token warning: {formatProfileTokenWarning(toolStatus)}
+                        Latest backup: {formatBackupTimestamp(latestBackup.created_at ?? latestBackup.backup_id)}
                       </p>
                     ) : null}
-                    {toolStatus?.warnings.length ? (
-                      <div className="stack-list">
-                        {toolStatus.warnings.map((warning, index) => (
-                          <p
-                            key={`${warning.code ?? warning.message ?? "warning"}-${index}`}
-                            className="inline-note"
-                          >
-                            Warning: {formatProfileWarning(warning)}
+                    {snapshot.profiles[tool]?.active === entry.name ? (
+                      <>
+                        <p className="inline-note">
+                          Credential backend: {toolStatus?.credential_backend ?? "unknown"}
+                        </p>
+                        <p className="inline-note">
+                          Live match:{" "}
+                          {toolStatus?.active_profile_applied === undefined ||
+                          toolStatus?.active_profile_applied === null
+                            ? "unknown"
+                            : toolStatus.active_profile_applied
+                              ? "yes"
+                              : "no"}
+                        </p>
+                        <p className="inline-note">
+                          Credentials present:{" "}
+                          {toolStatus?.credentials_present === undefined ||
+                          toolStatus?.credentials_present === null
+                            ? "unknown"
+                            : toolStatus.credentials_present
+                              ? "yes"
+                              : "no"}
+                        </p>
+                        <p className="inline-note">
+                          Permissions OK:{" "}
+                          {toolStatus?.permissions_ok === undefined || toolStatus?.permissions_ok === null
+                            ? "unknown"
+                            : toolStatus.permissions_ok
+                              ? "yes"
+                              : "no"}
+                        </p>
+                        {toolStatus?.token_warning ? (
+                          <p className="inline-note">
+                            Token warning: {formatProfileTokenWarning(toolStatus)}
                           </p>
-                        ))}
-                      </div>
-                    ) : null}
-                    {!toolStatus?.token_warning && !toolStatus?.warnings.length ? (
+                        ) : null}
+                        {toolStatus?.warnings.length ? (
+                          <div className="stack-list">
+                            {toolStatus.warnings.map((warning, index) => (
+                              <p
+                                key={`${warning.code ?? warning.message ?? "warning"}-${index}`}
+                                className="inline-note"
+                              >
+                                Warning: {formatProfileWarning(warning)}
+                              </p>
+                            ))}
+                          </div>
+                        ) : null}
+                        {!toolStatus?.token_warning && !toolStatus?.warnings.length ? (
+                          <p className="inline-note">
+                            No additional token or runtime warnings are currently reported for this tool.
+                          </p>
+                        ) : null}
+                      </>
+                    ) : (
                       <p className="inline-note">
-                        No additional token or runtime warnings are currently reported for this tool.
+                        Live runtime diagnostics are only available for the active profile. Activate this
+                        profile to verify backend, live-match, token, and permission state.
                       </p>
-                    ) : null}
+                    )}
                   </article>
                 ) : null}
               </div>
@@ -890,6 +910,40 @@ function formatProfileWarning(
 ) {
   const detail = warning.message ?? warning.code ?? "Warning reported by aisw.";
   return warning.remediation ? `${detail} Remediation: ${warning.remediation}` : detail;
+}
+
+function formatBackupTimestamp(value: string) {
+  const isoDate = Date.parse(value);
+  if (!Number.isNaN(isoDate)) {
+    return new Intl.DateTimeFormat(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZoneName: "short",
+    }).format(new Date(isoDate));
+  }
+
+  const match = value.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/);
+  if (!match) {
+    return "Unknown";
+  }
+
+  const [, year, month, day, hour, minute, second] = match;
+  const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(date);
 }
 
 function duplicateWarning(tool: string, profile: string) {
