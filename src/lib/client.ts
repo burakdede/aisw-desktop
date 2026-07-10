@@ -61,6 +61,7 @@ export interface UseAllProfilesInput {
 export interface UseContextInput {
   context: string;
   stateMode?: string | null;
+  label?: string;
 }
 
 export interface ActivateProfileSetInput {

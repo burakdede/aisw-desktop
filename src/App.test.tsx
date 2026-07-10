@@ -3222,6 +3222,105 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("uses saved profile-set labels in CLI context activation results", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    const settingsWithSet: DesktopSettings = {
+      ...bootstrap.settings,
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    };
+    let currentContext = "work";
+    const contextSnapshot = {
+      ...bootstrap.snapshot,
+      contexts: [
+        {
+          name: "client-acme",
+          profiles: {
+            claude: "work",
+            codex: "work",
+          },
+        },
+      ],
+      workspace_status: {
+        status: "mismatch",
+        current_context: currentContext,
+        expected_context: "client-acme",
+        matched_binding: {
+          scope: "path",
+          path: "/code/acme",
+          context: "client-acme",
+        },
+      },
+      project_bindings: {
+        user_bindings: {
+          guard_mode: "warn",
+          default_context: "none",
+          items: [{ scope: "path", path: "/code/acme", context: "client-acme" }],
+        },
+      },
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "use_context") {
+        currentContext = "client-acme";
+        return { command, snapshot: contextSnapshot };
+      }
+      return (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            settings: settingsWithSet,
+            snapshot: contextSnapshot,
+          },
+          get_snapshot: contextSnapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: {
+            result: {
+              status: currentContext === "client-acme" ? "match" : "mismatch",
+              current_context: currentContext,
+              expected_context: "client-acme",
+              matched_binding: {
+                scope: "path",
+                path: "/code/acme",
+                context: "client-acme",
+              },
+            },
+          },
+          get_project_bindings: {
+            result: {
+              user_bindings: {
+                guard_mode: "warn",
+                default_context: "none",
+                items: [{ scope: "path", path: "/code/acme", context: "client-acme" }],
+              },
+            },
+          },
+          list_backups: [],
+          get_settings: settingsWithSet,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Contexts"));
+    fireEvent.click(screen.getByText("Activate CLI context"));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
+    });
+    expect(screen.getByText("Last context result: Activated context Client Acme.")).toBeInTheDocument();
+  });
+
   it("excludes duplicate CLI workspace bindings when a matching profile set already exists", async () => {
     const settingsWithSet: DesktopSettings = {
       ...bootstrap.settings,

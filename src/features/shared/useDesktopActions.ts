@@ -214,7 +214,7 @@ export function useDesktopActions() {
         "Switch context",
         useContext,
         () => ({ type: "global", id: "context" }),
-        (variables) => `Activated context ${variables.context}.`,
+        (variables) => `Activated context ${variables.label ?? variables.context}.`,
       ),
       onSettled: invalidate,
     }),

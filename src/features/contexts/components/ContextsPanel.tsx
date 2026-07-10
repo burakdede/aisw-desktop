@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
 import {
+  contextDisplayLabel,
   profileSetHasSelections,
   profileSetDisplayLabel,
   profileSetIsActive,
@@ -299,6 +300,7 @@ export function ContextsPanel({
                     useContextMutation.mutate({
                       context: context.name,
                       stateMode: resolveGlobalStateMode(snapshot),
+                      label: contextDisplayLabel(settings, context.name),
                     })
                   }
                 >
