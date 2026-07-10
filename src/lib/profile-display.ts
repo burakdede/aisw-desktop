@@ -55,6 +55,13 @@ export function sharedProfileEntries(settings: DesktopSettings, snapshot: AppSna
 }
 
 export function activeSetLabel(settings: DesktopSettings, snapshot: AppSnapshot) {
+  const activeProfileSet = [...(settings.profile_sets ?? [])]
+    .sort((left, right) => left.name.localeCompare(right.name))
+    .find((set) => profileSetIsActive(snapshot, set));
+  if (activeProfileSet) {
+    return profileSetDisplayLabel(activeProfileSet);
+  }
+
   const activeProfiles = snapshot.statuses
     .map((status) => status.active_profile?.trim())
     .filter((profile): profile is string => Boolean(profile));

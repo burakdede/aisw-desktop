@@ -3332,7 +3332,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
-      expect(screen.getByText(/Client Acme/)).toBeInTheDocument();
+      expect(screen.getAllByText(/Client Acme/).length).toBeGreaterThan(0);
       expect(screen.getByText("Saved profile set client-acme.")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Active set" })).toBeDisabled();
     });
@@ -3682,6 +3682,38 @@ describe("App", () => {
           work: "Office",
         },
       },
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    };
+    const snapshotWithMatchingSet = {
+      ...bootstrap.snapshot,
+      statuses: [
+        ...bootstrap.snapshot.statuses,
+        {
+          tool: "codex",
+          binary_found: true,
+          stored_profiles: 1,
+          active_profile: "work",
+          auth_method: "api_key",
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+        },
+      ],
+      profiles: {
+        ...bootstrap.snapshot.profiles,
+        codex: {
+          active: "work",
+          profiles: [{ name: "work", auth: "api_key", label: "Work" }],
+        },
+      },
     };
 
     window.__AISW_DESKTOP_MOCK__ = async (command) =>
@@ -3690,8 +3722,9 @@ describe("App", () => {
           get_bootstrap: {
             ...bootstrap,
             settings: settingsWithOverride,
+            snapshot: snapshotWithMatchingSet,
           },
-          get_snapshot: bootstrap.snapshot,
+          get_snapshot: snapshotWithMatchingSet,
           run_init: {
             result: {
               live_accounts: [{ tool: "claude", outcome: "detected", auth_method: "oauth" }],
@@ -3709,7 +3742,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
-    expect(screen.getByText("Active set: Office")).toBeInTheDocument();
+    expect(screen.getByText("Active set: Client Acme")).toBeInTheDocument();
     const firstSwitchSelect = screen.getByLabelText("First switch profile");
     expect(within(firstSwitchSelect).getByRole("option", { name: "Office" })).toBeInTheDocument();
   });

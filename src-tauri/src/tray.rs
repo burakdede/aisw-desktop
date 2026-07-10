@@ -365,6 +365,16 @@ fn active_set_label(
     snapshot: Option<&AppSnapshot>,
 ) -> Option<String> {
     let snapshot = snapshot?;
+    if let Some(settings) = settings {
+        let mut sets = settings.profile_sets.iter().collect::<Vec<_>>();
+        sets.sort_by(|left, right| left.name.cmp(&right.name));
+        if let Some(active_set) = sets
+            .into_iter()
+            .find(|set| profile_set_is_active(set, snapshot))
+        {
+            return Some(profile_set_label(active_set, snapshot).trim_end_matches(" ✓").to_owned());
+        }
+    }
     let mut active_profiles = snapshot
         .statuses
         .iter()
@@ -858,7 +868,7 @@ mod tests {
     }
 
     #[test]
-    fn active_set_label_prefers_settings_override() {
+    fn active_set_label_prefers_profile_set_label() {
         let snapshot = AppSnapshot {
             statuses: vec![
                 ToolStatus {
@@ -928,12 +938,19 @@ mod tests {
                 "claude".to_owned(),
                 HashMap::from([("work".to_owned(), Some("Office".to_owned()))]),
             )]),
-            profile_sets: vec![],
+            profile_sets: vec![ProfileSet {
+                name: "client-acme".to_owned(),
+                label: Some("Client Acme".to_owned()),
+                profiles: HashMap::from([
+                    ("claude".to_owned(), Some("work".to_owned())),
+                    ("codex".to_owned(), Some("work".to_owned())),
+                ]),
+            }],
         };
 
         assert_eq!(
             active_set_label(Some(&settings), Some(&snapshot)).as_deref(),
-            Some("Office")
+            Some("Client Acme")
         );
     }
 
