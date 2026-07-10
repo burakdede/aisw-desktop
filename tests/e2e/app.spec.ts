@@ -698,6 +698,7 @@ test("binds and resolves workspace context from the workspaces panel", async ({ 
   await workspacesForm.getByRole("textbox").fill("/code/next");
   await workspacesForm.getByRole("button", { name: "Save binding" }).click();
 
+  await expect(page.getByText("Last workspace result: Saved workspace binding for Client Acme.")).toBeVisible();
   await expect(page.getByText("path · /code/next")).toBeVisible();
 
   await page.getByRole("button", { name: "Guard strict" }).click();

@@ -85,6 +85,10 @@ export function WorkspacesPanel({
   function submitBind(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!context) return;
+    const selectedContext = bindingOptions.find((entry) => entry.value === context);
+    const label = selectedContext?.label.startsWith("Profile set: ")
+      ? selectedContext.label.slice("Profile set: ".length)
+      : undefined;
 
     const target =
       scope === "default"
@@ -93,7 +97,7 @@ export function WorkspacesPanel({
           ? { scope: "path" as const, path: trimmedTargetValue }
           : { scope: "git_remote" as const, pattern: trimmedTargetValue };
 
-    workspaceBindMutation.mutate({ target, context });
+    workspaceBindMutation.mutate({ target, context, label });
   }
 
   return (

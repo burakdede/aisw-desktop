@@ -308,7 +308,7 @@ export function useDesktopActions() {
         "Save workspace binding",
         workspaceBind,
         () => ({ type: "global", id: "workspace" }),
-        (variables) => `Saved workspace binding for ${variables.context}.`,
+        (variables) => `Saved workspace binding for ${variables.label ?? variables.context}.`,
       ),
       onSuccess: invalidate,
     }),

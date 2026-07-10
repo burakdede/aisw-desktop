@@ -2005,6 +2005,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "workspace_bind")).toBe(true);
     });
+    expect(screen.getByText("Last workspace result: Saved workspace binding for Client Acme.")).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Profile set: Client Acme" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Remove this binding"));

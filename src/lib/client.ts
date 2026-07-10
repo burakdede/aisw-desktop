@@ -97,6 +97,7 @@ export interface WorkspaceBindInput {
     | { scope: "path"; path: string }
     | { scope: "git_remote"; pattern: string };
   context: string;
+  label?: string;
 }
 
 export interface WorkspaceUnbindInput {
