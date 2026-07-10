@@ -527,6 +527,19 @@ test("clears stale update results after channel edits until the user checks agai
   await expect(page.getByText(/Endpoint:\s*https:\/\/updates\.example\.com\/beta\.json/)).toBeVisible();
 });
 
+test("checks and installs a signed desktop update", async ({ page }) => {
+  await installDesktopMock(page, "profiles");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Check for updates" }).click();
+
+  await expect(page.getByText("Update available: 0.2.0")).toBeVisible();
+  await page.getByRole("button", { name: "Install update" }).click();
+
+  await expect(page.getByText("Update installed. Restart has been requested.")).toBeVisible();
+});
+
 test("clears a saved custom runtime path after switching back to bundled runtime", async ({ page }) => {
   await installDesktopMock(page, "customRuntime");
 
