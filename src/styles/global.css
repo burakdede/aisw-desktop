@@ -366,6 +366,48 @@ button {
   align-items: start;
 }
 
+.sets-layout {
+  grid-template-columns: minmax(0, 1.25fr) minmax(300px, 360px);
+  align-items: start;
+}
+
+.set-inventory-pane,
+.set-editor-card {
+  min-width: 0;
+}
+
+.set-row {
+  align-items: center;
+}
+
+.set-row-active {
+  border-color: color-mix(in srgb, AccentColor 32%, transparent);
+  background: color-mix(in srgb, AccentColor 8%, Canvas 92%);
+}
+
+.set-row-imported {
+  background: color-mix(in srgb, CanvasText 2%, Canvas 98%);
+}
+
+.set-row-main {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.set-row-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.set-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 12px;
+}
+
 .overview-stack {
   display: grid;
   gap: 12px;
@@ -871,6 +913,10 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .sets-layout {
+    grid-template-columns: 1fr;
+  }
+
   .window-toolbar {
     flex-direction: column;
     align-items: flex-start;
@@ -886,6 +932,7 @@ button {
 }
 
 @media (max-width: 880px) {
+  .set-profile-grid,
   .overview-tool-facts {
     grid-template-columns: 1fr;
   }

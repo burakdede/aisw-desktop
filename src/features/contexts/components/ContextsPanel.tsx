@@ -148,153 +148,153 @@ export function ContextsPanel({
   }
 
   return (
-    <SectionCard title="Sets" kicker="Saved switching combinations">
-      <div className="panel-grid panel-grid-2">
-        <form className="stacked-form" onSubmit={saveProfileSet}>
-          <label>
-            Set name
-            <input
-              value={draft.name}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, name: event.target.value }))
-              }
-            />
-          </label>
-          <label>
-            Label
-            <input
-              value={draft.label}
-              onChange={(event) => setDraft((current) => ({ ...current, label: event.target.value }))}
-            />
-          </label>
-          {TOOLS.map((tool) => (
-            <label key={tool}>
-              {titleCase(tool)}
-              <select
-                value={draft.profiles[tool] ?? ""}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    profiles: {
-                      ...current.profiles,
-                      [tool]: event.target.value,
-                    },
-                  }))
-                }
+    <SectionCard
+      title="Sets"
+      kicker="Saved switching combinations"
+      actions={
+        <button
+          className="primary-button"
+          type="button"
+          onClick={() =>
+            setDraft({
+              sourceName: null,
+              name: "",
+              label: "",
+              profiles: Object.fromEntries(TOOLS.map((tool) => [tool, ""])),
+            })
+          }
+        >
+          New set
+        </button>
+      }
+    >
+      <div className="panel-grid panel-grid-2 sets-layout">
+        <div className="stack-list set-inventory-pane">
+          <div className="stack-list">
+            {localSets.map((set) => (
+              <article
+                key={set.name}
+                className={`list-row set-row ${profileSetIsActive(snapshot, set) ? "set-row-active" : ""}`}
               >
-                <option value="">None</option>
-                {profileOptions[tool].map((profile) => (
-                  <option key={profile.value} value={profile.value}>
-                    {profile.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ))}
-          <button
-            className="primary-button"
-            type="submit"
-            disabled={
-              mutationLock.isBusy || !trimmedDraftName || !draftHasSelections || hasDuplicateSetName
-            }
-          >
-            {isEditingExistingSet ? "Update set" : "Save set"}
-          </button>
-          {hasDuplicateSetName ? (
-            <p className="inline-note">
-              A set named {trimmedDraftName} already exists. Rename the existing set or choose a different name.
-            </p>
-          ) : null}
-          {!draftHasSelections ? (
-            <p className="inline-note">
-              Select at least one tool profile before saving this set.
-            </p>
-          ) : null}
-        </form>
-
-        <div className="stack-list">
-          {localSets.map((set) => (
-            <article key={set.name} className="list-row">
-              <div>
-                <strong>{profileSetDisplayLabel(set)}{profileSetIsActive(snapshot, set) ? " ✓" : ""}</strong>
-                <p>
-                  {TOOLS.map((tool) => {
-                    const profile = set.profiles[tool];
-                    const label = profile
-                      ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
-                      : "none";
-                    return `${tool}: ${label}`;
-                  }).join(" · ")}
-                </p>
-              </div>
-              <div className="button-row button-row-column">
-                <button
-                  className="primary-button"
-                  type="button"
-                  disabled={
-                    mutationLock.isBusy ||
-                    profileSetIsActive(snapshot, set) ||
-                    !profileSetHasUsableSelections(snapshot, set)
-                  }
-                  onClick={() => void activateProfileSet(set)}
-                >
-                  {profileSetIsActive(snapshot, set) ? "Current set" : "Switch to set"}
-                </button>
-                <button
-                  className="ghost-button"
-                  type="button"
-                  onClick={() =>
-                    setDraft({
-                      sourceName: set.name,
-                      name: set.name,
-                      label: set.label ?? "",
-                      profiles: Object.fromEntries(
-                        TOOLS.map((tool) => [tool, set.profiles[tool] ?? ""]),
-                      ),
-                    })
-                  }
-                >
-                  Edit
-                </button>
-                <button
-                  className="ghost-button danger-button"
-                  type="button"
-                  disabled={mutationLock.isBusy}
-                  onClick={() => deleteProfileSet(set.name)}
-                >
-                  Delete
-                </button>
-              </div>
-              {!profileSetHasSelections(set) ? (
+                <div className="set-row-main">
+                  <div className="set-row-header">
+                    <strong>{profileSetDisplayLabel(set)}</strong>
+                    <span
+                      className={`pill ${
+                        profileSetIsActive(snapshot, set)
+                          ? "pill-ok"
+                          : profileSetHasUsableSelections(snapshot, set)
+                            ? "pill-soft"
+                            : "pill-warn"
+                      }`}
+                    >
+                      {profileSetIsActive(snapshot, set)
+                        ? "Current"
+                        : profileSetHasUsableSelections(snapshot, set)
+                          ? "Ready"
+                          : "Needs attention"}
+                    </span>
+                  </div>
+                  <div className="set-profile-grid">
+                    {TOOLS.map((tool) => {
+                      const profile = set.profiles[tool];
+                      const label = profile
+                        ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
+                        : "Not configured";
+                      return (
+                        <p key={tool} className="inline-note">
+                          <strong>{titleCase(tool)}:</strong> {label}
+                        </p>
+                      );
+                    })}
+                  </div>
+                  <p className="inline-note">
+                    {TOOLS.map((tool) => {
+                      const profile = set.profiles[tool];
+                      const label = profile
+                        ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
+                        : "none";
+                      return `${tool}: ${label}`;
+                    }).join(" · ")}
+                  </p>
+                  {!profileSetHasSelections(set) ? (
+                    <p className="inline-note">
+                      Add at least one mapped profile before using this set in Overview, the menu bar, or project rules.
+                    </p>
+                  ) : !profileSetHasUsableSelections(snapshot, set) ? (
+                    <p className="inline-note">
+                      Refresh or repair the missing mapped profiles before using this set. Missing:{" "}
+                      {missingProfileSetSelections(snapshot, set)
+                        .map(([tool, profile]) => `${tool}: ${profile}`)
+                        .join(" · ")}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="button-row button-row-column">
+                  <button
+                    className="primary-button"
+                    type="button"
+                    disabled={
+                      mutationLock.isBusy ||
+                      profileSetIsActive(snapshot, set) ||
+                      !profileSetHasUsableSelections(snapshot, set)
+                    }
+                    onClick={() => void activateProfileSet(set)}
+                  >
+                    {profileSetIsActive(snapshot, set) ? "Current set" : "Switch to set"}
+                  </button>
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    onClick={() =>
+                      setDraft({
+                        sourceName: set.name,
+                        name: set.name,
+                        label: set.label ?? "",
+                        profiles: Object.fromEntries(
+                          TOOLS.map((tool) => [tool, set.profiles[tool] ?? ""]),
+                        ),
+                      })
+                    }
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="ghost-button danger-button"
+                    type="button"
+                    disabled={mutationLock.isBusy}
+                    onClick={() => deleteProfileSet(set.name)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </article>
+            ))}
+            {!localSets.length ? (
+              <article className="diagnostic-card">
+                <h3>No saved sets yet</h3>
                 <p className="inline-note">
-                  Add at least one mapped profile before using this set in Overview, the menu bar, or project rules.
+                  No local sets are stored yet. Save a work, personal, or client bundle here when you
+                  need a reusable switching combination.
                 </p>
-              ) : !profileSetHasUsableSelections(snapshot, set) ? (
-                <p className="inline-note">
-                  Refresh or repair the missing mapped profiles before using this set. Missing:{" "}
-                  {missingProfileSetSelections(snapshot, set)
-                    .map(([tool, profile]) => `${tool}: ${profile}`)
-                    .join(" · ")}
-                </p>
-              ) : null}
-            </article>
-          ))}
-          {!localSets.length ? (
-            <p className="inline-note">
-              No local sets are stored yet. Save a work, personal, or client bundle here when you
-              need a reusable switching combination.
-            </p>
-          ) : null}
+              </article>
+            ) : null}
+          </div>
 
           <div className="stack-list">
             <h3>Imported contexts</h3>
             {snapshot.contexts.map((context) => (
-              <article key={context.name} className="list-row">
-                <div>
-                  <strong>
-                    {contextDisplayLabel(settings, context.name)}
-                    {activeContext === context.name ? " ✓" : ""}
-                  </strong>
+              <article key={context.name} className="list-row set-row set-row-imported">
+                <div className="set-row-main">
+                  <div className="set-row-header">
+                    <strong>
+                      {contextDisplayLabel(settings, context.name)}
+                      {activeContext === context.name ? " ✓" : ""}
+                    </strong>
+                    <span className={`pill ${activeContext === context.name ? "pill-ok" : "pill-soft"}`}>
+                      {activeContext === context.name ? "Current" : "Imported"}
+                    </span>
+                  </div>
                   {contextDisplayLabel(settings, context.name) !== context.name ? (
                     <p className="inline-note">CLI context id: {context.name}</p>
                   ) : null}
@@ -332,6 +332,7 @@ export function ContextsPanel({
               </p>
             ) : null}
           </div>
+
           {contextResult ? (
             <p className={`inline-note ${contextResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
               Last context result: {contextResult.message}
@@ -340,6 +341,99 @@ export function ContextsPanel({
           ) : null}
           {lastAction ? <p className="inline-note">{lastAction}</p> : null}
         </div>
+
+        <article className="diagnostic-card set-editor-card">
+          <div className="stack-list">
+            <div>
+              <p className="card-kicker">{isEditingExistingSet ? "Edit set" : "New set"}</p>
+              <h3>{isEditingExistingSet ? draft.label.trim() || draft.name : "Create a reusable set"}</h3>
+            </div>
+            <p className="inline-note">
+              Save the profiles you want to switch together so Overview, project rules, and quick switching
+              can work from one clear identity.
+            </p>
+          </div>
+
+          <form className="stacked-form diagnostics-body" onSubmit={saveProfileSet}>
+            <label>
+              Set name
+              <input
+                value={draft.name}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, name: event.target.value }))
+                }
+              />
+            </label>
+            <label>
+              Label
+              <input
+                value={draft.label}
+                onChange={(event) => setDraft((current) => ({ ...current, label: event.target.value }))}
+              />
+            </label>
+            {TOOLS.map((tool) => (
+              <label key={tool}>
+                {titleCase(tool)}
+                <select
+                  value={draft.profiles[tool] ?? ""}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      profiles: {
+                        ...current.profiles,
+                        [tool]: event.target.value,
+                      },
+                    }))
+                  }
+                >
+                  <option value="">None</option>
+                  {profileOptions[tool].map((profile) => (
+                    <option key={profile.value} value={profile.value}>
+                      {profile.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+            <div className="button-row">
+              <button
+                className="primary-button"
+                type="submit"
+                disabled={
+                  mutationLock.isBusy || !trimmedDraftName || !draftHasSelections || hasDuplicateSetName
+                }
+              >
+                {isEditingExistingSet ? "Update set" : "Save set"}
+              </button>
+              {isEditingExistingSet ? (
+                <button
+                  className="ghost-button"
+                  type="button"
+                  onClick={() =>
+                    setDraft({
+                      sourceName: null,
+                      name: "",
+                      label: "",
+                      profiles: Object.fromEntries(TOOLS.map((tool) => [tool, ""])),
+                    })
+                  }
+                >
+                  Cancel edit
+                </button>
+              ) : null}
+            </div>
+            {hasDuplicateSetName ? (
+              <p className="inline-note">
+                A set named {trimmedDraftName} already exists. Rename the existing set or choose a different name.
+              </p>
+            ) : null}
+            {!draftHasSelections ? (
+              <p className="inline-note">
+                Select at least one tool profile before saving this set.
+              </p>
+            ) : null}
+          </form>
+        </article>
       </div>
     </SectionCard>
   );
