@@ -146,7 +146,7 @@ export function SettingsPanel({
       <SectionCard title="Desktop updates" kicker="Signed app releases">
         <div className="stack-list">
           <p className="inline-note">
-            Check for a signed AISW Desktop release on the selected {settings.update_channel} channel.
+            Check for a signed AISW Desktop release on the selected {updateChannel} channel.
           </p>
           <div className="button-row">
             <button

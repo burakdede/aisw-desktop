@@ -231,6 +231,9 @@ test("requires saving settings before updater actions use a changed channel", as
 
   await page.getByLabel("Update channel").selectOption("beta");
   await expect(
+    page.getByText("Check for a signed AISW Desktop release on the selected beta channel."),
+  ).toBeVisible();
+  await expect(
     page.getByText(
       "Save settings before checking for updates so the runtime and channel selection match the persisted desktop configuration.",
     ),

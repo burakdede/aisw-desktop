@@ -3158,6 +3158,9 @@ describe("App", () => {
     });
 
     expect(
+      screen.getByText("Check for a signed AISW Desktop release on the selected beta channel."),
+    ).toBeInTheDocument();
+    expect(
       screen.getByText(
         "Save settings before checking for updates so the runtime and channel selection match the persisted desktop configuration.",
       ),
