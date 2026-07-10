@@ -48,6 +48,17 @@ test("opens shell setup from onboarding", async ({ page }) => {
   await expect(page.getByText("Config file: ~/.zshrc")).toBeVisible();
 });
 
+test("opens profile setup from onboarding when first-switch options are missing", async ({ page }) => {
+  await installDesktopMock(page, "onboarding");
+
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Open profile setup" }).click();
+
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(page.getByLabel("Tool")).toHaveValue("claude");
+});
+
 test("switches shared profiles and recovers from live mismatch", async ({ page }) => {
   await installDesktopMock(page, "switching");
 

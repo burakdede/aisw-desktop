@@ -248,9 +248,16 @@ export function SetupPanel({
             </button>
           </div>
           {!switchableProfiles.length ? (
-            <p className="inline-note">
-              Import or create matching profile names across tools before running a switch-all check.
-            </p>
+            <div className="stack-list">
+              <p className="inline-note">
+                Import or create matching profile names across tools before running a switch-all check.
+              </p>
+              <div className="button-row">
+                <button className="ghost-button" type="button" onClick={() => onOpenProfiles("claude")}>
+                  Open profile setup
+                </button>
+              </div>
+            </div>
           ) : null}
 
           <div className="diagnostic-card">
