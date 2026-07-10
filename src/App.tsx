@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { AppFrame } from "./components/AppFrame";
 import { SectionCard } from "./components/SectionCard";
 import { recordCommandResult } from "./features/shared/lastCommandResult";
@@ -31,6 +32,7 @@ type ProfilesRouteState = {
 };
 
 export function App() {
+  const queryClient = useQueryClient();
   const [activeNav, setActiveNav] = useState<(typeof NAV)[number]["id"]>("overview");
   const [profilesRouteState, setProfilesRouteState] = useState<ProfilesRouteState>({});
   const { bootstrap, snapshot, init } = useDesktop();
@@ -80,6 +82,7 @@ export function App() {
             ? payload.message
             : [payload.message, payload.remediation].filter(Boolean).join(" "),
       });
+      void queryClient.invalidateQueries({ queryKey: ["snapshot"] });
     }).then((dispose) => {
       if (typeof dispose === "function") {
         disposers.push(dispose);
@@ -90,7 +93,7 @@ export function App() {
       active = false;
       disposers.forEach((dispose) => dispose());
     };
-  }, []);
+  }, [queryClient]);
 
   if (bootstrap.isLoading) {
     return (

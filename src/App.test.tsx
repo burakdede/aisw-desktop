@@ -3141,6 +3141,93 @@ describe("App", () => {
     });
   });
 
+  it("refreshes overview state after a successful tray profile switch", async () => {
+    const refreshedSnapshot = {
+      ...bootstrap.snapshot,
+      statuses: bootstrap.snapshot.statuses.map((status) =>
+        status.tool === "claude" ? { ...status, active_profile: "personal" } : status,
+      ),
+      profiles: {
+        ...bootstrap.snapshot.profiles,
+        claude: {
+          active: "personal",
+          profiles: [
+            { name: "work", auth: "oauth", label: "Work" },
+            { name: "personal", auth: "oauth", label: "Personal" },
+          ],
+        },
+      },
+    };
+    let snapshotReads = 0;
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "get_snapshot") {
+        snapshotReads += 1;
+        return snapshotReads > 1 ? refreshedSnapshot : bootstrap.snapshot;
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          run_doctor: { summary: { status: "pass" } },
+          run_init: {
+            result: {
+              live_accounts: [{ tool: "claude", outcome: "detected", auth_method: "oauth" }],
+            },
+          },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+          get_shell_guidance: {
+            detected_shell: "zsh",
+            capabilities: [
+              "Apply CLAUDE_CONFIG_DIR, CODEX_HOME, and GEMINI_API_KEY into the current shell session when you run `aisw use` or `aisw context use`.",
+            ],
+            note: "Shell hook guidance remains informational.",
+            manual_apply_examples: ['eval "$(aisw use claude work --emit-env)"'],
+            variants: [
+              {
+                shell: "zsh",
+                title: "Zsh",
+                config_path: "~/.zshrc",
+                alternate_config_path: null,
+                install_command: "echo 'eval \"$(aisw shell-hook zsh)\"' >> ~/.zshrc",
+                reload_command: "source ~/.zshrc",
+                verify_command: "echo \"$AISW_SHELL_HOOK\"",
+                verify_expected: "1",
+              },
+            ],
+          },
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Work" })).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["tray-command-result"]?.({
+        scope: "tool",
+        tool: "claude",
+        label: "Switch profile",
+        status: "success",
+        message: "Switched claude to personal.",
+      });
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Personal" })).toBeInTheDocument();
+    });
+    expect(screen.getByText("Last result: Switched claude to personal.")).toBeInTheDocument();
+  });
+
   it("records tray context failures with remediation and shows a desktop notification", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());

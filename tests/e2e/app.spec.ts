@@ -15,6 +15,7 @@ type ScenarioName =
   | "profileCommandError"
   | "tokenWarnings"
   | "failedBulkSwitch"
+  | "trayRefresh"
   | "matchingContextSet"
   | "diagnosticFixes"
   | "missingTool"
@@ -378,6 +379,33 @@ test("records tray command results and shows a desktop notification", async ({ p
       title: "Switch profile",
       body: "Switched claude to work.",
     });
+});
+
+test("refreshes overview state after a successful tray profile switch", async ({ page }) => {
+  await installDesktopMock(page, "trayRefresh");
+
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Work" }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Personal" })).toHaveCount(0);
+
+  await page.evaluate(() => {
+    const handlers = (
+      window as typeof window & {
+        __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+      }
+    ).__AISW_DESKTOP_EVENT_HANDLERS__;
+    handlers?.["tray-command-result"]?.({
+      scope: "tool",
+      tool: "claude",
+      label: "Switch profile",
+      status: "success",
+      message: "Switched claude to personal.",
+    });
+  });
+
+  const claudeCard = page.locator(".tool-card").filter({ hasText: "Claude" });
+  await expect(claudeCard.getByRole("heading", { name: "Personal" })).toBeVisible();
+  await expect(claudeCard.getByText("Last result: Switched claude to personal.")).toBeVisible();
 });
 
 test("records tray context failures and keeps the remediation visible in overview", async ({ page }) => {
@@ -1686,6 +1714,56 @@ async function installDesktopMock(
             },
           },
         },
+        trayRefresh: {
+          settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 2,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "api_key",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [
+                  { name: "work", auth: "oauth", label: "Work" },
+                  { name: "personal", auth: "oauth", label: "Personal" },
+                ],
+              },
+              codex: {
+                active: "work",
+                profiles: [{ name: "work", auth: "api_key", label: "Work" }],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
         matchingContextSet: {
           settings: {
             ...bootstrapSettings,
@@ -2510,6 +2588,22 @@ async function installDesktopMock(
                   };
                 }
               });
+            }
+          }
+          if (activeScenario === "trayRefresh") {
+            state.snapshotReads += 1;
+            if (state.snapshotReads > 1) {
+              state.snapshot.statuses = state.snapshot.statuses.map((entry) =>
+                entry.tool === "claude"
+                  ? { ...entry, active_profile: "personal", active_profile_applied: true }
+                  : entry,
+              );
+              if (state.snapshot.profiles.claude) {
+                state.snapshot.profiles.claude = {
+                  ...state.snapshot.profiles.claude,
+                  active: "personal",
+                };
+              }
             }
           }
           return cloneSnapshot();
