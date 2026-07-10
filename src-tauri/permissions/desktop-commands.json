@@ -1,0 +1,42 @@
+{
+  "$schema": "../gen/schemas/acl-manifests.json",
+  "default": null,
+  "permission": [
+    {
+      "identifier": "desktop-commands",
+      "description": "Allows the AISW Desktop invoke commands exposed to the main window.",
+      "commands": {
+        "allow": [
+          "get_bootstrap",
+          "get_snapshot",
+          "get_settings",
+          "get_shell_guidance",
+          "check_for_updates",
+          "install_update",
+          "update_settings",
+          "run_init",
+          "add_profile",
+          "add_profile_oauth",
+          "use_profile",
+          "use_all_profiles",
+          "use_context",
+          "activate_profile_set",
+          "rename_profile",
+          "remove_profile",
+          "restore_backup",
+          "run_doctor",
+          "run_verify",
+          "run_repair",
+          "export_diagnostic_bundle",
+          "list_backups",
+          "get_workspace_status",
+          "get_project_bindings",
+          "workspace_bind",
+          "workspace_unbind",
+          "workspace_guard"
+        ],
+        "deny": []
+      }
+    }
+  ]
+}

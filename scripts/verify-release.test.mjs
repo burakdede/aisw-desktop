@@ -60,6 +60,73 @@ function createReleaseFixture(overrides = {}) {
   );
   writeFixture(
     root,
+    "src-tauri/permissions/desktop-commands.json",
+    JSON.stringify(
+      {
+        permission: [
+          {
+            identifier: "desktop-commands",
+            commands: {
+              allow: [
+                "get_bootstrap",
+                "get_snapshot",
+                "get_settings",
+                "get_shell_guidance",
+                "check_for_updates",
+                "install_update",
+                "update_settings",
+                "run_init",
+                "add_profile",
+                "add_profile_oauth",
+                "use_profile",
+                "use_all_profiles",
+                "use_context",
+                "activate_profile_set",
+                "rename_profile",
+                "remove_profile",
+                "restore_backup",
+                "run_doctor",
+                "run_verify",
+                "run_repair",
+                "export_diagnostic_bundle",
+                "list_backups",
+                "get_workspace_status",
+                "get_project_bindings",
+                "workspace_bind",
+                "workspace_unbind",
+                "workspace_guard",
+              ],
+              deny: [],
+            },
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+  writeFixture(
+    root,
+    "src-tauri/capabilities/main.json",
+    JSON.stringify(
+      {
+        identifier: "main-capability",
+        windows: ["main"],
+        permissions: [
+          "desktop-commands",
+          "core:event:allow-listen",
+          "core:event:allow-unlisten",
+          "notification:allow-is-permission-granted",
+          "notification:allow-request-permission",
+          "notification:allow-notify",
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+  writeFixture(
+    root,
     ".github/workflows/ci.yml",
     overrides.ciWorkflow ??
       `
@@ -139,6 +206,10 @@ describe("verify-release", () => {
       checks: expect.arrayContaining([
         expect.objectContaining({ ok: true, label: "publish workflow enforces verification matrix" }),
         expect.objectContaining({ ok: true, label: "publish workflow covers every supported release target" }),
+        expect.objectContaining({
+          ok: true,
+          label: "tauri main window capability stays least-privilege",
+        }),
       ]),
     });
   });
@@ -249,6 +320,57 @@ AISW_SIDECAR_URL_LINUX_X64
     expect(result.checks).toContainEqual(
       expect.objectContaining({
         label: "publish workflow configures updater channels",
+        ok: false,
+      }),
+    );
+  });
+
+  it("fails when the Tauri desktop permission surface drifts or broad permissions are reintroduced", () => {
+    const root = createReleaseFixture();
+    writeFixture(
+      root,
+      "src-tauri/permissions/desktop-commands.json",
+      JSON.stringify(
+        {
+          permission: [
+            {
+              identifier: "desktop-commands",
+              commands: {
+                allow: ["get_bootstrap", "workspace_guard"],
+                deny: [],
+              },
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+    );
+    writeFixture(
+      root,
+      "src-tauri/capabilities/main.json",
+      JSON.stringify(
+        {
+          identifier: "main-capability",
+          windows: ["main"],
+          permissions: ["desktop-commands", "core:default"],
+        },
+        null,
+        2,
+      ),
+    );
+
+    const result = verifyReleaseContract(root);
+    expect(result.ok).toBe(false);
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        label: "tauri desktop permission allowlist matches the registered invoke surface",
+        ok: false,
+      }),
+    );
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        label: "tauri main window capability stays least-privilege",
         ok: false,
       }),
     );

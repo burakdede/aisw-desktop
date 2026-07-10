@@ -9,9 +9,49 @@ const repoRoot = resolve(scriptDir, "..");
 export function verifyReleaseContract(rootDir = repoRoot) {
   const packageJson = JSON.parse(readFileSync(resolve(rootDir, "package.json"), "utf8"));
   const tauriConfig = JSON.parse(readFileSync(resolve(rootDir, "src-tauri/tauri.conf.json"), "utf8"));
+  const desktopPermissions = JSON.parse(
+    readFileSync(resolve(rootDir, "src-tauri/permissions/desktop-commands.json"), "utf8"),
+  );
+  const mainCapability = JSON.parse(
+    readFileSync(resolve(rootDir, "src-tauri/capabilities/main.json"), "utf8"),
+  );
   const ciWorkflow = readFileSync(resolve(rootDir, ".github/workflows/ci.yml"), "utf8");
   const publishWorkflow = readFileSync(resolve(rootDir, ".github/workflows/publish.yml"), "utf8");
   const runbook = readFileSync(resolve(rootDir, "docs/release-runbook.md"), "utf8");
+  const expectedDesktopCommands = [
+    "get_bootstrap",
+    "get_snapshot",
+    "get_settings",
+    "get_shell_guidance",
+    "check_for_updates",
+    "install_update",
+    "update_settings",
+    "run_init",
+    "add_profile",
+    "add_profile_oauth",
+    "use_profile",
+    "use_all_profiles",
+    "use_context",
+    "activate_profile_set",
+    "rename_profile",
+    "remove_profile",
+    "restore_backup",
+    "run_doctor",
+    "run_verify",
+    "run_repair",
+    "export_diagnostic_bundle",
+    "list_backups",
+    "get_workspace_status",
+    "get_project_bindings",
+    "workspace_bind",
+    "workspace_unbind",
+    "workspace_guard",
+  ];
+  const allowedDesktopCommands =
+    desktopPermissions.permission?.find((entry) => entry.identifier === "desktop-commands")?.commands?.allow ?? [];
+  const mainCapabilityPermissions = Array.isArray(mainCapability.permissions)
+    ? mainCapability.permissions
+    : [];
 
   const checks = [
     {
@@ -41,6 +81,29 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         tauriConfig.plugins.updater.channels &&
         typeof tauriConfig.plugins.updater.channels === "object" &&
         Array.isArray(tauriConfig.plugins.updater.endpoints),
+    },
+    {
+      label: "tauri desktop permission allowlist matches the registered invoke surface",
+      ok:
+        expectedDesktopCommands.length === allowedDesktopCommands.length &&
+        expectedDesktopCommands.every((command) => allowedDesktopCommands.includes(command)),
+    },
+    {
+      label: "tauri main window capability stays least-privilege",
+      ok:
+        mainCapability.identifier === "main-capability" &&
+        Array.isArray(mainCapability.windows) &&
+        mainCapability.windows.includes("main") &&
+        ["desktop-commands", "core:event:allow-listen", "core:event:allow-unlisten", "notification:allow-is-permission-granted", "notification:allow-request-permission", "notification:allow-notify"].every(
+          (permission) => mainCapabilityPermissions.includes(permission),
+        ) &&
+        !mainCapabilityPermissions.some((permission) =>
+          typeof permission === "string" &&
+          (permission === "core:default" ||
+            permission.startsWith("shell:") ||
+            permission.startsWith("fs:") ||
+            permission.startsWith("opener:")),
+        ),
     },
     {
       label: "runbook documents sidecar staging",
