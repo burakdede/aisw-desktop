@@ -52,6 +52,10 @@ export function ProfilesPanel({
   const [oauthEvents, setOauthEvents] = useState<OAuthProgressEvent[]>([]);
   const [oauthError, setOauthError] = useState("");
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
+  const [pendingRestore, setPendingRestore] = useState<{
+    profile: string;
+    mode: "files" | "activate";
+  } | null>(null);
   const [expandedDetails, setExpandedDetails] = useState<string | null>(null);
   const apiKeyInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -331,6 +335,10 @@ export function ProfilesPanel({
             const renameDuplicate =
               renameDraft.trim().length > 0 &&
               isDuplicateProfileName(profiles, entry.name, renameDraft);
+            const isPendingRestoreFiles =
+              pendingRestore?.profile === entry.name && pendingRestore.mode === "files";
+            const isPendingRestoreAndActivate =
+              pendingRestore?.profile === entry.name && pendingRestore.mode === "activate";
             return (
             <article key={entry.name} className="list-row">
               <div>
@@ -501,28 +509,81 @@ export function ProfilesPanel({
                       className="ghost-button"
                       type="button"
                       disabled={mutationLock.isBusy}
-                      onClick={() => restoreBackupMutation.mutate(latestBackup.backup_id)}
+                      onClick={() =>
+                        setPendingRestore({
+                          profile: entry.name,
+                          mode: "files",
+                        })
+                      }
                     >
                       Restore latest
                     </button>
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      disabled={mutationLock.isBusy}
-                      onClick={() => {
-                        restoreBackupMutation.mutate(latestBackup.backup_id, {
-                          onSuccess: () => {
-                            useProfileMutation.mutate({
-                              tool,
-                              profile: entry.name,
-                              stateMode: tool === "gemini" ? null : "isolated",
-                            });
-                          },
-                        });
-                      }}
-                    >
-                      Restore latest + activate
-                    </button>
+                    {isPendingRestoreFiles ? (
+                      <>
+                        <button
+                          className="ghost-button danger-button"
+                          type="button"
+                          disabled={mutationLock.isBusy}
+                          onClick={() =>
+                            restoreBackupMutation.mutate(latestBackup.backup_id, {
+                              onSuccess: () => setPendingRestore(null),
+                            })
+                          }
+                        >
+                          Confirm restore latest
+                        </button>
+                        <button
+                          className="ghost-button"
+                          type="button"
+                          onClick={() => setPendingRestore(null)}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : isPendingRestoreAndActivate ? (
+                      <>
+                        <button
+                          className="primary-button"
+                          type="button"
+                          disabled={mutationLock.isBusy}
+                          onClick={() =>
+                            restoreBackupMutation.mutate(latestBackup.backup_id, {
+                              onSuccess: () => {
+                                setPendingRestore(null);
+                                useProfileMutation.mutate({
+                                  tool,
+                                  profile: entry.name,
+                                  stateMode: tool === "gemini" ? null : "isolated",
+                                });
+                              },
+                            })
+                          }
+                        >
+                          Confirm restore latest and activate
+                        </button>
+                        <button
+                          className="ghost-button"
+                          type="button"
+                          onClick={() => setPendingRestore(null)}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        disabled={mutationLock.isBusy}
+                        onClick={() =>
+                          setPendingRestore({
+                            profile: entry.name,
+                            mode: "activate",
+                          })
+                        }
+                      >
+                        Restore latest + activate
+                      </button>
+                    )}
                   </>
                 ) : null}
                 {snapshot.profiles[tool]?.active === entry.name ? (
@@ -578,6 +639,16 @@ export function ProfilesPanel({
                   </button>
                 )}
               </div>
+              {isPendingRestoreFiles ? (
+                <p className="inline-note">
+                  Confirm before restoring the latest backup for {tool} / {entry.name}. This replays the saved files only.
+                </p>
+              ) : null}
+              {isPendingRestoreAndActivate ? (
+                <p className="inline-note">
+                  Confirm before restoring and activating the latest backup for {tool} / {entry.name}. This replays the backup and switches the live profile again.
+                </p>
+              ) : null}
             </article>
             );
           })}
