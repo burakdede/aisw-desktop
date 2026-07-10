@@ -11,7 +11,9 @@ export function resolveWorkspaceActivationTarget(
   settings: DesktopSettings,
   snapshot: AppSnapshot,
 ): WorkspaceActivationTarget {
-  const profileSet = settings.profile_sets?.find((set) => set.name === expectedContext);
+  const profileSet = settings.profile_sets?.find(
+    (set) => set.name === expectedContext && profileSetHasSelections(set),
+  );
   if (profileSet) {
     return { kind: "profile_set", name: expectedContext, label: profileSet.label ?? profileSet.name };
   }

@@ -30,6 +30,7 @@ type ScenarioName =
   | "sharedWorkspaceContext"
   | "profileLatestBackup"
   | "emptyProfileSet"
+  | "emptyProfileSetWorkspaceMismatch"
   | "bootstrapError";
 
 const toolCapabilities = {
@@ -1077,6 +1078,35 @@ test("keeps empty profile sets out of activation surfaces", async ({ page }) => 
   await expect(
     page.getByText("Select at least one tool profile before saving this profile set."),
   ).toBeVisible();
+});
+
+test("prefers a matching CLI context over an empty profile set during workspace recovery", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "emptyProfileSetWorkspaceMismatch");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Workspaces" }).click();
+
+  await expect(page.getByRole("heading", { name: "Workspace mismatch" })).toBeVisible();
+  await expect(page.getByText("Expected context: Client Acme")).toBeVisible();
+  await page.getByRole("button", { name: "Use expected context now" }).click();
+
+  await expect
+    .poll(async () =>
+      page.evaluate(() => {
+        const log = window.__AISW_COMMAND_LOG__ ?? [];
+        return {
+          useContext: log.filter((entry) => entry.command === "use_context").length,
+          activateProfileSet: log.filter((entry) => entry.command === "activate_profile_set").length,
+        };
+      }),
+    )
+    .toEqual({
+      useContext: 1,
+      activateProfileSet: 0,
+    });
+  await expect(page.getByText("Current context: Client Acme")).toBeVisible();
 });
 
 test("uses saved profile labels in context summaries and selectors", async ({ page }) => {
@@ -2877,6 +2907,74 @@ async function installDesktopMock(
             },
           },
         },
+        emptyProfileSetWorkspaceMismatch: {
+          settings: {
+            ...bootstrapSettings,
+            profile_sets: [
+              {
+                name: "client-acme",
+                label: "Client Acme",
+                profiles: {
+                  claude: null,
+                  codex: null,
+                  gemini: null,
+                },
+              },
+            ],
+          },
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "shared",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "api_key",
+                credential_backend: "file",
+                state_mode: "shared",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+              codex: {
+                active: "work",
+                profiles: [{ name: "work", auth: "api_key", label: "Work" }],
+              },
+            },
+            contexts: [
+              {
+                name: "client-acme",
+                profiles: {
+                  claude: "work",
+                  codex: "work",
+                },
+              },
+            ],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
         profiles: {
           settings: bootstrapSettings,
           snapshot: {
@@ -3381,21 +3479,24 @@ async function installDesktopMock(
           activeScenario === "switching" ||
           activeScenario === "workspaceContext" ||
           activeScenario === "trayWorkspaceRefresh" ||
-          activeScenario === "diagnosticFixes"
+          activeScenario === "diagnosticFixes" ||
+          activeScenario === "emptyProfileSetWorkspaceMismatch"
             ? "work"
             : "none",
         guard_mode: "warn",
         default_context:
           activeScenario === "switching" ||
           activeScenario === "trayWorkspaceRefresh" ||
-          activeScenario === "diagnosticFixes"
+          activeScenario === "diagnosticFixes" ||
+          activeScenario === "emptyProfileSetWorkspaceMismatch"
             ? "work"
             : "none",
         items:
           activeScenario === "switching" ||
           activeScenario === "workspaceContext" ||
           activeScenario === "trayWorkspaceRefresh" ||
-          activeScenario === "diagnosticFixes"
+          activeScenario === "diagnosticFixes" ||
+          activeScenario === "emptyProfileSetWorkspaceMismatch"
             ? [{ scope: "path", path: "/code/acme", context: "client-acme" }]
             : [],
       };
