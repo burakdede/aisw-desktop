@@ -21,3 +21,18 @@ export function supportedStateModes(
 
   return ["isolated", "shared"];
 }
+
+export function resolveStateModeRequest(
+  tool: string,
+  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"],
+  preferred: string | null | undefined,
+) {
+  const modes = supportedStateModes(tool, toolCapabilities);
+  if (!modes.length) {
+    return null;
+  }
+  if (preferred && modes.includes(preferred)) {
+    return preferred;
+  }
+  return modes[0] ?? null;
+}

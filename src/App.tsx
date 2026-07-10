@@ -244,6 +244,7 @@ export function App() {
             <BackupsPanel
               snapshot={resolvedSnapshot}
               settings={settings}
+              toolCapabilities={toolCapabilities}
               onOpenProfiles={(tool, expandedProfile) => {
                 setProfilesRouteState({ tool, expandedProfile });
                 setActiveNav("profiles");

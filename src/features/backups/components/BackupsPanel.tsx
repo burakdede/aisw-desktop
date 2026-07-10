@@ -3,17 +3,20 @@ import { useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
 import { listBackups } from "../../../lib/client";
 import { toolProfileDisplayLabel } from "../../../lib/profile-display";
-import { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
+import { AppBootstrap, AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
+import { resolveStateModeRequest } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 
 export function BackupsPanel({
   snapshot,
   settings,
+  toolCapabilities,
   onOpenProfiles,
 }: {
   snapshot: AppSnapshot;
   settings: DesktopSettings;
+  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
   onOpenProfiles: (tool: string, expandedProfile?: string | null) => void;
 }) {
   const backups = useQuery({ queryKey: ["backups"], queryFn: listBackups });
@@ -39,6 +42,8 @@ export function BackupsPanel({
 
   function confirmRestore(entry: { backup_id: string; tool: string; profile: string }, mode: "files" | "activate") {
     const target = resolveBackupTarget(entry.tool, entry.profile);
+    const preferredStateMode =
+      snapshot.statuses.find((status) => status.tool === target.tool)?.state_mode ?? null;
     restoreBackupMutation.mutate(entry.backup_id, {
       onSuccess: () => {
         setPendingRestore(null);
@@ -46,7 +51,7 @@ export function BackupsPanel({
           useProfileMutation.mutate({
             tool: target.tool,
             profile: target.profile,
-            stateMode: target.tool === "gemini" ? null : "isolated",
+            stateMode: resolveStateModeRequest(target.tool, toolCapabilities, preferredStateMode),
           });
         }
       },

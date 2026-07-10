@@ -11,7 +11,7 @@ import { DesktopCommandError } from "../../../lib/tauri";
 import { listenDesktopEvent } from "../../../lib/tauri";
 import { listBackups, parseOAuthProgressEvent } from "../../../lib/client";
 import { titleCase } from "../../../lib/utils";
-import { supportedStateModes } from "../../shared/state-modes";
+import { resolveStateModeRequest, supportedStateModes } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 
 const TOOLS = ["claude", "codex", "gemini"] as const;
@@ -553,7 +553,7 @@ export function ProfilesPanel({
                                 useProfileMutation.mutate({
                                   tool,
                                   profile: entry.name,
-                                  stateMode: tool === "gemini" ? null : "isolated",
+                                  stateMode: resolveStateModeRequest(tool, toolCapabilities, stateMode),
                                 });
                               },
                             })

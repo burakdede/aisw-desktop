@@ -1669,6 +1669,94 @@ describe("App", () => {
     });
   });
 
+  it("preserves the tool state mode when a backup restore re-activates a profile", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    const sharedModeBootstrap = {
+      ...bootstrap,
+      runtime_status: {
+        ...bootstrap.runtime_status,
+        capabilities: {
+          ...bootstrap.runtime_status.capabilities,
+          tools: {
+            codex: {
+              state_modes: ["shared", "isolated"],
+              fail_closed_keyring_identity: false,
+            },
+          },
+        },
+      },
+      snapshot: {
+        ...bootstrap.snapshot,
+        statuses: [
+          ...bootstrap.snapshot.statuses,
+          {
+            tool: "codex",
+            binary_found: true,
+            stored_profiles: 2,
+            active_profile: "work",
+            auth_method: "api_key",
+            credential_backend: "file",
+            state_mode: "shared",
+            active_profile_applied: true,
+            credentials_present: true,
+            permissions_ok: true,
+            warnings: [],
+          },
+        ],
+      },
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "restore_backup" || command === "use_profile") {
+        return { command, snapshot: sharedModeBootstrap.snapshot };
+      }
+      return (
+        {
+          get_bootstrap: sharedModeBootstrap,
+          get_snapshot: sharedModeBootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [
+            {
+              backup_id: "20260326T094012Z-codex-personal",
+              tool: "codex",
+              profile: "codex/personal",
+            },
+          ],
+          get_settings: sharedModeBootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Backups")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Backups"));
+    await waitFor(() => expect(screen.getByText("Restore and activate")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText("Restore and activate"));
+    fireEvent.click(screen.getByText("Confirm restore and activate"));
+
+    await waitFor(() => {
+      expect(
+        calls.some(
+          (entry) =>
+            entry.command === "use_profile" &&
+            (entry.args as { request?: { tool?: string; profile?: string; state_mode?: string | null } })
+              ?.request?.tool === "codex" &&
+            (entry.args as { request?: { tool?: string; profile?: string; state_mode?: string | null } })
+              ?.request?.profile === "personal" &&
+            (entry.args as { request?: { tool?: string; profile?: string; state_mode?: string | null } })
+              ?.request?.state_mode === "shared",
+        ),
+      ).toBe(true);
+    });
+  });
+
   it("uses backup created_at metadata for ordering and display", async () => {
     window.__AISW_DESKTOP_MOCK__ = async (command) =>
       (
@@ -1945,6 +2033,110 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "restore_backup")).toBe(true);
       expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
+    });
+  });
+
+  it("uses the selected state mode when restoring and re-activating from profiles", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    const sharedModeBootstrap = {
+      ...bootstrap,
+      runtime_status: {
+        ...bootstrap.runtime_status,
+        capabilities: {
+          ...bootstrap.runtime_status.capabilities,
+          tools: {
+            codex: {
+              state_modes: ["isolated", "shared"],
+              fail_closed_keyring_identity: false,
+            },
+          },
+        },
+      },
+      snapshot: {
+        ...bootstrap.snapshot,
+        statuses: [
+          ...bootstrap.snapshot.statuses,
+          {
+            tool: "codex",
+            binary_found: true,
+            stored_profiles: 2,
+            active_profile: "work",
+            auth_method: "api_key",
+            credential_backend: "file",
+            state_mode: "isolated",
+            active_profile_applied: true,
+            credentials_present: true,
+            permissions_ok: true,
+            warnings: [],
+          },
+        ],
+        profiles: {
+          ...bootstrap.snapshot.profiles,
+          codex: {
+            active: "work",
+            profiles: [
+              { name: "work", auth: "api_key", label: "Work" },
+              { name: "personal", auth: "api_key", label: "Personal" },
+            ],
+          },
+        },
+      },
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "restore_backup" || command === "use_profile") {
+        return { command, snapshot: sharedModeBootstrap.snapshot };
+      }
+      return (
+        {
+          get_bootstrap: sharedModeBootstrap,
+          get_snapshot: sharedModeBootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [
+            {
+              backup_id: "20260325T114502Z-codex-work",
+              tool: "codex",
+              profile: "codex/work",
+            },
+          ],
+          get_settings: sharedModeBootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Profiles"));
+    fireEvent.change(screen.getByLabelText("Tool"), {
+      target: { value: "codex" },
+    });
+    fireEvent.change(screen.getByLabelText("State mode"), {
+      target: { value: "shared" },
+    });
+    await waitFor(() => expect(screen.getByText("Restore latest + activate")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText("Restore latest + activate"));
+    fireEvent.click(screen.getByText("Confirm restore latest and activate"));
+
+    await waitFor(() => {
+      expect(
+        calls.some(
+          (entry) =>
+            entry.command === "use_profile" &&
+            (entry.args as { request?: { tool?: string; profile?: string; state_mode?: string | null } })
+              ?.request?.tool === "codex" &&
+            (entry.args as { request?: { tool?: string; profile?: string; state_mode?: string | null } })
+              ?.request?.profile === "work" &&
+            (entry.args as { request?: { tool?: string; profile?: string; state_mode?: string | null } })
+              ?.request?.state_mode === "shared",
+        ),
+      ).toBe(true);
     });
   });
 
