@@ -187,6 +187,7 @@ Tray result messaging uses the same saved labels as tray menus
 Inactive profile details do not reuse live runtime diagnostics
 Routed profile details reset when the user switches tools manually
 Manual sidebar navigation clears stale routed profile and settings targets
+Backup restore warnings and confirmations use saved profile labels
 ## Verification Matrix
 npm test
 `,

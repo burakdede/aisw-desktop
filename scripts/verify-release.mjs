@@ -134,6 +134,7 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         acceptanceMatrix.includes("Inactive profile details do not reuse live runtime diagnostics") &&
         acceptanceMatrix.includes("Routed profile details reset when the user switches tools manually") &&
         acceptanceMatrix.includes("Manual sidebar navigation clears stale routed profile and settings targets") &&
+        acceptanceMatrix.includes("Backup restore warnings and confirmations use saved profile labels") &&
         acceptanceMatrix.includes("does not replace the local-only product spec"),
     },
     {

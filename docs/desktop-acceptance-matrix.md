@@ -167,6 +167,13 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src/App.tsx` clears route-only profile and settings state when the user opens those sections directly from the sidebar instead of a remediation or deep-link action.
   - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify routed profile details and routed shell-settings focus do not persist after leaving the section and reopening it manually.
 
+### 21. Backup restore warnings and confirmations use saved profile labels
+
+- Status: implemented
+- Evidence:
+  - `src/features/backups/components/BackupsPanel.tsx` and `src/features/profiles/components/ProfilesPanel.tsx` use display-label helpers for backup restore warnings and confirmations instead of raw profile ids.
+  - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify backup catalog and latest-backup restore copy prefer saved labels such as `Sandbox`, `Office`, and `Code Work`.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:
