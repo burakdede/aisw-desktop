@@ -11,6 +11,7 @@ type ScenarioName =
   | "workspaceContext"
   | "profiles"
   | "backupCatalog"
+  | "staleProfile"
   | "missingTool"
   | "partialSetup"
   | "updaterError"
@@ -657,6 +658,21 @@ test("creates profiles from environment and API key modes", async ({ page }) => 
   await expect(page.getByText("ops · api_key")).toBeVisible();
 });
 
+test("warns before adding a duplicate profile name", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  await page.getByLabel("Profile name").fill("work");
+  await expect(
+    page.getByText(
+      "Claude already has a profile named work. Choose a different name or rename the existing profile first.",
+    ),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Add profile" })).toBeDisabled();
+});
+
 test("runs guided OAuth capture from the profiles screen", async ({ page }) => {
   await installDesktopMock(page, "profiles");
 
@@ -675,6 +691,19 @@ test("runs guided OAuth capture from the profiles screen", async ({ page }) => {
   await expect(page.locator(".inline-note").filter({ hasText: "Launching browser" })).toBeVisible();
   await expect(page.locator(".inline-note").filter({ hasText: "Waiting for login" })).toBeVisible();
   await expect(page.getByText("personal · oauth")).toBeVisible();
+});
+
+test("shows missing-profile remediation when a stale profile is re-applied", async ({ page }) => {
+  await installDesktopMock(page, "staleProfile");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Re-apply Work" }).click();
+
+  await expect(
+    page.getByText(
+      "Last result: profile work no longer exists Remediation: Refresh profile state or recreate the missing profile before retrying.",
+    ),
+  ).toBeVisible();
 });
 
 test("renames, relabels, and removes profiles from the profiles screen", async ({ page }) => {
@@ -1391,6 +1420,37 @@ async function installDesktopMock(
               codex: {
                 active: "personal",
                 profiles: [{ name: "personal", auth: "api_key", label: "Personal" }],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
+        staleProfile: {
+          settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
               },
             },
             contexts: [],
@@ -2148,6 +2208,17 @@ async function installDesktopMock(
         }
         if (command === "use_profile") {
           const request = args.request;
+          if (
+            activeScenario === "staleProfile" &&
+            request.tool === "claude" &&
+            request.profile === "work"
+          ) {
+            throw {
+              kind: "ProfileMissing",
+              message: "profile work no longer exists",
+              remediation: "Refresh profile state or recreate the missing profile before retrying.",
+            };
+          }
           const profileEntry = state.snapshot.profiles[request.tool];
           const statusEntry = state.snapshot.statuses.find((entry) => entry.tool === request.tool);
           const matching = profileEntry?.profiles.find((profile) => profile.name === request.profile);
