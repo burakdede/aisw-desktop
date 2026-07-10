@@ -19,6 +19,11 @@ import {
   toolProfileDisplayLabel,
 } from "../../../lib/profile-display";
 import { titleCase } from "../../../lib/utils";
+import {
+  preferredProfileImportMode,
+  supportsProfileImportMode,
+  type ProfileImportMode,
+} from "../../shared/profile-capabilities";
 import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 import { resolveWorkspaceActivationTarget } from "../../workspaces/workspace-activation";
 
@@ -31,7 +36,11 @@ export function OverviewPanel({
   snapshot: AppSnapshot;
   settings: DesktopSettings;
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
-  onOpenProfiles: (tool: string, expandedProfile?: string | null) => void;
+  onOpenProfiles: (
+    tool: string,
+    expandedProfile?: string | null,
+    options?: { mode?: ProfileImportMode },
+  ) => void;
 }) {
   const queryClient = useQueryClient();
   const {
@@ -185,13 +194,17 @@ export function OverviewPanel({
             settings={settings}
             snapshot={snapshot}
             onImport={(tool, profile, stateMode) =>
-              addProfileMutation.mutate({
-                tool,
-                profile,
-                label: titleCase(profile),
-                stateMode,
-                importMode: { kind: "from_live" },
-              })
+              supportsProfileImportMode(tool, toolCapabilities, "from_live")
+                ? addProfileMutation.mutate({
+                    tool,
+                    profile,
+                    label: titleCase(profile),
+                    stateMode,
+                    importMode: { kind: "from_live" },
+                  })
+                : onOpenProfiles(tool, null, {
+                    mode: preferredProfileImportMode(tool, toolCapabilities, "from_live"),
+                  })
             }
             onUse={(tool, profile, stateMode) =>
               useProfileMutation.mutate({
@@ -203,6 +216,7 @@ export function OverviewPanel({
             }
             onAddProfile={(tool) => onOpenProfiles(tool)}
             onOpenDetails={(tool, profile) => onOpenProfiles(tool, profile)}
+            toolCapabilities={toolCapabilities}
           />
         ))}
       </div>
@@ -251,6 +265,7 @@ function ToolCard({
   refreshLocked,
   onRefresh,
   stateModes,
+  toolCapabilities,
   settings,
   snapshot,
   onImport,
@@ -270,6 +285,7 @@ function ToolCard({
   refreshLocked: boolean;
   onRefresh: () => void;
   stateModes: string[];
+  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
   settings: DesktopSettings;
   snapshot: AppSnapshot;
   onImport: (tool: string, profile: string, stateMode: string | null) => void;
@@ -289,6 +305,7 @@ function ToolCard({
   const selectedProfileLabel = selectedProfile
     ? toolProfileDisplayLabel(settings, snapshot, status.tool, selectedProfile)
     : null;
+  const supportsLiveImport = supportsProfileImportMode(status.tool, toolCapabilities, "from_live");
 
   useEffect(() => {
     if (!stateModes.length) {
@@ -375,27 +392,43 @@ function ToolCard({
             Live credentials changed outside AISW. Re-apply the active profile or import the current
             login as a new profile.
           </p>
-          <div className="inline-form">
-            <input
-              aria-label={`import ${status.tool} current login`}
-              placeholder="new profile name"
-              value={importName}
-              onChange={(event) => setImportName(event.target.value)}
-            />
-            <button
-              className="ghost-button"
-              type="button"
-              disabled={mutationLocked || !importName.trim()}
-              onClick={() => {
-                const profile = importName.trim();
-                if (!profile) return;
-                onImport(status.tool, profile, stateModes.length ? stateMode : null);
-                setImportName("");
-              }}
-            >
-              Import current as new
-            </button>
-          </div>
+          {supportsLiveImport ? (
+            <div className="inline-form">
+              <input
+                aria-label={`import ${status.tool} current login`}
+                placeholder="new profile name"
+                value={importName}
+                onChange={(event) => setImportName(event.target.value)}
+              />
+              <button
+                className="ghost-button"
+                type="button"
+                disabled={mutationLocked || !importName.trim()}
+                onClick={() => {
+                  const profile = importName.trim();
+                  if (!profile) return;
+                  onImport(status.tool, profile, stateModes.length ? stateMode : null);
+                  setImportName("");
+                }}
+              >
+                Import current as new
+              </button>
+            </div>
+          ) : (
+            <div className="stack-list">
+              <p className="inline-note">
+                This runtime does not advertise live import for {titleCase(status.tool)}. Open profile setup to use a supported flow.
+              </p>
+              <button
+                className="ghost-button"
+                type="button"
+                disabled={mutationLocked}
+                onClick={() => onAddProfile(status.tool)}
+              >
+                Open profile setup
+              </button>
+            </div>
+          )}
         </div>
       ) : null}
       {profiles.length ? (

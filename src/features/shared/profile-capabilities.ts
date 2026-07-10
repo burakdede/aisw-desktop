@@ -26,6 +26,26 @@ export function supportedProfileImportModes(
   return [...PROFILE_IMPORT_MODES];
 }
 
+export function supportsProfileImportMode(
+  tool: string,
+  toolCapabilities: ToolCapabilities,
+  mode: ProfileImportMode,
+) {
+  return supportedProfileImportModes(tool, toolCapabilities).includes(mode);
+}
+
+export function preferredProfileImportMode(
+  tool: string,
+  toolCapabilities: ToolCapabilities,
+  preferred: ProfileImportMode,
+): ProfileImportMode {
+  const supported = supportedProfileImportModes(tool, toolCapabilities);
+  if (supported.includes(preferred)) {
+    return preferred;
+  }
+  return supported[0] ?? preferred;
+}
+
 export function supportedCredentialBackends(
   tool: string,
   toolCapabilities: ToolCapabilities,

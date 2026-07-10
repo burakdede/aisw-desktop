@@ -102,6 +102,31 @@ test("opens profile setup from onboarding when first-switch options are missing"
   await expect(page.getByLabel("Tool")).toHaveValue("claude");
 });
 
+test("routes unsupported onboarding live imports into supported profile setup", async ({ page }) => {
+  await installDesktopMock(page, "switching", {
+    claude: {
+      auth_methods: ["from_env", "api_key"],
+      state_modes: ["isolated", "shared"],
+      credential_backends: ["file"],
+    },
+    codex: { state_modes: ["isolated", "shared"] },
+    gemini: { state_modes: [] },
+  });
+
+  await page.goto("/");
+
+  await expect(
+    page.getByText(
+      "This runtime does not advertise live import for Claude. Open profile setup to use a supported flow.",
+    ),
+  ).toBeVisible();
+  await page.locator(".tool-card").filter({ hasText: "Claude" }).getByRole("button", { name: "Open profile setup" }).click();
+
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(page.getByLabel("Tool")).toHaveValue("claude");
+  await expect(page.getByLabel("Import mode")).toHaveValue("from_env");
+});
+
 test("keeps onboarding usable when another installed tool has no live credentials", async ({ page }) => {
   await installDesktopMock(page, "partialSetup");
 

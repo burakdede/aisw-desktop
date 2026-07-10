@@ -146,11 +146,16 @@ async function renderSettingsPanel(
 
 async function renderSetupPanel({
   initReport = undefined,
+  bootstrapOverride,
   onOpenProfiles = vi.fn(),
   onOpenSettings = vi.fn(),
 }: {
   initReport?: InitReport;
-  onOpenProfiles?: (tool: string) => void;
+  bootstrapOverride?: AppBootstrap;
+  onOpenProfiles?: (
+    tool: string,
+    options?: { mode?: "from_live" | "from_env" | "api_key" | "oauth" },
+  ) => void;
   onOpenSettings?: (section?: "runtime" | "updates" | "shell" | "keyring") => void;
 } = {}) {
   const queryClient = new QueryClient({
@@ -162,13 +167,13 @@ async function renderSetupPanel({
   });
 
   let rendered: ReturnType<typeof render> | undefined;
-  const setupBootstrap = bootstrap as unknown as AppBootstrap;
+  const setupBootstrap = (bootstrapOverride ?? bootstrap) as unknown as AppBootstrap;
   await act(async () => {
     rendered = render(
       <QueryClientProvider client={queryClient}>
         <SetupPanel
           bootstrap={setupBootstrap}
-          snapshot={bootstrap.snapshot as unknown as AppSnapshot}
+          snapshot={(setupBootstrap.snapshot ?? bootstrap.snapshot) as unknown as AppSnapshot}
           initReport={initReport}
           onOpenProfiles={onOpenProfiles}
           onOpenSettings={onOpenSettings}
@@ -1941,6 +1946,99 @@ describe("App", () => {
     expect(within(backendSelect).getByRole("option", { name: "Automatic" })).toBeInTheDocument();
     expect(within(backendSelect).getByRole("option", { name: "System keyring" })).toBeInTheDocument();
     expect(within(backendSelect).getByRole("option", { name: "File-backed" })).toBeInTheDocument();
+  });
+
+  it("routes onboarding live-account imports into supported profile setup when live import is unavailable", async () => {
+    const onOpenProfiles = vi.fn();
+    const capabilityBootstrap = {
+      ...bootstrap,
+      runtime_status: {
+        ...bootstrap.runtime_status,
+        capabilities: {
+          features: {
+            mutation_json: true,
+          },
+          tools: {
+            claude: {
+              auth_methods: ["from_env", "api_key"],
+              state_modes: ["isolated", "shared"],
+              credential_backends: ["file"],
+              fail_closed_keyring_identity: false,
+            },
+          },
+        },
+      },
+    };
+    await renderSetupPanel({
+      bootstrapOverride: capabilityBootstrap as unknown as AppBootstrap,
+      initReport: {
+        result: {
+          live_accounts: [{ tool: "claude", outcome: "detected", auth_method: "oauth" }],
+        },
+      } as InitReport,
+      onOpenProfiles,
+    });
+
+    expect(
+      screen.getByText(
+        "This runtime does not advertise live import for Claude. Open profile setup to use a supported flow.",
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Open profile setup" }));
+
+    expect(onOpenProfiles).toHaveBeenCalledWith("claude", { mode: "from_env" });
+  });
+
+  it("opens supported profile setup instead of submitting unsupported live imports", async () => {
+    const capabilityBootstrap = {
+      ...bootstrap,
+      runtime_status: {
+        ...bootstrap.runtime_status,
+        capabilities: {
+          features: {
+            mutation_json: true,
+          },
+          tools: {
+            claude: {
+              auth_methods: ["from_env", "api_key"],
+              state_modes: ["isolated", "shared"],
+              credential_backends: ["file"],
+              fail_closed_keyring_identity: false,
+            },
+          },
+        },
+      },
+      snapshot: {
+        ...bootstrap.snapshot,
+        statuses: [
+          {
+            ...bootstrap.snapshot.statuses[0],
+            active_profile_applied: false,
+          },
+        ],
+      },
+    };
+    window.__AISW_DESKTOP_MOCK__ = {
+      ...window.__AISW_DESKTOP_MOCK__,
+      get_bootstrap: capabilityBootstrap,
+      get_snapshot: capabilityBootstrap.snapshot,
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    expect(
+      screen.getByText(
+        "This runtime does not advertise live import for Claude. Open profile setup to use a supported flow.",
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Open profile setup" }));
+
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Profiles" })).toBeInTheDocument());
+    expect(screen.getByLabelText("Tool")).toHaveValue("claude");
+    expect(screen.getByLabelText("Import mode")).toHaveValue("from_env");
+    expect(screen.queryByText("Guided OAuth capture")).not.toBeInTheDocument();
   });
 
   it("submits API keys via stdin payload and clears the field after save", async () => {

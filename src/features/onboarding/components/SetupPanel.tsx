@@ -12,10 +12,15 @@ import {
   openExternalGuide,
   toolBinaryName,
 } from "../../../lib/tool-guidance";
+import {
+  preferredProfileImportMode,
+  supportsProfileImportMode,
+} from "../../shared/profile-capabilities";
 import { resolveGlobalStateMode } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import type { SettingsSection } from "../../settings/components/SettingsPanel";
+import type { ProfileImportMode } from "../../shared/profile-capabilities";
 
 type LiveAccount = {
   tool: string;
@@ -40,10 +45,11 @@ export function SetupPanel({
   bootstrap: AppBootstrap;
   snapshot: AppSnapshot;
   initReport: InitReport | undefined;
-  onOpenProfiles: (tool: string) => void;
+  onOpenProfiles: (tool: string, options?: { mode?: ProfileImportMode }) => void;
   onOpenSettings: (section?: SettingsSection) => void;
 }) {
   const settings = bootstrap.settings;
+  const toolCapabilities = bootstrap.runtime_status.capabilities?.tools ?? {};
   const { initMutation, addProfileMutation, useAllProfilesMutation, mutationLock } =
     useDesktopActions();
   const readEnabled = useMutationAwareQueryEnabled();
@@ -91,6 +97,12 @@ export function SetupPanel({
     event.preventDefault();
     const value = profileNames[tool]?.trim();
     if (!value) return;
+    if (!supportsProfileImportMode(tool, toolCapabilities, "from_live")) {
+      onOpenProfiles(tool, {
+        mode: preferredProfileImportMode(tool, toolCapabilities, "from_live"),
+      });
+      return;
+    }
     addProfileMutation.mutate({
       tool,
       profile: value,
@@ -189,22 +201,44 @@ export function SetupPanel({
                   {account.outcome ?? "unknown"} · {account.auth_method ?? "unknown"}
                   {account.matched_profile ? ` · matches ${account.matched_profile}` : ""}
                 </p>
+                {!supportsProfileImportMode(account.tool, toolCapabilities, "from_live") ? (
+                  <p className="inline-note">
+                    This runtime does not advertise live import for {titleCase(account.tool)}. Open profile setup to use a supported flow.
+                  </p>
+                ) : null}
               </div>
               <div className="inline-form">
-                <input
-                  aria-label={`${account.tool} profile name`}
-                  placeholder="profile name"
-                  value={profileNames[account.tool] ?? ""}
-                  onChange={(event) =>
-                    setProfileNames((current) => ({
-                      ...current,
-                      [account.tool]: event.target.value,
-                    }))
-                  }
-                />
-                <button className="ghost-button" type="submit" disabled={mutationLock.isBusy}>
-                  Import current login
-                </button>
+                {supportsProfileImportMode(account.tool, toolCapabilities, "from_live") ? (
+                  <>
+                    <input
+                      aria-label={`${account.tool} profile name`}
+                      placeholder="profile name"
+                      value={profileNames[account.tool] ?? ""}
+                      onChange={(event) =>
+                        setProfileNames((current) => ({
+                          ...current,
+                          [account.tool]: event.target.value,
+                        }))
+                      }
+                    />
+                    <button className="ghost-button" type="submit" disabled={mutationLock.isBusy}>
+                      Import current login
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    disabled={mutationLock.isBusy}
+                    onClick={() =>
+                      onOpenProfiles(account.tool, {
+                        mode: preferredProfileImportMode(account.tool, toolCapabilities, "from_live"),
+                      })
+                    }
+                  >
+                    Open profile setup
+                  </button>
+                )}
               </div>
             </form>
           ))}

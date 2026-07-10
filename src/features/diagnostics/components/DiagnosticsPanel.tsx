@@ -1,12 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
-import { AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
+import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import { exportDiagnosticBundle, runDoctor, runRepair, runVerify } from "../../../lib/client";
 import { openExternalGuide, installGuideUrlForTool } from "../../../lib/tool-guidance";
 import { useLastCommandResults } from "../../shared/lastCommandResult";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
+import {
+  preferredProfileImportMode,
+  supportsProfileImportMode,
+  type ProfileImportMode,
+} from "../../shared/profile-capabilities";
 import {
   parseDoctorIssues,
   parseDoctorSummary,
@@ -28,17 +33,19 @@ const SUPPORTED_TOOLS = new Set(["claude", "codex", "gemini"]);
 export function DiagnosticsPanel({
   settings,
   snapshot,
+  toolCapabilities,
   onOpenProfiles,
   onOpenSettings,
   onOpenProfileSetup,
 }: {
   settings: DesktopSettings;
   snapshot: AppSnapshot;
+  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
   onOpenProfiles: (tool: string, expandedProfile?: string | null) => void;
   onOpenSettings: (section?: SettingsSection) => void;
   onOpenProfileSetup: (options?: {
     tool?: string;
-    mode?: "from_live" | "from_env" | "api_key" | "oauth";
+    mode?: ProfileImportMode;
     credentialBackend?: "file" | "system-keyring" | null;
   }) => void;
 }) {
@@ -93,6 +100,7 @@ export function DiagnosticsPanel({
     doctor: doctor.data,
     repair: repair.data,
     settings,
+    toolCapabilities,
     useProfile: useProfileMutation.mutate,
     useContext: useContextMutation.mutate,
     activateProfileSet: activateProfileSetMutation.mutate,
@@ -282,46 +290,67 @@ export function DiagnosticsPanel({
                 ) : null}
               </div>
               {fix.importTarget ? (
-                <div className="inline-form">
-                  <input
-                    aria-label={`import ${fix.importTarget.tool} current login from diagnostics`}
-                    placeholder="new profile name"
-                    value={importDrafts[quickFixKey(fix)] ?? ""}
-                    onChange={(event) =>
-                      setImportDrafts((current) => ({
-                        ...current,
-                        [quickFixKey(fix)]: event.target.value,
-                      }))
-                    }
-                  />
-                  <button
-                    className="ghost-button"
-                    type="button"
-                    disabled={mutationLock.isBusy || !importDrafts[quickFixKey(fix)]?.trim()}
-                    onClick={() => {
-                      const profile = importDrafts[quickFixKey(fix)]?.trim();
-                      if (!profile) return;
-                      addProfileMutation.mutate(
-                        {
-                          tool: fix.importTarget!.tool,
-                          profile,
-                          label: titleCase(profile),
-                          stateMode: fix.importTarget!.stateMode,
-                          importMode: { kind: "from_live" },
-                        },
-                        {
-                          onSuccess: () =>
-                            setImportDrafts((current) => ({
-                              ...current,
-                              [quickFixKey(fix)]: "",
-                            })),
-                        },
-                      );
-                    }}
-                  >
-                    Import current as new
-                  </button>
-                </div>
+                supportsProfileImportMode(fix.importTarget.tool, toolCapabilities, "from_live") ? (
+                  <div className="inline-form">
+                    <input
+                      aria-label={`import ${fix.importTarget.tool} current login from diagnostics`}
+                      placeholder="new profile name"
+                      value={importDrafts[quickFixKey(fix)] ?? ""}
+                      onChange={(event) =>
+                        setImportDrafts((current) => ({
+                          ...current,
+                          [quickFixKey(fix)]: event.target.value,
+                        }))
+                      }
+                    />
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      disabled={mutationLock.isBusy || !importDrafts[quickFixKey(fix)]?.trim()}
+                      onClick={() => {
+                        const profile = importDrafts[quickFixKey(fix)]?.trim();
+                        if (!profile) return;
+                        addProfileMutation.mutate(
+                          {
+                            tool: fix.importTarget!.tool,
+                            profile,
+                            label: titleCase(profile),
+                            stateMode: fix.importTarget!.stateMode,
+                            importMode: { kind: "from_live" },
+                          },
+                          {
+                            onSuccess: () =>
+                              setImportDrafts((current) => ({
+                                ...current,
+                                [quickFixKey(fix)]: "",
+                              })),
+                          },
+                        );
+                      }}
+                    >
+                      Import current as new
+                    </button>
+                  </div>
+                ) : (
+                  <div className="stack-list">
+                    <p className="inline-note">
+                      This runtime does not advertise live import for {titleCase(fix.importTarget.tool)}. Open profile setup to use a supported flow.
+                    </p>
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      disabled={mutationLock.isBusy}
+                      onClick={() =>
+                        onOpenProfileSetup({
+                          tool: fix.importTarget?.tool,
+                          mode: fix.importFallbackMode ?? preferredProfileImportMode(fix.importTarget!.tool, toolCapabilities, "from_live"),
+                        })
+                      }
+                    >
+                      Open profile setup
+                    </button>
+                  </div>
+                )
               ) : null}
             </article>
           ))}
@@ -380,6 +409,7 @@ type QuickFixCard = {
   status: "warn" | "fail";
   profileTarget?: { tool: string; profile: string | null };
   importTarget?: { tool: string; stateMode: string | null };
+  importFallbackMode?: ProfileImportMode;
   primary?: boolean;
   disabled?: boolean;
   secondaryAction?: {
@@ -395,6 +425,7 @@ function buildQuickFixes(
     doctor,
     repair,
     settings,
+    toolCapabilities,
     useProfile,
     useContext,
     activateProfileSet,
@@ -408,6 +439,7 @@ function buildQuickFixes(
     doctor: Record<string, unknown> | undefined;
     repair: Record<string, unknown> | undefined;
     settings: DesktopSettings;
+    toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
     useProfile: (request: {
       tool: string;
       profile: string;
@@ -430,7 +462,7 @@ function buildQuickFixes(
     onOpenSettings: (section?: SettingsSection) => void;
     onOpenProfileSetup: (options?: {
       tool?: string;
-      mode?: "from_live" | "from_env" | "api_key" | "oauth";
+      mode?: ProfileImportMode;
       credentialBackend?: "file" | "system-keyring" | null;
     }) => void;
     onRefreshDiagnostics: () => void;
@@ -517,6 +549,11 @@ function buildQuickFixes(
           tool: status.tool,
           stateMode: resolveStateMode(status),
         },
+        importFallbackMode: preferredProfileImportMode(
+          status.tool,
+          toolCapabilities,
+          "from_live",
+        ),
         primary: true,
         action: () =>
           useProfile({

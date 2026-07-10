@@ -20,6 +20,7 @@ import { notifyDesktop } from "./lib/notifications";
 import { activeSetLabel } from "./lib/profile-display";
 import { DesktopCommandError } from "./lib/tauri";
 import { listenDesktopEvent, type TrayCommandResultEvent } from "./lib/tauri";
+import type { ProfileImportMode } from "./features/shared/profile-capabilities";
 
 const NAV = [
   { id: "overview", label: "Overview" },
@@ -42,7 +43,7 @@ const DIAGNOSTICS_QUERY_KEYS = [
 type ProfilesRouteState = {
   tool?: string;
   expandedProfile?: string | null;
-  mode?: "from_live" | "from_env" | "api_key" | "oauth";
+  mode?: ProfileImportMode;
   credentialBackend?: "file" | "system-keyring" | null;
 };
 
@@ -223,8 +224,8 @@ export function App() {
             bootstrap={bootstrap.data}
             snapshot={resolvedSnapshot}
             initReport={init.data}
-            onOpenProfiles={(tool) => {
-              setProfilesRouteState({ tool, expandedProfile: null });
+            onOpenProfiles={(tool, options) => {
+              setProfilesRouteState({ tool, expandedProfile: null, mode: options?.mode });
               setActiveNav("profiles");
             }}
             onOpenSettings={openSettings}
@@ -234,8 +235,8 @@ export function App() {
               snapshot={resolvedSnapshot}
               settings={settings}
               toolCapabilities={toolCapabilities}
-              onOpenProfiles={(tool, expandedProfile) => {
-                setProfilesRouteState({ tool, expandedProfile });
+              onOpenProfiles={(tool, expandedProfile, options) => {
+                setProfilesRouteState({ tool, expandedProfile, mode: options?.mode });
                 setActiveNav("profiles");
               }}
             />
@@ -261,6 +262,7 @@ export function App() {
             <DiagnosticsPanel
               settings={settings}
               snapshot={resolvedSnapshot}
+              toolCapabilities={toolCapabilities}
               onOpenSettings={openSettings}
               onOpenProfiles={(tool, expandedProfile) => {
                 setProfilesRouteState({ tool, expandedProfile });
