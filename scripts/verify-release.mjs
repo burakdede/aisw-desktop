@@ -31,6 +31,13 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       ok: tauriConfig.bundle?.createUpdaterArtifacts === true,
     },
     {
+      label: "tauri declares updater plugin config for bundling",
+      ok:
+        typeof tauriConfig.plugins?.updater?.pubkey === "string" &&
+        tauriConfig.plugins.updater.pubkey.length > 0 &&
+        Array.isArray(tauriConfig.plugins.updater.endpoints),
+    },
+    {
       label: "runbook documents sidecar staging",
       ok:
         runbook.includes("npm run prepare:sidecar -- /absolute/path/to/aisw") &&

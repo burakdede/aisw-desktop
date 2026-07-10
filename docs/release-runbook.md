@@ -92,6 +92,8 @@ The repository workflow at `.github/workflows/publish.yml` expects these secrets
 - `TAURI_SIGNING_PRIVATE_KEY`
 - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
 
+The private key must match the updater public key committed in `src-tauri/tauri.conf.json`.
+
 Optional signing secrets:
 
 - `APPLE_CERTIFICATE`

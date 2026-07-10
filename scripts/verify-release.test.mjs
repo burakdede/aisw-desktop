@@ -45,6 +45,13 @@ function createReleaseFixture(overrides = {}) {
           createUpdaterArtifacts: true,
           externalBin: ["binaries/aisw"],
         },
+        plugins: {
+          updater: {
+            endpoints: [],
+            pubkey:
+              "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDYyMjc5RjUwRkFBNUEwQzcKUldUSG9LWDZVSjhuWWdMQWE4WDFhMGV5QnBxek5Gd3VHU2VXdG52ZlVHY3YxYzN0WjVBVjNDZkEK",
+          },
+        },
       },
       null,
       2,
@@ -157,7 +164,7 @@ Complete platform signing checks
     );
   });
 
-  it("fails when updater artifacts or release targets drift out of the contract", () => {
+  it("fails when updater config, artifacts, or release targets drift out of the contract", () => {
     const root = createReleaseFixture({
       publishWorkflow: `
 Download aisw sidecar
@@ -187,6 +194,12 @@ AISW_SIDECAR_URL_LINUX_X64
             createUpdaterArtifacts: false,
             externalBin: ["binaries/aisw"],
           },
+          plugins: {
+            updater: {
+              endpoints: [],
+              pubkey: "",
+            },
+          },
         },
         null,
         2,
@@ -198,6 +211,12 @@ AISW_SIDECAR_URL_LINUX_X64
     expect(result.checks).toContainEqual(
       expect.objectContaining({
         label: "tauri produces updater artifacts for signed desktop releases",
+        ok: false,
+      }),
+    );
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        label: "tauri declares updater plugin config for bundling",
         ok: false,
       }),
     );
