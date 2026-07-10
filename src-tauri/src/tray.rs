@@ -883,6 +883,79 @@ mod tests {
     }
 
     #[test]
+    fn tray_sections_use_saved_label_overrides() {
+        let snapshot = AppSnapshot {
+            statuses: vec![],
+            profiles: HashMap::from([
+                (
+                    "claude".to_owned(),
+                    ToolProfiles {
+                        active: Some("work".to_owned()),
+                        profiles: vec![ToolProfileSummary {
+                            name: "work".to_owned(),
+                            auth: "oauth".to_owned(),
+                            label: Some("Work".to_owned()),
+                        }],
+                    },
+                ),
+                (
+                    "codex".to_owned(),
+                    ToolProfiles {
+                        active: Some("work".to_owned()),
+                        profiles: vec![ToolProfileSummary {
+                            name: "work".to_owned(),
+                            auth: "api_key".to_owned(),
+                            label: Some("Work".to_owned()),
+                        }],
+                    },
+                ),
+            ]),
+            contexts: vec![],
+            workspace_status: None,
+            project_bindings: None,
+        };
+
+        let settings = DesktopSettings {
+            runtime_kind: RuntimeKind::Bundled,
+            runtime_path: None,
+            aisw_home: None,
+            update_channel: "stable".to_owned(),
+            profile_labels: HashMap::from([(
+                "claude".to_owned(),
+                HashMap::from([("work".to_owned(), Some("Office".to_owned()))]),
+            )]),
+            profile_sets: vec![],
+        };
+
+        assert_eq!(
+            tray_sections(Some(&settings), &snapshot),
+            vec![
+                TraySection {
+                    title: "Switch all".to_owned(),
+                    items: vec![TrayEntry {
+                        id: "switch-all:work".to_owned(),
+                        label: "Office".to_owned(),
+                    }],
+                },
+                TraySection {
+                    title: "Claude profiles".to_owned(),
+                    items: vec![TrayEntry {
+                        id: "profile:claude:work".to_owned(),
+                        label: "Office ✓".to_owned(),
+                    }],
+                },
+                TraySection {
+                    title: "Codex profiles".to_owned(),
+                    items: vec![TrayEntry {
+                        id: "profile:codex:work".to_owned(),
+                        label: "Work ✓".to_owned(),
+                    }],
+                },
+            ]
+        );
+    }
+
+    #[test]
     fn profile_set_only_marks_active_when_every_selected_tool_matches() {
         let snapshot = AppSnapshot {
             statuses: vec![
