@@ -56,15 +56,22 @@ button {
 
 .app-shell {
   min-height: 100vh;
+}
+
+.app-shell-onboarding {
   padding: 18px;
   display: grid;
   place-items: stretch;
 }
 
-.hero-card,
-.layout-shell {
-  width: min(1200px, 100%);
-  margin: 0 auto;
+.app-shell-window {
+  display: grid;
+  background: color-mix(in srgb, Canvas 99%, #e5e9ef 1%);
+}
+
+.hero-card {
+  width: min(560px, 100%);
+  margin: auto;
 }
 
 .hero-card {
@@ -114,25 +121,24 @@ button {
 }
 
 .layout-shell {
-  min-height: calc(100vh - 36px);
+  min-height: 100vh;
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: 236px minmax(0, 1fr);
   gap: 0;
   overflow: hidden;
-  border: 1px solid var(--separator);
-  border-radius: 20px;
-  background: color-mix(in srgb, Canvas 94%, transparent);
-  box-shadow: var(--shadow-window);
-  backdrop-filter: blur(30px);
+  background: color-mix(in srgb, Canvas 97%, transparent);
 }
 
 .sidebar {
-  padding: 18px 14px 16px;
+  padding: calc(18px + env(safe-area-inset-top, 0px)) 14px 14px;
   display: flex;
   flex-direction: column;
   gap: 18px;
-  background: linear-gradient(180deg, color-mix(in srgb, Canvas 92%, transparent), color-mix(in srgb, Canvas 84%, transparent));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, Canvas 94%, transparent), color-mix(in srgb, Canvas 88%, transparent)),
+    color-mix(in srgb, Canvas 90%, transparent);
   border-right: 1px solid var(--separator);
+  backdrop-filter: blur(20px);
 }
 
 .sidebar-brand,
@@ -184,7 +190,7 @@ button {
 
 .sidebar-title {
   margin: 2px 0 0;
-  font-size: 20px;
+  font-size: 19px;
   line-height: 1.15;
   letter-spacing: -0.02em;
 }
@@ -211,9 +217,9 @@ button {
 }
 
 .nav-button {
-  min-height: 34px;
+  min-height: 32px;
   border: 0;
-  border-radius: 9px;
+  border-radius: 7px;
   padding: 0 12px;
   background: transparent;
   color: var(--text-primary);
@@ -260,14 +266,17 @@ button {
 }
 
 .window-toolbar {
-  min-height: 58px;
-  padding: 14px 18px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  min-height: 72px;
+  padding: calc(18px + env(safe-area-inset-top, 0px)) 18px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid var(--separator);
-  background: color-mix(in srgb, Canvas 86%, transparent);
+  background: color-mix(in srgb, Canvas 90%, transparent);
   backdrop-filter: blur(24px);
 }
 
@@ -287,7 +296,7 @@ button {
 .content-main {
   min-height: 0;
   overflow: auto;
-  padding: 18px;
+  padding: 16px 18px 18px;
   display: grid;
   gap: 14px;
   align-content: start;
@@ -957,7 +966,7 @@ button {
 }
 
 @media (max-width: 720px) {
-  .app-shell {
+  .app-shell-onboarding {
     padding: 10px;
   }
 

@@ -151,7 +151,7 @@ export function App() {
 
   if (bootstrap.isLoading) {
     return (
-      <main className="app-shell">
+      <main className="app-shell app-shell-onboarding">
         <section className="hero-card">
           <p className="eyebrow">AI Switch</p>
           <h1>Loading your local account control center…</h1>
@@ -163,7 +163,7 @@ export function App() {
   if (bootstrap.isError || !bootstrap.data) {
     const bootstrapError = describeBootstrapError(bootstrap.error);
     return (
-      <main className="app-shell">
+      <main className="app-shell app-shell-onboarding">
         <section className="hero-card">
           <p className="eyebrow">AI Switch</p>
           <h1>AI Switch could not finish startup.</h1>

@@ -37,49 +37,51 @@ export function AppFrame({
   }, {});
 
   return (
-    <div className="layout-shell">
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <div className="brand-lockup">
-            <BrandMark />
-            <div>
-              <p className="eyebrow">AI Switch</p>
-              <h1 className="sidebar-title">AI Switch</h1>
-            </div>
-          </div>
-          {subtitle ? <p className="sidebar-copy">{subtitle}</p> : null}
-        </div>
-        <nav className="nav-list" aria-label="Primary">
-          {Object.entries(groups).map(([group, items]) => (
-            <div key={group} className="nav-group">
-              <p className="nav-group-label">{group}</p>
-              <div className="nav-group-items">
-                {items.map((item) => (
-                  <button
-                    key={item.id}
-                    className={cn("nav-button", activeNav === item.id && "nav-button-active")}
-                    disabled={item.disabled}
-                    onClick={() => onSelectNav(item.id)}
-                  >
-                    {item.label}
-                  </button>
-                ))}
+    <main className="app-shell app-shell-window">
+      <div className="layout-shell">
+        <aside className="sidebar">
+          <div className="sidebar-brand">
+            <div className="brand-lockup">
+              <BrandMark />
+              <div>
+                <p className="eyebrow">AI Switch</p>
+                <h1 className="sidebar-title">AI Switch</h1>
               </div>
             </div>
-          ))}
-        </nav>
-        {statusBadge ? <div className="status-badge">{statusBadge}</div> : null}
-      </aside>
-      <div className="content-shell">
-        <header className="window-toolbar">
-          <div className="window-toolbar-copy">
-            <p className="window-toolbar-kicker">Local control center</p>
-            <h2>{title}</h2>
+            {subtitle ? <p className="sidebar-copy">{subtitle}</p> : null}
           </div>
-          {toolbar ? <div className="window-toolbar-actions">{toolbar}</div> : null}
-        </header>
-        <div className="content-main">{children}</div>
+          <nav className="nav-list" aria-label="Primary">
+            {Object.entries(groups).map(([group, items]) => (
+              <div key={group} className="nav-group">
+                <p className="nav-group-label">{group}</p>
+                <div className="nav-group-items">
+                  {items.map((item) => (
+                    <button
+                      key={item.id}
+                      className={cn("nav-button", activeNav === item.id && "nav-button-active")}
+                      disabled={item.disabled}
+                      onClick={() => onSelectNav(item.id)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </nav>
+          {statusBadge ? <div className="status-badge">{statusBadge}</div> : null}
+        </aside>
+        <div className="content-shell">
+          <header className="window-toolbar">
+            <div className="window-toolbar-copy">
+              <p className="window-toolbar-kicker">Local control center</p>
+              <h2>{title}</h2>
+            </div>
+            {toolbar ? <div className="window-toolbar-actions">{toolbar}</div> : null}
+          </header>
+          <div className="content-main">{children}</div>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }
