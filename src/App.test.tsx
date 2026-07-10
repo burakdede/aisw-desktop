@@ -4354,6 +4354,76 @@ describe("App", () => {
     });
   });
 
+  it("keeps empty profile sets out of activation surfaces", async () => {
+    const settingsWithEmptySet: DesktopSettings = {
+      ...bootstrap.settings,
+      profile_sets: [
+        {
+          name: "empty-set",
+          label: "Empty Set",
+          profiles: { claude: null, codex: null, gemini: null },
+        },
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) =>
+      (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            settings: settingsWithEmptySet,
+            snapshot: bootstrap.snapshot,
+          },
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: settingsWithEmptySet,
+        } as Record<string, unknown>
+      )[command];
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Contexts"));
+
+    const emptySetRow = screen.getByText("Empty Set").closest(".list-row");
+    if (!(emptySetRow instanceof HTMLElement)) {
+      throw new Error("Missing empty profile set row.");
+    }
+    expect(within(emptySetRow).getByText("Activate set")).toBeDisabled();
+    expect(
+      within(emptySetRow).getByText(
+        "Add at least one mapped profile before using this set in overview, tray, or workspace bindings.",
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Overview"));
+    expect(screen.queryByRole("option", { name: "Profile set: Empty Set" })).not.toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Profile set: Client Acme" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Workspaces"));
+    expect(screen.queryByRole("option", { name: "Profile set: Empty Set" })).not.toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Profile set: Client Acme" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Contexts"));
+    fireEvent.change(screen.getByLabelText("Profile set name"), {
+      target: { value: "empty-next" },
+    });
+    expect(screen.getByText("Save profile set")).toBeDisabled();
+    expect(
+      screen.getByText("Select at least one tool profile before saving this profile set."),
+    ).toBeInTheDocument();
+  });
+
   it("prefers the native CLI context when a profile set matches it", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     const contextSnapshot = {

@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
 import {
+  profileSetHasSelections,
   profileSetDisplayLabel,
   profileSetIsActive,
   toolProfileDisplayLabel,
@@ -41,6 +42,7 @@ export function ContextsPanel({
 
   const localSets = settings.profile_sets ?? [];
   const trimmedDraftName = draft.name.trim();
+  const draftHasSelections = Object.values(draft.profiles).some((profile) => profile.trim().length > 0);
   const isEditingExistingSet =
     trimmedDraftName.length > 0 && localSets.some((entry) => entry.name === trimmedDraftName);
   const contextResult = lastCommandResults.global.context;
@@ -61,7 +63,7 @@ export function ContextsPanel({
   function saveProfileSet(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const name = trimmedDraftName;
-    if (!name) return;
+    if (!name || !draftHasSelections) return;
 
     const nextSets = [
       ...localSets.filter((entry) => entry.name !== name),
@@ -167,9 +169,18 @@ export function ContextsPanel({
               </select>
             </label>
           ))}
-          <button className="primary-button" type="submit" disabled={mutationLock.isBusy}>
+          <button
+            className="primary-button"
+            type="submit"
+            disabled={mutationLock.isBusy || !trimmedDraftName || !draftHasSelections}
+          >
             {isEditingExistingSet ? "Update profile set" : "Save profile set"}
           </button>
+          {!draftHasSelections ? (
+            <p className="inline-note">
+              Select at least one tool profile before saving this profile set.
+            </p>
+          ) : null}
         </form>
 
         <div className="stack-list">
@@ -191,7 +202,11 @@ export function ContextsPanel({
                 <button
                   className="primary-button"
                   type="button"
-                  disabled={mutationLock.isBusy || profileSetIsActive(snapshot, set)}
+                  disabled={
+                    mutationLock.isBusy ||
+                    profileSetIsActive(snapshot, set) ||
+                    !profileSetHasSelections(set)
+                  }
                   onClick={() => void activateProfileSet(set)}
                 >
                   {profileSetIsActive(snapshot, set) ? "Active set" : "Activate set"}
@@ -220,6 +235,11 @@ export function ContextsPanel({
                   Delete
                 </button>
               </div>
+              {!profileSetHasSelections(set) ? (
+                <p className="inline-note">
+                  Add at least one mapped profile before using this set in overview, tray, or workspace bindings.
+                </p>
+              ) : null}
             </article>
           ))}
           {!localSets.length ? (

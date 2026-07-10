@@ -27,6 +27,7 @@ type ScenarioName =
   | "customRuntime"
   | "sharedWorkspaceContext"
   | "profileLatestBackup"
+  | "emptyProfileSet"
   | "bootstrapError";
 
 const toolCapabilities = {
@@ -838,6 +839,36 @@ test("uses the newest matching backup when restoring latest from profiles", asyn
       }),
     )
     .toBe("20260327T121500Z-claude-work");
+});
+
+test("keeps empty profile sets out of activation surfaces", async ({ page }) => {
+  await installDesktopMock(page, "emptyProfileSet");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Contexts" }).click();
+
+  const emptySetRow = page.locator(".list-row").filter({ hasText: "Empty Set" });
+  await expect(emptySetRow.getByRole("button", { name: "Activate set" })).toBeDisabled();
+  await expect(
+    emptySetRow.getByText(
+      "Add at least one mapped profile before using this set in overview, tray, or workspace bindings.",
+    ),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Overview" }).click();
+  await expect(page.getByRole("option", { name: "Profile set: Empty Set" })).toHaveCount(0);
+  await expect(page.getByRole("option", { name: "Profile set: Client Acme" })).toHaveCount(1);
+
+  await page.getByRole("button", { name: "Workspaces" }).click();
+  await expect(page.getByRole("option", { name: "Profile set: Empty Set" })).toHaveCount(0);
+  await expect(page.getByRole("option", { name: "Profile set: Client Acme" })).toHaveCount(1);
+
+  await page.getByRole("button", { name: "Contexts" }).click();
+  await page.getByLabel("Profile set name").fill("empty-next");
+  await expect(page.getByRole("button", { name: "Save profile set" })).toBeDisabled();
+  await expect(
+    page.getByText("Select at least one tool profile before saving this profile set."),
+  ).toBeVisible();
 });
 
 test("uses saved profile labels in context summaries and selectors", async ({ page }) => {
@@ -2356,6 +2387,75 @@ async function installDesktopMock(
               claude: {
                 active: "work",
                 profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
+        emptyProfileSet: {
+          settings: {
+            ...bootstrapSettings,
+            profile_sets: [
+              {
+                name: "empty-set",
+                label: "Empty Set",
+                profiles: {
+                  claude: null,
+                  codex: null,
+                  gemini: null,
+                },
+              },
+              {
+                name: "client-acme",
+                label: "Client Acme",
+                profiles: {
+                  claude: "work",
+                  codex: "work",
+                  gemini: null,
+                },
+              },
+            ],
+          },
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "api_key",
+                credential_backend: "file",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+              codex: {
+                active: "work",
+                profiles: [{ name: "work", auth: "api_key", label: "Work" }],
               },
             },
             contexts: [],

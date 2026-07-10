@@ -578,6 +578,7 @@ fn profile_set_entries(settings: &DesktopSettings, snapshot: &AppSnapshot) -> Ve
     let mut sets = settings.profile_sets.clone();
     sets.sort_by(|left, right| left.name.cmp(&right.name));
     sets.into_iter()
+        .filter(profile_set_has_selections)
         .map(|set| TrayEntry {
             id: format!("{PROFILE_SET_PREFIX}{}", set.name),
             label: profile_set_label(&set, snapshot),
@@ -604,6 +605,12 @@ fn profile_set_is_active(set: &ProfileSet, snapshot: &AppSnapshot) -> bool {
         && selected.into_iter().all(|(tool, profile)| {
             active_profile_for_tool(snapshot, tool) == Some(profile)
         })
+}
+
+fn profile_set_has_selections(set: &ProfileSet) -> bool {
+    set.profiles
+        .values()
+        .any(|profile| profile.as_deref().is_some_and(|value| !value.trim().is_empty()))
 }
 
 fn shared_profile_display_name(
@@ -671,8 +678,8 @@ fn active_profile_for_tool<'a>(snapshot: &'a AppSnapshot, tool: &str) -> Option<
 mod tests {
     use super::{
         active_set_label, active_summary, active_summary_or_default, build_tray_command_result_event,
-        parse_tray_action,
-        profile_set_is_active, shared_profile_entries, tray_runtime_notice, tray_sections,
+        parse_tray_action, profile_set_entries, profile_set_is_active, shared_profile_entries,
+        tray_runtime_notice, tray_sections,
         tray_status_label,
         tray_use_all_profiles_request, tray_use_context_request, tray_use_profile_request,
         TrayAction, TrayCommandScope, TrayEntry, TraySection,
@@ -1114,6 +1121,79 @@ mod tests {
                     }],
                 },
             ]
+        );
+    }
+
+    #[test]
+    fn tray_profile_set_entries_skip_empty_sets() {
+        let snapshot = AppSnapshot {
+            statuses: vec![
+                ToolStatus {
+                    tool: "claude".to_owned(),
+                    binary_found: true,
+                    stored_profiles: 1,
+                    active_profile: Some("work".to_owned()),
+                    auth_method: Some("oauth".to_owned()),
+                    credential_backend: Some("system_keyring".to_owned()),
+                    state_mode: Some("isolated".to_owned()),
+                    active_profile_applied: Some(true),
+                    credentials_present: Some(true),
+                    permissions_ok: Some(true),
+                    token_warning: None,
+                    warnings: vec![],
+                },
+                ToolStatus {
+                    tool: "codex".to_owned(),
+                    binary_found: true,
+                    stored_profiles: 1,
+                    active_profile: Some("work".to_owned()),
+                    auth_method: Some("api_key".to_owned()),
+                    credential_backend: Some("file".to_owned()),
+                    state_mode: Some("isolated".to_owned()),
+                    active_profile_applied: Some(true),
+                    credentials_present: Some(true),
+                    permissions_ok: Some(true),
+                    token_warning: None,
+                    warnings: vec![],
+                },
+            ],
+            profiles: HashMap::new(),
+            contexts: vec![],
+            workspace_status: None,
+            project_bindings: None,
+        };
+        let settings = DesktopSettings {
+            runtime_kind: RuntimeKind::Bundled,
+            runtime_path: None,
+            aisw_home: None,
+            update_channel: "stable".to_owned(),
+            profile_labels: HashMap::new(),
+            profile_sets: vec![
+                ProfileSet {
+                    name: "empty-set".to_owned(),
+                    label: Some("Empty Set".to_owned()),
+                    profiles: HashMap::from([
+                        ("claude".to_owned(), None),
+                        ("codex".to_owned(), Some(" ".to_owned())),
+                    ]),
+                },
+                ProfileSet {
+                    name: "client-acme".to_owned(),
+                    label: Some("Client Acme".to_owned()),
+                    profiles: HashMap::from([
+                        ("claude".to_owned(), Some("work".to_owned())),
+                        ("codex".to_owned(), Some("work".to_owned())),
+                    ]),
+                },
+            ],
+        };
+
+        assert_eq!(
+            profile_set_entries(&settings, &snapshot),
+            vec![TrayEntry {
+                id: "profile-set:client-acme".to_owned(),
+                label: "Client Acme ✓".to_owned(),
+            }]
         );
     }
 

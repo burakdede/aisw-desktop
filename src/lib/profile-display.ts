@@ -76,6 +76,14 @@ export function profileSetDisplayLabel(set: NonNullable<DesktopSettings["profile
   return set.label ?? set.name;
 }
 
+export function profileSetHasSelections(
+  set: NonNullable<DesktopSettings["profile_sets"]>[number],
+) {
+  return Object.values(set.profiles).some(
+    (profile) => typeof profile === "string" && profile.trim().length > 0,
+  );
+}
+
 export function contextDisplayLabel(settings: DesktopSettings, context: string) {
   const profileSet = (settings.profile_sets ?? []).find((entry) => entry.name === context);
   return profileSet ? profileSetDisplayLabel(profileSet) : context;
@@ -89,7 +97,7 @@ export function profileSetIsActive(
     (entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0,
   );
   return (
-    selectedProfiles.length > 0 &&
+    profileSetHasSelections(set) &&
     selectedProfiles.every(
       ([tool, profile]) =>
         snapshot.statuses.find((status) => status.tool === tool)?.active_profile === profile,

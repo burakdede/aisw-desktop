@@ -13,6 +13,7 @@ import { resolveGlobalStateMode, supportedStateModes } from "../../shared/state-
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import {
   contextDisplayLabel,
+  profileSetHasSelections,
   sharedProfileEntries,
   toolProfileDisplayLabel,
 } from "../../../lib/profile-display";
@@ -46,6 +47,7 @@ export function OverviewPanel({
   const quickSwitchOptions = useMemo(() => {
     const sharedProfiles = sharedProfileEntries(settings, snapshot);
     const profileSets = [...(settings.profile_sets ?? [])]
+      .filter(profileSetHasSelections)
       .sort((left, right) => left.name.localeCompare(right.name))
       .map((set) => ({
         value: `set:${set.name}`,
