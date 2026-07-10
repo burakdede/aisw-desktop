@@ -172,6 +172,11 @@ describe("App", () => {
       },
       run_verify: { summary: { status: "pass" } },
       run_repair: { result: { mode: "dry_run" } },
+      export_diagnostic_bundle: {
+        path: "/tmp/aisw-desktop/aisw-desktop-diagnostics-123.json",
+        filename: "aisw-desktop-diagnostics-123.json",
+        generated_at: "unix:123",
+      },
       get_workspace_status: { result: { status: "match" } },
       get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
       list_backups: [],
@@ -2597,6 +2602,71 @@ describe("App", () => {
     expect(
       screen.getByText("Run the guided OAuth flow again and finish login before timeout."),
     ).toBeInTheDocument();
+  });
+
+  it("exports a redacted diagnostic bundle from diagnostics", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { checks: [], summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { summary: { status: "pass", actions_planned: 0, actions_applied: 0, issues_remaining: 0 }, actions: [] } },
+          export_diagnostic_bundle: {
+            path: "/tmp/aisw-desktop/aisw-desktop-diagnostics-456.json",
+            filename: "aisw-desktop-diagnostics-456.json",
+            generated_at: "unix:456",
+          },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+          get_shell_guidance: {
+            detected_shell: "zsh",
+            capabilities: [
+              "Apply CLAUDE_CONFIG_DIR, CODEX_HOME, and GEMINI_API_KEY into the current shell session when you run `aisw use` or `aisw context use`.",
+            ],
+            note: "Without the shell hook, `aisw use` still writes live credential files and updates `~/.aisw/config.json`.",
+            manual_apply_examples: ['eval "$(aisw use claude work --emit-env)"'],
+            variants: [
+              {
+                shell: "zsh",
+                title: "Zsh",
+                config_path: "~/.zshrc",
+                alternate_config_path: null,
+                install_command: "echo 'eval \"$(aisw shell-hook zsh)\"' >> ~/.zshrc",
+                reload_command: "source ~/.zshrc",
+                verify_command: "echo \"$AISW_SHELL_HOOK\"",
+                verify_expected: "1",
+              },
+            ],
+          },
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Diagnostics")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Diagnostics"));
+    fireEvent.click(screen.getByText("Export redacted bundle"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Diagnostic bundle exported")).toBeInTheDocument();
+      expect(screen.getByText("/tmp/aisw-desktop/aisw-desktop-diagnostics-456.json")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("Copy bundle path"));
+
+    await waitFor(() => {
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+        "/tmp/aisw-desktop/aisw-desktop-diagnostics-456.json",
+      );
+    });
+    expect(calls.some((entry) => entry.command === "export_diagnostic_bundle")).toBe(true);
   });
 
   it("opens shell setup from diagnostics when doctor reports the shell hook is inactive", async () => {

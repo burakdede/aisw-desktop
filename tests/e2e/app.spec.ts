@@ -526,6 +526,24 @@ test("records tray context failures and keeps the remediation visible in overvie
     });
 });
 
+test("exports a redacted diagnostic bundle from diagnostics", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+  await page.getByRole("button", { name: "Export redacted bundle" }).click();
+
+  await expect(page.getByText("Diagnostic bundle exported")).toBeVisible();
+  await expect(
+    page.getByText("/tmp/aisw-desktop/aisw-desktop-diagnostics-789.json"),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Copy bundle path" }).click();
+  await expect(
+    page.getByText("Copied bundle path /tmp/aisw-desktop/aisw-desktop-diagnostics-789.json."),
+  ).toBeVisible();
+});
+
 test("shows no-action states when diagnostics are healthy", async ({ page }) => {
   await installDesktopMock(page, "profiles");
 
@@ -3296,6 +3314,13 @@ async function installDesktopMock(
         }
         if (command === "restore_backup") {
           return { command, snapshot: cloneSnapshot() };
+        }
+        if (command === "export_diagnostic_bundle") {
+          return {
+            path: "/tmp/aisw-desktop/aisw-desktop-diagnostics-789.json",
+            filename: "aisw-desktop-diagnostics-789.json",
+            generated_at: "unix:789",
+          };
         }
         if (command === "add_profile_oauth") {
           const request = args.request;

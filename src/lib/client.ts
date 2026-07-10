@@ -3,6 +3,7 @@ import {
   appSnapshotSchema,
   backupEntrySchema,
   desktopSettingsSchema,
+  diagnosticBundleExportSchema,
   doctorReportSchema,
   initReportSchema,
   installUpdateReportSchema,
@@ -13,6 +14,7 @@ import {
   type AppBootstrap,
   type AppSnapshot,
   type BackupEntry,
+  type DiagnosticBundleExport,
   type DesktopSettings,
   type InstallUpdateReport,
   type InitReport,
@@ -231,6 +233,10 @@ export async function runVerify() {
 
 export async function runRepair(request: { apply: boolean; fixes: string[] }) {
   return repairReportSchema.parse(await invokeDesktop("run_repair", { request }));
+}
+
+export async function exportDiagnosticBundle(): Promise<DiagnosticBundleExport> {
+  return diagnosticBundleExportSchema.parse(await invokeDesktop("export_diagnostic_bundle"));
 }
 
 export async function getSettings(): Promise<DesktopSettings> {

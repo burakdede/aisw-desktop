@@ -167,6 +167,11 @@ export const shellHookGuidanceSchema = z.object({
   manual_apply_examples: z.array(z.string()),
   variants: z.array(shellHookVariantSchema),
 });
+export const diagnosticBundleExportSchema = z.object({
+  path: z.string(),
+  filename: z.string(),
+  generated_at: z.string(),
+});
 export const oauthProgressEventSchema = z.object({
   type: z.string().nullable().optional(),
   seq: z.number().nullable().optional(),
@@ -199,3 +204,4 @@ export type UpdateCheckReport = z.infer<typeof updateCheckReportSchema>;
 export type InstallUpdateReport = z.infer<typeof installUpdateReportSchema>;
 export type ShellHookGuidance = z.infer<typeof shellHookGuidanceSchema>;
 export type OAuthProgressEvent = z.infer<typeof oauthProgressEventSchema>;
+export type DiagnosticBundleExport = z.infer<typeof diagnosticBundleExportSchema>;

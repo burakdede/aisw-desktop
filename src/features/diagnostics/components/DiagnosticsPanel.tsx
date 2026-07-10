@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
 import { AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
-import { runDoctor, runRepair, runVerify } from "../../../lib/client";
+import { exportDiagnosticBundle, runDoctor, runRepair, runVerify } from "../../../lib/client";
 import { openExternalGuide, installGuideUrlForTool } from "../../../lib/tool-guidance";
 import { useLastCommandResults } from "../../shared/lastCommandResult";
 import { useDesktopActions } from "../../shared/useDesktopActions";
@@ -52,6 +52,7 @@ export function DiagnosticsPanel({
     queryFn: () => runRepair({ apply: false, fixes: [] }),
   });
   const [importDrafts, setImportDrafts] = useState<Record<string, string>>({});
+  const [bundleCopyMessage, setBundleCopyMessage] = useState("");
   const applyRepair = useMutation({
     mutationFn: (fixes: string[]) => runRepair({ apply: true, fixes }),
     onSuccess: async () => {
@@ -61,6 +62,9 @@ export function DiagnosticsPanel({
       await queryClient.invalidateQueries({ queryKey: ["snapshot"] });
       await queryClient.invalidateQueries({ queryKey: ["bootstrap"] });
     },
+  });
+  const exportBundle = useMutation({
+    mutationFn: exportDiagnosticBundle,
   });
 
   const summaryCards: SummaryCardData[] = [
@@ -110,9 +114,44 @@ export function DiagnosticsPanel({
           >
             {applyRepair.isPending ? "Applying repairs…" : "Apply safe repairs"}
           </button>
+          <button
+            className="ghost-button"
+            onClick={() => exportBundle.mutate()}
+            disabled={exportBundle.isPending}
+          >
+            {exportBundle.isPending ? "Exporting bundle…" : "Export redacted bundle"}
+          </button>
         </div>
       }
     >
+      {exportBundle.data ? (
+        <article className="diagnostic-card diagnostic-pass diagnostics-body">
+          <h3>Diagnostic bundle exported</h3>
+          <p className="inline-note">{exportBundle.data.filename}</p>
+          <p className="inline-note">{exportBundle.data.path}</p>
+          <div className="button-row">
+            <button
+              className="ghost-button"
+              type="button"
+              onClick={() => void copyBundlePath(exportBundle.data.path, setBundleCopyMessage)}
+            >
+              Copy bundle path
+            </button>
+          </div>
+          {bundleCopyMessage ? <p className="inline-note">{bundleCopyMessage}</p> : null}
+        </article>
+      ) : null}
+      {exportBundle.error ? (
+        <article className="diagnostic-card diagnostic-fail diagnostics-body">
+          <h3>Diagnostic bundle export failed</h3>
+          <p className="inline-note">
+            {exportBundle.error instanceof Error
+              ? exportBundle.error.message
+              : "Diagnostic bundle export failed."}
+          </p>
+        </article>
+      ) : null}
+
       <div className="panel-grid panel-grid-3">
         {summaryCards.map((card) => (
           <article key={card.title} className={`diagnostic-card diagnostic-${card.status}`}>
@@ -639,4 +678,16 @@ function buildRecentFailureCards(
 
 function quickFixKey(fix: QuickFixCard) {
   return `${fix.title}:${fix.label}`;
+}
+
+async function copyBundlePath(
+  path: string,
+  setMessage: (message: string) => void,
+) {
+  if (!navigator.clipboard?.writeText) {
+    setMessage(`Clipboard access is unavailable. Copy the bundle path manually: ${path}`);
+    return;
+  }
+  await navigator.clipboard.writeText(path);
+  setMessage(`Copied bundle path ${path}.`);
 }

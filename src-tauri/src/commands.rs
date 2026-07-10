@@ -1,4 +1,5 @@
 use crate::bridge::{AiswBridge, CliAiswBridge};
+use crate::diagnostic_bundle::{default_output_dir, write_redacted_bundle, DiagnosticBundleExport};
 use crate::errors::{DesktopResult, ErrorPayload};
 use crate::models::{
     AddOAuthProfileRequest, AddProfileRequest, AppBootstrap, AppSnapshot, BackupEntry,
@@ -247,6 +248,53 @@ pub async fn run_repair(
         .repair(request)
         .await
         .map_err(ErrorPayload::from)
+}
+
+#[tauri::command]
+pub async fn export_diagnostic_bundle(
+    state: tauri::State<'_, AppState>,
+) -> DesktopResult<DiagnosticBundleExport> {
+    let bootstrap = state.bootstrap().await?;
+    let snapshot = state.snapshot().await?;
+    let settings = state.load_settings().await.map_err(ErrorPayload::from)?;
+    let bridge = CliAiswBridge::new(
+        settings.runtime_kind.clone(),
+        settings.runtime_path.as_ref().map(PathBuf::from),
+        settings.aisw_home.as_ref().map(PathBuf::from),
+    );
+    let doctor = bridge.doctor().await.map_err(ErrorPayload::from)?;
+    let verify = bridge.verify().await.map_err(ErrorPayload::from)?;
+    let repair_preview = bridge
+        .repair(RepairRequest {
+            apply: false,
+            fixes: Vec::new(),
+        })
+        .await
+        .map_err(ErrorPayload::from)?;
+    let backups = bridge.list_backups().await.unwrap_or_default();
+    let shell_guidance = shell::shell_hook_guidance();
+
+    let payload = serde_json::json!({
+        "app": {
+            "name": "AISW Desktop",
+            "version": env!("CARGO_PKG_VERSION"),
+            "platform": std::env::consts::OS,
+            "arch": std::env::consts::ARCH,
+        },
+        "generated_at": std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|duration| duration.as_secs())
+            .unwrap_or(0),
+        "bootstrap": bootstrap,
+        "snapshot": snapshot,
+        "doctor": doctor,
+        "verify": verify,
+        "repair_preview": repair_preview,
+        "backups": backups,
+        "shell_guidance": shell_guidance,
+    });
+
+    write_redacted_bundle(&payload, &default_output_dir()).map_err(ErrorPayload::from)
 }
 
 #[tauri::command]

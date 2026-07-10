@@ -2,6 +2,7 @@
 
 mod bridge;
 mod commands;
+mod diagnostic_bundle;
 mod errors;
 mod models;
 mod redaction;
@@ -50,6 +51,7 @@ fn main() {
             commands::run_doctor,
             commands::run_verify,
             commands::run_repair,
+            commands::export_diagnostic_bundle,
             commands::list_backups,
             commands::get_workspace_status,
             commands::get_project_bindings,
