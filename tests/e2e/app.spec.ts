@@ -47,7 +47,9 @@ test("imports detected Claude, Codex, and Gemini accounts during onboarding", as
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "First-run setup" })).toBeVisible();
-  await expect(page.getByText("Active set: Work")).toBeVisible();
+  await expect(page.getByText("Local-only by default")).toBeVisible();
+  await expect(page.getByText("✓ Credentials stay on this Mac")).toBeVisible();
+  await expect(page.getByText("Current set: Work")).toBeVisible();
   await page.getByRole("button", { name: "Start setup" }).click();
   await expect(page.getByText("detected · oauth").first()).toBeVisible();
 

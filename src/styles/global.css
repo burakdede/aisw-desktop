@@ -550,9 +550,23 @@ button {
 
 .tool-card-meta,
 .stacked-form,
-.stack-list {
+.stack-list,
+.trust-list {
   display: grid;
   gap: 10px;
+}
+
+.trust-list {
+  gap: 8px;
+}
+
+.trust-list-item {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .tool-card-meta {

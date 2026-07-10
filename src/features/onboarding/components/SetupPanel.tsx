@@ -135,6 +135,16 @@ export function SetupPanel({
         It includes the compatible switching runtime it needs, so there is no extra command-line setup for normal use.
       </p>
 
+      <article className="diagnostic-card diagnostics-body">
+        <h3>Local-only by default</h3>
+        <div className="trust-list">
+          <p className="trust-list-item">✓ Credentials stay on this Mac</p>
+          <p className="trust-list-item">✓ No telemetry</p>
+          <p className="trust-list-item">✓ No prompt or API traffic proxy</p>
+          <p className="trust-list-item">✓ Bundled runtime included</p>
+        </div>
+      </article>
+
       <div className="panel-grid panel-grid-2 diagnostics-body">
         <article className="diagnostic-card">
           <h3>App runtime</h3>

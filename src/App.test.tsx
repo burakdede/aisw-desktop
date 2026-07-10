@@ -307,6 +307,9 @@ describe("App", () => {
     expect(screen.getByText("First-run setup")).toBeInTheDocument();
     expect(screen.getByText("App runtime")).toBeInTheDocument();
     expect(screen.getByText("Health check")).toBeInTheDocument();
+    expect(screen.getByText("Local-only by default")).toBeInTheDocument();
+    expect(screen.getByText("✓ Credentials stay on this Mac")).toBeInTheDocument();
+    expect(screen.getByText("✓ No telemetry")).toBeInTheDocument();
     expect(
       screen.getByText("AI Switch is using its bundled runtime."),
     ).toBeInTheDocument();
