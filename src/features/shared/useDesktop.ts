@@ -17,7 +17,7 @@ export function useDesktop() {
   const init = useQuery({
     queryKey: ["init"],
     queryFn: runInit,
-    enabled: bootstrap.data?.runtime_status.compatible ?? false,
+    enabled: false,
   });
 
   return {

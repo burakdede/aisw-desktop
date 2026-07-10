@@ -301,7 +301,10 @@ export function useDesktopActions() {
           throw error;
         }
       },
-      onSuccess: invalidate,
+      onSuccess: async (result) => {
+        queryClient.setQueryData(["init"], result);
+        await invalidate();
+      },
     }),
     workspaceBindMutation: useMutation({
       mutationFn: queueMutation(

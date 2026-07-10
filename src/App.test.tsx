@@ -2856,9 +2856,6 @@ describe("App", () => {
     window.__AISW_DESKTOP_MOCK__ = async (command) => {
       if (command === "run_init") {
         initCalls += 1;
-        if (initCalls === 1) {
-          return { result: { live_accounts: [] } };
-        }
         return {
           result: {
             live_accounts: [{ tool: "codex", outcome: "detected", auth_method: "oauth" }],
@@ -2888,12 +2885,13 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByText("Run the setup scan to detect live Claude, Codex, and Gemini accounts.")).toBeInTheDocument();
     });
+    expect(initCalls).toBe(0);
 
     fireEvent.click(screen.getByText("Start setup"));
 
     await waitFor(() => {
       expect(screen.getByText("detected · oauth")).toBeInTheDocument();
-      expect(initCalls).toBeGreaterThanOrEqual(2);
+      expect(initCalls).toBe(1);
     });
   });
 
@@ -4300,6 +4298,14 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
+    });
+    await waitFor(() => {
+      expect(
+        screen.queryByText(
+          "Save settings before checking for updates so the runtime and channel selection match the persisted desktop configuration.",
+        ),
+      ).not.toBeInTheDocument();
+      expect(screen.getByText("Check for updates")).not.toBeDisabled();
     });
 
     fireEvent.click(screen.getByText("Check for updates"));

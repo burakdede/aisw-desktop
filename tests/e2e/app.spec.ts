@@ -37,6 +37,7 @@ test("imports detected Claude, Codex, and Gemini accounts during onboarding", as
 
   await expect(page.getByRole("heading", { name: "First-run setup" })).toBeVisible();
   await expect(page.getByText("Active set: Work")).toBeVisible();
+  await page.getByRole("button", { name: "Start setup" }).click();
   await expect(page.getByText("detected · oauth").first()).toBeVisible();
 
   await importDetectedAccount(page, "claude", "work");
@@ -157,10 +158,34 @@ test("reruns setup detection when no live accounts are initially found", async (
 
   await expect(page.getByRole("heading", { name: "First-run setup" })).toBeVisible();
   await expect(page.getByText("No live credentials detected").first()).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (
+            window as typeof window & {
+              __AISW_DESKTOP_SCENARIO_STATE__?: { initRuns?: number };
+            }
+          ).__AISW_DESKTOP_SCENARIO_STATE__?.initRuns ?? 0,
+      ),
+    )
+    .toBe(0);
 
   await page.getByRole("button", { name: "Start setup" }).click();
 
   await expect(page.getByText("detected · oauth")).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (
+            window as typeof window & {
+              __AISW_DESKTOP_SCENARIO_STATE__?: { initRuns?: number };
+            }
+          ).__AISW_DESKTOP_SCENARIO_STATE__?.initRuns ?? 0,
+      ),
+    )
+    .toBe(1);
 });
 
 test("runs the onboarding first switch flow", async ({ page }) => {
@@ -2436,6 +2461,7 @@ async function installDesktopMock(
         initRuns: 0,
         snapshotReads: 0,
       };
+      window.__AISW_DESKTOP_SCENARIO_STATE__ = state;
 
       const stateWorkspace = {
         current_path: "/code/acme",
@@ -2790,7 +2816,7 @@ async function installDesktopMock(
         }
         if (command === "run_init") {
           state.initRuns += 1;
-          if (activeScenario === "noLiveAccounts" && state.initRuns > 1) {
+          if (activeScenario === "noLiveAccounts" && state.initRuns >= 1) {
             return {
               result: {
                 live_accounts: [{ tool: "codex", outcome: "detected", auth_method: "oauth" }],
