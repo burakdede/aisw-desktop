@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "prepare:sidecar": "node ./scripts/prepare-sidecar.mjs",
+    "prepare:updater": "node ./scripts/prepare-updater.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:e2e": "playwright test",

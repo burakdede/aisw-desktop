@@ -75,6 +75,7 @@ npm run tauri:build
 1. Export signing inputs before running `npm run tauri:build`:
    `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`, `TAURI_SIGNING_PRIVATE_KEY`, and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
 2. Configure `plugins.updater.channels` in `src-tauri/tauri.conf.json` for every release channel you intend to ship, or provide `AISW_DESKTOP_UPDATER_ENDPOINT[_CHANNEL]` overrides for a non-production build.
+   CI release builds do this with `npm run prepare:updater`.
 3. Build with the target-specific sidecar staged:
    `npm run tauri:build`
 4. Confirm the build produced a signed `.app`, a signed `.dmg`, and an updater archive plus `.sig`.
@@ -84,6 +85,7 @@ npm run tauri:build
 
 1. Export `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
 2. Configure `plugins.updater.channels` in `src-tauri/tauri.conf.json` for the Windows release channels you publish.
+   CI release builds do this with `npm run prepare:updater`.
 3. Build the Windows target after staging the matching sidecar.
 4. Verify the generated installer is code signed.
 5. Install on a clean Windows machine and confirm SmartScreen reputation is the only remaining trust variable.
@@ -92,6 +94,7 @@ npm run tauri:build
 
 1. Build the Linux target after staging the matching sidecar.
 2. Configure `plugins.updater.channels` in `src-tauri/tauri.conf.json` for every Linux release channel you publish.
+   CI release builds do this with `npm run prepare:updater`.
 3. Validate the generated `.deb`, `.rpm`, and AppImage artifacts on a clean machine or container.
 4. Confirm the packaged app resolves the bundled `aisw` sidecar in `Bundled` mode.
 
@@ -116,6 +119,8 @@ The repository workflow at `.github/workflows/publish.yml` expects these secrets
 - `AISW_SIDECAR_URL_MACOS_X64`
 - `AISW_SIDECAR_URL_LINUX_X64`
 - `AISW_SIDECAR_URL_WINDOWS_X64`
+- `AISW_DESKTOP_UPDATER_ENDPOINT_STABLE`
+- `AISW_DESKTOP_UPDATER_ENDPOINT_BETA`
 - `TAURI_SIGNING_PRIVATE_KEY`
 - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
 

@@ -29,6 +29,7 @@ function createReleaseFixture(overrides = {}) {
       {
         scripts: {
           "prepare:sidecar": "node ./scripts/prepare-sidecar.mjs",
+          "prepare:updater": "node ./scripts/prepare-updater.mjs",
           "tauri:build": "tauri build",
         },
       },
@@ -79,6 +80,7 @@ run: |
       `
 Download aisw sidecar
 npm run prepare:sidecar -- --target \${{ matrix.target }} "\${{ runner.temp }}/aisw"
+npm run prepare:updater
 npm test
 npm run test:e2e
 npm run build
@@ -95,6 +97,8 @@ AISW_SIDECAR_URL_MACOS_ARM64
 AISW_SIDECAR_URL_MACOS_X64
 AISW_SIDECAR_URL_LINUX_X64
 AISW_SIDECAR_URL_WINDOWS_X64
+AISW_DESKTOP_UPDATER_ENDPOINT_STABLE
+AISW_DESKTOP_UPDATER_ENDPOINT_BETA
 `,
   );
   writeFixture(
@@ -103,6 +107,7 @@ AISW_SIDECAR_URL_WINDOWS_X64
     overrides.runbook ??
       `
 npm run prepare:sidecar -- /absolute/path/to/aisw
+npm run prepare:updater
 npm run tauri:build
 npm test
 npm run build
@@ -182,6 +187,7 @@ Complete platform signing checks
       publishWorkflow: `
 Download aisw sidecar
 npm run prepare:sidecar -- --target \${{ matrix.target }} "\${{ runner.temp }}/aisw"
+npm run prepare:updater
 npm test
 npm run test:e2e
 npm run build
@@ -243,6 +249,12 @@ AISW_SIDECAR_URL_LINUX_X64
     expect(result.checks).toContainEqual(
       expect.objectContaining({
         label: "publish workflow wires target-specific sidecar secrets",
+        ok: false,
+      }),
+    );
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        label: "publish workflow configures updater channels",
         ok: false,
       }),
     );

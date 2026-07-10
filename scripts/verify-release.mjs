@@ -23,6 +23,10 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       ok: packageJson.scripts?.["prepare:sidecar"] === "node ./scripts/prepare-sidecar.mjs",
     },
     {
+      label: "package.json exposes updater channel staging",
+      ok: packageJson.scripts?.["prepare:updater"] === "node ./scripts/prepare-updater.mjs",
+    },
+    {
       label: "tauri bundles aisw via externalBin",
       ok: Array.isArray(tauriConfig.bundle?.externalBin) && tauriConfig.bundle.externalBin.includes("binaries/aisw"),
     },
@@ -43,7 +47,8 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       label: "runbook documents sidecar staging",
       ok:
         runbook.includes("npm run prepare:sidecar -- /absolute/path/to/aisw") &&
-        runbook.includes("npm run tauri:build"),
+        runbook.includes("npm run tauri:build") &&
+        runbook.includes("npm run prepare:updater"),
     },
     {
       label: "runbook captures verification matrix",
@@ -92,6 +97,13 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       ok:
         publishWorkflow.includes("npm run prepare:sidecar -- --target ${{ matrix.target }}") &&
         publishWorkflow.includes("Download aisw sidecar"),
+    },
+    {
+      label: "publish workflow configures updater channels",
+      ok:
+        publishWorkflow.includes("npm run prepare:updater") &&
+        publishWorkflow.includes("AISW_DESKTOP_UPDATER_ENDPOINT_STABLE") &&
+        publishWorkflow.includes("AISW_DESKTOP_UPDATER_ENDPOINT_BETA"),
     },
     {
       label: "publish workflow covers every supported release target",
