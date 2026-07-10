@@ -3108,4 +3108,73 @@ describe("App", () => {
       expect(screen.getByDisplayValue("Beta")).toBeInTheDocument();
     });
   });
+
+  it("requires saving settings before updater actions use a changed channel", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    let currentSettings: DesktopSettings = bootstrap.settings;
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "update_settings") {
+        currentSettings = {
+          ...currentSettings,
+          ...(args as { request?: DesktopSettings }).request,
+        };
+        return currentSettings;
+      }
+      if (command === "check_for_updates") {
+        return {
+          configured: true,
+          channel: currentSettings.update_channel,
+          current_version: "0.1.0",
+          endpoint: `https://updates.example.com/${currentSettings.update_channel}.json`,
+          update: null,
+          message: "No update is currently available.",
+        };
+      }
+      return (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            settings: currentSettings,
+          },
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: currentSettings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Settings"));
+    fireEvent.change(screen.getByDisplayValue("Stable"), {
+      target: { value: "beta" },
+    });
+
+    expect(
+      screen.getByText(
+        "Save settings before checking for updates so the runtime and channel selection match the persisted desktop configuration.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Check for updates")).toBeDisabled();
+
+    fireEvent.click(screen.getByText("Save settings"));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
+    });
+
+    fireEvent.click(screen.getByText("Check for updates"));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "check_for_updates")).toBe(true);
+      expect(screen.getByText("Channel: beta")).toBeInTheDocument();
+    });
+  });
 });

@@ -31,6 +31,11 @@ export function SettingsPanel({
     if (!variants.length) return undefined;
     return variants.find((variant) => variant.shell === selectedShell) ?? variants[0];
   }, [selectedShell, shellGuidance.data]);
+  const hasPendingSettingsChanges =
+    runtimeKind !== settings.runtime_kind ||
+    runtimePath !== (settings.runtime_path ?? "") ||
+    aiswHome !== (settings.aisw_home ?? "") ||
+    updateChannel !== settings.update_channel;
 
   useEffect(() => {
     if (!shellGuidance.data?.variants.length) return;
@@ -147,7 +152,11 @@ export function SettingsPanel({
             <button
               className="primary-button"
               type="button"
-              disabled={mutationLock.isBusy || checkForUpdatesMutation.isPending}
+              disabled={
+                mutationLock.isBusy ||
+                checkForUpdatesMutation.isPending ||
+                hasPendingSettingsChanges
+              }
               onClick={() => checkForUpdatesMutation.mutate()}
             >
               {checkForUpdatesMutation.isPending ? "Checking…" : "Check for updates"}
@@ -156,6 +165,7 @@ export function SettingsPanel({
               type="button"
               disabled={
                 mutationLock.isBusy ||
+                hasPendingSettingsChanges ||
                 installUpdateMutation.isPending ||
                 !checkForUpdatesMutation.data?.update
               }
@@ -164,6 +174,12 @@ export function SettingsPanel({
               {installUpdateMutation.isPending ? "Installing…" : "Install update"}
             </button>
           </div>
+          {hasPendingSettingsChanges ? (
+            <p className="inline-note">
+              Save settings before checking for updates so the runtime and channel selection match
+              the persisted desktop configuration.
+            </p>
+          ) : null}
           {checkForUpdatesMutation.data ? (
             <div className="stack-list">
               <p className="inline-note">Current app version: {checkForUpdatesMutation.data.current_version}</p>

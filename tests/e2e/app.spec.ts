@@ -223,6 +223,32 @@ test("shows remediation when the updater configuration is invalid", async ({ pag
   ).toBeVisible();
 });
 
+test("requires saving settings before updater actions use a changed channel", async ({ page }) => {
+  await installDesktopMock(page, "profiles");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+
+  await page.getByLabel("Update channel").selectOption("beta");
+  await expect(
+    page.getByText(
+      "Save settings before checking for updates so the runtime and channel selection match the persisted desktop configuration.",
+    ),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Check for updates" })).toBeDisabled();
+
+  await page.getByRole("button", { name: "Save settings" }).click();
+  await expect(
+    page.getByText(
+      "Save settings before checking for updates so the runtime and channel selection match the persisted desktop configuration.",
+    ),
+  ).not.toBeVisible();
+
+  await page.getByRole("button", { name: "Check for updates" }).click();
+  await expect(page.getByText("Channel: beta")).toBeVisible();
+  await expect(page.getByText(/Endpoint:\s*https:\/\/updates\.example\.com\/beta\.json/)).toBeVisible();
+});
+
 test("creates profiles from environment and API key modes", async ({ page }) => {
   await installDesktopMock(page, "profiles");
 
@@ -842,7 +868,7 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
             configured: true,
             channel: state.settings.update_channel,
             current_version: "0.1.0",
-            endpoint: "https://updates.example.com/stable.json",
+            endpoint: `https://updates.example.com/${state.settings.update_channel}.json`,
             update: {
               version: "0.2.0",
               current_version: "0.1.0",
@@ -861,6 +887,11 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
             restart_requested: true,
             message: "Update installed. Restart has been requested.",
           };
+        }
+        if (command === "update_settings") {
+          state.settings = deepClone(args.request);
+          state.bootstrap.settings = deepClone(args.request);
+          return deepClone(state.settings);
         }
         if (command === "get_settings") {
           return deepClone(state.settings);
