@@ -119,13 +119,13 @@ export function WorkspacesPanel({
   }
 
   return (
-    <SectionCard title="Workspaces" kicker="Guardrails and bindings">
+    <SectionCard title="Project rules" kicker="Expected sets by folder or remote">
       <div className="panel-grid panel-grid-2">
         <form className="stacked-form" onSubmit={submitBind}>
           <label>
             Binding scope
             <select value={scope} onChange={(event) => setScope(event.target.value as BindScope)}>
-              <option value="default">Default context</option>
+              <option value="default">Default set</option>
               <option value="path">Path prefix</option>
               <option value="git_remote">Git remote pattern</option>
             </select>
@@ -137,9 +137,9 @@ export function WorkspacesPanel({
             </label>
           ) : null}
           <label>
-            Context
+            Set
             <select value={context} onChange={(event) => setContext(event.target.value)}>
-              <option value="">Select context</option>
+              <option value="">Select set</option>
               {bindingOptions.map((entry) => (
                 <option key={entry.value} value={entry.value}>
                   {entry.label}
@@ -149,7 +149,7 @@ export function WorkspacesPanel({
           </label>
           <div className="button-row">
             <button className="primary-button" type="submit" disabled={mutationLock.isBusy || !canSaveBinding}>
-              Save binding
+              Save rule
             </button>
             <button
               className="ghost-button"
@@ -165,12 +165,12 @@ export function WorkspacesPanel({
                 )
               }
             >
-              Remove binding
+              Remove rule
             </button>
           </div>
           {!bindingOptions.length ? (
             <p className="inline-note">
-              No profile sets or CLI contexts are available yet. Create one before saving workspace bindings.
+              No sets are available yet. Create one before saving a project rule.
             </p>
           ) : null}
           {requiresExplicitTarget && trimmedTargetValue.length === 0 ? (
@@ -216,24 +216,24 @@ export function WorkspacesPanel({
                   disabled={mutationLock.isBusy}
                   onClick={activateExpectedWorkspaceTarget}
                 >
-                  {expectedWorkspaceTarget ? "Use expected context now" : "Open contexts"}
+                  {expectedWorkspaceTarget ? "Use expected set now" : "Open sets"}
                 </button>
                 <button
                   className="ghost-button"
                   type="button"
                   onClick={() => setWorkspaceOverrideDismissed(true)}
                 >
-                  Keep current context
+                  Keep current set
                 </button>
               </div>
             </article>
           ) : null}
 
           <article className="diagnostic-card">
-            <h3>Resolved workspace</h3>
+            <h3>Resolved project rule</h3>
             <p className="diagnostic-status">{statusCard.status}</p>
-            <p className="inline-note">Current context: {currentContextDisplay}</p>
-            <p className="inline-note">Expected context: {expectedContextDisplay}</p>
+            <p className="inline-note">Current set: {currentContextDisplay}</p>
+            <p className="inline-note">Expected set: {expectedContextDisplay}</p>
             <p className="inline-note">Matched scope: {statusCard.scope}</p>
             <p className="inline-note">Matched target: {statusCard.target}</p>
           </article>
@@ -242,7 +242,7 @@ export function WorkspacesPanel({
             <h3>Workspace guard</h3>
             <p className="inline-note">Guard mode: {bindingsSummary.guardMode}</p>
             <p className="inline-note">
-              Default context: {contextDisplayLabel(settings, bindingsSummary.defaultContext)}
+              Default set: {contextDisplayLabel(settings, bindingsSummary.defaultContext)}
             </p>
           </article>
 
@@ -281,8 +281,8 @@ export function WorkspacesPanel({
             })}
             {!bindingsSummary.bindings.length ? (
               <p className="inline-note">
-                No explicit workspace bindings are configured yet. Save one from the form to attach
-                a context to a default scope, path prefix, or git remote pattern.
+                No explicit project rules are configured yet. Save one from the form to attach a
+                set to a default scope, path prefix, or git remote pattern.
               </p>
             ) : null}
           </div>

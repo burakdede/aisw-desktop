@@ -4,18 +4,18 @@ import { AppFrame } from "./components/AppFrame";
 import { SectionCard } from "./components/SectionCard";
 import { recordCommandResult } from "./features/shared/lastCommandResult";
 import { BackupsPanel } from "./features/backups/components/BackupsPanel";
-import { ContextsPanel } from "./features/contexts/components/ContextsPanel";
 import { DiagnosticsPanel } from "./features/diagnostics/components/DiagnosticsPanel";
 import { SetupPanel } from "./features/onboarding/components/SetupPanel";
 import { OverviewPanel } from "./features/overview/components/OverviewPanel";
 import { ProfilesPanel } from "./features/profiles/components/ProfilesPanel";
+import { ActivityPanel } from "./features/activity/components/ActivityPanel";
+import { SetsPanel } from "./features/sets/components/SetsPanel";
 import { invalidatePostMutationQueries } from "./features/shared/postMutationRefresh";
 import {
   SettingsPanel,
   type SettingsSection,
 } from "./features/settings/components/SettingsPanel";
 import { useDesktop } from "./features/shared/useDesktop";
-import { WorkspacesPanel } from "./features/workspaces/components/WorkspacesPanel";
 import { notifyDesktop } from "./lib/notifications";
 import { activeSetLabel } from "./lib/profile-display";
 import { DesktopCommandError } from "./lib/tauri";
@@ -23,13 +23,13 @@ import { listenDesktopEvent, type TrayCommandResultEvent } from "./lib/tauri";
 import type { ProfileImportMode } from "./features/shared/profile-capabilities";
 
 const NAV = [
-  { id: "overview", label: "Overview" },
-  { id: "profiles", label: "Profiles" },
-  { id: "contexts", label: "Contexts" },
-  { id: "workspaces", label: "Workspaces" },
-  { id: "diagnostics", label: "Diagnostics" },
-  { id: "backups", label: "Backups" },
-  { id: "settings", label: "Settings" },
+  { id: "overview", label: "Overview", group: "Main" },
+  { id: "profiles", label: "Profiles", group: "Main" },
+  { id: "sets", label: "Sets", group: "Main" },
+  { id: "diagnostics", label: "Diagnostics", group: "Health" },
+  { id: "backups", label: "Backups", group: "Health" },
+  { id: "activity", label: "Activity", group: "Health" },
+  { id: "settings", label: "Settings", group: "App" },
 ] as const;
 
 const DIAGNOSTICS_QUERY_KEYS = [
@@ -64,7 +64,7 @@ export function App() {
   }
 
   function openContexts() {
-    setActiveNav("contexts");
+    setActiveNav("sets");
   }
 
   function selectNav(id: string) {
@@ -153,8 +153,8 @@ export function App() {
     return (
       <main className="app-shell">
         <section className="hero-card">
-          <p className="eyebrow">AISW Desktop</p>
-          <h1>Loading local control plane…</h1>
+          <p className="eyebrow">AI Switch</p>
+          <h1>Loading your local account control center…</h1>
         </section>
       </main>
     );
@@ -165,9 +165,9 @@ export function App() {
     return (
       <main className="app-shell">
         <section className="hero-card">
-          <p className="eyebrow">AISW Desktop</p>
-          <h1>Desktop bootstrap failed.</h1>
-          <p className="lede">Check the configured `aisw` runtime, local permissions, and JSON contract compatibility.</p>
+          <p className="eyebrow">AI Switch</p>
+          <h1>AI Switch could not finish startup.</h1>
+          <p className="lede">Check the selected runtime, local permissions, and compatibility details before continuing.</p>
           <p className="inline-note">{bootstrapError.message}</p>
           {bootstrapError.remediation ? (
             <p className="inline-note">{bootstrapError.remediation}</p>
@@ -183,25 +183,46 @@ export function App() {
   const currentActiveSet = resolvedSnapshot ? activeSetLabel(settings, resolvedSnapshot) : null;
   const runtimeBlocked = !runtimeStatus.compatible;
   const activeSection = runtimeBlocked ? "settings" : activeNav;
-  const navItems = NAV.map(({ id, label }) => ({
+  const navItems = NAV.map(({ id, label, group }) => ({
     id,
     label,
+    group,
     disabled: runtimeBlocked && id !== "settings",
   }));
   const runtimeBlocker = describeRuntimeBlocker(runtimeStatus);
 
   return (
     <AppFrame
-      title="Local-first switching"
-      subtitle="See agent identity state, switch safely, and recover from auth drift without touching hidden files."
+      title={sectionTitle(activeSection)}
+      subtitle="Manage Claude Code, Codex CLI, and Gemini CLI identities from a compact local Mac utility."
       nav={navItems}
       activeNav={activeSection}
       onSelectNav={selectNav}
+      toolbar={
+        <div className="button-row">
+          <button className="ghost-button" type="button" onClick={() => setActiveNav("sets")}>
+            Quick Switch
+          </button>
+          <button className="ghost-button" type="button" onClick={() => setActiveNav("diagnostics")}>
+            Verify
+          </button>
+          <button
+            className="primary-button"
+            type="button"
+            onClick={() => {
+              setProfilesRouteState({ tool: "claude", expandedProfile: null });
+              setActiveNav("profiles");
+            }}
+          >
+            Add Profile
+          </button>
+        </div>
+      }
       statusBadge={
         <div>
-          <strong>{currentActiveSet ? `Active set: ${currentActiveSet}` : "No shared active set"}</strong>
-          <p>{runtimeStatus.compatible ? "Runtime ready" : "Runtime blocked"}</p>
-          <p>{runtimeStatus.resolved_path ?? "No aisw runtime resolved"}</p>
+          <strong>{currentActiveSet ? `Current set: ${currentActiveSet}` : "No shared set active"}</strong>
+          <p>{runtimeStatus.compatible ? "Ready to switch" : "Needs attention"}</p>
+          <p>{runtimeStatus.resolved_path ?? "No runtime resolved"}</p>
         </div>
       }
     >
@@ -263,11 +284,8 @@ export function App() {
               initialCredentialBackend={profilesRouteState.credentialBackend}
             />
           ) : null}
-          {activeSection === "contexts" ? (
-            <ContextsPanel snapshot={resolvedSnapshot} settings={settings} />
-          ) : null}
-          {activeSection === "workspaces" ? (
-            <WorkspacesPanel
+          {activeSection === "sets" ? (
+            <SetsPanel
               snapshot={resolvedSnapshot}
               settings={settings}
               onOpenContexts={openContexts}
@@ -306,6 +324,7 @@ export function App() {
               }}
             />
           ) : null}
+          {activeSection === "activity" ? <ActivityPanel /> : null}
           {activeSection === "settings" ? (
             <SettingsPanel
               settings={settings}
@@ -339,7 +358,7 @@ function describeBootstrapError(error: unknown) {
   }
 
   return {
-    message: "AISW Desktop could not load its initial local state.",
+    message: "AI Switch could not load its initial local state.",
     remediation: undefined,
   };
 }
@@ -363,24 +382,45 @@ function describeRuntimeBlocker(runtimeStatus: {
   if (hasResolvedRuntime && missingDesktopContract) {
     return {
       summary:
-        "AISW Desktop found an `aisw` binary, but this build does not support the desktop integration features yet.",
+        "AI Switch found a runtime binary, but it does not support the desktop integration features required by this release.",
       nextStep:
-        "Open Settings and switch to the bundled runtime, or point AISW Desktop at a newer `aisw` build before continuing.",
+        "Open Settings and switch back to the bundled runtime, or choose a newer compatible runtime before continuing.",
     };
   }
 
   if (hasResolvedRuntime) {
     return {
       summary:
-        "AISW Desktop found an `aisw` binary, but it is not compatible with this desktop build.",
+        "AI Switch found a runtime binary, but it is not compatible with this desktop build.",
       nextStep:
-        "Open Settings and switch to the bundled runtime, or point AISW Desktop at a compatible `aisw` build before continuing.",
+        "Open Settings and switch back to the bundled runtime, or choose a compatible runtime before continuing.",
     };
   }
 
   return {
-    summary: "AISW Desktop could not use the selected `aisw` runtime.",
+    summary: "AI Switch could not use the selected runtime.",
     nextStep:
-      "Open Settings and switch to a working bundled, system, or custom `aisw` runtime before continuing.",
+      "Open Settings and switch to a working bundled runtime or choose an advanced override before continuing.",
   };
+}
+
+function sectionTitle(section: string) {
+  switch (section) {
+    case "overview":
+      return "Overview";
+    case "profiles":
+      return "Profiles";
+    case "sets":
+      return "Sets";
+    case "diagnostics":
+      return "Diagnostics";
+    case "backups":
+      return "Backups";
+    case "activity":
+      return "Activity";
+    case "settings":
+      return "Settings";
+    default:
+      return "AI Switch";
+  }
 }

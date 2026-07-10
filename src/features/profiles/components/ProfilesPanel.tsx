@@ -329,7 +329,7 @@ export function ProfilesPanel({
             <div className="diagnostic-card">
               <h3>OAuth wizard</h3>
               <p className="inline-note">
-                AISW Desktop will launch the tool&apos;s native login flow and stream progress from
+                AI Switch will launch the tool&apos;s native login flow and stream progress from
                 <code> aisw add {tool} {profile || "<profile>"} --progress-json</code>.
               </p>
               <p className="inline-note">
@@ -879,7 +879,7 @@ function buildOauthWizardSteps(
     {
       id: "browser" as const,
       label: "2. Browser opens",
-      fallback: "AISW Desktop launches the provider login flow.",
+      fallback: "AI Switch launches the provider login flow.",
     },
     {
       id: "login" as const,

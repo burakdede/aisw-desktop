@@ -93,7 +93,7 @@ export function OverviewPanel({
       ? "Expected profile set"
       : expectedWorkspaceTarget?.kind === "context"
         ? "Expected CLI context"
-        : "Expected context";
+        : "Expected set";
   const expectedWorkspaceDisplay = contextDisplayLabel(settings, workspaceStatus.expectedContext);
   const currentWorkspaceDisplay = contextDisplayLabel(settings, workspaceStatus.currentContext);
   const workspaceResult = lastCommandResults.global.workspace;
@@ -152,12 +152,12 @@ export function OverviewPanel({
     >
       {showWorkspaceSummary ? (
         <article className={`diagnostic-card ${hasWorkspaceMismatch ? "diagnostic-warn" : "diagnostic-pass"}`}>
-          <h3>{hasWorkspaceMismatch ? "Workspace wants a different context" : "Workspace match"}</h3>
+          <h3>{hasWorkspaceMismatch ? "Workspace wants a different set" : "Workspace match"}</h3>
           <p className="inline-note">
             {workspaceSummaryLabel}: <strong>{expectedWorkspaceDisplay}</strong>
           </p>
           <p className="inline-note">
-            Current context: <strong>{currentWorkspaceDisplay}</strong>
+            Current set: <strong>{currentWorkspaceDisplay}</strong>
           </p>
           <p className="inline-note">
             Matched via {workspaceStatus.scope}: {workspaceStatus.target}
@@ -184,7 +184,7 @@ export function OverviewPanel({
                   });
                 }}
               >
-                {expectedWorkspaceTarget ? "Use expected context now" : "Open contexts"}
+                {expectedWorkspaceTarget ? "Use expected set now" : "Open sets"}
               </button>
             </div>
           ) : null}
@@ -513,7 +513,7 @@ function MissingBinaryGuidance({
   return (
     <div className="stack-list">
       <p className="inline-note">
-        {titleCase(tool)} is not available on PATH, so AISW Desktop cannot switch or verify that
+        {titleCase(tool)} is not available on PATH, so AI Switch cannot switch or verify that
         tool yet.
       </p>
       <p className="inline-note">

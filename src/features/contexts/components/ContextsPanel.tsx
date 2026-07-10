@@ -148,11 +148,11 @@ export function ContextsPanel({
   }
 
   return (
-    <SectionCard title="Contexts" kicker="Profile sets and work modes">
+    <SectionCard title="Sets" kicker="Saved switching combinations">
       <div className="panel-grid panel-grid-2">
         <form className="stacked-form" onSubmit={saveProfileSet}>
           <label>
-            Profile set name
+            Set name
             <input
               value={draft.name}
               onChange={(event) =>
@@ -198,16 +198,16 @@ export function ContextsPanel({
               mutationLock.isBusy || !trimmedDraftName || !draftHasSelections || hasDuplicateSetName
             }
           >
-            {isEditingExistingSet ? "Update profile set" : "Save profile set"}
+            {isEditingExistingSet ? "Update set" : "Save set"}
           </button>
           {hasDuplicateSetName ? (
             <p className="inline-note">
-              A profile set named {trimmedDraftName} already exists. Rename the existing set or choose a different name.
+              A set named {trimmedDraftName} already exists. Rename the existing set or choose a different name.
             </p>
           ) : null}
           {!draftHasSelections ? (
             <p className="inline-note">
-              Select at least one tool profile before saving this profile set.
+              Select at least one tool profile before saving this set.
             </p>
           ) : null}
         </form>
@@ -238,7 +238,7 @@ export function ContextsPanel({
                   }
                   onClick={() => void activateProfileSet(set)}
                 >
-                  {profileSetIsActive(snapshot, set) ? "Active set" : "Activate set"}
+                  {profileSetIsActive(snapshot, set) ? "Current set" : "Switch to set"}
                 </button>
                 <button
                   className="ghost-button"
@@ -267,7 +267,7 @@ export function ContextsPanel({
               </div>
               {!profileSetHasSelections(set) ? (
                 <p className="inline-note">
-                  Add at least one mapped profile before using this set in overview, tray, or workspace bindings.
+                  Add at least one mapped profile before using this set in Overview, the menu bar, or project rules.
                 </p>
               ) : !profileSetHasUsableSelections(snapshot, set) ? (
                 <p className="inline-note">
@@ -281,13 +281,13 @@ export function ContextsPanel({
           ))}
           {!localSets.length ? (
             <p className="inline-note">
-              No local profile sets are stored yet. Save a work, personal, or client bundle here
-              when you need a desktop-level grouping beyond the current `aisw` context list.
+              No local sets are stored yet. Save a work, personal, or client bundle here when you
+              need a reusable switching combination.
             </p>
           ) : null}
 
           <div className="stack-list">
-            <h3>CLI contexts</h3>
+            <h3>Imported contexts</h3>
             {snapshot.contexts.map((context) => (
               <article key={context.name} className="list-row">
                 <div>
@@ -321,14 +321,14 @@ export function ContextsPanel({
                     })
                   }
                 >
-                  {activeContext === context.name ? "Active context" : "Activate CLI context"}
+                  {activeContext === context.name ? "Current context" : "Switch to imported context"}
                 </button>
               </article>
             ))}
             {!snapshot.contexts.length ? (
               <p className="inline-note">
-                No CLI contexts are currently stored in `aisw`. Local profile sets remain available
-                even when the lower-level context API is sparse.
+                No imported contexts are currently available. Local sets remain available even
+                when lower-level context support is sparse.
               </p>
             ) : null}
           </div>

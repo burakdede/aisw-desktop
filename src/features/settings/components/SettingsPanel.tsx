@@ -153,7 +153,7 @@ export function SettingsPanel({
             <article className={`diagnostic-card ${runtimeKind === "bundled" ? "diagnostic-pass" : "diagnostic-warn"}`}>
               <h3>Recommended runtime</h3>
               <p className="inline-note">
-                AISW Desktop ships with a compatible `aisw` runtime and uses it by default.
+                AI Switch ships with a compatible runtime and uses it by default.
               </p>
               <p className="inline-note">
                 Use a system or custom runtime only when you intentionally need to override the supported desktop bundle.
@@ -164,7 +164,7 @@ export function SettingsPanel({
               <article className="diagnostic-card diagnostic-warn">
                 <h3>Advanced runtime override is active</h3>
                 <p className="inline-note">
-                  This desktop session is using a {runtimeKind === "system" ? "system" : "custom"} `aisw` binary instead of the bundled runtime.
+                  This desktop session is using a {runtimeKind === "system" ? "system" : "custom"} runtime binary instead of the bundled runtime.
                 </p>
                 <p className="inline-note">
                   Compatibility for onboarding, switching, and diagnostics is only guaranteed with the bundled runtime shipped in this app release.
@@ -180,8 +180,8 @@ export function SettingsPanel({
                     value={runtimeKind}
                     onChange={(event) => setRuntimeKind(event.target.value as typeof runtimeKind)}
                   >
-                    <option value="bundled">Bundled aisw</option>
-                    <option value="system">System aisw</option>
+                    <option value="bundled">Bundled runtime</option>
+                    <option value="system">System runtime</option>
                     <option value="custom">Custom path</option>
                   </select>
                 </label>
@@ -223,7 +223,7 @@ export function SettingsPanel({
             )}
 
             <label>
-              AISW_HOME override
+              App data home override
               <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
             </label>
             <label>
@@ -251,17 +251,17 @@ export function SettingsPanel({
             <article className="diagnostic-card">
               <h3>Runtime detection</h3>
               <p className="inline-note">
-                Current resolved path: {runtimeStatus.resolved_path ?? "No aisw runtime resolved"}
+                Current resolved path: {runtimeStatus.resolved_path ?? "No runtime resolved"}
               </p>
               <p className="inline-note">
-                Effective AISW home: {settings.aisw_home ?? "~/.aisw"}
+                Effective app data home: {settings.aisw_home ?? "~/.aisw"}
               </p>
               <p className="inline-note">
-                Bundled aisw: {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
+                Bundled runtime: {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
               </p>
               {showAdvancedRuntime || runtimeKind !== "bundled" ? (
                 <p className="inline-note">
-                  System aisw: {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
+                  System runtime: {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
                 </p>
               ) : null}
               {runtimeStatus.inventory.configured_path ? (
@@ -294,7 +294,7 @@ export function SettingsPanel({
         <SectionCard title="Desktop updates" kicker="Signed app releases">
           <div className="stack-list">
             <p className="inline-note">
-              Check for a signed AISW Desktop release on the selected {updateChannel} channel.
+              Check for a signed AI Switch release on the selected {updateChannel} channel.
             </p>
             <div className="button-row">
               <button
@@ -473,7 +473,7 @@ export function SettingsPanel({
         <SectionCard title="Keyring setup" kicker="Local credential backends">
           <div className="stack-list">
             <p className="inline-note">
-              AISW Desktop keeps credentials on this machine. When diagnostics report a keyring
+              AI Switch keeps credentials on this machine. When diagnostics report a keyring
               failure, use the guidance below to restore the OS-native secret store before retrying.
             </p>
 
@@ -503,7 +503,7 @@ const KEYRING_GUIDES = [
     backend: "Login keychain",
     steps: [
       "Open Keychain Access and confirm the login keychain is unlocked.",
-      "Approve any keychain access prompts for AISW Desktop, Claude, Codex, or Gemini.",
+      "Approve any keychain access prompts for AI Switch, Claude, Codex, or Gemini.",
       "If access keeps failing, lock and unlock the login keychain, then rerun diagnostics.",
     ],
     verify: "Rerun diagnostics and confirm the keyring warning disappears.",
@@ -513,7 +513,7 @@ const KEYRING_GUIDES = [
     title: "Windows Credential Manager",
     backend: "Credential Manager / DPAPI",
     steps: [
-      "Stay signed in to a normal desktop session before launching AISW Desktop.",
+      "Stay signed in to a normal desktop session before launching AI Switch.",
       "Confirm security software is not blocking local credential storage prompts.",
       "If the machine policy reset credentials, sign in again and retry the profile action.",
     ],
@@ -525,7 +525,7 @@ const KEYRING_GUIDES = [
     backend: "Secret Service daemon",
     steps: [
       "Start a Secret Service provider such as gnome-keyring or KeePassXC with Secret Service enabled.",
-      "Make sure the desktop session has an active D-Bus user session before launching AISW Desktop.",
+      "Make sure the desktop session has an active D-Bus user session before launching AI Switch.",
       "If diagnostics still fail, unlock the keyring collection or restart the secret service daemon.",
     ],
     verify: "Run diagnostics again after the secret service is available.",

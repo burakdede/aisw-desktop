@@ -586,7 +586,7 @@ function buildQuickFixes(
       detail: target
         ? `This folder wants ${expectedContextLabel}, but ${currentContextLabel} is currently active.`
         : `This folder wants ${expectedContextLabel}, but no matching CLI context or non-empty profile set is currently available.`,
-      label: target ? "Use expected context now" : "Open contexts",
+      label: target ? "Use expected set now" : "Open sets",
       status: "warn",
       primary: true,
       action: () =>

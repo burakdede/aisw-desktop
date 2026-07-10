@@ -144,6 +144,28 @@ async function renderSettingsPanel(
   };
 }
 
+async function openSetsSection() {
+  await waitFor(() => expect(document.querySelector(".sidebar")).not.toBeNull());
+  const sidebar = document.querySelector(".sidebar");
+  if (!(sidebar instanceof HTMLElement)) {
+    throw new Error("Sidebar not found.");
+  }
+  fireEvent.click(within(sidebar).getByRole("button", { name: "Sets" }));
+  if (!screen.queryByLabelText("Set name")) {
+    const segmentedSets = screen.getAllByRole("button", { name: "Sets" }).find((button) =>
+      button.className.includes("segmented-control-button"),
+    );
+    if (segmentedSets) {
+      fireEvent.click(segmentedSets);
+    }
+  }
+}
+
+async function openProjectRulesSection() {
+  await openSetsSection();
+  fireEvent.click(screen.getByRole("button", { name: "Project rules" }));
+}
+
 async function renderSetupPanel({
   initReport = undefined,
   bootstrapOverride,
@@ -280,13 +302,13 @@ describe("App", () => {
       expect(screen.getByText("Control Center")).toBeInTheDocument();
     });
     expect(screen.getByText("Re-apply Work")).toBeInTheDocument();
-    expect(screen.getByText("Active set: Work")).toBeInTheDocument();
-    expect(screen.getByText("Runtime ready")).toBeInTheDocument();
+    expect(screen.getByText("Current set: Work")).toBeInTheDocument();
+    expect(screen.getByText("Ready to switch")).toBeInTheDocument();
     expect(screen.getByText("First-run setup")).toBeInTheDocument();
-    expect(screen.getByText("Desktop runtime")).toBeInTheDocument();
+    expect(screen.getByText("App runtime")).toBeInTheDocument();
     expect(screen.getByText("Health check")).toBeInTheDocument();
     expect(
-      screen.getByText("AISW Desktop is using its bundled runtime."),
+      screen.getByText("AI Switch is using its bundled runtime."),
     ).toBeInTheDocument();
   });
 
@@ -313,27 +335,27 @@ describe("App", () => {
     });
     expect(
       screen.getByText(
-        "AISW Desktop found an `aisw` binary, but this build does not support the desktop integration features yet.",
+        "AI Switch found a runtime binary, but it does not support the desktop integration features required by this release.",
       ),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Open Settings and switch to the bundled runtime, or point AISW Desktop at a newer `aisw` build before continuing.",
+        "Open Settings and switch back to the bundled runtime, or choose a newer compatible runtime before continuing.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Technical details")).toBeInTheDocument();
     expect(screen.getByText("aisw version info is unavailable")).toBeInTheDocument();
     expect(screen.getByText("aisw capabilities info is unavailable")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
+    expect(screen.getByText("Bundled runtime and advanced overrides")).toBeInTheDocument();
     expect(screen.getByText("Runtime detection")).toBeInTheDocument();
     expect(screen.queryByText("First-run setup")).not.toBeInTheDocument();
     expect(screen.queryByText("Control Center")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Overview" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Profiles" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Contexts" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Workspaces" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Sets" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Diagnostics" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Backups" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Activity" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Settings" })).not.toBeDisabled();
   });
 
@@ -351,7 +373,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("Desktop bootstrap failed.")).toBeInTheDocument();
+      expect(screen.getByText("AI Switch could not finish startup.")).toBeInTheDocument();
     });
     expect(screen.getByText("aisw binary could not be resolved")).toBeInTheDocument();
     expect(
@@ -405,10 +427,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("Gemini is not available on PATH, so AISW Desktop cannot switch or verify that tool yet.")).toBeInTheDocument();
+      expect(screen.getByText("Gemini is not available on PATH, so AI Switch cannot switch or verify that tool yet.")).toBeInTheDocument();
     });
     const overviewCard = screen
-      .getByText("Gemini is not available on PATH, so AISW Desktop cannot switch or verify that tool yet.")
+      .getByText("Gemini is not available on PATH, so AI Switch cannot switch or verify that tool yet.")
       .closest(".tool-card");
     if (!(overviewCard instanceof HTMLElement)) {
       throw new Error("Missing Gemini overview card.");
@@ -656,7 +678,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
+      expect(screen.getByText("Bundled runtime and advanced overrides")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Runtime", pressed: true })).toBeInTheDocument();
     });
     expect(screen.getByRole("button", { name: "Shell hook", pressed: false })).toBeInTheDocument();
@@ -2049,7 +2071,7 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Open profile setup" }));
 
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Profiles" })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByLabelText("Tool")).toHaveValue("claude"));
     expect(screen.getByLabelText("Tool")).toHaveValue("claude");
     expect(screen.getByLabelText("Import mode")).toHaveValue("from_env");
     expect(screen.queryByText("Guided OAuth capture")).not.toBeInTheDocument();
@@ -2342,7 +2364,7 @@ describe("App", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getAllByText(/Created:/)).toHaveLength(2);
-    const backupsSection = screen.getByRole("heading", { name: "Backups" }).closest(".section-card");
+    const backupsSection = screen.getAllByRole("heading", { name: "Backups" })[1]?.closest(".section-card");
     const articles = backupsSection?.querySelectorAll(".list-row") ?? [];
     expect(articles[0]?.textContent).toContain("Sandbox");
     expect(articles[1]?.textContent).toContain("Work");
@@ -2487,7 +2509,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Backups"));
     await waitFor(() => expect(screen.getAllByText("Copy backup ID")).toHaveLength(2));
 
-    const backupsSection = screen.getByRole("heading", { name: "Backups" }).closest(".section-card");
+    const backupsSection = screen.getAllByRole("heading", { name: "Backups" })[1]?.closest(".section-card");
     const articles = backupsSection?.querySelectorAll(".list-row") ?? [];
     expect(articles[0]?.textContent).toContain("Personal");
     expect(articles[1]?.textContent).toContain("Work");
@@ -2574,7 +2596,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Open profile details"));
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Profiles" })).toBeInTheDocument();
+      expect(screen.getByLabelText("Tool")).toHaveValue("claude");
       expect(screen.getByDisplayValue("Claude")).toBeInTheDocument();
       expect(screen.getByText("Hide diagnostic details")).toBeInTheDocument();
     });
@@ -3270,22 +3292,22 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Workspaces")).toBeInTheDocument());
+    await openProjectRulesSection();
     await waitFor(() => {
-      expect(screen.getByText("Workspace wants a different context")).toBeInTheDocument();
+      expect(screen.getByText("Workspace mismatch")).toBeInTheDocument();
       expect(
         screen.getByText((_, element) =>
-          element?.tagName === "P" && element.textContent?.trim() === "Expected profile set: Client Acme",
+          element?.tagName === "P" && element.textContent?.trim() === "Expected set: Client Acme",
         ),
       ).toBeInTheDocument();
       expect(
         screen.getByText((_, element) =>
-          element?.tagName === "P" && element.textContent?.trim() === "Current context: work",
+          element?.tagName === "P" && element.textContent?.trim() === "Current set: work",
         ),
       ).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getAllByText("Use expected context now")[0]);
+    fireEvent.click(screen.getAllByText("Use expected set now")[0]);
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
     });
@@ -3297,19 +3319,19 @@ describe("App", () => {
       body: "Switched to Client Acme for /code/acme.",
     });
 
-    fireEvent.click(screen.getByText("Workspaces"));
+    await openProjectRulesSection();
     await waitFor(() => {
-      expect(screen.getByText(/Current context:\s*work/)).toBeInTheDocument();
-      expect(screen.getByText(/Expected context:\s*Client Acme/)).toBeInTheDocument();
+      expect(screen.getByText(/Current set:\s*work/)).toBeInTheDocument();
+      expect(screen.getByText(/Expected set:\s*Client Acme/)).toBeInTheDocument();
       expect(screen.getByText(/Guard mode:\s*warn/)).toBeInTheDocument();
-      expect(screen.getByText(/Default context:\s*work/)).toBeInTheDocument();
+      expect(screen.getByText(/Default set:\s*work/)).toBeInTheDocument();
       expect(screen.getByText("path · /code/acme")).toBeInTheDocument();
       expect(screen.getByText("Matched binding ✓")).toBeInTheDocument();
       expect(screen.getAllByText("Client Acme").length).toBeGreaterThan(0);
       expect(screen.getByText("Workspace mismatch")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("Keep current context"));
+    fireEvent.click(screen.getByText("Keep current set"));
     await waitFor(() => {
       expect(screen.queryByText("Workspace mismatch")).not.toBeInTheDocument();
     });
@@ -3317,13 +3339,13 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Binding scope"), {
       target: { value: "path" },
     });
-    fireEvent.change(screen.getByLabelText("Context"), {
+    fireEvent.change(screen.getByLabelText("Set"), {
       target: { value: "client-acme" },
     });
     fireEvent.change(screen.getByLabelText("Path"), {
       target: { value: "/code/next" },
     });
-    fireEvent.click(screen.getByText("Save binding"));
+    fireEvent.click(screen.getByText("Save rule"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "workspace_bind")).toBe(true);
@@ -3403,12 +3425,11 @@ describe("App", () => {
       )[command];
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Workspaces")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Workspaces"));
+    await openProjectRulesSection();
     await waitFor(() => {
-      expect(screen.getByText(/Default context:\s*Client Acme/)).toBeInTheDocument();
-      expect(screen.getByText(/Current context:\s*Client Acme/)).toBeInTheDocument();
-      expect(screen.getByText(/Expected context:\s*Client Acme/)).toBeInTheDocument();
+      expect(screen.getByText(/Default set:\s*Client Acme/)).toBeInTheDocument();
+      expect(screen.getByText(/Current set:\s*Client Acme/)).toBeInTheDocument();
+      expect(screen.getByText(/Expected set:\s*Client Acme/)).toBeInTheDocument();
     });
   });
 
@@ -3526,7 +3547,7 @@ describe("App", () => {
       ).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getAllByText("Use expected context now")[0]);
+    fireEvent.click(screen.getAllByText("Use expected set now")[0]);
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
@@ -3606,16 +3627,16 @@ describe("App", () => {
     await waitFor(() => {
       expect(
         screen.getByText((_, element) =>
-          element?.tagName === "P" && element.textContent?.trim() === "Expected context: Client Acme",
+          element?.tagName === "P" && element.textContent?.trim() === "Expected set: Client Acme",
         ),
       ).toBeInTheDocument();
-      expect(screen.getByText("Open contexts")).toBeInTheDocument();
+      expect(screen.getByText("Open sets")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getAllByText("Open contexts")[0]);
+    fireEvent.click(screen.getAllByText("Open sets")[0]);
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Contexts" })).toBeInTheDocument();
+      expect(screen.getByLabelText("Set name")).toBeInTheDocument();
     });
     expect(calls.some((entry) => entry.command === "use_context")).toBe(false);
     expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(false);
@@ -3710,9 +3731,8 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Contexts"));
-    fireEvent.click(screen.getByText("Activate CLI context"));
+    await openSetsSection();
+    fireEvent.click(screen.getByText("Switch to imported context"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
@@ -3779,10 +3799,9 @@ describe("App", () => {
       )[command];
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Contexts"));
+    await openSetsSection();
 
-    const activeContextButton = screen.getByRole("button", { name: "Active context" });
+    const activeContextButton = screen.getByRole("button", { name: "Current context" });
     expect(activeContextButton).toBeDisabled();
     expect(screen.getByText("Client Acme ✓")).toBeInTheDocument();
   });
@@ -3832,8 +3851,7 @@ describe("App", () => {
       )[command];
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Workspaces")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Workspaces"));
+    await openProjectRulesSection();
 
     expect(screen.getByRole("option", { name: "Profile set: Client Acme" })).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: "CLI context: client-acme" })).not.toBeInTheDocument();
@@ -3870,15 +3888,14 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Workspaces")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Workspaces"));
+    await openProjectRulesSection();
 
     expect(
       screen.getByText(
-        "No profile sets or CLI contexts are available yet. Create one before saving workspace bindings.",
+        "No sets are available yet. Create one before saving a project rule.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Save binding")).toBeDisabled();
+    expect(screen.getByText("Save rule")).toBeDisabled();
 
     fireEvent.change(screen.getByLabelText("Binding scope"), {
       target: { value: "path" },
@@ -3887,13 +3904,13 @@ describe("App", () => {
     expect(
       screen.getByText("Enter a path prefix before saving or removing this binding."),
     ).toBeInTheDocument();
-    expect(screen.getByText("Save binding")).toBeDisabled();
-    expect(screen.getByText("Remove binding")).toBeDisabled();
+    expect(screen.getByText("Save rule")).toBeDisabled();
+    expect(screen.getByText("Remove rule")).toBeDisabled();
 
     fireEvent.change(screen.getByLabelText("Path"), {
       target: { value: "   " },
     });
-    expect(screen.getByText("Save binding")).toBeDisabled();
+    expect(screen.getByText("Save rule")).toBeDisabled();
 
     expect(calls.some((entry) => entry.command === "workspace_bind")).toBe(false);
     expect(calls.some((entry) => entry.command === "workspace_unbind")).toBe(false);
@@ -4162,7 +4179,7 @@ describe("App", () => {
     fireEvent.click(within(shellHookFix!).getByText("Open shell setup"));
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
+      expect(screen.getByText("Bundled runtime and advanced overrides")).toBeInTheDocument();
       expect(screen.getByRole("heading", { name: "Shell hook" })).toBeInTheDocument();
     });
   });
@@ -4297,8 +4314,8 @@ describe("App", () => {
     if (!(workspaceMismatchCard instanceof HTMLElement)) {
       throw new Error("Missing workspace mismatch diagnostic card.");
     }
-    expect(within(workspaceMismatchCard).getByText("Open contexts")).toBeInTheDocument();
-    expect(within(workspaceMismatchCard).queryByText("Use expected context now")).not.toBeInTheDocument();
+    expect(within(workspaceMismatchCard).getByText("Open sets")).toBeInTheDocument();
+    expect(within(workspaceMismatchCard).queryByText("Use expected set now")).not.toBeInTheDocument();
 
     const missingToolCard = screen.getByText("codex is missing").closest(".diagnostic-card");
     if (!(missingToolCard instanceof HTMLElement)) {
@@ -4335,9 +4352,9 @@ describe("App", () => {
       expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
     });
 
-    fireEvent.click(screen.getByText("Open contexts"));
+    fireEvent.click(screen.getByText("Open sets"));
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Contexts" })).toBeInTheDocument();
+      expect(screen.getByLabelText("Set name")).toBeInTheDocument();
     });
     expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(false);
   });
@@ -4564,7 +4581,7 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Use file-backed storage" }));
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Profiles" })).toBeInTheDocument();
+      expect(screen.getByLabelText("Tool")).toBeInTheDocument();
       expect(screen.getByLabelText("Import mode")).toHaveValue("from_live");
       expect(screen.getByLabelText("Credential backend")).toHaveValue("file");
     });
@@ -4572,7 +4589,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Diagnostics"));
     fireEvent.click(screen.getByText("Show keyring setup"));
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
+      expect(screen.getByText("Bundled runtime and advanced overrides")).toBeInTheDocument();
       expect(screen.getByRole("heading", { name: "Keyring setup" })).toBeInTheDocument();
       expect(screen.getByText("Linux Secret Service")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Keyring setup" })).toHaveAttribute("aria-pressed", "true");
@@ -5296,8 +5313,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Workspaces")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Workspaces"));
+    await openProjectRulesSection();
     await waitFor(() => {
       expect(screen.getByText("Workspace mismatch")).toBeInTheDocument();
       expect(screen.getByText("Guard mode: warn")).toBeInTheDocument();
@@ -5404,19 +5420,19 @@ describe("App", () => {
         label: "Switch context",
         status: "error",
         message: "Context switch failed.",
-        remediation: "Re-open AISW Desktop and verify the saved CLI context.",
+        remediation: "Re-open AI Switch and verify the saved imported context.",
       });
       await Promise.resolve();
     });
 
     expect(
       screen.getByText(
-        "Last context result: Context switch failed. Remediation: Re-open AISW Desktop and verify the saved CLI context.",
+        "Last context result: Context switch failed. Remediation: Re-open AI Switch and verify the saved imported context.",
       ),
     ).toBeInTheDocument();
     expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
       title: "Switch context",
-      body: "Context switch failed. Re-open AISW Desktop and verify the saved CLI context.",
+      body: "Context switch failed. Re-open AI Switch and verify the saved imported context.",
     });
   });
 
@@ -5509,9 +5525,8 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Contexts"));
-    fireEvent.change(screen.getByLabelText("Profile set name"), {
+    await openSetsSection();
+    fireEvent.change(screen.getByLabelText("Set name"), {
       target: { value: "client-acme" },
     });
     fireEvent.change(screen.getByLabelText("Label"), {
@@ -5523,13 +5538,13 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Codex"), {
       target: { value: "work" },
     });
-    fireEvent.click(screen.getByText("Save profile set"));
+    fireEvent.click(screen.getByText("Save set"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
       expect(screen.getAllByText(/Client Acme/).length).toBeGreaterThan(0);
       expect(screen.getByText("Saved profile set Client Acme.")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Active set" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Current set" })).toBeDisabled();
     });
   });
 
@@ -5580,8 +5595,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Contexts"));
+    await openSetsSection();
     fireEvent.click(screen.getByText("Delete"));
 
     await waitFor(() => {
@@ -5638,21 +5652,20 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Contexts"));
+    await openSetsSection();
     fireEvent.click(screen.getByText("Edit"));
 
     expect(screen.getByDisplayValue("client-acme")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Client Acme")).toBeInTheDocument();
-    expect(screen.getByText("Update profile set")).toBeInTheDocument();
+    expect(screen.getByText("Update set")).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Profile set name"), {
+    fireEvent.change(screen.getByLabelText("Set name"), {
       target: { value: "client-acme-prime" },
     });
     fireEvent.change(screen.getByLabelText("Label"), {
       target: { value: "Client Acme Prime" },
     });
-    fireEvent.click(screen.getByText("Update profile set"));
+    fireEvent.click(screen.getByText("Update set"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
@@ -5717,24 +5730,23 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Contexts"));
+    await openSetsSection();
     const clientRow = screen.getByText("Client Acme").closest(".list-row");
     if (!(clientRow instanceof HTMLElement)) {
       throw new Error("Missing client profile set row.");
     }
     fireEvent.click(within(clientRow).getByText("Edit"));
 
-    fireEvent.change(screen.getByLabelText("Profile set name"), {
+    fireEvent.change(screen.getByLabelText("Set name"), {
       target: { value: "focus-mode" },
     });
 
     expect(
       screen.getByText(
-        "A profile set named focus-mode already exists. Rename the existing set or choose a different name.",
+        "A set named focus-mode already exists. Rename the existing set or choose a different name.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Update profile set")).toBeDisabled();
+    expect(screen.getByText("Update set")).toBeDisabled();
     expect(calls.some((entry) => entry.command === "update_settings")).toBe(false);
   });
 
@@ -5776,17 +5788,16 @@ describe("App", () => {
       )[command];
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Contexts"));
+    await openSetsSection();
 
     const emptySetRow = screen.getByText("Empty Set").closest(".list-row");
     if (!(emptySetRow instanceof HTMLElement)) {
       throw new Error("Missing empty profile set row.");
     }
-    expect(within(emptySetRow).getByText("Activate set")).toBeDisabled();
+    expect(within(emptySetRow).getByText("Switch to set")).toBeDisabled();
     expect(
       within(emptySetRow).getByText(
-        "Add at least one mapped profile before using this set in overview, tray, or workspace bindings.",
+        "Add at least one mapped profile before using this set in Overview, the menu bar, or project rules.",
       ),
     ).toBeInTheDocument();
 
@@ -5794,17 +5805,17 @@ describe("App", () => {
     expect(screen.queryByRole("option", { name: "Profile set: Empty Set" })).not.toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Profile set: Client Acme" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("Workspaces"));
+    await openProjectRulesSection();
     expect(screen.queryByRole("option", { name: "Profile set: Empty Set" })).not.toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Profile set: Client Acme" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("Contexts"));
-    fireEvent.change(screen.getByLabelText("Profile set name"), {
+    await openSetsSection();
+    fireEvent.change(screen.getByLabelText("Set name"), {
       target: { value: "empty-next" },
     });
-    expect(screen.getByText("Save profile set")).toBeDisabled();
+    expect(screen.getByText("Save set")).toBeDisabled();
     expect(
-      screen.getByText("Select at least one tool profile before saving this profile set."),
+      screen.getByText("Select at least one tool profile before saving this set."),
     ).toBeInTheDocument();
   });
 
@@ -5841,8 +5852,7 @@ describe("App", () => {
       )[command];
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Contexts"));
+    await openSetsSection();
 
     const staleSetRow = screen
       .getByText(
@@ -5852,7 +5862,7 @@ describe("App", () => {
     if (!(staleSetRow instanceof HTMLElement)) {
       throw new Error("Missing stale profile set row.");
     }
-    expect(within(staleSetRow).getByText("Activate set")).toBeDisabled();
+    expect(within(staleSetRow).getByText("Switch to set")).toBeDisabled();
     expect(
       within(staleSetRow).getByText(
         "Refresh or repair the missing mapped profiles before using this set. Missing: codex: missing",
@@ -5862,7 +5872,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Overview"));
     expect(screen.queryByRole("option", { name: "Profile set: Client Acme" })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("Workspaces"));
+    await openProjectRulesSection();
     expect(screen.queryByRole("option", { name: "Profile set: Client Acme" })).not.toBeInTheDocument();
   });
 
@@ -5981,13 +5991,12 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Contexts"));
-    fireEvent.click(screen.getByText("Activate set"));
+    await openSetsSection();
+    fireEvent.click(screen.getByText("Switch to set"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
-      expect(screen.getByRole("button", { name: "Active set" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Current set" })).toBeDisabled();
     });
     expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(false);
     expect(calls.some((entry) => entry.command === "use_profile")).toBe(false);
@@ -6145,7 +6154,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
-    expect(screen.getByText("Active set: Client Acme")).toBeInTheDocument();
+    expect(screen.getByText("Current set: Client Acme")).toBeInTheDocument();
     const firstSwitchSelect = screen.getByLabelText("First switch profile");
     expect(within(firstSwitchSelect).getByRole("option", { name: "Office" })).toBeInTheDocument();
   });
@@ -6198,8 +6207,7 @@ describe("App", () => {
       )[command];
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Contexts"));
+    await openSetsSection();
 
     expect(screen.getAllByText("Client Acme")).toHaveLength(2);
     expect(screen.getByText("CLI context id: client-acme")).toBeInTheDocument();
@@ -6556,9 +6564,9 @@ describe("App", () => {
       expect(
         screen.getByText("Current resolved path: /Applications/AISW.app/Contents/Resources/aisw"),
       ).toBeInTheDocument();
-      expect(screen.getByText("Effective AISW home: ~/.aisw")).toBeInTheDocument();
+      expect(screen.getByText("Effective app data home: ~/.aisw")).toBeInTheDocument();
       expect(
-        screen.getAllByText("Bundled aisw: /Applications/AISW.app/Contents/Resources/aisw").length,
+        screen.getAllByText("Bundled runtime: /Applications/AISW.app/Contents/Resources/aisw").length,
       ).toBeGreaterThan(0);
       expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
       expect(
@@ -6567,7 +6575,7 @@ describe("App", () => {
       expect(
         screen.getByText((_, element) => element?.textContent?.trim() === "Selected backend: Bundled"),
       ).toBeInTheDocument();
-      expect(screen.getByText("Runtime version: 0.3.7")).toBeInTheDocument();
+      expect(screen.getAllByText("Runtime version: 0.3.7").length).toBeGreaterThan(0);
       expect(screen.getByText("CLI API 1 · JSON schema 1 · Progress schema 1")).toBeInTheDocument();
     });
   });
@@ -6792,7 +6800,7 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByDisplayValue("System aisw")).toBeInTheDocument();
+      expect(screen.getByDisplayValue("System runtime")).toBeInTheDocument();
       expect(screen.getByLabelText("Runtime path")).toHaveValue("");
     });
   });
@@ -6846,7 +6854,7 @@ describe("App", () => {
     });
 
     expect(
-      screen.getByText("Check for a signed AISW Desktop release on the selected beta channel."),
+      screen.getByText("Check for a signed AI Switch release on the selected beta channel."),
     ).toBeInTheDocument();
     expect(
       screen.getByText(

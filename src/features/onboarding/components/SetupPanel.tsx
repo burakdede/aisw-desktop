@@ -131,27 +131,27 @@ export function SetupPanel({
       }
         >
       <p className="inline-note">
-        AISW Desktop manages local account profiles for Claude Code, Codex CLI, and Gemini CLI.
-        It includes a compatible `aisw` runtime for the desktop app, so no separate `aisw` CLI setup is required for normal use.
+        AI Switch manages local account profiles for Claude Code, Codex CLI, and Gemini CLI.
+        It includes the compatible switching runtime it needs, so there is no extra command-line setup for normal use.
       </p>
 
       <div className="panel-grid panel-grid-2 diagnostics-body">
         <article className="diagnostic-card">
-          <h3>Desktop runtime</h3>
+          <h3>App runtime</h3>
           <p className="inline-note">
             {bootstrap.settings.runtime_kind === "bundled"
-              ? "AISW Desktop is using its bundled runtime."
-              : `AISW Desktop is using an advanced ${titleCase(bootstrap.settings.runtime_kind)} runtime override.`}
+              ? "AI Switch is using its bundled runtime."
+              : `AI Switch is using an advanced ${titleCase(bootstrap.settings.runtime_kind)} runtime override.`}
           </p>
           <p className="inline-note">
             Selected runtime: <strong>{titleCase(bootstrap.settings.runtime_kind)}</strong>
           </p>
           <p className="inline-note">
-            Bundled aisw: {bootstrap.runtime_status.inventory.bundled_path ?? "Not available in this build"}
+            Bundled runtime: {bootstrap.runtime_status.inventory.bundled_path ?? "Not available in this build"}
           </p>
           {bootstrap.settings.runtime_kind !== "bundled" ? (
             <p className="inline-note">
-              System aisw: {bootstrap.runtime_status.inventory.system_path ?? "Not found on PATH"}
+              System runtime: {bootstrap.runtime_status.inventory.system_path ?? "Not found on PATH"}
             </p>
           ) : null}
           {bootstrap.runtime_status.inventory.configured_path ? (
@@ -160,13 +160,13 @@ export function SetupPanel({
             </p>
           ) : null}
           <p className="inline-note">
-            Resolved path: {bootstrap.runtime_status.resolved_path ?? "No aisw runtime resolved"}
+            Resolved path: {bootstrap.runtime_status.resolved_path ?? "No runtime resolved"}
           </p>
           <p className="inline-note">
-            AISW home: {bootstrap.settings.aisw_home ?? "~/.aisw"}
+            App data home: {bootstrap.settings.aisw_home ?? "~/.aisw"}
           </p>
           <p className="inline-note">
-            Version: {bootstrap.runtime_status.version?.version ?? "unknown"}
+            Runtime version: {bootstrap.runtime_status.version?.version ?? "unknown"}
           </p>
           <p className="inline-note">
             Update channel: {bootstrap.settings.update_channel}
@@ -279,7 +279,7 @@ export function SetupPanel({
               <article key={status.tool} className="diagnostic-card diagnostic-warn">
                 <h4>{titleCase(status.tool)} is not installed</h4>
                 <p className="inline-note">
-                  AISW Desktop cannot detect or switch {titleCase(status.tool)} until the{" "}
+                  AI Switch cannot detect or switch {titleCase(status.tool)} until the{" "}
                   <code>{binary}</code> CLI is available on PATH.
                 </p>
                 <div className="diagnostic-remediation">
@@ -365,7 +365,7 @@ export function SetupPanel({
               </p>
             ) : null}
             <p className="inline-note">
-              AISW Desktop writes live credential files directly. Existing terminal sessions only
+              AI Switch writes live credential files directly. Existing terminal sessions only
               receive immediate environment exports such as <code>CLAUDE_CONFIG_DIR</code> and{" "}
               <code>CODEX_HOME</code> after you install the shell hook.
             </p>
@@ -405,7 +405,7 @@ function buildHealthItems(
       status: bootstrap.runtime_status.compatible ? "pass" : "fail",
       detail: bootstrap.runtime_status.compatible
         ? bootstrap.settings.runtime_kind === "bundled"
-          ? "Bundled aisw runtime is compatible with this desktop build."
+          ? "Bundled runtime is compatible with this desktop build."
           : "Selected runtime override is compatible with this desktop build."
         : bootstrap.runtime_status.issues.join(" · ") || "Compatibility checks failed.",
     },
