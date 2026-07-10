@@ -1,9 +1,9 @@
 use crate::errors::ErrorPayload;
 use crate::models::{
-    AppSnapshot, DesktopSettings, ProfileSet, UseAllProfilesRequest, UseContextRequest,
-    UseProfileRequest,
+    AppBootstrap, AppSnapshot, DesktopSettings, ProfileSet, UseAllProfilesRequest,
+    UseContextRequest, UseProfileRequest,
 };
-use crate::state::AppState;
+use crate::state::{incompatible_runtime_error, AppState};
 use serde::Serialize;
 use tauri::menu::{IsMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Emitter, Manager, Runtime};
@@ -62,18 +62,16 @@ pub fn build_tray<R: Runtime>(
     app: &AppHandle<R>,
     state: AppState,
 ) -> tauri::Result<tauri::tray::TrayIconBuilder<R>> {
-    let (settings, snapshot) = tauri::async_runtime::block_on(async {
-        (
-            state.load_settings().await.ok(),
-            state.snapshot().await.ok(),
-        )
-    });
-    let tooltip = snapshot
+    let bootstrap = tauri::async_runtime::block_on(async { state.bootstrap().await.ok() });
+    let settings = bootstrap.as_ref().map(|entry| &entry.settings);
+    let snapshot = bootstrap.as_ref().and_then(|entry| entry.snapshot.as_ref());
+    let runtime_compatible = bootstrap
         .as_ref()
-        .map(active_summary)
-        .unwrap_or_else(|| "AISW Desktop".to_owned());
+        .map(|entry| entry.runtime_status.compatible)
+        .unwrap_or(false);
+    let tooltip = tray_status_label(runtime_compatible, snapshot);
 
-    let menu = tray_menu(app, settings.as_ref(), snapshot.as_ref())?;
+    let menu = tray_menu(app, settings, snapshot, runtime_compatible)?;
     Ok(tauri::tray::TrayIconBuilder::with_id(TRAY_ID)
         .menu(&menu)
         .tooltip(tooltip)
@@ -84,12 +82,17 @@ pub fn build_tray<R: Runtime>(
 }
 
 pub async fn refresh_tray<R: Runtime>(app: &AppHandle<R>, state: AppState) -> tauri::Result<()> {
-    let settings = state.load_settings().await.ok();
-    let snapshot = state.snapshot().await.ok();
+    let bootstrap = state.bootstrap().await.ok();
+    let settings = bootstrap.as_ref().map(|entry| &entry.settings);
+    let snapshot = bootstrap.as_ref().and_then(|entry| entry.snapshot.as_ref());
+    let runtime_compatible = bootstrap
+        .as_ref()
+        .map(|entry| entry.runtime_status.compatible)
+        .unwrap_or(false);
     if let Some(tray) = app.tray_by_id(TRAY_ID) {
-        let menu = tray_menu(app, settings.as_ref(), snapshot.as_ref())?;
+        let menu = tray_menu(app, settings, snapshot, runtime_compatible)?;
         tray.set_menu(Some(menu))?;
-        tray.set_tooltip(Some(active_summary_or_default(snapshot.as_ref())))?;
+        tray.set_tooltip(Some(tray_status_label(runtime_compatible, snapshot)))?;
     }
     Ok(())
 }
@@ -110,11 +113,16 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
             let app_handle = app.clone();
             let context_label = context.clone();
             tauri::async_runtime::spawn(async move {
-                let result = state
-                    .mutate("tray_use_context", move |bridge| async move {
-                        bridge.use_context(tray_use_context_request(context.clone())).await
-                    })
-                    .await;
+                let result = match ensure_tray_runtime_compatible(&state).await {
+                    Ok(()) => {
+                        state
+                            .mutate("tray_use_context", move |bridge| async move {
+                                bridge.use_context(tray_use_context_request(context.clone())).await
+                            })
+                            .await
+                    }
+                    Err(error) => Err(error),
+                };
                 emit_tray_command_result(
                     &app_handle,
                     result,
@@ -131,13 +139,18 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
             let app_handle = app.clone();
             let profile_label = profile.clone();
             tauri::async_runtime::spawn(async move {
-                let result = state
-                    .mutate("tray_use_all_profiles", move |bridge| async move {
-                        bridge
-                            .use_all_profiles(tray_use_all_profiles_request(profile.clone()))
+                let result = match ensure_tray_runtime_compatible(&state).await {
+                    Ok(()) => {
+                        state
+                            .mutate("tray_use_all_profiles", move |bridge| async move {
+                                bridge
+                                    .use_all_profiles(tray_use_all_profiles_request(profile.clone()))
+                                    .await
+                            })
                             .await
-                    })
-                    .await;
+                    }
+                    Err(error) => Err(error),
+                };
                 emit_tray_command_result(
                     &app_handle,
                     result,
@@ -153,7 +166,10 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
         TrayAction::ActivateProfileSet(profile_set) => {
             let app_handle = app.clone();
             tauri::async_runtime::spawn(async move {
-                let result = state.activate_profile_set(&profile_set).await;
+                let result = match ensure_tray_runtime_compatible(&state).await {
+                    Ok(()) => state.activate_profile_set(&profile_set).await,
+                    Err(error) => Err(error),
+                };
                 emit_tray_command_result(
                     &app_handle,
                     result,
@@ -171,13 +187,18 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
             let tool_label = tool.clone();
             let profile_label = profile.clone();
             tauri::async_runtime::spawn(async move {
-                let result = state
-                    .mutate("tray_use_profile", move |bridge| async move {
-                        bridge
-                            .use_profile(tray_use_profile_request(tool.clone(), profile.clone()))
+                let result = match ensure_tray_runtime_compatible(&state).await {
+                    Ok(()) => {
+                        state
+                            .mutate("tray_use_profile", move |bridge| async move {
+                                bridge
+                                    .use_profile(tray_use_profile_request(tool.clone(), profile.clone()))
+                                    .await
+                            })
                             .await
-                    })
-                    .await;
+                    }
+                    Err(error) => Err(error),
+                };
                 emit_tray_command_result(
                     &app_handle,
                     result,
@@ -282,38 +303,43 @@ fn tray_menu<R: Runtime>(
     app: &AppHandle<R>,
     settings: Option<&DesktopSettings>,
     snapshot: Option<&AppSnapshot>,
+    runtime_compatible: bool,
 ) -> tauri::Result<Menu<R>> {
     let active_label = active_set_label(settings, snapshot)
         .map(|name| format!("Active set: {name}"))
-        .unwrap_or_else(|| format!("Active: {}", active_summary_or_default(snapshot)));
+        .unwrap_or_else(|| format!("Active: {}", tray_status_label(runtime_compatible, snapshot)));
     let mut items: Vec<MenuItemKind<R>> = vec![
         MenuItem::with_id(app, "active-summary", active_label, false, None::<&str>)?.kind(),
         PredefinedMenuItem::separator(app)?.kind(),
     ];
 
-    if let Some(snapshot) = snapshot {
-        for section in tray_sections(settings, snapshot) {
-            let submenu_items = section
-                .items
-                .iter()
-                .map(|entry| {
-                    MenuItem::with_id(
-                        app,
-                        entry.id.clone(),
-                        entry.label.clone(),
-                        true,
-                        None::<&str>,
-                    )
-                    .map(|item| item.kind())
-                })
-                .collect::<tauri::Result<Vec<_>>>()?;
-            let submenu_refs = submenu_items
-                .iter()
-                .map(|item| item as &dyn IsMenuItem<R>)
-                .collect::<Vec<_>>();
-            let submenu = Submenu::with_items(app, section.title, true, &submenu_refs)?;
-            items.push(submenu.kind());
+    if runtime_compatible {
+        if let Some(snapshot) = snapshot {
+            for section in tray_sections(settings, snapshot) {
+                let submenu_items = section
+                    .items
+                    .iter()
+                    .map(|entry| {
+                        MenuItem::with_id(
+                            app,
+                            entry.id.clone(),
+                            entry.label.clone(),
+                            true,
+                            None::<&str>,
+                        )
+                        .map(|item| item.kind())
+                    })
+                    .collect::<tauri::Result<Vec<_>>>()?;
+                let submenu_refs = submenu_items
+                    .iter()
+                    .map(|item| item as &dyn IsMenuItem<R>)
+                    .collect::<Vec<_>>();
+                let submenu = Submenu::with_items(app, section.title, true, &submenu_refs)?;
+                items.push(submenu.kind());
+            }
         }
+    } else if let Some(notice) = tray_runtime_notice(runtime_compatible) {
+        items.push(MenuItem::with_id(app, "runtime-blocked", notice, false, None::<&str>)?.kind());
     }
 
     items.push(MenuItem::with_id(app, OPEN_ID, "Open AISW Desktop", true, None::<&str>)?.kind());
@@ -327,6 +353,31 @@ fn tray_menu<R: Runtime>(
         .map(|item| item as &dyn IsMenuItem<R>)
         .collect::<Vec<_>>();
     Menu::with_items(app, &item_refs)
+}
+
+fn tray_status_label(runtime_compatible: bool, snapshot: Option<&AppSnapshot>) -> String {
+    if !runtime_compatible {
+        return "Runtime blocked".to_owned();
+    }
+
+    active_summary_or_default(snapshot)
+}
+
+fn tray_runtime_notice(runtime_compatible: bool) -> Option<&'static str> {
+    if runtime_compatible {
+        None
+    } else {
+        Some("Runtime blocked. Fix aisw in Settings.")
+    }
+}
+
+async fn ensure_tray_runtime_compatible(state: &AppState) -> Result<(), ErrorPayload> {
+    let bootstrap: AppBootstrap = state.bootstrap().await?;
+    if bootstrap.runtime_status.compatible {
+        Ok(())
+    } else {
+        Err(incompatible_runtime_error())
+    }
 }
 
 fn show_main_window<R: Runtime>(app: &AppHandle<R>) {
@@ -594,7 +645,8 @@ fn active_profile_for_tool<'a>(snapshot: &'a AppSnapshot, tool: &str) -> Option<
 mod tests {
     use super::{
         active_set_label, active_summary, active_summary_or_default, parse_tray_action,
-        profile_set_is_active, shared_profile_entries, tray_sections,
+        profile_set_is_active, shared_profile_entries, tray_runtime_notice, tray_sections,
+        tray_status_label,
         tray_use_all_profiles_request, tray_use_context_request, tray_use_profile_request,
         TrayAction, TrayEntry, TraySection,
     };
@@ -648,6 +700,16 @@ mod tests {
             "claude=work, codex=personal"
         );
         assert_eq!(active_set_label(None, Some(&snapshot)), None);
+    }
+
+    #[test]
+    fn tray_status_label_reports_blocked_runtime() {
+        assert_eq!(tray_status_label(false, None), "Runtime blocked");
+        assert_eq!(
+            tray_runtime_notice(false),
+            Some("Runtime blocked. Fix aisw in Settings.")
+        );
+        assert_eq!(tray_runtime_notice(true), None);
     }
 
     #[test]
