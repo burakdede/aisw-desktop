@@ -44,6 +44,14 @@ struct TrayEntry {
     label: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct TrayMenuModel {
+    active_label: String,
+    runtime_notice: Option<String>,
+    sections: Vec<TraySection>,
+    footer_items: Vec<TrayEntry>,
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "scope", rename_all = "snake_case")]
 enum TrayCommandScope {
@@ -333,52 +341,91 @@ fn tray_menu<R: Runtime>(
     snapshot: Option<&AppSnapshot>,
     runtime_compatible: bool,
 ) -> tauri::Result<Menu<R>> {
-    let active_label = active_set_label(settings, snapshot)
-        .map(|name| format!("Active set: {name}"))
-        .unwrap_or_else(|| format!("Active: {}", tray_status_label(runtime_compatible, snapshot)));
+    let model = tray_menu_model(settings, snapshot, runtime_compatible);
     let mut items: Vec<MenuItemKind<R>> = vec![
-        MenuItem::with_id(app, "active-summary", active_label, false, None::<&str>)?.kind(),
+        MenuItem::with_id(app, "active-summary", model.active_label, false, None::<&str>)?.kind(),
         PredefinedMenuItem::separator(app)?.kind(),
     ];
 
-    if runtime_compatible {
-        if let Some(snapshot) = snapshot {
-            for section in tray_sections(settings, snapshot) {
-                let submenu_items = section
-                    .items
-                    .iter()
-                    .map(|entry| {
-                        MenuItem::with_id(
-                            app,
-                            entry.id.clone(),
-                            entry.label.clone(),
-                            true,
-                            None::<&str>,
-                        )
-                        .map(|item| item.kind())
-                    })
-                    .collect::<tauri::Result<Vec<_>>>()?;
-                let submenu_refs = submenu_items
-                    .iter()
-                    .map(|item| item as &dyn IsMenuItem<R>)
-                    .collect::<Vec<_>>();
-                let submenu = Submenu::with_items(app, section.title, true, &submenu_refs)?;
-                items.push(submenu.kind());
-            }
-        }
-    } else if let Some(notice) = tray_runtime_notice(runtime_compatible) {
+    for section in model.sections {
+        let submenu_items = section
+            .items
+            .iter()
+            .map(|entry| {
+                MenuItem::with_id(
+                    app,
+                    entry.id.clone(),
+                    entry.label.clone(),
+                    true,
+                    None::<&str>,
+                )
+                .map(|item| item.kind())
+            })
+            .collect::<tauri::Result<Vec<_>>>()?;
+        let submenu_refs = submenu_items
+            .iter()
+            .map(|item| item as &dyn IsMenuItem<R>)
+            .collect::<Vec<_>>();
+        let submenu = Submenu::with_items(app, section.title, true, &submenu_refs)?;
+        items.push(submenu.kind());
+    }
+
+    if let Some(notice) = model.runtime_notice {
         items.push(MenuItem::with_id(app, "runtime-blocked", notice, false, None::<&str>)?.kind());
     }
 
-    items.push(MenuItem::with_id(app, OPEN_ID, "Open AISW Desktop", true, None::<&str>)?.kind());
-    items.push(MenuItem::with_id(app, DIAGNOSTICS_ID, "Run diagnostics", true, None::<&str>)?.kind());
-    items.push(MenuItem::with_id(app, QUIT_ID, "Quit", true, None::<&str>)?.kind());
+    items.extend(
+        model
+            .footer_items
+            .into_iter()
+            .map(|entry| MenuItem::with_id(app, entry.id, entry.label, true, None::<&str>))
+            .collect::<tauri::Result<Vec<_>>>()?
+            .into_iter()
+            .map(|item| item.kind()),
+    );
 
     let item_refs = items
         .iter()
         .map(|item| item as &dyn IsMenuItem<R>)
         .collect::<Vec<_>>();
     Menu::with_items(app, &item_refs)
+}
+
+fn tray_menu_model(
+    settings: Option<&DesktopSettings>,
+    snapshot: Option<&AppSnapshot>,
+    runtime_compatible: bool,
+) -> TrayMenuModel {
+    let active_label = active_set_label(settings, snapshot)
+        .map(|name| format!("Active set: {name}"))
+        .unwrap_or_else(|| format!("Active: {}", tray_status_label(runtime_compatible, snapshot)));
+    let sections = if runtime_compatible {
+        snapshot
+            .map(|snapshot| tray_sections(settings, snapshot))
+            .unwrap_or_default()
+    } else {
+        Vec::new()
+    };
+
+    TrayMenuModel {
+        active_label,
+        runtime_notice: tray_runtime_notice(runtime_compatible).map(str::to_owned),
+        sections,
+        footer_items: vec![
+            TrayEntry {
+                id: OPEN_ID.to_owned(),
+                label: "Open AISW Desktop".to_owned(),
+            },
+            TrayEntry {
+                id: DIAGNOSTICS_ID.to_owned(),
+                label: "Run diagnostics".to_owned(),
+            },
+            TrayEntry {
+                id: QUIT_ID.to_owned(),
+                label: "Quit".to_owned(),
+            },
+        ],
+    }
 }
 
 fn tray_status_label(runtime_compatible: bool, snapshot: Option<&AppSnapshot>) -> String {
@@ -679,7 +726,7 @@ mod tests {
     use super::{
         active_set_label, active_summary, active_summary_or_default, build_tray_command_result_event,
         parse_tray_action, profile_set_entries, profile_set_is_active, shared_profile_entries,
-        tray_runtime_notice, tray_sections,
+        tray_menu_model, tray_runtime_notice, tray_sections,
         tray_status_label,
         tray_use_all_profiles_request, tray_use_context_request, tray_use_profile_request,
         TrayAction, TrayCommandScope, TrayEntry, TraySection,
@@ -1122,6 +1169,109 @@ mod tests {
                 },
             ]
         );
+    }
+
+    #[test]
+    fn tray_menu_model_includes_fixed_footer_actions() {
+        let snapshot = AppSnapshot {
+            statuses: vec![ToolStatus {
+                tool: "claude".to_owned(),
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: Some("work".to_owned()),
+                auth_method: None,
+                credential_backend: None,
+                state_mode: None,
+                active_profile_applied: None,
+                credentials_present: None,
+                permissions_ok: None,
+                token_warning: None,
+                warnings: vec![],
+            }],
+            profiles: HashMap::from([(
+                "claude".to_owned(),
+                ToolProfiles {
+                    active: Some("work".to_owned()),
+                    profiles: vec![ToolProfileSummary {
+                        name: "work".to_owned(),
+                        auth: "oauth".to_owned(),
+                        label: Some("Work".to_owned()),
+                    }],
+                },
+            )]),
+            contexts: vec![],
+            workspace_status: None,
+            project_bindings: None,
+        };
+
+        let model = tray_menu_model(None, Some(&snapshot), true);
+
+        assert_eq!(model.active_label, "Active set: Work");
+        assert_eq!(model.runtime_notice, None);
+        assert_eq!(
+            model.footer_items,
+            vec![
+                TrayEntry {
+                    id: "open".to_owned(),
+                    label: "Open AISW Desktop".to_owned(),
+                },
+                TrayEntry {
+                    id: "diagnostics".to_owned(),
+                    label: "Run diagnostics".to_owned(),
+                },
+                TrayEntry {
+                    id: "quit".to_owned(),
+                    label: "Quit".to_owned(),
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn tray_menu_model_shows_runtime_notice_and_hides_sections_when_blocked() {
+        let snapshot = AppSnapshot {
+            statuses: vec![ToolStatus {
+                tool: "claude".to_owned(),
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: Some("work".to_owned()),
+                auth_method: None,
+                credential_backend: None,
+                state_mode: None,
+                active_profile_applied: None,
+                credentials_present: None,
+                permissions_ok: None,
+                token_warning: None,
+                warnings: vec![],
+            }],
+            profiles: HashMap::from([(
+                "claude".to_owned(),
+                ToolProfiles {
+                    active: Some("work".to_owned()),
+                    profiles: vec![ToolProfileSummary {
+                        name: "work".to_owned(),
+                        auth: "oauth".to_owned(),
+                        label: Some("Work".to_owned()),
+                    }],
+                },
+            )]),
+            contexts: vec![ContextSummary {
+                name: "client-acme".to_owned(),
+                profiles: HashMap::from([("claude".to_owned(), Some("work".to_owned()))]),
+            }],
+            workspace_status: None,
+            project_bindings: None,
+        };
+
+        let model = tray_menu_model(None, Some(&snapshot), false);
+
+        assert_eq!(model.active_label, "Active set: Work");
+        assert_eq!(
+            model.runtime_notice.as_deref(),
+            Some("Runtime blocked. Fix aisw in Settings.")
+        );
+        assert!(model.sections.is_empty());
+        assert_eq!(model.footer_items.len(), 3);
     }
 
     #[test]
