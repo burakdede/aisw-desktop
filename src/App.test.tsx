@@ -4195,6 +4195,17 @@ describe("App", () => {
           warnings: [],
         },
       ],
+      profiles: {
+        claude: {
+          active: "work",
+          profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+        },
+        codex: {
+          active: null,
+          profiles: [],
+        },
+      },
+      contexts: [],
       workspace_status: {
         result: {
           status: "mismatch",
@@ -4266,10 +4277,14 @@ describe("App", () => {
       expect(screen.getByText("codex is missing")).toBeInTheDocument();
       expect(screen.getByText("claude live mismatch")).toBeInTheDocument();
       expect(screen.getByText("Workspace context mismatch")).toBeInTheDocument();
-      expect(
-        screen.getByText("This folder wants Client Acme, but work is currently active."),
-      ).toBeInTheDocument();
     });
+
+    const workspaceMismatchCard = screen.getByText("Workspace context mismatch").closest(".diagnostic-card");
+    if (!(workspaceMismatchCard instanceof HTMLElement)) {
+      throw new Error("Missing workspace mismatch diagnostic card.");
+    }
+    expect(within(workspaceMismatchCard).getByText("Open contexts")).toBeInTheDocument();
+    expect(within(workspaceMismatchCard).queryByText("Use expected context now")).not.toBeInTheDocument();
 
     const missingToolCard = screen.getByText("codex is missing").closest(".diagnostic-card");
     if (!(missingToolCard instanceof HTMLElement)) {
@@ -4306,14 +4321,11 @@ describe("App", () => {
       expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
     });
 
-    fireEvent.click(screen.getByText("Use expected context now"));
+    fireEvent.click(screen.getByText("Open contexts"));
     await waitFor(() => {
-      expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
+      expect(screen.getByRole("heading", { name: "Contexts" })).toBeInTheDocument();
     });
-    expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
-      title: "Workspace switch",
-      body: "Switched to Client Acme for /code/acme.",
-    });
+    expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(false);
   });
 
   it("opens matching profile diagnostics from a diagnostics quick fix", async () => {

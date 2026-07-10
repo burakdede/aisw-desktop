@@ -422,6 +422,11 @@ test("offers direct diagnostic fixes for missing tools, live mismatch, and works
   await expect(page.getByText("codex is missing")).toBeVisible();
   await expect(page.getByText("claude live mismatch")).toBeVisible();
   await expect(page.getByText("Workspace context mismatch")).toBeVisible();
+  await expect(
+    page.getByText(
+      "This folder wants Client Acme, but no matching CLI context or non-empty profile set is currently available.",
+    ),
+  ).toBeVisible();
 
   const missingToolCard = page.locator(".diagnostic-card").filter({ hasText: "codex is missing" });
   await missingToolCard.getByRole("button", { name: "Open installation guide" }).click();
@@ -432,7 +437,7 @@ test("offers direct diagnostic fixes for missing tools, live mismatch, and works
     .toContain("https://www.npmjs.com/package/@openai/codex");
 
   await page.getByRole("button", { name: "Re-apply Work" }).click();
-  await page.getByRole("button", { name: "Use expected context now" }).click();
+  await page.getByRole("button", { name: "Open contexts" }).click();
 
   await expect
     .poll(() =>
@@ -446,23 +451,9 @@ test("offers direct diagnostic fixes for missing tools, live mismatch, and works
     .toEqual(
       expect.arrayContaining([
         expect.objectContaining({ command: "use_profile" }),
-        expect.objectContaining({ command: "activate_profile_set" }),
       ]),
     );
-
-  await expect
-    .poll(() =>
-      page.evaluate(
-        () =>
-          (window as typeof window & {
-            __AISW_NOTIFICATIONS__?: Array<{ title: string; body: string }>;
-          }).__AISW_NOTIFICATIONS__ ?? [],
-      ),
-    )
-    .toContainEqual({
-      title: "Workspace switch",
-      body: "Switched to Client Acme for /code/acme.",
-    });
+  await expect(page.getByRole("heading", { name: "Contexts", exact: true })).toBeVisible();
 });
 
 test("opens diagnostics when the tray requests it", async ({ page }) => {
