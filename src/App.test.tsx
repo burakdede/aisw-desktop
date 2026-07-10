@@ -3385,6 +3385,57 @@ describe("App", () => {
     });
   });
 
+  it("reruns diagnostics when the tray requests a diagnostics run", async () => {
+    let doctorRuns = 0;
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "run_doctor") {
+        doctorRuns += 1;
+        return doctorRuns === 1
+          ? { checks: [], summary: { status: "pass" } }
+          : {
+              checks: [
+                {
+                  name: "shell_hook",
+                  status: "warn",
+                  detail: "Shell hook is not active in the current shell session.",
+                  remediation: ["Install the shell hook and reload the shell."],
+                },
+              ],
+              summary: { status: "warn" },
+            };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["tray-run-diagnostics"]?.({});
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Doctor · Verify · Repair")).toBeInTheDocument();
+      expect(screen.getByText("Shell hook is not active in the current shell session.")).toBeInTheDocument();
+    });
+  });
+
   it("records tray command results and shows a desktop notification", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());

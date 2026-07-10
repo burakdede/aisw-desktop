@@ -15,6 +15,7 @@ const QUIT_ID: &str = "quit";
 const SWITCH_ALL_PREFIX: &str = "switch-all:";
 const PROFILE_SET_PREFIX: &str = "profile-set:";
 const OPEN_DIAGNOSTICS_EVENT: &str = "tray-open-diagnostics";
+const RUN_DIAGNOSTICS_EVENT: &str = "tray-run-diagnostics";
 const TRAY_COMMAND_RESULT_EVENT: &str = "tray-command-result";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -105,6 +106,7 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
         TrayAction::OpenDiagnostics => {
             show_main_window(app);
             let _ = app.emit(OPEN_DIAGNOSTICS_EVENT, ());
+            let _ = app.emit(RUN_DIAGNOSTICS_EVENT, ());
         }
         TrayAction::Quit => {
             app.exit(0);
@@ -343,9 +345,7 @@ fn tray_menu<R: Runtime>(
     }
 
     items.push(MenuItem::with_id(app, OPEN_ID, "Open AISW Desktop", true, None::<&str>)?.kind());
-    items.push(
-        MenuItem::with_id(app, DIAGNOSTICS_ID, "Open diagnostics", true, None::<&str>)?.kind(),
-    );
+    items.push(MenuItem::with_id(app, DIAGNOSTICS_ID, "Run diagnostics", true, None::<&str>)?.kind());
     items.push(MenuItem::with_id(app, QUIT_ID, "Quit", true, None::<&str>)?.kind());
 
     let item_refs = items

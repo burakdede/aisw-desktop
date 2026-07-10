@@ -27,6 +27,14 @@ const NAV = [
   { id: "settings", label: "Settings" },
 ] as const;
 
+const DIAGNOSTICS_QUERY_KEYS = [
+  ["doctor"],
+  ["verify"],
+  ["repair", "dry-run"],
+  ["snapshot"],
+  ["bootstrap"],
+] as const;
+
 type ProfilesRouteState = {
   tool?: string;
   expandedProfile?: string | null;
@@ -45,6 +53,18 @@ export function App() {
     void listenDesktopEvent("tray-open-diagnostics", () => {
       if (!active) return;
       setActiveNav("diagnostics");
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
+    void listenDesktopEvent("tray-run-diagnostics", () => {
+      if (!active) return;
+      setActiveNav("diagnostics");
+      for (const queryKey of DIAGNOSTICS_QUERY_KEYS) {
+        void queryClient.invalidateQueries({ queryKey: [...queryKey] });
+      }
     }).then((dispose) => {
       if (typeof dispose === "function") {
         disposers.push(dispose);

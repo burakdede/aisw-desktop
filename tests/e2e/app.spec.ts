@@ -16,6 +16,7 @@ type ScenarioName =
   | "tokenWarnings"
   | "failedBulkSwitch"
   | "trayRefresh"
+  | "trayDiagnosticsRefresh"
   | "matchingContextSet"
   | "diagnosticFixes"
   | "missingTool"
@@ -394,6 +395,28 @@ test("opens diagnostics when the tray requests it", async ({ page }) => {
   });
 
   await expect(page.getByText("Doctor · Verify · Repair")).toBeVisible();
+});
+
+test("reruns diagnostics when the tray requests a diagnostics run", async ({ page }) => {
+  await installDesktopMock(page, "trayDiagnosticsRefresh");
+
+  await page.goto("/");
+  await expect(page.getByText("Control Center")).toBeVisible();
+
+  await page.evaluate(() => {
+    const handlers = (
+      window as typeof window & {
+        __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+      }
+    ).__AISW_DESKTOP_EVENT_HANDLERS__;
+    handlers?.["tray-run-diagnostics"]?.({});
+  });
+
+  const diagnosticsSection = page.locator(".section-card").filter({ hasText: "Doctor · Verify · Repair" });
+  await expect(diagnosticsSection).toBeVisible();
+  await expect(
+    diagnosticsSection.getByText("Shell hook is not active in the current shell session.").first(),
+  ).toBeVisible();
 });
 
 test("records tray command results and shows a desktop notification", async ({ page }) => {
@@ -1880,6 +1903,56 @@ async function installDesktopMock(
             },
           },
         },
+        trayDiagnosticsRefresh: {
+          settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 2,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "api_key",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [
+                  { name: "work", auth: "oauth", label: "Work" },
+                  { name: "personal", auth: "oauth", label: "Personal" },
+                ],
+              },
+              codex: {
+                active: "work",
+                profiles: [{ name: "work", auth: "api_key", label: "Work" }],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
         matchingContextSet: {
           settings: {
             ...bootstrapSettings,
@@ -2528,6 +2601,7 @@ async function installDesktopMock(
         settings: deepClone(scenarioState.settings ?? bootstrapSettings),
         initRuns: 0,
         snapshotReads: 0,
+        doctorRuns: 0,
       };
       window.__AISW_DESKTOP_SCENARIO_STATE__ = state;
 
@@ -2739,6 +2813,22 @@ async function installDesktopMock(
           return cloneSnapshot();
         }
         if (command === "run_doctor") {
+          if (activeScenario === "trayDiagnosticsRefresh") {
+            state.doctorRuns += 1;
+            if (state.doctorRuns > 1) {
+              return {
+                checks: [
+                  {
+                    name: "shell_hook",
+                    status: "warn",
+                    detail: "Shell hook is not active in the current shell session.",
+                    remediation: ["Install the shell hook and reload the shell."],
+                  },
+                ],
+                summary: { status: "warn" },
+              };
+            }
+          }
           if (activeScenario === "diagnosticFixes") {
             return {
               checks: [{ name: "tool/codex", status: "warn", detail: "codex not found on PATH" }],
