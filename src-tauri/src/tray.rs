@@ -18,6 +18,18 @@ const OPEN_DIAGNOSTICS_EVENT: &str = "tray-open-diagnostics";
 const TRAY_COMMAND_RESULT_EVENT: &str = "tray-command-result";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+enum TrayAction {
+    Open,
+    OpenDiagnostics,
+    Quit,
+    UseContext(String),
+    UseAllProfiles(String),
+    ActivateProfileSet(String),
+    UseProfile { tool: String, profile: String },
+    Unknown,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct TraySection {
     title: String,
     items: Vec<TrayEntry>,
@@ -83,30 +95,24 @@ pub async fn refresh_tray<R: Runtime>(app: &AppHandle<R>, state: AppState) -> ta
 }
 
 fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String) {
-    match id.as_str() {
-        OPEN_ID => {
+    match parse_tray_action(&id) {
+        TrayAction::Open => {
             show_main_window(app);
         }
-        DIAGNOSTICS_ID => {
+        TrayAction::OpenDiagnostics => {
             show_main_window(app);
             let _ = app.emit(OPEN_DIAGNOSTICS_EVENT, ());
         }
-        QUIT_ID => {
+        TrayAction::Quit => {
             app.exit(0);
         }
-        _ if id.starts_with("context:") => {
-            let context = id.trim_start_matches("context:").to_owned();
+        TrayAction::UseContext(context) => {
             let app_handle = app.clone();
+            let context_label = context.clone();
             tauri::async_runtime::spawn(async move {
-                let context_for_command = context.clone();
                 let result = state
                     .mutate("tray_use_context", move |bridge| async move {
-                        bridge
-                            .use_context(UseContextRequest {
-                                context: context_for_command,
-                                state_mode: Some("isolated".to_owned()),
-                            })
-                            .await
+                        bridge.use_context(tray_use_context_request(context.clone())).await
                     })
                     .await;
                 emit_tray_command_result(
@@ -116,23 +122,19 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
                         id: "context".to_owned(),
                     },
                     "Switch context",
-                    format!("Activated context {context}."),
+                    format!("Activated context {context_label}."),
                 );
                 let _ = refresh_tray(&app_handle, state).await;
             });
         }
-        _ if id.starts_with(SWITCH_ALL_PREFIX) => {
-            let profile = id.trim_start_matches(SWITCH_ALL_PREFIX).to_owned();
+        TrayAction::UseAllProfiles(profile) => {
             let app_handle = app.clone();
+            let profile_label = profile.clone();
             tauri::async_runtime::spawn(async move {
-                let profile_for_command = profile.clone();
                 let result = state
                     .mutate("tray_use_all_profiles", move |bridge| async move {
                         bridge
-                            .use_all_profiles(UseAllProfilesRequest {
-                                profile: profile_for_command,
-                                state_mode: Some("isolated".to_owned()),
-                            })
+                            .use_all_profiles(tray_use_all_profiles_request(profile.clone()))
                             .await
                     })
                     .await;
@@ -143,13 +145,12 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
                         id: "switch-all".to_owned(),
                     },
                     "Switch all profiles",
-                    format!("Switched all tools to {profile}."),
+                    format!("Switched all tools to {profile_label}."),
                 );
                 let _ = refresh_tray(&app_handle, state).await;
             });
         }
-        _ if id.starts_with(PROFILE_SET_PREFIX) => {
-            let profile_set = id.trim_start_matches(PROFILE_SET_PREFIX).to_owned();
+        TrayAction::ActivateProfileSet(profile_set) => {
             let app_handle = app.clone();
             tauri::async_runtime::spawn(async move {
                 let result = state.activate_profile_set(&profile_set).await;
@@ -165,36 +166,31 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
                 let _ = refresh_tray(&app_handle, state).await;
             });
         }
-        _ if id.starts_with("profile:") => {
-            let mut parts = id.splitn(3, ':');
-            let _ = parts.next();
-            let tool = parts.next().unwrap_or_default().to_owned();
-            let profile = parts.next().unwrap_or_default().to_owned();
+        TrayAction::UseProfile { tool, profile } => {
             let app_handle = app.clone();
+            let tool_label = tool.clone();
+            let profile_label = profile.clone();
             tauri::async_runtime::spawn(async move {
-                let tool_for_command = tool.clone();
-                let profile_for_command = profile.clone();
                 let result = state
                     .mutate("tray_use_profile", move |bridge| async move {
                         bridge
-                            .use_profile(tray_use_profile_request(
-                                tool_for_command,
-                                profile_for_command,
-                            ))
+                            .use_profile(tray_use_profile_request(tool.clone(), profile.clone()))
                             .await
                     })
                     .await;
                 emit_tray_command_result(
                     &app_handle,
                     result,
-                    TrayCommandScope::Tool { tool: tool.clone() },
+                    TrayCommandScope::Tool {
+                        tool: tool_label.clone(),
+                    },
                     "Switch profile",
-                    format!("Switched {tool} to {profile}."),
+                    format!("Switched {tool_label} to {profile_label}."),
                 );
                 let _ = refresh_tray(&app_handle, state).await;
             });
         }
-        _ => {}
+        TrayAction::Unknown => {}
     }
 }
 
@@ -233,6 +229,52 @@ fn tray_use_profile_request(tool: String, profile: String) -> UseProfileRequest 
         },
         tool,
         profile,
+    }
+}
+
+fn tray_use_context_request(context: String) -> UseContextRequest {
+    UseContextRequest {
+        context,
+        state_mode: Some("isolated".to_owned()),
+    }
+}
+
+fn tray_use_all_profiles_request(profile: String) -> UseAllProfilesRequest {
+    UseAllProfilesRequest {
+        profile,
+        state_mode: Some("isolated".to_owned()),
+    }
+}
+
+fn parse_tray_action(id: &str) -> TrayAction {
+    match id {
+        OPEN_ID => TrayAction::Open,
+        DIAGNOSTICS_ID => TrayAction::OpenDiagnostics,
+        QUIT_ID => TrayAction::Quit,
+        _ if id.starts_with("context:") => {
+            TrayAction::UseContext(id.trim_start_matches("context:").to_owned())
+        }
+        _ if id.starts_with(SWITCH_ALL_PREFIX) => {
+            TrayAction::UseAllProfiles(id.trim_start_matches(SWITCH_ALL_PREFIX).to_owned())
+        }
+        _ if id.starts_with(PROFILE_SET_PREFIX) => {
+            TrayAction::ActivateProfileSet(id.trim_start_matches(PROFILE_SET_PREFIX).to_owned())
+        }
+        _ if id.starts_with("profile:") => {
+            let mut parts = id.splitn(3, ':');
+            let _ = parts.next();
+            let tool = parts.next().unwrap_or_default();
+            let profile = parts.next().unwrap_or_default();
+            if tool.is_empty() || profile.is_empty() {
+                TrayAction::Unknown
+            } else {
+                TrayAction::UseProfile {
+                    tool: tool.to_owned(),
+                    profile: profile.to_owned(),
+                }
+            }
+        }
+        _ => TrayAction::Unknown,
     }
 }
 
@@ -541,8 +583,10 @@ fn active_profile_for_tool<'a>(snapshot: &'a AppSnapshot, tool: &str) -> Option<
 #[cfg(test)]
 mod tests {
     use super::{
-        active_set_label, active_summary, active_summary_or_default, profile_set_is_active,
-        shared_profile_entries, tray_sections, tray_use_profile_request, TrayEntry, TraySection,
+        active_set_label, active_summary, active_summary_or_default, parse_tray_action,
+        profile_set_is_active, shared_profile_entries, tray_sections,
+        tray_use_all_profiles_request, tray_use_context_request, tray_use_profile_request,
+        TrayAction, TrayEntry, TraySection,
     };
     use crate::models::{
         AppSnapshot, ContextSummary, DesktopSettings, ProfileSet, RuntimeKind, ToolProfileSummary,
@@ -977,6 +1021,45 @@ mod tests {
         assert_eq!(gemini.tool, "gemini");
         assert_eq!(gemini.profile, "travel");
         assert_eq!(gemini.state_mode, None);
+    }
+
+    #[test]
+    fn tray_actions_map_ids_to_matching_commands() {
+        assert_eq!(parse_tray_action("open"), TrayAction::Open);
+        assert_eq!(parse_tray_action("diagnostics"), TrayAction::OpenDiagnostics);
+        assert_eq!(parse_tray_action("quit"), TrayAction::Quit);
+        assert_eq!(
+            parse_tray_action("context:client-acme"),
+            TrayAction::UseContext("client-acme".to_owned())
+        );
+        assert_eq!(
+            parse_tray_action("switch-all:work"),
+            TrayAction::UseAllProfiles("work".to_owned())
+        );
+        assert_eq!(
+            parse_tray_action("profile-set:client-acme"),
+            TrayAction::ActivateProfileSet("client-acme".to_owned())
+        );
+        assert_eq!(
+            parse_tray_action("profile:gemini:travel"),
+            TrayAction::UseProfile {
+                tool: "gemini".to_owned(),
+                profile: "travel".to_owned(),
+            }
+        );
+        assert_eq!(parse_tray_action("profile:gemini"), TrayAction::Unknown);
+        assert_eq!(parse_tray_action("something-else"), TrayAction::Unknown);
+    }
+
+    #[test]
+    fn tray_global_requests_use_isolated_mode() {
+        let context = tray_use_context_request("client-acme".to_owned());
+        assert_eq!(context.context, "client-acme");
+        assert_eq!(context.state_mode.as_deref(), Some("isolated"));
+
+        let switch_all = tray_use_all_profiles_request("work".to_owned());
+        assert_eq!(switch_all.profile, "work");
+        assert_eq!(switch_all.state_mode.as_deref(), Some("isolated"));
     }
 
     #[test]
