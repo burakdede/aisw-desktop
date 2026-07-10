@@ -144,6 +144,20 @@ test("reruns setup detection when no live accounts are initially found", async (
   await expect(page.getByText("detected · oauth")).toBeVisible();
 });
 
+test("runs the onboarding first switch flow", async ({ page }) => {
+  await installDesktopMock(page, "labelOverrides");
+
+  await page.goto("/");
+
+  await expect(page.getByRole("heading", { name: "First-run setup" })).toBeVisible();
+  await page.getByLabel("First switch profile").selectOption("work");
+  await page.getByRole("button", { name: "Switch now" }).click();
+
+  await expect(page.getByText("Last bulk result: Switched all tools to work.")).toBeVisible();
+  await expect(page.getByText("Shell guidance")).toBeVisible();
+  await expect(page.getByText("AISW runtime contract")).toBeVisible();
+});
+
 test("keeps Gemini state mode non-configurable when runtime capabilities are stale", async ({
   page,
 }) => {
