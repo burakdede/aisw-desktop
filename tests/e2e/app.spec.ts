@@ -10,6 +10,7 @@ type ScenarioName =
   | "switching"
   | "workspaceContext"
   | "profiles"
+  | "backupCatalog"
   | "missingTool"
   | "partialSetup"
   | "updaterError"
@@ -700,6 +701,37 @@ test("warns before restoring the latest profile backup from profiles", async ({ 
   await expect(page.locator(".list-row p").filter({ hasText: "work · api_key" }).first()).toBeVisible();
 });
 
+test("lists backups newest first, copies backup ids, and opens matching profile details", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "backupCatalog");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Backups" }).click();
+
+  const backupsSection = page.locator(".section-card").filter({ hasText: "Backups" });
+  const backupRows = backupsSection.locator(".list-row");
+  await expect(backupRows).toHaveCount(2);
+  await expect(backupRows.nth(0)).toContainText("Personal");
+  await expect(backupRows.nth(1)).toContainText("Work");
+
+  await backupRows.nth(0).getByRole("button", { name: "Copy backup ID" }).click();
+  await expect(page.getByText("Copied backup id 20260326T094012Z-codex-personal.")).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as typeof window & { __AISW_CLIPBOARD_WRITES__?: string[] }).__AISW_CLIPBOARD_WRITES__ ?? [],
+      ),
+    )
+    .toContain("20260326T094012Z-codex-personal");
+
+  await backupRows.nth(1).getByRole("button", { name: "Open profile details" }).click();
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(page.getByLabel("Tool")).toHaveValue("claude");
+  await expect(page.getByText("Credential backend: system_keyring")).toBeVisible();
+});
+
 async function installDesktopMock(
   page: Page,
   scenario: ScenarioName,
@@ -1281,6 +1313,53 @@ async function installDesktopMock(
             },
           },
         },
+        backupCatalog: {
+          settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "personal",
+                auth_method: "api_key",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+              codex: {
+                active: "personal",
+                profiles: [{ name: "personal", auth: "api_key", label: "Personal" }],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
         customRuntime: {
           settings: {
             ...bootstrapSettings,
@@ -1600,9 +1679,18 @@ async function installDesktopMock(
       const listeners = new Map();
       window.__AISW_OPENED_GUIDES__ = [];
       window.__AISW_NOTIFICATIONS__ = [];
+      window.__AISW_CLIPBOARD_WRITES__ = [];
       window.__AISW_DESKTOP_NOTIFY__ = (payload) => {
         window.__AISW_NOTIFICATIONS__.push(payload);
       };
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: {
+          writeText: async (value) => {
+            window.__AISW_CLIPBOARD_WRITES__.push(String(value));
+          },
+        },
+      });
       window.open = (url) => {
         window.__AISW_OPENED_GUIDES__.push(String(url));
         return null;
@@ -1807,6 +1895,20 @@ async function installDesktopMock(
           return { result: projectBindingsResult() };
         }
         if (command === "list_backups") {
+          if (activeScenario === "backupCatalog") {
+            return [
+              {
+                backup_id: "20260325T114502Z-claude-work",
+                tool: "claude",
+                profile: "claude/work",
+              },
+              {
+                backup_id: "20260326T094012Z-codex-personal",
+                tool: "codex",
+                profile: "codex/personal",
+              },
+            ];
+          }
           if (activeScenario === "switching") {
             return [
               {
