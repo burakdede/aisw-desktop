@@ -640,7 +640,9 @@ fn profile_set_entries(settings: &DesktopSettings, snapshot: &AppSnapshot) -> Ve
     let mut sets = settings.profile_sets.clone();
     sets.sort_by(|left, right| left.name.cmp(&right.name));
     sets.into_iter()
-        .filter(profile_set_has_selections)
+        .filter(|set| {
+            profile_set_has_selections(set) && !has_matching_cli_context(snapshot, &set.name)
+        })
         .map(|set| TrayEntry {
             id: format!("{PROFILE_SET_PREFIX}{}", set.name),
             label: profile_set_label(&set, snapshot),
@@ -673,6 +675,10 @@ fn profile_set_has_selections(set: &ProfileSet) -> bool {
     set.profiles
         .values()
         .any(|profile| profile.as_deref().is_some_and(|value| !value.trim().is_empty()))
+}
+
+fn has_matching_cli_context(snapshot: &AppSnapshot, name: &str) -> bool {
+    snapshot.contexts.iter().any(|context| context.name == name)
 }
 
 fn tray_context_display_label(settings: Option<&DesktopSettings>, context: &str) -> String {
@@ -1054,16 +1060,10 @@ mod tests {
                 },
                 TraySection {
                     title: "Profile sets".to_owned(),
-                    items: vec![
-                        TrayEntry {
-                            id: "profile-set:client-acme".to_owned(),
-                            label: "Client Acme ✓".to_owned(),
-                        },
-                        TrayEntry {
-                            id: "profile-set:personal-focus".to_owned(),
-                            label: "personal-focus".to_owned(),
-                        },
-                    ],
+                    items: vec![TrayEntry {
+                        id: "profile-set:personal-focus".to_owned(),
+                        label: "personal-focus".to_owned(),
+                    }],
                 },
                 TraySection {
                     title: "Claude profiles".to_owned(),
@@ -1353,7 +1353,7 @@ mod tests {
     }
 
     #[test]
-    fn tray_profile_set_entries_skip_empty_sets() {
+    fn tray_profile_set_entries_skip_empty_sets_and_matching_cli_contexts() {
         let snapshot = AppSnapshot {
             statuses: vec![
                 ToolStatus {
@@ -1386,7 +1386,13 @@ mod tests {
                 },
             ],
             profiles: HashMap::new(),
-            contexts: vec![],
+            contexts: vec![ContextSummary {
+                name: "client-acme".to_owned(),
+                profiles: HashMap::from([
+                    ("claude".to_owned(), Some("work".to_owned())),
+                    ("codex".to_owned(), Some("work".to_owned())),
+                ]),
+            }],
             workspace_status: None,
             project_bindings: None,
         };
@@ -1416,13 +1422,7 @@ mod tests {
             ],
         };
 
-        assert_eq!(
-            profile_set_entries(&settings, &snapshot),
-            vec![TrayEntry {
-                id: "profile-set:client-acme".to_owned(),
-                label: "Client Acme ✓".to_owned(),
-            }]
-        );
+        assert!(profile_set_entries(&settings, &snapshot).is_empty());
     }
 
     #[test]
