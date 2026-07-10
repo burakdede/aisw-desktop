@@ -4,6 +4,7 @@ import { cn } from "../lib/utils";
 interface NavItem {
   id: string;
   label: string;
+  disabled?: boolean;
 }
 
 interface AppFrameProps {
@@ -38,6 +39,7 @@ export function AppFrame({
             <button
               key={item.id}
               className={cn("nav-button", activeNav === item.id && "nav-button-active")}
+              disabled={item.disabled}
               onClick={() => onSelectNav(item.id)}
             >
               {item.label}

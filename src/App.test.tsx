@@ -245,6 +245,20 @@ describe("App", () => {
     expect(
       screen.getByText("aisw does not advertise mutation_json support"),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Fix the selected .* runtime in Settings before profile switching/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
+    expect(screen.getByText("Runtime detection")).toBeInTheDocument();
+    expect(screen.queryByText("First-run setup")).not.toBeInTheDocument();
+    expect(screen.queryByText("Control Center")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Overview" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Profiles" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Contexts" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Workspaces" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Diagnostics" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Backups" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Settings" })).not.toBeDisabled();
   });
 
   it("shows install and PATH guidance when a tool binary is missing", async () => {

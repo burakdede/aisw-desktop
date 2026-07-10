@@ -122,13 +122,20 @@ export function App() {
   const resolvedSnapshot = snapshot.data ?? bootstrap.data.snapshot;
   const toolCapabilities = runtimeStatus.capabilities?.tools ?? {};
   const currentActiveSet = resolvedSnapshot ? activeSetLabel(settings, resolvedSnapshot) : null;
+  const runtimeBlocked = !runtimeStatus.compatible;
+  const activeSection = runtimeBlocked ? "settings" : activeNav;
+  const navItems = NAV.map(({ id, label }) => ({
+    id,
+    label,
+    disabled: runtimeBlocked && id !== "settings",
+  }));
 
   return (
     <AppFrame
       title="Local-first switching"
       subtitle="See agent identity state, switch safely, and recover from auth drift without touching hidden files."
-      nav={NAV.map(({ id, label }) => ({ id, label }))}
-      activeNav={activeNav}
+      nav={navItems}
+      activeNav={activeSection}
       onSelectNav={(id) => setActiveNav(id as (typeof NAV)[number]["id"])}
       statusBadge={
         <div>
@@ -146,11 +153,17 @@ export function App() {
                 {issue}
               </p>
             ))}
+            <p className="inline-note">
+              Fix the selected `aisw` runtime in Settings before profile switching, diagnostics,
+              backups, or workspace actions are available again.
+            </p>
           </div>
         </SectionCard>
       ) : null}
 
-      {resolvedSnapshot ? (
+      {runtimeBlocked ? (
+        <SettingsPanel settings={settings} runtimeStatus={runtimeStatus} />
+      ) : resolvedSnapshot ? (
         <>
           <SetupPanel
             bootstrap={bootstrap.data}
@@ -162,7 +175,7 @@ export function App() {
             }}
             onOpenSettings={() => setActiveNav("settings")}
           />
-          {activeNav === "overview" ? (
+          {activeSection === "overview" ? (
             <OverviewPanel
               snapshot={resolvedSnapshot}
               settings={settings}
@@ -173,7 +186,7 @@ export function App() {
               }}
             />
           ) : null}
-          {activeNav === "profiles" ? (
+          {activeSection === "profiles" ? (
             <ProfilesPanel
               snapshot={resolvedSnapshot}
               settings={settings}
@@ -182,13 +195,13 @@ export function App() {
               initialExpandedProfile={profilesRouteState.expandedProfile}
             />
           ) : null}
-          {activeNav === "contexts" ? (
+          {activeSection === "contexts" ? (
             <ContextsPanel snapshot={resolvedSnapshot} settings={settings} />
           ) : null}
-          {activeNav === "workspaces" ? (
+          {activeSection === "workspaces" ? (
             <WorkspacesPanel snapshot={resolvedSnapshot} settings={settings} />
           ) : null}
-          {activeNav === "diagnostics" ? (
+          {activeSection === "diagnostics" ? (
             <DiagnosticsPanel
               settings={settings}
               snapshot={resolvedSnapshot}
@@ -198,7 +211,7 @@ export function App() {
               }}
             />
           ) : null}
-          {activeNav === "backups" ? (
+          {activeSection === "backups" ? (
             <BackupsPanel
               snapshot={resolvedSnapshot}
               settings={settings}
@@ -208,7 +221,7 @@ export function App() {
               }}
             />
           ) : null}
-          {activeNav === "settings" ? (
+          {activeSection === "settings" ? (
             <SettingsPanel settings={settings} runtimeStatus={runtimeStatus} />
           ) : null}
         </>

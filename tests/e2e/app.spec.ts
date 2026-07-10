@@ -135,6 +135,19 @@ test("shows runtime compatibility blockers when the configured aisw runtime is u
   await expect(page.getByText("Runtime blocked")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Runtime compatibility" })).toBeVisible();
   await expect(page.getByText("aisw does not advertise mutation_json support")).toBeVisible();
+  await expect(
+    page.getByText(/Fix the selected .* runtime in Settings before profile switching/),
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByText("Runtime detection")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Overview" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Profiles" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Contexts" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Workspaces" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Diagnostics" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Backups" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Settings", exact: true })).toBeEnabled();
+  await expect(page.getByText("First-run setup")).not.toBeVisible();
 });
 
 test("reruns setup detection when no live accounts are initially found", async ({ page }) => {
