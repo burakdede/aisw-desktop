@@ -101,6 +101,35 @@ test("shows missing-tool install guidance during onboarding", async ({ page }) =
     .toContain("https://www.npmjs.com/package/@google/gemini-cli");
 });
 
+test("keeps Gemini state mode non-configurable when runtime capabilities are stale", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "profiles", {
+    ...toolCapabilities,
+    gemini: { state_modes: ["isolated", "shared"] },
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+  await page.getByLabel("Tool").selectOption("gemini");
+
+  await expect(page.getByLabel("State mode")).toBeDisabled();
+  await expect(page.getByLabel("State mode")).toHaveValue("n/a");
+
+  await page.getByLabel("Profile name").fill("travel");
+  await page.getByRole("button", { name: "Add profile" }).click();
+
+  await page.getByRole("button", { name: "Overview" }).click();
+
+  const geminiCard = page.locator(".tool-card").filter({ hasText: "Gemini" });
+  await expect(geminiCard.getByText("State mode: n/a")).toBeVisible();
+  await expect(geminiCard.locator("select")).toHaveCount(1);
+
+  await geminiCard.getByRole("button", { name: "Re-apply Travel" }).click();
+  await expect(geminiCard.getByText("Last result: Switched gemini to travel.")).toBeVisible();
+  await expect(geminiCard.getByText("State mode: n/a")).toBeVisible();
+});
+
 test("switches shared profiles and recovers from live mismatch", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -382,7 +411,11 @@ test("warns before backup restore and re-activates the restored profile", async 
   await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "Work" })).toBeVisible();
 });
 
-async function installDesktopMock(page: Page, scenario: ScenarioName) {
+async function installDesktopMock(
+  page: Page,
+  scenario: ScenarioName,
+  capabilitiesOverride = toolCapabilities,
+) {
   await page.addInitScript(
     ({ activeScenario, capabilities }) => {
       const deepClone = (value) => JSON.parse(JSON.stringify(value));
@@ -1336,7 +1369,7 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
         throw new Error(`Unhandled desktop command: ${command}`);
       };
     },
-    { activeScenario: scenario, capabilities: toolCapabilities },
+    { activeScenario: scenario, capabilities: capabilitiesOverride },
   );
 }
 

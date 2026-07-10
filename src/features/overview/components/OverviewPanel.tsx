@@ -9,6 +9,7 @@ import {
   openExternalGuide,
   toolBinaryName,
 } from "../../../lib/tool-guidance";
+import { supportedStateModes } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { sharedProfileEntries, toolProfileDisplayLabel } from "../../../lib/profile-display";
 import { titleCase } from "../../../lib/utils";
@@ -478,15 +479,4 @@ function formatDiagnosticWarning(
 ) {
   const detail = warning.message ?? warning.code ?? "Warning reported by aisw.";
   return warning.remediation ? `${detail} Remediation: ${warning.remediation}` : detail;
-}
-
-function supportedStateModes(
-  tool: string,
-  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"],
-) {
-  const configured = toolCapabilities[tool]?.state_modes ?? [];
-  if (configured.length) {
-    return configured;
-  }
-  return tool === "gemini" ? [] : ["isolated", "shared"];
 }

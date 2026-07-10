@@ -11,6 +11,7 @@ import { DesktopCommandError } from "../../../lib/tauri";
 import { listenDesktopEvent } from "../../../lib/tauri";
 import { listBackups, parseOAuthProgressEvent } from "../../../lib/client";
 import { titleCase } from "../../../lib/utils";
+import { supportedStateModes } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 
 const TOOLS = ["claude", "codex", "gemini"] as const;
@@ -725,15 +726,4 @@ function isDuplicateProfileName(
   return profiles.some(
     (entry) => entry.name.trim().toLowerCase() === normalizedNext && entry.name.trim().toLowerCase() !== normalizedCurrent,
   );
-}
-
-function supportedStateModes(
-  tool: string,
-  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"],
-) {
-  const configured = toolCapabilities[tool]?.state_modes ?? [];
-  if (configured.length) {
-    return configured;
-  }
-  return tool === "gemini" ? [] : ["isolated", "shared"];
 }

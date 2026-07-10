@@ -6,7 +6,7 @@ import { resetLastCommandResultsForTests } from "./features/shared/lastCommandRe
 import { useDesktopActions } from "./features/shared/useDesktopActions";
 import { resetMutationQueueForTests } from "./features/shared/mutationQueue";
 import { SettingsPanel } from "./features/settings/components/SettingsPanel";
-import type { DesktopSettings } from "./lib/schemas";
+import type { AppSnapshot, DesktopSettings } from "./lib/schemas";
 
 Object.assign(navigator, {
   clipboard: {
@@ -839,6 +839,152 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(getProfilesSection().getByText("Add profile")).toBeDisabled();
     expect(calls.some((entry) => entry.command === "add_profile")).toBe(false);
+  });
+
+  it("keeps Gemini state mode non-configurable even when runtime capabilities advertise shared mode", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    let currentSnapshot: AppSnapshot = {
+      ...bootstrap.snapshot,
+      statuses: [
+        ...bootstrap.snapshot.statuses.map((entry) => ({
+          ...entry,
+          warnings:
+            "warnings" in entry && Array.isArray(entry.warnings) ? entry.warnings : [],
+        })),
+        {
+          tool: "gemini",
+          binary_found: true,
+          stored_profiles: 1,
+          active_profile: "travel",
+          auth_method: "oauth",
+          credential_backend: "system_keyring",
+          state_mode: null,
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+          warnings: [],
+        },
+      ],
+      profiles: {
+        ...bootstrap.snapshot.profiles,
+        gemini: {
+          active: "travel",
+          profiles: [{ name: "travel", auth: "oauth", label: "Travel" }],
+        },
+      },
+    };
+    const geminiBootstrap = {
+      ...bootstrap,
+      runtime_status: {
+        ...bootstrap.runtime_status,
+        capabilities: {
+          ...bootstrap.runtime_status.capabilities,
+          tools: {
+            gemini: {
+              state_modes: ["isolated", "shared"],
+              fail_closed_keyring_identity: false,
+            },
+          },
+        },
+      },
+      snapshot: currentSnapshot,
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "add_profile") {
+        currentSnapshot = {
+          ...currentSnapshot,
+          statuses: currentSnapshot.statuses.map((entry) =>
+            entry.tool === "gemini"
+              ? {
+                  ...entry,
+              stored_profiles: 2,
+              active_profile: "travel-next",
+              auth_method: "oauth",
+              state_mode: null,
+              warnings: [],
+            }
+              : entry,
+          ),
+          profiles: {
+            ...currentSnapshot.profiles,
+            gemini: {
+              active: "travel-next",
+              profiles: [
+                ...currentSnapshot.profiles.gemini.profiles,
+                { name: "travel-next", auth: "oauth", label: undefined },
+              ],
+            },
+          },
+        };
+        return { command, snapshot: currentSnapshot };
+      }
+      if (command === "use_profile") {
+        return { command, snapshot: currentSnapshot };
+      }
+      return (
+        {
+          get_bootstrap: {
+            ...geminiBootstrap,
+            snapshot: currentSnapshot,
+          },
+          get_snapshot: currentSnapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: geminiBootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Profiles"));
+    fireEvent.change(screen.getByLabelText("Tool"), {
+      target: { value: "gemini" },
+    });
+
+    expect(screen.getByDisplayValue("Not configurable")).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Profile name"), {
+      target: { value: "travel-next" },
+    });
+    fireEvent.click(getProfilesSection().getByText("Add profile"));
+
+    await waitFor(() => {
+      expect(
+        calls.some(
+          (entry) =>
+            entry.command === "add_profile" &&
+            (entry.args as { request?: { state_mode?: string | null } })?.request?.state_mode === null,
+        ),
+      ).toBe(true);
+    });
+
+    fireEvent.click(screen.getByText("Overview"));
+
+    const geminiCard = screen.getByText("Travel").closest(".tool-card");
+    if (!(geminiCard instanceof HTMLElement)) {
+      throw new Error("Missing Gemini overview card.");
+    }
+    const overview = within(geminiCard);
+    expect(overview.getAllByRole("combobox")).toHaveLength(1);
+    fireEvent.click(overview.getByRole("button", { name: "Re-apply Travel Next" }));
+
+    await waitFor(() => {
+      expect(
+        calls.some(
+          (entry) =>
+            entry.command === "use_profile" &&
+            (entry.args as { request?: { tool?: string; state_mode?: string | null } })?.request?.tool === "gemini" &&
+            (entry.args as { request?: { tool?: string; state_mode?: string | null } })?.request?.state_mode === null,
+        ),
+      ).toBe(true);
+    });
   });
 
   it("surfaces duplicate profile failures in the profiles screen", async () => {
