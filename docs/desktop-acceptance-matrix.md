@@ -299,6 +299,14 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src/features/workspaces/workspace-activation.test.ts` verifies both branches: a non-empty saved profile set still wins, while an empty same-named set defers to the CLI context and preserves the resolved shared state mode.
   - `tests/e2e/app.spec.ts` verifies the Workspaces mismatch action uses `use_context` and refreshes the UI to `Current context: Client Acme` instead of trying to activate an empty saved profile set.
 
+### 39. Stale workspace targets route users into Contexts instead of sending invalid activations
+
+- Status: implemented
+- Evidence:
+  - `src/features/workspaces/workspace-activation.ts` now returns `null` when the expected workspace target resolves to neither a non-empty saved profile set nor a live CLI context, instead of fabricating a doomed `use_context` request.
+  - `src/App.tsx`, `src/features/overview/components/OverviewPanel.tsx`, `src/features/diagnostics/components/DiagnosticsPanel.tsx`, and `src/features/workspaces/components/WorkspacesPanel.tsx` route that stale-target case into the Contexts screen with `Open contexts` recovery affordances.
+  - `src/features/workspaces/workspace-activation.test.ts`, `src/App.test.tsx`, and `tests/e2e/app.spec.ts` verify stale workspace recovery opens Contexts and does not dispatch `use_context` or `activate_profile_set`.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:

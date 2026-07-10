@@ -137,6 +137,7 @@ Acceptance criteria:
 - Workspace activation produces a visible result and optional desktop notification.
 - The currently matched explicit workspace binding is identified in the bindings list.
 - Workspace mismatch recovery ignores empty same-named profile sets and falls back to the matching native CLI context instead.
+- Workspace mismatch recovery fails closed into Contexts management when the expected target no longer exists as either a non-empty saved profile set or a CLI context.
 
 Test cases:
 - Creates and edits a profile set.
@@ -144,6 +145,7 @@ Test cases:
 - Shows expected-context mismatch with direct-fix action.
 - Marks the explicit binding row that currently resolves the workspace target.
 - Uses the matching CLI context for workspace recovery when a same-named saved profile set has no mapped profiles.
+- Opens Contexts instead of issuing an invalid activation when the expected workspace target is stale.
 - Excludes unsupported workspace bindings from the wrong surfaces.
 
 ### 6. Diagnostics and Repair
