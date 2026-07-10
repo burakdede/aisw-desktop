@@ -252,6 +252,29 @@ test("requires saving settings before updater actions use a changed channel", as
   await expect(page.getByText(/Endpoint:\s*https:\/\/updates\.example\.com\/beta\.json/)).toBeVisible();
 });
 
+test("clears stale update results after channel edits until the user checks again", async ({ page }) => {
+  await installDesktopMock(page, "profiles");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Check for updates" }).click();
+
+  await expect(page.getByText("Update available: 0.2.0")).toBeVisible();
+  await expect(page.getByText(/Endpoint:\s*https:\/\/updates\.example\.com\/stable\.json/)).toBeVisible();
+
+  await page.getByLabel("Update channel").selectOption("beta");
+  await expect(page.getByText("Update available: 0.2.0")).not.toBeVisible();
+  await expect(page.getByText(/Endpoint:\s*https:\/\/updates\.example\.com\/stable\.json/)).not.toBeVisible();
+
+  await page.getByRole("button", { name: "Save settings" }).click();
+  await expect(page.getByText("Update available: 0.2.0")).not.toBeVisible();
+  await expect(page.getByText(/Endpoint:\s*https:\/\/updates\.example\.com\/stable\.json/)).not.toBeVisible();
+
+  await page.getByRole("button", { name: "Check for updates" }).click();
+  await expect(page.getByText("Update available: 0.3.0-beta.1")).toBeVisible();
+  await expect(page.getByText(/Endpoint:\s*https:\/\/updates\.example\.com\/beta\.json/)).toBeVisible();
+});
+
 test("creates profiles from environment and API key modes", async ({ page }) => {
   await installDesktopMock(page, "profiles");
 
@@ -873,10 +896,14 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
             current_version: "0.1.0",
             endpoint: `https://updates.example.com/${state.settings.update_channel}.json`,
             update: {
-              version: "0.2.0",
+              version:
+                state.settings.update_channel === "beta" ? "0.3.0-beta.1" : "0.2.0",
               current_version: "0.1.0",
               target: "darwin-aarch64",
-              notes: "Faster switching and signed updater artifacts.",
+              notes:
+                state.settings.update_channel === "beta"
+                  ? "Preview release candidate."
+                  : "Faster switching and signed updater artifacts.",
             },
             message: null,
           };

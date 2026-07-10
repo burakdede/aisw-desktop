@@ -3180,4 +3180,89 @@ describe("App", () => {
       expect(screen.getByText("Channel: beta")).toBeInTheDocument();
     });
   });
+
+  it("clears stale update results when settings change and requires a fresh check", async () => {
+    let currentSettings: DesktopSettings = bootstrap.settings;
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "check_for_updates") {
+        return {
+          configured: true,
+          channel: currentSettings.update_channel,
+          current_version: "0.1.0",
+          endpoint: `https://updates.example.com/${currentSettings.update_channel}.json`,
+          update: {
+            version: currentSettings.update_channel === "beta" ? "0.3.0-beta.1" : "0.2.0",
+            current_version: "0.1.0",
+            target: "darwin-aarch64",
+            notes:
+              currentSettings.update_channel === "beta"
+                ? "Preview release candidate."
+                : "Faster switching and signed updater artifacts.",
+          },
+          message: null,
+        };
+      }
+      return (
+        {
+          run_doctor: { summary: { status: "pass" } },
+          get_shell_guidance: {
+            detected_shell: "zsh",
+            capabilities: [],
+            note: "Shell hook guidance",
+            manual_apply_examples: [],
+            variants: [
+              {
+                shell: "zsh",
+                title: "Zsh",
+                config_path: "~/.zshrc",
+                alternate_config_path: null,
+                install_command: "echo install",
+                reload_command: "source ~/.zshrc",
+                verify_command: 'echo "$AISW_SHELL_HOOK"',
+                verify_expected: "1",
+              },
+            ],
+          },
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    const rendered = await renderSettingsPanel(currentSettings);
+    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Check for updates"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Update available: 0.2.0")).toBeInTheDocument();
+      expect(screen.getByText("Endpoint: https://updates.example.com/stable.json")).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByDisplayValue("Stable"), {
+      target: { value: "beta" },
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Update available: 0.2.0")).not.toBeInTheDocument();
+      expect(screen.queryByText("Endpoint: https://updates.example.com/stable.json")).not.toBeInTheDocument();
+    });
+
+    currentSettings = {
+      ...currentSettings,
+      update_channel: "beta",
+    };
+    await act(async () => {
+      rendered.rerender(
+        <QueryClientProvider client={rendered.queryClient}>
+          <SettingsPanel settings={currentSettings} runtimeStatus={bootstrap.runtime_status} />
+        </QueryClientProvider>,
+      );
+      await Promise.resolve();
+    });
+
+    fireEvent.click(screen.getByText("Check for updates"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Update available: 0.3.0-beta.1")).toBeInTheDocument();
+      expect(screen.getByText("Endpoint: https://updates.example.com/beta.json")).toBeInTheDocument();
+    });
+  });
 });

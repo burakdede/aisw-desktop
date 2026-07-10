@@ -57,6 +57,20 @@ export function SettingsPanel({
     settings.update_channel,
   ]);
 
+  useEffect(() => {
+    if (checkForUpdatesMutation.isPending || installUpdateMutation.isPending) {
+      return;
+    }
+    checkForUpdatesMutation.reset();
+    installUpdateMutation.reset();
+  }, [
+    hasPendingSettingsChanges,
+    settings.runtime_kind,
+    settings.runtime_path,
+    settings.aisw_home,
+    settings.update_channel,
+  ]);
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     updateSettingsMutation.mutate({
