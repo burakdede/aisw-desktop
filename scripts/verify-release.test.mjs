@@ -90,6 +90,10 @@ npm run build
 npm run test:e2e
 cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
+## Release checklist
+Launch the packaged app in \`Bundled\` mode
+Switch a profile in the packaged app
+Complete platform signing checks
 `,
   );
 
@@ -115,12 +119,47 @@ npm run prepare:sidecar -- --target \${{ matrix.target }} "\${{ runner.temp }}/a
 tauri-apps/tauri-action@v1
 TAURI_SIGNING_PRIVATE_KEY
 `,
+      runbook: `
+npm run prepare:sidecar -- /absolute/path/to/aisw
+npm run tauri:build
+npm test
+npm run build
+npm run test:e2e
+cargo test --manifest-path src-tauri/Cargo.toml
+cargo check --manifest-path src-tauri/Cargo.toml
+## Release checklist
+Launch the packaged app in \`Bundled\` mode
+Switch a profile in the packaged app
+Complete platform signing checks
+`,
     });
     const result = verifyReleaseContract(root);
     expect(result.ok).toBe(false);
     expect(result.checks).toContainEqual(
       expect.objectContaining({
         label: "publish workflow enforces verification matrix",
+        ok: false,
+      }),
+    );
+  });
+
+  it("fails when the runbook drops the explicit release checklist", () => {
+    const root = createReleaseFixture({
+      runbook: `
+npm run prepare:sidecar -- /absolute/path/to/aisw
+npm run tauri:build
+npm test
+npm run build
+npm run test:e2e
+cargo test --manifest-path src-tauri/Cargo.toml
+cargo check --manifest-path src-tauri/Cargo.toml
+`,
+    });
+    const result = verifyReleaseContract(root);
+    expect(result.ok).toBe(false);
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        label: "runbook includes a release checklist",
         ok: false,
       }),
     );

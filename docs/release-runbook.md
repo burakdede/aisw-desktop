@@ -67,6 +67,19 @@ npm run tauri:build
 - Windows: sign the installer to reduce SmartScreen friction.
 - Linux: validate generated `.deb`, `.rpm`, and AppImage artifacts on a clean machine before release.
 
+## Release checklist
+
+- Stage the correct `aisw` sidecar for the target with `npm run prepare:sidecar`.
+- Pass the standard verification matrix:
+  `npm test`, `npm run build`, `npm run test:e2e`, `cargo test --manifest-path src-tauri/Cargo.toml`, `cargo check --manifest-path src-tauri/Cargo.toml`.
+- Build the desktop bundle with `npm run tauri:build`.
+- Launch the packaged app in `Bundled` mode and confirm the embedded `aisw` path resolves in runtime status.
+- Switch a profile in the packaged app and confirm the tray summary refreshes immediately.
+- Confirm negative runtime cases:
+  missing bundled sidecar blocks `Bundled`, missing `PATH` entry blocks `System`, and a missing custom path surfaces compatibility issues.
+- Complete platform signing checks:
+  notarized macOS bundle, signed Windows installer, and validated Linux package artifacts.
+
 ## CI release workflow inputs
 
 The repository workflow at `.github/workflows/publish.yml` expects these secrets:

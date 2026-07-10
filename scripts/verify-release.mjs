@@ -42,6 +42,14 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         runbook.includes("cargo check --manifest-path src-tauri/Cargo.toml"),
     },
     {
+      label: "runbook includes a release checklist",
+      ok:
+        runbook.includes("## Release checklist") &&
+        runbook.includes("Launch the packaged app in `Bundled` mode") &&
+        runbook.includes("Switch a profile in the packaged app") &&
+        runbook.includes("Complete platform signing checks"),
+    },
+    {
       label: "CI workflow enforces frontend verification matrix",
       ok:
         ciWorkflow.includes("npm test") &&
