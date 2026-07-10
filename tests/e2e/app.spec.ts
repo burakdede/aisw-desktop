@@ -887,10 +887,9 @@ test("activates a local profile set from contexts", async ({ page }) => {
   await page.locator(".list-row").filter({ hasText: "Client Acme" }).getByRole("button", { name: "Activate set" }).click();
 
   await expect(page.getByText("Activated profile set Client Acme.")).toBeVisible();
-  await expect(page.getByText("Client Acme ✓")).toBeVisible();
-  await expect(
-    page.locator(".list-row").filter({ hasText: "Client Acme ✓" }).getByRole("button", { name: "Active set" }),
-  ).toBeDisabled();
+  const activeSetRow = page.locator(".list-row").filter({ hasText: "Client Acme ✓" }).first();
+  await expect(activeSetRow).toContainText("Client Acme ✓");
+  await expect(activeSetRow.getByRole("button", { name: "Active set" })).toBeDisabled();
   await page.getByRole("button", { name: "Workspaces" }).click();
   await expect(page.getByText("Current context: Client Acme")).toBeVisible();
 });
@@ -903,7 +902,8 @@ test("uses native profile-set activation when a matching CLI context exists", as
   await page.locator(".list-row").filter({ hasText: "Client Acme" }).getByRole("button", { name: "Activate set" }).click();
 
   await expect(page.getByText("Activated profile set Client Acme.")).toBeVisible();
-  await expect(page.getByText("Client Acme ✓")).toBeVisible();
+  const activeSetRow = page.locator(".list-row").filter({ hasText: "Client Acme ✓" }).first();
+  await expect(activeSetRow).toContainText("Client Acme ✓");
   await expect
     .poll(() =>
       page.evaluate(
