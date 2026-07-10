@@ -181,6 +181,14 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src/features/contexts/components/ContextsPanel.tsx` passes the resolved context display label through `useContextMutation`, while `src/features/shared/useDesktopActions.ts` prefers that label in success messages without changing the backend request.
   - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify activating the `client-acme` CLI context reports `Client Acme` when a matching saved profile set exists, while raw CLI ids remain intact for unlabeled contexts.
 
+### 23. In-window switch results prefer saved profile labels over raw ids
+
+- Status: implemented
+- Evidence:
+  - `src/features/shared/useDesktopActions.ts` accepts optional display labels for single-tool and switch-all mutations and uses them only for frontend success copy, leaving backend payload ids unchanged.
+  - `src/features/overview/components/OverviewPanel.tsx`, `src/features/profiles/components/ProfilesPanel.tsx`, `src/features/backups/components/BackupsPanel.tsx`, `src/features/diagnostics/components/DiagnosticsPanel.tsx`, and `src/features/onboarding/components/SetupPanel.tsx` pass saved labels into switch mutations from each desktop entry point.
+  - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify result strings such as `Switched Codex to Code Work.` and `Switched all tools to Office.` while tray-result payloads keep the backend event contract.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:

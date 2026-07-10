@@ -189,6 +189,7 @@ Routed profile details reset when the user switches tools manually
 Manual sidebar navigation clears stale routed profile and settings targets
 Backup restore warnings and confirmations use saved profile labels
 CLI context activation results prefer matching saved profile-set labels
+In-window switch results prefer saved profile labels over raw ids
 ## Verification Matrix
 npm test
 `,

@@ -136,6 +136,7 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         acceptanceMatrix.includes("Manual sidebar navigation clears stale routed profile and settings targets") &&
         acceptanceMatrix.includes("Backup restore warnings and confirmations use saved profile labels") &&
         acceptanceMatrix.includes("CLI context activation results prefer matching saved profile-set labels") &&
+        acceptanceMatrix.includes("In-window switch results prefer saved profile labels over raw ids") &&
         acceptanceMatrix.includes("does not replace the local-only product spec"),
     },
     {
