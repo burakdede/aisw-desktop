@@ -716,7 +716,7 @@ test("saves and deletes a local profile set from contexts", async ({ page }) => 
   await expect(focusModeRow).toHaveCount(0);
 });
 
-test("edits a local profile set from contexts", async ({ page }) => {
+test("renames a local profile set from contexts without leaving the old entry behind", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
@@ -728,11 +728,13 @@ test("edits a local profile set from contexts", async ({ page }) => {
   await expect(contextsForm.getByLabel("Profile set name")).toHaveValue("client-acme");
   await expect(contextsForm.getByRole("button", { name: "Update profile set" })).toBeVisible();
 
+  await contextsForm.getByLabel("Profile set name").fill("client-acme-prime");
   await contextsForm.getByLabel("Label").fill("Client Acme Prime");
   await contextsForm.getByRole("button", { name: "Update profile set" }).click();
 
   await expect(page.getByText("Updated profile set Client Acme Prime.")).toBeVisible();
   await expect(page.locator(".list-row").filter({ hasText: "Client Acme Prime" })).toHaveCount(1);
+  await expect(page.getByText("Client Acme", { exact: true })).toHaveCount(0);
 });
 
 test("activates a local profile set from contexts", async ({ page }) => {

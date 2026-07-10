@@ -4388,7 +4388,7 @@ describe("App", () => {
     expect(screen.queryByText("Client Acme")).not.toBeInTheDocument();
   });
 
-  it("edits a local profile set and reports the result", async () => {
+  it("renames a local profile set through edit mode and replaces the original entry", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     let currentSettings: DesktopSettings = {
       ...bootstrap.settings,
@@ -4443,6 +4443,9 @@ describe("App", () => {
     expect(screen.getByDisplayValue("Client Acme")).toBeInTheDocument();
     expect(screen.getByText("Update profile set")).toBeInTheDocument();
 
+    fireEvent.change(screen.getByLabelText("Profile set name"), {
+      target: { value: "client-acme-prime" },
+    });
     fireEvent.change(screen.getByLabelText("Label"), {
       target: { value: "Client Acme Prime" },
     });
@@ -4453,6 +4456,83 @@ describe("App", () => {
       expect(screen.getByText("Client Acme Prime")).toBeInTheDocument();
       expect(screen.getByText("Updated profile set Client Acme Prime.")).toBeInTheDocument();
     });
+    expect(screen.queryByText("Client Acme")).not.toBeInTheDocument();
+    expect(
+      currentSettings.profile_sets.map((set) => ({ name: set.name, label: set.label })),
+    ).toEqual([{ name: "client-acme-prime", label: "Client Acme Prime" }]);
+  });
+
+  it("blocks renaming a profile set to an existing saved name", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    let currentSettings: DesktopSettings = {
+      ...bootstrap.settings,
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+        {
+          name: "focus-mode",
+          label: "Focus Mode",
+          profiles: { claude: "work", codex: null, gemini: null },
+        },
+      ],
+    };
+    const snapshotWithoutCliContexts = {
+      ...bootstrap.snapshot,
+      contexts: [],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "get_bootstrap") {
+        return {
+          ...bootstrap,
+          settings: currentSettings,
+          snapshot: snapshotWithoutCliContexts,
+        };
+      }
+      if (command === "update_settings") {
+        const request = (args as { request?: DesktopSettings })?.request;
+        currentSettings = request ?? currentSettings;
+        return currentSettings;
+      }
+      return (
+        {
+          get_snapshot: snapshotWithoutCliContexts,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: currentSettings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Contexts"));
+    const clientRow = screen.getByText("Client Acme").closest(".list-row");
+    if (!(clientRow instanceof HTMLElement)) {
+      throw new Error("Missing client profile set row.");
+    }
+    fireEvent.click(within(clientRow).getByText("Edit"));
+
+    fireEvent.change(screen.getByLabelText("Profile set name"), {
+      target: { value: "focus-mode" },
+    });
+
+    expect(
+      screen.getByText(
+        "A profile set named focus-mode already exists. Rename the existing set or choose a different name.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Update profile set")).toBeDisabled();
+    expect(calls.some((entry) => entry.command === "update_settings")).toBe(false);
   });
 
   it("keeps empty profile sets out of activation surfaces", async () => {

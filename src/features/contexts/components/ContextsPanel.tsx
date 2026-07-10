@@ -14,6 +14,7 @@ import { useDesktopActions } from "../../shared/useDesktopActions";
 const TOOLS = ["claude", "codex", "gemini"] as const;
 
 type EditableProfileSet = {
+  sourceName: string | null;
   name: string;
   label: string;
   profiles: Record<string, string>;
@@ -34,6 +35,7 @@ export function ContextsPanel({
     lastCommandResults,
   } = useDesktopActions();
   const [draft, setDraft] = useState<EditableProfileSet>({
+    sourceName: null,
     name: "",
     label: "",
     profiles: Object.fromEntries(TOOLS.map((tool) => [tool, ""])),
@@ -43,8 +45,12 @@ export function ContextsPanel({
   const localSets = settings.profile_sets ?? [];
   const trimmedDraftName = draft.name.trim();
   const draftHasSelections = Object.values(draft.profiles).some((profile) => profile.trim().length > 0);
-  const isEditingExistingSet =
-    trimmedDraftName.length > 0 && localSets.some((entry) => entry.name === trimmedDraftName);
+  const isEditingExistingSet = draft.sourceName !== null;
+  const hasDuplicateSetName =
+    trimmedDraftName.length > 0 &&
+    localSets.some(
+      (entry) => entry.name === trimmedDraftName && entry.name !== draft.sourceName,
+    );
   const contextResult = lastCommandResults.global.context;
   const profileOptions = useMemo(
     () =>
@@ -63,10 +69,10 @@ export function ContextsPanel({
   function saveProfileSet(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const name = trimmedDraftName;
-    if (!name || !draftHasSelections) return;
+    if (!name || !draftHasSelections || hasDuplicateSetName) return;
 
     const nextSets = [
-      ...localSets.filter((entry) => entry.name !== name),
+      ...localSets.filter((entry) => entry.name !== (draft.sourceName ?? name)),
       {
         name,
         label: draft.label.trim() || null,
@@ -91,6 +97,7 @@ export function ContextsPanel({
             `${isEditingExistingSet ? "Updated" : "Saved"} profile set ${draft.label.trim() || name}.`,
           );
           setDraft({
+            sourceName: null,
             name: "",
             label: "",
             profiles: Object.fromEntries(TOOLS.map((tool) => [tool, ""])),
@@ -112,6 +119,14 @@ export function ContextsPanel({
     const label = profileSetDisplayLabel(
       localSets.find((entry) => entry.name === name) ?? { name, label: null, profiles: {} },
     );
+    if (draft.sourceName === name || trimmedDraftName === name) {
+      setDraft({
+        sourceName: null,
+        name: "",
+        label: "",
+        profiles: Object.fromEntries(TOOLS.map((tool) => [tool, ""])),
+      });
+    }
     updateSettingsMutation.mutate(
       {
         runtime_kind: settings.runtime_kind,
@@ -135,7 +150,9 @@ export function ContextsPanel({
             Profile set name
             <input
               value={draft.name}
-              onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, name: event.target.value }))
+              }
             />
           </label>
           <label>
@@ -172,10 +189,17 @@ export function ContextsPanel({
           <button
             className="primary-button"
             type="submit"
-            disabled={mutationLock.isBusy || !trimmedDraftName || !draftHasSelections}
+            disabled={
+              mutationLock.isBusy || !trimmedDraftName || !draftHasSelections || hasDuplicateSetName
+            }
           >
             {isEditingExistingSet ? "Update profile set" : "Save profile set"}
           </button>
+          {hasDuplicateSetName ? (
+            <p className="inline-note">
+              A profile set named {trimmedDraftName} already exists. Rename the existing set or choose a different name.
+            </p>
+          ) : null}
           {!draftHasSelections ? (
             <p className="inline-note">
               Select at least one tool profile before saving this profile set.
@@ -216,6 +240,7 @@ export function ContextsPanel({
                   type="button"
                   onClick={() =>
                     setDraft({
+                      sourceName: set.name,
                       name: set.name,
                       label: set.label ?? "",
                       profiles: Object.fromEntries(
