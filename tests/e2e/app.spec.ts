@@ -1074,6 +1074,18 @@ test("shows missing-tool guidance and opens the install guide from diagnostics",
   await page.getByRole("button", { name: "Diagnostics" }).click();
   const missingToolCard = page.locator(".diagnostic-card").filter({ hasText: "gemini is missing" });
   await expect(missingToolCard).toBeVisible();
+  const doctorRunsBeforeRefresh = await page.evaluate(
+    () => (window.__AISW_COMMAND_LOG__ ?? []).filter((entry) => entry.command === "run_doctor").length,
+  );
+  await missingToolCard.getByRole("button", { name: "Refresh diagnostics" }).click();
+  await expect
+    .poll(
+      async () =>
+        page.evaluate(
+          () => (window.__AISW_COMMAND_LOG__ ?? []).filter((entry) => entry.command === "run_doctor").length,
+        ),
+    )
+    .toBeGreaterThan(doctorRunsBeforeRefresh);
   await missingToolCard.getByRole("button", { name: "Open installation guide" }).click();
 
   await expect

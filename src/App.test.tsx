@@ -3395,6 +3395,13 @@ describe("App", () => {
       "_blank",
       "noopener,noreferrer",
     );
+    const doctorRunsBeforeRefresh = calls.filter((entry) => entry.command === "run_doctor").length;
+    fireEvent.click(within(missingToolCard).getByText("Refresh diagnostics"));
+    await waitFor(() => {
+      expect(calls.filter((entry) => entry.command === "run_doctor").length).toBeGreaterThan(
+        doctorRunsBeforeRefresh,
+      );
+    });
 
     fireEvent.change(screen.getByLabelText("import claude current login from diagnostics"), {
       target: { value: "incident" },

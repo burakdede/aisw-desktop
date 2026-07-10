@@ -93,6 +93,8 @@ export function DiagnosticsPanel({
     activateWorkspaceTarget: activateWorkspaceTargetMutation.mutate,
     applyRepairFixes: (fixes) => applyRepair.mutate(fixes),
     onOpenSettings,
+    onRefreshDiagnostics: () =>
+      void refreshDiagnostics(queryClient, doctor.refetch, verify.refetch, repair.refetch),
   });
 
   return (
@@ -254,6 +256,16 @@ export function DiagnosticsPanel({
                 >
                   {fix.label}
                 </button>
+                {fix.secondaryAction ? (
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    disabled={mutationLock.isBusy}
+                    onClick={() => void fix.secondaryAction?.action()}
+                  >
+                    {fix.secondaryAction?.label}
+                  </button>
+                ) : null}
                 {fix.profileTarget ? (
                   <button
                     className="ghost-button"
@@ -365,6 +377,10 @@ type QuickFixCard = {
   importTarget?: { tool: string; stateMode: string | null };
   primary?: boolean;
   disabled?: boolean;
+  secondaryAction?: {
+    label: string;
+    action: () => void | Promise<void>;
+  };
   action: () => void;
 };
 
@@ -380,6 +396,7 @@ function buildQuickFixes(
     activateWorkspaceTarget,
     applyRepairFixes,
     onOpenSettings,
+    onRefreshDiagnostics,
   }: {
     snapshot: AppSnapshot | undefined;
     doctor: Record<string, unknown> | undefined;
@@ -400,6 +417,7 @@ function buildQuickFixes(
     }) => void;
     applyRepairFixes: (fixes: string[]) => void;
     onOpenSettings: (section?: SettingsSection) => void;
+    onRefreshDiagnostics: () => void;
   },
 ): QuickFixCard[] {
   const fixes: QuickFixCard[] = [];
@@ -450,6 +468,10 @@ function buildQuickFixes(
         label: "Open installation guide",
         status: "warn",
         action: () => openExternalGuide(installGuideUrlForTool(status.tool)),
+        secondaryAction: {
+          label: "Refresh diagnostics",
+          action: onRefreshDiagnostics,
+        },
       });
     }
 
@@ -762,6 +784,17 @@ function recentFailureTitle(input: {
 
 function quickFixKey(fix: QuickFixCard) {
   return `${fix.title}:${fix.label}`;
+}
+
+async function refreshDiagnostics(
+  queryClient: ReturnType<typeof useQueryClient>,
+  refetchDoctor: () => Promise<unknown>,
+  refetchVerify: () => Promise<unknown>,
+  refetchRepair: () => Promise<unknown>,
+) {
+  await queryClient.invalidateQueries({ queryKey: ["bootstrap"] });
+  await queryClient.invalidateQueries({ queryKey: ["snapshot"] });
+  await Promise.all([refetchDoctor(), refetchVerify(), refetchRepair()]);
 }
 
 async function copyBundlePath(
