@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
-import { chmodSync, copyFileSync, existsSync, mkdirSync } from "node:fs";
-import { dirname, extname, join, resolve } from "node:path";
+import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import process from "node:process";
 
 function detectTargetTriple() {
@@ -19,6 +19,53 @@ function detectTargetTriple() {
     }
     return hostLine.replace("host: ", "");
   }
+}
+
+function expectedBinaryFormat(targetTriple) {
+  if (targetTriple.endsWith("pc-windows-msvc")) {
+    return "pe";
+  }
+  if (targetTriple.endsWith("unknown-linux-gnu")) {
+    return "elf";
+  }
+  if (targetTriple.endsWith("apple-darwin")) {
+    return "macho";
+  }
+  throw new Error(`unsupported target triple for sidecar staging: ${targetTriple}`);
+}
+
+function detectBinaryFormat(sourcePath) {
+  const header = readFileSync(sourcePath).subarray(0, 4);
+  if (header.length < 4) {
+    return "unknown";
+  }
+
+  const hex = header.toString("hex");
+  if (header[0] === 0x4d && header[1] === 0x5a) {
+    return "pe";
+  }
+  if (hex === "7f454c46") {
+    return "elf";
+  }
+  if (
+    [
+      "feedface",
+      "cefaedfe",
+      "feedfacf",
+      "cffaedfe",
+      "cafebabe",
+      "bebafeca",
+      "cafebabf",
+      "bfbafeca",
+    ].includes(hex)
+  ) {
+    return "macho";
+  }
+  return "unknown";
+}
+
+function extensionForTarget(targetTriple) {
+  return expectedBinaryFormat(targetTriple) === "pe" ? ".exe" : "";
 }
 
 const args = process.argv.slice(2);
@@ -48,7 +95,15 @@ if (!existsSync(resolvedSource)) {
 }
 
 const targetTriple = explicitTarget ?? detectTargetTriple();
-const extension = extname(resolvedSource).toLowerCase() === ".exe" ? ".exe" : "";
+const expectedFormat = expectedBinaryFormat(targetTriple);
+const actualFormat = detectBinaryFormat(resolvedSource);
+if (actualFormat !== expectedFormat) {
+  console.error(
+    `aisw binary format mismatch: expected ${expectedFormat} for ${targetTriple}, got ${actualFormat}.`,
+  );
+  process.exit(1);
+}
+const extension = extensionForTarget(targetTriple);
 const targetDir = resolve("src-tauri/binaries");
 const targetPath = join(targetDir, `aisw-${targetTriple}${extension}`);
 
