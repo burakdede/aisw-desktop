@@ -60,6 +60,16 @@ export function App() {
     setActiveNav("settings");
   }
 
+  function selectNav(id: string) {
+    if (id === "profiles") {
+      setProfilesRouteState({});
+    }
+    if (id === "settings") {
+      setSettingsRouteState({});
+    }
+    setActiveNav(id as (typeof NAV)[number]["id"]);
+  }
+
   useEffect(() => {
     let active = true;
     const disposers: Array<() => void> = [];
@@ -178,7 +188,7 @@ export function App() {
       subtitle="See agent identity state, switch safely, and recover from auth drift without touching hidden files."
       nav={navItems}
       activeNav={activeSection}
-      onSelectNav={(id) => setActiveNav(id as (typeof NAV)[number]["id"])}
+      onSelectNav={selectNav}
       statusBadge={
         <div>
           <strong>{currentActiveSet ? `Active set: ${currentActiveSet}` : "No shared active set"}</strong>

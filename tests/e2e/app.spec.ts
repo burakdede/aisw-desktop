@@ -309,6 +309,39 @@ test("clears route-opened profile details when switching tools manually", async 
   await expect(page.getByRole("heading", { name: "Diagnostic details" })).toHaveCount(0);
 });
 
+test("clears routed profile details when reopening profiles from the sidebar", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+
+  const codexCard = page.locator(".tool-card").filter({ hasText: "Codex" });
+  await codexCard.getByRole("button", { name: "Open details" }).click();
+
+  await expect(page.getByLabel("Tool")).toHaveValue("codex");
+  await expect(page.getByRole("heading", { name: "Diagnostic details" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Overview" }).click();
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  await expect(page.getByLabel("Tool")).toHaveValue("claude");
+  await expect(page.getByRole("heading", { name: "Diagnostic details" })).toHaveCount(0);
+});
+
+test("clears routed settings sections when reopening settings from the sidebar", async ({ page }) => {
+  await installDesktopMock(page, "onboarding");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open shell setup" }).click();
+
+  await expect(page.getByRole("button", { name: "Shell hook", pressed: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Overview" }).click();
+  await page.getByRole("button", { name: "Settings" }).click();
+
+  await expect(page.getByRole("button", { name: "Runtime", pressed: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Shell hook", pressed: false })).toBeVisible();
+});
+
 test("refreshes state after a failed switch-all to show the rolled-back profiles", async ({ page }) => {
   await installDesktopMock(page, "failedBulkSwitch");
 
