@@ -601,6 +601,86 @@ describe("App", () => {
     expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
   });
 
+  it("disables overview refresh actions while a mutation is in progress", async () => {
+    let resolveUseProfile: ((value: unknown) => void) | undefined;
+    const snapshotWithMissingTool = {
+      ...bootstrap.snapshot,
+      statuses: [
+        ...bootstrap.snapshot.statuses,
+        {
+          tool: "gemini",
+          binary_found: false,
+          stored_profiles: 0,
+          active_profile: null,
+          auth_method: null,
+          credential_backend: null,
+          state_mode: null,
+          active_profile_applied: null,
+          credentials_present: false,
+          permissions_ok: true,
+          warnings: [],
+        },
+      ],
+      profiles: {
+        ...bootstrap.snapshot.profiles,
+        gemini: {
+          active: null,
+          profiles: [],
+        },
+      },
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "use_profile") {
+        return await new Promise((resolve) => {
+          resolveUseProfile = resolve;
+        });
+      }
+      return (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            snapshot: snapshotWithMissingTool,
+          },
+          get_snapshot: snapshotWithMissingTool,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText("Re-apply Work"));
+    await waitFor(() => {
+      expect(resolveUseProfile).toBeDefined();
+    });
+
+    expect(screen.getByRole("button", { name: "Refresh state" })).toBeDisabled();
+    const geminiCard = screen.getByText("Gemini").closest(".tool-card");
+    if (!(geminiCard instanceof HTMLElement)) {
+      throw new Error("Missing Gemini tool card.");
+    }
+    expect(within(geminiCard).getByRole("button", { name: "Refresh" })).toBeDisabled();
+
+    await act(async () => {
+      resolveUseProfile?.({ command: "use_profile", snapshot: snapshotWithMissingTool });
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Refresh state" })).toBeEnabled();
+      expect(within(geminiCard).getByRole("button", { name: "Refresh" })).toBeEnabled();
+    });
+  });
+
   it("switches a stored profile directly from the overview card", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     const overviewSnapshot = {

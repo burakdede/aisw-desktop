@@ -121,7 +121,11 @@ export function OverviewPanel({
           >
             Switch all
           </button>
-          <button className="ghost-button" onClick={() => refresh.mutate()}>
+          <button
+            className="ghost-button"
+            disabled={mutationLock.isBusy || refresh.isPending}
+            onClick={() => refresh.mutate()}
+          >
             Refresh state
           </button>
         </div>
@@ -171,6 +175,7 @@ export function OverviewPanel({
             profiles={snapshot.profiles[status.tool]?.profiles ?? []}
             lastResult={lastCommandResults.tool[status.tool]}
             mutationLocked={mutationLock.isBusy}
+            refreshLocked={mutationLock.isBusy || refresh.isPending}
             onRefresh={() => refresh.mutate()}
             stateModes={supportedStateModes(status.tool, toolCapabilities)}
             settings={settings}
@@ -234,6 +239,7 @@ function ToolCard({
   profiles,
   lastResult,
   mutationLocked,
+  refreshLocked,
   onRefresh,
   stateModes,
   settings,
@@ -252,6 +258,7 @@ function ToolCard({
     remediation?: string;
   };
   mutationLocked: boolean;
+  refreshLocked: boolean;
   onRefresh: () => void;
   stateModes: string[];
   settings: DesktopSettings;
@@ -351,7 +358,11 @@ function ToolCard({
         </label>
       ) : null}
       {!status.binary_found ? (
-        <MissingBinaryGuidance tool={status.tool} onRefresh={onRefresh} />
+        <MissingBinaryGuidance
+          tool={status.tool}
+          onRefresh={onRefresh}
+          refreshLocked={refreshLocked}
+        />
       ) : null}
       {activeState === false ? (
         <div className="stack-list">
@@ -436,7 +447,15 @@ function ToolCard({
   );
 }
 
-function MissingBinaryGuidance({ tool, onRefresh }: { tool: string; onRefresh: () => void }) {
+function MissingBinaryGuidance({
+  tool,
+  onRefresh,
+  refreshLocked,
+}: {
+  tool: string;
+  onRefresh: () => void;
+  refreshLocked: boolean;
+}) {
   const binary = toolBinaryName(tool);
   const verifyCommand = commandForCurrentPlatform(binary, "verify");
   const pathCommand = commandForCurrentPlatform(binary, "path");
@@ -469,7 +488,7 @@ function MissingBinaryGuidance({ tool, onRefresh }: { tool: string; onRefresh: (
         >
           Open installation guide
         </button>
-        <button className="ghost-button" type="button" onClick={onRefresh}>
+        <button className="ghost-button" type="button" disabled={refreshLocked} onClick={onRefresh}>
           Refresh
         </button>
       </div>
