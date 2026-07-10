@@ -7,6 +7,7 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
 ### Runtime model
 
 - The desktop app defaults to a bundled `aisw` sidecar and can switch to system or custom runtimes through Settings.
+- Sidecar staging validates target-compatible binary formats before release packaging.
 - The Rust bridge is the only layer that executes `aisw` commands.
 - The frontend consumes typed JSON responses validated at the boundary.
 

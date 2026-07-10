@@ -175,6 +175,7 @@ TAURI_SIGNING_PUBLIC_KEY
       `
 This does not replace the local-only product spec.
 ## Architecture Summary
+validates target-compatible binary formats
 least-privilege capability
 ## Acceptance Criteria
 API key never appears in logs
@@ -188,6 +189,7 @@ npm test
     overrides.runbook ??
       `
 npm run prepare:sidecar -- /absolute/path/to/aisw
+prepare:sidecar validates the binary format against the requested target triple
 npm run prepare:updater
 npm run tauri:build
 npm test

@@ -113,6 +113,7 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       label: "runbook documents sidecar staging",
       ok:
         runbook.includes("npm run prepare:sidecar -- /absolute/path/to/aisw") &&
+        runbook.includes("validates the binary format against the requested target triple") &&
         runbook.includes("npm run tauri:build") &&
         runbook.includes("npm run prepare:updater"),
     },
@@ -123,6 +124,7 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         acceptanceMatrix.includes("## Acceptance Criteria") &&
         acceptanceMatrix.includes("## Verification Matrix") &&
         acceptanceMatrix.includes("least-privilege capability") &&
+        acceptanceMatrix.includes("validates target-compatible binary formats") &&
         acceptanceMatrix.includes("API key never appears in logs") &&
         acceptanceMatrix.includes("does not replace the local-only product spec"),
     },
