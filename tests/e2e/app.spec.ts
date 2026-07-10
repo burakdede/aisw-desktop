@@ -948,6 +948,24 @@ test("warns before backup restore and re-activates the restored profile", async 
   await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "Work" })).toBeVisible();
 });
 
+test("restores backup files only without re-activating the profile", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Backups" }).click();
+  await page.getByRole("button", { name: "Restore files only" }).click();
+  await expect(
+    page.getByText(
+      "Confirm before restoring codex / work. This replays the saved files only.",
+    ),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Confirm restore files" }).click();
+
+  await page.getByRole("button", { name: "Overview" }).click();
+  await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "Personal" })).toBeVisible();
+});
+
 test("warns before restoring the latest profile backup from profiles", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -964,6 +982,25 @@ test("warns before restoring the latest profile backup from profiles", async ({ 
 
   await page.getByRole("button", { name: "Confirm restore latest and activate" }).click();
   await expect(page.locator(".list-row p").filter({ hasText: "work · api_key" }).first()).toBeVisible();
+});
+
+test("restores the latest profile backup without re-activating it", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+  await page.getByLabel("Tool").selectOption("codex");
+  await page.getByRole("button", { name: "Restore latest", exact: true }).click();
+
+  await expect(
+    page.getByText(
+      "Confirm before restoring the latest backup for codex / work. This replays the saved files only.",
+    ),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Confirm restore latest" }).click();
+
+  await page.getByRole("button", { name: "Overview" }).click();
+  await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "Personal" })).toBeVisible();
 });
 
 test("lists backups newest first, copies backup ids, and opens matching profile details", async ({
