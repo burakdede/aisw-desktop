@@ -274,6 +274,29 @@ test("labels workspace summary as a CLI context when no profile set matches", as
   await expect(page.getByText("Current context: client-acme")).toBeVisible();
 });
 
+test("blocks empty workspace bindings when no context targets are available", async ({ page }) => {
+  await installDesktopMock(page, "profiles");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Workspaces" }).click();
+
+  await expect(
+    page.getByText(
+      "No profile sets or CLI contexts are available yet. Create one before saving workspace bindings.",
+    ),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Save binding" })).toBeDisabled();
+
+  const workspacesForm = page.locator("form.stacked-form");
+  await workspacesForm.getByLabel("Binding scope").selectOption("path");
+
+  await expect(
+    page.getByText("Enter a path prefix before saving or removing this binding."),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Save binding" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Remove binding" })).toBeDisabled();
+});
+
 test("shows missing-tool guidance and opens the install guide from diagnostics", async ({ page }) => {
   await installDesktopMock(page, "missingTool");
 

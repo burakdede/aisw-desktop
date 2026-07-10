@@ -2169,6 +2169,66 @@ describe("App", () => {
     expect(screen.queryByRole("option", { name: "CLI context: client-acme" })).not.toBeInTheDocument();
   });
 
+  it("blocks unsupported workspace binding submits until a context and target are available", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    const emptyWorkspaceSnapshot = {
+      ...bootstrap.snapshot,
+      contexts: [],
+      workspace_status: { status: "match", current_context: "none" },
+      project_bindings: { user_bindings: { guard_mode: "warn", default_context: "none", items: [] } },
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      return (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            snapshot: emptyWorkspaceSnapshot,
+          },
+          get_snapshot: emptyWorkspaceSnapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: emptyWorkspaceSnapshot.workspace_status },
+          get_project_bindings: { result: emptyWorkspaceSnapshot.project_bindings },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Workspaces")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Workspaces"));
+
+    expect(
+      screen.getByText(
+        "No profile sets or CLI contexts are available yet. Create one before saving workspace bindings.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Save binding")).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("Binding scope"), {
+      target: { value: "path" },
+    });
+
+    expect(
+      screen.getByText("Enter a path prefix before saving or removing this binding."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Save binding")).toBeDisabled();
+    expect(screen.getByText("Remove binding")).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("Path"), {
+      target: { value: "   " },
+    });
+    expect(screen.getByText("Save binding")).toBeDisabled();
+
+    expect(calls.some((entry) => entry.command === "workspace_bind")).toBe(false);
+    expect(calls.some((entry) => entry.command === "workspace_unbind")).toBe(false);
+  });
+
   it("applies safe repairs from diagnostics", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {

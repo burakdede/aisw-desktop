@@ -47,6 +47,11 @@ export function WorkspacesPanel({
   const [context, setContext] = useState(bindingOptions[0]?.value ?? "");
   const [targetValue, setTargetValue] = useState("");
   const [workspaceOverrideDismissed, setWorkspaceOverrideDismissed] = useState(false);
+  const trimmedTargetValue = targetValue.trim();
+  const requiresExplicitTarget = scope !== "default";
+  const canSaveBinding =
+    Boolean(context) && (!requiresExplicitTarget || trimmedTargetValue.length > 0);
+  const canRemoveBinding = scope === "default" || trimmedTargetValue.length > 0;
 
   const statusCard = parseWorkspaceStatus(workspaceStatus.data);
   const bindingsSummary = parseWorkspaceBindings(bindings.data);
@@ -82,8 +87,8 @@ export function WorkspacesPanel({
       scope === "default"
         ? { scope: "default" as const }
         : scope === "path"
-          ? { scope: "path" as const, path: targetValue }
-          : { scope: "git_remote" as const, pattern: targetValue };
+          ? { scope: "path" as const, path: trimmedTargetValue }
+          : { scope: "git_remote" as const, pattern: trimmedTargetValue };
 
     workspaceBindMutation.mutate({ target, context });
   }
@@ -118,26 +123,36 @@ export function WorkspacesPanel({
             </select>
           </label>
           <div className="button-row">
-            <button className="primary-button" type="submit" disabled={mutationLock.isBusy}>
+            <button className="primary-button" type="submit" disabled={mutationLock.isBusy || !canSaveBinding}>
               Save binding
             </button>
             <button
               className="ghost-button"
               type="button"
-              disabled={mutationLock.isBusy}
+              disabled={mutationLock.isBusy || !canRemoveBinding}
               onClick={() =>
                 workspaceUnbindMutation.mutate(
                   scope === "default"
                     ? { scope: "default" }
                     : scope === "path"
-                      ? { scope: "path", path: targetValue }
-                      : { scope: "git_remote", pattern: targetValue },
+                      ? { scope: "path", path: trimmedTargetValue }
+                      : { scope: "git_remote", pattern: trimmedTargetValue },
                 )
               }
             >
               Remove binding
             </button>
           </div>
+          {!bindingOptions.length ? (
+            <p className="inline-note">
+              No profile sets or CLI contexts are available yet. Create one before saving workspace bindings.
+            </p>
+          ) : null}
+          {requiresExplicitTarget && trimmedTargetValue.length === 0 ? (
+            <p className="inline-note">
+              Enter a {scope === "path" ? "path prefix" : "git remote pattern"} before saving or removing this binding.
+            </p>
+          ) : null}
           <div className="button-row">
             <button
               className="ghost-button"
