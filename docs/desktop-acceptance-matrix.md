@@ -307,6 +307,16 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src/App.tsx`, `src/features/overview/components/OverviewPanel.tsx`, `src/features/diagnostics/components/DiagnosticsPanel.tsx`, and `src/features/workspaces/components/WorkspacesPanel.tsx` route that stale-target case into the Contexts screen with `Open contexts` recovery affordances.
   - `src/features/workspaces/workspace-activation.test.ts`, `src/App.test.tsx`, and `tests/e2e/app.spec.ts` verify stale workspace recovery opens Contexts and does not dispatch `use_context` or `activate_profile_set`.
 
+### 40. Stale profile sets fail closed before activation
+
+- Status: implemented
+- Evidence:
+  - `src/lib/profile-display.ts` distinguishes non-empty profile sets from usable profile sets by reporting missing mapped profiles against the live snapshot.
+  - `src/features/overview/components/OverviewPanel.tsx` and `src/features/workspaces/workspace-activation.ts` exclude stale saved profile sets from quick-switch and workspace-binding activation surfaces while still allowing matching CLI contexts to participate.
+  - `src/features/contexts/components/ContextsPanel.tsx` keeps stale saved profile sets visible for editing and deletion, disables `Activate set`, and explains which mapped profiles are missing.
+  - `src-tauri/src/state.rs` preflights profile-set activation and returns a `ProfileMissing` error before issuing any partial per-tool switch when mapped profiles no longer exist.
+  - `src/App.test.tsx`, `tests/e2e/app.spec.ts`, and `src-tauri/src/state.rs` unit tests verify stale sets are blocked in-window, omitted from activation pickers, and rejected by the backend preflight.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:
