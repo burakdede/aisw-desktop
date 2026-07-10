@@ -3720,6 +3720,40 @@ describe("App", () => {
     });
   });
 
+  it("classifies tray profile failures in diagnostics", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["tray-command-result"]?.({
+        scope: "tool",
+        tool: "claude",
+        label: "Switch profile",
+        status: "error",
+        kind: "ProfileMissing",
+        message: "profile work no longer exists",
+        remediation: "Refresh profile state or recreate the missing profile before retrying.",
+      });
+      await Promise.resolve();
+    });
+
+    fireEvent.click(screen.getByText("Diagnostics"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Claude profile missing")).toBeInTheDocument();
+      expect(screen.getByText("profile work no longer exists")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Refresh profile state or recreate the missing profile before retrying.",
+        ),
+      ).toBeInTheDocument();
+    });
+  });
+
   it("saves and activates a local profile set", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     let currentSettings: DesktopSettings = bootstrap.settings;

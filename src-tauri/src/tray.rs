@@ -1,4 +1,4 @@
-use crate::errors::ErrorPayload;
+use crate::errors::{ErrorPayload, GuiErrorKind};
 use crate::models::{
     AppBootstrap, AppSnapshot, DesktopSettings, ProfileSet, UseAllProfilesRequest,
     UseContextRequest, UseProfileRequest,
@@ -55,6 +55,8 @@ struct TrayCommandResultEvent {
     label: String,
     status: String,
     message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    kind: Option<GuiErrorKind>,
     #[serde(skip_serializing_if = "Option::is_none")]
     remediation: Option<String>,
 }
@@ -224,12 +226,23 @@ fn emit_tray_command_result<R: Runtime>(
     label: &str,
     success_message: String,
 ) {
-    let payload = match result {
+    let payload = build_tray_command_result_event(result, scope, label, success_message);
+    let _ = app.emit(TRAY_COMMAND_RESULT_EVENT, payload);
+}
+
+fn build_tray_command_result_event(
+    result: Result<crate::models::MutationResponse, ErrorPayload>,
+    scope: TrayCommandScope,
+    label: &str,
+    success_message: String,
+) -> TrayCommandResultEvent {
+    match result {
         Ok(_) => TrayCommandResultEvent {
             scope,
             label: label.to_owned(),
             status: "success".to_owned(),
             message: success_message,
+            kind: None,
             remediation: None,
         },
         Err(error) => TrayCommandResultEvent {
@@ -237,10 +250,10 @@ fn emit_tray_command_result<R: Runtime>(
             label: label.to_owned(),
             status: "error".to_owned(),
             message: error.message,
+            kind: Some(error.kind),
             remediation: error.remediation,
         },
-    };
-    let _ = app.emit(TRAY_COMMAND_RESULT_EVENT, payload);
+    }
 }
 
 fn tray_use_profile_request(tool: String, profile: String) -> UseProfileRequest {
@@ -644,15 +657,17 @@ fn active_profile_for_tool<'a>(snapshot: &'a AppSnapshot, tool: &str) -> Option<
 #[cfg(test)]
 mod tests {
     use super::{
-        active_set_label, active_summary, active_summary_or_default, parse_tray_action,
+        active_set_label, active_summary, active_summary_or_default, build_tray_command_result_event,
+        parse_tray_action,
         profile_set_is_active, shared_profile_entries, tray_runtime_notice, tray_sections,
         tray_status_label,
         tray_use_all_profiles_request, tray_use_context_request, tray_use_profile_request,
-        TrayAction, TrayEntry, TraySection,
+        TrayAction, TrayCommandScope, TrayEntry, TraySection,
     };
+    use crate::errors::{ErrorPayload, GuiErrorKind};
     use crate::models::{
-        AppSnapshot, ContextSummary, DesktopSettings, ProfileSet, RuntimeKind, ToolProfileSummary,
-        ToolProfiles, ToolStatus,
+        AppSnapshot, ContextSummary, DesktopSettings, MutationResponse, ProfileSet, RuntimeKind,
+        ToolProfileSummary, ToolProfiles, ToolStatus,
     };
     use std::collections::HashMap;
 
@@ -1128,6 +1143,55 @@ mod tests {
         );
         assert_eq!(parse_tray_action("profile:gemini"), TrayAction::Unknown);
         assert_eq!(parse_tray_action("something-else"), TrayAction::Unknown);
+    }
+
+    #[test]
+    fn tray_error_payloads_include_structured_kind() {
+        let payload = build_tray_command_result_event(
+            Err(ErrorPayload {
+                kind: GuiErrorKind::ProfileMissing,
+                message: "profile work no longer exists".to_owned(),
+                remediation: Some(
+                    "Refresh profile state or recreate the missing profile before retrying."
+                        .to_owned(),
+                ),
+            }),
+            TrayCommandScope::Tool {
+                tool: "claude".to_owned(),
+            },
+            "Switch profile",
+            "Switched claude to work.".to_owned(),
+        );
+
+        assert_eq!(payload.status, "error");
+        assert!(matches!(payload.kind, Some(GuiErrorKind::ProfileMissing)));
+        assert_eq!(payload.message, "profile work no longer exists");
+    }
+
+    #[test]
+    fn tray_success_payloads_omit_structured_kind() {
+        let payload = build_tray_command_result_event(
+            Ok(MutationResponse {
+                command: "use_profile".to_owned(),
+                raw: serde_json::json!({ "ok": true }),
+                snapshot: AppSnapshot {
+                    statuses: vec![],
+                    profiles: HashMap::new(),
+                    contexts: vec![],
+                    workspace_status: None,
+                    project_bindings: None,
+                },
+            }),
+            TrayCommandScope::Global {
+                id: "switch-all".to_owned(),
+            },
+            "Switch all profiles",
+            "Switched all tools to work.".to_owned(),
+        );
+
+        assert_eq!(payload.status, "success");
+        assert!(payload.kind.is_none());
+        assert_eq!(payload.message, "Switched all tools to work.");
     }
 
     #[test]

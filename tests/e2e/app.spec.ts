@@ -527,6 +527,37 @@ test("records tray context failures and keeps the remediation visible in overvie
     });
 });
 
+test("classifies tray profile failures in diagnostics", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await expect(page.getByText("Control Center")).toBeVisible();
+
+  await page.evaluate(() => {
+    const handlers = (
+      window as typeof window & {
+        __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+      }
+    ).__AISW_DESKTOP_EVENT_HANDLERS__;
+    handlers?.["tray-command-result"]?.({
+      scope: "tool",
+      tool: "claude",
+      label: "Switch profile",
+      status: "error",
+      kind: "ProfileMissing",
+      message: "profile work no longer exists",
+      remediation: "Refresh profile state or recreate the missing profile before retrying.",
+    });
+  });
+
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+  await expect(page.getByText("Claude profile missing")).toBeVisible();
+  await expect(page.getByText("profile work no longer exists")).toBeVisible();
+  await expect(
+    page.getByText("Refresh profile state or recreate the missing profile before retrying."),
+  ).toBeVisible();
+});
+
 test("exports a redacted diagnostic bundle from diagnostics", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
