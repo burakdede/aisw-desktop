@@ -136,8 +136,8 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
 
 - Status: implemented
 - Evidence:
-  - `tests/e2e/app.spec.ts` verifies diagnostics missing-tool cards expose both install-guide and refresh actions, and that refresh reruns doctor checks.
-  - `src/App.test.tsx` verifies the missing-tool diagnostics card can reopen the install guide and trigger a fresh diagnostics run from the same recovery surface.
+  - `tests/e2e/app.spec.ts` verifies diagnostics missing-tool cards expose both install-guide and refresh actions, and that refresh reruns doctor checks plus desktop snapshot reads.
+  - `src/App.test.tsx` verifies the missing-tool diagnostics card can reopen the install guide and trigger a fresh diagnostics run and snapshot refresh from the same recovery surface.
 
 ## Verification Matrix
 
