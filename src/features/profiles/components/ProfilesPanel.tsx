@@ -25,6 +25,19 @@ import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { StateModeField } from "../../shared/components/StateModeField";
 
 const TOOLS = ["claude", "codex", "gemini"] as const;
+const INVENTORY_FILTERS = ["all", ...TOOLS] as const;
+
+type InventoryFilter = (typeof INVENTORY_FILTERS)[number];
+type InventoryEntry = {
+  tool: (typeof TOOLS)[number];
+  name: string;
+  auth: string;
+  label: string;
+  active: boolean;
+  backend: string;
+  state: string;
+  lastChecked: string;
+};
 
 export function ProfilesPanel({
   snapshot,
@@ -57,6 +70,10 @@ export function ProfilesPanel({
   const [tool, setTool] = useState<(typeof TOOLS)[number]>(
     isSupportedTool(initialTool) ? initialTool : "claude",
   );
+  const [inventoryFilter, setInventoryFilter] = useState<InventoryFilter>(
+    isSupportedTool(initialTool) ? initialTool : "claude",
+  );
+  const [search, setSearch] = useState("");
   const [profile, setProfile] = useState("");
   const [label, setLabel] = useState("");
   const [mode, setMode] = useState<ProfileImportMode>(
@@ -79,6 +96,45 @@ export function ProfilesPanel({
   const apiKeyInputRef = useRef<HTMLInputElement | null>(null);
 
   const profiles = useMemo(() => snapshot.profiles[tool]?.profiles ?? [], [snapshot, tool]);
+  const readEnabled = useMutationAwareQueryEnabled();
+  const backups = useQuery({ queryKey: ["backups"], queryFn: listBackups, enabled: readEnabled });
+  const inventoryProfiles = useMemo(() => {
+    const toolEntries =
+      inventoryFilter === "all" ? TOOLS : [inventoryFilter];
+
+    return toolEntries.flatMap((entryTool) =>
+      (snapshot.profiles[entryTool]?.profiles ?? []).map<InventoryEntry>((entry) => {
+        const status = snapshot.statuses.find((candidate) => candidate.tool === entryTool);
+        const latestBackup = latestBackupForProfile(entryTool, entry.name, backups.data);
+        return {
+          tool: entryTool,
+          name: entry.name,
+          auth: entry.auth,
+          label: effectiveLabel(entryTool, entry.name, entry.label, settings) ?? titleCase(entry.name),
+          active: snapshot.profiles[entryTool]?.active === entry.name,
+          backend: status?.credential_backend ? formatBackendLabel(status.credential_backend) : "Stored",
+          state: status?.active_profile_applied === false ? "Live mismatch" : snapshot.profiles[entryTool]?.active === entry.name ? "Active" : "Stored",
+          lastChecked: latestBackup
+            ? formatBackupTimestamp(latestBackup.created_at ?? latestBackup.backup_id)
+            : snapshot.profiles[entryTool]?.active === entry.name
+              ? "Just now"
+              : "Available locally",
+        };
+      }),
+    );
+  }, [backups.data, inventoryFilter, settings, snapshot]);
+  const filteredInventoryProfiles = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) {
+      return inventoryProfiles;
+    }
+    return inventoryProfiles.filter((entry) =>
+      [entry.label, entry.name, titleCase(entry.tool), entry.auth, entry.backend, entry.state]
+        .join(" ")
+        .toLowerCase()
+        .includes(query),
+    );
+  }, [inventoryProfiles, search]);
   const normalizedProfileNames = useMemo(
     () => new Set(profiles.map((entry) => entry.name.trim().toLowerCase())),
     [profiles],
@@ -87,8 +143,6 @@ export function ProfilesPanel({
     () => snapshot.statuses.find((entry) => entry.tool === tool),
     [snapshot.statuses, tool],
   );
-  const readEnabled = useMutationAwareQueryEnabled();
-  const backups = useQuery({ queryKey: ["backups"], queryFn: listBackups, enabled: readEnabled });
   const availableStateModes = useMemo(
     () => supportedStateModes(tool, toolCapabilities),
     [tool, toolCapabilities],
@@ -123,6 +177,7 @@ export function ProfilesPanel({
       return;
     }
     setTool(initialTool);
+    setInventoryFilter(initialTool);
   }, [initialTool]);
 
   useEffect(() => {
@@ -154,6 +209,13 @@ export function ProfilesPanel({
   useEffect(() => {
     setExpandedDetails(initialExpandedProfile ?? null);
   }, [initialExpandedProfile, initialTool]);
+
+  useEffect(() => {
+    if (inventoryFilter === "all") {
+      return;
+    }
+    setTool(inventoryFilter);
+  }, [inventoryFilter]);
 
   useEffect(() => {
     let active = true;
@@ -242,8 +304,118 @@ export function ProfilesPanel({
   }
 
   return (
-    <SectionCard title="Profiles" kicker="Provisioning">
-      <div className="panel-grid panel-grid-2">
+    <SectionCard
+      title="Profiles"
+      kicker="Provisioning"
+      actions={
+        <div className="profiles-toolbar">
+          <input
+            className="profiles-search"
+            aria-label="Search Profiles"
+            placeholder="Search profiles"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <div className="segmented-control" role="tablist" aria-label="Profile filters">
+            {INVENTORY_FILTERS.map((entry) => (
+              <button
+                key={entry}
+                type="button"
+                className={
+                  inventoryFilter === entry
+                    ? "segmented-control-button segmented-control-button-active"
+                    : "segmented-control-button"
+                }
+                aria-selected={inventoryFilter === entry}
+                onClick={() => setInventoryFilter(entry)}
+              >
+                {entry === "all" ? "All" : titleCase(entry)}
+              </button>
+            ))}
+          </div>
+        </div>
+      }
+    >
+      <div className="panel-grid panel-grid-2 profiles-layout">
+        <div className="stack-list profiles-inventory-pane">
+          <div className="profiles-list-header" aria-hidden="true">
+            <span>Name</span>
+            <span>Tool</span>
+            <span>Auth</span>
+            <span>Backend</span>
+            <span>State</span>
+            <span>Last checked</span>
+          </div>
+          {filteredInventoryProfiles.map((inventoryEntry) => (
+            <article
+              key={`${inventoryEntry.tool}:${inventoryEntry.name}`}
+              className={`list-row profile-list-row ${
+                inventoryEntry.active ? "profile-list-row-active" : ""
+              }`}
+              onDoubleClick={() => {
+                setTool(inventoryEntry.tool);
+                setExpandedDetails(inventoryEntry.name);
+              }}
+            >
+              <div className="profile-list-main">
+                <strong>{inventoryEntry.label}</strong>
+                <p>
+                  Profile: {inventoryEntry.name}
+                </p>
+              </div>
+              <div className="profile-list-columns">
+                <span>{titleCase(inventoryEntry.tool)}</span>
+                <span>{inventoryEntry.auth}</span>
+                <span>{inventoryEntry.backend}</span>
+                <span>{inventoryEntry.state}</span>
+                <span>{inventoryEntry.lastChecked}</span>
+              </div>
+              <div className="button-row">
+                <button
+                  className="ghost-button"
+                  type="button"
+                  onClick={() => {
+                    setTool(inventoryEntry.tool);
+                    useProfileMutation.mutate({
+                      tool: inventoryEntry.tool,
+                      profile: inventoryEntry.name,
+                      stateMode: supportedStateModes(inventoryEntry.tool, toolCapabilities).length
+                        ? stateMode
+                        : null,
+                      label: inventoryEntry.label,
+                    });
+                  }}
+                  disabled={mutationLock.isBusy}
+                >
+                  Activate
+                </button>
+                <button
+                  className="ghost-button"
+                  type="button"
+                  onClick={() => {
+                    setTool(inventoryEntry.tool);
+                    setExpandedDetails((current) =>
+                      current === inventoryEntry.name ? null : inventoryEntry.name,
+                    );
+                  }}
+                >
+                  {expandedDetails === inventoryEntry.name && tool === inventoryEntry.tool
+                    ? "Close details"
+                    : "Open details"}
+                </button>
+              </div>
+            </article>
+          ))}
+          {!filteredInventoryProfiles.length ? (
+            <article className="diagnostic-card">
+              <h3>No matching profiles</h3>
+              <p className="inline-note">
+                Adjust the tool filter or search query, or add a new profile from the inspector.
+              </p>
+            </article>
+          ) : null}
+        </div>
+        <div className="stack-list profiles-inspector-pane">
         <form className="stacked-form" onSubmit={submit}>
           <label>
             Tool
@@ -767,6 +939,7 @@ export function ProfilesPanel({
           })}
           {!profiles.length ? <p className="inline-note">No profiles stored for this tool yet.</p> : null}
         </div>
+        </div>
       </div>
     </SectionCard>
   );
@@ -797,6 +970,17 @@ function profileCredentialBackendLabel(backend: ProfileCredentialBackend) {
       return "System keyring";
     case "file":
       return "File-backed";
+  }
+}
+
+function formatBackendLabel(backend: string) {
+  switch (backend) {
+    case "system_keyring":
+      return "Keychain";
+    case "file":
+      return "File";
+    default:
+      return titleCase(backend.split("_").join(" "));
   }
 }
 

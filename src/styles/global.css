@@ -309,6 +309,24 @@ button {
   flex-wrap: wrap;
 }
 
+.profiles-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.profiles-search {
+  min-height: 32px;
+  min-width: 220px;
+  border-radius: 8px;
+  border: 1px solid var(--separator);
+  background: color-mix(in srgb, Canvas 96%, CanvasText 4%);
+  color: var(--text-primary);
+  padding: 0 10px;
+  font: inherit;
+}
+
 .tool-grid,
 .panel-grid {
   display: grid;
@@ -322,6 +340,11 @@ button {
 
 .panel-grid-2 {
   grid-template-columns: minmax(260px, 360px) minmax(0, 1fr);
+}
+
+.profiles-layout {
+  grid-template-columns: minmax(0, 1.3fr) minmax(300px, 360px);
+  align-items: start;
 }
 
 .tool-card,
@@ -558,6 +581,61 @@ button {
   padding: 12px 14px;
 }
 
+.profiles-list-header {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) repeat(5, minmax(0, 0.9fr));
+  gap: 12px;
+  padding: 0 6px;
+  font-size: 11px;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.profiles-inventory-pane,
+.profiles-inspector-pane {
+  min-width: 0;
+}
+
+.profile-list-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) minmax(0, 1.8fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.profile-list-row-active {
+  border-color: color-mix(in srgb, AccentColor 32%, transparent);
+  background: color-mix(in srgb, AccentColor 8%, Canvas 92%);
+}
+
+.profile-list-main {
+  min-width: 0;
+}
+
+.profile-list-main strong,
+.profile-list-main p {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-list-columns {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.profile-list-columns span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .list-row-form {
   align-items: center;
 }
@@ -652,9 +730,28 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .profiles-layout {
+    grid-template-columns: 1fr;
+  }
+
   .window-toolbar {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 880px) {
+  .profiles-list-header {
+    display: none;
+  }
+
+  .profile-list-row {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .profile-list-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

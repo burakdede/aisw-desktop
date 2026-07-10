@@ -505,6 +505,67 @@ describe("App", () => {
     });
   });
 
+  it("filters the profile inventory by search query and tool segment", async () => {
+    const codexStatus = {
+      tool: "codex",
+      binary_found: true,
+      stored_profiles: 1,
+      active_profile: "sandbox",
+      auth_method: "api_key",
+      credential_backend: "file",
+      state_mode: "isolated",
+      active_profile_applied: true,
+      credentials_present: true,
+      permissions_ok: true,
+      warnings: [],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = {
+      ...window.__AISW_DESKTOP_MOCK__,
+      get_bootstrap: {
+        ...bootstrap,
+        snapshot: {
+          ...bootstrap.snapshot,
+          statuses: [...bootstrap.snapshot.statuses, codexStatus],
+          profiles: {
+            ...bootstrap.snapshot.profiles,
+            codex: {
+              active: "sandbox",
+              profiles: [{ name: "sandbox", auth: "api_key", label: "Sandbox" }],
+            },
+          },
+        },
+      },
+      get_snapshot: {
+        ...bootstrap.snapshot,
+        statuses: [...bootstrap.snapshot.statuses, codexStatus],
+        profiles: {
+          ...bootstrap.snapshot.profiles,
+          codex: {
+            active: "sandbox",
+            profiles: [{ name: "sandbox", auth: "api_key", label: "Sandbox" }],
+          },
+        },
+      },
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Profiles"));
+
+    expect(screen.getAllByText("Work").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Sandbox")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Codex" }));
+    expect(screen.getAllByText("Sandbox").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Work")).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Search Profiles"), {
+      target: { value: "office" },
+    });
+    expect(screen.getByText("No matching profiles")).toBeInTheDocument();
+  });
+
   it("clears route-opened profile details when switching tools manually", async () => {
     const claudeStatus = {
       ...bootstrap.snapshot.statuses[0],
