@@ -3445,6 +3445,73 @@ describe("App", () => {
     expect(screen.getByText("Last context result: Activated context Client Acme.")).toBeInTheDocument();
   });
 
+  it("marks the active CLI context in contexts and disables reactivation", async () => {
+    const settingsWithSet: DesktopSettings = {
+      ...bootstrap.settings,
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) =>
+      (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            settings: settingsWithSet,
+            snapshot: {
+              ...bootstrap.snapshot,
+              workspace_status: {
+                status: "match",
+                current_context: "client-acme",
+                expected_context: "client-acme",
+              },
+            },
+          },
+          get_snapshot: {
+            ...bootstrap.snapshot,
+            contexts: [
+              {
+                name: "client-acme",
+                profiles: { claude: "work", codex: "work", gemini: null },
+              },
+            ],
+            workspace_status: {
+              status: "match",
+              current_context: "client-acme",
+              expected_context: "client-acme",
+            },
+          },
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: {
+            result: {
+              status: "match",
+              current_context: "client-acme",
+              expected_context: "client-acme",
+            },
+          },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: settingsWithSet,
+        } as Record<string, unknown>
+      )[command];
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Contexts"));
+
+    const activeContextButton = screen.getByRole("button", { name: "Active context" });
+    expect(activeContextButton).toBeDisabled();
+    expect(screen.getByText("Client Acme ✓")).toBeInTheDocument();
+  });
+
   it("excludes duplicate CLI workspace bindings when a matching profile set already exists", async () => {
     const settingsWithSet: DesktopSettings = {
       ...bootstrap.settings,

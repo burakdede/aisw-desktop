@@ -962,6 +962,24 @@ test("uses saved profile-set labels in CLI context activation results", async ({
   await expect(page.getByText("Current context: Client Acme")).toBeVisible();
 });
 
+test("marks the active CLI context and disables reactivation", async ({ page }) => {
+  await installDesktopMock(page, "matchingContextSet");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Contexts" }).click();
+
+  const cliContextRow = page.locator(".list-row").filter({ hasText: "client-acme" });
+  await cliContextRow.getByRole("button", { name: "Activate CLI context" }).click();
+  await expect(page.getByText("Last context result: Activated context Client Acme.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Workspaces" }).click();
+  await expect(page.getByText("Current context: Client Acme")).toBeVisible();
+
+  await page.getByRole("button", { name: "Contexts" }).click();
+  const activeContextRow = page.locator(".list-row").filter({ hasText: "Client Acme ✓" });
+  await expect(activeContextRow.getByRole("button", { name: "Active context" })).toBeDisabled();
+});
+
 test("preserves shared state mode when activating a CLI context", async ({ page }) => {
   await installDesktopMock(page, "sharedWorkspaceContext");
 

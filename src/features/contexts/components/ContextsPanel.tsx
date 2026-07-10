@@ -11,6 +11,7 @@ import { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
 import { resolveGlobalStateMode } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
+import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 
 const TOOLS = ["claude", "codex", "gemini"] as const;
 
@@ -42,6 +43,7 @@ export function ContextsPanel({
     profiles: Object.fromEntries(TOOLS.map((tool) => [tool, ""])),
   });
   const [lastAction, setLastAction] = useState("");
+  const activeContext = parseWorkspaceStatus(snapshot.workspace_status ?? undefined).currentContext;
 
   const localSets = settings.profile_sets ?? [];
   const trimmedDraftName = draft.name.trim();
@@ -280,7 +282,10 @@ export function ContextsPanel({
             {snapshot.contexts.map((context) => (
               <article key={context.name} className="list-row">
                 <div>
-                  <strong>{contextDisplayLabel(settings, context.name)}</strong>
+                  <strong>
+                    {contextDisplayLabel(settings, context.name)}
+                    {activeContext === context.name ? " ✓" : ""}
+                  </strong>
                   {contextDisplayLabel(settings, context.name) !== context.name ? (
                     <p className="inline-note">CLI context id: {context.name}</p>
                   ) : null}
@@ -298,7 +303,7 @@ export function ContextsPanel({
                 <button
                   className="ghost-button"
                   type="button"
-                  disabled={mutationLock.isBusy}
+                  disabled={mutationLock.isBusy || activeContext === context.name}
                   onClick={() =>
                     useContextMutation.mutate({
                       context: context.name,
@@ -307,7 +312,7 @@ export function ContextsPanel({
                     })
                   }
                 >
-                  Activate CLI context
+                  {activeContext === context.name ? "Active context" : "Activate CLI context"}
                 </button>
               </article>
             ))}
