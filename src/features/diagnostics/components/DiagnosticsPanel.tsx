@@ -26,10 +26,12 @@ export function DiagnosticsPanel({
   settings,
   snapshot,
   onOpenProfiles,
+  onOpenSettings,
 }: {
   settings: DesktopSettings;
   snapshot: AppSnapshot;
   onOpenProfiles: (tool: string, expandedProfile?: string | null) => void;
+  onOpenSettings: () => void;
 }) {
   const queryClient = useQueryClient();
   const {
@@ -79,6 +81,7 @@ export function DiagnosticsPanel({
     activateProfileSet: activateProfileSetMutation.mutate,
     activateWorkspaceTarget: activateWorkspaceTargetMutation.mutate,
     applyRepairFixes: (fixes) => applyRepair.mutate(fixes),
+    onOpenSettings,
   });
 
   return (
@@ -304,6 +307,7 @@ function buildQuickFixes(
     activateProfileSet,
     activateWorkspaceTarget,
     applyRepairFixes,
+    onOpenSettings,
   }: {
     snapshot: AppSnapshot | undefined;
     doctor: Record<string, unknown> | undefined;
@@ -318,6 +322,7 @@ function buildQuickFixes(
       matchedTarget: string;
     }) => void;
     applyRepairFixes: (fixes: string[]) => void;
+    onOpenSettings: () => void;
   },
 ): QuickFixCard[] {
   const fixes: QuickFixCard[] = [];
@@ -331,6 +336,17 @@ function buildQuickFixes(
       status: issue.status,
       primary: issue.primary,
       action: () => applyRepairFixes([issue.fix]),
+    });
+  }
+
+  const shellHookIssue = shellHookDoctorIssue(doctor);
+  if (shellHookIssue) {
+    fixes.push({
+      title: "Shell hook not active",
+      detail: shellHookIssue.detail,
+      label: "Open shell setup",
+      status: shellHookIssue.status,
+      action: onOpenSettings,
     });
   }
 
@@ -482,6 +498,27 @@ function doctorRepairFixCard(
     fix,
     primary: true,
   };
+}
+
+function shellHookDoctorIssue(doctor: Record<string, unknown> | undefined) {
+  const checks = asArray(doctor?.checks)
+    .map((check) => asObject(check))
+    .filter((check): check is Record<string, unknown> => Boolean(check));
+
+  for (const check of checks) {
+    const name = asStringValue(check.name)?.toLowerCase() ?? "";
+    const detail = asStringValue(check.detail) ?? "Shell hook guidance needs attention.";
+    const status = (asStringValue(check.status) as "warn" | "fail" | undefined) ?? "warn";
+    const detailText = detail.toLowerCase();
+    if (
+      (name.includes("shell") && name.includes("hook")) ||
+      detailText.includes("shell hook")
+    ) {
+      return { detail, status };
+    }
+  }
+
+  return null;
 }
 
 function asObject(value: unknown): Record<string, unknown> | undefined {

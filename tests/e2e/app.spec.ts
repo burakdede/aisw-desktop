@@ -570,6 +570,24 @@ test("shows doctor remediations and targeted repair actions in diagnostics", asy
   await expect(page.getByText("retry the OAuth recovery flow")).toBeVisible();
 });
 
+test("opens shell setup from diagnostics when doctor reports the shell hook is inactive", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "diagnosticsRepair");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+
+  const shellHookFix = page.locator("article").filter({ hasText: "Shell hook not active" });
+  await expect(shellHookFix).toBeVisible();
+  await expect(shellHookFix.getByText("Shell hook is not active in the current shell session.")).toBeVisible();
+
+  await shellHookFix.getByRole("button", { name: "Open shell setup" }).click();
+
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Shell hook" })).toBeVisible();
+});
+
 test("switches one tool directly from overview and refreshes the active profile state", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -2719,6 +2737,12 @@ async function installDesktopMock(
                   status: "fail",
                   detail: "Upstream OAuth session timed out.",
                   remediation: "Run the guided OAuth flow again and finish login before timeout.",
+                },
+                {
+                  name: "shell_hook",
+                  status: "warn",
+                  detail: "Shell hook is not active in the current shell session.",
+                  remediation: ["Install the shell hook and reload the shell."],
                 },
               ],
             };

@@ -211,6 +211,7 @@ export function App() {
             <DiagnosticsPanel
               settings={settings}
               snapshot={resolvedSnapshot}
+              onOpenSettings={() => setActiveNav("settings")}
               onOpenProfiles={(tool, expandedProfile) => {
                 setProfilesRouteState({ tool, expandedProfile });
                 setActiveNav("profiles");

@@ -2541,6 +2541,57 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("opens shell setup from diagnostics when doctor reports the shell hook is inactive", async () => {
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: {
+            checks: [
+              {
+                name: "shell_hook",
+                status: "warn",
+                detail: "Shell hook is not active in the current shell session.",
+                remediation: ["Install the shell hook and reload the shell."],
+              },
+            ],
+          },
+          run_verify: { summary: { status: "warn", passed: 0, warnings: 1, failed: 0 }, tools: [] },
+          run_repair: {
+            result: {
+              summary: { status: "warn", actions_planned: 0, actions_applied: 0, issues_remaining: 1 },
+              actions: [],
+            },
+          },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Diagnostics")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Diagnostics"));
+
+    let shellHookFix: HTMLElement;
+    await waitFor(() => {
+      shellHookFix = screen.getByText("Shell hook not active").closest("article") as HTMLElement;
+      expect(shellHookFix).toBeInTheDocument();
+      expect(within(shellHookFix).getByText("Open shell setup")).toBeInTheDocument();
+    });
+
+    fireEvent.click(within(shellHookFix!).getByText("Open shell setup"));
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Shell hook" })).toBeInTheDocument();
+    });
+  });
+
   it("offers direct diagnostic fixes for missing tools, live mismatch, and workspace mismatch", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     const settingsWithSet: DesktopSettings = {
