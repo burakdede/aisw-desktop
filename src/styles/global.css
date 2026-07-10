@@ -347,6 +347,49 @@ button {
   align-items: start;
 }
 
+.overview-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.overview-current-set {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--separator);
+  background: color-mix(in srgb, Canvas 97%, CanvasText 3%);
+  box-shadow: var(--shadow-card);
+}
+
+.overview-current-set-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.overview-current-set-copy h3 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.overview-current-set-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 12px;
+}
+
+.overview-current-set-actions {
+  flex: none;
+}
+
+.overview-tool-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
 .tool-card,
 .diagnostic-card,
 .list-row {
@@ -361,6 +404,62 @@ button {
 .tool-card {
   display: grid;
   gap: 10px;
+}
+
+.overview-tool-card {
+  gap: 12px;
+}
+
+.overview-tool-card-ok {
+  border-color: color-mix(in srgb, var(--ok) 24%, var(--separator));
+}
+
+.overview-tool-card-warning {
+  border-color: color-mix(in srgb, var(--warning) 28%, var(--separator));
+}
+
+.overview-tool-card-neutral {
+  border-color: color-mix(in srgb, CanvasText 12%, transparent);
+}
+
+.overview-tool-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.overview-tool-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.overview-tool-facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.overview-tool-facts div {
+  display: grid;
+  gap: 2px;
+}
+
+.overview-tool-facts dt {
+  font-size: 11px;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.overview-tool-facts dd {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-primary);
 }
 
 .tool-card header,
@@ -521,6 +620,25 @@ button {
 .pill-soft {
   background: color-mix(in srgb, CanvasText 8%, Canvas 92%);
   color: var(--text-secondary);
+}
+
+.health-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, CanvasText 24%, transparent);
+}
+
+.health-dot-ok {
+  background: var(--ok);
+}
+
+.health-dot-warning {
+  background: var(--warning);
+}
+
+.health-dot-neutral {
+  background: color-mix(in srgb, CanvasText 24%, transparent);
 }
 
 .danger-button {
@@ -738,9 +856,21 @@ button {
     flex-direction: column;
     align-items: flex-start;
   }
+
+  .overview-current-set {
+    flex-direction: column;
+  }
+
+  .overview-current-set-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 880px) {
+  .overview-tool-facts {
+    grid-template-columns: 1fr;
+  }
+
   .profiles-list-header {
     display: none;
   }

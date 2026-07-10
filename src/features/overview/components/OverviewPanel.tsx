@@ -13,6 +13,7 @@ import { resolveGlobalStateMode, supportedStateModes } from "../../shared/state-
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { StateModeField } from "../../shared/components/StateModeField";
 import {
+  activeSetLabel,
   contextDisplayLabel,
   profileSetHasUsableSelections,
   sharedProfileEntries,
@@ -51,7 +52,6 @@ export function OverviewPanel({
     activateProfileSetMutation,
     useProfileMutation,
     useAllProfilesMutation,
-    useContextMutation,
     mutationLock,
     lastCommandResults,
   } = useDesktopActions();
@@ -98,6 +98,13 @@ export function OverviewPanel({
   const currentWorkspaceDisplay = contextDisplayLabel(settings, workspaceStatus.currentContext);
   const workspaceResult = lastCommandResults.global.workspace;
   const contextResult = lastCommandResults.global.context;
+  const currentSetLabel = activeSetLabel(settings, snapshot);
+  const currentSetProfiles = snapshot.statuses.map((status) => ({
+    tool: status.tool,
+    label: status.active_profile
+      ? toolProfileDisplayLabel(settings, snapshot, status.tool, status.active_profile)
+      : null,
+  }));
 
   return (
     <SectionCard
@@ -150,6 +157,54 @@ export function OverviewPanel({
         </div>
       }
     >
+      <div className="overview-stack">
+      {currentSetLabel || quickSwitchOptions.length ? (
+        <article className="overview-current-set">
+          <div className="overview-current-set-copy">
+            <p className="card-kicker">Current set</p>
+            <h3>{currentSetLabel ?? "No shared set active"}</h3>
+            <div className="overview-current-set-grid">
+              {currentSetProfiles.map((entry) => (
+                <p key={entry.tool} className="inline-note">
+                  <strong>{titleCase(entry.tool)}:</strong> {entry.label ?? "Not configured"}
+                </p>
+              ))}
+            </div>
+          </div>
+          <div className="overview-current-set-actions">
+            <button
+              className="ghost-button"
+              type="button"
+              disabled={mutationLock.isBusy}
+              onClick={() => {
+                if (!quickSwitch) {
+                  return;
+                }
+                if (quickSwitch.startsWith("set:")) {
+                  const name = quickSwitch.slice("set:".length);
+                  const profileSet = settings.profile_sets?.find((set) => set.name === name);
+                  activateProfileSetMutation.mutate({
+                    name,
+                    label: profileSet?.label ?? profileSet?.name,
+                  });
+                  return;
+                }
+                if (quickSwitch.startsWith("profile:")) {
+                  const profileName = quickSwitch.slice("profile:".length);
+                  const sharedProfile = sharedProfiles.find((profile) => profile.name === profileName);
+                  useAllProfilesMutation.mutate({
+                    profile: profileName,
+                    stateMode: resolveGlobalStateMode(snapshot),
+                    label: sharedProfile?.label,
+                  });
+                }
+              }}
+            >
+              Switch set…
+            </button>
+          </div>
+        </article>
+      ) : null}
       {showWorkspaceSummary ? (
         <article className={`diagnostic-card ${hasWorkspaceMismatch ? "diagnostic-warn" : "diagnostic-pass"}`}>
           <h3>{hasWorkspaceMismatch ? "Workspace wants a different set" : "Workspace match"}</h3>
@@ -190,7 +245,7 @@ export function OverviewPanel({
           ) : null}
         </article>
       ) : null}
-      <div className="tool-grid">
+      <div className="tool-grid overview-tool-grid">
         {snapshot.statuses.map((status) => (
           <ToolCard
             key={status.tool}
@@ -229,6 +284,7 @@ export function OverviewPanel({
             toolCapabilities={toolCapabilities}
           />
         ))}
+      </div>
       </div>
       {lastCommandResults.global["switch-all"] || lastCommandResults.global["profile-set"] ? (
         <p
@@ -335,29 +391,43 @@ function ToolCard({
   }, [profiles, selectedProfile, status.active_profile]);
 
   return (
-    <article className="tool-card">
-      <header>
+    <article className={`tool-card overview-tool-card overview-tool-card-${resolveCardState(status)}`}>
+      <header className="overview-tool-card-header">
         <div>
           <p className="card-kicker">{titleCase(status.tool)}</p>
-          <h3>{activeProfileLabel ?? "No active profile"}</h3>
+          <h3>{activeProfileLabel ?? "Not configured"}</h3>
         </div>
-        <span className={`pill ${status.binary_found ? "pill-ok" : "pill-warn"}`}>
-          {status.binary_found ? "Installed" : "Missing"}
-        </span>
+        <div className="overview-tool-status">
+          <span className={`health-dot health-dot-${resolveCardState(status)}`} aria-hidden="true" />
+          <span className={`pill ${status.binary_found ? "pill-ok" : "pill-warn"}`}>
+            {status.binary_found ? "Installed" : "Missing"}
+          </span>
+        </div>
       </header>
-      <div className="tool-card-meta">
-        <span>Auth: {status.auth_method ?? "unknown"}</span>
-        <span>Backend: {status.credential_backend ?? "unknown"}</span>
-        <span>State mode: {status.state_mode ?? "n/a"}</span>
-        <span>
-          Live match:{" "}
-          {activeState === null || activeState === undefined
-            ? "unknown"
-            : activeState
-              ? "yes"
-              : "mismatch"}
-        </span>
-      </div>
+      <dl className="overview-tool-facts">
+        <div>
+          <dt>Live match</dt>
+          <dd>
+            {activeState === null || activeState === undefined
+              ? "Unknown"
+              : activeState
+                ? "Yes"
+                : "Mismatch"}
+          </dd>
+        </div>
+        <div>
+          <dt>Auth</dt>
+          <dd>{status.auth_method ?? "Unknown"}</dd>
+        </div>
+        <div>
+          <dt>Backend</dt>
+          <dd>{status.credential_backend ?? "Unknown"}</dd>
+        </div>
+        <div>
+          <dt>State</dt>
+          <dd>{status.state_mode ?? "n/a"}</dd>
+        </div>
+      </dl>
       {status.token_warning ? (
         <p className="inline-note">
           Token warning: {formatTokenWarning(status)}
@@ -399,7 +469,7 @@ function ToolCard({
       {activeState === false ? (
         <div className="stack-list">
           <p className="inline-note">
-            Live credentials changed outside AISW. Re-apply the active profile or import the current
+            Live credentials changed outside AI Switch. Re-apply the active profile or import the current
             login as a new profile.
           </p>
           {supportsLiveImport ? (
@@ -457,30 +527,27 @@ function ToolCard({
               ))}
             </select>
           </label>
-          <button
-            className="primary-button"
-            disabled={mutationLocked || !selectedProfile}
-            onClick={() => onUse(status.tool, selectedProfile, stateModes.length ? stateMode : null)}
-          >
-            {selectedProfile && selectedProfile === status.active_profile
-              ? `Re-apply ${selectedProfileLabel}`
-              : selectedProfileLabel
-                ? `Switch to ${selectedProfileLabel}`
-                : "Switch profile"}
-          </button>
         </div>
       ) : null}
       <div className="button-row">
-        {status.binary_found ? (
-          <button
-            className="ghost-button"
-            type="button"
-            disabled={mutationLocked}
-            onClick={() => onAddProfile(status.tool)}
-          >
-            Add profile
-          </button>
-        ) : null}
+        <button
+          className={profiles.length ? "primary-button" : "ghost-button"}
+          type="button"
+          disabled={mutationLocked}
+          onClick={() =>
+            profiles.length && selectedProfile
+              ? onUse(status.tool, selectedProfile, stateModes.length ? stateMode : null)
+              : onAddProfile(status.tool)
+          }
+        >
+          {profiles.length
+            ? selectedProfile && selectedProfile === status.active_profile
+              ? `Re-apply ${selectedProfileLabel}`
+              : selectedProfileLabel
+                ? `Switch to ${selectedProfileLabel}`
+                : "Switch profile"
+            : "Add profile"}
+        </button>
         {status.active_profile ? (
           <button
             className="ghost-button"
@@ -562,6 +629,19 @@ function formatTokenWarning(status: ToolStatus) {
 function formatDiagnosticWarning(
   warning: ToolStatus["warnings"][number],
 ) {
-  const detail = warning.message ?? warning.code ?? "Warning reported by aisw.";
+  const detail = warning.message ?? warning.code ?? "Warning reported by AI Switch.";
   return warning.remediation ? `${detail} Remediation: ${warning.remediation}` : detail;
+}
+
+function resolveCardState(status: ToolStatus) {
+  if (!status.binary_found) {
+    return "neutral";
+  }
+  if (status.active_profile_applied === false || status.token_warning || status.warnings.length) {
+    return "warning";
+  }
+  if (!status.active_profile) {
+    return "neutral";
+  }
+  return "ok";
 }

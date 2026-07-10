@@ -3275,7 +3275,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "add_profile")).toBe(true);
-      expect(screen.getByText("Live credentials changed outside AISW. Re-apply the active profile or import the current login as a new profile.")).toBeInTheDocument();
+      expect(screen.getByText("Live credentials changed outside AI Switch. Re-apply the active profile or import the current login as a new profile.")).toBeInTheDocument();
     });
   });
 
@@ -5264,7 +5264,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Work" })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByRole("heading", { name: "Work" }).length).toBeGreaterThan(0));
 
     const handlers = (window as typeof window & {
       __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
@@ -5282,7 +5282,7 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Personal" })).toBeInTheDocument();
+      expect(screen.getAllByRole("heading", { name: "Personal" }).length).toBeGreaterThan(0);
     });
     expect(screen.getByText("Last result: Switched claude to personal.")).toBeInTheDocument();
   });
