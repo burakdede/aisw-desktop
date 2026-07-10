@@ -22,7 +22,7 @@ impl SettingsStore {
         }
 
         let bytes = tokio::fs::read(&self.path).await?;
-        Ok(serde_json::from_slice(&bytes)?)
+        Ok(normalize_runtime_settings(serde_json::from_slice(&bytes)?))
     }
 
     pub async fn save(
@@ -33,23 +33,26 @@ impl SettingsStore {
             tokio::fs::create_dir_all(parent).await?;
         }
 
-        let runtime_path = match request.runtime_kind {
-            RuntimeKind::Custom => request.runtime_path,
-            RuntimeKind::Bundled | RuntimeKind::System => None,
-        };
-
-        let settings = DesktopSettings {
+        let settings = normalize_runtime_settings(DesktopSettings {
             runtime_kind: request.runtime_kind,
-            runtime_path,
+            runtime_path: request.runtime_path,
             aisw_home: request.aisw_home,
             update_channel: request.update_channel,
             profile_labels: request.profile_labels,
             profile_sets: request.profile_sets,
-        };
+        });
         let bytes = serde_json::to_vec_pretty(&settings)?;
         tokio::fs::write(&self.path, bytes).await?;
         Ok(settings)
     }
+}
+
+fn normalize_runtime_settings(mut settings: DesktopSettings) -> DesktopSettings {
+    settings.runtime_path = match settings.runtime_kind {
+        RuntimeKind::Custom => settings.runtime_path,
+        RuntimeKind::Bundled | RuntimeKind::System => None,
+    };
+    settings
 }
 
 #[cfg(test)]
@@ -114,6 +117,28 @@ mod tests {
             .unwrap();
 
         assert_eq!(saved.runtime_path, None);
+        let loaded = store.load().await.unwrap();
+        assert_eq!(loaded.runtime_path, None);
+    }
+
+    #[tokio::test]
+    async fn load_normalizes_legacy_non_custom_runtime_path() {
+        let dir = tempdir().unwrap();
+        let store = SettingsStore::new(dir.path().to_path_buf());
+        tokio::fs::write(
+            dir.path().join("settings.json"),
+            r#"{
+  "runtime_kind": "system",
+  "runtime_path": "/tmp/aisw",
+  "aisw_home": null,
+  "update_channel": "stable",
+  "profile_labels": {},
+  "profile_sets": []
+}"#,
+        )
+        .await
+        .unwrap();
+
         let loaded = store.load().await.unwrap();
         assert_eq!(loaded.runtime_path, None);
     }
