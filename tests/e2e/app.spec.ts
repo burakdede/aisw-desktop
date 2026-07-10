@@ -380,6 +380,48 @@ test("records tray command results and shows a desktop notification", async ({ p
     });
 });
 
+test("records tray context failures and keeps the remediation visible in overview", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await expect(page.getByText("Control Center")).toBeVisible();
+
+  await page.evaluate(() => {
+    const handlers = (
+      window as typeof window & {
+        __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+      }
+    ).__AISW_DESKTOP_EVENT_HANDLERS__;
+    handlers?.["tray-command-result"]?.({
+      scope: "global",
+      id: "context",
+      label: "Switch context",
+      status: "error",
+      message: "Context switch failed.",
+      remediation: "Re-open AISW Desktop and verify the saved CLI context.",
+    });
+  });
+
+  await expect(
+    page.getByText(
+      "Last context result: Context switch failed. Remediation: Re-open AISW Desktop and verify the saved CLI context.",
+    ),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as typeof window & {
+            __AISW_NOTIFICATIONS__?: Array<{ title: string; body: string }>;
+          }).__AISW_NOTIFICATIONS__ ?? [],
+      ),
+    )
+    .toContainEqual({
+      title: "Switch context",
+      body: "Context switch failed. Re-open AISW Desktop and verify the saved CLI context.",
+    });
+});
+
 test("shows no-action states when diagnostics are healthy", async ({ page }) => {
   await installDesktopMock(page, "profiles");
 
@@ -569,6 +611,7 @@ test("activates a CLI context from contexts", async ({ page }) => {
   await page.getByRole("button", { name: "Contexts" }).click();
 
   await page.locator(".list-row").filter({ hasText: "client-acme" }).getByRole("button", { name: "Activate CLI context" }).click();
+  await expect(page.getByText("Last context result: Activated context client-acme.")).toBeVisible();
 
   await page.getByRole("button", { name: "Workspaces" }).click();
   await expect(page.getByText("Current context: client-acme")).toBeVisible();

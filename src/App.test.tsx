@@ -3141,6 +3141,37 @@ describe("App", () => {
     });
   });
 
+  it("records tray context failures with remediation and shows a desktop notification", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["tray-command-result"]?.({
+        scope: "global",
+        id: "context",
+        label: "Switch context",
+        status: "error",
+        message: "Context switch failed.",
+        remediation: "Re-open AISW Desktop and verify the saved CLI context.",
+      });
+      await Promise.resolve();
+    });
+
+    expect(
+      screen.getByText(
+        "Last context result: Context switch failed. Remediation: Re-open AISW Desktop and verify the saved CLI context.",
+      ),
+    ).toBeInTheDocument();
+    expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
+      title: "Switch context",
+      body: "Context switch failed. Re-open AISW Desktop and verify the saved CLI context.",
+    });
+  });
+
   it("saves and activates a local profile set", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     let currentSettings: DesktopSettings = bootstrap.settings;

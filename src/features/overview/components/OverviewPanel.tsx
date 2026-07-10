@@ -73,6 +73,7 @@ export function OverviewPanel({
   const workspaceSummaryLabel =
     expectedWorkspaceTarget?.kind === "profile_set" ? "Expected profile set" : "Expected CLI context";
   const workspaceResult = lastCommandResults.global.workspace;
+  const contextResult = lastCommandResults.global.context;
 
   return (
     <SectionCard
@@ -205,6 +206,12 @@ export function OverviewPanel({
         <p className={`inline-note ${workspaceResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
           Last workspace result: {workspaceResult.message}
           {workspaceResult.remediation ? ` Remediation: ${workspaceResult.remediation}` : ""}
+        </p>
+      ) : null}
+      {contextResult ? (
+        <p className={`inline-note ${contextResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
+          Last context result: {contextResult.message}
+          {contextResult.remediation ? ` Remediation: ${contextResult.remediation}` : ""}
         </p>
       ) : null}
     </SectionCard>

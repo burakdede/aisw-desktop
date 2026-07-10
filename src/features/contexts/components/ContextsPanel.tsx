@@ -25,6 +25,7 @@ export function ContextsPanel({
     activateProfileSetMutation,
     useContextMutation,
     mutationLock,
+    lastCommandResults,
   } = useDesktopActions();
   const [draft, setDraft] = useState<EditableProfileSet>({
     name: "",
@@ -37,6 +38,7 @@ export function ContextsPanel({
   const trimmedDraftName = draft.name.trim();
   const isEditingExistingSet =
     trimmedDraftName.length > 0 && localSets.some((entry) => entry.name === trimmedDraftName);
+  const contextResult = lastCommandResults.global.context;
   const profileOptions = useMemo(
     () =>
       Object.fromEntries(
@@ -250,6 +252,12 @@ export function ContextsPanel({
               </p>
             ) : null}
           </div>
+          {contextResult ? (
+            <p className={`inline-note ${contextResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
+              Last context result: {contextResult.message}
+              {contextResult.remediation ? ` Remediation: ${contextResult.remediation}` : ""}
+            </p>
+          ) : null}
           {lastAction ? <p className="inline-note">{lastAction}</p> : null}
         </div>
       </div>
