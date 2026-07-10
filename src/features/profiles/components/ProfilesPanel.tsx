@@ -147,6 +147,9 @@ export function ProfilesPanel({
 
     if (mode === "api_key") {
       const apiKey = apiKeyInputRef.current?.value ?? "";
+      if (apiKeyInputRef.current) {
+        apiKeyInputRef.current.value = "";
+      }
       void apiKeyProfileAction
         .submit({
           tool,
@@ -158,9 +161,6 @@ export function ProfilesPanel({
         .then(() => {
           setProfile("");
           setLabel("");
-          if (apiKeyInputRef.current) {
-            apiKeyInputRef.current.value = "";
-          }
         })
         .catch(() => undefined);
       return;
