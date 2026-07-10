@@ -139,6 +139,13 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `tests/e2e/app.spec.ts` verifies diagnostics missing-tool cards expose both install-guide and refresh actions, and that refresh reruns doctor checks plus desktop snapshot reads.
   - `src/App.test.tsx` verifies the missing-tool diagnostics card can reopen the install guide and trigger a fresh diagnostics run and snapshot refresh from the same recovery surface.
 
+### 17. Tray result messaging uses the same saved labels as tray menus
+
+- Status: implemented
+- Evidence:
+  - `src-tauri/src/tray.rs` derives tray success messages for shared profiles, profile sets, contexts, and per-tool profiles from the same saved-label helpers used to build tray menu entries.
+  - `src-tauri/src/tray.rs` includes unit tests proving tray result labels prefer profile-set labels and per-tool label overrides over raw ids.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:

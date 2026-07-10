@@ -183,6 +183,7 @@ Remediation actions land on targeted settings guidance
 Guided OAuth capture shows a stable five-step desktop wizard
 Editable state-mode choices explain isolated versus shared behavior
 Missing-tool diagnostics support install guidance and in-place refresh
+Tray result messaging uses the same saved labels as tray menus
 ## Verification Matrix
 npm test
 `,
