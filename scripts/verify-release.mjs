@@ -42,6 +42,7 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         runbook.includes("npm test") &&
         runbook.includes("npm run build") &&
         runbook.includes("npm run test:e2e") &&
+        runbook.includes("npm run verify:release") &&
         runbook.includes("cargo test --manifest-path src-tauri/Cargo.toml") &&
         runbook.includes("cargo check --manifest-path src-tauri/Cargo.toml"),
     },
@@ -58,7 +59,8 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       ok:
         ciWorkflow.includes("npm test") &&
         ciWorkflow.includes("npm run test:e2e") &&
-        ciWorkflow.includes("npm run build"),
+        ciWorkflow.includes("npm run build") &&
+        ciWorkflow.includes("npm run verify:release"),
     },
     {
       label: "CI workflow enforces Rust verification matrix",
@@ -86,6 +88,7 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         publishWorkflow.includes("npm test") &&
         publishWorkflow.includes("npm run test:e2e") &&
         publishWorkflow.includes("npm run build") &&
+        publishWorkflow.includes("npm run verify:release") &&
         publishWorkflow.includes("cargo test --manifest-path src-tauri/Cargo.toml") &&
         publishWorkflow.includes("cargo check --manifest-path src-tauri/Cargo.toml"),
     },

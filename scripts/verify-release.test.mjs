@@ -59,6 +59,7 @@ run: |
   npm test
   npm run test:e2e
   npm run build
+  npm run verify:release
   cargo test --manifest-path src-tauri/Cargo.toml
   cargo check --manifest-path src-tauri/Cargo.toml
 `,
@@ -73,6 +74,7 @@ npm run prepare:sidecar -- --target \${{ matrix.target }} "\${{ runner.temp }}/a
 npm test
 npm run test:e2e
 npm run build
+npm run verify:release
 cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
 tauri-apps/tauri-action@v1
@@ -97,6 +99,7 @@ npm run tauri:build
 npm test
 npm run build
 npm run test:e2e
+npm run verify:release
 cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
 ## Release checklist
@@ -135,6 +138,7 @@ npm run tauri:build
 npm test
 npm run build
 npm run test:e2e
+npm run verify:release
 cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
 ## Release checklist
@@ -161,6 +165,7 @@ npm run prepare:sidecar -- --target \${{ matrix.target }} "\${{ runner.temp }}/a
 npm test
 npm run test:e2e
 npm run build
+npm run verify:release
 cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
 tauri-apps/tauri-action@v1
@@ -218,6 +223,7 @@ npm run tauri:build
 npm test
 npm run build
 npm run test:e2e
+npm run verify:release
 cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
 `,

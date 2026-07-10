@@ -31,6 +31,7 @@ npm run prepare:sidecar -- --target x86_64-apple-darwin /absolute/path/to/aisw
 npm test
 npm run build
 npm run test:e2e
+npm run verify:release
 cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
 ```
@@ -71,7 +72,7 @@ npm run tauri:build
 
 - Stage the correct `aisw` sidecar for the target with `npm run prepare:sidecar`.
 - Pass the standard verification matrix:
-  `npm test`, `npm run build`, `npm run test:e2e`, `cargo test --manifest-path src-tauri/Cargo.toml`, `cargo check --manifest-path src-tauri/Cargo.toml`.
+  `npm test`, `npm run build`, `npm run test:e2e`, `npm run verify:release`, `cargo test --manifest-path src-tauri/Cargo.toml`, `cargo check --manifest-path src-tauri/Cargo.toml`.
 - Build the desktop bundle with `npm run tauri:build`.
 - Launch the packaged app in `Bundled` mode and confirm the embedded `aisw` path resolves in runtime status.
 - Switch a profile in the packaged app and confirm the tray summary refreshes immediately.
