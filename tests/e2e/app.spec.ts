@@ -392,6 +392,34 @@ test("shows remediation when the updater configuration is invalid", async ({ pag
   ).toBeVisible();
 });
 
+test("shows runtime detection and shell guidance in settings", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+
+  const settingsSection = page.locator(".section-card").filter({ hasText: "Runtime and home directory" });
+  const shellSection = page.locator(".section-card").filter({ hasText: "Explicit shell guidance" });
+
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(
+    settingsSection.getByText("Current resolved path: /Applications/AISW.app/Contents/Resources/aisw"),
+  ).toBeVisible();
+  await expect(
+    settingsSection.getByText("Bundled aisw: /Applications/AISW.app/Contents/Resources/aisw"),
+  ).toBeVisible();
+  await expect(settingsSection.getByText("System aisw: /opt/homebrew/bin/aisw")).toBeVisible();
+  await expect(settingsSection.getByText("Selected backend: Bundled")).toBeVisible();
+
+  await expect(shellSection.getByRole("heading", { name: "Shell hook" })).toBeVisible();
+  await expect(shellSection.getByText("Detected shell: Zsh")).toBeVisible();
+  await expect(shellSection.getByText("Config file: ~/.zshrc")).toBeVisible();
+  await expect(shellSection.getByText("echo 'eval \"$(aisw shell-hook zsh)\"' >> ~/.zshrc")).toBeVisible();
+  await expect(shellSection.getByText("source ~/.zshrc")).toBeVisible();
+  await expect(shellSection.getByText("echo \"$AISW_SHELL_HOOK\"")).toBeVisible();
+  await expect(shellSection.getByText("Expected output: 1")).toBeVisible();
+});
+
 test("requires saving settings before updater actions use a changed channel", async ({ page }) => {
   await installDesktopMock(page, "profiles");
 
