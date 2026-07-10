@@ -210,6 +210,13 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `.github/workflows/ci.yml` runs the desktop verification matrix on `macos-latest`, `ubuntu-22.04`, and `windows-latest` through a shared platform matrix.
   - `scripts/verify-release.mjs` and `scripts/verify-release.test.mjs` fail release-contract verification if the CI workflow drops the shared matrix or any required desktop platform runner.
 
+### 27. Contexts screen marks the active CLI context and prevents redundant activation
+
+- Status: implemented
+- Evidence:
+  - `src/features/contexts/components/ContextsPanel.tsx` derives the active CLI context from workspace status, appends the active marker to the current context row, and replaces the action with a disabled `Active context` button when that context is already selected.
+  - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify the Contexts screen updates from `Activate CLI context` to `Active context` after activation and shows the active marker alongside the saved display label.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:
