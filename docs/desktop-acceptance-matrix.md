@@ -160,6 +160,13 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src/features/profiles/components/ProfilesPanel.tsx` treats route-provided profile expansion as a one-time navigation state and clears it when the user changes the selected tool locally.
   - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify overview-driven profile details open correctly, then close when the tool picker changes to another tool.
 
+### 20. Manual sidebar navigation clears stale routed profile and settings targets
+
+- Status: implemented
+- Evidence:
+  - `src/App.tsx` clears route-only profile and settings state when the user opens those sections directly from the sidebar instead of a remediation or deep-link action.
+  - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify routed profile details and routed shell-settings focus do not persist after leaving the section and reopening it manually.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:

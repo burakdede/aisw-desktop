@@ -186,6 +186,7 @@ Missing-tool diagnostics support install guidance and in-place refresh
 Tray result messaging uses the same saved labels as tray menus
 Inactive profile details do not reuse live runtime diagnostics
 Routed profile details reset when the user switches tools manually
+Manual sidebar navigation clears stale routed profile and settings targets
 ## Verification Matrix
 npm test
 `,
