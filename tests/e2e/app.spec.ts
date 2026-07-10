@@ -6,6 +6,7 @@ type ScenarioName =
   | "noLiveAccounts"
   | "labelOverrides"
   | "incompatibleRuntime"
+  | "diagnosticsRepair"
   | "switching"
   | "workspaceContext"
   | "profiles"
@@ -229,6 +230,45 @@ test("shows no-action states when diagnostics are healthy", async ({ page }) => 
     page.getByText("No direct fix actions are available from the current diagnostics state."),
   ).toBeVisible();
   await expect(page.getByText("No safe automatic repairs are currently planned.")).toBeVisible();
+});
+
+test("applies safe repairs from diagnostics", async ({ page }) => {
+  await installDesktopMock(page, "diagnosticsRepair");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+
+  await expect(page.getByText("1 actions planned")).toBeVisible();
+  await page.getByRole("button", { name: "Apply safe repairs" }).click();
+
+  await expect(page.getByText("Last applied repair")).toBeVisible();
+  await expect(page.getByText("1 actions applied")).toBeVisible();
+});
+
+test("shows doctor remediations and targeted repair actions in diagnostics", async ({ page }) => {
+  await installDesktopMock(page, "diagnosticsRepair");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+
+  await expect(page.getByText("System keyring is locked.").first()).toBeVisible();
+  await expect(page.getByText("AISW cannot write the active config path.").first()).toBeVisible();
+  await expect(page.getByText("Upstream OAuth session timed out.").first()).toBeVisible();
+  await expect(page.getByText("Unlock the system keychain and retry.")).toBeVisible();
+  await expect(page.getByText("Grant write access to ~/.aisw")).toBeVisible();
+  await expect(page.getByText("Retry the switch")).toBeVisible();
+  await expect(
+    page.getByText("Run the guided OAuth flow again and finish login before timeout."),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Apply keyring repair" }).click();
+  await expect(page.getByText("1 actions applied").first()).toBeVisible();
+
+  await page.getByRole("button", { name: "Repair permissions" }).click();
+  await expect(page.getByText("repair config path permissions")).toBeVisible();
+
+  await page.getByRole("button", { name: "Retry OAuth repair" }).click();
+  await expect(page.getByText("retry the OAuth recovery flow")).toBeVisible();
 });
 
 test("switches one tool directly from overview and refreshes the active profile state", async ({ page }) => {
@@ -870,6 +910,37 @@ async function installDesktopMock(
         },
         incompatibleRuntime: {
           snapshot: null,
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
+        diagnosticsRepair: {
+          settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: false,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+            },
+            contexts: [],
+          },
           initReport: {
             result: {
               live_accounts: [],
@@ -1592,10 +1663,131 @@ async function installDesktopMock(
           return cloneSnapshot();
         }
         if (command === "run_doctor") {
+          if (activeScenario === "diagnosticsRepair") {
+            return {
+              checks: [
+                {
+                  name: "keyring",
+                  status: "fail",
+                  detail: "System keyring is locked.",
+                  remediation: ["Unlock the system keychain and retry."],
+                },
+                {
+                  name: "permissions",
+                  status: "warn",
+                  detail: "AISW cannot write the active config path.",
+                  remediation: ["Grant write access to ~/.aisw", "Retry the switch"],
+                },
+                {
+                  name: "oauth",
+                  status: "fail",
+                  detail: "Upstream OAuth session timed out.",
+                  remediation: "Run the guided OAuth flow again and finish login before timeout.",
+                },
+              ],
+            };
+          }
           return { summary: { status: "pass" }, checks: [] };
         }
         if (command === "run_verify") {
+          if (activeScenario === "diagnosticsRepair") {
+            return { summary: { status: "warn", passed: 0, warnings: 0, failed: 0 }, tools: [] };
+          }
           return { summary: { status: "pass" } };
+        }
+        if (command === "run_repair") {
+          if (activeScenario === "diagnosticsRepair") {
+            const request = args?.request ?? {};
+            const fixes = Array.isArray(request.fixes) ? request.fixes : [];
+            if (request.apply) {
+              if (fixes.length > 0) {
+                return {
+                  result: {
+                    summary: {
+                      status: "pass",
+                      actions_planned: fixes.length,
+                      actions_applied: fixes.length,
+                      issues_remaining: 0,
+                    },
+                    actions: fixes.map((fix) => ({
+                      kind: "repair",
+                      fix,
+                      path: "~/.aisw",
+                      detail:
+                        fix === "keyring"
+                          ? "unlock the system keyring integration"
+                          : fix === "permissions"
+                            ? "repair config path permissions"
+                            : "retry the OAuth recovery flow",
+                      status: "applied",
+                    })),
+                  },
+                };
+              }
+
+              return {
+                result: {
+                  summary: {
+                    status: "pass",
+                    actions_planned: 1,
+                    actions_applied: 1,
+                    issues_remaining: 0,
+                  },
+                  actions: [
+                    {
+                      kind: "create_dir",
+                      fix: "home",
+                      path: "/tmp/aisw",
+                      detail: "create AISW_HOME directory",
+                      status: "applied",
+                    },
+                  ],
+                },
+              };
+            }
+
+            return {
+              result: {
+                summary: {
+                  status: "warn",
+                  actions_planned: 1,
+                  actions_applied: 0,
+                  issues_remaining: 3,
+                },
+                actions: [
+                  {
+                    kind: "create_dir",
+                    fix: "home",
+                    path: "/tmp/aisw",
+                    detail: "create AISW_HOME directory",
+                    status: "planned",
+                  },
+                  {
+                    kind: "repair",
+                    fix: "keyring",
+                    path: "~/.aisw",
+                    detail: "unlock the system keyring integration",
+                    status: "planned",
+                  },
+                  {
+                    kind: "repair",
+                    fix: "permissions",
+                    path: "~/.aisw",
+                    detail: "repair config path permissions",
+                    status: "planned",
+                  },
+                  {
+                    kind: "repair",
+                    fix: "oauth",
+                    path: "~/.aisw",
+                    detail: "retry the OAuth recovery flow",
+                    status: "planned",
+                  },
+                ],
+              },
+            };
+          }
+          return { result: { mode: "dry_run" } };
         }
         if (command === "run_init") {
           state.initRuns += 1;
