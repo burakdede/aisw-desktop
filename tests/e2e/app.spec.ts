@@ -15,6 +15,7 @@ type ScenarioName =
   | "profileCommandError"
   | "tokenWarnings"
   | "failedBulkSwitch"
+  | "matchingContextSet"
   | "missingTool"
   | "partialSetup"
   | "updaterError"
@@ -467,6 +468,42 @@ test("activates a local profile set from contexts", async ({ page }) => {
   await expect(page.getByText("Activated profile set client-acme.")).toBeVisible();
   await page.getByRole("button", { name: "Workspaces" }).click();
   await expect(page.getByText("Current context: client-acme")).toBeVisible();
+});
+
+test("uses native profile-set activation when a matching CLI context exists", async ({ page }) => {
+  await installDesktopMock(page, "matchingContextSet");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Contexts" }).click();
+  await page.locator(".list-row").filter({ hasText: "Client Acme" }).getByRole("button", { name: "Activate set" }).click();
+
+  await expect(page.getByText("Activated profile set client-acme.")).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as typeof window & {
+            __AISW_COMMAND_LOG__?: Array<{ command: string }>;
+          }).__AISW_COMMAND_LOG__ ?? [],
+      ),
+    )
+    .toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ command: "activate_profile_set" }),
+      ]),
+    );
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as typeof window & {
+            __AISW_COMMAND_LOG__?: Array<{ command: string }>;
+          }).__AISW_COMMAND_LOG__?.some(
+            (entry) => entry.command === "use_all_profiles" || entry.command === "use_profile",
+          ) ?? false,
+      ),
+    )
+    .toBe(false);
 });
 
 test("activates a CLI context from contexts", async ({ page }) => {
@@ -1550,6 +1587,74 @@ async function installDesktopMock(
             },
           },
         },
+        matchingContextSet: {
+          settings: {
+            ...bootstrapSettings,
+            profile_sets: [
+              {
+                name: "client-acme",
+                label: "Client Acme",
+                profiles: {
+                  claude: "work",
+                  codex: "work",
+                  gemini: null,
+                },
+              },
+            ],
+          },
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "api_key",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+              codex: {
+                active: "work",
+                profiles: [{ name: "work", auth: "api_key", label: "Work" }],
+              },
+            },
+            contexts: [
+              {
+                name: "client-acme",
+                profiles: {
+                  claude: "work",
+                  codex: "work",
+                },
+              },
+            ],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
         workspaceContext: {
           settings: bootstrapSettings,
           snapshot: {
@@ -2143,6 +2248,7 @@ async function installDesktopMock(
       });
       const listeners = new Map();
       window.__AISW_DESKTOP_EVENT_HANDLERS__ = {};
+      window.__AISW_COMMAND_LOG__ = [];
       window.__AISW_OPENED_GUIDES__ = [];
       window.__AISW_NOTIFICATIONS__ = [];
       window.__AISW_CLIPBOARD_WRITES__ = [];
@@ -2200,6 +2306,7 @@ async function installDesktopMock(
       };
 
       window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+        window.__AISW_COMMAND_LOG__.push({ command, args: deepClone(args ?? null) });
         if (command === "get_bootstrap") {
           if (activeScenario === "incompatibleRuntime") {
             return {
