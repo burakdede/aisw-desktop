@@ -13,6 +13,7 @@ type ScenarioName =
   | "backupCatalog"
   | "staleProfile"
   | "profileCommandError"
+  | "tokenWarnings"
   | "missingTool"
   | "partialSetup"
   | "updaterError"
@@ -303,6 +304,21 @@ test("shows no-action states when diagnostics are healthy", async ({ page }) => 
     page.getByText("No direct fix actions are available from the current diagnostics state."),
   ).toBeVisible();
   await expect(page.getByText("No safe automatic repairs are currently planned.")).toBeVisible();
+});
+
+test("shows token warnings in the overview cards", async ({ page }) => {
+  await installDesktopMock(page, "tokenWarnings");
+
+  await page.goto("/");
+
+  await expect(
+    page.getByText("Token warning: Claude session expires soon Expires in 2 days."),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      "Warning: Refresh Claude authentication soon. Remediation: Run the guided OAuth flow again.",
+    ),
+  ).toBeVisible();
 });
 
 test("applies safe repairs from diagnostics", async ({ page }) => {
@@ -788,6 +804,28 @@ test("runs guided OAuth capture from the profiles screen", async ({ page }) => {
   await expect(page.locator(".inline-note").filter({ hasText: "Launching browser" })).toBeVisible();
   await expect(page.locator(".inline-note").filter({ hasText: "Waiting for login" })).toBeVisible();
   await expect(page.getByText("personal · oauth")).toBeVisible();
+});
+
+test("shows token and runtime warnings in profile diagnostic details", async ({ page }) => {
+  await installDesktopMock(page, "tokenWarnings");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+  await page.getByRole("button", { name: "View diagnostic details" }).click();
+
+  await expect(page.getByRole("heading", { name: "Diagnostic details" })).toBeVisible();
+  await expect(page.getByText("Credential backend: system_keyring")).toBeVisible();
+  await expect(page.getByText("Live match: yes")).toBeVisible();
+  await expect(page.getByText("Credentials present: no")).toBeVisible();
+  await expect(page.getByText("Permissions OK: no")).toBeVisible();
+  await expect(
+    page.getByText("Token warning: Claude session expires soon Expires in 2 days."),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      "Warning: Keyring access failed. Remediation: Unlock the system keychain and retry.",
+    ),
+  ).toBeVisible();
 });
 
 test("shows missing-profile remediation when a stale profile is re-applied", async ({ page }) => {
@@ -1603,6 +1641,53 @@ async function installDesktopMock(
                 active_profile_applied: true,
                 credentials_present: true,
                 permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
+        tokenWarnings: {
+          settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: false,
+                permissions_ok: false,
+                token_warning: {
+                  severity: "warn",
+                  summary: "Claude session expires soon",
+                  expires_in_days: 2,
+                },
+                warnings: [
+                  {
+                    code: "token_expiry",
+                    message: "Refresh Claude authentication soon.",
+                    remediation: "Run the guided OAuth flow again.",
+                  },
+                  {
+                    message: "Keyring access failed.",
+                    remediation: "Unlock the system keychain and retry.",
+                  },
+                ],
               },
             ],
             profiles: {
