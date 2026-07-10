@@ -7,6 +7,7 @@ import {
   DesktopSettings,
   type OAuthProgressEvent,
 } from "../../../lib/schemas";
+import { compareBackupsNewestFirst } from "../../../lib/backups";
 import { DesktopCommandError } from "../../../lib/tauri";
 import { listenDesktopEvent } from "../../../lib/tauri";
 import { listBackups, parseOAuthProgressEvent } from "../../../lib/client";
@@ -699,11 +700,13 @@ function latestBackupForProfile(
   profile: string,
   backups: Array<{ backup_id: string; tool: string; profile: string; created_at?: string | null }> | undefined,
 ) {
-  return backups?.find(
-    (entry) =>
-      entry.tool === tool &&
-      (entry.profile === profile || entry.profile === `${tool}/${profile}`),
-  );
+  return [...(backups ?? [])]
+    .filter(
+      (entry) =>
+        entry.tool === tool &&
+        (entry.profile === profile || entry.profile === `${tool}/${profile}`),
+    )
+    .sort(compareBackupsNewestFirst)[0];
 }
 
 function expectedEnvVar(tool: string) {

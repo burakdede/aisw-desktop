@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
 import { listBackups } from "../../../lib/client";
+import { compareBackupsNewestFirst } from "../../../lib/backups";
 import { toolProfileDisplayLabel } from "../../../lib/profile-display";
 import { AppBootstrap, AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
@@ -199,23 +200,6 @@ function resolveBackupTarget(tool: string, profile: string) {
     }
   }
   return { tool, profile };
-}
-
-function compareBackupsNewestFirst(
-  left: { backup_id: string; created_at?: string | null },
-  right: { backup_id: string; created_at?: string | null },
-) {
-  const leftSortKey = backupSortKey(left.created_at ?? left.backup_id);
-  const rightSortKey = backupSortKey(right.created_at ?? right.backup_id);
-  return rightSortKey.localeCompare(leftSortKey);
-}
-
-function backupSortKey(value: string) {
-  const isoDate = Date.parse(value);
-  if (!Number.isNaN(isoDate)) {
-    return new Date(isoDate).toISOString();
-  }
-  return value;
 }
 
 function formatBackupTimestamp(value: string) {

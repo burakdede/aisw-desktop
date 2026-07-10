@@ -26,6 +26,7 @@ type ScenarioName =
   | "updaterInstallError"
   | "customRuntime"
   | "sharedWorkspaceContext"
+  | "profileLatestBackup"
   | "bootstrapError";
 
 const toolCapabilities = {
@@ -818,6 +819,25 @@ test("preserves shared state mode when activating a CLI context", async ({ page 
       }),
     )
     .toBe("shared");
+});
+
+test("uses the newest matching backup when restoring latest from profiles", async ({ page }) => {
+  await installDesktopMock(page, "profileLatestBackup");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+  await page.getByRole("button", { name: "Restore latest + activate" }).click();
+  await page.getByRole("button", { name: "Confirm restore latest and activate" }).click();
+
+  await expect
+    .poll(async () =>
+      page.evaluate(() => {
+        const log = window.__AISW_COMMAND_LOG__ ?? [];
+        const matching = [...log].reverse().find((entry) => entry.command === "restore_backup");
+        return matching?.args?.backup_id;
+      }),
+    )
+    .toBe("20260327T121500Z-claude-work");
 });
 
 test("uses saved profile labels in context summaries and selectors", async ({ page }) => {
@@ -2315,6 +2335,37 @@ async function installDesktopMock(
             },
           },
         },
+        profileLatestBackup: {
+          settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
         profiles: {
           settings: bootstrapSettings,
           snapshot: {
@@ -3216,6 +3267,20 @@ async function installDesktopMock(
                 backup_id: "20260326T094012Z-codex-personal",
                 tool: "codex",
                 profile: "codex/personal",
+              },
+            ];
+          }
+          if (activeScenario === "profileLatestBackup") {
+            return [
+              {
+                backup_id: "20260325T114502Z-claude-work",
+                tool: "claude",
+                profile: "claude/work",
+              },
+              {
+                backup_id: "20260327T121500Z-claude-work",
+                tool: "claude",
+                profile: "claude/work",
               },
             ];
           }
