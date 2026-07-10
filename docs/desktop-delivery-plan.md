@@ -111,11 +111,14 @@ Acceptance criteria:
 - Profiles can be added, imported, relabeled, renamed, removed, and activated.
 - Active profile metadata is visible per tool.
 - State mode is editable only for supported tools.
+- Profile setup derives supported import modes and credential backends from the selected runtime's advertised capabilities, while preserving the legacy desktop defaults if that metadata is absent.
 - Credential backend selection is exposed during profile creation for tools that support both file-backed and system-keyring storage.
 - Profile details are reachable from overview, diagnostics, and backups.
 
 Test cases:
 - Adds profiles from environment, live import, API key, and OAuth-capable flows.
+- Restricts import modes and credential backends to the runtime-advertised set for the selected tool.
+- Falls back to the legacy desktop profile-setup options when older compatible runtimes omit auth/backend capability metadata.
 - Passes explicit file-backed and system-keyring backend requests during profile creation.
 - Renames and relabels profiles without losing active-state visibility.
 - Prevents invalid shared-state actions for Gemini.

@@ -252,6 +252,14 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src/features/diagnostics/components/DiagnosticsPanel.tsx` adds a `Use file-backed storage` direct-fix action that opens profile setup with file-backed storage preselected.
   - `src/App.tsx`, `src/features/profiles/components/ProfilesPanel.tsx`, `src/App.test.tsx`, and `tests/e2e/app.spec.ts` verify the diagnostics action lands on Profiles with `from_live` mode and `file` backend selected.
 
+### 33. Profile setup options follow runtime-advertised auth and backend capabilities
+
+- Status: implemented
+- Evidence:
+  - `src/lib/schemas.ts`, `src-tauri/src/models.rs`, and `src/features/shared/profile-capabilities.ts` preserve `auth_methods` and `credential_backends` from the `aisw capabilities --json` contract, normalizing them for desktop use while retaining the previous desktop defaults as a compatibility fallback.
+  - `src/features/profiles/components/ProfilesPanel.tsx` derives the import-mode and credential-backend selectors from those runtime capabilities instead of hardcoded per-tool assumptions.
+  - `src/App.test.tsx` verifies both the narrowed capability-driven UI and the legacy fallback path when compatible runtimes omit the new capability fields.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:
