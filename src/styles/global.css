@@ -843,6 +843,11 @@ button {
   background: color-mix(in srgb, AccentColor 8%, Canvas 92%);
 }
 
+.profile-list-row-selected {
+  border-color: color-mix(in srgb, AccentColor 42%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, AccentColor 22%, transparent);
+}
+
 .profile-list-main {
   min-width: 0;
 }

@@ -1548,7 +1548,7 @@ test("creates profiles from environment and API key modes", async ({ page }) => 
   await page.getByLabel("Credential backend").selectOption("file");
   await page.locator('input[type="password"]').fill("sk-ant-live-secret");
   await profilesSection.getByRole("button", { name: "Add profile" }).click();
-  await expect(page.getByText("ops · api_key")).toBeVisible();
+  await expect(page.locator(".list-row p").filter({ hasText: "ops · api_key" })).toBeVisible();
   await expect
     .poll(() =>
       page.evaluate(() => {
@@ -1595,7 +1595,7 @@ test("runs guided OAuth capture from the profiles screen", async ({ page }) => {
   await expect(page.getByText("Preparing the native login flow.")).toBeVisible();
   await expect(page.locator(".inline-note").filter({ hasText: "Launching browser" })).toBeVisible();
   await expect(page.locator(".inline-note").filter({ hasText: "Waiting for login" })).toBeVisible();
-  await expect(page.getByText("personal · oauth")).toBeVisible();
+  await expect(page.locator(".list-row p").filter({ hasText: "personal · oauth" })).toBeVisible();
 });
 
 test("shows token and runtime warnings in profile diagnostic details", async ({ page }) => {
@@ -1627,19 +1627,20 @@ test("limits live runtime diagnostics to the active profile details", async ({ p
   await page.getByRole("button", { name: "Profiles" }).click();
 
   const personalRow = page.locator(".list-row").filter({ hasText: "personal · oauth" });
-  await personalRow.getByRole("button", { name: "View diagnostic details" }).click();
+  await personalRow.getByRole("button", { name: "Open details" }).click();
+  await page.getByRole("button", { name: "View diagnostic details" }).click();
 
-  await expect(personalRow.getByRole("heading", { name: "Diagnostic details" })).toBeVisible();
-  await expect(personalRow.getByText("Auth method: oauth")).toBeVisible();
-  await expect(personalRow.getByText("Desktop active: no")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Diagnostic details" })).toBeVisible();
+  await expect(page.getByText("Auth method: oauth")).toBeVisible();
+  await expect(page.getByText("Desktop active: no")).toBeVisible();
   await expect(
-    personalRow.getByText(
+    page.getByText(
       "Live runtime diagnostics are only available for the active profile. Activate this profile to verify backend, live-match, token, and permission state.",
     ),
   ).toBeVisible();
-  await expect(personalRow.getByText("Credential backend: system_keyring")).toHaveCount(0);
-  await expect(personalRow.getByText(/^Live match:/)).toHaveCount(0);
-  await expect(personalRow.getByText(/^Token warning:/)).toHaveCount(0);
+  await expect(page.getByText("Credential backend: system_keyring")).toHaveCount(0);
+  await expect(page.getByText(/^Live match:/)).toHaveCount(0);
+  await expect(page.getByText(/^Token warning:/)).toHaveCount(0);
 });
 
 test("shows missing-profile remediation when a stale profile is re-applied", async ({ page }) => {
@@ -1708,13 +1709,14 @@ test("warns before renaming a profile to a duplicate name", async ({ page }) => 
   await page.getByRole("button", { name: "Profiles" }).click();
 
   const personalRow = page.locator(".list-row").filter({ hasText: "personal · oauth" });
-  await personalRow.getByLabel("rename personal").fill("work");
+  await personalRow.getByRole("button", { name: "Open details" }).click();
+  await page.getByLabel("rename personal").fill("work");
   await expect(
     page.getByText(
       "Claude already has a profile named work. Choose a different name or rename the existing profile first.",
     ),
   ).toBeVisible();
-  await expect(personalRow.getByRole("button", { name: "Rename" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Rename" })).toBeDisabled();
 });
 
 test("shows remediation text for profile command failures", async ({ page }) => {
@@ -1737,19 +1739,18 @@ test("renames, relabels, and removes profiles from the profiles screen", async (
   await page.goto("/");
   await page.getByRole("button", { name: "Profiles" }).click();
 
-  const workRow = page.locator(".list-row").filter({ hasText: "work · oauth" });
-  await workRow.getByLabel("rename work").fill("client-acme");
-  await workRow.getByRole("button", { name: "Rename" }).click();
-  await expect(page.getByText("client-acme · oauth")).toBeVisible();
+  await page.getByLabel("rename work").fill("client-acme");
+  await page.getByRole("button", { name: "Rename" }).click();
+  await expect(page.locator(".list-row p").filter({ hasText: "client-acme · oauth" })).toBeVisible();
 
   const renamedRow = page.locator(".list-row").filter({ hasText: "client-acme · oauth" });
-  await renamedRow.getByLabel("label client-acme").fill("Client Acme");
-  await renamedRow.getByRole("button", { name: "Relabel" }).click();
+  await page.getByLabel("label client-acme").fill("Client Acme");
+  await page.getByRole("button", { name: "Relabel" }).click();
   await expect(renamedRow.getByText("Client Acme")).toBeVisible();
 
-  await renamedRow.getByRole("button", { name: "Remove active…" }).click();
-  await renamedRow.getByRole("button", { name: "Confirm remove active" }).click();
-  await expect(page.getByText("client-acme · oauth")).not.toBeVisible();
+  await page.getByRole("button", { name: "Remove active…" }).click();
+  await page.getByRole("button", { name: "Confirm remove active" }).click();
+  await expect(page.locator(".list-row p").filter({ hasText: "client-acme · oauth" })).toHaveCount(0);
 });
 
 test("warns before backup restore and re-activates the restored profile", async ({ page }) => {

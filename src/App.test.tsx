@@ -1417,21 +1417,22 @@ describe("App", () => {
       .getByText("personal · oauth")
       .closest(".list-row") as HTMLElement | null;
     expect(personalRow).not.toBeNull();
-    fireEvent.click(within(personalRow!).getByText("View diagnostic details"));
+    fireEvent.click(within(personalRow!).getByText("Open details"));
+    fireEvent.click(screen.getByText("View diagnostic details"));
 
     await waitFor(() => {
-      expect(within(personalRow!).getByText("Diagnostic details")).toBeInTheDocument();
+      expect(screen.getByText("Diagnostic details")).toBeInTheDocument();
     });
-    expect(within(personalRow!).getByText("Auth method: oauth")).toBeInTheDocument();
-    expect(within(personalRow!).getByText("Desktop active: no")).toBeInTheDocument();
+    expect(screen.getByText("Auth method: oauth")).toBeInTheDocument();
+    expect(screen.getByText("Desktop active: no")).toBeInTheDocument();
     expect(
-      within(personalRow!).getByText(
+      screen.getByText(
         "Live runtime diagnostics are only available for the active profile. Activate this profile to verify backend, live-match, token, and permission state.",
       ),
     ).toBeInTheDocument();
-    expect(within(personalRow!).queryByText(/Credential backend:/)).not.toBeInTheDocument();
-    expect(within(personalRow!).queryByText(/Live match:/)).not.toBeInTheDocument();
-    expect(within(personalRow!).queryByText(/Token warning:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Credential backend:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Live match:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Token warning:/)).not.toBeInTheDocument();
   });
 
   it("warns before adding a duplicate profile name", async () => {
@@ -1690,6 +1691,11 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
+    const personalRow = screen
+      .getByText("personal · oauth")
+      .closest(".list-row") as HTMLElement | null;
+    expect(personalRow).not.toBeNull();
+    fireEvent.click(within(personalRow!).getByText("Open details"));
     fireEvent.change(screen.getByLabelText("rename personal"), {
       target: { value: "work" },
     });
@@ -1699,12 +1705,7 @@ describe("App", () => {
         "Claude already has a profile named work. Choose a different name or rename the existing profile first.",
       ),
     ).toBeInTheDocument();
-    const renameInput = screen.getByLabelText("rename personal");
-    const renameRow = renameInput.closest(".list-row") as HTMLElement | null;
-    if (!renameRow) {
-      throw new Error("Rename row not found.");
-    }
-    expect(within(renameRow).getByText("Rename")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Rename" })).toBeDisabled();
     expect(calls.some((entry) => entry.command === "rename_profile")).toBe(false);
   });
 
