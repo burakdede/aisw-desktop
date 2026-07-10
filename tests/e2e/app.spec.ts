@@ -3,6 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 type ScenarioName =
   | "onboarding"
   | "switching"
+  | "workspaceContext"
   | "profiles"
   | "missingTool"
   | "partialSetup"
@@ -164,6 +165,7 @@ test("binds and resolves workspace context from the workspaces panel", async ({ 
   await expect(page.getByText("path · /code/acme")).toBeVisible();
 
   await page.getByRole("button", { name: "Use expected context now" }).click();
+  await expect(page.getByText("Last workspace result: Switched to client-acme for /code/acme.")).toBeVisible();
   await expect(page.getByText("Current context: client-acme")).toBeVisible();
   await expect(page.getByText("Expected context: client-acme")).toBeVisible();
 
@@ -180,6 +182,20 @@ test("binds and resolves workspace context from the workspaces panel", async ({ 
 
   await page.getByRole("button", { name: "Remove this binding" }).first().click();
   await expect(page.getByText("path · /code/acme")).not.toBeVisible();
+});
+
+test("labels workspace summary as a CLI context when no profile set matches", async ({ page }) => {
+  await installDesktopMock(page, "workspaceContext");
+
+  await page.goto("/");
+
+  await expect(page.getByText("Expected CLI context: client-acme")).toBeVisible();
+  await expect(page.getByText("Current context: work")).toBeVisible();
+
+  await page.getByRole("button", { name: "Use expected context now" }).click();
+
+  await expect(page.getByText("Last workspace result: Switched to client-acme for /code/acme.")).toBeVisible();
+  await expect(page.getByText("Current context: client-acme")).toBeVisible();
 });
 
 test("shows missing-tool guidance and opens the install guide from diagnostics", async ({ page }) => {
@@ -567,6 +583,61 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
             },
           },
         },
+        workspaceContext: {
+          settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "api_key",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+              codex: {
+                active: "work",
+                profiles: [{ name: "work", auth: "api_key", label: "Work" }],
+              },
+            },
+            contexts: [
+              {
+                name: "client-acme",
+                profiles: {
+                  claude: "work",
+                  codex: "work",
+                },
+              },
+            ],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
         profiles: {
           settings: bootstrapSettings,
           snapshot: {
@@ -824,11 +895,12 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
       const stateWorkspace = {
         current_path: "/code/acme",
         current_remote: "git@github.com:acme/desktop.git",
-        current_context: activeScenario === "switching" ? "work" : "none",
+        current_context:
+          activeScenario === "switching" || activeScenario === "workspaceContext" ? "work" : "none",
         guard_mode: "warn",
         default_context: activeScenario === "switching" ? "work" : "none",
         items:
-          activeScenario === "switching"
+          activeScenario === "switching" || activeScenario === "workspaceContext"
             ? [{ scope: "path", path: "/code/acme", context: "client-acme" }]
             : [],
       };

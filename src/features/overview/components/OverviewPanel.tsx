@@ -66,6 +66,12 @@ export function OverviewPanel({
   const hasWorkspaceMismatch =
     workspaceStatus.status === "mismatch" &&
     workspaceStatus.expectedContext !== workspaceStatus.currentContext;
+  const expectedWorkspaceTarget = showWorkspaceSummary
+    ? resolveWorkspaceActivationTarget(workspaceStatus.expectedContext, settings, snapshot)
+    : null;
+  const workspaceSummaryLabel =
+    expectedWorkspaceTarget?.kind === "profile_set" ? "Expected profile set" : "Expected CLI context";
+  const workspaceResult = lastCommandResults.global.workspace;
 
   return (
     <SectionCard
@@ -112,7 +118,7 @@ export function OverviewPanel({
         <article className={`diagnostic-card ${hasWorkspaceMismatch ? "diagnostic-warn" : "diagnostic-pass"}`}>
           <h3>{hasWorkspaceMismatch ? "Workspace wants a different context" : "Workspace match"}</h3>
           <p className="inline-note">
-            Expected profile set: <strong>{workspaceStatus.expectedContext}</strong>
+            {workspaceSummaryLabel}: <strong>{workspaceStatus.expectedContext}</strong>
           </p>
           <p className="inline-note">
             Current context: <strong>{workspaceStatus.currentContext}</strong>
@@ -192,6 +198,12 @@ export function OverviewPanel({
                   lastCommandResults.global["switch-all"])?.remediation
               }`
             : ""}
+        </p>
+      ) : null}
+      {workspaceResult ? (
+        <p className={`inline-note ${workspaceResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
+          Last workspace result: {workspaceResult.message}
+          {workspaceResult.remediation ? ` Remediation: ${workspaceResult.remediation}` : ""}
         </p>
       ) : null}
     </SectionCard>

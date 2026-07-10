@@ -37,6 +37,7 @@ export function WorkspacesPanel({
     workspaceGuardMutation,
     activateWorkspaceTargetMutation,
     mutationLock,
+    lastCommandResults,
   } = useDesktopActions();
   const [scope, setScope] = useState<BindScope>("default");
   const bindingOptions = useMemo(
@@ -53,6 +54,7 @@ export function WorkspacesPanel({
     statusCard.status === "mismatch" &&
     statusCard.expectedContext !== "none" &&
     statusCard.expectedContext !== statusCard.currentContext;
+  const workspaceResult = lastCommandResults.global.workspace;
 
   useEffect(() => {
     setWorkspaceOverrideDismissed(false);
@@ -234,6 +236,12 @@ export function WorkspacesPanel({
               </p>
             ) : null}
           </div>
+          {workspaceResult ? (
+            <p className={`inline-note ${workspaceResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
+              Last workspace result: {workspaceResult.message}
+              {workspaceResult.remediation ? ` Remediation: ${workspaceResult.remediation}` : ""}
+            </p>
+          ) : null}
         </div>
       </div>
     </SectionCard>

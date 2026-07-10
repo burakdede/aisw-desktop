@@ -1663,6 +1663,9 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
     });
+    expect(
+      screen.getByText("Last workspace result: Switched to client-acme for /code/acme."),
+    ).toBeInTheDocument();
     expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
       title: "Workspace switch",
       body: "Switched to client-acme for /code/acme.",
@@ -1710,6 +1713,104 @@ describe("App", () => {
           (entry.args as { target?: { scope?: string; path?: string } })?.target?.path === "/code/acme",
       ),
     ).toBe(true);
+  });
+
+  it("labels workspace context targets correctly in overview and activates the native CLI context", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    let currentContext = "work";
+    const workspaceSnapshot = {
+      ...bootstrap.snapshot,
+      contexts: [
+        {
+          name: "client-acme",
+          profiles: {
+            claude: "work",
+            codex: "work",
+          },
+        },
+      ],
+      workspace_status: {
+        status: "mismatch",
+        current_context: currentContext,
+        expected_context: "client-acme",
+        matched_binding: {
+          scope: "path",
+          path: "/code/acme",
+          context: "client-acme",
+        },
+      },
+      project_bindings: {
+        user_bindings: {
+          guard_mode: "warn",
+          default_context: "none",
+          items: [{ scope: "path", path: "/code/acme", context: "client-acme" }],
+        },
+      },
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "use_context") {
+        currentContext = "client-acme";
+        return { command, snapshot: workspaceSnapshot };
+      }
+      return (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            settings: bootstrap.settings,
+            snapshot: workspaceSnapshot,
+          },
+          get_snapshot: workspaceSnapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: {
+            result: {
+              status: currentContext === "client-acme" ? "match" : "mismatch",
+              current_context: currentContext,
+              expected_context: "client-acme",
+              matched_binding: {
+                scope: "path",
+                path: "/code/acme",
+                context: "client-acme",
+              },
+            },
+          },
+          get_project_bindings: {
+            result: {
+              user_bindings: {
+                guard_mode: "warn",
+                default_context: "none",
+                items: [{ scope: "path", path: "/code/acme", context: "client-acme" }],
+              },
+            },
+          },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => {
+      expect(
+        screen.getByText((_, element) =>
+          element?.tagName === "P" && element.textContent?.trim() === "Expected CLI context: client-acme",
+        ),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getAllByText("Use expected context now")[0]);
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
+    });
+    expect(
+      screen.getByText("Last workspace result: Switched to client-acme for /code/acme."),
+    ).toBeInTheDocument();
   });
 
   it("applies safe repairs from diagnostics", async () => {
