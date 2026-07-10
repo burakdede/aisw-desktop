@@ -280,7 +280,10 @@ export function ContextsPanel({
             {snapshot.contexts.map((context) => (
               <article key={context.name} className="list-row">
                 <div>
-                  <strong>{context.name}</strong>
+                  <strong>{contextDisplayLabel(settings, context.name)}</strong>
+                  {contextDisplayLabel(settings, context.name) !== context.name ? (
+                    <p className="inline-note">CLI context id: {context.name}</p>
+                  ) : null}
                   <p>
                     {Object.entries(context.profiles)
                       .map(([tool, profile]) => {

@@ -5780,8 +5780,8 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Contexts"));
 
-    expect(screen.getByText("Client Acme")).toBeInTheDocument();
-    expect(screen.getByText("client-acme")).toBeInTheDocument();
+    expect(screen.getAllByText("Client Acme")).toHaveLength(2);
+    expect(screen.getByText("CLI context id: client-acme")).toBeInTheDocument();
     expect(screen.getAllByText("claude: Office · codex: Code Work · gemini: none")).toHaveLength(2);
     expect(screen.getAllByRole("option", { name: "Office" }).length).toBeGreaterThanOrEqual(2);
     expect(screen.getByRole("option", { name: "Code Work" })).toBeInTheDocument();

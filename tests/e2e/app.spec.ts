@@ -953,6 +953,8 @@ test("uses saved profile-set labels in CLI context activation results", async ({
   await page.getByRole("button", { name: "Contexts" }).click();
 
   const cliContextRow = page.locator(".list-row").filter({ hasText: "client-acme" });
+  await expect(cliContextRow.getByText("Client Acme")).toBeVisible();
+  await expect(cliContextRow.getByText("CLI context id: client-acme")).toBeVisible();
   await cliContextRow.getByRole("button", { name: "Activate CLI context" }).click();
   await expect(page.getByText("Last context result: Activated context Client Acme.")).toBeVisible();
 
