@@ -27,6 +27,7 @@ import {
   type CommandResultScope,
 } from "./lastCommandResult";
 import { enqueueMutation, useMutationQueueState } from "./mutationQueue";
+import { invalidatePostMutationQueries } from "./postMutationRefresh";
 
 type WorkspaceTargetInput =
   | {
@@ -49,16 +50,7 @@ export function useDesktopActions() {
   const mutationLock = useMutationQueueState();
   const lastCommandResults = useLastCommandResults();
 
-  const invalidate = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["bootstrap"] });
-    await queryClient.invalidateQueries({ queryKey: ["snapshot"] });
-    await queryClient.invalidateQueries({ queryKey: ["doctor"] });
-    await queryClient.invalidateQueries({ queryKey: ["verify"] });
-    await queryClient.invalidateQueries({ queryKey: ["backups"] });
-    await queryClient.invalidateQueries({ queryKey: ["init"] });
-    await queryClient.invalidateQueries({ queryKey: ["workspace-status"] });
-    await queryClient.invalidateQueries({ queryKey: ["project-bindings"] });
-  };
+  const invalidate = async () => invalidatePostMutationQueries(queryClient);
 
   const submitApiKeyProfile = async (input: AddProfileInput) => {
     setApiKeyProfilePending(true);

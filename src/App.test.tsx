@@ -4266,6 +4266,186 @@ describe("App", () => {
     expect(screen.getByText("Last result: Switched claude to personal.")).toBeInTheDocument();
   });
 
+  it("refreshes workspace status and bindings after a tray context switch", async () => {
+    const refreshedSnapshot = {
+      ...bootstrap.snapshot,
+      contexts: [
+        {
+          name: "client-acme",
+          profiles: {
+            claude: "work",
+            codex: "work",
+          },
+        },
+      ],
+    };
+    let snapshotReads = 0;
+    let workspaceStatusReads = 0;
+    let projectBindingsReads = 0;
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "get_snapshot") {
+        snapshotReads += 1;
+        return snapshotReads > 1 ? refreshedSnapshot : bootstrap.snapshot;
+      }
+      if (command === "get_workspace_status") {
+        workspaceStatusReads += 1;
+        return workspaceStatusReads > 1
+          ? {
+              result: {
+                status: "match",
+                scope: "default",
+                target: "default",
+                expected_context: "client-acme",
+                current_context: "client-acme",
+              },
+            }
+          : {
+              result: {
+                status: "mismatch",
+                scope: "default",
+                target: "default",
+                expected_context: "client-acme",
+                current_context: "none",
+              },
+            };
+      }
+      if (command === "get_project_bindings") {
+        projectBindingsReads += 1;
+        return projectBindingsReads > 1
+          ? {
+              result: {
+                user_bindings: {
+                  guard_mode: "strict",
+                  default_context: "client-acme",
+                  rules: [],
+                },
+              },
+            }
+          : {
+              result: {
+                user_bindings: {
+                  guard_mode: "warn",
+                  default_context: "none",
+                  rules: [],
+                },
+              },
+            };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          run_doctor: { summary: { status: "pass" } },
+          run_init: { result: { live_accounts: [] } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+          get_shell_guidance: {
+            detected_shell: "zsh",
+            capabilities: [],
+            note: "Shell hook guidance remains informational.",
+            manual_apply_examples: [],
+            variants: [],
+          },
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Workspaces")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Workspaces"));
+    await waitFor(() => {
+      expect(screen.getByText("Workspace mismatch")).toBeInTheDocument();
+      expect(screen.getByText("Guard mode: warn")).toBeInTheDocument();
+    });
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["tray-command-result"]?.({
+        scope: "global",
+        id: "context",
+        label: "Switch context",
+        status: "success",
+        message: "Activated context client-acme.",
+      });
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Workspace mismatch")).not.toBeInTheDocument();
+      expect(screen.getByText("Guard mode: strict")).toBeInTheDocument();
+    });
+  });
+
+  it("refreshes the backups list after a successful tray profile switch", async () => {
+    let backupReads = 0;
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "list_backups") {
+        backupReads += 1;
+        return backupReads > 1
+          ? [
+              {
+                backup_id: "20260326T120000Z-claude-work",
+                tool: "claude",
+                profile: "claude/work",
+              },
+            ]
+          : [];
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_doctor: { summary: { status: "pass" } },
+          run_init: { result: { live_accounts: [] } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          get_settings: bootstrap.settings,
+          get_shell_guidance: {
+            detected_shell: "zsh",
+            capabilities: [],
+            note: "Shell hook guidance remains informational.",
+            manual_apply_examples: [],
+            variants: [],
+          },
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Backups")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Backups"));
+    await waitFor(() => expect(screen.getByText("No backups found.")).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["tray-command-result"]?.({
+        scope: "tool",
+        tool: "claude",
+        label: "Switch profile",
+        status: "success",
+        message: "Switched claude to work.",
+      });
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Claude backup · 20260326T120000Z-claude-work"),
+      ).toBeInTheDocument();
+    });
+  });
+
   it("records tray context failures with remediation and shows a desktop notification", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());

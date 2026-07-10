@@ -9,6 +9,7 @@ import { DiagnosticsPanel } from "./features/diagnostics/components/DiagnosticsP
 import { SetupPanel } from "./features/onboarding/components/SetupPanel";
 import { OverviewPanel } from "./features/overview/components/OverviewPanel";
 import { ProfilesPanel } from "./features/profiles/components/ProfilesPanel";
+import { invalidatePostMutationQueries } from "./features/shared/postMutationRefresh";
 import { SettingsPanel } from "./features/settings/components/SettingsPanel";
 import { useDesktop } from "./features/shared/useDesktop";
 import { WorkspacesPanel } from "./features/workspaces/components/WorkspacesPanel";
@@ -105,7 +106,7 @@ export function App() {
             ? payload.message
             : [payload.message, payload.remediation].filter(Boolean).join(" "),
       });
-      void queryClient.invalidateQueries({ queryKey: ["snapshot"] });
+      void invalidatePostMutationQueries(queryClient);
     }).then((dispose) => {
       if (typeof dispose === "function") {
         disposers.push(dispose);
