@@ -795,7 +795,7 @@ describe("App", () => {
               warnings: [
                 {
                   message: "Keyring access failed.",
-                  remediation: "Unlock the system keychain and retry.",
+                  remediation: "Unlock the local credential store and retry.",
                 },
               ],
             },
@@ -816,7 +816,7 @@ describe("App", () => {
             warnings: [
               {
                 message: "Keyring access failed.",
-                remediation: "Unlock the system keychain and retry.",
+                remediation: "Unlock the local credential store and retry.",
               },
             ],
           },
@@ -841,7 +841,7 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Warning: Keyring access failed. Remediation: Unlock the system keychain and retry.",
+        "Warning: Keyring access failed. Remediation: Unlock the local credential store and retry.",
       ),
     ).toBeInTheDocument();
   });
@@ -1126,7 +1126,7 @@ describe("App", () => {
         throw {
           kind: "KeyringUnavailable",
           message: "keyring unavailable",
-          remediation: "Unlock the system keychain and retry.",
+          remediation: "Unlock the local credential store and retry.",
         };
       }
       return (
@@ -1156,7 +1156,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(
         screen.getByText(
-          "keyring unavailable Remediation: Unlock the system keychain and retry.",
+          "keyring unavailable Remediation: Unlock the local credential store and retry.",
         ),
       ).toBeInTheDocument();
     });
@@ -1451,7 +1451,7 @@ describe("App", () => {
         throw {
           kind: "keyring_unavailable",
           message: "keyring unavailable",
-          remediation: "Unlock the system keychain and retry.",
+          remediation: "Unlock the local credential store and retry.",
         };
       }
       return (
@@ -1493,7 +1493,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("keyring unavailable Remediation: Unlock the system keychain and retry."),
+        screen.getByText("keyring unavailable Remediation: Unlock the local credential store and retry."),
       ).toBeInTheDocument();
     });
     expect(apiKeyInput.value).toBe("");
@@ -2622,8 +2622,8 @@ describe("App", () => {
               {
                 name: "keyring",
                 status: "fail",
-                detail: "System keyring is locked.",
-                remediation: "Unlock the system keychain and retry.",
+                detail: "Local credential store is locked.",
+                remediation: "Unlock the local credential store and retry.",
               },
               {
                 name: "permissions",
@@ -2654,11 +2654,11 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Diagnostics"));
 
     await waitFor(() => {
-      expect(screen.getAllByText("System keyring is locked.").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Local credential store is locked.").length).toBeGreaterThan(0);
       expect(screen.getAllByText("AISW cannot write the active config path.").length).toBeGreaterThan(0);
       expect(screen.getAllByText("Upstream OAuth session timed out.").length).toBeGreaterThan(0);
     });
-    expect(screen.getByText("Unlock the system keychain and retry.")).toBeInTheDocument();
+    expect(screen.getByText("Unlock the local credential store and retry.")).toBeInTheDocument();
     expect(screen.getByText("Grant write access to ~/.aisw")).toBeInTheDocument();
     expect(screen.getByText("Retry the switch")).toBeInTheDocument();
     expect(
@@ -3080,8 +3080,8 @@ describe("App", () => {
               {
                 name: "keyring",
                 status: "fail",
-                detail: "System keyring is locked.",
-                remediation: ["Unlock the system keychain and retry."],
+                detail: "Local credential store is locked.",
+                remediation: ["Unlock the local credential store and retry."],
               },
               {
                 name: "permissions",

@@ -766,11 +766,11 @@ fn remediation_for_kind(kind: &GuiErrorKind) -> Option<String> {
             "Choose a different profile name or rename the existing profile first.".to_owned(),
         ),
         GuiErrorKind::KeyringUnavailable => Some(
-            "Unlock the system keychain or switch to a backend that is available on this machine."
+            "Unlock the local credential store or switch to a backend that is available on this machine."
                 .to_owned(),
         ),
         GuiErrorKind::PermissionDenied => Some(
-            "Check filesystem and keychain permissions for AISW and the selected tool.".to_owned(),
+            "Check filesystem and credential-store permissions for AISW and the selected tool.".to_owned(),
         ),
         GuiErrorKind::OAuthTimeout => Some(
             "Retry the guided OAuth flow and complete the upstream login before the timeout expires."

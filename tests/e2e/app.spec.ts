@@ -623,10 +623,10 @@ test("shows doctor remediations and targeted repair actions in diagnostics", asy
   await page.goto("/");
   await page.getByRole("button", { name: "Diagnostics" }).click();
 
-  await expect(page.getByText("System keyring is locked.").first()).toBeVisible();
+  await expect(page.getByText("Local credential store is locked.").first()).toBeVisible();
   await expect(page.getByText("AISW cannot write the active config path.").first()).toBeVisible();
   await expect(page.getByText("Upstream OAuth session timed out.").first()).toBeVisible();
-  await expect(page.getByText("Unlock the system keychain and retry.")).toBeVisible();
+  await expect(page.getByText("Unlock the local credential store and retry.")).toBeVisible();
   await expect(page.getByText("Grant write access to ~/.aisw")).toBeVisible();
   await expect(page.getByText("Retry the switch")).toBeVisible();
   await expect(
@@ -1176,7 +1176,7 @@ test("shows token and runtime warnings in profile diagnostic details", async ({ 
   ).toBeVisible();
   await expect(
     page.getByText(
-      "Warning: Keyring access failed. Remediation: Unlock the system keychain and retry.",
+      "Warning: Keyring access failed. Remediation: Unlock the local credential store and retry.",
     ),
   ).toBeVisible();
 });
@@ -1266,7 +1266,7 @@ test("shows remediation text for profile command failures", async ({ page }) => 
   await page.getByRole("button", { name: "Add profile" }).click();
 
   await expect(
-    page.getByText("keyring unavailable Remediation: Unlock the system keychain and retry."),
+    page.getByText("keyring unavailable Remediation: Unlock the local credential store and retry."),
   ).toBeVisible();
 });
 
@@ -2449,7 +2449,7 @@ async function installDesktopMock(
                   },
                   {
                     message: "Keyring access failed.",
-                    remediation: "Unlock the system keychain and retry.",
+                    remediation: "Unlock the local credential store and retry.",
                   },
                 ],
               },
@@ -2945,8 +2945,8 @@ async function installDesktopMock(
                 {
                   name: "keyring",
                   status: "fail",
-                  detail: "System keyring is locked.",
-                  remediation: ["Unlock the system keychain and retry."],
+                  detail: "Local credential store is locked.",
+                  remediation: ["Unlock the local credential store and retry."],
                 },
                 {
                   name: "permissions",
@@ -3221,7 +3221,7 @@ async function installDesktopMock(
             throw {
               kind: "KeyringUnavailable",
               message: "keyring unavailable",
-              remediation: "Unlock the system keychain and retry.",
+              remediation: "Unlock the local credential store and retry.",
             };
           }
           ensureToolEntry(request.tool);
