@@ -375,7 +375,7 @@ export function SetupPanel({
             </p>
             <div className="button-row">
               <button className="ghost-button" type="button" onClick={() => onOpenSettings("shell")}>
-                Open shell setup
+                Open terminal setup
               </button>
             </div>
           </div>

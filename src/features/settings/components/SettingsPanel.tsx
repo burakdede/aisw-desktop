@@ -135,7 +135,7 @@ export function SettingsPanel({
   return (
     <>
       <div ref={runtimeRef}>
-        <SectionCard title="Settings" kicker="Bundled runtime and advanced overrides">
+        <SectionCard title="Settings" kicker="Runtime and local storage">
           <div className="button-row">
             {SETTINGS_SECTIONS.map((section) => (
               <button
@@ -175,7 +175,7 @@ export function SettingsPanel({
             {showAdvancedRuntime ? (
               <>
                 <label>
-                  Runtime selection
+                  Runtime source
                   <select
                     value={runtimeKind}
                     onChange={(event) => setRuntimeKind(event.target.value as typeof runtimeKind)}
@@ -223,7 +223,7 @@ export function SettingsPanel({
             )}
 
             <label>
-              App data home override
+              Local data folder override
               <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
             </label>
             <label>
@@ -249,7 +249,7 @@ export function SettingsPanel({
           ) : null}
           <div className="stack-list diagnostics-body">
             <article className="diagnostic-card">
-              <h3>Runtime detection</h3>
+              <h3>Runtime details</h3>
               <p className="inline-note">
                 Current resolved path: {runtimeStatus.resolved_path ?? "No runtime resolved"}
               </p>
@@ -273,7 +273,7 @@ export function SettingsPanel({
                 Selected update channel: <strong>{titleCase(updateChannel)}</strong>
               </p>
               <p className="inline-note">
-                Selected backend: <strong>{titleCase(runtimeKind)}</strong>
+                Selected runtime: <strong>{titleCase(runtimeKind)}</strong>
               </p>
               <p className="inline-note">
                 Runtime version: {runtimeStatus.version?.version ?? "unknown"}
@@ -291,7 +291,7 @@ export function SettingsPanel({
       </div>
 
       <div ref={updatesRef}>
-        <SectionCard title="Desktop updates" kicker="Signed app releases">
+        <SectionCard title="Updates" kicker="Signed desktop releases">
           <div className="stack-list">
             <p className="inline-note">
               Check for a signed AI Switch release on the selected {updateChannel} channel.
@@ -374,15 +374,15 @@ export function SettingsPanel({
       </div>
 
       <div ref={shellRef}>
-        <SectionCard title="Shell hook" kicker="Explicit shell guidance">
+        <SectionCard title="Terminal Integration" kicker="Shell setup and current-session switching">
           <div className="stack-list">
             <p className="inline-note">
-              The shell hook is optional, but recommended when you want immediate environment exports
-              in the current terminal session and workspace guardrails before agent launch.
+              Terminal integration is optional, but recommended when you want immediate environment
+              exports in the current shell session and workspace guardrails before agent launch.
             </p>
             {shellCheck ? (
               <p className={`diagnostic-status diagnostic-status-${shellCheck.status}`}>
-                {shellCheck.status === "pass" ? "✓" : shellCheck.status === "warn" ? "!" : "✕"} Shell hook{" "}
+                {shellCheck.status === "pass" ? "✓" : shellCheck.status === "warn" ? "!" : "✕"} Terminal integration{" "}
                 {shellCheck.status}
                 {shellCheck.detail ? ` · ${shellCheck.detail}` : ""}
               </p>
@@ -418,7 +418,7 @@ export function SettingsPanel({
             )}
             {selectedVariant ? (
               <article className="diagnostic-card">
-                <h3>{selectedVariant.title}</h3>
+                <h3>{selectedVariant.title} shell setup</h3>
                 <p className="inline-note">Config file: {selectedVariant.config_path}</p>
                 {selectedVariant.alternate_config_path ? (
                   <p className="inline-note">Alternative: {selectedVariant.alternate_config_path}</p>
@@ -428,8 +428,8 @@ export function SettingsPanel({
                     <p className="inline-note">Install</p>
                     <pre>{selectedVariant.install_command}</pre>
                     <div className="button-row">
-                      <button type="button" className="ghost-button" onClick={() => void copyText(selectedVariant.install_command, "install")}>
-                        Copy install command
+                      <button type="button" className="ghost-button" onClick={() => void copyText(selectedVariant.install_command, "setup")}>
+                        Copy setup command
                       </button>
                     </div>
                   </div>
@@ -470,12 +470,18 @@ export function SettingsPanel({
       </div>
 
       <div ref={keyringRef}>
-        <SectionCard title="Keyring setup" kicker="Local credential backends">
+        <SectionCard title="Security" kicker="Local credential storage and recovery">
           <div className="stack-list">
             <p className="inline-note">
               AI Switch keeps credentials on this machine. When diagnostics report a keyring
               failure, use the guidance below to restore the OS-native secret store before retrying.
             </p>
+            <article className="diagnostic-card diagnostic-pass">
+              <h3>Privacy and storage</h3>
+              <p className="inline-note">Credentials stay local to this Mac or workstation.</p>
+              <p className="inline-note">No telemetry or remote credential proxy is used for switching.</p>
+              <p className="inline-note">Native keyrings remain preferred whenever the OS provides them.</p>
+            </article>
 
             {KEYRING_GUIDES.map((guide) => (
               <article key={guide.platform} className="diagnostic-card">
@@ -593,8 +599,8 @@ function sectionLabel(section: SettingsSection) {
     case "updates":
       return "Updates";
     case "shell":
-      return "Shell hook";
+      return "Terminal Integration";
     case "keyring":
-      return "Keyring setup";
+      return "Security";
   }
 }

@@ -346,8 +346,8 @@ describe("App", () => {
     expect(screen.getByText("Technical details")).toBeInTheDocument();
     expect(screen.getByText("aisw version info is unavailable")).toBeInTheDocument();
     expect(screen.getByText("aisw capabilities info is unavailable")).toBeInTheDocument();
-    expect(screen.getByText("Bundled runtime and advanced overrides")).toBeInTheDocument();
-    expect(screen.getByText("Runtime detection")).toBeInTheDocument();
+    expect(screen.getByText("Runtime and local storage")).toBeInTheDocument();
+    expect(screen.getByText("Runtime details")).toBeInTheDocument();
     expect(screen.queryByText("First-run setup")).not.toBeInTheDocument();
     expect(screen.queryByText("Control Center")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Overview" })).toBeDisabled();
@@ -726,23 +726,23 @@ describe("App", () => {
 
   it("clears routed settings sections when reopening settings from the sidebar", async () => {
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Open shell setup")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Open terminal setup")).toBeInTheDocument());
 
-    fireEvent.click(screen.getByText("Open shell setup"));
+    fireEvent.click(screen.getByText("Open terminal setup"));
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Shell hook" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Shell hook", pressed: true })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Terminal Integration", pressed: true })).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Overview" }));
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Bundled runtime and advanced overrides")).toBeInTheDocument();
+      expect(screen.getByText("Runtime and local storage")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Runtime", pressed: true })).toBeInTheDocument();
     });
-    expect(screen.getByRole("button", { name: "Shell hook", pressed: false })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Terminal Integration", pressed: false })).toBeInTheDocument();
   });
 
   it("surfaces token warnings in the overview cards", async () => {
@@ -4233,17 +4233,17 @@ describe("App", () => {
 
     let shellHookFix: HTMLElement;
     await waitFor(() => {
-      const shellHookMatches = screen.getAllByText("Shell hook not active");
+      const shellHookMatches = screen.getAllByText("Terminal integration not active");
       shellHookFix = shellHookMatches[shellHookMatches.length - 1].closest("article") as HTMLElement;
       expect(shellHookFix).toBeInTheDocument();
-      expect(within(shellHookFix).getByText("Open shell setup")).toBeInTheDocument();
+      expect(within(shellHookFix).getByText("Open terminal setup")).toBeInTheDocument();
     });
 
-    fireEvent.click(within(shellHookFix!).getByText("Open shell setup"));
+    fireEvent.click(within(shellHookFix!).getByText("Open terminal setup"));
 
     await waitFor(() => {
-      expect(screen.getByText("Bundled runtime and advanced overrides")).toBeInTheDocument();
-      expect(screen.getByRole("heading", { name: "Shell hook" })).toBeInTheDocument();
+      expect(screen.getByText("Runtime and local storage")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
     });
   });
 
@@ -4654,10 +4654,10 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Diagnostics"));
     fireEvent.click(screen.getByText("Show keyring setup"));
     await waitFor(() => {
-      expect(screen.getByText("Bundled runtime and advanced overrides")).toBeInTheDocument();
-      expect(screen.getByRole("heading", { name: "Keyring setup" })).toBeInTheDocument();
+      expect(screen.getByText("Runtime and local storage")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Security" })).toBeInTheDocument();
       expect(screen.getByText("Linux Secret Service")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Keyring setup" })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("button", { name: "Security" })).toHaveAttribute("aria-pressed", "true");
     });
   });
 
@@ -4937,12 +4937,12 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
 
     expect(screen.getByText("Detected shell:")).toBeInTheDocument();
-    fireEvent.click(screen.getByText("Open shell setup"));
+    fireEvent.click(screen.getByText("Open terminal setup"));
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Shell hook" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
       expect(screen.getByText("Config file: ~/.zshrc")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Shell hook" })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("button", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "true");
     });
   });
 
@@ -6451,7 +6451,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Settings"));
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Shell hook" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
       expect(screen.getAllByText(/Detected shell:/).length).toBeGreaterThan(0);
       expect(screen.getByText("Config file: ~/.zshrc")).toBeInTheDocument();
       expect(screen.getByText("echo 'eval \"$(aisw shell-hook zsh)\"' >> ~/.zshrc")).toBeInTheDocument();
@@ -6608,7 +6608,7 @@ describe("App", () => {
   it("shows cross-platform keyring setup guidance in settings", async () => {
     await renderSettingsPanel(bootstrap.settings);
 
-    expect(screen.getByRole("heading", { name: "Keyring setup" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Security" })).toBeInTheDocument();
     expect(screen.getByText("macOS Keychain")).toBeInTheDocument();
     expect(screen.getByText("Windows Credential Manager")).toBeInTheDocument();
     expect(screen.getByText("Linux Secret Service")).toBeInTheDocument();
@@ -6625,7 +6625,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Settings"));
 
     await waitFor(() => {
-      expect(screen.getByText("Runtime detection")).toBeInTheDocument();
+      expect(screen.getByText("Runtime details")).toBeInTheDocument();
       expect(
         screen.getByText("Current resolved path: /Applications/AISW.app/Contents/Resources/aisw"),
       ).toBeInTheDocument();
@@ -6638,8 +6638,8 @@ describe("App", () => {
         screen.getByText((_, element) => element?.textContent?.trim() === "Selected update channel: Stable"),
       ).toBeInTheDocument();
       expect(
-        screen.getByText((_, element) => element?.textContent?.trim() === "Selected backend: Bundled"),
-      ).toBeInTheDocument();
+        screen.getAllByText((_, element) => element?.textContent?.trim() === "Selected runtime: Bundled").length,
+      ).toBeGreaterThan(0);
       expect(screen.getAllByText("Runtime version: 0.3.7").length).toBeGreaterThan(0);
       expect(screen.getByText("CLI API 1 · JSON schema 1 · Progress schema 1")).toBeInTheDocument();
     });

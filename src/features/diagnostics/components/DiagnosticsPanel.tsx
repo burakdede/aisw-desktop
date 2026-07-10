@@ -510,9 +510,9 @@ function buildQuickFixes(
   const shellHookIssue = shellHookDoctorIssue(doctor);
   if (shellHookIssue) {
     fixes.push({
-      title: "Shell hook not active",
+      title: "Terminal integration not active",
       detail: shellHookIssue.detail,
-      label: "Open shell setup",
+      label: "Open terminal setup",
       status: shellHookIssue.status,
       action: () => onOpenSettings("shell"),
     });
@@ -710,7 +710,7 @@ function shellHookDoctorIssue(doctor: Record<string, unknown> | undefined) {
 
   for (const check of checks) {
     const name = asStringValue(check.name)?.toLowerCase() ?? "";
-    const detail = asStringValue(check.detail) ?? "Shell hook guidance needs attention.";
+    const detail = asStringValue(check.detail) ?? "Terminal integration guidance needs attention.";
     const status = (asStringValue(check.status) as "warn" | "fail" | undefined) ?? "warn";
     const detailText = detail.toLowerCase();
     if (

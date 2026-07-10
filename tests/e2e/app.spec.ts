@@ -87,11 +87,11 @@ test("opens shell setup from onboarding", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByText("Detected shell:")).toBeVisible();
-  await page.getByRole("button", { name: "Open shell setup" }).click();
+  await page.getByRole("button", { name: "Open terminal setup" }).click();
 
-  await expect(page.getByRole("heading", { name: "Shell hook" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Terminal Integration" })).toBeVisible();
   await expect(page.getByText("Config file: ~/.zshrc")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Shell hook", pressed: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Terminal Integration", pressed: true })).toBeVisible();
 });
 
 test("opens profile setup from onboarding when first-switch options are missing", async ({ page }) => {
@@ -186,7 +186,7 @@ test("shows runtime compatibility blockers when the configured aisw runtime is u
   await expect(page.getByText("aisw version info is unavailable")).toBeVisible();
   await expect(page.getByText("aisw capabilities info is unavailable")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
-  await expect(page.getByText("Runtime detection")).toBeVisible();
+  await expect(page.getByText("Runtime details")).toBeVisible();
   await expect(page.getByRole("button", { name: "Overview" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Profiles" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Contexts" })).toBeDisabled();
@@ -368,15 +368,15 @@ test("clears routed settings sections when reopening settings from the sidebar",
   await installDesktopMock(page, "onboarding");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Open shell setup" }).click();
+  await page.getByRole("button", { name: "Open terminal setup" }).click();
 
-  await expect(page.getByRole("button", { name: "Shell hook", pressed: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Terminal Integration", pressed: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Overview" }).click();
-  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
 
   await expect(page.getByRole("button", { name: "Runtime", pressed: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Shell hook", pressed: false })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Terminal Integration", pressed: false })).toBeVisible();
 });
 
 test("refreshes state after a failed switch-all to show the rolled-back profiles", async ({ page }) => {
@@ -807,10 +807,10 @@ test("shows doctor remediations and targeted repair actions in diagnostics", asy
 
   await page.getByRole("button", { name: "Diagnostics" }).click();
   await page.getByRole("button", { name: "Show keyring setup" }).click();
-  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Keyring setup" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Settings", pressed: true, exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Security" })).toBeVisible();
   await expect(page.getByText("Linux Secret Service")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Keyring setup", pressed: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Security", pressed: true })).toBeVisible();
 });
 
 test("opens shell setup from diagnostics when doctor reports the shell hook is inactive", async ({
@@ -821,15 +821,15 @@ test("opens shell setup from diagnostics when doctor reports the shell hook is i
   await page.goto("/");
   await page.getByRole("button", { name: "Diagnostics" }).click();
 
-  const shellHookFix = page.locator("article").filter({ hasText: "Shell hook not active" });
+  const shellHookFix = page.locator("article").filter({ hasText: "Terminal integration not active" });
   await expect(shellHookFix).toBeVisible();
   await expect(shellHookFix.getByText("Shell hook is not active in the current shell session.")).toBeVisible();
 
-  await shellHookFix.getByRole("button", { name: "Open shell setup" }).click();
+  await shellHookFix.getByRole("button", { name: "Open terminal setup" }).click();
 
-  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Shell hook" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Shell hook", pressed: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Settings", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Terminal Integration" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Terminal Integration", pressed: true })).toBeVisible();
 });
 
 test("switches one tool directly from overview and refreshes the active profile state", async ({ page }) => {
@@ -1327,7 +1327,7 @@ test("shows remediation when the updater configuration is invalid", async ({ pag
   await installDesktopMock(page, "updaterError");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("button", { name: "Check for updates" }).click();
 
   await expect(page.getByRole("heading", { name: "Update check failed" })).toBeVisible();
@@ -1343,7 +1343,7 @@ test("shows remediation when update install fails", async ({ page }) => {
   await installDesktopMock(page, "updaterInstallError");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("button", { name: "Check for updates" }).click();
 
   await expect(page.getByText("Update available: 0.2.0")).toBeVisible();
@@ -1362,26 +1362,26 @@ test("shows runtime detection and shell guidance in settings", async ({ page }) 
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
 
-  const settingsSection = page.locator(".section-card").filter({ hasText: "Bundled runtime and advanced overrides" });
-  const shellSection = page.locator(".section-card").filter({ hasText: "Explicit shell guidance" });
+  const settingsSection = page.locator(".section-card").filter({ hasText: "Runtime and local storage" });
+  const shellSection = page.locator(".section-card").filter({ hasText: "Shell setup and current-session switching" });
 
-  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Settings" }).first()).toBeVisible();
   await expect(
     settingsSection.getByText("Current resolved path: /Applications/AISW.app/Contents/Resources/aisw"),
   ).toBeVisible();
-  await expect(settingsSection.getByText("Effective AISW home: ~/.aisw")).toBeVisible();
+  await expect(settingsSection.getByText("Effective local data folder: ~/.aisw")).toBeVisible();
   await expect(
-    settingsSection.getByText("Bundled aisw: /Applications/AISW.app/Contents/Resources/aisw"),
+    settingsSection.getByText("Bundled runtime: /Applications/AISW.app/Contents/Resources/aisw"),
   ).toBeVisible();
   await expect(settingsSection.getByText("Show advanced runtime options")).toBeVisible();
   await expect(settingsSection.getByText("Selected update channel: Stable")).toBeVisible();
-  await expect(settingsSection.getByText("Selected backend: Bundled")).toBeVisible();
+  await expect(settingsSection.getByText("Selected runtime: Bundled")).toBeVisible();
   await expect(settingsSection.getByText("Runtime version: 0.3.7")).toBeVisible();
   await expect(settingsSection.getByText("CLI API 1 · JSON schema 1 · Progress schema 1")).toBeVisible();
 
-  await expect(shellSection.getByRole("heading", { name: "Shell hook" })).toBeVisible();
+  await expect(shellSection.getByRole("heading", { name: "Terminal Integration" })).toBeVisible();
   await expect(shellSection.getByText("Detected shell: Zsh")).toBeVisible();
   await expect(shellSection.getByText("Config file: ~/.zshrc")).toBeVisible();
   await expect(shellSection.getByText("echo 'eval \"$(aisw shell-hook zsh)\"' >> ~/.zshrc")).toBeVisible();
@@ -1394,31 +1394,31 @@ test("saves custom runtime and AISW home settings", async ({ page }) => {
   await installDesktopMock(page, "profiles");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
 
   await page.getByRole("button", { name: "Show advanced runtime options" }).click();
-  await page.getByLabel("Runtime selection").selectOption("custom");
+  await page.getByLabel("Runtime source").selectOption("custom");
   await page.getByLabel("Runtime path").fill("/opt/custom/aisw");
-  await page.getByLabel("AISW_HOME override").fill("/tmp/aisw-home");
+  await page.getByLabel("Local data folder override").fill("/tmp/aisw-home");
   await page.getByRole("button", { name: "Save settings" }).click();
 
-  await expect(page.getByLabel("Runtime selection")).toHaveValue("custom");
+  await expect(page.getByLabel("Runtime source")).toHaveValue("custom");
   await expect(page.getByLabel("Runtime path")).toHaveValue("/opt/custom/aisw");
-  await expect(page.getByLabel("AISW_HOME override")).toHaveValue("/tmp/aisw-home");
+  await expect(page.getByLabel("Local data folder override")).toHaveValue("/tmp/aisw-home");
 
-  const settingsSection = page.locator(".section-card").filter({ hasText: "Bundled runtime and advanced overrides" });
-  await expect(settingsSection.getByText("Selected backend: Custom")).toBeVisible();
+  const settingsSection = page.locator(".section-card").filter({ hasText: "Runtime and local storage" });
+  await expect(settingsSection.getByText("Selected runtime: Custom")).toBeVisible();
 });
 
 test("requires saving settings before updater actions use a changed channel", async ({ page }) => {
   await installDesktopMock(page, "profiles");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
 
   await page.getByLabel("Update channel").selectOption("beta");
   await expect(
-    page.getByText("Check for a signed AISW Desktop release on the selected beta channel."),
+    page.getByText("Check for a signed AI Switch release on the selected beta channel."),
   ).toBeVisible();
   await expect(
     page.getByText(
@@ -1443,7 +1443,7 @@ test("clears stale update results after channel edits until the user checks agai
   await installDesktopMock(page, "profiles");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("button", { name: "Check for updates" }).click();
 
   await expect(page.getByText("Update available: 0.2.0")).toBeVisible();
@@ -1466,7 +1466,7 @@ test("checks and installs a signed desktop update", async ({ page }) => {
   await installDesktopMock(page, "profiles");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("button", { name: "Check for updates" }).click();
 
   await expect(page.getByText("Update available: 0.2.0")).toBeVisible();
@@ -1479,19 +1479,19 @@ test("clears a saved custom runtime path after switching back to bundled runtime
   await installDesktopMock(page, "customRuntime");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
 
   const runtimePath = page.getByLabel("Runtime path");
   await expect(runtimePath).toHaveValue("/opt/aisw/bin/aisw");
   await expect(runtimePath).toBeEnabled();
 
-  await page.getByLabel("Runtime selection").selectOption("bundled");
+  await page.getByLabel("Runtime source").selectOption("bundled");
   await expect(runtimePath).toBeDisabled();
 
   await page.getByRole("button", { name: "Save settings" }).click();
 
   await expect(page.getByRole("button", { name: "Show advanced runtime options" })).toBeVisible();
-  await expect(page.getByText("Selected backend: Bundled")).toBeVisible();
+  await expect(page.getByText("Selected runtime: Bundled").first()).toBeVisible();
   await expect(page.getByText("Current resolved path: /Applications/AISW.app/Contents/Resources/aisw")).toBeVisible();
 });
 
@@ -1499,19 +1499,19 @@ test("switches from a custom runtime back to the system aisw selection", async (
   await installDesktopMock(page, "customRuntime");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
 
   const runtimePath = page.getByLabel("Runtime path");
   await expect(runtimePath).toHaveValue("/opt/aisw/bin/aisw");
   await expect(runtimePath).toBeEnabled();
 
-  await page.getByLabel("Runtime selection").selectOption("system");
+  await page.getByLabel("Runtime source").selectOption("system");
   await expect(runtimePath).toBeDisabled();
 
   await page.getByRole("button", { name: "Save settings" }).click();
 
   await expect(runtimePath).toHaveValue("");
-  await expect(page.getByText("Selected backend: System")).toBeVisible();
+  await expect(page.getByText("Selected runtime: System").first()).toBeVisible();
   await expect(page.getByText("Current resolved path: /opt/homebrew/bin/aisw")).toBeVisible();
 });
 
