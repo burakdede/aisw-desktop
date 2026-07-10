@@ -178,6 +178,19 @@ test("imports the current login as a new profile from diagnostics", async ({ pag
   await expect(page.getByText("incident · oauth")).toBeVisible();
 });
 
+test("shows no-action states when diagnostics are healthy", async ({ page }) => {
+  await installDesktopMock(page, "profiles");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+
+  await expect(page.getByText("No failing or warning diagnostics are currently reported.")).toBeVisible();
+  await expect(
+    page.getByText("No direct fix actions are available from the current diagnostics state."),
+  ).toBeVisible();
+  await expect(page.getByText("No safe automatic repairs are currently planned.")).toBeVisible();
+});
+
 test("switches one tool directly from overview and refreshes the active profile state", async ({ page }) => {
   await installDesktopMock(page, "switching");
 

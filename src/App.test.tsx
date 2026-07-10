@@ -2138,6 +2138,24 @@ describe("App", () => {
     });
   });
 
+  it("shows explicit no-action states when diagnostics are healthy", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Diagnostics")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Diagnostics"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("No failing or warning diagnostics are currently reported."),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("No direct fix actions are available from the current diagnostics state."),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("No safe automatic repairs are currently planned."),
+      ).toBeInTheDocument();
+    });
+  });
+
   it("shows doctor remediations for keyring, permission, and OAuth failures", async () => {
     window.__AISW_DESKTOP_MOCK__ = async (command) => {
       return (
