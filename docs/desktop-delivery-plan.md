@@ -126,11 +126,13 @@ Acceptance criteria:
 - Workspace bindings can target a context or profile set.
 - Mismatch state is surfaced before activation.
 - Workspace activation produces a visible result and optional desktop notification.
+- The currently matched explicit workspace binding is identified in the bindings list.
 
 Test cases:
 - Creates and edits a profile set.
 - Applies a workspace target and refreshes active state.
 - Shows expected-context mismatch with direct-fix action.
+- Marks the explicit binding row that currently resolves the workspace target.
 - Excludes unsupported workspace bindings from the wrong surfaces.
 
 ### 6. Diagnostics and Repair

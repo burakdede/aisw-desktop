@@ -217,6 +217,13 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src/features/contexts/components/ContextsPanel.tsx` derives the active CLI context from workspace status, appends the active marker to the current context row, and replaces the action with a disabled `Active context` button when that context is already selected.
   - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify the Contexts screen updates from `Activate CLI context` to `Active context` after activation and shows the active marker alongside the saved display label.
 
+### 28. Workspaces screen marks the explicit binding row that currently matches
+
+- Status: implemented
+- Evidence:
+  - `src/features/workspaces/components/WorkspacesPanel.tsx` derives the current matched binding from workspace status and annotates the matching explicit binding row with `Matched binding ✓`.
+  - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify the matched-binding marker appears for the active `/code/acme` workspace binding.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:
