@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
 import { AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import { runDoctor, runRepair, runVerify } from "../../../lib/client";
@@ -17,6 +18,7 @@ import {
 import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 import { resolveWorkspaceActivationTarget } from "../../workspaces/workspace-activation";
 import { toolProfileDisplayLabel } from "../../../lib/profile-display";
+import { titleCase } from "../../../lib/utils";
 
 const SUPPORTED_TOOLS = new Set(["claude", "codex", "gemini"]);
 
@@ -31,6 +33,7 @@ export function DiagnosticsPanel({
 }) {
   const queryClient = useQueryClient();
   const {
+    addProfileMutation,
     useProfileMutation,
     useContextMutation,
     activateProfileSetMutation,
@@ -44,6 +47,7 @@ export function DiagnosticsPanel({
     queryKey: ["repair", "dry-run"],
     queryFn: () => runRepair({ apply: false, fixes: [] }),
   });
+  const [importDrafts, setImportDrafts] = useState<Record<string, string>>({});
   const applyRepair = useMutation({
     mutationFn: (fixes: string[]) => runRepair({ apply: true, fixes }),
     onSuccess: async () => {
@@ -188,7 +192,7 @@ export function DiagnosticsPanel({
         <div className="stack-list">
           <h3>Direct fixes</h3>
           {quickFixes.map((fix) => (
-            <article key={fix.title} className={`diagnostic-card diagnostic-${fix.status}`}>
+            <article key={quickFixKey(fix)} className={`diagnostic-card diagnostic-${fix.status}`}>
               <h4>{fix.title}</h4>
               <p className="inline-note">{fix.detail}</p>
               <div className="button-row">
@@ -210,6 +214,48 @@ export function DiagnosticsPanel({
                   </button>
                 ) : null}
               </div>
+              {fix.importTarget ? (
+                <div className="inline-form">
+                  <input
+                    aria-label={`import ${fix.importTarget.tool} current login from diagnostics`}
+                    placeholder="new profile name"
+                    value={importDrafts[quickFixKey(fix)] ?? ""}
+                    onChange={(event) =>
+                      setImportDrafts((current) => ({
+                        ...current,
+                        [quickFixKey(fix)]: event.target.value,
+                      }))
+                    }
+                  />
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    disabled={mutationLock.isBusy || !importDrafts[quickFixKey(fix)]?.trim()}
+                    onClick={() => {
+                      const profile = importDrafts[quickFixKey(fix)]?.trim();
+                      if (!profile) return;
+                      addProfileMutation.mutate(
+                        {
+                          tool: fix.importTarget!.tool,
+                          profile,
+                          label: titleCase(profile),
+                          stateMode: fix.importTarget!.stateMode,
+                          importMode: { kind: "from_live" },
+                        },
+                        {
+                          onSuccess: () =>
+                            setImportDrafts((current) => ({
+                              ...current,
+                              [quickFixKey(fix)]: "",
+                            })),
+                        },
+                      );
+                    }}
+                  >
+                    Import current as new
+                  </button>
+                </div>
+              ) : null}
             </article>
           ))}
           {!quickFixes.length ? (
@@ -241,6 +287,7 @@ type QuickFixCard = {
   label: string;
   status: "warn" | "fail";
   profileTarget?: { tool: string; profile: string | null };
+  importTarget?: { tool: string; stateMode: string | null };
   primary?: boolean;
   disabled?: boolean;
   action: () => void;
@@ -312,6 +359,10 @@ function buildQuickFixes(
         profileTarget: {
           tool: status.tool,
           profile: status.active_profile,
+        },
+        importTarget: {
+          tool: status.tool,
+          stateMode: resolveStateMode(status),
         },
         primary: true,
         action: () =>
@@ -470,4 +521,8 @@ function resolveDiagnosticTool(title: string) {
   const normalized = title.trim().toLowerCase();
   const candidate = normalized.startsWith("tool/") ? normalized.slice("tool/".length) : normalized;
   return SUPPORTED_TOOLS.has(candidate) ? candidate : null;
+}
+
+function quickFixKey(fix: QuickFixCard) {
+  return `${fix.title}:${fix.label}`;
 }

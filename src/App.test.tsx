@@ -1938,6 +1938,14 @@ describe("App", () => {
       "noopener,noreferrer",
     );
 
+    fireEvent.change(screen.getByLabelText("import claude current login from diagnostics"), {
+      target: { value: "incident" },
+    });
+    fireEvent.click(screen.getByText("Import current as new"));
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "add_profile")).toBe(true);
+    });
+
     fireEvent.click(screen.getByText("Re-apply Work"));
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);

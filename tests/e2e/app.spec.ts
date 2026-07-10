@@ -71,6 +71,19 @@ test("opens profile diagnostics from a diagnostics live mismatch card", async ({
   await expect(page.getByText("Live mismatch detected")).toBeVisible();
 });
 
+test("imports the current login as a new profile from diagnostics", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+  await page.getByLabel("import claude current login from diagnostics").fill("incident");
+  await page.getByRole("button", { name: "Import current as new" }).click();
+
+  await page.getByRole("button", { name: "Profiles" }).click();
+  await expect(page.getByText("incident · oauth")).toBeVisible();
+});
+
 test("switches one tool directly from overview and refreshes the active profile state", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
