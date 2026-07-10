@@ -275,6 +275,14 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src/App.tsx` carries the fallback profile-setup mode through route state so the Profiles screen opens in the nearest supported import mode.
   - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify unsupported onboarding and live-mismatch flows land on Profiles with `from_env` selected instead of trying an invalid live import.
 
+### 36. Updater channels fail closed unless the configured feed uses HTTPS
+
+- Status: implemented
+- Evidence:
+  - `src-tauri/src/updater.rs` rejects non-HTTPS updater feeds from both environment overrides and staged `plugins.updater.channels` config, matching the desktop remediation contract that requires a valid HTTPS URL.
+  - `scripts/prepare-updater.mjs` rejects non-HTTPS release-channel endpoints before they are written into `src-tauri/tauri.conf.json`, while `scripts/verify-release.mjs` fails release verification if staged updater channels or fallback endpoints drift to non-HTTPS URLs.
+  - `scripts/prepare-updater.test.mjs`, `scripts/verify-release.test.mjs`, and `src-tauri/src/updater.rs` unit tests verify both build-time and runtime rejection paths.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:

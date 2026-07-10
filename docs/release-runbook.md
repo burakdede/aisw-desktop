@@ -9,6 +9,7 @@ Produce signed desktop bundles that embed the exact `aisw` binary validated for 
 - Tauri bundles `src-tauri/binaries/aisw-$TARGET_TRIPLE[.exe]` via `externalBin`.
 - The desktop bridge resolves bundled binaries only from packaged sidecar locations or explicit desktop overrides.
 - `prepare:sidecar` validates the binary format against the requested target triple before staging it and always writes a Windows `.exe` sidecar for Windows targets.
+- `prepare:updater` accepts HTTPS release feeds only and stages them into `plugins.updater.channels` before packaging.
 - Sidecar binaries are intentionally not tracked in Git.
 
 ## Prepare a local release build

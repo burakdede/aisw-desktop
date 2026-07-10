@@ -197,12 +197,14 @@ Test cases:
 Acceptance criteria:
 - AISW home, runtime choice, custom runtime path, and update channel are editable.
 - Shell guidance exposes detected shell, install commands, reload commands, and verification commands.
+- Desktop updater channels accept HTTPS endpoints only, both when staged into release builds and when resolved at runtime.
 - Guidance stays informational unless an explicit setup action is added later.
 
 Test cases:
 - Round-trips persisted settings.
 - Shows shell variants with supported commands.
 - Prefers channel-specific update endpoints when configured.
+- Rejects non-HTTPS updater endpoints before packaging and at runtime.
 - Rejects invalid updater configuration safely.
 
 ### 10. Packaging, Signing, and Release
