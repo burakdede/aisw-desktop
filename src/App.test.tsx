@@ -419,6 +419,101 @@ describe("App", () => {
     });
   });
 
+  it("clears route-opened profile details when switching tools manually", async () => {
+    const claudeStatus = {
+      ...bootstrap.snapshot.statuses[0],
+      stored_profiles: 2,
+      active_profile: "personal",
+      auth_method: "oauth",
+      credential_backend: "system_keyring",
+      state_mode: "isolated",
+      active_profile_applied: true,
+      credentials_present: true,
+      permissions_ok: true,
+      warnings: [],
+    };
+    const codexStatus = {
+      tool: "codex",
+      binary_found: true,
+      stored_profiles: 2,
+      active_profile: "personal",
+      auth_method: "api_key",
+      credential_backend: "file",
+      state_mode: "shared",
+      active_profile_applied: true,
+      credentials_present: true,
+      permissions_ok: true,
+      warnings: [],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = {
+      ...window.__AISW_DESKTOP_MOCK__,
+      get_bootstrap: {
+        ...bootstrap,
+        snapshot: {
+          ...bootstrap.snapshot,
+          statuses: [claudeStatus, codexStatus],
+          profiles: {
+            claude: {
+              active: "personal",
+              profiles: [
+                { name: "work", auth: "oauth", label: "Work" },
+                { name: "personal", auth: "oauth", label: "Personal" },
+              ],
+            },
+            codex: {
+              active: "personal",
+              profiles: [
+                { name: "work", auth: "api_key", label: "Work" },
+                { name: "personal", auth: "api_key", label: "Personal" },
+              ],
+            },
+          },
+        },
+      },
+      get_snapshot: {
+        ...bootstrap.snapshot,
+        statuses: [claudeStatus, codexStatus],
+        profiles: {
+          claude: {
+            active: "personal",
+            profiles: [
+              { name: "work", auth: "oauth", label: "Work" },
+              { name: "personal", auth: "oauth", label: "Personal" },
+            ],
+          },
+          codex: {
+            active: "personal",
+            profiles: [
+              { name: "work", auth: "api_key", label: "Work" },
+              { name: "personal", auth: "api_key", label: "Personal" },
+            ],
+          },
+        },
+      },
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+
+    fireEvent.click(screen.getAllByText("Open details")[1]);
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("Codex")).toBeInTheDocument();
+      expect(screen.getByText("Diagnostic details")).toBeInTheDocument();
+      expect(screen.getByText("Auth method: api_key")).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText("Tool"), {
+      target: { value: "claude" },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("Claude")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("Diagnostic details")).not.toBeInTheDocument();
+  });
+
   it("surfaces token warnings in the overview cards", async () => {
     window.__AISW_DESKTOP_MOCK__ = {
       ...window.__AISW_DESKTOP_MOCK__,

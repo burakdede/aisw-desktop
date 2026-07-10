@@ -103,7 +103,7 @@ export function ProfilesPanel({
 
   useEffect(() => {
     setExpandedDetails(initialExpandedProfile ?? null);
-  }, [initialExpandedProfile, tool]);
+  }, [initialExpandedProfile, initialTool]);
 
   useEffect(() => {
     let active = true;
@@ -194,7 +194,13 @@ export function ProfilesPanel({
         <form className="stacked-form" onSubmit={submit}>
           <label>
             Tool
-            <select value={tool} onChange={(event) => setTool(event.target.value as typeof tool)}>
+            <select
+              value={tool}
+              onChange={(event) => {
+                setTool(event.target.value as typeof tool);
+                setExpandedDetails(null);
+              }}
+            >
               {TOOLS.map((entry) => (
                 <option key={entry} value={entry}>
                   {titleCase(entry)}

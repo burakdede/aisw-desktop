@@ -292,6 +292,23 @@ test("opens the profiles screen from overview details actions", async ({ page })
   ).toBeVisible();
 });
 
+test("clears route-opened profile details when switching tools manually", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+
+  const codexCard = page.locator(".tool-card").filter({ hasText: "Codex" });
+  await codexCard.getByRole("button", { name: "Open details" }).click();
+
+  await expect(page.getByLabel("Tool")).toHaveValue("codex");
+  await expect(page.getByRole("heading", { name: "Diagnostic details" })).toBeVisible();
+
+  await page.getByLabel("Tool").selectOption("claude");
+
+  await expect(page.getByLabel("Tool")).toHaveValue("claude");
+  await expect(page.getByRole("heading", { name: "Diagnostic details" })).toHaveCount(0);
+});
+
 test("refreshes state after a failed switch-all to show the rolled-back profiles", async ({ page }) => {
   await installDesktopMock(page, "failedBulkSwitch");
 
