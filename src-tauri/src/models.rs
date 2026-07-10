@@ -267,6 +267,7 @@ pub struct AddOAuthProfileRequest {
     pub profile: String,
     pub label: Option<String>,
     pub state_mode: Option<String>,
+    pub credential_backend: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -275,6 +276,7 @@ pub struct AddProfileRequest {
     pub profile: String,
     pub label: Option<String>,
     pub state_mode: Option<String>,
+    pub credential_backend: Option<String>,
     pub import_mode: AddProfileMode,
 }
 

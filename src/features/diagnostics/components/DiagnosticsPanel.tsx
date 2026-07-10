@@ -30,11 +30,17 @@ export function DiagnosticsPanel({
   snapshot,
   onOpenProfiles,
   onOpenSettings,
+  onOpenProfileSetup,
 }: {
   settings: DesktopSettings;
   snapshot: AppSnapshot;
   onOpenProfiles: (tool: string, expandedProfile?: string | null) => void;
   onOpenSettings: (section?: SettingsSection) => void;
+  onOpenProfileSetup: (options?: {
+    tool?: string;
+    mode?: "from_live" | "from_env" | "api_key" | "oauth";
+    credentialBackend?: "file" | "system-keyring" | null;
+  }) => void;
 }) {
   const queryClient = useQueryClient();
   const {
@@ -93,6 +99,7 @@ export function DiagnosticsPanel({
     activateWorkspaceTarget: activateWorkspaceTargetMutation.mutate,
     applyRepairFixes: (fixes) => applyRepair.mutate(fixes),
     onOpenSettings,
+    onOpenProfileSetup,
     onRefreshDiagnostics: () =>
       void refreshDiagnostics(queryClient, doctor.refetch, verify.refetch, repair.refetch),
   });
@@ -394,6 +401,7 @@ function buildQuickFixes(
     activateWorkspaceTarget,
     applyRepairFixes,
     onOpenSettings,
+    onOpenProfileSetup,
     onRefreshDiagnostics,
   }: {
     snapshot: AppSnapshot | undefined;
@@ -420,6 +428,11 @@ function buildQuickFixes(
     }) => void;
     applyRepairFixes: (fixes: string[]) => void;
     onOpenSettings: (section?: SettingsSection) => void;
+    onOpenProfileSetup: (options?: {
+      tool?: string;
+      mode?: "from_live" | "from_env" | "api_key" | "oauth";
+      credentialBackend?: "file" | "system-keyring" | null;
+    }) => void;
     onRefreshDiagnostics: () => void;
   },
 ): QuickFixCard[] {
@@ -450,6 +463,17 @@ function buildQuickFixes(
 
   const keyringIssue = keyringDoctorIssue(doctor);
   if (keyringIssue) {
+    fixes.push({
+      title: "Use file-backed storage",
+      detail: "Open profile setup with file-backed credential storage preselected for the next import or add flow.",
+      label: "Use file-backed storage",
+      status: keyringIssue.status,
+      action: () =>
+        onOpenProfileSetup({
+          mode: "from_live",
+          credentialBackend: "file",
+        }),
+    });
     fixes.push({
       title: "Keyring setup instructions",
       detail: "Review the supported local keyring services for macOS, Windows, and Linux.",

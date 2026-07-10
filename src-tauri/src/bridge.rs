@@ -172,6 +172,10 @@ impl CliAiswBridge {
             owned.push("--state-mode".to_owned());
             owned.push(mode.clone());
         }
+        if let Some(backend) = &req.credential_backend {
+            owned.push("--credential-backend".to_owned());
+            owned.push(backend.clone());
+        }
         let args = owned.iter().map(String::as_str).collect::<Vec<_>>();
         command.args(&args);
         if let Some(home) = &self.aisw_home {
@@ -399,6 +403,9 @@ impl AiswBridge for CliAiswBridge {
         }
         if let Some(mode) = &req.state_mode {
             args.extend(["--state-mode", mode.as_str()]);
+        }
+        if let Some(backend) = &req.credential_backend {
+            args.extend(["--credential-backend", backend.as_str()]);
         }
 
         match req.import_mode {
@@ -834,6 +841,7 @@ printf '{"version":"0.3.7","cli_api_version":1,"json_schema_version":1,"progress
                 profile: "work".to_owned(),
                 label: None,
                 state_mode: None,
+                credential_backend: None,
                 import_mode: AddProfileMode::ApiKey {
                     value: "sk-ant-api03-secret".to_owned(),
                 },
@@ -867,6 +875,7 @@ printf '{"version":"0.3.7","cli_api_version":1,"json_schema_version":1,"progress
                 profile: "ci".to_owned(),
                 label: None,
                 state_mode: None,
+                credential_backend: None,
                 import_mode: AddProfileMode::FromEnv,
             })
             .await
@@ -874,6 +883,36 @@ printf '{"version":"0.3.7","cli_api_version":1,"json_schema_version":1,"progress
 
         assert_eq!(response["args"], "add codex ci --json --from-env");
         assert_eq!(response["command"], "add");
+    }
+
+    #[tokio::test]
+    async fn add_profile_forwards_explicit_credential_backend() {
+        let path = write_fake_aisw(
+            r#"#!/bin/sh
+if [ "$1" = "add" ]; then
+  printf '{"command":"add","args":"%s %s %s %s %s %s %s"}' "$1" "$2" "$3" "$4" "$5" "$6" "$7"
+  exit 0
+fi
+printf '{"version":"0.3.7","cli_api_version":1,"json_schema_version":1,"progress_schema_version":1}'
+"#,
+        );
+        let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
+        let response = bridge
+            .add_profile(AddProfileRequest {
+                tool: "claude".to_owned(),
+                profile: "work".to_owned(),
+                label: None,
+                state_mode: None,
+                credential_backend: Some("file".to_owned()),
+                import_mode: AddProfileMode::FromLive,
+            })
+            .await
+            .unwrap();
+
+        assert_eq!(
+            response["args"],
+            "add claude work --json --credential-backend file --from-live"
+        );
     }
 
     #[tokio::test]
@@ -899,6 +938,7 @@ printf '{"version":"0.3.7","cli_api_version":1,"json_schema_version":1,"progress
                     profile: "work".to_owned(),
                     label: None,
                     state_mode: Some("isolated".to_owned()),
+                    credential_backend: None,
                 },
                 |event| events.push(event),
             )
@@ -930,6 +970,7 @@ printf '{}'
                 profile: "work".to_owned(),
                 label: None,
                 state_mode: None,
+                credential_backend: None,
                 import_mode: AddProfileMode::ApiKey {
                     value: "sk-ant-api03-supersecret".to_owned(),
                 },
@@ -965,6 +1006,7 @@ printf '{}'
                     profile: "work".to_owned(),
                     label: None,
                     state_mode: None,
+                    credential_backend: None,
                 },
                 |_| {},
             )

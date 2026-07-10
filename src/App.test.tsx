@@ -1838,6 +1838,9 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Import mode"), {
       target: { value: "from_env" },
     });
+    fireEvent.change(screen.getByLabelText("Credential backend"), {
+      target: { value: "system-keyring" },
+    });
 
     expect(screen.getByText("OPENAI_API_KEY")).toBeInTheDocument();
     fireEvent.click(getProfilesSection().getByText("Add profile"));
@@ -1854,6 +1857,7 @@ describe("App", () => {
           profile: "ci",
           label: null,
           state_mode: "isolated",
+          credential_backend: "system-keyring",
           import_mode: {
             kind: "from_env",
           },
@@ -1897,6 +1901,9 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Import mode"), {
       target: { value: "api_key" },
     });
+    fireEvent.change(screen.getByLabelText("Credential backend"), {
+      target: { value: "file" },
+    });
 
     const apiKeyInput = screen.getByLabelText("API key") as HTMLInputElement;
     fireEvent.change(apiKeyInput, {
@@ -1918,6 +1925,7 @@ describe("App", () => {
           profile: "ops",
           label: null,
           state_mode: "isolated",
+          credential_backend: "file",
           import_mode: {
             kind: "api_key",
             value: "sk-live-secret",
@@ -4236,6 +4244,7 @@ describe("App", () => {
       expect(screen.getByText("Apply keyring repair")).toBeInTheDocument();
       expect(screen.getByText("Repair permissions")).toBeInTheDocument();
       expect(screen.getByText("Retry OAuth repair")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Use file-backed storage" })).toBeInTheDocument();
       expect(screen.getByText("Show keyring setup")).toBeInTheDocument();
     });
 
@@ -4275,6 +4284,14 @@ describe("App", () => {
       ).toBe(true);
     });
 
+    fireEvent.click(screen.getByRole("button", { name: "Use file-backed storage" }));
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Profiles" })).toBeInTheDocument();
+      expect(screen.getByLabelText("Import mode")).toHaveValue("from_live");
+      expect(screen.getByLabelText("Credential backend")).toHaveValue("file");
+    });
+
+    fireEvent.click(screen.getByText("Diagnostics"));
     fireEvent.click(screen.getByText("Show keyring setup"));
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();

@@ -25,12 +25,16 @@ export function ProfilesPanel({
   toolCapabilities,
   initialTool,
   initialExpandedProfile,
+  initialMode,
+  initialCredentialBackend,
 }: {
   snapshot: AppSnapshot;
   settings: DesktopSettings;
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
   initialTool?: string;
   initialExpandedProfile?: string | null;
+  initialMode?: "from_live" | "from_env" | "api_key" | "oauth";
+  initialCredentialBackend?: "file" | "system-keyring" | null;
 }) {
   const {
     addProfileMutation,
@@ -48,7 +52,12 @@ export function ProfilesPanel({
   );
   const [profile, setProfile] = useState("");
   const [label, setLabel] = useState("");
-  const [mode, setMode] = useState<"from_live" | "from_env" | "api_key" | "oauth">("from_live");
+  const [mode, setMode] = useState<"from_live" | "from_env" | "api_key" | "oauth">(
+    initialMode ?? "from_live",
+  );
+  const [credentialBackend, setCredentialBackend] = useState<"auto" | "file" | "system-keyring">(
+    initialCredentialBackend ?? "auto",
+  );
   const [stateMode, setStateMode] = useState("isolated");
   const [renameDrafts, setRenameDrafts] = useState<Record<string, string>>({});
   const [labelDrafts, setLabelDrafts] = useState<Record<string, string>>({});
@@ -77,6 +86,10 @@ export function ProfilesPanel({
     () => supportedStateModes(tool, toolCapabilities),
     [tool, toolCapabilities],
   );
+  const availableCredentialBackends = useMemo(
+    () => supportedCredentialBackends(tool),
+    [tool],
+  );
   const duplicateDraftName = profile.trim();
   const hasDuplicateProfileName =
     duplicateDraftName.length > 0 && normalizedProfileNames.has(duplicateDraftName.toLowerCase());
@@ -100,6 +113,25 @@ export function ProfilesPanel({
     }
     setTool(initialTool);
   }, [initialTool]);
+
+  useEffect(() => {
+    if (!initialMode) {
+      return;
+    }
+    setMode(initialMode);
+  }, [initialMode]);
+
+  useEffect(() => {
+    const next = initialCredentialBackend ?? "auto";
+    setCredentialBackend(next);
+  }, [initialCredentialBackend]);
+
+  useEffect(() => {
+    if (availableCredentialBackends.some((entry) => entry.value === credentialBackend)) {
+      return;
+    }
+    setCredentialBackend(availableCredentialBackends[0]?.value ?? "auto");
+  }, [availableCredentialBackends, credentialBackend]);
 
   useEffect(() => {
     setExpandedDetails(initialExpandedProfile ?? null);
@@ -139,6 +171,7 @@ export function ProfilesPanel({
           profile,
           label: label || null,
           stateMode: nextStateMode,
+          credentialBackend: resolveCredentialBackendRequest(credentialBackend),
         },
         {
           onSuccess: () => {
@@ -164,6 +197,7 @@ export function ProfilesPanel({
           profile,
           label: label || null,
           stateMode: availableStateModes.length ? stateMode : null,
+          credentialBackend: resolveCredentialBackendRequest(credentialBackend),
           importMode: { kind: "api_key", value: apiKey },
         })
         .then(() => {
@@ -184,6 +218,7 @@ export function ProfilesPanel({
       profile,
       label: label || null,
       stateMode: availableStateModes.length ? stateMode : null,
+      credentialBackend: resolveCredentialBackendRequest(credentialBackend),
       importMode,
     });
   }
@@ -230,6 +265,27 @@ export function ProfilesPanel({
               <option value="oauth">Guided OAuth capture</option>
             </select>
           </label>
+          <label>
+            Credential backend
+            <select
+              value={credentialBackend}
+              onChange={(event) =>
+                setCredentialBackend(event.target.value as typeof credentialBackend)
+              }
+              disabled={availableCredentialBackends.length === 1}
+            >
+              {availableCredentialBackends.map((entry) => (
+                <option key={entry.value} value={entry.value}>
+                  {entry.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {tool === "gemini" ? (
+            <p className="inline-note">
+              Gemini profiles are always stored with file-backed credentials.
+            </p>
+          ) : null}
           {mode === "api_key" ? (
             <label>
               API key
@@ -699,6 +755,23 @@ export function ProfilesPanel({
 
 function isSupportedTool(tool: string | undefined): tool is (typeof TOOLS)[number] {
   return Boolean(tool && TOOLS.includes(tool as (typeof TOOLS)[number]));
+}
+
+function supportedCredentialBackends(tool: (typeof TOOLS)[number]) {
+  if (tool === "gemini") {
+    return [{ value: "file" as const, label: "File-backed only" }];
+  }
+  return [
+    { value: "auto" as const, label: "Automatic" },
+    { value: "system-keyring" as const, label: "System keyring" },
+    { value: "file" as const, label: "File-backed" },
+  ];
+}
+
+function resolveCredentialBackendRequest(
+  backend: "auto" | "file" | "system-keyring",
+): string | null {
+  return backend === "auto" ? null : backend;
 }
 
 function effectiveLabel(

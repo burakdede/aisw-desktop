@@ -42,6 +42,8 @@ const DIAGNOSTICS_QUERY_KEYS = [
 type ProfilesRouteState = {
   tool?: string;
   expandedProfile?: string | null;
+  mode?: "from_live" | "from_env" | "api_key" | "oauth";
+  credentialBackend?: "file" | "system-keyring" | null;
 };
 
 type SettingsRouteState = {
@@ -245,6 +247,8 @@ export function App() {
               toolCapabilities={toolCapabilities}
               initialTool={profilesRouteState.tool}
               initialExpandedProfile={profilesRouteState.expandedProfile}
+              initialMode={profilesRouteState.mode}
+              initialCredentialBackend={profilesRouteState.credentialBackend}
             />
           ) : null}
           {activeSection === "contexts" ? (
@@ -260,6 +264,15 @@ export function App() {
               onOpenSettings={openSettings}
               onOpenProfiles={(tool, expandedProfile) => {
                 setProfilesRouteState({ tool, expandedProfile });
+                setActiveNav("profiles");
+              }}
+              onOpenProfileSetup={(options) => {
+                setProfilesRouteState({
+                  tool: options?.tool,
+                  expandedProfile: null,
+                  mode: options?.mode,
+                  credentialBackend: options?.credentialBackend ?? null,
+                });
                 setActiveNav("profiles");
               }}
             />

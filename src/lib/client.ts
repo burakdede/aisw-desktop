@@ -34,6 +34,7 @@ export interface AddProfileInput {
   profile: string;
   label?: string | null;
   stateMode?: string | null;
+  credentialBackend?: string | null;
   importMode:
     | { kind: "from_live" }
     | { kind: "from_env" }
@@ -45,6 +46,7 @@ export interface AddOAuthProfileInput {
   profile: string;
   label?: string | null;
   stateMode?: string | null;
+  credentialBackend?: string | null;
 }
 
 export interface UseProfileInput {
@@ -127,6 +129,7 @@ export async function addProfile(input: AddProfileInput): Promise<MutationRespon
         profile: input.profile,
         label: input.label ?? null,
         state_mode: input.stateMode ?? null,
+        credential_backend: input.credentialBackend ?? null,
         import_mode: input.importMode,
       },
     }),
@@ -143,6 +146,7 @@ export async function addProfileOAuth(
         profile: input.profile,
         label: input.label ?? null,
         state_mode: input.stateMode ?? null,
+        credential_backend: input.credentialBackend ?? null,
       },
     }),
   );
