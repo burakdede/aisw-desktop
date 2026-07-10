@@ -3396,10 +3396,14 @@ describe("App", () => {
       "noopener,noreferrer",
     );
     const doctorRunsBeforeRefresh = calls.filter((entry) => entry.command === "run_doctor").length;
+    const snapshotReadsBeforeRefresh = calls.filter((entry) => entry.command === "get_snapshot").length;
     fireEvent.click(within(missingToolCard).getByText("Refresh diagnostics"));
     await waitFor(() => {
       expect(calls.filter((entry) => entry.command === "run_doctor").length).toBeGreaterThan(
         doctorRunsBeforeRefresh,
+      );
+      expect(calls.filter((entry) => entry.command === "get_snapshot").length).toBeGreaterThan(
+        snapshotReadsBeforeRefresh,
       );
     });
 

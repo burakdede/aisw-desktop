@@ -106,11 +106,9 @@ export function DiagnosticsPanel({
           <button
             className="ghost-button"
             disabled={mutationLock.isBusy}
-            onClick={() => {
-              void doctor.refetch();
-              void verify.refetch();
-              void repair.refetch();
-            }}
+            onClick={() =>
+              void refreshDiagnostics(queryClient, doctor.refetch, verify.refetch, repair.refetch)
+            }
           >
             Refresh diagnostics
           </button>

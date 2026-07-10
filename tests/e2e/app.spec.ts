@@ -1077,6 +1077,9 @@ test("shows missing-tool guidance and opens the install guide from diagnostics",
   const doctorRunsBeforeRefresh = await page.evaluate(
     () => (window.__AISW_COMMAND_LOG__ ?? []).filter((entry) => entry.command === "run_doctor").length,
   );
+  const snapshotReadsBeforeRefresh = await page.evaluate(
+    () => (window.__AISW_COMMAND_LOG__ ?? []).filter((entry) => entry.command === "get_snapshot").length,
+  );
   await missingToolCard.getByRole("button", { name: "Refresh diagnostics" }).click();
   await expect
     .poll(
@@ -1086,6 +1089,14 @@ test("shows missing-tool guidance and opens the install guide from diagnostics",
         ),
     )
     .toBeGreaterThan(doctorRunsBeforeRefresh);
+  await expect
+    .poll(
+      async () =>
+        page.evaluate(
+          () => (window.__AISW_COMMAND_LOG__ ?? []).filter((entry) => entry.command === "get_snapshot").length,
+        ),
+    )
+    .toBeGreaterThan(snapshotReadsBeforeRefresh);
   await missingToolCard.getByRole("button", { name: "Open installation guide" }).click();
 
   await expect
