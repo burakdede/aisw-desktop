@@ -908,6 +908,73 @@ printf '{"version":"0.3.7","cli_api_version":1,"json_schema_version":1,"progress
     }
 
     #[tokio::test]
+    async fn add_profile_redacts_secrets_from_failure_stderr() {
+        let path = write_fake_aisw(
+            r#"#!/bin/sh
+if [ "$1" = "add" ]; then
+  printf 'key rejected for sk-ant-api03-supersecret\n' >&2
+  exit 1
+fi
+printf '{}'
+"#,
+        );
+        let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
+        let error = bridge
+            .add_profile(AddProfileRequest {
+                tool: "claude".to_owned(),
+                profile: "work".to_owned(),
+                label: None,
+                state_mode: None,
+                import_mode: AddProfileMode::ApiKey {
+                    value: "sk-ant-api03-supersecret".to_owned(),
+                },
+            })
+            .await
+            .expect_err("expected command failure");
+
+        let crate::errors::DesktopError::CommandFailed { message, .. } = error else {
+            panic!("expected command failure");
+        };
+
+        assert!(message.contains("[REDACTED]"));
+        assert!(!message.contains("sk-ant-api03-supersecret"));
+    }
+
+    #[tokio::test]
+    async fn add_profile_oauth_redacts_secrets_from_failure_stderr() {
+        let path = write_fake_aisw(
+            r#"#!/bin/sh
+if [ "$1" = "add" ]; then
+  printf '%s\n' '{"type":"started","seq":1,"command":"add","tool":"claude","profile":"work"}'
+  printf 'oauth failed for AIzaSecret123\n' >&2
+  exit 1
+fi
+printf '{}'
+"#,
+        );
+        let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
+        let error = bridge
+            .add_profile_oauth(
+                AddOAuthProfileRequest {
+                    tool: "claude".to_owned(),
+                    profile: "work".to_owned(),
+                    label: None,
+                    state_mode: None,
+                },
+                |_| {},
+            )
+            .await
+            .expect_err("expected command failure");
+
+        let crate::errors::DesktopError::CommandFailed { message, .. } = error else {
+            panic!("expected command failure");
+        };
+
+        assert!(message.contains("[REDACTED]"));
+        assert!(!message.contains("AIzaSecret123"));
+    }
+
+    #[tokio::test]
     async fn init_and_workspace_commands_use_machine_flags() {
         let path = write_fake_aisw(
             r#"#!/bin/sh
