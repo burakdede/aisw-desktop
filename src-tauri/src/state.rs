@@ -64,24 +64,35 @@ impl AppState {
             .map_err(ErrorPayload::from)
     }
 
+    pub async fn run_init(&self) -> DesktopResult<crate::models::InitReport> {
+        self.with_mutation_lock(|| async {
+            let settings = self.load_settings().await.map_err(ErrorPayload::from)?;
+            let bridge = self.bridge_from_settings(&settings);
+            bridge.init().await.map_err(ErrorPayload::from)
+        })
+        .await
+    }
+
     pub async fn mutate<F, Fut>(&self, command: &str, f: F) -> DesktopResult<MutationResponse>
     where
         F: FnOnce(Arc<dyn AiswBridge>) -> Fut,
         Fut: std::future::Future<Output = Result<serde_json::Value, DesktopError>>,
     {
-        let _guard = self.mutation_lock.lock().await;
-        let settings = self.load_settings().await.map_err(ErrorPayload::from)?;
-        let bridge = self.bridge_from_settings(&settings);
-        let raw = f(bridge.clone()).await.map_err(ErrorPayload::from)?;
-        let snapshot = self
-            .fetch_snapshot(&*bridge)
-            .await
-            .map_err(ErrorPayload::from)?;
-        Ok(MutationResponse {
-            command: command.to_owned(),
-            raw,
-            snapshot,
+        self.with_mutation_lock(|| async {
+            let settings = self.load_settings().await.map_err(ErrorPayload::from)?;
+            let bridge = self.bridge_from_settings(&settings);
+            let raw = f(bridge.clone()).await.map_err(ErrorPayload::from)?;
+            let snapshot = self
+                .fetch_snapshot(&*bridge)
+                .await
+                .map_err(ErrorPayload::from)?;
+            Ok(MutationResponse {
+                command: command.to_owned(),
+                raw,
+                snapshot,
+            })
         })
+        .await
     }
 
     pub async fn mutate_cli<F, Fut>(&self, command: &str, f: F) -> DesktopResult<MutationResponse>
@@ -89,58 +100,64 @@ impl AppState {
         F: FnOnce(CliAiswBridge) -> Fut,
         Fut: std::future::Future<Output = Result<serde_json::Value, DesktopError>>,
     {
-        let _guard = self.mutation_lock.lock().await;
-        let settings = self.load_settings().await.map_err(ErrorPayload::from)?;
-        let bridge = CliAiswBridge::new(
-            settings.runtime_kind.clone(),
-            settings.runtime_path.as_ref().map(PathBuf::from),
-            settings.aisw_home.as_ref().map(PathBuf::from),
-        );
-        let raw = f(bridge.clone()).await.map_err(ErrorPayload::from)?;
-        let snapshot = self
-            .fetch_snapshot(&bridge)
-            .await
-            .map_err(ErrorPayload::from)?;
-        Ok(MutationResponse {
-            command: command.to_owned(),
-            raw,
-            snapshot,
+        self.with_mutation_lock(|| async {
+            let settings = self.load_settings().await.map_err(ErrorPayload::from)?;
+            let bridge = CliAiswBridge::new(
+                settings.runtime_kind.clone(),
+                settings.runtime_path.as_ref().map(PathBuf::from),
+                settings.aisw_home.as_ref().map(PathBuf::from),
+            );
+            let raw = f(bridge.clone()).await.map_err(ErrorPayload::from)?;
+            let snapshot = self
+                .fetch_snapshot(&bridge)
+                .await
+                .map_err(ErrorPayload::from)?;
+            Ok(MutationResponse {
+                command: command.to_owned(),
+                raw,
+                snapshot,
+            })
         })
+        .await
     }
 
     pub async fn activate_profile_set(&self, name: &str) -> DesktopResult<MutationResponse> {
-        let _guard = self.mutation_lock.lock().await;
-        let settings = self.load_settings().await.map_err(ErrorPayload::from)?;
-        let bridge = self.bridge_from_settings(&settings);
-        let set = settings
-            .profile_sets
-            .iter()
-            .find(|entry| entry.name == name)
-            .cloned()
-            .ok_or_else(|| ErrorPayload {
-                kind: GuiErrorKind::ContextMissing,
-                message: format!("Profile set {name} no longer exists."),
-                remediation: Some(
-                    "Refresh settings or recreate the profile set before trying again."
-                        .to_owned(),
-                ),
-            })?;
+        self.with_mutation_lock(|| async {
+            let settings = self.load_settings().await.map_err(ErrorPayload::from)?;
+            let bridge = self.bridge_from_settings(&settings);
+            let set = settings
+                .profile_sets
+                .iter()
+                .find(|entry| entry.name == name)
+                .cloned()
+                .ok_or_else(|| ErrorPayload {
+                    kind: GuiErrorKind::ContextMissing,
+                    message: format!("Profile set {name} no longer exists."),
+                    remediation: Some(
+                        "Refresh settings or recreate the profile set before trying again."
+                            .to_owned(),
+                    ),
+                })?;
 
-        let contexts = bridge.list_contexts().await.unwrap_or_default();
-        let current_snapshot = self
-            .fetch_snapshot(&*bridge)
-            .await
-            .map_err(ErrorPayload::from)?;
-        let raw = activate_profile_set_on_bridge(&*bridge, &set, &contexts, &current_snapshot).await?;
-        let snapshot = self
-            .fetch_snapshot(&*bridge)
-            .await
-            .map_err(ErrorPayload::from)?;
-        Ok(MutationResponse {
-            command: "activate_profile_set".to_owned(),
-            raw,
-            snapshot,
+            let contexts = bridge.list_contexts().await.unwrap_or_default();
+            let current_snapshot = self
+                .fetch_snapshot(&*bridge)
+                .await
+                .map_err(ErrorPayload::from)?;
+            let raw =
+                activate_profile_set_on_bridge(&*bridge, &set, &contexts, &current_snapshot)
+                    .await?;
+            let snapshot = self
+                .fetch_snapshot(&*bridge)
+                .await
+                .map_err(ErrorPayload::from)?;
+            Ok(MutationResponse {
+                command: "activate_profile_set".to_owned(),
+                raw,
+                snapshot,
+            })
         })
+        .await
     }
 
     fn bridge_from_settings(&self, settings: &DesktopSettings) -> Arc<dyn AiswBridge> {
@@ -209,6 +226,15 @@ impl AppState {
             workspace_status: bridge.workspace_status().await.ok(),
             project_bindings: bridge.project_bindings().await.ok(),
         })
+    }
+
+    async fn with_mutation_lock<T, F, Fut>(&self, f: F) -> DesktopResult<T>
+    where
+        F: FnOnce() -> Fut,
+        Fut: std::future::Future<Output = DesktopResult<T>>,
+    {
+        let _guard = self.mutation_lock.lock().await;
+        f().await
     }
 }
 
@@ -362,7 +388,10 @@ pub(crate) fn preferred_tool_state_mode(
 mod tests {
     use super::{preferred_global_state_mode, preferred_tool_state_mode};
     use crate::models::{AppSnapshot, ToolStatus};
+    use crate::settings::SettingsStore;
     use std::collections::HashMap;
+    use std::time::{Duration, SystemTime, UNIX_EPOCH};
+    use tokio::sync::{mpsc, oneshot};
 
     fn status(tool: &str, state_mode: Option<&str>) -> ToolStatus {
         ToolStatus {
@@ -416,5 +445,61 @@ mod tests {
         );
         assert_eq!(preferred_tool_state_mode("codex", Some(&snapshot)).as_deref(), Some("isolated"));
         assert_eq!(preferred_tool_state_mode("gemini", Some(&snapshot)), None);
+    }
+
+    #[tokio::test]
+    async fn mutation_lock_serializes_concurrent_operations() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or(Duration::from_secs(0))
+            .as_nanos();
+        let state = super::AppState::new(SettingsStore::new(
+            std::env::temp_dir().join(format!("aisw-desktop-state-test-{unique}")),
+        ));
+        let (events_tx, mut events_rx) = mpsc::unbounded_channel::<&'static str>();
+        let (release_first_tx, release_first_rx) = oneshot::channel::<()>();
+
+        let first = {
+            let state = state.clone();
+            let events_tx = events_tx.clone();
+            tokio::spawn(async move {
+                state
+                    .with_mutation_lock(|| async move {
+                        events_tx.send("first-entered").unwrap();
+                        let _ = release_first_rx.await;
+                        events_tx.send("first-exiting").unwrap();
+                        Ok::<(), crate::errors::ErrorPayload>(())
+                    })
+                    .await
+                    .unwrap();
+            })
+        };
+
+        assert_eq!(events_rx.recv().await, Some("first-entered"));
+
+        let second = {
+            let state = state.clone();
+            let events_tx = events_tx.clone();
+            tokio::spawn(async move {
+                state
+                    .with_mutation_lock(|| async move {
+                        events_tx.send("second-entered").unwrap();
+                        Ok::<(), crate::errors::ErrorPayload>(())
+                    })
+                    .await
+                    .unwrap();
+            })
+        };
+
+        tokio::task::yield_now().await;
+        tokio::task::yield_now().await;
+        assert!(events_rx.try_recv().is_err());
+
+        let _ = release_first_tx.send(());
+        assert_eq!(events_rx.recv().await, Some("first-exiting"));
+        assert_eq!(events_rx.recv().await, Some("second-entered"));
+
+        first.await.unwrap();
+        second.await.unwrap();
     }
 }

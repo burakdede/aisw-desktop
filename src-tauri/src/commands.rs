@@ -311,11 +311,7 @@ pub async fn run_init(
     app: tauri::AppHandle,
     state: tauri::State<'_, AppState>,
 ) -> DesktopResult<InitReport> {
-    let result = make_bridge(&state)
-        .await?
-        .init()
-        .await
-        .map_err(ErrorPayload::from)?;
+    let result = state.run_init().await?;
     let _ = tray::refresh_tray(&app, state.inner().clone()).await;
     Ok(result)
 }
