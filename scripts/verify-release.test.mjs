@@ -109,6 +109,11 @@ npm run test:e2e
 npm run verify:release
 cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
+## Platform signing flow
+APPLE_SIGNING_IDENTITY
+Confirm notarization completed
+Verify the generated installer is code signed
+Validate the generated \`.deb\`, \`.rpm\`, and AppImage artifacts
 ## Release checklist
 Launch the packaged app in \`Bundled\` mode
 Switch a profile in the packaged app
@@ -148,6 +153,11 @@ npm run test:e2e
 npm run verify:release
 cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
+## Platform signing flow
+APPLE_SIGNING_IDENTITY
+Confirm notarization completed
+Verify the generated installer is code signed
+Validate the generated \`.deb\`, \`.rpm\`, and AppImage artifacts
 ## Release checklist
 Launch the packaged app in \`Bundled\` mode
 Switch a profile in the packaged app
@@ -245,6 +255,11 @@ npm run test:e2e
 npm run verify:release
 cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
+## Platform signing flow
+APPLE_SIGNING_IDENTITY
+Confirm notarization completed
+Verify the generated installer is code signed
+Validate the generated \`.deb\`, \`.rpm\`, and AppImage artifacts
 `,
     });
     const result = verifyReleaseContract(root);
@@ -252,6 +267,33 @@ cargo check --manifest-path src-tauri/Cargo.toml
     expect(result.checks).toContainEqual(
       expect.objectContaining({
         label: "runbook includes a release checklist",
+        ok: false,
+      }),
+    );
+  });
+
+  it("fails when the runbook drops repeatable signing guidance", () => {
+    const root = createReleaseFixture({
+      runbook: `
+npm run prepare:sidecar -- /absolute/path/to/aisw
+npm run tauri:build
+npm test
+npm run build
+npm run test:e2e
+npm run verify:release
+cargo test --manifest-path src-tauri/Cargo.toml
+cargo check --manifest-path src-tauri/Cargo.toml
+## Release checklist
+Launch the packaged app in \`Bundled\` mode
+Switch a profile in the packaged app
+Complete platform signing checks
+`,
+    });
+    const result = verifyReleaseContract(root);
+    expect(result.ok).toBe(false);
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        label: "runbook documents repeatable platform signing flows",
         ok: false,
       }),
     );

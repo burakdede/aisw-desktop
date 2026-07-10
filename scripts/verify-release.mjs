@@ -62,6 +62,15 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         runbook.includes("Complete platform signing checks"),
     },
     {
+      label: "runbook documents repeatable platform signing flows",
+      ok:
+        runbook.includes("## Platform signing flow") &&
+        runbook.includes("APPLE_SIGNING_IDENTITY") &&
+        runbook.includes("Confirm notarization completed") &&
+        runbook.includes("Verify the generated installer is code signed") &&
+        runbook.includes("Validate the generated `.deb`, `.rpm`, and AppImage artifacts"),
+    },
+    {
       label: "CI workflow enforces frontend verification matrix",
       ok:
         ciWorkflow.includes("npm test") &&

@@ -68,6 +68,30 @@ npm run tauri:build
 - Windows: sign the installer to reduce SmartScreen friction.
 - Linux: validate generated `.deb`, `.rpm`, and AppImage artifacts on a clean machine before release.
 
+## Platform signing flow
+
+### macOS
+
+1. Export signing inputs before running `npm run tauri:build`:
+   `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`, `TAURI_SIGNING_PRIVATE_KEY`, and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
+2. Build with the target-specific sidecar staged:
+   `npm run tauri:build`
+3. Confirm the build produced a signed `.app`, a signed `.dmg`, and an updater archive plus `.sig`.
+4. Confirm notarization completed and the app launches without Gatekeeper warnings on a clean macOS machine.
+
+### Windows
+
+1. Export `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
+2. Build the Windows target after staging the matching sidecar.
+3. Verify the generated installer is code signed.
+4. Install on a clean Windows machine and confirm SmartScreen reputation is the only remaining trust variable.
+
+### Linux
+
+1. Build the Linux target after staging the matching sidecar.
+2. Validate the generated `.deb`, `.rpm`, and AppImage artifacts on a clean machine or container.
+3. Confirm the packaged app resolves the bundled `aisw` sidecar in `Bundled` mode.
+
 ## Release checklist
 
 - Stage the correct `aisw` sidecar for the target with `npm run prepare:sidecar`.
