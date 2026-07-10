@@ -17,6 +17,8 @@ type ScenarioName =
   | "tokenWarnings"
   | "failedBulkSwitch"
   | "trayRefresh"
+  | "trayWorkspaceRefresh"
+  | "trayBackupRefresh"
   | "trayDiagnosticsRefresh"
   | "matchingContextSet"
   | "diagnosticFixes"
@@ -486,6 +488,79 @@ test("refreshes overview state after a successful tray profile switch", async ({
   const claudeCard = page.locator(".tool-card").filter({ hasText: "Claude" });
   await expect(claudeCard.getByRole("heading", { name: "Personal" })).toBeVisible();
   await expect(claudeCard.getByText("Last result: Switched claude to personal.")).toBeVisible();
+});
+
+test("refreshes workspace status and bindings after a successful tray context switch", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "trayWorkspaceRefresh");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Workspaces" }).click();
+
+  await expect(page.getByText("Workspace mismatch")).toBeVisible();
+  await expect(page.getByText("Guard mode: warn")).toBeVisible();
+
+  await page.evaluate(() => {
+    (
+      window as typeof window & {
+        __AISW_DESKTOP_SCENARIO_STATE__?: { trayContextApplied?: boolean };
+      }
+    ).__AISW_DESKTOP_SCENARIO_STATE__!.trayContextApplied = true;
+    const handlers = (
+      window as typeof window & {
+        __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+      }
+    ).__AISW_DESKTOP_EVENT_HANDLERS__;
+    handlers?.["tray-command-result"]?.({
+      scope: "global",
+      id: "context",
+      label: "Switch context",
+      status: "success",
+      message: "Activated context client-acme.",
+    });
+  });
+
+  await expect(page.getByText("Current context: client-acme")).toBeVisible();
+  await expect(page.getByText("Expected context: client-acme")).toBeVisible();
+  await expect(page.getByText("Guard mode: strict")).toBeVisible();
+  await expect(page.getByText("Workspace mismatch")).not.toBeVisible();
+});
+
+test("refreshes the backup catalog after a successful tray profile switch", async ({ page }) => {
+  await installDesktopMock(page, "trayBackupRefresh");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Backups" }).click();
+
+  await expect(page.getByText("No backups found.")).toBeVisible();
+
+  await page.evaluate(() => {
+    (
+      window as typeof window & {
+        __AISW_DESKTOP_SCENARIO_STATE__?: { trayBackupApplied?: boolean };
+      }
+    ).__AISW_DESKTOP_SCENARIO_STATE__!.trayBackupApplied = true;
+    const handlers = (
+      window as typeof window & {
+        __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+      }
+    ).__AISW_DESKTOP_EVENT_HANDLERS__;
+    handlers?.["tray-command-result"]?.({
+      scope: "tool",
+      tool: "claude",
+      label: "Switch profile",
+      status: "success",
+      message: "Switched claude to work.",
+    });
+  });
+
+  await expect(page.getByText("Claude backup · 20260326T120000Z-claude-work")).toBeVisible();
+  await expect(
+    page.getByText(
+      "Affects claude / work. Restore files only unless you explicitly re-activate this profile.",
+    ),
+  ).toBeVisible();
 });
 
 test("records tray context failures and keeps the remediation visible in overview", async ({ page }) => {
@@ -2096,6 +2171,84 @@ async function installDesktopMock(
             },
           },
         },
+        trayWorkspaceRefresh: {
+          settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "api_key",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+              codex: {
+                active: "work",
+                profiles: [{ name: "work", auth: "api_key", label: "Work" }],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
+        trayBackupRefresh: {
+          settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
         trayDiagnosticsRefresh: {
           settings: bootstrapSettings,
           snapshot: {
@@ -2981,6 +3134,11 @@ async function installDesktopMock(
         initRuns: 0,
         snapshotReads: 0,
         doctorRuns: 0,
+        workspaceStatusReads: 0,
+        projectBindingsReads: 0,
+        backupReads: 0,
+        trayContextApplied: false,
+        trayBackupApplied: false,
       };
       window.__AISW_DESKTOP_SCENARIO_STATE__ = state;
 
@@ -2990,17 +3148,21 @@ async function installDesktopMock(
         current_context:
           activeScenario === "switching" ||
           activeScenario === "workspaceContext" ||
+          activeScenario === "trayWorkspaceRefresh" ||
           activeScenario === "diagnosticFixes"
             ? "work"
             : "none",
         guard_mode: "warn",
         default_context:
-          activeScenario === "switching" || activeScenario === "diagnosticFixes"
+          activeScenario === "switching" ||
+          activeScenario === "trayWorkspaceRefresh" ||
+          activeScenario === "diagnosticFixes"
             ? "work"
             : "none",
         items:
           activeScenario === "switching" ||
           activeScenario === "workspaceContext" ||
+          activeScenario === "trayWorkspaceRefresh" ||
           activeScenario === "diagnosticFixes"
             ? [{ scope: "path", path: "/code/acme", context: "client-acme" }]
             : [],
@@ -3039,6 +3201,10 @@ async function installDesktopMock(
       };
 
       const workspaceStatusResult = () => {
+        state.workspaceStatusReads += 1;
+        if (activeScenario === "trayWorkspaceRefresh" && state.trayContextApplied) {
+          stateWorkspace.current_context = "client-acme";
+        }
         const matchedBinding = findMatchedBinding();
         if (!matchedBinding) {
           return {
@@ -3057,13 +3223,20 @@ async function installDesktopMock(
         };
       };
 
-      const projectBindingsResult = () => ({
-        user_bindings: {
-          guard_mode: stateWorkspace.guard_mode,
-          default_context: stateWorkspace.default_context,
-          items: stateWorkspace.items.map((binding) => cloneBinding(binding)),
-        },
-      });
+      const projectBindingsResult = () => {
+        state.projectBindingsReads += 1;
+        if (activeScenario === "trayWorkspaceRefresh" && state.trayContextApplied) {
+          stateWorkspace.guard_mode = "strict";
+          stateWorkspace.default_context = "client-acme";
+        }
+        return {
+          user_bindings: {
+            guard_mode: stateWorkspace.guard_mode,
+            default_context: stateWorkspace.default_context,
+            items: stateWorkspace.items.map((binding) => cloneBinding(binding)),
+          },
+        };
+      };
 
       const cloneSnapshot = () => ({
         ...deepClone(state.snapshot),
@@ -3382,6 +3555,18 @@ async function installDesktopMock(
           return { result: projectBindingsResult() };
         }
         if (command === "list_backups") {
+          state.backupReads += 1;
+          if (activeScenario === "trayBackupRefresh") {
+            return state.trayBackupApplied
+              ? [
+                  {
+                    backup_id: "20260326T120000Z-claude-work",
+                    tool: "claude",
+                    profile: "claude/work",
+                  },
+                ]
+              : [];
+          }
           if (activeScenario === "backupCatalog") {
             return [
               {
