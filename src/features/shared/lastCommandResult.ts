@@ -8,6 +8,7 @@ export type LastCommandResult = {
   label: string;
   status: "success" | "error";
   message: string;
+  kind?: string;
   remediation?: string;
   at: number;
 };

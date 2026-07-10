@@ -20,6 +20,7 @@ export type TrayCommandResultEvent =
       label: string;
       status: "success" | "error";
       message: string;
+      kind?: string;
       remediation?: string;
     }
   | {
@@ -28,6 +29,7 @@ export type TrayCommandResultEvent =
       label: string;
       status: "success" | "error";
       message: string;
+      kind?: string;
       remediation?: string;
     };
 

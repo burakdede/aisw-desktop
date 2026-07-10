@@ -36,6 +36,7 @@ pub enum GuiErrorKind {
     OAuthTimeout,
     ConfigLockTimeout,
     InvalidStateMode,
+    NonInteractiveMode,
     CommandContractError,
     Unknown,
 }

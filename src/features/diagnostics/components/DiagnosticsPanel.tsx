@@ -637,6 +637,7 @@ function buildRecentFailureCards(
     key: string;
     title: string;
     message: string;
+    kind?: string;
     remediation?: string;
     at: number;
     profileTarget?: { tool: string; profile: string | null };
@@ -652,8 +653,14 @@ function buildRecentFailureCards(
       null;
     failures.push({
       key: `tool:${tool}`,
-      title: `${titleCase(tool)} · ${result.label}`,
+      title: recentFailureTitle({
+        kind: result.kind,
+        scope: "tool",
+        tool,
+        label: result.label,
+      }),
       message: result.message,
+      kind: result.kind,
       remediation: result.remediation,
       at: result.at,
       profileTarget: { tool, profile: activeProfile },
@@ -666,14 +673,52 @@ function buildRecentFailureCards(
     }
     failures.push({
       key: `global:${id}`,
-      title: result.label,
+      title: recentFailureTitle({
+        kind: result.kind,
+        scope: "global",
+        id,
+        label: result.label,
+      }),
       message: result.message,
+      kind: result.kind,
       remediation: result.remediation,
       at: result.at,
     });
   }
 
   return failures.sort((left, right) => right.at - left.at);
+}
+
+function recentFailureTitle(input: {
+  kind?: string;
+  scope: "tool" | "global";
+  tool?: string;
+  id?: string;
+  label: string;
+}) {
+  switch (input.kind) {
+    case "ToolMissing":
+      return `${titleCase(input.tool ?? "Tool")} CLI missing`;
+    case "ProfileMissing":
+      return `${titleCase(input.tool ?? "Profile")} profile missing`;
+    case "KeyringUnavailable":
+      return `${titleCase(input.tool ?? "Credential")} keyring unavailable`;
+    case "PermissionDenied":
+      return "Permission issue";
+    case "OAuthTimeout":
+      return "OAuth timeout";
+    case "ConfigLockTimeout":
+      return "Config lock timeout";
+    case "NonInteractiveMode":
+      return "Non-interactive mode failure";
+    case "InvalidStateMode":
+      return input.tool === "gemini" ? "Gemini shared-mode failure" : "Unsupported state mode";
+    default:
+      if (input.scope === "global" && input.id === "backup") {
+        return "Backup restore needs attention";
+      }
+      return input.tool ? `${titleCase(input.tool)} · ${input.label}` : input.label;
+  }
 }
 
 function quickFixKey(fix: QuickFixCard) {

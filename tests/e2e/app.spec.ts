@@ -12,6 +12,7 @@ type ScenarioName =
   | "profiles"
   | "backupCatalog"
   | "staleProfile"
+  | "nonInteractiveProfile"
   | "profileCommandError"
   | "tokenWarnings"
   | "failedBulkSwitch"
@@ -1157,6 +1158,25 @@ test("shows missing-profile remediation when a stale profile is re-applied", asy
   ).toBeVisible();
 });
 
+test("classifies non-interactive failures in diagnostics", async ({ page }) => {
+  await installDesktopMock(page, "nonInteractiveProfile");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+  await page.getByLabel("Profile name").fill("ops");
+  await page.getByRole("button", { name: "Add profile" }).click();
+
+  await expect(page.getByText("interactive login required")).toBeVisible();
+
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+  await expect(page.getByText("Non-interactive mode failure")).toBeVisible();
+  await expect(
+    page.getByText(
+      "Rerun this flow in an interactive session or use a supported non-interactive import method.",
+    ),
+  ).toBeVisible();
+});
+
 test("surfaces recent command failures in diagnostics", async ({ page }) => {
   await installDesktopMock(page, "staleProfile");
 
@@ -1171,7 +1191,7 @@ test("surfaces recent command failures in diagnostics", async ({ page }) => {
 
   await page.getByRole("button", { name: "Diagnostics" }).click();
 
-  const failureCard = page.locator("article").filter({ hasText: "Claude · Switch profile" });
+  const failureCard = page.locator("article").filter({ hasText: "Claude profile missing" });
   await expect(failureCard).toBeVisible();
   await expect(failureCard.getByText("profile work no longer exists")).toBeVisible();
   await expect(
@@ -2303,6 +2323,37 @@ async function installDesktopMock(
             },
           },
         },
+        nonInteractiveProfile: {
+          settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
         profileCommandError: {
           settings: bootstrapSettings,
           snapshot: {
@@ -3121,6 +3172,14 @@ async function installDesktopMock(
           };
         }
         if (command === "add_profile") {
+          if (activeScenario === "nonInteractiveProfile") {
+            throw {
+              kind: "NonInteractiveMode",
+              message: "interactive login required",
+              remediation:
+                "Rerun this flow in an interactive session or use a supported non-interactive import method.",
+            };
+          }
           const request = args.request;
           if (activeScenario === "profileCommandError") {
             throw {

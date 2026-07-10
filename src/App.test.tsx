@@ -1200,6 +1200,68 @@ describe("App", () => {
     });
   });
 
+  it("classifies non-interactive failures in diagnostics", async () => {
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "add_profile") {
+        throw {
+          kind: "NonInteractiveMode",
+          message: "interactive login required",
+          remediation:
+            "Rerun this flow in an interactive session or use a supported non-interactive import method.",
+        };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          export_diagnostic_bundle: {
+            path: "/tmp/aisw-desktop/aisw-desktop-diagnostics-123.json",
+            filename: "aisw-desktop-diagnostics-123.json",
+            generated_at: "unix:123",
+          },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+          get_shell_guidance: {
+            detected_shell: "zsh",
+            capabilities: [],
+            note: "Without the shell hook, aisw use still writes live credential files.",
+            manual_apply_examples: [],
+            variants: [],
+          },
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Profiles"));
+    fireEvent.change(screen.getByLabelText("Profile name"), {
+      target: { value: "ops" },
+    });
+    fireEvent.click(getProfilesSection().getByText("Add profile"));
+
+    await waitFor(() => {
+      expect(screen.getByText(/interactive login required/)).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("Diagnostics"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Non-interactive mode failure")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Rerun this flow in an interactive session or use a supported non-interactive import method.",
+        ),
+      ).toBeInTheDocument();
+    });
+  });
+
   it("surfaces recent command failures in diagnostics", async () => {
     window.__AISW_DESKTOP_MOCK__ = async (command) => {
       if (command === "use_profile") {
@@ -1241,7 +1303,7 @@ describe("App", () => {
 
     let failureCard: HTMLElement;
     await waitFor(() => {
-      failureCard = screen.getByText("Claude · Switch profile").closest("article") as HTMLElement;
+      failureCard = screen.getByText("Config lock timeout").closest("article") as HTMLElement;
       expect(failureCard).toBeInTheDocument();
       expect(within(failureCard).getByText("config lock is busy")).toBeInTheDocument();
       expect(

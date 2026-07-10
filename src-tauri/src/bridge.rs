@@ -677,6 +677,8 @@ fn map_command_failure(command: &str, stderr: &str) -> DesktopError {
         GuiErrorKind::PermissionDenied
     } else if lower.contains("timeout") {
         GuiErrorKind::OAuthTimeout
+    } else if lower.contains("non-interactive") || lower.contains("interactive login required") {
+        GuiErrorKind::NonInteractiveMode
     } else if lower.contains("lock") {
         GuiErrorKind::ConfigLockTimeout
     } else if lower.contains("state-mode") || lower.contains("invalid state mode") {
@@ -718,6 +720,8 @@ fn map_machine_failure(command: &str, value: &serde_json::Value) -> Option<Deskt
         GuiErrorKind::PermissionDenied
     } else if lower.contains("timeout") {
         GuiErrorKind::OAuthTimeout
+    } else if lower.contains("non_interactive") || lower.contains("non-interactive") {
+        GuiErrorKind::NonInteractiveMode
     } else if lower.contains("lock") {
         GuiErrorKind::ConfigLockTimeout
     } else if lower.contains("state_mode") || lower.contains("invalid_state_mode") {
@@ -770,6 +774,10 @@ fn remediation_for_kind(kind: &GuiErrorKind) -> Option<String> {
         ),
         GuiErrorKind::OAuthTimeout => Some(
             "Retry the guided OAuth flow and complete the upstream login before the timeout expires."
+                .to_owned(),
+        ),
+        GuiErrorKind::NonInteractiveMode => Some(
+            "Rerun this flow in an interactive session or use a supported non-interactive import method."
                 .to_owned(),
         ),
         GuiErrorKind::ConfigLockTimeout => Some(
@@ -1039,6 +1047,26 @@ printf '{}'
         assert_eq!(
             remediation.as_deref(),
             remediation_for_kind(&GuiErrorKind::ProfileMissing).as_deref()
+        );
+    }
+
+    #[test]
+    fn command_failures_classify_non_interactive_mode() {
+        let error =
+            map_command_failure("add_profile", "interactive login required in non-interactive mode");
+        let crate::errors::DesktopError::CommandFailed {
+            kind,
+            remediation,
+            ..
+        } = error
+        else {
+            panic!("expected command failure");
+        };
+
+        assert!(matches!(kind, GuiErrorKind::NonInteractiveMode));
+        assert_eq!(
+            remediation.as_deref(),
+            remediation_for_kind(&GuiErrorKind::NonInteractiveMode).as_deref()
         );
     }
 

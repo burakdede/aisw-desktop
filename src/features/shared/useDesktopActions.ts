@@ -83,6 +83,7 @@ export function useDesktopActions() {
           label: "Add profile",
           status: "error",
           message: resolved.message,
+          kind: resolved instanceof DesktopCommandError ? resolved.kind : undefined,
           remediation:
             resolved instanceof DesktopCommandError ? resolved.remediation : undefined,
         },
@@ -120,6 +121,7 @@ export function useDesktopActions() {
             label,
             status: "error",
             message: resolved.message,
+            kind: resolved instanceof DesktopCommandError ? resolved.kind : undefined,
             remediation:
               resolved instanceof DesktopCommandError ? resolved.remediation : undefined,
           });
@@ -162,6 +164,7 @@ export function useDesktopActions() {
           label,
           status: "error",
           message: resolved.message,
+          kind: resolved instanceof DesktopCommandError ? resolved.kind : undefined,
           remediation: resolved instanceof DesktopCommandError ? resolved.remediation : undefined,
         },
       );
@@ -294,6 +297,7 @@ export function useDesktopActions() {
               label: "Run setup",
               status: "error",
               message: resolved.message,
+              kind: resolved instanceof DesktopCommandError ? resolved.kind : undefined,
               remediation:
                 resolved instanceof DesktopCommandError ? resolved.remediation : undefined,
             },

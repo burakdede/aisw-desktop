@@ -81,6 +81,7 @@ export function App() {
             label: payload.label,
             status: payload.status,
             message: payload.message,
+            kind: "kind" in payload && typeof payload.kind === "string" ? payload.kind : undefined,
             remediation: payload.remediation,
           },
         );
@@ -91,6 +92,7 @@ export function App() {
             label: payload.label,
             status: payload.status,
             message: payload.message,
+            kind: "kind" in payload && typeof payload.kind === "string" ? payload.kind : undefined,
             remediation: payload.remediation,
           },
         );
