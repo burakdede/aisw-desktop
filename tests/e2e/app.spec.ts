@@ -984,6 +984,7 @@ test("shows runtime detection and shell guidance in settings", async ({ page }) 
     settingsSection.getByText("Bundled aisw: /Applications/AISW.app/Contents/Resources/aisw"),
   ).toBeVisible();
   await expect(settingsSection.getByText("System aisw: /opt/homebrew/bin/aisw")).toBeVisible();
+  await expect(settingsSection.getByText("Selected update channel: Stable")).toBeVisible();
   await expect(settingsSection.getByText("Selected backend: Bundled")).toBeVisible();
   await expect(settingsSection.getByText("Runtime version: 0.3.7")).toBeVisible();
   await expect(settingsSection.getByText("CLI API 1 · JSON schema 1 · Progress schema 1")).toBeVisible();

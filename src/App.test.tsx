@@ -4743,6 +4743,9 @@ describe("App", () => {
       ).toBeGreaterThan(0);
       expect(screen.getAllByText("System aisw: /opt/homebrew/bin/aisw").length).toBeGreaterThan(0);
       expect(
+        screen.getByText((_, element) => element?.textContent?.trim() === "Selected update channel: Stable"),
+      ).toBeInTheDocument();
+      expect(
         screen.getByText((_, element) => element?.textContent?.trim() === "Selected backend: Bundled"),
       ).toBeInTheDocument();
       expect(screen.getByText("Runtime version: 0.3.7")).toBeInTheDocument();

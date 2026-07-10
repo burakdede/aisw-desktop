@@ -159,6 +159,9 @@ export function SettingsPanel({
               </p>
             ) : null}
             <p className="inline-note">
+              Selected update channel: <strong>{titleCase(updateChannel)}</strong>
+            </p>
+            <p className="inline-note">
               Selected backend: <strong>{titleCase(runtimeKind)}</strong>
             </p>
             <p className="inline-note">
