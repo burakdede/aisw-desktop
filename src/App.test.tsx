@@ -1257,10 +1257,66 @@ describe("App", () => {
       expect(screen.getByText("Copied backup id 20260326T094012Z-codex-personal.")).toBeInTheDocument();
     });
     fireEvent.click(screen.getAllByText("Restore and activate")[0]);
+    expect(
+      screen.getByText(
+        "Confirm before restoring and activating codex / personal. This replays the backup and switches the live profile again.",
+      ),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getAllByText("Confirm restore and activate")[0]);
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "restore_backup")).toBe(true);
       expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
+    });
+  });
+
+  it("warns before restoring backup files without activating the profile", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "restore_backup") {
+        return { command, snapshot: bootstrap.snapshot };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [
+            {
+              backup_id: "20260326T094012Z-codex-personal",
+              tool: "codex",
+              profile: "codex/personal",
+            },
+          ],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Backups")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Backups"));
+    await waitFor(() => expect(screen.getByText("Restore files only")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText("Restore files only"));
+    expect(
+      screen.getByText(
+        "Confirm before restoring codex / personal. This replays the saved files only.",
+      ),
+    ).toBeInTheDocument();
+    expect(calls.some((entry) => entry.command === "restore_backup")).toBe(false);
+
+    fireEvent.click(screen.getByText("Confirm restore files"));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "restore_backup")).toBe(true);
+      expect(calls.some((entry) => entry.command === "use_profile")).toBe(false);
     });
   });
 

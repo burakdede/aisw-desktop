@@ -371,6 +371,12 @@ test("warns before backup restore and re-activates the restored profile", async 
   await expect(page.getByText("Affects codex / work. Restore files only unless you explicitly re-activate this profile.")).toBeVisible();
 
   await page.getByRole("button", { name: "Restore and activate" }).click();
+  await expect(
+    page.getByText(
+      "Confirm before restoring and activating codex / work. This replays the backup and switches the live profile again.",
+    ),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Confirm restore and activate" }).click();
 
   await page.getByRole("button", { name: "Overview" }).click();
   await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "Work" })).toBeVisible();

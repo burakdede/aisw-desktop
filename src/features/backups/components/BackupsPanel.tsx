@@ -19,6 +19,10 @@ export function BackupsPanel({
   const backups = useQuery({ queryKey: ["backups"], queryFn: listBackups });
   const { restoreBackupMutation, useProfileMutation, mutationLock } = useDesktopActions();
   const [copyMessage, setCopyMessage] = useState("");
+  const [pendingRestore, setPendingRestore] = useState<{
+    backupId: string;
+    mode: "files" | "activate";
+  } | null>(null);
   const sortedBackups = useMemo(
     () =>
       [...(backups.data ?? [])].sort((left, right) => right.backup_id.localeCompare(left.backup_id)),
@@ -32,6 +36,22 @@ export function BackupsPanel({
     }
     await navigator.clipboard.writeText(backupId);
     setCopyMessage(`Copied backup id ${backupId}.`);
+  }
+
+  function confirmRestore(entry: { backup_id: string; tool: string; profile: string }, mode: "files" | "activate") {
+    const target = resolveBackupTarget(entry.tool, entry.profile);
+    restoreBackupMutation.mutate(entry.backup_id, {
+      onSuccess: () => {
+        setPendingRestore(null);
+        if (mode === "activate") {
+          useProfileMutation.mutate({
+            tool: target.tool,
+            profile: target.profile,
+            stateMode: target.tool === "gemini" ? null : "isolated",
+          });
+        }
+      },
+    });
   }
 
   return (
@@ -49,6 +69,10 @@ export function BackupsPanel({
             target.tool,
             target.profile,
           );
+          const isPendingFilesRestore =
+            pendingRestore?.backupId === entry.backup_id && pendingRestore.mode === "files";
+          const isPendingRestoreAndActivate =
+            pendingRestore?.backupId === entry.backup_id && pendingRestore.mode === "activate";
 
           return (
           <article key={entry.backup_id} className="list-row">
@@ -82,28 +106,76 @@ export function BackupsPanel({
               <button
                 className="ghost-button"
                 disabled={mutationLock.isBusy}
-                onClick={() => restoreBackupMutation.mutate(entry.backup_id)}
+                onClick={() =>
+                  setPendingRestore({
+                    backupId: entry.backup_id,
+                    mode: "files",
+                  })
+                }
               >
                 Restore files only
               </button>
-              <button
-                className="primary-button"
-                disabled={mutationLock.isBusy}
-                onClick={() => {
-                  restoreBackupMutation.mutate(entry.backup_id, {
-                    onSuccess: () => {
-                      useProfileMutation.mutate({
-                        tool: target.tool,
-                        profile: target.profile,
-                        stateMode: target.tool === "gemini" ? null : "isolated",
-                      });
-                    },
-                  });
-                }}
-              >
-                Restore and activate
-              </button>
+              {isPendingFilesRestore ? (
+                <>
+                  <button
+                    className="ghost-button danger-button"
+                    type="button"
+                    disabled={mutationLock.isBusy}
+                    onClick={() => confirmRestore(entry, "files")}
+                  >
+                    Confirm restore files
+                  </button>
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    onClick={() => setPendingRestore(null)}
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : isPendingRestoreAndActivate ? (
+                <>
+                  <button
+                    className="primary-button"
+                    type="button"
+                    disabled={mutationLock.isBusy}
+                    onClick={() => confirmRestore(entry, "activate")}
+                  >
+                    Confirm restore and activate
+                  </button>
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    onClick={() => setPendingRestore(null)}
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button
+                  className="primary-button"
+                  disabled={mutationLock.isBusy}
+                  onClick={() =>
+                    setPendingRestore({
+                      backupId: entry.backup_id,
+                      mode: "activate",
+                    })
+                  }
+                >
+                  Restore and activate
+                </button>
+              )}
             </div>
+            {isPendingFilesRestore ? (
+              <p className="inline-note">
+                Confirm before restoring {target.tool} / {target.profile}. This replays the saved files only.
+              </p>
+            ) : null}
+            {isPendingRestoreAndActivate ? (
+              <p className="inline-note">
+                Confirm before restoring and activating {target.tool} / {target.profile}. This replays the backup and switches the live profile again.
+              </p>
+            ) : null}
           </article>
         )})}
         {!backups.data?.length ? (
