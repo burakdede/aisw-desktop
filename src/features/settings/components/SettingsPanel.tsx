@@ -24,6 +24,9 @@ export function SettingsPanel({
     useDesktopActions();
   const [runtimeKind, setRuntimeKind] = useState(settings.runtime_kind);
   const [runtimePath, setRuntimePath] = useState(settings.runtime_path ?? "");
+  const [showAdvancedRuntime, setShowAdvancedRuntime] = useState(
+    settings.runtime_kind !== "bundled",
+  );
   const [aiswHome, setAiswHome] = useState(settings.aisw_home ?? "");
   const [updateChannel, setUpdateChannel] = useState(settings.update_channel);
   const readEnabled = useMutationAwareQueryEnabled();
@@ -66,6 +69,7 @@ export function SettingsPanel({
   useEffect(() => {
     setRuntimeKind(settings.runtime_kind);
     setRuntimePath(settings.runtime_path ?? "");
+    setShowAdvancedRuntime(settings.runtime_kind !== "bundled");
     setAiswHome(settings.aisw_home ?? "");
     setUpdateChannel(settings.update_channel);
   }, [
@@ -131,7 +135,7 @@ export function SettingsPanel({
   return (
     <>
       <div ref={runtimeRef}>
-        <SectionCard title="Settings" kicker="Runtime and home directory">
+        <SectionCard title="Settings" kicker="Bundled runtime and advanced overrides">
           <div className="button-row">
             {SETTINGS_SECTIONS.map((section) => (
               <button
@@ -146,41 +150,96 @@ export function SettingsPanel({
             ))}
           </div>
           <form className="stacked-form settings-form" onSubmit={submit}>
-          <label>
-            Runtime selection
-            <select value={runtimeKind} onChange={(event) => setRuntimeKind(event.target.value as typeof runtimeKind)}>
-              <option value="bundled">Bundled aisw</option>
-              <option value="system">System aisw</option>
-              <option value="custom">Custom path</option>
-            </select>
-          </label>
-          <label>
-            Runtime path
-            <input
-              value={runtimePath}
-              disabled={runtimeKind !== "custom"}
-              placeholder={runtimeKind === "custom" ? "/path/to/aisw" : "Only used for custom runtime"}
-              onChange={(event) => setRuntimePath(event.target.value)}
-            />
-          </label>
-          <label>
-            AISW_HOME override
-            <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
-          </label>
-          <label>
-            Update channel
-            <select value={updateChannel} onChange={(event) => setUpdateChannel(event.target.value)}>
-              <option value="stable">Stable</option>
-              <option value="beta">Beta</option>
-            </select>
-          </label>
-          <button
-            className="primary-button"
-            type="submit"
-            disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
-          >
-            {updateSettingsMutation.isPending ? "Saving…" : "Save settings"}
-          </button>
+            <article className={`diagnostic-card ${runtimeKind === "bundled" ? "diagnostic-pass" : "diagnostic-warn"}`}>
+              <h3>Recommended runtime</h3>
+              <p className="inline-note">
+                AISW Desktop ships with a compatible `aisw` runtime and uses it by default.
+              </p>
+              <p className="inline-note">
+                Use a system or custom runtime only when you intentionally need to override the supported desktop bundle.
+              </p>
+            </article>
+
+            {runtimeKind !== "bundled" ? (
+              <article className="diagnostic-card diagnostic-warn">
+                <h3>Advanced runtime override is active</h3>
+                <p className="inline-note">
+                  This desktop session is using a {runtimeKind === "system" ? "system" : "custom"} `aisw` binary instead of the bundled runtime.
+                </p>
+                <p className="inline-note">
+                  Compatibility for onboarding, switching, and diagnostics is only guaranteed with the bundled runtime shipped in this app release.
+                </p>
+              </article>
+            ) : null}
+
+            {showAdvancedRuntime ? (
+              <>
+                <label>
+                  Runtime selection
+                  <select
+                    value={runtimeKind}
+                    onChange={(event) => setRuntimeKind(event.target.value as typeof runtimeKind)}
+                  >
+                    <option value="bundled">Bundled aisw</option>
+                    <option value="system">System aisw</option>
+                    <option value="custom">Custom path</option>
+                  </select>
+                </label>
+                <label>
+                  Runtime path
+                  <input
+                    value={runtimePath}
+                    disabled={runtimeKind !== "custom"}
+                    placeholder={
+                      runtimeKind === "custom"
+                        ? "/path/to/aisw"
+                        : "Only used for custom runtime"
+                    }
+                    onChange={(event) => setRuntimePath(event.target.value)}
+                  />
+                </label>
+                {runtimeKind === "bundled" ? (
+                  <div className="button-row">
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      onClick={() => setShowAdvancedRuntime(false)}
+                    >
+                      Hide advanced runtime options
+                    </button>
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <div className="button-row">
+                <button
+                  className="ghost-button"
+                  type="button"
+                  onClick={() => setShowAdvancedRuntime(true)}
+                >
+                  Show advanced runtime options
+                </button>
+              </div>
+            )}
+
+            <label>
+              AISW_HOME override
+              <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
+            </label>
+            <label>
+              Update channel
+              <select value={updateChannel} onChange={(event) => setUpdateChannel(event.target.value)}>
+                <option value="stable">Stable</option>
+                <option value="beta">Beta</option>
+              </select>
+            </label>
+            <button
+              className="primary-button"
+              type="submit"
+              disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
+            >
+              {updateSettingsMutation.isPending ? "Saving…" : "Save settings"}
+            </button>
           </form>
           {updateSettingsMutation.error ? (
             <MutationErrorCard
@@ -200,9 +259,11 @@ export function SettingsPanel({
               <p className="inline-note">
                 Bundled aisw: {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
               </p>
-              <p className="inline-note">
-                System aisw: {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
-              </p>
+              {showAdvancedRuntime || runtimeKind !== "bundled" ? (
+                <p className="inline-note">
+                  System aisw: {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
+                </p>
+              ) : null}
               {runtimeStatus.inventory.configured_path ? (
                 <p className="inline-note">
                   Configured custom path: {runtimeStatus.inventory.configured_path}

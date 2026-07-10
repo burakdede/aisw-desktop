@@ -283,9 +283,11 @@ describe("App", () => {
     expect(screen.getByText("Active set: Work")).toBeInTheDocument();
     expect(screen.getByText("Runtime ready")).toBeInTheDocument();
     expect(screen.getByText("First-run setup")).toBeInTheDocument();
-    expect(screen.getByText("Backend check")).toBeInTheDocument();
+    expect(screen.getByText("Desktop runtime")).toBeInTheDocument();
     expect(screen.getByText("Health check")).toBeInTheDocument();
-    expect(screen.getByText("System aisw: /opt/homebrew/bin/aisw")).toBeInTheDocument();
+    expect(
+      screen.getByText("AISW Desktop is using its bundled runtime."),
+    ).toBeInTheDocument();
   });
 
   it("shows compatibility blockers when runtime is not usable", async () => {
@@ -6558,7 +6560,7 @@ describe("App", () => {
       expect(
         screen.getAllByText("Bundled aisw: /Applications/AISW.app/Contents/Resources/aisw").length,
       ).toBeGreaterThan(0);
-      expect(screen.getAllByText("System aisw: /opt/homebrew/bin/aisw").length).toBeGreaterThan(0);
+      expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
       expect(
         screen.getByText((_, element) => element?.textContent?.trim() === "Selected update channel: Stable"),
       ).toBeInTheDocument();
@@ -6613,7 +6615,7 @@ describe("App", () => {
       expect(screen.getByText("Settings")).toBeInTheDocument();
     });
 
-    expect(screen.getByDisplayValue("Bundled aisw")).toBeInTheDocument();
+    expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Stable")).toBeInTheDocument();
 
     await act(async () => {
@@ -6709,8 +6711,8 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByDisplayValue("Bundled aisw")).toBeInTheDocument();
-      expect(screen.getByPlaceholderText("Only used for custom runtime")).toHaveValue("");
+      expect(screen.queryByLabelText("Runtime path")).not.toBeInTheDocument();
+      expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
     });
   });
 
@@ -6791,7 +6793,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByDisplayValue("System aisw")).toBeInTheDocument();
-      expect(screen.getByPlaceholderText("Only used for custom runtime")).toHaveValue("");
+      expect(screen.getByLabelText("Runtime path")).toHaveValue("");
     });
   });
 

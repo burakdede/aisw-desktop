@@ -1364,7 +1364,7 @@ test("shows runtime detection and shell guidance in settings", async ({ page }) 
   await page.goto("/");
   await page.getByRole("button", { name: "Settings" }).click();
 
-  const settingsSection = page.locator(".section-card").filter({ hasText: "Runtime and home directory" });
+  const settingsSection = page.locator(".section-card").filter({ hasText: "Bundled runtime and advanced overrides" });
   const shellSection = page.locator(".section-card").filter({ hasText: "Explicit shell guidance" });
 
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
@@ -1375,7 +1375,7 @@ test("shows runtime detection and shell guidance in settings", async ({ page }) 
   await expect(
     settingsSection.getByText("Bundled aisw: /Applications/AISW.app/Contents/Resources/aisw"),
   ).toBeVisible();
-  await expect(settingsSection.getByText("System aisw: /opt/homebrew/bin/aisw")).toBeVisible();
+  await expect(settingsSection.getByText("Show advanced runtime options")).toBeVisible();
   await expect(settingsSection.getByText("Selected update channel: Stable")).toBeVisible();
   await expect(settingsSection.getByText("Selected backend: Bundled")).toBeVisible();
   await expect(settingsSection.getByText("Runtime version: 0.3.7")).toBeVisible();
@@ -1396,6 +1396,7 @@ test("saves custom runtime and AISW home settings", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Settings" }).click();
 
+  await page.getByRole("button", { name: "Show advanced runtime options" }).click();
   await page.getByLabel("Runtime selection").selectOption("custom");
   await page.getByLabel("Runtime path").fill("/opt/custom/aisw");
   await page.getByLabel("AISW_HOME override").fill("/tmp/aisw-home");
@@ -1405,7 +1406,7 @@ test("saves custom runtime and AISW home settings", async ({ page }) => {
   await expect(page.getByLabel("Runtime path")).toHaveValue("/opt/custom/aisw");
   await expect(page.getByLabel("AISW_HOME override")).toHaveValue("/tmp/aisw-home");
 
-  const settingsSection = page.locator(".section-card").filter({ hasText: "Runtime and home directory" });
+  const settingsSection = page.locator(".section-card").filter({ hasText: "Bundled runtime and advanced overrides" });
   await expect(settingsSection.getByText("Selected backend: Custom")).toBeVisible();
 });
 
@@ -1489,7 +1490,7 @@ test("clears a saved custom runtime path after switching back to bundled runtime
 
   await page.getByRole("button", { name: "Save settings" }).click();
 
-  await expect(runtimePath).toHaveValue("");
+  await expect(page.getByRole("button", { name: "Show advanced runtime options" })).toBeVisible();
   await expect(page.getByText("Selected backend: Bundled")).toBeVisible();
   await expect(page.getByText("Current resolved path: /Applications/AISW.app/Contents/Resources/aisw")).toBeVisible();
 });

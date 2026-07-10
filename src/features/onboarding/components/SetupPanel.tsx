@@ -129,24 +129,31 @@ export function SetupPanel({
           {initMutation.isPending ? "Scanning…" : "Start setup"}
         </button>
       }
-    >
+        >
       <p className="inline-note">
         AISW Desktop manages local account profiles for Claude Code, Codex CLI, and Gemini CLI.
-        Credentials stay on this machine. No cloud sync. No prompt logging. No proxy.
+        It includes a compatible `aisw` runtime for the desktop app, so no separate `aisw` CLI setup is required for normal use.
       </p>
 
       <div className="panel-grid panel-grid-2 diagnostics-body">
         <article className="diagnostic-card">
-          <h3>Backend check</h3>
+          <h3>Desktop runtime</h3>
+          <p className="inline-note">
+            {bootstrap.settings.runtime_kind === "bundled"
+              ? "AISW Desktop is using its bundled runtime."
+              : `AISW Desktop is using an advanced ${titleCase(bootstrap.settings.runtime_kind)} runtime override.`}
+          </p>
           <p className="inline-note">
             Selected runtime: <strong>{titleCase(bootstrap.settings.runtime_kind)}</strong>
           </p>
           <p className="inline-note">
             Bundled aisw: {bootstrap.runtime_status.inventory.bundled_path ?? "Not available in this build"}
           </p>
-          <p className="inline-note">
-            System aisw: {bootstrap.runtime_status.inventory.system_path ?? "Not found on PATH"}
-          </p>
+          {bootstrap.settings.runtime_kind !== "bundled" ? (
+            <p className="inline-note">
+              System aisw: {bootstrap.runtime_status.inventory.system_path ?? "Not found on PATH"}
+            </p>
+          ) : null}
           {bootstrap.runtime_status.inventory.configured_path ? (
             <p className="inline-note">
               Configured custom path: {bootstrap.runtime_status.inventory.configured_path}
@@ -164,6 +171,11 @@ export function SetupPanel({
           <p className="inline-note">
             Update channel: {bootstrap.settings.update_channel}
           </p>
+          <div className="button-row">
+            <button className="ghost-button" type="button" onClick={() => onOpenSettings("runtime")}>
+              Runtime settings
+            </button>
+          </div>
         </article>
 
         <article className="diagnostic-card">
@@ -392,7 +404,9 @@ function buildHealthItems(
       label: "AISW runtime contract",
       status: bootstrap.runtime_status.compatible ? "pass" : "fail",
       detail: bootstrap.runtime_status.compatible
-        ? "Bundled or selected aisw runtime is compatible with this desktop build."
+        ? bootstrap.settings.runtime_kind === "bundled"
+          ? "Bundled aisw runtime is compatible with this desktop build."
+          : "Selected runtime override is compatible with this desktop build."
         : bootstrap.runtime_status.issues.join(" · ") || "Compatibility checks failed.",
     },
   ];
