@@ -21,6 +21,7 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
 - The Tauri main window is bound to an explicit least-privilege capability under `src-tauri/capabilities/main.json`.
 - The app invoke surface is enumerated in `src-tauri/permissions/desktop-commands.json`.
 - OAuth progress uses event listeners only; desktop notifications use the narrow notification permission set only.
+- Tray-triggered mutations use the same post-mutation refresh contract as in-window actions, so overview, diagnostics, workspaces, backups, and bootstrap-derived state stay coherent.
 
 ## Acceptance Criteria
 
@@ -95,6 +96,20 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `tests/e2e/app.spec.ts` covers restore-only and restore-then-activate flows, warning copy, and latest-backup restore actions.
   - `src/App.test.tsx` covers restore confirmation and post-action refresh behavior.
 
+### 11. Tray mutations refresh dependent desktop surfaces
+
+- Status: implemented
+- Evidence:
+  - `tests/e2e/app.spec.ts` covers tray-triggered refresh of overview, workspaces, and backups.
+  - `src/App.test.tsx` covers tray-result invalidation across snapshot, workspace, bindings, and backup queries.
+
+### 12. Backend init cannot race with desktop mutations
+
+- Status: implemented
+- Evidence:
+  - `src-tauri/src/state.rs` serializes init, CLI mutations, profile-set activation, and bridge-backed write commands through a shared mutation lock.
+  - `src-tauri/src/state.rs` includes a concurrency test proving later operations cannot enter the critical section before the active mutation exits.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:
@@ -112,4 +127,5 @@ cargo check --manifest-path src-tauri/Cargo.toml
 
 - Runtime selection stays compatible across bundled, system, and custom `aisw`.
 - The Tauri command surface stays least-privilege and avoids shell, opener, or filesystem plugin expansion.
+- Tray actions and in-window mutations share the same refresh and serialization guarantees.
 - Release workflows stage a target-specific sidecar and enforce the same verification matrix as local release builds.
