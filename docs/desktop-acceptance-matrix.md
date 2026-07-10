@@ -203,6 +203,13 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src/features/contexts/components/ContextsPanel.tsx` renders CLI contexts with `contextDisplayLabel(settings, context.name)` in the primary heading, but still shows `CLI context id: ...` whenever the saved display label differs from the backend context id.
   - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify the Contexts screen shows `Client Acme` alongside `CLI context id: client-acme`, while activation results and workspace summaries continue to use the same saved label.
 
+### 26. CI keeps cross-platform desktop smoke coverage for supported platforms
+
+- Status: implemented
+- Evidence:
+  - `.github/workflows/ci.yml` runs the desktop verification matrix on `macos-latest`, `ubuntu-22.04`, and `windows-latest` through a shared platform matrix.
+  - `scripts/verify-release.mjs` and `scripts/verify-release.test.mjs` fail release-contract verification if the CI workflow drops the shared matrix or any required desktop platform runner.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:
