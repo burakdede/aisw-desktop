@@ -238,6 +238,20 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src-tauri/src/tray.rs` filters profile-set tray entries when a saved profile set already matches an available CLI context id, so the tray does not render duplicate `client-acme` actions in both sections.
   - `src-tauri/src/tray.rs` unit tests verify matching `client-acme` profile sets are omitted from the tray profile-set section while unrelated profile sets still remain available.
 
+### 31. Profile creation exposes explicit credential-backend selection
+
+- Status: implemented
+- Evidence:
+  - `src/features/profiles/components/ProfilesPanel.tsx`, `src/lib/client.ts`, and `src-tauri/src/bridge.rs` expose `credential_backend` through the desktop add-profile and OAuth flows, including explicit `file` and `system-keyring` selection for supported tools.
+  - `src/App.test.tsx`, `tests/e2e/app.spec.ts`, and `src-tauri/src/bridge.rs` unit tests verify the desktop sends `system-keyring` and `file` backend requests through the add-profile command contract.
+
+### 32. Keyring diagnostics route users into file-backed profile setup
+
+- Status: implemented
+- Evidence:
+  - `src/features/diagnostics/components/DiagnosticsPanel.tsx` adds a `Use file-backed storage` direct-fix action that opens profile setup with file-backed storage preselected.
+  - `src/App.tsx`, `src/features/profiles/components/ProfilesPanel.tsx`, `src/App.test.tsx`, and `tests/e2e/app.spec.ts` verify the diagnostics action lands on Profiles with `from_live` mode and `file` backend selected.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:

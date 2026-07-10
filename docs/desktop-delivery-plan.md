@@ -111,10 +111,12 @@ Acceptance criteria:
 - Profiles can be added, imported, relabeled, renamed, removed, and activated.
 - Active profile metadata is visible per tool.
 - State mode is editable only for supported tools.
+- Credential backend selection is exposed during profile creation for tools that support both file-backed and system-keyring storage.
 - Profile details are reachable from overview, diagnostics, and backups.
 
 Test cases:
 - Adds profiles from environment, live import, API key, and OAuth-capable flows.
+- Passes explicit file-backed and system-keyring backend requests during profile creation.
 - Renames and relabels profiles without losing active-state visibility.
 - Prevents invalid shared-state actions for Gemini.
 - Surfaces duplicate-name and missing-profile errors cleanly.
@@ -140,12 +142,14 @@ Test cases:
 Acceptance criteria:
 - Diagnostics combine doctor, verify, and repair preview state.
 - Direct-fix cards exist for missing tools, live mismatch, workspace mismatch, and repairable environment issues.
+- Keyring diagnostics can route users into a file-backed profile-setup recovery path when native keyring storage is unavailable.
 - UI labels match saved profile labels where applicable.
 - Safe repairs can be previewed and applied with post-refresh validation.
 
 Test cases:
 - Opens install guidance for missing tools.
 - Re-applies an active profile from mismatch state.
+- Opens profile setup with file-backed storage preselected from keyring diagnostics.
 - Runs targeted repairs for keyring, permissions, and OAuth failures.
 - Shows no-action states when diagnostics are healthy.
 
