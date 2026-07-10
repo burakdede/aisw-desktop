@@ -12,7 +12,8 @@
     "test:e2e": "playwright test",
     "test:watch": "vitest",
     "tauri": "tauri",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "verify:release": "node ./scripts/verify-release.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.83.0",

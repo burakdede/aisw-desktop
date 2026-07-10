@@ -89,6 +89,7 @@ jobs:
           npx playwright install chromium
           npm run test:e2e
           npm run build
+          npm run verify:release
 
       - name: Verify Rust
         run: |
