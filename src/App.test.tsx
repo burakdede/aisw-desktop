@@ -1838,7 +1838,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Diagnostics"));
 
     await waitFor(() => {
-      expect(screen.getByText("Non-interactive mode failure")).toBeInTheDocument();
+      expect(screen.getAllByText("Non-interactive mode failure").length).toBeGreaterThan(0);
       expect(
         screen.getByText(
           "Rerun this flow in an interactive session or use a supported non-interactive import method.",
@@ -1888,7 +1888,8 @@ describe("App", () => {
 
     let failureCard: HTMLElement;
     await waitFor(() => {
-      failureCard = screen.getByText("Config lock timeout").closest("article") as HTMLElement;
+      const failureMatch = screen.getAllByText("Config lock timeout");
+      failureCard = failureMatch[failureMatch.length - 1].closest("article") as HTMLElement;
       expect(failureCard).toBeInTheDocument();
       expect(within(failureCard).getByText("config lock is busy")).toBeInTheDocument();
       expect(
@@ -4177,7 +4178,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Diagnostics")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Diagnostics"));
-    fireEvent.click(screen.getByText("Export redacted bundle"));
+    fireEvent.click(screen.getByText("Export report"));
 
     await waitFor(() => {
       expect(screen.getByText("Diagnostic bundle exported")).toBeInTheDocument();
@@ -4232,7 +4233,8 @@ describe("App", () => {
 
     let shellHookFix: HTMLElement;
     await waitFor(() => {
-      shellHookFix = screen.getByText("Shell hook not active").closest("article") as HTMLElement;
+      const shellHookMatches = screen.getAllByText("Shell hook not active");
+      shellHookFix = shellHookMatches[shellHookMatches.length - 1].closest("article") as HTMLElement;
       expect(shellHookFix).toBeInTheDocument();
       expect(within(shellHookFix).getByText("Open shell setup")).toBeInTheDocument();
     });
@@ -4365,9 +4367,9 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Diagnostics"));
 
     await waitFor(() => {
-      expect(screen.getByText("Direct fixes")).toBeInTheDocument();
-      expect(screen.getByText("codex is missing")).toBeInTheDocument();
-      expect(screen.getByText("claude live mismatch")).toBeInTheDocument();
+      expect(screen.getByText("Recommended fixes")).toBeInTheDocument();
+      expect(screen.getAllByText("codex is missing").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("claude live mismatch").length).toBeGreaterThan(0);
       expect(screen.getByText("Workspace context mismatch")).toBeInTheDocument();
     });
 
@@ -4378,7 +4380,8 @@ describe("App", () => {
     expect(within(workspaceMismatchCard).getByText("Open sets")).toBeInTheDocument();
     expect(within(workspaceMismatchCard).queryByText("Use expected set now")).not.toBeInTheDocument();
 
-    const missingToolCard = screen.getByText("codex is missing").closest(".diagnostic-card");
+    const missingToolMatches = screen.getAllByText("codex is missing");
+    const missingToolCard = missingToolMatches[missingToolMatches.length - 1].closest(".diagnostic-card");
     if (!(missingToolCard instanceof HTMLElement)) {
       throw new Error("Missing diagnostics tool card.");
     }
@@ -4484,8 +4487,9 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("Diagnostics")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Diagnostics"));
 
-    await waitFor(() => expect(screen.getByText("claude live mismatch")).toBeInTheDocument());
-    const mismatchCard = screen.getByText("claude live mismatch").closest("article");
+    await waitFor(() => expect(screen.getAllByText("claude live mismatch").length).toBeGreaterThan(0));
+    const mismatchMatches = screen.getAllByText("claude live mismatch");
+    const mismatchCard = mismatchMatches[mismatchMatches.length - 1].closest("article");
     expect(mismatchCard).not.toBeNull();
     fireEvent.click(within(mismatchCard!).getByText("Open profile details"));
 
@@ -5018,7 +5022,7 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Doctor · Verify · Repair")).toBeInTheDocument();
+      expect(screen.getByText("Verify and recovery")).toBeInTheDocument();
     });
   });
 
@@ -5068,7 +5072,7 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Doctor · Verify · Repair")).toBeInTheDocument();
+      expect(screen.getByText("Verify and recovery")).toBeInTheDocument();
       expect(screen.getByText("Shell hook is not active in the current shell session.")).toBeInTheDocument();
     });
   });
@@ -5155,8 +5159,8 @@ describe("App", () => {
       handlers?.["tray-run-diagnostics"]?.({});
     });
 
-    await waitFor(() => expect(screen.getByText("Doctor · Verify · Repair")).toBeInTheDocument());
-    expect(screen.getByRole("button", { name: "Refresh diagnostics" })).toBeDisabled();
+    await waitFor(() => expect(screen.getByText("Verify and recovery")).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Verify again" })).toBeDisabled();
     expect(doctorRuns).toBe(1);
     expect(verifyRuns).toBe(0);
     expect(repairRuns).toBe(0);
@@ -5171,7 +5175,7 @@ describe("App", () => {
       expect(verifyRuns).toBeGreaterThan(0);
       expect(repairRuns).toBeGreaterThan(0);
     });
-    expect(screen.getByRole("button", { name: "Refresh diagnostics" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Verify again" })).toBeEnabled();
   });
 
   it("records tray command results and shows a desktop notification", async () => {
@@ -5521,7 +5525,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Diagnostics"));
 
     await waitFor(() => {
-      expect(screen.getByText("Claude profile missing")).toBeInTheDocument();
+      expect(screen.getAllByText("Claude profile missing").length).toBeGreaterThan(0);
       expect(screen.getByText("profile work no longer exists")).toBeInTheDocument();
       expect(
         screen.getByText(

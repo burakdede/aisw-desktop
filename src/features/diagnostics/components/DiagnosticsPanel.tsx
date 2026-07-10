@@ -114,11 +114,17 @@ export function DiagnosticsPanel({
     onRefreshDiagnostics: () =>
       void refreshDiagnostics(queryClient, doctor.refetch, verify.refetch, repair.refetch),
   });
+  const totalIssues = issueCards.length + recentFailures.length;
+  const summaryHighlights = [
+    ...quickFixes.slice(0, 2).map((fix) => fix.title),
+    ...issueCards.flatMap((card) => card.issues).slice(0, 2),
+    ...recentFailures.slice(0, 1).map((failure) => failure.title),
+  ].slice(0, 3);
 
   return (
     <SectionCard
       title="Diagnostics"
-      kicker="Doctor · Verify · Repair"
+      kicker="Verify and recovery"
       actions={
         <div className="button-row">
           <button
@@ -128,7 +134,7 @@ export function DiagnosticsPanel({
               void refreshDiagnostics(queryClient, doctor.refetch, verify.refetch, repair.refetch)
             }
           >
-            Refresh diagnostics
+            Verify again
           </button>
           <button
             className="primary-button"
@@ -142,11 +148,25 @@ export function DiagnosticsPanel({
             onClick={() => exportBundle.mutate()}
             disabled={exportBundle.isPending}
           >
-            {exportBundle.isPending ? "Exporting bundle…" : "Export redacted bundle"}
+            {exportBundle.isPending ? "Exporting report…" : "Export report"}
           </button>
         </div>
       }
     >
+      <article className={`diagnostic-card diagnostics-overview ${totalIssues ? "diagnostic-warn" : "diagnostic-pass"}`}>
+        <h3>{totalIssues ? `${totalIssues} issue${totalIssues === 1 ? "" : "s"} found` : "System looks healthy"}</h3>
+        {summaryHighlights.length ? (
+          <div className="stack-list">
+            {summaryHighlights.map((line) => (
+              <p key={line} className="inline-note">{line}</p>
+            ))}
+          </div>
+        ) : (
+          <p className="inline-note">
+            Active profiles, local storage, and repair checks are currently passing.
+          </p>
+        )}
+      </article>
       {exportBundle.data ? (
         <article className="diagnostic-card diagnostic-pass diagnostics-body">
           <h3>Diagnostic bundle exported</h3>
@@ -219,7 +239,7 @@ export function DiagnosticsPanel({
 
       <div className="panel-grid panel-grid-2 diagnostics-body">
         <div className="stack-list">
-          <h3>Issues and remediation</h3>
+          <h3>Checks and details</h3>
           {issueCards.map((card) => (
             <article key={`${card.title}-${card.status}`} className={`diagnostic-card diagnostic-${card.status}`}>
               <h4>{card.title}</h4>
@@ -258,7 +278,7 @@ export function DiagnosticsPanel({
         </div>
 
         <div className="stack-list">
-          <h3>Direct fixes</h3>
+          <h3>Recommended fixes</h3>
           {quickFixes.map((fix) => (
             <article key={quickFixKey(fix)} className={`diagnostic-card diagnostic-${fix.status}`}>
               <h4>{fix.title}</h4>
@@ -363,7 +383,7 @@ export function DiagnosticsPanel({
         </div>
 
         <div className="stack-list">
-          <h3>Recent command failures</h3>
+          <h3>Recent problems</h3>
           {recentFailures.map((failure) => (
             <article key={failure.key} className="diagnostic-card diagnostic-fail">
               <h4>{failure.title}</h4>
@@ -388,7 +408,7 @@ export function DiagnosticsPanel({
         </div>
 
         <div className="stack-list">
-          <h3>Planned repair actions</h3>
+          <h3>Planned repairs</h3>
           {repairActions.map((action) => (
             <article key={`${action.title}-${action.detail}`} className="diagnostic-card">
               <h4>{action.title}</h4>

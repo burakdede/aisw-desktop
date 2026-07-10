@@ -738,6 +738,11 @@ button {
   margin-top: 14px;
 }
 
+.diagnostics-overview {
+  display: grid;
+  gap: 8px;
+}
+
 .diagnostic-remediation {
   margin-top: 10px;
   display: grid;

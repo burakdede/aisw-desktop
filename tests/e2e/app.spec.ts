@@ -427,7 +427,7 @@ test("offers direct diagnostic fixes for missing tools, live mismatch, and works
   await page.goto("/");
   await page.getByRole("button", { name: "Diagnostics" }).click();
 
-  await expect(page.getByText("Direct fixes")).toBeVisible();
+  await expect(page.getByText("Recommended fixes")).toBeVisible();
   await expect(page.getByText("codex is missing")).toBeVisible();
   await expect(page.getByText("claude live mismatch")).toBeVisible();
   await expect(page.getByText("Workspace context mismatch")).toBeVisible();
@@ -480,7 +480,7 @@ test("opens diagnostics when the tray requests it", async ({ page }) => {
     handlers?.["tray-open-diagnostics"]?.({});
   });
 
-  await expect(page.getByText("Doctor · Verify · Repair")).toBeVisible();
+  await expect(page.getByText("Verify and recovery")).toBeVisible();
 });
 
 test("reruns diagnostics when the tray requests a diagnostics run", async ({ page }) => {
@@ -498,7 +498,7 @@ test("reruns diagnostics when the tray requests a diagnostics run", async ({ pag
     handlers?.["tray-run-diagnostics"]?.({});
   });
 
-  const diagnosticsSection = page.locator(".section-card").filter({ hasText: "Doctor · Verify · Repair" });
+  const diagnosticsSection = page.locator(".section-card").filter({ hasText: "Verify and recovery" });
   await expect(diagnosticsSection).toBeVisible();
   await expect(
     diagnosticsSection.getByText("Shell hook is not active in the current shell session.").first(),
@@ -721,7 +721,7 @@ test("exports a redacted diagnostic bundle from diagnostics", async ({ page }) =
 
   await page.goto("/");
   await page.getByRole("button", { name: "Diagnostics" }).click();
-  await page.getByRole("button", { name: "Export redacted bundle" }).click();
+  await page.getByRole("button", { name: "Export report" }).click();
 
   await expect(page.getByText("Diagnostic bundle exported")).toBeVisible();
   await expect(
