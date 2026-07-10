@@ -610,7 +610,7 @@ test("refreshes the backup catalog after a successful tray profile switch", asyn
   await expect(page.getByText("Claude backup · 20260326T120000Z-claude-work")).toBeVisible();
   await expect(
     page.getByText(
-      "Affects claude / work. Restore files only unless you explicitly re-activate this profile.",
+      "Affects Claude / Work. Restore files only unless you explicitly re-activate this profile.",
     ),
   ).toBeVisible();
 });
@@ -1574,12 +1574,12 @@ test("warns before backup restore and re-activates the restored profile", async 
     ),
   ).toBeVisible();
   await expect(page.getByText("Codex backup · 20260325T114502Z-codex-work")).toBeVisible();
-  await expect(page.getByText("Affects codex / work. Restore files only unless you explicitly re-activate this profile.")).toBeVisible();
+  await expect(page.getByText("Affects Codex / Work. Restore files only unless you explicitly re-activate this profile.")).toBeVisible();
 
   await page.getByRole("button", { name: "Restore and activate" }).click();
   await expect(
     page.getByText(
-      "Confirm before restoring and activating codex / work. This replays the backup and switches the live profile again.",
+      "Confirm before restoring and activating Codex / Work. This replays the backup and switches the live profile again.",
     ),
   ).toBeVisible();
   await page.getByRole("button", { name: "Confirm restore and activate" }).click();
@@ -1597,7 +1597,7 @@ test("restores backup files only without re-activating the profile", async ({ pa
   await page.getByRole("button", { name: "Restore files only" }).click();
   await expect(
     page.getByText(
-      "Confirm before restoring codex / work. This replays the saved files only.",
+      "Confirm before restoring Codex / Work. This replays the saved files only.",
     ),
   ).toBeVisible();
   await page.getByRole("button", { name: "Confirm restore files" }).click();
@@ -1616,7 +1616,7 @@ test("warns before restoring the latest profile backup from profiles", async ({ 
 
   await expect(
     page.getByText(
-      "Confirm before restoring and activating the latest backup for codex / work. This replays the backup and switches the live profile again.",
+      "Confirm before restoring and activating the latest backup for Codex / Work. This replays the backup and switches the live profile again.",
     ),
   ).toBeVisible();
 
@@ -1656,13 +1656,44 @@ test("restores the latest profile backup without re-activating it", async ({ pag
 
   await expect(
     page.getByText(
-      "Confirm before restoring the latest backup for codex / work. This replays the saved files only.",
+      "Confirm before restoring the latest backup for Codex / Work. This replays the saved files only.",
     ),
   ).toBeVisible();
   await page.getByRole("button", { name: "Confirm restore latest" }).click();
 
   await page.getByRole("button", { name: "Overview" }).click();
   await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "Personal" })).toBeVisible();
+});
+
+test("uses saved labels in backup restore copy", async ({ page }) => {
+  await installDesktopMock(page, "labelOverrides");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Backups" }).click();
+
+  const backupRow = page.locator(".list-row").filter({ hasText: "Code Work" });
+  await expect(backupRow.getByText("Code Work", { exact: true })).toBeVisible();
+  await expect(
+    backupRow.getByText(
+      "Affects Codex / Code Work. Restore files only unless you explicitly re-activate this profile.",
+    ),
+  ).toBeVisible();
+
+  await backupRow.getByRole("button", { name: "Restore and activate" }).click();
+  await expect(
+    backupRow.getByText(
+      "Confirm before restoring and activating Codex / Code Work. This replays the backup and switches the live profile again.",
+    ),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Profiles" }).click();
+  await page.getByLabel("Tool").selectOption("codex");
+  await page.getByRole("button", { name: "Restore latest + activate" }).click();
+  await expect(
+    page.getByText(
+      "Confirm before restoring and activating the latest backup for Codex / Code Work. This replays the backup and switches the live profile again.",
+    ),
+  ).toBeVisible();
 });
 
 test("lists backups newest first, copies backup ids, and opens matching profile details", async ({
@@ -3699,6 +3730,15 @@ async function installDesktopMock(
             ];
           }
           if (activeScenario === "switching") {
+            return [
+              {
+                backup_id: "20260325T114502Z-codex-work",
+                tool: "codex",
+                profile: "codex/work",
+              },
+            ];
+          }
+          if (activeScenario === "labelOverrides") {
             return [
               {
                 backup_id: "20260325T114502Z-codex-work",

@@ -349,6 +349,8 @@ export function ProfilesPanel({
             const renameDuplicate =
               renameDraft.trim().length > 0 &&
               isDuplicateProfileName(profiles, entry.name, renameDraft);
+            const profileDisplay = effectiveLabel(tool, entry.name, entry.label, settings) ?? titleCase(entry.name);
+            const restoreTargetDisplay = `${titleCase(tool)} / ${profileDisplay}`;
             const isPendingRestoreFiles =
               pendingRestore?.profile === entry.name && pendingRestore.mode === "files";
             const isPendingRestoreAndActivate =
@@ -675,12 +677,12 @@ export function ProfilesPanel({
               </div>
               {isPendingRestoreFiles ? (
                 <p className="inline-note">
-                  Confirm before restoring the latest backup for {tool} / {entry.name}. This replays the saved files only.
+                  Confirm before restoring the latest backup for {restoreTargetDisplay}. This replays the saved files only.
                 </p>
               ) : null}
               {isPendingRestoreAndActivate ? (
                 <p className="inline-note">
-                  Confirm before restoring and activating the latest backup for {tool} / {entry.name}. This replays the backup and switches the live profile again.
+                  Confirm before restoring and activating the latest backup for {restoreTargetDisplay}. This replays the backup and switches the live profile again.
                 </p>
               ) : null}
             </article>

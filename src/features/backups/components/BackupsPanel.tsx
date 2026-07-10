@@ -76,6 +76,7 @@ export function BackupsPanel({
             target.tool,
             target.profile,
           );
+          const targetDisplay = `${titleCase(target.tool)} / ${profileLabel}`;
           const isPendingFilesRestore =
             pendingRestore?.backupId === entry.backup_id && pendingRestore.mode === "files";
           const isPendingRestoreAndActivate =
@@ -90,7 +91,7 @@ export function BackupsPanel({
                 {titleCase(target.tool)} backup · {entry.backup_id}
               </p>
               <p className="inline-note">
-                Affects {target.tool} / {target.profile}. Restore files only unless you explicitly
+                Affects {targetDisplay}. Restore files only unless you explicitly
                 re-activate this profile.
               </p>
             </div>
@@ -175,12 +176,12 @@ export function BackupsPanel({
             </div>
             {isPendingFilesRestore ? (
               <p className="inline-note">
-                Confirm before restoring {target.tool} / {target.profile}. This replays the saved files only.
+                Confirm before restoring {targetDisplay}. This replays the saved files only.
               </p>
             ) : null}
             {isPendingRestoreAndActivate ? (
               <p className="inline-note">
-                Confirm before restoring and activating {target.tool} / {target.profile}. This replays the backup and switches the live profile again.
+                Confirm before restoring and activating {targetDisplay}. This replays the backup and switches the live profile again.
               </p>
             ) : null}
           </article>

@@ -1966,6 +1966,14 @@ describe("App", () => {
 
   it("restores and re-activates a backup through desktop commands", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
+    const settingsWithLabels: DesktopSettings = {
+      ...bootstrap.settings,
+      profile_labels: {
+        codex: {
+          personal: "Sandbox",
+        },
+      },
+    };
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
       if (command === "restore_backup" || command === "use_profile") {
@@ -1973,7 +1981,10 @@ describe("App", () => {
       }
       return (
         {
-          get_bootstrap: bootstrap,
+          get_bootstrap: {
+            ...bootstrap,
+            settings: settingsWithLabels,
+          },
           get_snapshot: bootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
           run_doctor: { summary: { status: "pass" } },
@@ -1993,7 +2004,7 @@ describe("App", () => {
               profile: "codex/personal",
             },
           ],
-          get_settings: bootstrap.settings,
+          get_settings: settingsWithLabels,
         } as Record<string, unknown>
       )[command];
     };
@@ -2003,12 +2014,16 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Backups"));
     await waitFor(() => expect(screen.getAllByText("Restore and activate")).toHaveLength(2));
     expect(screen.getByText(/Restore replays the saved files only/)).toBeInTheDocument();
-    expect(screen.getByText("Personal")).toBeInTheDocument();
-    expect(screen.getByText(/Affects codex \/ personal/)).toBeInTheDocument();
+    expect(screen.getByText("Sandbox")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Affects Codex / Sandbox. Restore files only unless you explicitly re-activate this profile.",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getAllByText(/Created:/)).toHaveLength(2);
     const backupsSection = screen.getByRole("heading", { name: "Backups" }).closest(".section-card");
     const articles = backupsSection?.querySelectorAll(".list-row") ?? [];
-    expect(articles[0]?.textContent).toContain("Personal");
+    expect(articles[0]?.textContent).toContain("Sandbox");
     expect(articles[1]?.textContent).toContain("Work");
     fireEvent.click(screen.getAllByText("Copy backup ID")[0]);
     await waitFor(() => {
@@ -2017,7 +2032,7 @@ describe("App", () => {
     fireEvent.click(screen.getAllByText("Restore and activate")[0]);
     expect(
       screen.getByText(
-        "Confirm before restoring and activating codex / personal. This replays the backup and switches the live profile again.",
+        "Confirm before restoring and activating Codex / Sandbox. This replays the backup and switches the live profile again.",
       ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getAllByText("Confirm restore and activate")[0]);
@@ -2195,7 +2210,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Restore files only"));
     expect(
       screen.getByText(
-        "Confirm before restoring codex / personal. This replays the saved files only.",
+        "Confirm before restoring Codex / Personal. This replays the saved files only.",
       ),
     ).toBeInTheDocument();
     expect(calls.some((entry) => entry.command === "restore_backup")).toBe(false);
@@ -2387,7 +2402,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Restore latest + activate"));
     expect(
       screen.getByText(
-        "Confirm before restoring and activating the latest backup for claude / work. This replays the backup and switches the live profile again.",
+        "Confirm before restoring and activating the latest backup for Claude / Work. This replays the backup and switches the live profile again.",
       ),
     ).toBeInTheDocument();
     expect(calls.some((entry) => entry.command === "restore_backup")).toBe(false);
@@ -2397,6 +2412,54 @@ describe("App", () => {
       expect(calls.some((entry) => entry.command === "restore_backup")).toBe(true);
       expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
     });
+  });
+
+  it("uses saved labels in latest profile backup confirmations", async () => {
+    const labeledSettings: DesktopSettings = {
+      ...bootstrap.settings,
+      profile_labels: {
+        claude: {
+          work: "Office",
+        },
+      },
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) =>
+      (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            settings: labeledSettings,
+          },
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [
+            {
+              backup_id: "20260325T114502Z-claude-work",
+              tool: "claude",
+              profile: "claude/work",
+            },
+          ],
+          get_settings: labeledSettings,
+        } as Record<string, unknown>
+      )[command];
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Profiles"));
+    await waitFor(() => expect(screen.getByText("Restore latest + activate")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText("Restore latest + activate"));
+    expect(
+      screen.getByText(
+        "Confirm before restoring and activating the latest backup for Claude / Office. This replays the backup and switches the live profile again.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("chooses the newest matching backup when restoring latest from a profile row", async () => {
@@ -2591,7 +2654,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Restore latest"));
     expect(
       screen.getByText(
-        "Confirm before restoring the latest backup for claude / work. This replays the saved files only.",
+        "Confirm before restoring the latest backup for Claude / Work. This replays the saved files only.",
       ),
     ).toBeInTheDocument();
     expect(calls.some((entry) => entry.command === "restore_backup")).toBe(false);
