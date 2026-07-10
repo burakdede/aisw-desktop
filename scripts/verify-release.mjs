@@ -131,6 +131,7 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         acceptanceMatrix.includes("Editable state-mode choices explain isolated versus shared behavior") &&
         acceptanceMatrix.includes("Missing-tool diagnostics support install guidance and in-place refresh") &&
         acceptanceMatrix.includes("Tray result messaging uses the same saved labels as tray menus") &&
+        acceptanceMatrix.includes("Inactive profile details do not reuse live runtime diagnostics") &&
         acceptanceMatrix.includes("does not replace the local-only product spec"),
     },
     {

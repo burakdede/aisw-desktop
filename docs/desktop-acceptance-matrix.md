@@ -146,6 +146,13 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src-tauri/src/tray.rs` derives tray success messages for shared profiles, profile sets, contexts, and per-tool profiles from the same saved-label helpers used to build tray menu entries.
   - `src-tauri/src/tray.rs` includes unit tests proving tray result labels prefer profile-set labels and per-tool label overrides over raw ids.
 
+### 18. Inactive profile details do not reuse live runtime diagnostics
+
+- Status: implemented
+- Evidence:
+  - `src/features/profiles/components/ProfilesPanel.tsx` limits credential-backend, live-match, permission, and token-warning details to the desktop-active profile while still showing stored auth metadata for inactive rows.
+  - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify inactive profile details show the activation hint instead of the active profile's runtime diagnostics.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:
