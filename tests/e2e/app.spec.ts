@@ -221,6 +221,62 @@ test("imports the current login as a new profile from diagnostics", async ({ pag
   await expect(page.getByText("incident · oauth")).toBeVisible();
 });
 
+test("opens diagnostics when the tray requests it", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await expect(page.getByText("Control Center")).toBeVisible();
+
+  await page.evaluate(() => {
+    const handlers = (
+      window as typeof window & {
+        __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+      }
+    ).__AISW_DESKTOP_EVENT_HANDLERS__;
+    handlers?.["tray-open-diagnostics"]?.({});
+  });
+
+  await expect(page.getByText("Doctor · Verify · Repair")).toBeVisible();
+});
+
+test("records tray command results and shows a desktop notification", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await expect(page.getByText("Control Center")).toBeVisible();
+
+  await page.evaluate(() => {
+    const handlers = (
+      window as typeof window & {
+        __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+      }
+    ).__AISW_DESKTOP_EVENT_HANDLERS__;
+    handlers?.["tray-command-result"]?.({
+      scope: "tool",
+      tool: "claude",
+      label: "Switch profile",
+      status: "success",
+      message: "Switched claude to work.",
+    });
+  });
+
+  const claudeCard = page.locator(".tool-card").filter({ hasText: "Claude" });
+  await expect(claudeCard.getByText("Last result: Switched claude to work.")).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as typeof window & {
+            __AISW_NOTIFICATIONS__?: Array<{ title: string; body: string }>;
+          }).__AISW_NOTIFICATIONS__ ?? [],
+      ),
+    )
+    .toContainEqual({
+      title: "Switch profile",
+      body: "Switched claude to work.",
+    });
+});
+
 test("shows no-action states when diagnostics are healthy", async ({ page }) => {
   await installDesktopMock(page, "profiles");
 
@@ -1778,6 +1834,7 @@ async function installDesktopMock(
         project_bindings: projectBindingsResult(),
       });
       const listeners = new Map();
+      window.__AISW_DESKTOP_EVENT_HANDLERS__ = {};
       window.__AISW_OPENED_GUIDES__ = [];
       window.__AISW_NOTIFICATIONS__ = [];
       window.__AISW_CLIPBOARD_WRITES__ = [];
@@ -1827,7 +1884,11 @@ async function installDesktopMock(
 
       window.__AISW_DESKTOP_LISTEN__ = async (event, handler) => {
         listeners.set(event, handler);
-        return () => listeners.delete(event);
+        window.__AISW_DESKTOP_EVENT_HANDLERS__[event] = handler;
+        return () => {
+          listeners.delete(event);
+          delete window.__AISW_DESKTOP_EVENT_HANDLERS__[event];
+        };
       };
 
       window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
