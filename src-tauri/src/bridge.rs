@@ -663,7 +663,11 @@ fn windows_path_exts() -> Vec<String> {
 
 fn map_command_failure(command: &str, stderr: &str) -> DesktopError {
     let lower = stderr.to_ascii_lowercase();
-    let kind = if lower.contains("not found") {
+    let kind = if lower.contains("profile") && (lower.contains("not found") || lower.contains("missing")) {
+        GuiErrorKind::ProfileMissing
+    } else if lower.contains("context") && (lower.contains("not found") || lower.contains("missing")) {
+        GuiErrorKind::ContextMissing
+    } else if lower.contains("not found") {
         GuiErrorKind::ToolMissing
     } else if lower.contains("duplicate") {
         GuiErrorKind::DuplicateProfile
@@ -700,7 +704,11 @@ fn map_machine_failure(command: &str, value: &serde_json::Value) -> Option<Deskt
         .and_then(|item| item.as_str())
         .unwrap_or("unknown");
     let lower = kind_value.to_ascii_lowercase();
-    let kind = if lower.contains("not_found") || lower.contains("tool_missing") {
+    let kind = if lower.contains("profile_missing") || lower.contains("profile_not_found") {
+        GuiErrorKind::ProfileMissing
+    } else if lower.contains("context_missing") || lower.contains("context_not_found") {
+        GuiErrorKind::ContextMissing
+    } else if lower.contains("not_found") || lower.contains("tool_missing") {
         GuiErrorKind::ToolMissing
     } else if lower.contains("duplicate") {
         GuiErrorKind::DuplicateProfile
@@ -742,6 +750,13 @@ fn remediation_for_kind(kind: &GuiErrorKind) -> Option<String> {
     match kind {
         GuiErrorKind::ToolMissing => Some(
             "Install the missing agent CLI or fix PATH, then refresh diagnostics.".to_owned(),
+        ),
+        GuiErrorKind::ProfileMissing => Some(
+            "Refresh profile state or recreate the missing profile before retrying.".to_owned(),
+        ),
+        GuiErrorKind::ContextMissing => Some(
+            "Refresh settings or recreate the missing context or profile set before retrying."
+                .to_owned(),
         ),
         GuiErrorKind::DuplicateProfile => Some(
             "Choose a different profile name or rename the existing profile first.".to_owned(),
@@ -1009,6 +1024,25 @@ printf '{}'
     }
 
     #[test]
+    fn command_failures_classify_missing_profiles() {
+        let error = map_command_failure("use_profile", "profile work not found");
+        let crate::errors::DesktopError::CommandFailed {
+            kind,
+            remediation,
+            ..
+        } = error
+        else {
+            panic!("expected command failure");
+        };
+
+        assert!(matches!(kind, GuiErrorKind::ProfileMissing));
+        assert_eq!(
+            remediation.as_deref(),
+            remediation_for_kind(&GuiErrorKind::ProfileMissing).as_deref()
+        );
+    }
+
+    #[test]
     fn machine_failures_fall_back_to_default_remediation() {
         let value = serde_json::json!({
             "ok": false,
@@ -1031,6 +1065,32 @@ printf '{}'
         assert_eq!(
             remediation.as_deref(),
             remediation_for_kind(&GuiErrorKind::PermissionDenied).as_deref()
+        );
+    }
+
+    #[test]
+    fn machine_failures_classify_missing_contexts() {
+        let value = serde_json::json!({
+            "ok": false,
+            "error": {
+                "kind": "context_missing",
+                "message": "Context client-acme no longer exists"
+            }
+        });
+
+        let crate::errors::DesktopError::CommandFailed {
+            kind,
+            remediation,
+            ..
+        } = map_machine_failure("use_context", &value).expect("expected machine failure")
+        else {
+            panic!("expected command failure");
+        };
+
+        assert!(matches!(kind, GuiErrorKind::ContextMissing));
+        assert_eq!(
+            remediation.as_deref(),
+            remediation_for_kind(&GuiErrorKind::ContextMissing).as_deref()
         );
     }
 }
