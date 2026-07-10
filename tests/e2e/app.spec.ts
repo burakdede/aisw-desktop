@@ -16,6 +16,7 @@ type ScenarioName =
   | "tokenWarnings"
   | "failedBulkSwitch"
   | "matchingContextSet"
+  | "diagnosticFixes"
   | "missingTool"
   | "partialSetup"
   | "updaterError"
@@ -266,6 +267,61 @@ test("imports the current login as a new profile from diagnostics", async ({ pag
 
   await page.getByRole("button", { name: "Profiles" }).click();
   await expect(page.getByText("incident · oauth")).toBeVisible();
+});
+
+test("offers direct diagnostic fixes for missing tools, live mismatch, and workspace mismatch", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "diagnosticFixes");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+
+  await expect(page.getByText("Direct fixes")).toBeVisible();
+  await expect(page.getByText("codex is missing")).toBeVisible();
+  await expect(page.getByText("claude live mismatch")).toBeVisible();
+  await expect(page.getByText("Workspace context mismatch")).toBeVisible();
+
+  const missingToolCard = page.locator(".diagnostic-card").filter({ hasText: "codex is missing" });
+  await missingToolCard.getByRole("button", { name: "Open installation guide" }).click();
+  await expect
+    .poll(() =>
+      page.evaluate(() => (window as typeof window & { __AISW_OPENED_GUIDES__?: string[] }).__AISW_OPENED_GUIDES__ ?? []),
+    )
+    .toContain("https://www.npmjs.com/package/@openai/codex");
+
+  await page.getByRole("button", { name: "Re-apply Work" }).click();
+  await page.getByRole("button", { name: "Use expected context now" }).click();
+
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as typeof window & {
+            __AISW_COMMAND_LOG__?: Array<{ command: string }>;
+          }).__AISW_COMMAND_LOG__ ?? [],
+      ),
+    )
+    .toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ command: "use_profile" }),
+        expect.objectContaining({ command: "activate_profile_set" }),
+      ]),
+    );
+
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as typeof window & {
+            __AISW_NOTIFICATIONS__?: Array<{ title: string; body: string }>;
+          }).__AISW_NOTIFICATIONS__ ?? [],
+      ),
+    )
+    .toContainEqual({
+      title: "Workspace switch",
+      body: "Switched to client-acme for /code/acme.",
+    });
 });
 
 test("opens diagnostics when the tray requests it", async ({ page }) => {
@@ -1655,6 +1711,68 @@ async function installDesktopMock(
             },
           },
         },
+        diagnosticFixes: {
+          settings: {
+            ...bootstrapSettings,
+            profile_sets: [
+              {
+                name: "client-acme",
+                label: "Client Acme",
+                profiles: {
+                  claude: "work",
+                  codex: "work",
+                  gemini: null,
+                },
+              },
+            ],
+          },
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: false,
+                credentials_present: true,
+                permissions_ok: true,
+                warnings: [],
+              },
+              {
+                tool: "codex",
+                binary_found: false,
+                stored_profiles: 0,
+                active_profile: null,
+                auth_method: null,
+                credential_backend: null,
+                state_mode: "isolated",
+                active_profile_applied: null,
+                credentials_present: false,
+                permissions_ok: true,
+                warnings: [],
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+              codex: {
+                active: null,
+                profiles: [],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
         workspaceContext: {
           settings: bootstrapSettings,
           snapshot: {
@@ -2173,11 +2291,20 @@ async function installDesktopMock(
         current_path: "/code/acme",
         current_remote: "git@github.com:acme/desktop.git",
         current_context:
-          activeScenario === "switching" || activeScenario === "workspaceContext" ? "work" : "none",
+          activeScenario === "switching" ||
+          activeScenario === "workspaceContext" ||
+          activeScenario === "diagnosticFixes"
+            ? "work"
+            : "none",
         guard_mode: "warn",
-        default_context: activeScenario === "switching" ? "work" : "none",
+        default_context:
+          activeScenario === "switching" || activeScenario === "diagnosticFixes"
+            ? "work"
+            : "none",
         items:
-          activeScenario === "switching" || activeScenario === "workspaceContext"
+          activeScenario === "switching" ||
+          activeScenario === "workspaceContext" ||
+          activeScenario === "diagnosticFixes"
             ? [{ scope: "path", path: "/code/acme", context: "client-acme" }]
             : [],
       };
@@ -2345,6 +2472,11 @@ async function installDesktopMock(
           return cloneSnapshot();
         }
         if (command === "run_doctor") {
+          if (activeScenario === "diagnosticFixes") {
+            return {
+              checks: [{ name: "tool/codex", status: "warn", detail: "codex not found on PATH" }],
+            };
+          }
           if (activeScenario === "diagnosticsRepair") {
             return {
               checks: [
@@ -2372,6 +2504,25 @@ async function installDesktopMock(
           return { summary: { status: "pass" }, checks: [] };
         }
         if (command === "run_verify") {
+          if (activeScenario === "diagnosticFixes") {
+            return {
+              summary: { status: "fail", passed: 0, warnings: 1, failed: 2 },
+              tools: [
+                {
+                  tool: "claude",
+                  status: "fail",
+                  issues: ["live credentials changed outside AISW"],
+                  remediation: ["Re-apply the active profile"],
+                },
+                {
+                  tool: "codex",
+                  status: "warn",
+                  issues: ["tool binary not found on PATH"],
+                  remediation: ["Install codex"],
+                },
+              ],
+            };
+          }
           if (activeScenario === "diagnosticsRepair") {
             return { summary: { status: "warn", passed: 0, warnings: 0, failed: 0 }, tools: [] };
           }
