@@ -261,6 +261,28 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Settings" })).not.toBeDisabled();
   });
 
+  it("shows bootstrap failure details and remediation", async () => {
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "get_bootstrap") {
+        throw {
+          kind: "aisw_not_found",
+          message: "aisw binary could not be resolved",
+          remediation: "Stage the bundled aisw binary or switch to a working system runtime.",
+        };
+      }
+      return undefined;
+    };
+
+    await renderApp();
+    await waitFor(() => {
+      expect(screen.getByText("Desktop bootstrap failed.")).toBeInTheDocument();
+    });
+    expect(screen.getByText("aisw binary could not be resolved")).toBeInTheDocument();
+    expect(
+      screen.getByText("Stage the bundled aisw binary or switch to a working system runtime."),
+    ).toBeInTheDocument();
+  });
+
   it("shows install and PATH guidance when a tool binary is missing", async () => {
     window.__AISW_DESKTOP_MOCK__ = {
       ...window.__AISW_DESKTOP_MOCK__,

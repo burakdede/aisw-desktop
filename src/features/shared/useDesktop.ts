@@ -5,6 +5,7 @@ export function useDesktop() {
   const bootstrap = useQuery({
     queryKey: ["bootstrap"],
     queryFn: getBootstrap,
+    retry: false,
   });
 
   const snapshot = useQuery({

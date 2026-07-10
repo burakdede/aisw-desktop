@@ -22,7 +22,8 @@ type ScenarioName =
   | "partialSetup"
   | "updaterError"
   | "updaterInstallError"
-  | "customRuntime";
+  | "customRuntime"
+  | "bootstrapError";
 
 const toolCapabilities = {
   claude: { state_modes: ["isolated", "shared"] },
@@ -149,6 +150,20 @@ test("shows runtime compatibility blockers when the configured aisw runtime is u
   await expect(page.getByRole("button", { name: "Backups" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Settings", exact: true })).toBeEnabled();
   await expect(page.getByText("First-run setup")).not.toBeVisible();
+});
+
+test("shows bootstrap failure remediation when the desktop shell cannot load initial state", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "bootstrapError");
+
+  await page.goto("/");
+
+  await expect(page.getByText("Desktop bootstrap failed.")).toBeVisible();
+  await expect(page.getByText("aisw binary could not be resolved")).toBeVisible();
+  await expect(
+    page.getByText("Stage the bundled aisw binary or switch to a working system runtime."),
+  ).toBeVisible();
 });
 
 test("reruns setup detection when no live accounts are initially found", async ({ page }) => {
@@ -1462,6 +1477,14 @@ async function installDesktopMock(
             },
           },
         },
+        bootstrapError: {
+          snapshot: null,
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
         diagnosticsRepair: {
           settings: bootstrapSettings,
           snapshot: {
@@ -2611,6 +2634,13 @@ async function installDesktopMock(
       window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
         window.__AISW_COMMAND_LOG__.push({ command, args: deepClone(args ?? null) });
         if (command === "get_bootstrap") {
+          if (activeScenario === "bootstrapError") {
+            throw {
+              kind: "aisw_not_found",
+              message: "aisw binary could not be resolved",
+              remediation: "Stage the bundled aisw binary or switch to a working system runtime.",
+            };
+          }
           if (activeScenario === "incompatibleRuntime") {
             return {
               ...deepClone(state.bootstrap),

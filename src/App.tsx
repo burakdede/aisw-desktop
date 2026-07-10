@@ -14,6 +14,7 @@ import { useDesktop } from "./features/shared/useDesktop";
 import { WorkspacesPanel } from "./features/workspaces/components/WorkspacesPanel";
 import { notifyDesktop } from "./lib/notifications";
 import { activeSetLabel } from "./lib/profile-display";
+import { DesktopCommandError } from "./lib/tauri";
 import { listenDesktopEvent, type TrayCommandResultEvent } from "./lib/tauri";
 
 const NAV = [
@@ -107,12 +108,17 @@ export function App() {
   }
 
   if (bootstrap.isError || !bootstrap.data) {
+    const bootstrapError = describeBootstrapError(bootstrap.error);
     return (
       <main className="app-shell">
         <section className="hero-card">
           <p className="eyebrow">AISW Desktop</p>
           <h1>Desktop bootstrap failed.</h1>
           <p className="lede">Check the configured `aisw` runtime, local permissions, and JSON contract compatibility.</p>
+          <p className="inline-note">{bootstrapError.message}</p>
+          {bootstrapError.remediation ? (
+            <p className="inline-note">{bootstrapError.remediation}</p>
+          ) : null}
         </section>
       </main>
     );
@@ -232,4 +238,25 @@ export function App() {
       )}
     </AppFrame>
   );
+}
+
+function describeBootstrapError(error: unknown) {
+  if (error instanceof DesktopCommandError) {
+    return {
+      message: error.message,
+      remediation: error.remediation,
+    };
+  }
+
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      remediation: undefined,
+    };
+  }
+
+  return {
+    message: "AISW Desktop could not load its initial local state.",
+    remediation: undefined,
+  };
 }
