@@ -597,7 +597,7 @@ test("activates a local profile set from contexts", async ({ page }) => {
     page.locator(".list-row").filter({ hasText: "Client Acme ✓" }).getByRole("button", { name: "Active set" }),
   ).toBeDisabled();
   await page.getByRole("button", { name: "Workspaces" }).click();
-  await expect(page.getByText("Current context: client-acme")).toBeVisible();
+  await expect(page.getByText("Current context: Client Acme")).toBeVisible();
 });
 
 test("uses native profile-set activation when a matching CLI context exists", async ({ page }) => {
@@ -670,13 +670,13 @@ test("binds and resolves workspace context from the workspaces panel", async ({ 
 
   await expect(page.getByRole("heading", { name: "Workspace mismatch" })).toBeVisible();
   await expect(page.getByText("Current context: work")).toBeVisible();
-  await expect(page.getByText("Expected context: client-acme")).toBeVisible();
+  await expect(page.getByText("Expected context: Client Acme")).toBeVisible();
   await expect(page.getByText("path · /code/acme")).toBeVisible();
 
   await page.getByRole("button", { name: "Use expected context now" }).click();
   await expect(page.getByText("Last workspace result: Switched to client-acme for /code/acme.")).toBeVisible();
-  await expect(page.getByText("Current context: client-acme")).toBeVisible();
-  await expect(page.getByText("Expected context: client-acme")).toBeVisible();
+  await expect(page.getByText("Current context: Client Acme")).toBeVisible();
+  await expect(page.getByText("Expected context: Client Acme")).toBeVisible();
   await expect
     .poll(() =>
       page.evaluate(

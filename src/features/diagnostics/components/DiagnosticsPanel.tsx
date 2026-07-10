@@ -17,7 +17,7 @@ import {
 } from "../diagnostic-parsers";
 import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 import { resolveWorkspaceActivationTarget } from "../../workspaces/workspace-activation";
-import { toolProfileDisplayLabel } from "../../../lib/profile-display";
+import { contextDisplayLabel, toolProfileDisplayLabel } from "../../../lib/profile-display";
 import { titleCase } from "../../../lib/utils";
 
 const SUPPORTED_TOOLS = new Set(["claude", "codex", "gemini"]);
@@ -382,9 +382,11 @@ function buildQuickFixes(
     workspace.expectedContext !== workspace.currentContext;
 
   if (hasWorkspaceMismatch) {
+    const expectedContextLabel = contextDisplayLabel(settings, workspace.expectedContext);
+    const currentContextLabel = contextDisplayLabel(settings, workspace.currentContext);
     fixes.push({
       title: "Workspace context mismatch",
-      detail: `This folder wants ${workspace.expectedContext}, but ${workspace.currentContext} is currently active.`,
+      detail: `This folder wants ${expectedContextLabel}, but ${currentContextLabel} is currently active.`,
       label: "Use expected context now",
       status: "warn",
       primary: true,

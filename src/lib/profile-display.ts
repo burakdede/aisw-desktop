@@ -76,6 +76,11 @@ export function profileSetDisplayLabel(set: NonNullable<DesktopSettings["profile
   return set.label ?? set.name;
 }
 
+export function contextDisplayLabel(settings: DesktopSettings, context: string) {
+  const profileSet = (settings.profile_sets ?? []).find((entry) => entry.name === context);
+  return profileSet ? profileSetDisplayLabel(profileSet) : context;
+}
+
 export function profileSetIsActive(
   snapshot: AppSnapshot,
   set: NonNullable<DesktopSettings["profile_sets"]>[number],

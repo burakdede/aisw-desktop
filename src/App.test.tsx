@@ -1953,7 +1953,7 @@ describe("App", () => {
       expect(screen.getByText("Workspace wants a different context")).toBeInTheDocument();
       expect(
         screen.getByText((_, element) =>
-          element?.tagName === "P" && element.textContent?.trim() === "Expected profile set: client-acme",
+          element?.tagName === "P" && element.textContent?.trim() === "Expected profile set: Client Acme",
         ),
       ).toBeInTheDocument();
       expect(
@@ -1978,9 +1978,10 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Workspaces"));
     await waitFor(() => {
       expect(screen.getByText(/Current context:\s*work/)).toBeInTheDocument();
-      expect(screen.getByText(/Expected context:\s*client-acme/)).toBeInTheDocument();
+      expect(screen.getByText(/Expected context:\s*Client Acme/)).toBeInTheDocument();
       expect(screen.getByText(/Guard mode:\s*warn/)).toBeInTheDocument();
       expect(screen.getByText("path · /code/acme")).toBeInTheDocument();
+      expect(screen.getAllByText("Client Acme").length).toBeGreaterThan(0);
       expect(screen.getByText("Workspace mismatch")).toBeInTheDocument();
     });
 
@@ -2494,6 +2495,9 @@ describe("App", () => {
       expect(screen.getByText("codex is missing")).toBeInTheDocument();
       expect(screen.getByText("claude live mismatch")).toBeInTheDocument();
       expect(screen.getByText("Workspace context mismatch")).toBeInTheDocument();
+      expect(
+        screen.getByText("This folder wants Client Acme, but work is currently active."),
+      ).toBeInTheDocument();
     });
 
     const missingToolCard = screen.getByText("codex is missing").closest(".diagnostic-card");

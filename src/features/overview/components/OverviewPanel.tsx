@@ -11,7 +11,11 @@ import {
 } from "../../../lib/tool-guidance";
 import { supportedStateModes } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
-import { sharedProfileEntries, toolProfileDisplayLabel } from "../../../lib/profile-display";
+import {
+  contextDisplayLabel,
+  sharedProfileEntries,
+  toolProfileDisplayLabel,
+} from "../../../lib/profile-display";
 import { titleCase } from "../../../lib/utils";
 import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 import { resolveWorkspaceActivationTarget } from "../../workspaces/workspace-activation";
@@ -72,6 +76,8 @@ export function OverviewPanel({
     : null;
   const workspaceSummaryLabel =
     expectedWorkspaceTarget?.kind === "profile_set" ? "Expected profile set" : "Expected CLI context";
+  const expectedWorkspaceDisplay = contextDisplayLabel(settings, workspaceStatus.expectedContext);
+  const currentWorkspaceDisplay = contextDisplayLabel(settings, workspaceStatus.currentContext);
   const workspaceResult = lastCommandResults.global.workspace;
   const contextResult = lastCommandResults.global.context;
 
@@ -120,10 +126,10 @@ export function OverviewPanel({
         <article className={`diagnostic-card ${hasWorkspaceMismatch ? "diagnostic-warn" : "diagnostic-pass"}`}>
           <h3>{hasWorkspaceMismatch ? "Workspace wants a different context" : "Workspace match"}</h3>
           <p className="inline-note">
-            {workspaceSummaryLabel}: <strong>{workspaceStatus.expectedContext}</strong>
+            {workspaceSummaryLabel}: <strong>{expectedWorkspaceDisplay}</strong>
           </p>
           <p className="inline-note">
-            Current context: <strong>{workspaceStatus.currentContext}</strong>
+            Current context: <strong>{currentWorkspaceDisplay}</strong>
           </p>
           <p className="inline-note">
             Matched via {workspaceStatus.scope}: {workspaceStatus.target}

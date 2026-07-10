@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getProjectBindings, getWorkspaceStatus } from "../../../lib/client";
 import { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { SectionCard } from "../../../components/SectionCard";
+import { contextDisplayLabel } from "../../../lib/profile-display";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import {
   parseWorkspaceBindings,
@@ -60,6 +61,8 @@ export function WorkspacesPanel({
     statusCard.expectedContext !== "none" &&
     statusCard.expectedContext !== statusCard.currentContext;
   const workspaceResult = lastCommandResults.global.workspace;
+  const expectedContextDisplay = contextDisplayLabel(settings, statusCard.expectedContext);
+  const currentContextDisplay = contextDisplayLabel(settings, statusCard.currentContext);
 
   useEffect(() => {
     setWorkspaceOverrideDismissed(false);
@@ -178,8 +181,8 @@ export function WorkspacesPanel({
             <article className="diagnostic-card diagnostic-warn">
               <h3>Workspace mismatch</h3>
               <p className="inline-note">
-                This folder matches <strong>{statusCard.expectedContext}</strong>, but the current
-                active context is <strong>{statusCard.currentContext}</strong>.
+                This folder matches <strong>{expectedContextDisplay}</strong>, but the current
+                active context is <strong>{currentContextDisplay}</strong>.
               </p>
               <p className="inline-note">
                 Matched from {statusCard.scope} binding: {statusCard.target}
@@ -207,8 +210,8 @@ export function WorkspacesPanel({
           <article className="diagnostic-card">
             <h3>Resolved workspace</h3>
             <p className="diagnostic-status">{statusCard.status}</p>
-            <p className="inline-note">Current context: {statusCard.currentContext}</p>
-            <p className="inline-note">Expected context: {statusCard.expectedContext}</p>
+            <p className="inline-note">Current context: {currentContextDisplay}</p>
+            <p className="inline-note">Expected context: {expectedContextDisplay}</p>
             <p className="inline-note">Matched scope: {statusCard.scope}</p>
             <p className="inline-note">Matched target: {statusCard.target}</p>
           </article>
@@ -227,7 +230,7 @@ export function WorkspacesPanel({
                 className="list-row"
               >
                 <div>
-                  <strong>{binding.context}</strong>
+                  <strong>{contextDisplayLabel(settings, binding.context)}</strong>
                   <p>
                     {binding.scope} · {binding.target}
                   </p>
