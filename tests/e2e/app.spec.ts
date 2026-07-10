@@ -423,6 +423,19 @@ test("activates a local profile set from contexts", async ({ page }) => {
   await expect(page.getByText("Current context: client-acme")).toBeVisible();
 });
 
+test("activates a CLI context from contexts", async ({ page }) => {
+  await installDesktopMock(page, "workspaceContext");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Contexts" }).click();
+
+  await page.locator(".list-row").filter({ hasText: "client-acme" }).getByRole("button", { name: "Activate CLI context" }).click();
+
+  await page.getByRole("button", { name: "Workspaces" }).click();
+  await expect(page.getByText("Current context: client-acme")).toBeVisible();
+  await expect(page.getByText("Expected context: client-acme")).toBeVisible();
+});
+
 test("uses saved profile labels in context summaries and selectors", async ({ page }) => {
   await installDesktopMock(page, "labelOverrides");
 
