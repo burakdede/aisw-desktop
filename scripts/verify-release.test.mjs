@@ -42,6 +42,7 @@ function createReleaseFixture(overrides = {}) {
     JSON.stringify(
       {
         bundle: {
+          createUpdaterArtifacts: true,
           externalBin: ["binaries/aisw"],
         },
       },
@@ -76,6 +77,14 @@ cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
 tauri-apps/tauri-action@v1
 TAURI_SIGNING_PRIVATE_KEY
+aarch64-apple-darwin
+x86_64-apple-darwin
+x86_64-unknown-linux-gnu
+x86_64-pc-windows-msvc
+AISW_SIDECAR_URL_MACOS_ARM64
+AISW_SIDECAR_URL_MACOS_X64
+AISW_SIDECAR_URL_LINUX_X64
+AISW_SIDECAR_URL_WINDOWS_X64
 `,
   );
   writeFixture(
@@ -107,6 +116,7 @@ describe("verify-release", () => {
       ok: true,
       checks: expect.arrayContaining([
         expect.objectContaining({ ok: true, label: "publish workflow enforces verification matrix" }),
+        expect.objectContaining({ ok: true, label: "publish workflow covers every supported release target" }),
       ]),
     });
   });
@@ -138,6 +148,63 @@ Complete platform signing checks
     expect(result.checks).toContainEqual(
       expect.objectContaining({
         label: "publish workflow enforces verification matrix",
+        ok: false,
+      }),
+    );
+  });
+
+  it("fails when updater artifacts or release targets drift out of the contract", () => {
+    const root = createReleaseFixture({
+      publishWorkflow: `
+Download aisw sidecar
+npm run prepare:sidecar -- --target \${{ matrix.target }} "\${{ runner.temp }}/aisw"
+npm test
+npm run test:e2e
+npm run build
+cargo test --manifest-path src-tauri/Cargo.toml
+cargo check --manifest-path src-tauri/Cargo.toml
+tauri-apps/tauri-action@v1
+TAURI_SIGNING_PRIVATE_KEY
+aarch64-apple-darwin
+x86_64-apple-darwin
+x86_64-unknown-linux-gnu
+AISW_SIDECAR_URL_MACOS_ARM64
+AISW_SIDECAR_URL_MACOS_X64
+AISW_SIDECAR_URL_LINUX_X64
+`,
+    });
+    writeFixture(
+      root,
+      "src-tauri/tauri.conf.json",
+      JSON.stringify(
+        {
+          bundle: {
+            createUpdaterArtifacts: false,
+            externalBin: ["binaries/aisw"],
+          },
+        },
+        null,
+        2,
+      ),
+    );
+
+    const result = verifyReleaseContract(root);
+    expect(result.ok).toBe(false);
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        label: "tauri produces updater artifacts for signed desktop releases",
+        ok: false,
+      }),
+    );
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        label: "publish workflow covers every supported release target",
+        ok: false,
+      }),
+    );
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        label: "publish workflow wires target-specific sidecar secrets",
         ok: false,
       }),
     );

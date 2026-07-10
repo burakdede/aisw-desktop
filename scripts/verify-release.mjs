@@ -27,6 +27,10 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       ok: Array.isArray(tauriConfig.bundle?.externalBin) && tauriConfig.bundle.externalBin.includes("binaries/aisw"),
     },
     {
+      label: "tauri produces updater artifacts for signed desktop releases",
+      ok: tauriConfig.bundle?.createUpdaterArtifacts === true,
+    },
+    {
       label: "runbook documents sidecar staging",
       ok:
         runbook.includes("npm run prepare:sidecar -- /absolute/path/to/aisw") &&
@@ -69,6 +73,14 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         publishWorkflow.includes("Download aisw sidecar"),
     },
     {
+      label: "publish workflow covers every supported release target",
+      ok:
+        publishWorkflow.includes("aarch64-apple-darwin") &&
+        publishWorkflow.includes("x86_64-apple-darwin") &&
+        publishWorkflow.includes("x86_64-unknown-linux-gnu") &&
+        publishWorkflow.includes("x86_64-pc-windows-msvc"),
+    },
+    {
       label: "publish workflow enforces verification matrix",
       ok:
         publishWorkflow.includes("npm test") &&
@@ -82,6 +94,14 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       ok:
         publishWorkflow.includes("tauri-apps/tauri-action@v1") &&
         publishWorkflow.includes("TAURI_SIGNING_PRIVATE_KEY"),
+    },
+    {
+      label: "publish workflow wires target-specific sidecar secrets",
+      ok:
+        publishWorkflow.includes("AISW_SIDECAR_URL_MACOS_ARM64") &&
+        publishWorkflow.includes("AISW_SIDECAR_URL_MACOS_X64") &&
+        publishWorkflow.includes("AISW_SIDECAR_URL_LINUX_X64") &&
+        publishWorkflow.includes("AISW_SIDECAR_URL_WINDOWS_X64"),
     },
   ];
 
