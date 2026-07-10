@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-type ScenarioName = "onboarding" | "switching" | "profiles";
+type ScenarioName = "onboarding" | "switching" | "profiles" | "missingTool";
 
 const toolCapabilities = {
   claude: { state_modes: ["isolated", "shared"] },
@@ -161,6 +161,32 @@ test("binds and resolves workspace context from the workspaces panel", async ({ 
 
   await page.getByRole("button", { name: "Remove this binding" }).first().click();
   await expect(page.getByText("path · /code/acme")).not.toBeVisible();
+});
+
+test("shows missing-tool guidance and opens the install guide from diagnostics", async ({ page }) => {
+  await installDesktopMock(page, "missingTool");
+
+  await page.goto("/");
+
+  await expect(
+    page.getByText(
+      "Gemini is not available on PATH, so AISW Desktop cannot switch or verify that tool yet.",
+    ),
+  ).toBeVisible();
+  await expect(page.getByText("npm install -g @google/gemini-cli")).toBeVisible();
+  await expect(page.getByText("gemini --version")).toBeVisible();
+  await expect(page.getByText(/(which|where) gemini/)).toBeVisible();
+
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+  const missingToolCard = page.locator(".diagnostic-card").filter({ hasText: "gemini is missing" });
+  await expect(missingToolCard).toBeVisible();
+  await missingToolCard.getByRole("button", { name: "Open installation guide" }).click();
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => (window as typeof window & { __AISW_OPENED_GUIDES__?: string[] }).__AISW_OPENED_GUIDES__ ?? []),
+    )
+    .toContain("https://www.npmjs.com/package/@google/gemini-cli");
 });
 
 test("creates profiles from environment and API key modes", async ({ page }) => {
@@ -446,6 +472,69 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
             },
           },
         },
+        missingTool: {
+          settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "api_key",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+              {
+                tool: "gemini",
+                binary_found: false,
+                stored_profiles: 0,
+                active_profile: null,
+                auth_method: null,
+                credential_backend: null,
+                state_mode: null,
+                active_profile_applied: null,
+                credentials_present: false,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+              codex: {
+                active: "work",
+                profiles: [{ name: "work", auth: "api_key", label: "Work" }],
+              },
+              gemini: {
+                active: null,
+                profiles: [],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
       };
 
       const scenarioState = scenarios[activeScenario];
@@ -537,6 +626,11 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
         project_bindings: projectBindingsResult(),
       });
       const listeners = new Map();
+      window.__AISW_OPENED_GUIDES__ = [];
+      window.open = (url) => {
+        window.__AISW_OPENED_GUIDES__.push(String(url));
+        return null;
+      };
 
       const ensureToolEntry = (tool) => {
         if (!state.snapshot.profiles[tool]) {
