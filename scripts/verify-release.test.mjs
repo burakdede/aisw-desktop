@@ -182,6 +182,7 @@ API key never appears in logs
 Remediation actions land on targeted settings guidance
 Guided OAuth capture shows a stable five-step desktop wizard
 Editable state-mode choices explain isolated versus shared behavior
+Missing-tool diagnostics support install guidance and in-place refresh
 ## Verification Matrix
 npm test
 `,
