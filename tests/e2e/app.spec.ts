@@ -3,6 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 type ScenarioName =
   | "onboarding"
   | "onboardingMissingTool"
+  | "noLiveAccounts"
   | "switching"
   | "workspaceContext"
   | "profiles"
@@ -99,6 +100,19 @@ test("shows missing-tool install guidance during onboarding", async ({ page }) =
       page.evaluate(() => (window as typeof window & { __AISW_OPENED_GUIDES__?: string[] }).__AISW_OPENED_GUIDES__ ?? []),
     )
     .toContain("https://www.npmjs.com/package/@google/gemini-cli");
+});
+
+test("reruns setup detection when no live accounts are initially found", async ({ page }) => {
+  await installDesktopMock(page, "noLiveAccounts");
+
+  await page.goto("/");
+
+  await expect(page.getByRole("heading", { name: "First-run setup" })).toBeVisible();
+  await expect(page.getByText("No live credentials detected").first()).toBeVisible();
+
+  await page.getByRole("button", { name: "Start setup" }).click();
+
+  await expect(page.getByText("detected · oauth")).toBeVisible();
 });
 
 test("keeps Gemini state mode non-configurable when runtime capabilities are stale", async ({
@@ -725,6 +739,68 @@ async function installDesktopMock(
             },
           },
         },
+        noLiveAccounts: {
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 0,
+                active_profile: null,
+                auth_method: null,
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: null,
+                credentials_present: false,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 0,
+                active_profile: null,
+                auth_method: null,
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: null,
+                credentials_present: false,
+                permissions_ok: true,
+              },
+              {
+                tool: "gemini",
+                binary_found: true,
+                stored_profiles: 0,
+                active_profile: null,
+                auth_method: null,
+                credential_backend: null,
+                state_mode: null,
+                active_profile_applied: null,
+                credentials_present: false,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: null,
+                profiles: [],
+              },
+              codex: {
+                active: null,
+                profiles: [],
+              },
+              gemini: {
+                active: null,
+                profiles: [],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
         switching: {
           settings: {
             ...bootstrapSettings,
@@ -1102,6 +1178,7 @@ async function installDesktopMock(
         snapshot: deepClone(scenarioState.snapshot),
         initReport: deepClone(scenarioState.initReport),
         settings: deepClone(scenarioState.settings ?? bootstrapSettings),
+        initRuns: 0,
       };
 
       const stateWorkspace = {
@@ -1238,6 +1315,14 @@ async function installDesktopMock(
           return { summary: { status: "pass" } };
         }
         if (command === "run_init") {
+          state.initRuns += 1;
+          if (activeScenario === "noLiveAccounts" && state.initRuns > 1) {
+            return {
+              result: {
+                live_accounts: [{ tool: "codex", outcome: "detected", auth_method: "oauth" }],
+              },
+            };
+          }
           return deepClone(state.initReport);
         }
         if (command === "get_workspace_status") {
