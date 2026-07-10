@@ -177,11 +177,10 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
                 let result = state
                     .mutate("tray_use_profile", move |bridge| async move {
                         bridge
-                            .use_profile(UseProfileRequest {
-                                tool: tool_for_command,
-                                profile: profile_for_command,
-                                state_mode: Some("isolated".to_owned()),
-                            })
+                            .use_profile(tray_use_profile_request(
+                                tool_for_command,
+                                profile_for_command,
+                            ))
                             .await
                     })
                     .await;
@@ -223,6 +222,18 @@ fn emit_tray_command_result<R: Runtime>(
         },
     };
     let _ = app.emit(TRAY_COMMAND_RESULT_EVENT, payload);
+}
+
+fn tray_use_profile_request(tool: String, profile: String) -> UseProfileRequest {
+    UseProfileRequest {
+        state_mode: if tool == "gemini" {
+            None
+        } else {
+            Some("isolated".to_owned())
+        },
+        tool,
+        profile,
+    }
 }
 
 fn tray_menu<R: Runtime>(
@@ -531,7 +542,7 @@ fn active_profile_for_tool<'a>(snapshot: &'a AppSnapshot, tool: &str) -> Option<
 mod tests {
     use super::{
         active_set_label, active_summary, active_summary_or_default, profile_set_is_active,
-        shared_profile_entries, tray_sections, TrayEntry, TraySection,
+        shared_profile_entries, tray_sections, tray_use_profile_request, TrayEntry, TraySection,
     };
     use crate::models::{
         AppSnapshot, ContextSummary, DesktopSettings, ProfileSet, RuntimeKind, ToolProfileSummary,
@@ -953,6 +964,19 @@ mod tests {
                 },
             ]
         );
+    }
+
+    #[test]
+    fn tray_profile_requests_respect_tool_state_modes() {
+        let claude = tray_use_profile_request("claude".to_owned(), "work".to_owned());
+        assert_eq!(claude.tool, "claude");
+        assert_eq!(claude.profile, "work");
+        assert_eq!(claude.state_mode.as_deref(), Some("isolated"));
+
+        let gemini = tray_use_profile_request("gemini".to_owned(), "travel".to_owned());
+        assert_eq!(gemini.tool, "gemini");
+        assert_eq!(gemini.profile, "travel");
+        assert_eq!(gemini.state_mode, None);
     }
 
     #[test]
