@@ -118,6 +118,13 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `tests/e2e/app.spec.ts` verifies onboarding and diagnostics remediation actions open the correct shell/keyring settings section.
   - `src/App.test.tsx` verifies focused settings shortcuts are selected for shell-hook and keyring remediation flows.
 
+### 14. Guided OAuth capture shows a stable five-step desktop wizard
+
+- Status: implemented
+- Evidence:
+  - `tests/e2e/app.spec.ts` verifies the OAuth capture flow renders the fixed five-step wizard and streams inline progress details.
+  - `src/App.test.tsx` verifies OAuth progress events are normalized into the desktop wizard contract even when the upstream event stream varies.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:

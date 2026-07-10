@@ -180,6 +180,7 @@ least-privilege capability
 ## Acceptance Criteria
 API key never appears in logs
 Remediation actions land on targeted settings guidance
+Guided OAuth capture shows a stable five-step desktop wizard
 ## Verification Matrix
 npm test
 `,
