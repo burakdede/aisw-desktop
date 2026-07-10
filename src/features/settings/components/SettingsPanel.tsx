@@ -33,7 +33,7 @@ export function SettingsPanel({
   }, [selectedShell, shellGuidance.data]);
   const hasPendingSettingsChanges =
     runtimeKind !== settings.runtime_kind ||
-    runtimePath !== (settings.runtime_path ?? "") ||
+    effectiveRuntimePath(runtimeKind, runtimePath) !== (settings.runtime_path ?? "") ||
     aiswHome !== (settings.aisw_home ?? "") ||
     updateChannel !== settings.update_channel;
 
@@ -75,7 +75,7 @@ export function SettingsPanel({
     event.preventDefault();
     updateSettingsMutation.mutate({
       runtime_kind: runtimeKind,
-      runtime_path: runtimePath || null,
+      runtime_path: effectiveRuntimePath(runtimeKind, runtimePath) || null,
       aisw_home: aiswHome || null,
       update_channel: updateChannel,
       profile_labels: settings.profile_labels ?? {},
@@ -106,7 +106,12 @@ export function SettingsPanel({
           </label>
           <label>
             Runtime path
-            <input value={runtimePath} onChange={(event) => setRuntimePath(event.target.value)} />
+            <input
+              value={runtimePath}
+              disabled={runtimeKind !== "custom"}
+              placeholder={runtimeKind === "custom" ? "/path/to/aisw" : "Only used for custom runtime"}
+              onChange={(event) => setRuntimePath(event.target.value)}
+            />
           </label>
           <label>
             AISW_HOME override
@@ -380,4 +385,11 @@ function findShellHookCheck(report: Record<string, unknown> | undefined) {
     };
   }
   return null;
+}
+
+function effectiveRuntimePath(runtimeKind: DesktopSettings["runtime_kind"], runtimePath: string) {
+  if (runtimeKind !== "custom") {
+    return "";
+  }
+  return runtimePath;
 }

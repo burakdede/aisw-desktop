@@ -297,12 +297,6 @@ impl CliAiswBridge {
 #[async_trait]
 impl AiswBridge for CliAiswBridge {
     async fn resolve_binary(&self) -> Result<PathBuf, DesktopError> {
-        if let Some(path) = &self.configured_path {
-            if path.exists() {
-                return Ok(path.clone());
-            }
-        }
-
         if let Some(path) = std::env::var_os("AISW_DESKTOP_AISW_PATH") {
             let candidate = PathBuf::from(path);
             if candidate.exists() {
@@ -311,9 +305,14 @@ impl AiswBridge for CliAiswBridge {
         }
 
         match self.runtime_kind {
+            RuntimeKind::Custom => self
+                .configured_path
+                .as_ref()
+                .filter(|path| path.exists())
+                .cloned()
+                .ok_or(DesktopError::AiswNotFound),
             RuntimeKind::Bundled => resolve_bundled_binary(),
             RuntimeKind::System => find_binary_on_path("aisw"),
-            RuntimeKind::Custom => Err(DesktopError::AiswNotFound),
         }
     }
 
@@ -980,6 +979,14 @@ printf '{}'
             CliAiswBridge::new(RuntimeKind::Bundled, Some(PathBuf::from("/missing")), None);
         let resolved = bridge.resolve_binary().await;
         assert!(resolved.is_err());
+    }
+
+    #[tokio::test]
+    async fn system_runtime_ignores_stale_custom_path() {
+        let path = write_fake_aisw("#!/bin/sh\nprintf '{}'\n");
+        let bridge = CliAiswBridge::new(RuntimeKind::System, Some(path.clone()), None);
+        let resolved = bridge.resolve_binary().await;
+        assert_ne!(resolved.ok().as_ref(), Some(&path));
     }
 
     #[test]

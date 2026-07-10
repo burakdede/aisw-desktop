@@ -6,7 +6,8 @@ type ScenarioName =
   | "profiles"
   | "missingTool"
   | "partialSetup"
-  | "updaterError";
+  | "updaterError"
+  | "customRuntime";
 
 const toolCapabilities = {
   claude: { state_modes: ["isolated", "shared"] },
@@ -248,7 +249,7 @@ test("requires saving settings before updater actions use a changed channel", as
   ).not.toBeVisible();
 
   await page.getByRole("button", { name: "Check for updates" }).click();
-  await expect(page.getByText("Channel: beta")).toBeVisible();
+  await expect(page.getByText("Channel: beta", { exact: true })).toBeVisible();
   await expect(page.getByText(/Endpoint:\s*https:\/\/updates\.example\.com\/beta\.json/)).toBeVisible();
 });
 
@@ -273,6 +274,26 @@ test("clears stale update results after channel edits until the user checks agai
   await page.getByRole("button", { name: "Check for updates" }).click();
   await expect(page.getByText("Update available: 0.3.0-beta.1")).toBeVisible();
   await expect(page.getByText(/Endpoint:\s*https:\/\/updates\.example\.com\/beta\.json/)).toBeVisible();
+});
+
+test("clears a saved custom runtime path after switching back to bundled runtime", async ({ page }) => {
+  await installDesktopMock(page, "customRuntime");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+
+  const runtimePath = page.getByLabel("Runtime path");
+  await expect(runtimePath).toHaveValue("/opt/aisw/bin/aisw");
+  await expect(runtimePath).toBeEnabled();
+
+  await page.getByLabel("Runtime selection").selectOption("bundled");
+  await expect(runtimePath).toBeDisabled();
+
+  await page.getByRole("button", { name: "Save settings" }).click();
+
+  await expect(runtimePath).toHaveValue("");
+  await expect(page.getByText("Selected backend: Bundled")).toBeVisible();
+  await expect(page.getByText("Current resolved path: /Applications/AISW.app/Contents/Resources/aisw")).toBeVisible();
 });
 
 test("creates profiles from environment and API key modes", async ({ page }) => {
@@ -330,6 +351,10 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
         update_channel: "stable",
         profile_sets: [],
       };
+      if (activeScenario === "customRuntime") {
+        bootstrapSettings.runtime_kind = "custom";
+        bootstrapSettings.runtime_path = "/opt/aisw/bin/aisw";
+      }
 
       const baseBootstrap = {
         settings: bootstrapSettings,
@@ -544,6 +569,73 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
         },
         profiles: {
           settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 0,
+                active_profile: null,
+                auth_method: null,
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: null,
+                credentials_present: false,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 0,
+                active_profile: null,
+                auth_method: null,
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: null,
+                credentials_present: false,
+                permissions_ok: true,
+              },
+              {
+                tool: "gemini",
+                binary_found: true,
+                stored_profiles: 0,
+                active_profile: null,
+                auth_method: null,
+                credential_backend: null,
+                state_mode: null,
+                active_profile_applied: null,
+                credentials_present: false,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: null,
+                profiles: [],
+              },
+              codex: {
+                active: null,
+                profiles: [],
+              },
+              gemini: {
+                active: null,
+                profiles: [],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
+        customRuntime: {
+          settings: {
+            ...bootstrapSettings,
+            runtime_kind: "custom",
+            runtime_path: "/opt/aisw/bin/aisw",
+          },
           snapshot: {
             statuses: [
               {
