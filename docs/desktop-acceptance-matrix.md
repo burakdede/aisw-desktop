@@ -174,6 +174,13 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src/features/backups/components/BackupsPanel.tsx` and `src/features/profiles/components/ProfilesPanel.tsx` use display-label helpers for backup restore warnings and confirmations instead of raw profile ids.
   - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify backup catalog and latest-backup restore copy prefer saved labels such as `Sandbox`, `Office`, and `Code Work`.
 
+### 22. CLI context activation results prefer matching saved profile-set labels
+
+- Status: implemented
+- Evidence:
+  - `src/features/contexts/components/ContextsPanel.tsx` passes the resolved context display label through `useContextMutation`, while `src/features/shared/useDesktopActions.ts` prefers that label in success messages without changing the backend request.
+  - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify activating the `client-acme` CLI context reports `Client Acme` when a matching saved profile set exists, while raw CLI ids remain intact for unlabeled contexts.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:

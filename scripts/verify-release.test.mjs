@@ -188,6 +188,7 @@ Inactive profile details do not reuse live runtime diagnostics
 Routed profile details reset when the user switches tools manually
 Manual sidebar navigation clears stale routed profile and settings targets
 Backup restore warnings and confirmations use saved profile labels
+CLI context activation results prefer matching saved profile-set labels
 ## Verification Matrix
 npm test
 `,

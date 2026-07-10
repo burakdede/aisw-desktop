@@ -135,6 +135,7 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         acceptanceMatrix.includes("Routed profile details reset when the user switches tools manually") &&
         acceptanceMatrix.includes("Manual sidebar navigation clears stale routed profile and settings targets") &&
         acceptanceMatrix.includes("Backup restore warnings and confirmations use saved profile labels") &&
+        acceptanceMatrix.includes("CLI context activation results prefer matching saved profile-set labels") &&
         acceptanceMatrix.includes("does not replace the local-only product spec"),
     },
     {
