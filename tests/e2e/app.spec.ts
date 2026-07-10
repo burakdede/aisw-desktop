@@ -657,6 +657,26 @@ test("creates profiles from environment and API key modes", async ({ page }) => 
   await expect(page.getByText("ops · api_key")).toBeVisible();
 });
 
+test("runs guided OAuth capture from the profiles screen", async ({ page }) => {
+  await installDesktopMock(page, "profiles");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  const profilesSection = page.locator(".section-card").filter({ hasText: "Provisioning" });
+  await page.getByLabel("Profile name").fill("personal");
+  await page.getByLabel("Import mode").selectOption("oauth");
+  await profilesSection.getByRole("button", { name: "Start OAuth" }).click();
+
+  await expect(page.getByText("OAuth progress")).toBeVisible();
+  await expect(page.getByText("Browser Launch", { exact: true })).toBeVisible();
+  await expect(page.getByText("Waiting For Login", { exact: true })).toBeVisible();
+  await expect(page.getByText("Profile Saved", { exact: true })).toBeVisible();
+  await expect(page.locator(".inline-note").filter({ hasText: "Launching browser" })).toBeVisible();
+  await expect(page.locator(".inline-note").filter({ hasText: "Waiting for login" })).toBeVisible();
+  await expect(page.getByText("personal · oauth")).toBeVisible();
+});
+
 test("renames, relabels, and removes profiles from the profiles screen", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
