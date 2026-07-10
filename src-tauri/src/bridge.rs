@@ -821,7 +821,7 @@ mod tests {
             r#"#!/bin/sh
 if [ "$1" = "add" ]; then
   read secret
-  printf '{"command":"add","received":"%s"}' "$secret"
+  printf '{"command":"add","args":"%s %s %s %s %s","received":"%s"}' "$1" "$2" "$3" "$4" "$5" "$secret"
   exit 0
 fi
 printf '{"version":"0.3.7","cli_api_version":1,"json_schema_version":1,"progress_schema_version":1}'
@@ -841,7 +841,12 @@ printf '{"version":"0.3.7","cli_api_version":1,"json_schema_version":1,"progress
             .await
             .unwrap();
 
+        assert_eq!(response["args"], "add claude work --json --api-key-stdin");
         assert_eq!(response["received"], "sk-ant-api03-secret");
+        assert!(!response["args"]
+            .as_str()
+            .expect("args should serialize as a string")
+            .contains("sk-ant-api03-secret"));
     }
 
     #[tokio::test]
