@@ -1953,6 +1953,83 @@ describe("App", () => {
     });
   });
 
+  it("opens matching profile diagnostics from a diagnostics quick fix", async () => {
+    const diagnosticsSnapshot = {
+      ...bootstrap.snapshot,
+      statuses: [
+        {
+          tool: "claude",
+          binary_found: true,
+          stored_profiles: 1,
+          active_profile: "work",
+          auth_method: "oauth",
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: false,
+          credentials_present: true,
+          permissions_ok: true,
+          warnings: [],
+        },
+      ],
+      profiles: {
+        claude: {
+          active: "work",
+          profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+        },
+      },
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) =>
+      (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            snapshot: diagnosticsSnapshot,
+          },
+          get_snapshot: diagnosticsSnapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { checks: [] },
+          run_verify: {
+            summary: { status: "fail", passed: 0, warnings: 0, failed: 1 },
+            tools: [
+              {
+                tool: "claude",
+                status: "fail",
+                issues: ["live credentials changed outside AISW"],
+                remediation: ["Re-apply the active profile"],
+              },
+            ],
+          },
+          run_repair: {
+            result: {
+              summary: { status: "warn", actions_planned: 0, actions_applied: 0, issues_remaining: 1 },
+              actions: [],
+            },
+          },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Diagnostics")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Diagnostics"));
+
+    await waitFor(() => expect(screen.getByText("claude live mismatch")).toBeInTheDocument());
+    const mismatchCard = screen.getByText("claude live mismatch").closest("article");
+    expect(mismatchCard).not.toBeNull();
+    fireEvent.click(within(mismatchCard!).getByText("Open profile details"));
+
+    await waitFor(() =>
+      expect(screen.getByText("Credential backend: system_keyring")).toBeInTheDocument(),
+    );
+    expect(screen.getByText("Diagnostic details")).toBeInTheDocument();
+    expect(screen.getByText("Credential backend: system_keyring")).toBeInTheDocument();
+    expect(screen.getByText("Live match: no")).toBeInTheDocument();
+  });
+
   it("runs targeted diagnostic repairs for keyring, permissions, and OAuth failures", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {

@@ -3,7 +3,6 @@ import { SectionCard } from "../../../components/SectionCard";
 import { AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import { runDoctor, runRepair, runVerify } from "../../../lib/client";
 import { openExternalGuide, installGuideUrlForTool } from "../../../lib/tool-guidance";
-import { useDesktop } from "../../shared/useDesktop";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import {
   parseDoctorIssues,
@@ -19,8 +18,17 @@ import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 import { resolveWorkspaceActivationTarget } from "../../workspaces/workspace-activation";
 import { toolProfileDisplayLabel } from "../../../lib/profile-display";
 
-export function DiagnosticsPanel({ settings }: { settings: DesktopSettings }) {
-  const { snapshot } = useDesktop();
+const SUPPORTED_TOOLS = new Set(["claude", "codex", "gemini"]);
+
+export function DiagnosticsPanel({
+  settings,
+  snapshot,
+  onOpenProfiles,
+}: {
+  settings: DesktopSettings;
+  snapshot: AppSnapshot;
+  onOpenProfiles: (tool: string, expandedProfile?: string | null) => void;
+}) {
   const queryClient = useQueryClient();
   const {
     useProfileMutation,
@@ -58,7 +66,7 @@ export function DiagnosticsPanel({ settings }: { settings: DesktopSettings }) {
   ];
   const repairActions = parseRepairActions(repair.data);
   const quickFixes = buildQuickFixes({
-    snapshot: snapshot.data,
+    snapshot,
     doctor: doctor.data,
     repair: repair.data,
     settings,
@@ -155,6 +163,21 @@ export function DiagnosticsPanel({ settings }: { settings: DesktopSettings }) {
                   ))}
                 </div>
               ) : null}
+              {resolveIssueProfileTarget(card, snapshot) ? (
+                <div className="button-row">
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    onClick={() => {
+                      const target = resolveIssueProfileTarget(card, snapshot);
+                      if (!target) return;
+                      onOpenProfiles(target.tool, target.profile);
+                    }}
+                  >
+                    Open profile details
+                  </button>
+                </div>
+              ) : null}
             </article>
           ))}
           {!issueCards.length ? (
@@ -177,6 +200,15 @@ export function DiagnosticsPanel({ settings }: { settings: DesktopSettings }) {
                 >
                   {fix.label}
                 </button>
+                {fix.profileTarget ? (
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    onClick={() => onOpenProfiles(fix.profileTarget!.tool, fix.profileTarget!.profile)}
+                  >
+                    Open profile details
+                  </button>
+                ) : null}
               </div>
             </article>
           ))}
@@ -208,6 +240,7 @@ type QuickFixCard = {
   detail: string;
   label: string;
   status: "warn" | "fail";
+  profileTarget?: { tool: string; profile: string | null };
   primary?: boolean;
   disabled?: boolean;
   action: () => void;
@@ -276,6 +309,10 @@ function buildQuickFixes(
         detail: `Re-apply ${profileLabel} so the live credentials match AISW again.`,
         label: `Re-apply ${profileLabel}`,
         status: "fail",
+        profileTarget: {
+          tool: status.tool,
+          profile: status.active_profile,
+        },
         primary: true,
         action: () =>
           useProfile({
@@ -413,4 +450,24 @@ function resolveStateMode(status: ToolStatus) {
     return null;
   }
   return status.state_mode ?? "isolated";
+}
+
+function resolveIssueProfileTarget(card: IssueCardData, snapshot: AppSnapshot) {
+  const tool = resolveDiagnosticTool(card.title);
+  if (!tool) {
+    return null;
+  }
+
+  const status = snapshot.statuses.find((entry) => entry.tool === tool);
+  const activeProfile = status?.active_profile ?? snapshot.profiles[tool]?.active ?? null;
+  return {
+    tool,
+    profile: activeProfile,
+  };
+}
+
+function resolveDiagnosticTool(title: string) {
+  const normalized = title.trim().toLowerCase();
+  const candidate = normalized.startsWith("tool/") ? normalized.slice("tool/".length) : normalized;
+  return SUPPORTED_TOOLS.has(candidate) ? candidate : null;
 }

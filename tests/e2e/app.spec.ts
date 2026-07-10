@@ -57,6 +57,20 @@ test("switches shared profiles and recovers from live mismatch", async ({ page }
   await expect(page.getByText("incident · oauth")).toBeVisible();
 });
 
+test("opens profile diagnostics from a diagnostics live mismatch card", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+  const mismatchCard = page.locator(".diagnostic-card").filter({ hasText: "claude live mismatch" });
+  await mismatchCard.getByRole("button", { name: "Open profile details" }).click();
+
+  await expect(page.getByText("Credential backend: system_keyring")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Hide diagnostic details" }).first()).toBeVisible();
+  await expect(page.getByText("Live mismatch detected")).toBeVisible();
+});
+
 test("switches one tool directly from overview and refreshes the active profile state", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
