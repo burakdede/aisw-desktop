@@ -4,6 +4,7 @@ type ScenarioName =
   | "onboarding"
   | "onboardingMissingTool"
   | "noLiveAccounts"
+  | "labelOverrides"
   | "switching"
   | "workspaceContext"
   | "profiles"
@@ -44,6 +45,17 @@ test("imports detected Claude, Codex, and Gemini accounts during onboarding", as
   await page.getByLabel("Tool").selectOption("gemini");
   await expect(page.getByText("travel · oauth")).toBeVisible();
   await expect(page.locator(".list-row strong").filter({ hasText: "Travel" })).toBeVisible();
+});
+
+test("uses saved profile labels across onboarding and overview", async ({ page }) => {
+  await installDesktopMock(page, "labelOverrides");
+
+  await page.goto("/");
+
+  await expect(page.getByText("Active set: Office")).toBeVisible();
+  await expect(page.getByLabel("First switch profile").getByRole("option", { name: "Office" })).toHaveCount(1);
+  const overview = page.locator(".section-card").filter({ hasText: "Control Center" });
+  await expect(overview.getByRole("option", { name: "Shared profile: Office" })).toHaveCount(1);
 });
 
 test("opens shell setup from onboarding", async ({ page }) => {
@@ -269,6 +281,17 @@ test("edits a local profile set from contexts", async ({ page }) => {
 
   await expect(page.getByText("Updated profile set client-acme.")).toBeVisible();
   await expect(page.getByText("Client Acme Prime")).toBeVisible();
+});
+
+test("uses saved profile labels in context summaries and selectors", async ({ page }) => {
+  await installDesktopMock(page, "labelOverrides");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Contexts" }).click();
+
+  await expect(page.getByText("claude: Office · codex: Code Work · gemini: none")).toBeVisible();
+  const contextsForm = page.locator("form.stacked-form");
+  await expect(contextsForm.getByLabel("Codex").getByRole("option", { name: "Code Work" })).toHaveCount(1);
 });
 
 test("binds and resolves workspace context from the workspaces panel", async ({ page }) => {
@@ -796,6 +819,90 @@ async function installDesktopMock(
           initReport: {
             result: {
               live_accounts: [],
+            },
+          },
+        },
+        labelOverrides: {
+          settings: {
+            ...bootstrapSettings,
+            profile_labels: {
+              claude: {
+                work: "Office",
+              },
+              codex: {
+                work: "Code Work",
+              },
+            },
+            profile_sets: [
+              {
+                name: "client-acme",
+                label: "Client Acme",
+                profiles: {
+                  claude: "work",
+                  codex: "work",
+                  gemini: null,
+                },
+              },
+            ],
+          },
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "api_key",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+              {
+                tool: "gemini",
+                binary_found: true,
+                stored_profiles: 0,
+                active_profile: null,
+                auth_method: null,
+                credential_backend: null,
+                state_mode: null,
+                active_profile_applied: null,
+                credentials_present: false,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+              codex: {
+                active: "work",
+                profiles: [{ name: "work", auth: "api_key", label: "Work" }],
+              },
+              gemini: {
+                active: null,
+                profiles: [],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [{ tool: "claude", outcome: "detected", auth_method: "oauth" }],
             },
           },
         },
