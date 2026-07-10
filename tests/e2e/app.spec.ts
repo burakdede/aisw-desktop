@@ -1070,6 +1070,7 @@ test("binds and resolves workspace context from the workspaces panel", async ({ 
   await expect(page.getByText("Expected context: Client Acme")).toBeVisible();
   await expect(page.getByText("Default context: work")).toBeVisible();
   await expect(page.getByText("path · /code/acme")).toBeVisible();
+  await expect(page.getByText("Matched binding ✓")).toBeVisible();
 
   await page.getByRole("button", { name: "Use expected context now" }).click();
   await expect(page.getByText("Last workspace result: Switched to Client Acme for /code/acme.")).toBeVisible();

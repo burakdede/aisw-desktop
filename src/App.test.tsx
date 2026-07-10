@@ -3107,6 +3107,7 @@ describe("App", () => {
       expect(screen.getByText(/Guard mode:\s*warn/)).toBeInTheDocument();
       expect(screen.getByText(/Default context:\s*work/)).toBeInTheDocument();
       expect(screen.getByText("path · /code/acme")).toBeInTheDocument();
+      expect(screen.getByText("Matched binding ✓")).toBeInTheDocument();
       expect(screen.getAllByText("Client Acme").length).toBeGreaterThan(0);
       expect(screen.getByText("Workspace mismatch")).toBeInTheDocument();
     });

@@ -67,6 +67,10 @@ export function WorkspacesPanel({
   const workspaceResult = lastCommandResults.global.workspace;
   const expectedContextDisplay = contextDisplayLabel(settings, statusCard.expectedContext);
   const currentContextDisplay = contextDisplayLabel(settings, statusCard.currentContext);
+  const matchedBindingKey =
+    statusCard.scope !== "none"
+      ? `${statusCard.scope}:${statusCard.target}:${statusCard.expectedContext}`
+      : null;
 
   useEffect(() => {
     setWorkspaceOverrideDismissed(false);
@@ -234,29 +238,37 @@ export function WorkspacesPanel({
 
           <div className="stack-list">
             <h3>Explicit bindings</h3>
-            {bindingsSummary.bindings.map((binding) => (
-              <article
-                key={`${binding.scope}-${binding.target}-${binding.context}`}
-                className="list-row"
-              >
-                <div>
-                  <strong>{contextDisplayLabel(settings, binding.context)}</strong>
-                  <p>
-                    {binding.scope} · {binding.target}
-                  </p>
-                </div>
-                <button
-                  className="ghost-button danger-button"
-                  type="button"
-                  disabled={mutationLock.isBusy}
-                  onClick={() =>
-                    workspaceUnbindMutation.mutate(unbindTargetForBinding(binding.scope, binding.target))
-                  }
+            {bindingsSummary.bindings.map((binding) => {
+              const isMatchedBinding =
+                matchedBindingKey === `${binding.scope}:${binding.target}:${binding.context}`;
+
+              return (
+                <article
+                  key={`${binding.scope}-${binding.target}-${binding.context}`}
+                  className="list-row"
                 >
-                  Remove this binding
-                </button>
-              </article>
-            ))}
+                  <div>
+                    <strong>{contextDisplayLabel(settings, binding.context)}</strong>
+                    <p>
+                      {binding.scope} · {binding.target}
+                    </p>
+                    {isMatchedBinding ? <p className="inline-note">Matched binding ✓</p> : null}
+                  </div>
+                  <button
+                    className="ghost-button danger-button"
+                    type="button"
+                    disabled={mutationLock.isBusy}
+                    onClick={() =>
+                      workspaceUnbindMutation.mutate(
+                        unbindTargetForBinding(binding.scope, binding.target),
+                      )
+                    }
+                  >
+                    Remove this binding
+                  </button>
+                </article>
+              );
+            })}
             {!bindingsSummary.bindings.length ? (
               <p className="inline-note">
                 No explicit workspace bindings are configured yet. Save one from the form to attach
