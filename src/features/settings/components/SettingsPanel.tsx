@@ -27,7 +27,11 @@ export function SettingsPanel({
   const [aiswHome, setAiswHome] = useState(settings.aisw_home ?? "");
   const [updateChannel, setUpdateChannel] = useState(settings.update_channel);
   const readEnabled = useMutationAwareQueryEnabled();
-  const shellGuidance = useQuery({ queryKey: ["shell-guidance"], queryFn: getShellGuidance });
+  const shellGuidance = useQuery({
+    queryKey: ["shell-guidance"],
+    queryFn: getShellGuidance,
+    enabled: readEnabled,
+  });
   const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor, enabled: readEnabled });
   const [selectedShell, setSelectedShell] = useState("");
   const [copyMessage, setCopyMessage] = useState("");

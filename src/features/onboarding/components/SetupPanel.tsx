@@ -48,7 +48,11 @@ export function SetupPanel({
     useDesktopActions();
   const readEnabled = useMutationAwareQueryEnabled();
   const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor, enabled: readEnabled });
-  const shellGuidance = useQuery({ queryKey: ["shell-guidance"], queryFn: getShellGuidance });
+  const shellGuidance = useQuery({
+    queryKey: ["shell-guidance"],
+    queryFn: getShellGuidance,
+    enabled: readEnabled,
+  });
   const [profileNames, setProfileNames] = useState<Record<string, string>>({});
   const [firstSwitchProfile, setFirstSwitchProfile] = useState("");
 

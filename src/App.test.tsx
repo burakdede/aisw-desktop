@@ -2,11 +2,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, renderHook, screen, waitFor, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { App } from "./App";
+import { SetupPanel } from "./features/onboarding/components/SetupPanel";
 import { resetLastCommandResultsForTests } from "./features/shared/lastCommandResult";
 import { useDesktopActions } from "./features/shared/useDesktopActions";
-import { resetMutationQueueForTests } from "./features/shared/mutationQueue";
+import { enqueueMutation, resetMutationQueueForTests } from "./features/shared/mutationQueue";
 import { SettingsPanel } from "./features/settings/components/SettingsPanel";
-import type { AppSnapshot, DesktopSettings } from "./lib/schemas";
+import type { AppBootstrap, AppSnapshot, DesktopSettings, InitReport } from "./lib/schemas";
 
 Object.assign(navigator, {
   clipboard: {
@@ -135,6 +136,50 @@ async function renderSettingsPanel(
 
   if (!rendered) {
     throw new Error("Settings panel failed to render.");
+  }
+
+  return {
+    ...rendered,
+    queryClient,
+  };
+}
+
+async function renderSetupPanel({
+  initReport = undefined,
+  onOpenProfiles = vi.fn(),
+  onOpenSettings = vi.fn(),
+}: {
+  initReport?: InitReport;
+  onOpenProfiles?: (tool: string) => void;
+  onOpenSettings?: (section?: "runtime" | "updates" | "shell" | "keyring") => void;
+} = {}) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  let rendered: ReturnType<typeof render> | undefined;
+  const setupBootstrap = bootstrap as unknown as AppBootstrap;
+  await act(async () => {
+    rendered = render(
+      <QueryClientProvider client={queryClient}>
+        <SetupPanel
+          bootstrap={setupBootstrap}
+          snapshot={bootstrap.snapshot as unknown as AppSnapshot}
+          initReport={initReport}
+          onOpenProfiles={onOpenProfiles}
+          onOpenSettings={onOpenSettings}
+        />
+      </QueryClientProvider>,
+    );
+    await Promise.resolve();
+  });
+
+  if (!rendered) {
+    throw new Error("Setup panel failed to render.");
   }
 
   return {
@@ -5918,6 +5963,151 @@ describe("App", () => {
       expect(screen.getByText("echo 'eval \"$(aisw shell-hook zsh)\"' >> ~/.zshrc")).toBeInTheDocument();
       expect(screen.getByText("source ~/.zshrc")).toBeInTheDocument();
       expect(screen.getByText("echo \"$AISW_SHELL_HOOK\"")).toBeInTheDocument();
+    });
+  });
+
+  it("pauses shell guidance reads in settings until the mutation queue is idle", async () => {
+    const calls: string[] = [];
+    let releaseMutation: () => void = () => {
+      throw new Error("Expected mutation release handle.");
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      calls.push(command);
+      return (
+        {
+          run_doctor: { summary: { status: "pass" }, checks: [] },
+          get_shell_guidance: {
+            detected_shell: "zsh",
+            capabilities: [],
+            note: "Shell hook guidance",
+            manual_apply_examples: [],
+            variants: [
+              {
+                shell: "zsh",
+                title: "Zsh",
+                config_path: "~/.zshrc",
+                alternate_config_path: null,
+                install_command: "echo install",
+                reload_command: "source ~/.zshrc",
+                verify_command: 'echo "$AISW_SHELL_HOOK"',
+                verify_expected: "1",
+              },
+            ],
+          },
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    const mutation = enqueueMutation(
+      "Hold mutation lock",
+      () =>
+        new Promise<void>((resolve) => {
+          releaseMutation = resolve;
+        }),
+    );
+
+    await renderSettingsPanel(bootstrap.settings, "shell");
+
+    await waitFor(() => {
+      expect(screen.getByText("Shell guidance is unavailable.")).toBeInTheDocument();
+    });
+    expect(calls).toEqual([]);
+
+    releaseMutation();
+    await act(async () => {
+      await mutation;
+    });
+
+    await waitFor(() => {
+      expect(calls).toContain("run_doctor");
+      expect(calls).toContain("get_shell_guidance");
+      expect(screen.getByText("Config file: ~/.zshrc")).toBeInTheDocument();
+    });
+  });
+
+  it("pauses onboarding shell guidance reads until the mutation queue is idle", async () => {
+    const calls: string[] = [];
+    let releaseMutation: () => void = () => {
+      throw new Error("Expected mutation release handle.");
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      calls.push(command);
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_doctor: { summary: { status: "pass" }, checks: [] },
+          run_init: {
+            result: {
+              live_accounts: [
+                { tool: "claude", outcome: "detected", auth_method: "oauth" },
+              ],
+            },
+          },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          export_diagnostic_bundle: {
+            path: "/tmp/aisw-desktop/aisw-desktop-diagnostics-123.json",
+            filename: "aisw-desktop-diagnostics-123.json",
+            generated_at: "unix:123",
+          },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+          get_shell_guidance: {
+            detected_shell: "zsh",
+            capabilities: [],
+            note: "Shell hook guidance",
+            manual_apply_examples: [],
+            variants: [
+              {
+                shell: "zsh",
+                title: "Zsh",
+                config_path: "~/.zshrc",
+                alternate_config_path: null,
+                install_command: "echo install",
+                reload_command: "source ~/.zshrc",
+                verify_command: 'echo "$AISW_SHELL_HOOK"',
+                verify_expected: "1",
+              },
+            ],
+          },
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    const mutation = enqueueMutation(
+      "Hold mutation lock",
+      () =>
+        new Promise<void>((resolve) => {
+          releaseMutation = resolve;
+        }),
+    );
+
+    await renderSetupPanel({
+      initReport: {
+        result: {
+          live_accounts: [{ tool: "claude", outcome: "detected", auth_method: "oauth" }],
+        },
+      },
+    });
+
+    expect(screen.getByText("First-run setup")).toBeInTheDocument();
+    expect(calls).not.toContain("run_doctor");
+    expect(calls).not.toContain("get_shell_guidance");
+
+    releaseMutation();
+    await act(async () => {
+      await mutation;
+    });
+
+    await waitFor(() => {
+      expect(calls).toContain("run_doctor");
+      expect(calls).toContain("get_shell_guidance");
+      expect(screen.getByText("Start setup")).toBeInTheDocument();
     });
   });
 
