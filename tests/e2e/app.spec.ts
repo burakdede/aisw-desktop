@@ -5,6 +5,7 @@ type ScenarioName =
   | "onboardingMissingTool"
   | "noLiveAccounts"
   | "labelOverrides"
+  | "incompatibleRuntime"
   | "switching"
   | "workspaceContext"
   | "profiles"
@@ -112,6 +113,18 @@ test("shows missing-tool install guidance during onboarding", async ({ page }) =
       page.evaluate(() => (window as typeof window & { __AISW_OPENED_GUIDES__?: string[] }).__AISW_OPENED_GUIDES__ ?? []),
     )
     .toContain("https://www.npmjs.com/package/@google/gemini-cli");
+});
+
+test("shows runtime compatibility blockers when the configured aisw runtime is unusable", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "incompatibleRuntime");
+
+  await page.goto("/");
+
+  await expect(page.getByText("Runtime blocked")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Runtime compatibility" })).toBeVisible();
+  await expect(page.getByText("aisw does not advertise mutation_json support")).toBeVisible();
 });
 
 test("reruns setup detection when no live accounts are initially found", async ({ page }) => {
@@ -835,6 +848,14 @@ async function installDesktopMock(
             },
           },
         },
+        incompatibleRuntime: {
+          snapshot: null,
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
         labelOverrides: {
           settings: {
             ...bootstrapSettings,
@@ -1484,6 +1505,17 @@ async function installDesktopMock(
 
       window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
         if (command === "get_bootstrap") {
+          if (activeScenario === "incompatibleRuntime") {
+            return {
+              ...deepClone(state.bootstrap),
+              runtime_status: {
+                ...deepClone(state.bootstrap.runtime_status),
+                compatible: false,
+                issues: ["aisw does not advertise mutation_json support"],
+              },
+              snapshot: null,
+            };
+          }
           return {
             ...deepClone(state.bootstrap),
             snapshot: cloneSnapshot(),
