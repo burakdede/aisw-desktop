@@ -260,6 +260,13 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src/features/profiles/components/ProfilesPanel.tsx` derives the import-mode and credential-backend selectors from those runtime capabilities instead of hardcoded per-tool assumptions.
   - `src/App.test.tsx` verifies both the narrowed capability-driven UI and the legacy fallback path when compatible runtimes omit the new capability fields.
 
+### 34. Runtime compatibility fails closed when required desktop features are missing
+
+- Status: implemented
+- Evidence:
+  - `src-tauri/src/state.rs` requires the full `aisw` desktop feature set at bootstrap, including `api_key_stdin`, `mutation_json`, `progress_json`, non-prompting init, live detection, verify, repair, contexts, and workspace bindings.
+  - `src-tauri/src/state.rs` unit tests verify compatible runtimes must advertise every required feature and that missing features are surfaced explicitly in the runtime issue list instead of allowing partial desktop behavior.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:

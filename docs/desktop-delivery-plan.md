@@ -69,12 +69,14 @@ Acceptance criteria:
 - App starts with bundled runtime by default.
 - System and custom runtime paths are visible and selectable.
 - Incompatible runtime contracts block mutation surfaces and explain why.
+- Runtime compatibility requires the full desktop feature contract from `aisw capabilities --json`, not just basic mutation support.
 - Bootstrap reports resolved runtime path, version, channel, and AISW home.
 
 Test cases:
 - Loads bundled runtime when compatible.
 - Falls back correctly when system runtime is missing or incompatible.
 - Shows compatibility blocker when required capabilities are absent.
+- Rejects runtimes that omit required desktop features such as progress streaming, verify/repair, contexts, or workspace bindings.
 - Persists runtime settings across reloads.
 
 ### 2. Onboarding
