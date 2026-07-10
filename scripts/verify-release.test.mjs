@@ -28,6 +28,7 @@ function createReleaseFixture(overrides = {}) {
     JSON.stringify(
       {
         scripts: {
+          "tauri:bundle-local": "node ./scripts/build-local-bundle.mjs",
           "prepare:sidecar": "node ./scripts/prepare-sidecar.mjs",
           "prepare:updater": "node ./scripts/prepare-updater.mjs",
           "tauri:build": "tauri build",
@@ -210,6 +211,7 @@ npm test
       `
 npm run prepare:sidecar -- /absolute/path/to/aisw
 prepare:sidecar validates the binary format against the requested target triple
+npm run tauri:bundle-local
 npm run prepare:updater
 npm run tauri:build
 npm test
@@ -225,6 +227,7 @@ Confirm notarization completed
 Verify the generated installer is code signed
 Validate the generated \`.deb\`, \`.rpm\`, and AppImage artifacts
 ## Release checklist
+Run \`npm run tauri:bundle-local\` to smoke-test an unsigned local bundle
 Launch the packaged app in \`Bundled\` mode
 Switch a profile in the packaged app
 Complete platform signing checks
@@ -268,6 +271,7 @@ TAURI_SIGNING_PRIVATE_KEY
 `,
       runbook: `
 npm run prepare:sidecar -- /absolute/path/to/aisw
+npm run tauri:bundle-local
 npm run tauri:build
 npm test
 npm run build
@@ -282,6 +286,7 @@ Confirm notarization completed
 Verify the generated installer is code signed
 Validate the generated \`.deb\`, \`.rpm\`, and AppImage artifacts
 ## Release checklist
+Run \`npm run tauri:bundle-local\` to smoke-test an unsigned local bundle
 Launch the packaged app in \`Bundled\` mode
 Switch a profile in the packaged app
 Complete platform signing checks
@@ -484,6 +489,7 @@ AISW_SIDECAR_URL_LINUX_X64
     const root = createReleaseFixture({
       runbook: `
 npm run prepare:sidecar -- /absolute/path/to/aisw
+npm run tauri:bundle-local
 npm run tauri:build
 npm test
 npm run build
@@ -531,6 +537,7 @@ Validate the generated \`.deb\`, \`.rpm\`, and AppImage artifacts
     const root = createReleaseFixture({
       runbook: `
 npm run prepare:sidecar -- /absolute/path/to/aisw
+npm run tauri:bundle-local
 npm run tauri:build
 npm test
 npm run build
@@ -549,6 +556,34 @@ Complete platform signing checks
     expect(result.checks).toContainEqual(
       expect.objectContaining({
         label: "runbook documents repeatable platform signing flows",
+        ok: false,
+      }),
+    );
+  });
+
+  it("fails when the repo drops the local bundle smoke-build path", () => {
+    const root = createReleaseFixture();
+    writeFixture(
+      root,
+      "package.json",
+      JSON.stringify(
+        {
+          scripts: {
+            "prepare:sidecar": "node ./scripts/prepare-sidecar.mjs",
+            "prepare:updater": "node ./scripts/prepare-updater.mjs",
+            "tauri:build": "tauri build",
+          },
+        },
+        null,
+        2,
+      ),
+    );
+
+    const result = verifyReleaseContract(root);
+    expect(result.ok).toBe(false);
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        label: "package.json exposes local unsigned bundle smoke build",
         ok: false,
       }),
     );

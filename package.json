@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "tauri:bundle-local": "node ./scripts/build-local-bundle.mjs",
     "prepare:sidecar": "node ./scripts/prepare-sidecar.mjs",
     "prepare:updater": "node ./scripts/prepare-updater.mjs",
     "preview": "vite preview",

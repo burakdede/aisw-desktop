@@ -73,6 +73,10 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       ok: packageJson.scripts?.["tauri:build"] === "tauri build",
     },
     {
+      label: "package.json exposes local unsigned bundle smoke build",
+      ok: packageJson.scripts?.["tauri:bundle-local"] === "node ./scripts/build-local-bundle.mjs",
+    },
+    {
       label: "package.json exposes sidecar staging",
       ok: packageJson.scripts?.["prepare:sidecar"] === "node ./scripts/prepare-sidecar.mjs",
     },
@@ -136,6 +140,7 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       ok:
         runbook.includes("npm run prepare:sidecar -- /absolute/path/to/aisw") &&
         runbook.includes("validates the binary format against the requested target triple") &&
+        runbook.includes("npm run tauri:bundle-local") &&
         runbook.includes("npm run tauri:build") &&
         runbook.includes("npm run prepare:updater"),
     },
@@ -177,6 +182,7 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       label: "runbook includes a release checklist",
       ok:
         runbook.includes("## Release checklist") &&
+        runbook.includes("Run `npm run tauri:bundle-local` to smoke-test an unsigned local bundle") &&
         runbook.includes("Launch the packaged app in `Bundled` mode") &&
         runbook.includes("Switch a profile in the packaged app") &&
         runbook.includes("Complete platform signing checks"),
