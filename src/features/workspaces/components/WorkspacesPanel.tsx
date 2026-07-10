@@ -219,7 +219,9 @@ export function WorkspacesPanel({
           <article className="diagnostic-card">
             <h3>Workspace guard</h3>
             <p className="inline-note">Guard mode: {bindingsSummary.guardMode}</p>
-            <p className="inline-note">Default context: {bindingsSummary.defaultContext}</p>
+            <p className="inline-note">
+              Default context: {contextDisplayLabel(settings, bindingsSummary.defaultContext)}
+            </p>
           </article>
 
           <div className="stack-list">

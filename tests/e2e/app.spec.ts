@@ -671,6 +671,7 @@ test("binds and resolves workspace context from the workspaces panel", async ({ 
   await expect(page.getByRole("heading", { name: "Workspace mismatch" })).toBeVisible();
   await expect(page.getByText("Current context: work")).toBeVisible();
   await expect(page.getByText("Expected context: Client Acme")).toBeVisible();
+  await expect(page.getByText("Default context: work")).toBeVisible();
   await expect(page.getByText("path · /code/acme")).toBeVisible();
 
   await page.getByRole("button", { name: "Use expected context now" }).click();

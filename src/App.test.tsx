@@ -1980,6 +1980,7 @@ describe("App", () => {
       expect(screen.getByText(/Current context:\s*work/)).toBeInTheDocument();
       expect(screen.getByText(/Expected context:\s*Client Acme/)).toBeInTheDocument();
       expect(screen.getByText(/Guard mode:\s*warn/)).toBeInTheDocument();
+      expect(screen.getByText(/Default context:\s*work/)).toBeInTheDocument();
       expect(screen.getByText("path · /code/acme")).toBeInTheDocument();
       expect(screen.getAllByText("Client Acme").length).toBeGreaterThan(0);
       expect(screen.getByText("Workspace mismatch")).toBeInTheDocument();
@@ -2018,6 +2019,73 @@ describe("App", () => {
           (entry.args as { target?: { scope?: string; path?: string } })?.target?.path === "/code/acme",
       ),
     ).toBe(true);
+  });
+
+  it("uses saved profile labels for workspace default context", async () => {
+    const settingsWithSet = {
+      ...bootstrap.settings,
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    };
+    const workspaceStatus = {
+      result: {
+        status: "match",
+        current_context: "client-acme",
+        expected_context: "client-acme",
+        matched_binding: {
+          scope: "default",
+          context: "client-acme",
+        },
+      },
+    };
+    const projectBindings = {
+      result: {
+        user_bindings: {
+          guard_mode: "warn",
+          default_context: "client-acme",
+          items: [],
+        },
+      },
+    };
+    const workspaceSnapshot = {
+      ...bootstrap.snapshot,
+      workspace_status: workspaceStatus.result,
+      project_bindings: projectBindings.result,
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) =>
+      (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            settings: settingsWithSet,
+            snapshot: workspaceSnapshot,
+          },
+          get_snapshot: workspaceSnapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: workspaceStatus,
+          get_project_bindings: projectBindings,
+          list_backups: [],
+          get_settings: settingsWithSet,
+        } as Record<string, unknown>
+      )[command];
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Workspaces")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Workspaces"));
+    await waitFor(() => {
+      expect(screen.getByText(/Default context:\s*Client Acme/)).toBeInTheDocument();
+      expect(screen.getByText(/Current context:\s*Client Acme/)).toBeInTheDocument();
+      expect(screen.getByText(/Expected context:\s*Client Acme/)).toBeInTheDocument();
+    });
   });
 
   it("labels workspace context targets correctly in overview and activates the native CLI context", async () => {
