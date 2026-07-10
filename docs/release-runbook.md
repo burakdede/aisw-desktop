@@ -74,23 +74,26 @@ npm run tauri:build
 
 1. Export signing inputs before running `npm run tauri:build`:
    `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`, `TAURI_SIGNING_PRIVATE_KEY`, and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
-2. Build with the target-specific sidecar staged:
+2. Configure `plugins.updater.channels` in `src-tauri/tauri.conf.json` for every release channel you intend to ship, or provide `AISW_DESKTOP_UPDATER_ENDPOINT[_CHANNEL]` overrides for a non-production build.
+3. Build with the target-specific sidecar staged:
    `npm run tauri:build`
-3. Confirm the build produced a signed `.app`, a signed `.dmg`, and an updater archive plus `.sig`.
-4. Confirm notarization completed and the app launches without Gatekeeper warnings on a clean macOS machine.
+4. Confirm the build produced a signed `.app`, a signed `.dmg`, and an updater archive plus `.sig`.
+5. Confirm notarization completed and the app launches without Gatekeeper warnings on a clean macOS machine.
 
 ### Windows
 
 1. Export `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
-2. Build the Windows target after staging the matching sidecar.
-3. Verify the generated installer is code signed.
-4. Install on a clean Windows machine and confirm SmartScreen reputation is the only remaining trust variable.
+2. Configure `plugins.updater.channels` in `src-tauri/tauri.conf.json` for the Windows release channels you publish.
+3. Build the Windows target after staging the matching sidecar.
+4. Verify the generated installer is code signed.
+5. Install on a clean Windows machine and confirm SmartScreen reputation is the only remaining trust variable.
 
 ### Linux
 
 1. Build the Linux target after staging the matching sidecar.
-2. Validate the generated `.deb`, `.rpm`, and AppImage artifacts on a clean machine or container.
-3. Confirm the packaged app resolves the bundled `aisw` sidecar in `Bundled` mode.
+2. Configure `plugins.updater.channels` in `src-tauri/tauri.conf.json` for every Linux release channel you publish.
+3. Validate the generated `.deb`, `.rpm`, and AppImage artifacts on a clean machine or container.
+4. Confirm the packaged app resolves the bundled `aisw` sidecar in `Bundled` mode.
 
 ## Release checklist
 
@@ -117,6 +120,7 @@ The repository workflow at `.github/workflows/publish.yml` expects these secrets
 - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
 
 The private key must match the updater public key committed in `src-tauri/tauri.conf.json`.
+Release channel endpoints live in `plugins.updater.channels` in `src-tauri/tauri.conf.json`.
 
 Optional signing secrets:
 

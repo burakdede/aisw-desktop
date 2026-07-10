@@ -35,6 +35,8 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       ok:
         typeof tauriConfig.plugins?.updater?.pubkey === "string" &&
         tauriConfig.plugins.updater.pubkey.length > 0 &&
+        tauriConfig.plugins.updater.channels &&
+        typeof tauriConfig.plugins.updater.channels === "object" &&
         Array.isArray(tauriConfig.plugins.updater.endpoints),
     },
     {
@@ -66,6 +68,7 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       ok:
         runbook.includes("## Platform signing flow") &&
         runbook.includes("APPLE_SIGNING_IDENTITY") &&
+        runbook.includes("plugins.updater.channels") &&
         runbook.includes("Confirm notarization completed") &&
         runbook.includes("Verify the generated installer is code signed") &&
         runbook.includes("Validate the generated `.deb`, `.rpm`, and AppImage artifacts"),

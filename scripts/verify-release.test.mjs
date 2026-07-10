@@ -47,6 +47,7 @@ function createReleaseFixture(overrides = {}) {
         },
         plugins: {
           updater: {
+            channels: {},
             endpoints: [],
             pubkey:
               "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDYyMjc5RjUwRkFBNUEwQzcKUldUSG9LWDZVSjhuWWdMQWE4WDFhMGV5QnBxek5Gd3VHU2VXdG52ZlVHY3YxYzN0WjVBVjNDZkEK",
@@ -111,6 +112,7 @@ cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
 ## Platform signing flow
 APPLE_SIGNING_IDENTITY
+plugins.updater.channels
 Confirm notarization completed
 Verify the generated installer is code signed
 Validate the generated \`.deb\`, \`.rpm\`, and AppImage artifacts
@@ -155,6 +157,7 @@ cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
 ## Platform signing flow
 APPLE_SIGNING_IDENTITY
+plugins.updater.channels
 Confirm notarization completed
 Verify the generated installer is code signed
 Validate the generated \`.deb\`, \`.rpm\`, and AppImage artifacts
@@ -206,6 +209,7 @@ AISW_SIDECAR_URL_LINUX_X64
           },
           plugins: {
             updater: {
+              channels: {},
               endpoints: [],
               pubkey: "",
             },
@@ -257,6 +261,7 @@ cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
 ## Platform signing flow
 APPLE_SIGNING_IDENTITY
+plugins.updater.channels
 Confirm notarization completed
 Verify the generated installer is code signed
 Validate the generated \`.deb\`, \`.rpm\`, and AppImage artifacts

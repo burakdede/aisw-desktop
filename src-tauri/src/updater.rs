@@ -1,5 +1,6 @@
 use crate::errors::{DesktopError, GuiErrorKind};
 use crate::models::{InstallUpdateReport, UpdateCheckReport, UpdateInfo};
+use serde_json::Value;
 use tauri::{AppHandle, Runtime};
 use tauri_plugin_updater::UpdaterExt;
 use url::Url;
@@ -11,7 +12,7 @@ const PUBKEY_ENV: &str = "AISW_DESKTOP_UPDATER_PUBKEY";
 struct UpdaterConfig {
     channel: String,
     endpoint: Url,
-    pubkey: String,
+    pubkey_override: Option<String>,
 }
 
 pub async fn check_for_updates<R: Runtime>(
@@ -19,7 +20,7 @@ pub async fn check_for_updates<R: Runtime>(
     channel: &str,
 ) -> Result<UpdateCheckReport, DesktopError> {
     let current_version = app.package_info().version.to_string();
-    let Some(config) = resolve_updater_config(channel)? else {
+    let Some(config) = resolve_updater_config(app, channel)? else {
         return Ok(UpdateCheckReport {
             configured: false,
             channel: channel.to_owned(),
@@ -27,7 +28,7 @@ pub async fn check_for_updates<R: Runtime>(
             endpoint: None,
             update: None,
             message: Some(
-                "Updater is not configured for this build. Set AISW_DESKTOP_UPDATER_ENDPOINT[_CHANNEL] and AISW_DESKTOP_UPDATER_PUBKEY."
+                "Updater is not configured for this build. Set AISW_DESKTOP_UPDATER_ENDPOINT[_CHANNEL] or configure plugins.updater.channels in tauri.conf.json."
                     .to_owned(),
             ),
         });
@@ -56,7 +57,7 @@ pub async fn install_update<R: Runtime>(
     channel: &str,
 ) -> Result<InstallUpdateReport, DesktopError> {
     let current_version = app.package_info().version.to_string();
-    let Some(config) = resolve_updater_config(channel)? else {
+    let Some(config) = resolve_updater_config(app, channel)? else {
         return Ok(InstallUpdateReport {
             configured: false,
             channel: channel.to_owned(),
@@ -64,7 +65,7 @@ pub async fn install_update<R: Runtime>(
             installed_version: None,
             restart_requested: false,
             message: Some(
-                "Updater is not configured for this build. Set AISW_DESKTOP_UPDATER_ENDPOINT[_CHANNEL] and AISW_DESKTOP_UPDATER_PUBKEY."
+                "Updater is not configured for this build. Set AISW_DESKTOP_UPDATER_ENDPOINT[_CHANNEL] or configure plugins.updater.channels in tauri.conf.json."
                     .to_owned(),
             ),
         });
@@ -105,33 +106,37 @@ fn build_updater<R: Runtime>(
     app: &AppHandle<R>,
     config: &UpdaterConfig,
 ) -> Result<tauri_plugin_updater::Updater, DesktopError> {
-    app.updater_builder()
-        .pubkey(config.pubkey.clone())
+    let mut builder = app.updater_builder();
+    if let Some(pubkey) = &config.pubkey_override {
+        builder = builder.pubkey(pubkey.clone());
+    }
+    builder
         .endpoints(vec![config.endpoint.clone()])
         .map_err(map_updater_error)?
         .build()
         .map_err(map_updater_error)
 }
 
-fn resolve_updater_config(channel: &str) -> Result<Option<UpdaterConfig>, DesktopError> {
-    resolve_updater_config_from(channel, |key| std::env::var(key).ok())
+fn resolve_updater_config<R: Runtime>(
+    app: &AppHandle<R>,
+    channel: &str,
+) -> Result<Option<UpdaterConfig>, DesktopError> {
+    let plugin_config = app.config().plugins.0.get("updater");
+    resolve_updater_config_from(channel, |key| std::env::var(key).ok(), plugin_config)
 }
 
 fn resolve_updater_config_from<F>(
     channel: &str,
     get_var: F,
+    plugin_config: Option<&Value>,
 ) -> Result<Option<UpdaterConfig>, DesktopError>
 where
     F: Fn(&str) -> Option<String>,
 {
-    let endpoint_var = format!(
-        "AISW_DESKTOP_UPDATER_ENDPOINT_{}",
-        channel.to_ascii_uppercase()
-    );
-    let endpoint_raw = get_var(&endpoint_var).or_else(|| get_var(GENERIC_ENDPOINT_ENV));
-    let pubkey = get_var(PUBKEY_ENV);
+    let endpoint_raw = resolve_endpoint(channel, &get_var, plugin_config);
+    let pubkey_override = get_var(PUBKEY_ENV);
 
-    let (Some(endpoint_raw), Some(pubkey)) = (endpoint_raw, pubkey) else {
+    let Some(endpoint_raw) = endpoint_raw else {
         return Ok(None);
     };
 
@@ -140,15 +145,51 @@ where
         kind: GuiErrorKind::Unknown,
         message: format!("Updater endpoint is invalid: {error}"),
         remediation: Some(
-            "Set AISW_DESKTOP_UPDATER_ENDPOINT[_CHANNEL] to a valid HTTPS URL.".to_owned(),
+            "Set AISW_DESKTOP_UPDATER_ENDPOINT[_CHANNEL] or plugins.updater.channels.<channel> to a valid HTTPS URL.".to_owned(),
         ),
     })?;
 
     Ok(Some(UpdaterConfig {
         channel: channel.to_owned(),
         endpoint,
-        pubkey,
+        pubkey_override,
     }))
+}
+
+fn resolve_endpoint<F>(
+    channel: &str,
+    get_var: &F,
+    plugin_config: Option<&Value>,
+) -> Option<String>
+where
+    F: Fn(&str) -> Option<String>,
+{
+    let endpoint_var = format!(
+        "AISW_DESKTOP_UPDATER_ENDPOINT_{}",
+        channel.to_ascii_uppercase()
+    );
+    if let Some(endpoint) = get_var(&endpoint_var) {
+        return Some(endpoint);
+    }
+    if let Some(endpoint) = get_var(GENERIC_ENDPOINT_ENV) {
+        return Some(endpoint);
+    }
+
+    let plugin_config = plugin_config?;
+    plugin_config
+        .get("channels")
+        .and_then(Value::as_object)
+        .and_then(|channels| channels.get(channel))
+        .and_then(Value::as_str)
+        .map(ToOwned::to_owned)
+        .or_else(|| {
+            plugin_config
+                .get("endpoints")
+                .and_then(Value::as_array)
+                .and_then(|endpoints| endpoints.first())
+                .and_then(Value::as_str)
+                .map(ToOwned::to_owned)
+        })
 }
 
 fn map_updater_error(error: tauri_plugin_updater::Error) -> DesktopError {
@@ -166,12 +207,14 @@ fn map_updater_error(error: tauri_plugin_updater::Error) -> DesktopError {
 #[cfg(test)]
 mod tests {
     use super::{resolve_updater_config_from, GENERIC_ENDPOINT_ENV, PUBKEY_ENV};
+    use serde_json::json;
     use std::collections::HashMap;
 
     #[test]
     fn returns_none_without_required_env() {
         let env = HashMap::<String, String>::new();
-        let config = resolve_updater_config_from("stable", |key| env.get(key).cloned()).unwrap();
+        let config =
+            resolve_updater_config_from("stable", |key| env.get(key).cloned(), None).unwrap();
         assert!(config.is_none());
     }
 
@@ -186,14 +229,64 @@ mod tests {
                 "AISW_DESKTOP_UPDATER_ENDPOINT_BETA".to_owned(),
                 "https://updates.example.com/beta.json".to_owned(),
             ),
-            (PUBKEY_ENV.to_owned(), "pubkey".to_owned()),
         ]);
-        let config = resolve_updater_config_from("beta", |key| env.get(key).cloned())
+        let plugin_config = json!({
+            "channels": {
+                "beta": "https://releases.example.com/beta.json"
+            },
+            "pubkey": "configured-pubkey"
+        });
+        let config = resolve_updater_config_from(
+            "beta",
+            |key| env.get(key).cloned(),
+            Some(&plugin_config),
+        )
             .unwrap()
             .unwrap();
         assert_eq!(
             config.endpoint.as_str(),
             "https://updates.example.com/beta.json"
+        );
+        assert!(config.pubkey_override.is_none());
+    }
+
+    #[test]
+    fn uses_plugin_channel_config_when_env_is_absent() {
+        let env = HashMap::<String, String>::new();
+        let plugin_config = json!({
+            "channels": {
+                "beta": "https://releases.example.com/beta.json"
+            },
+            "pubkey": "configured-pubkey"
+        });
+        let config = resolve_updater_config_from(
+            "beta",
+            |key| env.get(key).cloned(),
+            Some(&plugin_config),
+        )
+        .unwrap()
+        .unwrap();
+        assert_eq!(config.endpoint.as_str(), "https://releases.example.com/beta.json");
+        assert!(config.pubkey_override.is_none());
+    }
+
+    #[test]
+    fn falls_back_to_plugin_generic_endpoint() {
+        let env = HashMap::<String, String>::new();
+        let plugin_config = json!({
+            "endpoints": ["https://releases.example.com/stable.json"],
+            "pubkey": "configured-pubkey"
+        });
+        let config = resolve_updater_config_from(
+            "stable",
+            |key| env.get(key).cloned(),
+            Some(&plugin_config),
+        )
+        .unwrap()
+        .unwrap();
+        assert_eq!(
+            config.endpoint.as_str(),
+            "https://releases.example.com/stable.json"
         );
     }
 
@@ -204,9 +297,42 @@ mod tests {
                 "AISW_DESKTOP_UPDATER_ENDPOINT_STABLE".to_owned(),
                 "not-a-url".to_owned(),
             ),
-            (PUBKEY_ENV.to_owned(), "pubkey".to_owned()),
         ]);
-        let error = resolve_updater_config_from("stable", |key| env.get(key).cloned()).unwrap_err();
+        let error = resolve_updater_config_from("stable", |key| env.get(key).cloned(), None)
+            .unwrap_err();
         assert!(error.to_string().contains("desktop_updater"));
+    }
+
+    #[test]
+    fn rejects_invalid_plugin_endpoint() {
+        let env = HashMap::<String, String>::new();
+        let plugin_config = json!({
+            "channels": {
+                "stable": "not-a-url"
+            },
+            "pubkey": "configured-pubkey"
+        });
+        let error = resolve_updater_config_from(
+            "stable",
+            |key| env.get(key).cloned(),
+            Some(&plugin_config),
+        )
+        .unwrap_err();
+        assert!(error.to_string().contains("desktop_updater"));
+    }
+
+    #[test]
+    fn uses_env_pubkey_override_when_present() {
+        let env = HashMap::from([
+            (
+                GENERIC_ENDPOINT_ENV.to_owned(),
+                "https://updates.example.com/generic.json".to_owned(),
+            ),
+            (PUBKEY_ENV.to_owned(), "override-pubkey".to_owned()),
+        ]);
+        let config = resolve_updater_config_from("stable", |key| env.get(key).cloned(), None)
+            .unwrap()
+            .unwrap();
+        assert_eq!(config.pubkey_override.as_deref(), Some("override-pubkey"));
     }
 }
