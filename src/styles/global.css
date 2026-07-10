@@ -232,6 +232,58 @@ body {
   color: rgba(244, 247, 251, 0.8);
 }
 
+.state-mode-field {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.state-mode-field legend {
+  padding: 0;
+  color: rgba(244, 247, 251, 0.8);
+}
+
+.state-mode-options {
+  display: grid;
+  gap: 10px;
+}
+
+.state-mode-option {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(4, 8, 14, 0.6);
+  cursor: pointer;
+}
+
+.state-mode-choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.state-mode-option input {
+  margin: 0;
+}
+
+.state-mode-option-active {
+  border-color: rgba(248, 191, 99, 0.6);
+  background: linear-gradient(135deg, rgba(248, 191, 99, 0.16), rgba(64, 139, 255, 0.12));
+}
+
+.state-mode-label {
+  font-weight: 600;
+}
+
+.state-mode-copy {
+  color: rgba(244, 247, 251, 0.68);
+  line-height: 1.5;
+}
+
 .stacked-form input,
 .stacked-form select,
 .primary-button,

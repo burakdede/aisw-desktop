@@ -15,6 +15,7 @@ import { titleCase } from "../../../lib/utils";
 import { resolveStateModeRequest, supportedStateModes } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
+import { StateModeField } from "../../shared/components/StateModeField";
 
 const TOOLS = ["claude", "codex", "gemini"] as const;
 
@@ -255,21 +256,21 @@ export function ProfilesPanel({
               </p>
             </div>
           ) : null}
-          <label>
-            State mode
-            <select
-              value={availableStateModes.length ? stateMode : "n/a"}
-              onChange={(event) => setStateMode(event.target.value)}
-              disabled={!availableStateModes.length}
-            >
-              {!availableStateModes.length ? <option value="n/a">Not configurable</option> : null}
-              {availableStateModes.map((entry) => (
-                <option key={entry} value={entry}>
-                  {titleCase(entry)}
-                </option>
-              ))}
-            </select>
-          </label>
+          {availableStateModes.length ? (
+            <StateModeField
+              name={`profile-state-mode-${tool}`}
+              value={stateMode}
+              options={availableStateModes}
+              onChange={setStateMode}
+            />
+          ) : (
+            <label>
+              State mode
+              <select value="n/a" disabled>
+                <option value="n/a">Not configurable</option>
+              </select>
+            </label>
+          )}
           <button
             className="primary-button"
             type="submit"

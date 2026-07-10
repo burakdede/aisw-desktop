@@ -2257,12 +2257,10 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
-    fireEvent.change(screen.getByLabelText("Tool"), {
+    fireEvent.change(getProfilesSection().getByLabelText("Tool"), {
       target: { value: "codex" },
     });
-    fireEvent.change(screen.getByLabelText("State mode"), {
-      target: { value: "shared" },
-    });
+    fireEvent.click(getProfilesSection().getByRole("radio", { name: "Shared" }));
     await waitFor(() => expect(screen.getByText("Restore latest + activate")).toBeInTheDocument());
 
     fireEvent.click(screen.getByText("Restore latest + activate"));

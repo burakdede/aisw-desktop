@@ -235,13 +235,14 @@ test("keeps Gemini state mode non-configurable when runtime capabilities are sta
 
   await page.goto("/");
   await page.getByRole("button", { name: "Profiles" }).click();
-  await page.getByLabel("Tool").selectOption("gemini");
+  const profilesSection = page.locator(".section-card").filter({ hasText: "Profiles" });
+  await profilesSection.locator("form select").first().selectOption("gemini");
 
-  await expect(page.getByLabel("State mode")).toBeDisabled();
-  await expect(page.getByLabel("State mode")).toHaveValue("n/a");
+  await expect(profilesSection.getByLabel("State mode")).toBeDisabled();
+  await expect(profilesSection.getByLabel("State mode")).toHaveValue("n/a");
 
-  await page.getByLabel("Profile name").fill("travel");
-  await page.getByRole("button", { name: "Add profile" }).click();
+  await profilesSection.getByLabel("Profile name").fill("travel");
+  await profilesSection.getByRole("button", { name: "Add profile" }).click();
 
   await page.getByRole("button", { name: "Overview" }).click();
 
@@ -1533,10 +1534,11 @@ test("passes the selected state mode when restoring and re-activating from profi
 
   await page.goto("/");
   await page.getByRole("button", { name: "Profiles" }).click();
-  await page.getByLabel("Tool").selectOption("codex");
-  await page.getByLabel("State mode").selectOption("shared");
-  await page.getByRole("button", { name: "Restore latest + activate" }).click();
-  await page.getByRole("button", { name: "Confirm restore latest and activate" }).click();
+  const profilesSection = page.locator(".section-card").filter({ hasText: "Profiles" });
+  await profilesSection.locator("form select").first().selectOption("codex");
+  await profilesSection.getByRole("radio", { name: "Shared" }).click();
+  await profilesSection.getByRole("button", { name: "Restore latest + activate" }).click();
+  await profilesSection.getByRole("button", { name: "Confirm restore latest and activate" }).click();
 
   await expect
     .poll(async () =>

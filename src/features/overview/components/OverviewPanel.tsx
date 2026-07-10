@@ -11,6 +11,7 @@ import {
 } from "../../../lib/tool-guidance";
 import { resolveGlobalStateMode, supportedStateModes } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
+import { StateModeField } from "../../shared/components/StateModeField";
 import {
   contextDisplayLabel,
   profileSetHasSelections,
@@ -346,16 +347,12 @@ function ToolCard({
         </p>
       ) : null}
       {stateModes.length ? (
-        <label className="stacked-form">
-          <span>State mode</span>
-          <select value={stateMode} onChange={(event) => setStateMode(event.target.value)}>
-            {stateModes.map((mode) => (
-              <option key={mode} value={mode}>
-                {titleCase(mode)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <StateModeField
+          name={`overview-state-mode-${status.tool}`}
+          value={stateMode}
+          options={stateModes}
+          onChange={setStateMode}
+        />
       ) : null}
       {!status.binary_found ? (
         <MissingBinaryGuidance
