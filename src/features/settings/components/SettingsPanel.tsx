@@ -349,9 +349,67 @@ export function SettingsPanel({
           {copyMessage ? <p className="inline-note">{copyMessage}</p> : null}
         </div>
       </SectionCard>
+
+      <SectionCard title="Keyring setup" kicker="Local credential backends">
+        <div className="stack-list">
+          <p className="inline-note">
+            AISW Desktop keeps credentials on this machine. When diagnostics report a keyring
+            failure, use the guidance below to restore the OS-native secret store before retrying.
+          </p>
+
+          {KEYRING_GUIDES.map((guide) => (
+            <article key={guide.platform} className="diagnostic-card">
+              <h3>{guide.title}</h3>
+              <p className="inline-note">Expected backend: {guide.backend}</p>
+              {guide.steps.map((step) => (
+                <p key={step} className="inline-note">
+                  {step}
+                </p>
+              ))}
+              <p className="inline-note">Verify: {guide.verify}</p>
+            </article>
+          ))}
+        </div>
+      </SectionCard>
     </>
   );
 }
+
+const KEYRING_GUIDES = [
+  {
+    platform: "macos",
+    title: "macOS Keychain",
+    backend: "Login keychain",
+    steps: [
+      "Open Keychain Access and confirm the login keychain is unlocked.",
+      "Approve any keychain access prompts for AISW Desktop, Claude, Codex, or Gemini.",
+      "If access keeps failing, lock and unlock the login keychain, then rerun diagnostics.",
+    ],
+    verify: "Rerun diagnostics and confirm the keyring warning disappears.",
+  },
+  {
+    platform: "windows",
+    title: "Windows Credential Manager",
+    backend: "Credential Manager / DPAPI",
+    steps: [
+      "Stay signed in to a normal desktop session before launching AISW Desktop.",
+      "Confirm security software is not blocking local credential storage prompts.",
+      "If the machine policy reset credentials, sign in again and retry the profile action.",
+    ],
+    verify: "Retry the failed profile action and confirm no keyring warning returns.",
+  },
+  {
+    platform: "linux",
+    title: "Linux Secret Service",
+    backend: "Secret Service daemon",
+    steps: [
+      "Start a Secret Service provider such as gnome-keyring or KeePassXC with Secret Service enabled.",
+      "Make sure the desktop session has an active D-Bus user session before launching AISW Desktop.",
+      "If diagnostics still fail, unlock the keyring collection or restart the secret service daemon.",
+    ],
+    verify: "Run diagnostics again after the secret service is available.",
+  },
+] as const;
 
 function MutationErrorCard({ title, error }: { title: string; error: unknown }) {
   const resolved = formatMutationError(error);

@@ -417,6 +417,17 @@ function buildQuickFixes(
     });
   }
 
+  const keyringIssue = keyringDoctorIssue(doctor);
+  if (keyringIssue) {
+    fixes.push({
+      title: "Keyring setup instructions",
+      detail: "Review the supported local keyring services for macOS, Windows, and Linux.",
+      label: "Show keyring setup",
+      status: keyringIssue.status,
+      action: onOpenSettings,
+    });
+  }
+
   if (!snapshot) {
     return fixes;
   }
@@ -581,6 +592,24 @@ function shellHookDoctorIssue(doctor: Record<string, unknown> | undefined) {
       (name.includes("shell") && name.includes("hook")) ||
       detailText.includes("shell hook")
     ) {
+      return { detail, status };
+    }
+  }
+
+  return null;
+}
+
+function keyringDoctorIssue(doctor: Record<string, unknown> | undefined) {
+  const checks = asArray(doctor?.checks)
+    .map((check) => asObject(check))
+    .filter((check): check is Record<string, unknown> => Boolean(check));
+
+  for (const check of checks) {
+    const name = asStringValue(check.name)?.toLowerCase() ?? "";
+    const detail = asStringValue(check.detail) ?? "Keyring access needs attention.";
+    const status = (asStringValue(check.status) as "warn" | "fail" | undefined) ?? "warn";
+    const detailText = detail.toLowerCase();
+    if (name.includes("keyring") || detailText.includes("keyring")) {
       return { detail, status };
     }
   }

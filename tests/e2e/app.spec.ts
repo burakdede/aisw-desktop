@@ -610,6 +610,11 @@ test("shows doctor remediations and targeted repair actions in diagnostics", asy
 
   await page.getByRole("button", { name: "Retry OAuth repair" }).click();
   await expect(page.getByText("retry the OAuth recovery flow")).toBeVisible();
+
+  await page.getByRole("button", { name: "Show keyring setup" }).click();
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Keyring setup" })).toBeVisible();
+  await expect(page.getByText("Linux Secret Service")).toBeVisible();
 });
 
 test("opens shell setup from diagnostics when doctor reports the shell hook is inactive", async ({

@@ -3114,6 +3114,7 @@ describe("App", () => {
       expect(screen.getByText("Apply keyring repair")).toBeInTheDocument();
       expect(screen.getByText("Repair permissions")).toBeInTheDocument();
       expect(screen.getByText("Retry OAuth repair")).toBeInTheDocument();
+      expect(screen.getByText("Show keyring setup")).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText("Apply keyring repair"));
@@ -3150,6 +3151,13 @@ describe("App", () => {
             (entry.args as { request?: { fixes?: string[] } })?.request?.fixes?.includes("oauth"),
         ),
       ).toBe(true);
+    });
+
+    fireEvent.click(screen.getByText("Show keyring setup"));
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Keyring setup" })).toBeInTheDocument();
+      expect(screen.getByText("Linux Secret Service")).toBeInTheDocument();
     });
   });
 
@@ -4435,6 +4443,20 @@ describe("App", () => {
       expect(screen.getByText("source ~/.zshrc")).toBeInTheDocument();
       expect(screen.getByText("echo \"$AISW_SHELL_HOOK\"")).toBeInTheDocument();
     });
+  });
+
+  it("shows cross-platform keyring setup guidance in settings", async () => {
+    await renderSettingsPanel(bootstrap.settings);
+
+    expect(screen.getByRole("heading", { name: "Keyring setup" })).toBeInTheDocument();
+    expect(screen.getByText("macOS Keychain")).toBeInTheDocument();
+    expect(screen.getByText("Windows Credential Manager")).toBeInTheDocument();
+    expect(screen.getByText("Linux Secret Service")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Start a Secret Service provider such as gnome-keyring or KeePassXC with Secret Service enabled.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("shows runtime detection details in settings", async () => {
