@@ -1116,6 +1116,33 @@ test("shows missing-profile remediation when a stale profile is re-applied", asy
   ).toBeVisible();
 });
 
+test("surfaces recent command failures in diagnostics", async ({ page }) => {
+  await installDesktopMock(page, "staleProfile");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Re-apply Work" }).click();
+
+  await expect(
+    page.getByText(
+      "Last result: profile work no longer exists Remediation: Refresh profile state or recreate the missing profile before retrying.",
+    ),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+
+  const failureCard = page.locator("article").filter({ hasText: "Claude · Switch profile" });
+  await expect(failureCard).toBeVisible();
+  await expect(failureCard.getByText("profile work no longer exists")).toBeVisible();
+  await expect(
+    failureCard.getByText(
+      "Refresh profile state or recreate the missing profile before retrying.",
+    ),
+  ).toBeVisible();
+
+  await failureCard.getByRole("button", { name: "Open profile details" }).click();
+  await expect(page.getByRole("heading", { name: "Diagnostic details" })).toBeVisible();
+});
+
 test("warns before renaming a profile to a duplicate name", async ({ page }) => {
   await installDesktopMock(page, "switching");
 

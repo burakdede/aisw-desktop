@@ -4,6 +4,7 @@ import { SectionCard } from "../../../components/SectionCard";
 import { AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import { runDoctor, runRepair, runVerify } from "../../../lib/client";
 import { openExternalGuide, installGuideUrlForTool } from "../../../lib/tool-guidance";
+import { useLastCommandResults } from "../../shared/lastCommandResult";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import {
   parseDoctorIssues,
@@ -43,6 +44,7 @@ export function DiagnosticsPanel({
     mutationLock,
   } =
     useDesktopActions();
+  const lastCommandResults = useLastCommandResults();
   const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor });
   const verify = useQuery({ queryKey: ["verify"], queryFn: runVerify });
   const repair = useQuery({
@@ -71,6 +73,7 @@ export function DiagnosticsPanel({
     ...parseVerifyIssues(verify.data),
   ];
   const repairActions = parseRepairActions(repair.data);
+  const recentFailures = buildRecentFailureCards(lastCommandResults, snapshot);
   const quickFixes = buildQuickFixes({
     snapshot,
     doctor: doctor.data,
@@ -263,6 +266,31 @@ export function DiagnosticsPanel({
           ))}
           {!quickFixes.length ? (
             <p className="inline-note">No direct fix actions are available from the current diagnostics state.</p>
+          ) : null}
+        </div>
+
+        <div className="stack-list">
+          <h3>Recent command failures</h3>
+          {recentFailures.map((failure) => (
+            <article key={failure.key} className="diagnostic-card diagnostic-fail">
+              <h4>{failure.title}</h4>
+              <p className="inline-note">{failure.message}</p>
+              {failure.remediation ? <p className="inline-note">{failure.remediation}</p> : null}
+              {failure.profileTarget ? (
+                <div className="button-row">
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    onClick={() => onOpenProfiles(failure.profileTarget!.tool, failure.profileTarget!.profile)}
+                  >
+                    Open profile details
+                  </button>
+                </div>
+              ) : null}
+            </article>
+          ))}
+          {!recentFailures.length ? (
+            <p className="inline-note">No recent command failures are recorded in this session.</p>
           ) : null}
         </div>
 
@@ -560,6 +588,53 @@ function resolveDiagnosticTool(title: string) {
   const normalized = title.trim().toLowerCase();
   const candidate = normalized.startsWith("tool/") ? normalized.slice("tool/".length) : normalized;
   return SUPPORTED_TOOLS.has(candidate) ? candidate : null;
+}
+
+function buildRecentFailureCards(
+  lastCommandResults: ReturnType<typeof useLastCommandResults>,
+  snapshot: AppSnapshot | undefined,
+) {
+  const failures: Array<{
+    key: string;
+    title: string;
+    message: string;
+    remediation?: string;
+    at: number;
+    profileTarget?: { tool: string; profile: string | null };
+  }> = [];
+
+  for (const [tool, result] of Object.entries(lastCommandResults.tool)) {
+    if (!result || result.status !== "error") {
+      continue;
+    }
+    const activeProfile =
+      snapshot?.statuses.find((entry) => entry.tool === tool)?.active_profile ??
+      snapshot?.profiles[tool]?.active ??
+      null;
+    failures.push({
+      key: `tool:${tool}`,
+      title: `${titleCase(tool)} · ${result.label}`,
+      message: result.message,
+      remediation: result.remediation,
+      at: result.at,
+      profileTarget: { tool, profile: activeProfile },
+    });
+  }
+
+  for (const [id, result] of Object.entries(lastCommandResults.global)) {
+    if (!result || result.status !== "error") {
+      continue;
+    }
+    failures.push({
+      key: `global:${id}`,
+      title: result.label,
+      message: result.message,
+      remediation: result.remediation,
+      at: result.at,
+    });
+  }
+
+  return failures.sort((left, right) => right.at - left.at);
 }
 
 function quickFixKey(fix: QuickFixCard) {
