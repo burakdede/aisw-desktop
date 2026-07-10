@@ -410,6 +410,19 @@ test("edits a local profile set from contexts", async ({ page }) => {
   await expect(page.getByText("Client Acme Prime")).toBeVisible();
 });
 
+test("activates a local profile set from contexts", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Contexts" }).click();
+
+  await page.locator(".list-row").filter({ hasText: "Client Acme" }).getByRole("button", { name: "Activate set" }).click();
+
+  await expect(page.getByText("Activated profile set client-acme.")).toBeVisible();
+  await page.getByRole("button", { name: "Workspaces" }).click();
+  await expect(page.getByText("Current context: client-acme")).toBeVisible();
+});
+
 test("uses saved profile labels in context summaries and selectors", async ({ page }) => {
   await installDesktopMock(page, "labelOverrides");
 
