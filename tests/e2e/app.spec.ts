@@ -14,6 +14,7 @@ type ScenarioName =
   | "staleProfile"
   | "profileCommandError"
   | "tokenWarnings"
+  | "failedBulkSwitch"
   | "missingTool"
   | "partialSetup"
   | "updaterError"
@@ -208,6 +209,19 @@ test("switches shared profiles and recovers from live mismatch", async ({ page }
 
   await page.getByRole("button", { name: "Profiles" }).click();
   await expect(page.getByText("incident · oauth")).toBeVisible();
+});
+
+test("refreshes state after a failed switch-all to show the rolled-back profiles", async ({ page }) => {
+  await installDesktopMock(page, "failedBulkSwitch");
+
+  await page.goto("/");
+
+  await expect(page.getByRole("heading", { name: "Work" }).first()).toBeVisible();
+  await page.locator(".section-card").filter({ hasText: "Control Center" }).getByRole("combobox").first().selectOption("profile:work");
+  await page.getByRole("button", { name: "Switch all" }).click();
+
+  await expect(page.getByRole("heading", { name: "Personal" }).first()).toBeVisible();
+  await expect(page.getByText("Last bulk result: switch failed")).toBeVisible();
 });
 
 test("opens profile diagnostics from a diagnostics live mismatch card", async ({ page }) => {
@@ -1430,6 +1444,59 @@ async function installDesktopMock(
             },
           },
         },
+        failedBulkSwitch: {
+          settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 2,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 2,
+                active_profile: "work",
+                auth_method: "api_key",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [
+                  { name: "work", auth: "oauth", label: "Work" },
+                  { name: "personal", auth: "oauth", label: "Personal" },
+                ],
+              },
+              codex: {
+                active: "work",
+                profiles: [
+                  { name: "work", auth: "api_key", label: "Work" },
+                  { name: "personal", auth: "api_key", label: "Personal" },
+                ],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
         workspaceContext: {
           settings: bootstrapSettings,
           snapshot: {
@@ -1941,6 +2008,7 @@ async function installDesktopMock(
         initReport: deepClone(scenarioState.initReport),
         settings: deepClone(scenarioState.settings ?? bootstrapSettings),
         initRuns: 0,
+        snapshotReads: 0,
       };
 
       const stateWorkspace = {
@@ -2097,6 +2165,23 @@ async function installDesktopMock(
           };
         }
         if (command === "get_snapshot") {
+          if (activeScenario === "failedBulkSwitch") {
+            state.snapshotReads += 1;
+            if (state.snapshotReads > 1) {
+              state.snapshot.statuses = state.snapshot.statuses.map((entry) => ({
+                ...entry,
+                active_profile: "personal",
+              }));
+              Object.entries(state.snapshot.profiles).forEach(([tool, profileEntry]) => {
+                if (profileEntry) {
+                  state.snapshot.profiles[tool] = {
+                    ...profileEntry,
+                    active: "personal",
+                  };
+                }
+              });
+            }
+          }
           return cloneSnapshot();
         }
         if (command === "run_doctor") {
@@ -2417,6 +2502,9 @@ async function installDesktopMock(
           return { command, snapshot: cloneSnapshot() };
         }
         if (command === "use_all_profiles") {
+          if (activeScenario === "failedBulkSwitch") {
+            throw new Error("switch failed");
+          }
           const request = args.request;
           state.snapshot.statuses.forEach((entry) => {
             const matching = state.snapshot.profiles[entry.tool]?.profiles.find(
