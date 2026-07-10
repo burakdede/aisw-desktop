@@ -125,6 +125,13 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `tests/e2e/app.spec.ts` verifies the OAuth capture flow renders the fixed five-step wizard and streams inline progress details.
   - `src/App.test.tsx` verifies OAuth progress events are normalized into the desktop wizard contract even when the upstream event stream varies.
 
+### 15. Editable state-mode choices explain isolated versus shared behavior
+
+- Status: implemented
+- Evidence:
+  - `tests/e2e/app.spec.ts` verifies supported tools can choose `Shared` during profile restore-and-activate while Gemini remains non-configurable.
+  - `src/App.test.tsx` verifies profile mutations preserve the selected `shared` state mode when the guided radio choice is used.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:

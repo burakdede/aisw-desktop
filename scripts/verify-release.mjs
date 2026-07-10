@@ -128,6 +128,7 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         acceptanceMatrix.includes("API key never appears in logs") &&
         acceptanceMatrix.includes("Remediation actions land on targeted settings guidance") &&
         acceptanceMatrix.includes("Guided OAuth capture shows a stable five-step desktop wizard") &&
+        acceptanceMatrix.includes("Editable state-mode choices explain isolated versus shared behavior") &&
         acceptanceMatrix.includes("does not replace the local-only product spec"),
     },
     {
