@@ -295,7 +295,12 @@ describe("App", () => {
         runtime_status: {
           ...bootstrap.runtime_status,
           compatible: false,
-          issues: ["aisw does not advertise mutation_json support"],
+          version: null,
+          capabilities: null,
+          issues: [
+            "aisw version info is unavailable",
+            "aisw capabilities info is unavailable",
+          ],
         },
         snapshot: null,
       },
@@ -305,11 +310,18 @@ describe("App", () => {
       expect(screen.getByText("Runtime compatibility")).toBeInTheDocument();
     });
     expect(
-      screen.getByText("aisw does not advertise mutation_json support"),
+      screen.getByText(
+        "AISW Desktop found an `aisw` binary, but this build does not support the desktop integration features yet.",
+      ),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Fix the selected .* runtime in Settings before profile switching/),
+      screen.getByText(
+        "Open Settings and switch to the bundled runtime, or point AISW Desktop at a newer `aisw` build before continuing.",
+      ),
     ).toBeInTheDocument();
+    expect(screen.getByText("Technical details")).toBeInTheDocument();
+    expect(screen.getByText("aisw version info is unavailable")).toBeInTheDocument();
+    expect(screen.getByText("aisw capabilities info is unavailable")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
     expect(screen.getByText("Runtime detection")).toBeInTheDocument();
     expect(screen.queryByText("First-run setup")).not.toBeInTheDocument();

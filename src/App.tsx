@@ -188,6 +188,7 @@ export function App() {
     label,
     disabled: runtimeBlocked && id !== "settings",
   }));
+  const runtimeBlocker = describeRuntimeBlocker(runtimeStatus);
 
   return (
     <AppFrame
@@ -207,15 +208,20 @@ export function App() {
       {!runtimeStatus.compatible ? (
         <SectionCard title="Runtime compatibility" kicker="Onboarding blocker">
           <div className="stack-list">
-            {runtimeStatus.issues.map((issue) => (
-              <p key={issue} className="inline-note">
-                {issue}
-              </p>
-            ))}
             <p className="inline-note">
-              Fix the selected `aisw` runtime in Settings before profile switching, diagnostics,
-              backups, or workspace actions are available again.
+              {runtimeBlocker.summary}
             </p>
+            <p className="inline-note">{runtimeBlocker.nextStep}</p>
+            {runtimeStatus.issues.length ? (
+              <article className="diagnostic-card">
+                <h3>Technical details</h3>
+                {runtimeStatus.issues.map((issue) => (
+                  <p key={issue} className="inline-note">
+                    {issue}
+                  </p>
+                ))}
+              </article>
+            ) : null}
           </div>
         </SectionCard>
       ) : null}
@@ -335,5 +341,46 @@ function describeBootstrapError(error: unknown) {
   return {
     message: "AISW Desktop could not load its initial local state.",
     remediation: undefined,
+  };
+}
+
+function describeRuntimeBlocker(runtimeStatus: {
+  resolved_path?: string | null;
+  version?: unknown;
+  capabilities?: unknown;
+  issues: string[];
+}) {
+  const hasResolvedRuntime = Boolean(runtimeStatus.resolved_path);
+  const missingDesktopContract =
+    runtimeStatus.version == null ||
+    runtimeStatus.capabilities == null ||
+    runtimeStatus.issues.some(
+      (issue) =>
+        issue.includes("version info is unavailable") ||
+        issue.includes("capabilities info is unavailable"),
+    );
+
+  if (hasResolvedRuntime && missingDesktopContract) {
+    return {
+      summary:
+        "AISW Desktop found an `aisw` binary, but this build does not support the desktop integration features yet.",
+      nextStep:
+        "Open Settings and switch to the bundled runtime, or point AISW Desktop at a newer `aisw` build before continuing.",
+    };
+  }
+
+  if (hasResolvedRuntime) {
+    return {
+      summary:
+        "AISW Desktop found an `aisw` binary, but it is not compatible with this desktop build.",
+      nextStep:
+        "Open Settings and switch to the bundled runtime, or point AISW Desktop at a compatible `aisw` build before continuing.",
+    };
+  }
+
+  return {
+    summary: "AISW Desktop could not use the selected `aisw` runtime.",
+    nextStep:
+      "Open Settings and switch to a working bundled, system, or custom `aisw` runtime before continuing.",
   };
 }

@@ -172,10 +172,19 @@ test("shows runtime compatibility blockers when the configured aisw runtime is u
 
   await expect(page.getByText("Runtime blocked")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Runtime compatibility" })).toBeVisible();
-  await expect(page.getByText("aisw does not advertise mutation_json support")).toBeVisible();
   await expect(
-    page.getByText(/Fix the selected .* runtime in Settings before profile switching/),
+    page.getByText(
+      "AISW Desktop found an `aisw` binary, but this build does not support the desktop integration features yet.",
+    ),
   ).toBeVisible();
+  await expect(
+    page.getByText(
+      "Open Settings and switch to the bundled runtime, or point AISW Desktop at a newer `aisw` build before continuing.",
+    ),
+  ).toBeVisible();
+  await expect(page.getByText("Technical details")).toBeVisible();
+  await expect(page.getByText("aisw version info is unavailable")).toBeVisible();
+  await expect(page.getByText("aisw capabilities info is unavailable")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await expect(page.getByText("Runtime detection")).toBeVisible();
   await expect(page.getByRole("button", { name: "Overview" })).toBeDisabled();
@@ -3810,8 +3819,13 @@ async function installDesktopMock(
               ...deepClone(state.bootstrap),
               runtime_status: {
                 ...deepClone(state.bootstrap.runtime_status),
+                version: null,
+                capabilities: null,
                 compatible: false,
-                issues: ["aisw does not advertise mutation_json support"],
+                issues: [
+                  "aisw version info is unavailable",
+                  "aisw capabilities info is unavailable",
+                ],
               },
               snapshot: null,
             };
