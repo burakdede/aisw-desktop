@@ -2880,6 +2880,107 @@ describe("App", () => {
     });
   });
 
+  it("shows updater remediation when update checks fail", async () => {
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "check_for_updates") {
+        throw {
+          message: "Desktop update failed: invalid endpoint",
+          remediation: "Verify the updater endpoint, signing key, and generated updater artifacts for this release.",
+        };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Settings"));
+    fireEvent.click(screen.getByText("Check for updates"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Update check failed")).toBeInTheDocument();
+      expect(screen.getByText("Desktop update failed: invalid endpoint")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Verify the updater endpoint, signing key, and generated updater artifacts for this release.",
+        ),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("shows updater remediation when install fails", async () => {
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "check_for_updates") {
+        return {
+          configured: true,
+          channel: "stable",
+          current_version: "0.1.0",
+          endpoint: "https://updates.example.com/stable.json",
+          update: {
+            version: "0.2.0",
+            current_version: "0.1.0",
+            target: "darwin-aarch64",
+            notes: "Faster switching and signed updater artifacts.",
+          },
+          message: null,
+        };
+      }
+      if (command === "install_update") {
+        throw {
+          message: "Desktop update failed: signature mismatch",
+          remediation: "Verify the updater endpoint, signing key, and generated updater artifacts for this release.",
+        };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Settings"));
+    fireEvent.click(screen.getByText("Check for updates"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Update available: 0.2.0")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("Install update"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Update install failed")).toBeInTheDocument();
+      expect(screen.getByText("Desktop update failed: signature mismatch")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Verify the updater endpoint, signing key, and generated updater artifacts for this release.",
+        ),
+      ).toBeInTheDocument();
+    });
+  });
+
   it("shows explicit shell hook guidance in settings", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());

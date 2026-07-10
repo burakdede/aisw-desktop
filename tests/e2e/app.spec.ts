@@ -1,6 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 
-type ScenarioName = "onboarding" | "switching" | "profiles" | "missingTool" | "partialSetup";
+type ScenarioName =
+  | "onboarding"
+  | "switching"
+  | "profiles"
+  | "missingTool"
+  | "partialSetup"
+  | "updaterError";
 
 const toolCapabilities = {
   claude: { state_modes: ["isolated", "shared"] },
@@ -199,6 +205,22 @@ test("shows missing-tool guidance and opens the install guide from diagnostics",
       page.evaluate(() => (window as typeof window & { __AISW_OPENED_GUIDES__?: string[] }).__AISW_OPENED_GUIDES__ ?? []),
     )
     .toContain("https://www.npmjs.com/package/@google/gemini-cli");
+});
+
+test("shows remediation when the updater configuration is invalid", async ({ page }) => {
+  await installDesktopMock(page, "updaterError");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Check for updates" }).click();
+
+  await expect(page.getByRole("heading", { name: "Update check failed" })).toBeVisible();
+  await expect(page.getByText("Desktop update failed: invalid endpoint")).toBeVisible();
+  await expect(
+    page.getByText(
+      "Verify the updater endpoint, signing key, and generated updater artifacts for this release.",
+    ),
+  ).toBeVisible();
 });
 
 test("creates profiles from environment and API key modes", async ({ page }) => {
@@ -594,6 +616,53 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
             },
           },
         },
+        updaterError: {
+          settings: bootstrapSettings,
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "api_key",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+              codex: {
+                active: "work",
+                profiles: [{ name: "work", auth: "api_key", label: "Work" }],
+              },
+            },
+            contexts: [],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
       };
 
       const scenarioState = scenarios[activeScenario];
@@ -760,6 +829,38 @@ async function installDesktopMock(page: Page, scenario: ScenarioName) {
             ];
           }
           return [];
+        }
+        if (command === "check_for_updates") {
+          if (activeScenario === "updaterError") {
+            throw {
+              message: "Desktop update failed: invalid endpoint",
+              remediation:
+                "Verify the updater endpoint, signing key, and generated updater artifacts for this release.",
+            };
+          }
+          return {
+            configured: true,
+            channel: state.settings.update_channel,
+            current_version: "0.1.0",
+            endpoint: "https://updates.example.com/stable.json",
+            update: {
+              version: "0.2.0",
+              current_version: "0.1.0",
+              target: "darwin-aarch64",
+              notes: "Faster switching and signed updater artifacts.",
+            },
+            message: null,
+          };
+        }
+        if (command === "install_update") {
+          return {
+            configured: true,
+            channel: state.settings.update_channel,
+            current_version: "0.1.0",
+            installed_version: "0.2.0",
+            restart_requested: true,
+            message: "Update installed. Restart has been requested.",
+          };
         }
         if (command === "get_settings") {
           return deepClone(state.settings);

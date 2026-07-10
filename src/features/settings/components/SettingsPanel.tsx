@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
 import { getShellGuidance, runDoctor } from "../../../lib/client";
+import { DesktopCommandError } from "../../../lib/tauri";
 import { DesktopSettings, AppBootstrap } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
 import { useDesktopActions } from "../../shared/useDesktopActions";
@@ -95,6 +96,12 @@ export function SettingsPanel({
             {updateSettingsMutation.isPending ? "Saving…" : "Save settings"}
           </button>
         </form>
+        {updateSettingsMutation.error ? (
+          <MutationErrorCard
+            title="Settings could not be saved"
+            error={updateSettingsMutation.error}
+          />
+        ) : null}
         <div className="stack-list diagnostics-body">
           <article className="diagnostic-card">
             <h3>Runtime detection</h3>
@@ -166,6 +173,12 @@ export function SettingsPanel({
               )}
             </div>
           ) : null}
+          {checkForUpdatesMutation.error ? (
+            <MutationErrorCard
+              title="Update check failed"
+              error={checkForUpdatesMutation.error}
+            />
+          ) : null}
           {installUpdateMutation.data ? (
             <p className="inline-note">
               {installUpdateMutation.data.message ??
@@ -173,6 +186,12 @@ export function SettingsPanel({
                   ? `Installed ${installUpdateMutation.data.installed_version}`
                   : "No update installed.")}
             </p>
+          ) : null}
+          {installUpdateMutation.error ? (
+            <MutationErrorCard
+              title="Update install failed"
+              error={installUpdateMutation.error}
+            />
           ) : null}
         </div>
       </SectionCard>
@@ -272,6 +291,37 @@ export function SettingsPanel({
       </SectionCard>
     </>
   );
+}
+
+function MutationErrorCard({ title, error }: { title: string; error: unknown }) {
+  const resolved = formatMutationError(error);
+
+  return (
+    <article className="diagnostic-card diagnostic-fail">
+      <h3>{title}</h3>
+      <p className="inline-note">{resolved.message}</p>
+      {resolved.remediation ? <p className="inline-note">{resolved.remediation}</p> : null}
+    </article>
+  );
+}
+
+function formatMutationError(error: unknown) {
+  if (error instanceof DesktopCommandError) {
+    return {
+      message: error.message,
+      remediation: error.remediation,
+    };
+  }
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      remediation: undefined,
+    };
+  }
+  return {
+    message: "Desktop command failed.",
+    remediation: undefined,
+  };
 }
 
 function findShellHookCheck(report: Record<string, unknown> | undefined) {
