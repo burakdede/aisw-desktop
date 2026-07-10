@@ -79,6 +79,10 @@ export function ProfilesPanel({
   const duplicateDraftName = profile.trim();
   const hasDuplicateProfileName =
     duplicateDraftName.length > 0 && normalizedProfileNames.has(duplicateDraftName.toLowerCase());
+  const oauthWizardSteps = useMemo(
+    () => buildOauthWizardSteps(tool, oauthEvents, oauthError),
+    [tool, oauthEvents, oauthError],
+  );
 
   useEffect(() => {
     if (!availableStateModes.length) {
@@ -313,20 +317,20 @@ export function ProfilesPanel({
           {mode === "oauth" ? (
             <article className="diagnostic-card">
               <h3>OAuth progress</h3>
-              {oauthEvents.length ? (
+              {oauthWizardSteps.some((step) => step.status !== "pending") ? (
                 <div className="stack-list">
-                  {oauthEvents.map((event, index) => (
-                    <div key={`${event.seq ?? index}-${event.phase ?? event.type ?? "event"}`}>
-                      <p className="diagnostic-status">
-                        {formatOauthStep(event)}
+                  {oauthWizardSteps.map((step) => (
+                    <div key={step.id}>
+                      <p className={`diagnostic-status diagnostic-status-${step.status}`}>
+                        {step.label}
                       </p>
-                      {event.message ? <p className="inline-note">{event.message}</p> : null}
+                      <p className="inline-note">{step.detail}</p>
                     </div>
                   ))}
                 </div>
               ) : (
                 <p className="inline-note">
-                  Start OAuth to stream steps such as browser launch, waiting for login, and profile save.
+                  Start OAuth to stream each login step before the profile is captured and saved.
                 </p>
               )}
               {oauthError ? <p className="inline-note">{oauthError}</p> : null}
@@ -724,21 +728,120 @@ function expectedEnvVar(tool: string) {
   }
 }
 
-function formatOauthStep(event: OAuthProgressEvent) {
-  const phase = event.phase ?? event.type ?? "progress";
+type OAuthWizardStep = {
+  id: "start" | "browser" | "login" | "capture" | "saved";
+  label: string;
+  detail: string;
+  status: "pending" | "warn" | "pass" | "fail";
+};
+
+function buildOauthWizardSteps(
+  tool: string,
+  events: OAuthProgressEvent[],
+  oauthError: string,
+): OAuthWizardStep[] {
+  const definitions = [
+    {
+      id: "start" as const,
+      label: `1. Starting ${titleCase(tool)} login`,
+      fallback: "Preparing the native login flow.",
+    },
+    {
+      id: "browser" as const,
+      label: "2. Browser opens",
+      fallback: "AISW Desktop launches the provider login flow.",
+    },
+    {
+      id: "login" as const,
+      label: "3. Complete login in browser",
+      fallback: "Finish the provider sign-in flow in the browser or terminal window.",
+    },
+    {
+      id: "capture" as const,
+      label: "4. Waiting for credential capture",
+      fallback: "AISW waits for the upstream tool to persist the captured credentials.",
+    },
+    {
+      id: "saved" as const,
+      label: "5. Profile saved",
+      fallback: "AISW stores the captured profile and refreshes desktop state.",
+    },
+  ];
+
+  const stageIndex = new Map<OAuthWizardStep["id"], number>(
+    definitions.map((definition, index) => [definition.id, index]),
+  );
+  const seen = new Map<
+    OAuthWizardStep["id"],
+    { detail: string; failed: boolean }
+  >();
+  let highestReached = -1;
+  let terminalFailure = false;
+
+  for (const event of events) {
+    const stage = oauthEventStage(event);
+    if (!stage) continue;
+    const index = stageIndex.get(stage) ?? -1;
+    if (index > highestReached) {
+      highestReached = index;
+    }
+    const detail = event.message?.trim() || definitions[index].fallback;
+    const failed = stage === "saved" && event.ok === false;
+    if (failed) {
+      terminalFailure = true;
+    }
+    seen.set(stage, { detail, failed });
+  }
+
+  if (oauthError) {
+    highestReached = Math.max(highestReached, definitions.length - 1);
+    terminalFailure = true;
+  }
+
+  return definitions.map((definition, index) => {
+    const explicit = seen.get(definition.id);
+    const isFinal = index === definitions.length - 1;
+    let status: OAuthWizardStep["status"] = "pending";
+
+    if (terminalFailure && isFinal) {
+      status = "fail";
+    } else if (highestReached >= index) {
+      status = highestReached === index && !isFinal ? "warn" : "pass";
+    }
+
+    if (highestReached === definitions.length - 1 && !terminalFailure) {
+      status = "pass";
+    }
+
+    return {
+      id: definition.id,
+      label: terminalFailure && isFinal ? "5. OAuth failed" : definition.label,
+      detail:
+        explicit?.detail ??
+        (isFinal && oauthError ? oauthError : definition.fallback),
+      status,
+    };
+  });
+}
+
+function oauthEventStage(event: OAuthProgressEvent): OAuthWizardStep["id"] | null {
+  const phase = (event.phase ?? event.type ?? "").toLowerCase();
   switch (phase) {
-    case "starting_upstream_auth":
-      return "1. Starting upstream login";
-    case "waiting_for_user":
-      return "2. Waiting for login completion";
-    case "applying_changes":
-      return "3. Saving captured profile";
-    case "result":
-      return event.ok ? "4. Profile saved" : "4. OAuth failed";
     case "started":
-      return "0. Starting OAuth";
+      return "start";
+    case "starting_upstream_auth":
+    case "browser_launch":
+      return "browser";
+    case "waiting_for_user":
+    case "waiting_for_login":
+      return "login";
+    case "applying_changes":
+      return "capture";
+    case "profile_saved":
+    case "result":
+      return "saved";
     default:
-      return titleCase(phase.replace(/_/g, " "));
+      return null;
   }
 }
 

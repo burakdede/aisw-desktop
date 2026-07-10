@@ -1323,9 +1323,12 @@ test("runs guided OAuth capture from the profiles screen", async ({ page }) => {
   await profilesSection.getByRole("button", { name: "Start OAuth" }).click();
 
   await expect(page.getByText("OAuth progress")).toBeVisible();
-  await expect(page.getByText("Browser Launch", { exact: true })).toBeVisible();
-  await expect(page.getByText("Waiting For Login", { exact: true })).toBeVisible();
-  await expect(page.getByText("Profile Saved", { exact: true })).toBeVisible();
+  await expect(page.getByText("1. Starting Claude login")).toBeVisible();
+  await expect(page.getByText("2. Browser opens")).toBeVisible();
+  await expect(page.getByText("3. Complete login in browser")).toBeVisible();
+  await expect(page.getByText("4. Waiting for credential capture")).toBeVisible();
+  await expect(page.getByText("5. Profile saved")).toBeVisible();
+  await expect(page.getByText("Preparing the native login flow.")).toBeVisible();
   await expect(page.locator(".inline-note").filter({ hasText: "Launching browser" })).toBeVisible();
   await expect(page.locator(".inline-note").filter({ hasText: "Waiting for login" })).toBeVisible();
   await expect(page.getByText("personal · oauth")).toBeVisible();

@@ -2066,11 +2066,15 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "add_profile_oauth")).toBe(true);
       expect(screen.getByText("OAuth progress")).toBeInTheDocument();
-      expect(screen.getByText("0. Starting OAuth")).toBeInTheDocument();
-      expect(screen.getByText("1. Starting upstream login")).toBeInTheDocument();
-      expect(screen.getByText("2. Waiting for login completion")).toBeInTheDocument();
-      expect(screen.getByText("3. Saving captured profile")).toBeInTheDocument();
-      expect(screen.getByText("4. Profile saved")).toBeInTheDocument();
+      expect(screen.getByText("1. Starting Claude login")).toBeInTheDocument();
+      expect(screen.getByText("2. Browser opens")).toBeInTheDocument();
+      expect(screen.getByText("3. Complete login in browser")).toBeInTheDocument();
+      expect(screen.getByText("4. Waiting for credential capture")).toBeInTheDocument();
+      expect(screen.getByText("5. Profile saved")).toBeInTheDocument();
+      expect(screen.getByText("Preparing the native login flow.")).toBeInTheDocument();
+      expect(screen.getByText("Launching Claude login")).toBeInTheDocument();
+      expect(screen.getByText("Complete login in the browser or terminal")).toBeInTheDocument();
+      expect(screen.getByText("Saving captured credentials")).toBeInTheDocument();
     });
   });
 
