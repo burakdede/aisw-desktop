@@ -5390,6 +5390,87 @@ describe("App", () => {
     });
   });
 
+  it("drops the saved custom runtime path when switching to the system runtime", async () => {
+    const updateRequests: DesktopSettings[] = [];
+    let currentSettings: DesktopSettings = {
+      ...bootstrap.settings,
+      runtime_kind: "custom",
+      runtime_path: "/opt/aisw/bin/aisw",
+      aisw_home: null,
+      update_channel: "stable",
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      const requestArgs = args as { request: DesktopSettings } | undefined;
+      if (command === "update_settings") {
+        updateRequests.push(requestArgs?.request as DesktopSettings);
+        currentSettings = requestArgs?.request as DesktopSettings;
+        return currentSettings;
+      }
+      return (
+        {
+          get_settings: currentSettings,
+          run_doctor: { summary: { status: "pass" }, checks: [] },
+          get_shell_guidance: {
+            detected_shell: "zsh",
+            capabilities: [],
+            note: "Shell hook guidance",
+            manual_apply_examples: [],
+            variants: [
+              {
+                shell: "zsh",
+                title: "Zsh",
+                config_path: "~/.zshrc",
+                alternate_config_path: null,
+                install_command: "echo install",
+                reload_command: "source ~/.zshrc",
+                verify_command: 'echo "$AISW_SHELL_HOOK"',
+                verify_expected: "1",
+              },
+            ],
+          },
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    const rendered = await renderSettingsPanel(currentSettings);
+    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
+
+    expect(screen.getByDisplayValue("/opt/aisw/bin/aisw")).toBeEnabled();
+
+    fireEvent.change(screen.getByDisplayValue("Custom path"), {
+      target: { value: "system" },
+    });
+
+    const runtimePathInput = screen.getByDisplayValue("/opt/aisw/bin/aisw");
+    expect(runtimePathInput).toBeDisabled();
+
+    fireEvent.click(screen.getByText("Save settings"));
+
+    await waitFor(() => {
+      expect(updateRequests).toEqual([
+        expect.objectContaining({
+          runtime_kind: "system",
+          runtime_path: null,
+        }),
+      ]);
+    });
+
+    await act(async () => {
+      rendered.rerender(
+        <QueryClientProvider client={rendered.queryClient}>
+          <SettingsPanel settings={currentSettings} runtimeStatus={bootstrap.runtime_status} />
+        </QueryClientProvider>,
+      );
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("System aisw")).toBeInTheDocument();
+      expect(screen.getByPlaceholderText("Only used for custom runtime")).toHaveValue("");
+    });
+  });
+
   it("requires saving settings before updater actions use a changed channel", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     let currentSettings: DesktopSettings = bootstrap.settings;

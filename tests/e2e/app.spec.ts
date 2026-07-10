@@ -1175,6 +1175,26 @@ test("clears a saved custom runtime path after switching back to bundled runtime
   await expect(page.getByText("Current resolved path: /Applications/AISW.app/Contents/Resources/aisw")).toBeVisible();
 });
 
+test("switches from a custom runtime back to the system aisw selection", async ({ page }) => {
+  await installDesktopMock(page, "customRuntime");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+
+  const runtimePath = page.getByLabel("Runtime path");
+  await expect(runtimePath).toHaveValue("/opt/aisw/bin/aisw");
+  await expect(runtimePath).toBeEnabled();
+
+  await page.getByLabel("Runtime selection").selectOption("system");
+  await expect(runtimePath).toBeDisabled();
+
+  await page.getByRole("button", { name: "Save settings" }).click();
+
+  await expect(runtimePath).toHaveValue("");
+  await expect(page.getByText("Selected backend: System")).toBeVisible();
+  await expect(page.getByText("Current resolved path: /opt/homebrew/bin/aisw")).toBeVisible();
+});
+
 test("creates profiles from environment and API key modes", async ({ page }) => {
   await installDesktopMock(page, "profiles");
 
@@ -1522,7 +1542,10 @@ async function installDesktopMock(
       const baseBootstrap = {
         settings: bootstrapSettings,
         runtime_status: {
-          resolved_path: "/Applications/AISW.app/Contents/Resources/aisw",
+          resolved_path:
+            activeScenario === "customRuntime"
+              ? "/opt/aisw/bin/aisw"
+              : "/Applications/AISW.app/Contents/Resources/aisw",
           version: {
             version: "0.3.7",
             cli_api_version: 1,
@@ -1538,7 +1561,8 @@ async function installDesktopMock(
           inventory: {
             bundled_path: "/Applications/AISW.app/Contents/Resources/aisw",
             system_path: "/opt/homebrew/bin/aisw",
-            configured_path: null,
+            configured_path:
+              activeScenario === "customRuntime" ? "/opt/aisw/bin/aisw" : null,
           },
           compatible: true,
           issues: [],
@@ -3443,6 +3467,18 @@ async function installDesktopMock(
         if (command === "update_settings") {
           state.settings = deepClone(args.request);
           state.bootstrap.settings = deepClone(args.request);
+          if (state.settings.runtime_kind === "custom") {
+            state.bootstrap.runtime_status.resolved_path = state.settings.runtime_path;
+            state.bootstrap.runtime_status.inventory.configured_path = state.settings.runtime_path;
+          } else if (state.settings.runtime_kind === "system") {
+            state.bootstrap.runtime_status.resolved_path =
+              state.bootstrap.runtime_status.inventory.system_path;
+            state.bootstrap.runtime_status.inventory.configured_path = null;
+          } else {
+            state.bootstrap.runtime_status.resolved_path =
+              state.bootstrap.runtime_status.inventory.bundled_path;
+            state.bootstrap.runtime_status.inventory.configured_path = null;
+          }
           return deepClone(state.settings);
         }
         if (command === "get_settings") {
