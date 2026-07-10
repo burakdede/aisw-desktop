@@ -127,6 +127,7 @@ export const backupEntrySchema = z.object({
   backup_id: z.string(),
   tool: z.string(),
   profile: z.string(),
+  created_at: z.string().nullable().optional(),
 });
 export const updateInfoSchema = z.object({
   version: z.string(),

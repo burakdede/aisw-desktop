@@ -697,7 +697,7 @@ function mergeProfileLabel(
 function latestBackupForProfile(
   tool: string,
   profile: string,
-  backups: Array<{ backup_id: string; tool: string; profile: string }> | undefined,
+  backups: Array<{ backup_id: string; tool: string; profile: string; created_at?: string | null }> | undefined,
 ) {
   return backups?.find(
     (entry) =>

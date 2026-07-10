@@ -24,8 +24,7 @@ export function BackupsPanel({
     mode: "files" | "activate";
   } | null>(null);
   const sortedBackups = useMemo(
-    () =>
-      [...(backups.data ?? [])].sort((left, right) => right.backup_id.localeCompare(left.backup_id)),
+    () => [...(backups.data ?? [])].sort(compareBackupsNewestFirst),
     [backups.data],
   );
 
@@ -78,7 +77,7 @@ export function BackupsPanel({
           <article key={entry.backup_id} className="list-row">
             <div>
               <strong>{profileLabel}</strong>
-              <p className="inline-note">Created: {formatBackupTimestamp(entry.backup_id)}</p>
+              <p className="inline-note">Created: {formatBackupTimestamp(entry.created_at ?? entry.backup_id)}</p>
               <p>
                 {titleCase(target.tool)} backup · {entry.backup_id}
               </p>
@@ -197,8 +196,37 @@ function resolveBackupTarget(tool: string, profile: string) {
   return { tool, profile };
 }
 
-function formatBackupTimestamp(backupId: string) {
-  const match = backupId.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/);
+function compareBackupsNewestFirst(
+  left: { backup_id: string; created_at?: string | null },
+  right: { backup_id: string; created_at?: string | null },
+) {
+  const leftSortKey = backupSortKey(left.created_at ?? left.backup_id);
+  const rightSortKey = backupSortKey(right.created_at ?? right.backup_id);
+  return rightSortKey.localeCompare(leftSortKey);
+}
+
+function backupSortKey(value: string) {
+  const isoDate = Date.parse(value);
+  if (!Number.isNaN(isoDate)) {
+    return new Date(isoDate).toISOString();
+  }
+  return value;
+}
+
+function formatBackupTimestamp(value: string) {
+  const isoDate = Date.parse(value);
+  if (!Number.isNaN(isoDate)) {
+    return new Intl.DateTimeFormat(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZoneName: "short",
+    }).format(new Date(isoDate));
+  }
+
+  const match = value.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/);
   if (!match) {
     return "Unknown";
   }
@@ -208,7 +236,6 @@ function formatBackupTimestamp(backupId: string) {
   if (Number.isNaN(date.getTime())) {
     return "Unknown";
   }
-
   return new Intl.DateTimeFormat(undefined, {
     year: "numeric",
     month: "short",

@@ -213,6 +213,7 @@ pub struct BackupEntry {
     pub backup_id: String,
     pub tool: String,
     pub profile: String,
+    pub created_at: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

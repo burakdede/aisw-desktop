@@ -1669,6 +1669,48 @@ describe("App", () => {
     });
   });
 
+  it("uses backup created_at metadata for ordering and display", async () => {
+    window.__AISW_DESKTOP_MOCK__ = async (command) =>
+      (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [
+            {
+              backup_id: "legacy-codex-personal",
+              tool: "codex",
+              profile: "codex/personal",
+              created_at: "2026-03-26T09:40:12Z",
+            },
+            {
+              backup_id: "legacy-claude-work",
+              tool: "claude",
+              profile: "claude/work",
+              created_at: "2026-03-25T11:45:02Z",
+            },
+          ],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Backups")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Backups"));
+    await waitFor(() => expect(screen.getAllByText("Copy backup ID")).toHaveLength(2));
+
+    const backupsSection = screen.getByRole("heading", { name: "Backups" }).closest(".section-card");
+    const articles = backupsSection?.querySelectorAll(".list-row") ?? [];
+    expect(articles[0]?.textContent).toContain("Personal");
+    expect(articles[1]?.textContent).toContain("Work");
+    expect(screen.queryByText("Created: Unknown")).not.toBeInTheDocument();
+  });
+
   it("warns before restoring backup files without activating the profile", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
