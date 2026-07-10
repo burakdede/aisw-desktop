@@ -286,6 +286,19 @@ test("binds and resolves workspace context from the workspaces panel", async ({ 
   await expect(page.getByText("Last workspace result: Switched to client-acme for /code/acme.")).toBeVisible();
   await expect(page.getByText("Current context: client-acme")).toBeVisible();
   await expect(page.getByText("Expected context: client-acme")).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as typeof window & {
+            __AISW_NOTIFICATIONS__?: Array<{ title: string; body: string }>;
+          }).__AISW_NOTIFICATIONS__ ?? [],
+      ),
+    )
+    .toContainEqual({
+      title: "Workspace switch",
+      body: "Switched to client-acme for /code/acme.",
+    });
 
   const workspacesForm = page.locator("form.stacked-form");
   await workspacesForm.getByLabel("Binding scope").selectOption("path");
@@ -1288,6 +1301,10 @@ async function installDesktopMock(
       });
       const listeners = new Map();
       window.__AISW_OPENED_GUIDES__ = [];
+      window.__AISW_NOTIFICATIONS__ = [];
+      window.__AISW_DESKTOP_NOTIFY__ = (payload) => {
+        window.__AISW_NOTIFICATIONS__.push(payload);
+      };
       window.open = (url) => {
         window.__AISW_OPENED_GUIDES__.push(String(url));
         return null;
