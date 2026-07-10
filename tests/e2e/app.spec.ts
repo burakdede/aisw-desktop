@@ -433,6 +433,25 @@ test("shows runtime detection and shell guidance in settings", async ({ page }) 
   await expect(shellSection.getByText("Expected output: 1")).toBeVisible();
 });
 
+test("saves custom runtime and AISW home settings", async ({ page }) => {
+  await installDesktopMock(page, "profiles");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+
+  await page.getByLabel("Runtime selection").selectOption("custom");
+  await page.getByLabel("Runtime path").fill("/opt/custom/aisw");
+  await page.getByLabel("AISW_HOME override").fill("/tmp/aisw-home");
+  await page.getByRole("button", { name: "Save settings" }).click();
+
+  await expect(page.getByLabel("Runtime selection")).toHaveValue("custom");
+  await expect(page.getByLabel("Runtime path")).toHaveValue("/opt/custom/aisw");
+  await expect(page.getByLabel("AISW_HOME override")).toHaveValue("/tmp/aisw-home");
+
+  const settingsSection = page.locator(".section-card").filter({ hasText: "Runtime and home directory" });
+  await expect(settingsSection.getByText("Selected backend: Custom")).toBeVisible();
+});
+
 test("requires saving settings before updater actions use a changed channel", async ({ page }) => {
   await installDesktopMock(page, "profiles");
 
