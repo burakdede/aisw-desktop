@@ -21,9 +21,11 @@ type BindScope = "default" | "path" | "git_remote";
 export function WorkspacesPanel({
   snapshot,
   settings,
+  onOpenContexts,
 }: {
   snapshot: AppSnapshot;
   settings: DesktopSettings;
+  onOpenContexts: () => void;
 }) {
   const readEnabled = useMutationAwareQueryEnabled();
   const bindings = useQuery({
@@ -67,6 +69,11 @@ export function WorkspacesPanel({
   const workspaceResult = lastCommandResults.global.workspace;
   const expectedContextDisplay = contextDisplayLabel(settings, statusCard.expectedContext);
   const currentContextDisplay = contextDisplayLabel(settings, statusCard.currentContext);
+  const expectedWorkspaceTarget = resolveWorkspaceActivationTarget(
+    statusCard.expectedContext,
+    settings,
+    snapshot,
+  );
   const matchedBindingKey =
     statusCard.scope !== "none"
       ? `${statusCard.scope}:${statusCard.target}:${statusCard.expectedContext}`
@@ -83,9 +90,12 @@ export function WorkspacesPanel({
   }, [bindingOptions, context]);
 
   function activateExpectedWorkspaceTarget() {
-    const target = resolveWorkspaceActivationTarget(statusCard.expectedContext, settings, snapshot);
+    if (!expectedWorkspaceTarget) {
+      onOpenContexts();
+      return;
+    }
     activateWorkspaceTargetMutation.mutate({
-      ...target,
+      ...expectedWorkspaceTarget,
       matchedTarget: statusCard.target,
     });
   }
@@ -206,7 +216,7 @@ export function WorkspacesPanel({
                   disabled={mutationLock.isBusy}
                   onClick={activateExpectedWorkspaceTarget}
                 >
-                  Use expected context now
+                  {expectedWorkspaceTarget ? "Use expected context now" : "Open contexts"}
                 </button>
                 <button
                   className="ghost-button"

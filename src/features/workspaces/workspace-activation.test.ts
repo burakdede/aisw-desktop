@@ -108,4 +108,31 @@ describe("resolveWorkspaceActivationTarget", () => {
       stateMode: "shared",
     });
   });
+
+  it("returns null when no matching CLI context or non-empty profile set exists", () => {
+    const settings: DesktopSettings = {
+      runtime_kind: "bundled",
+      runtime_path: null,
+      aisw_home: null,
+      update_channel: "stable",
+      profile_labels: {},
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: {
+            claude: null,
+            codex: null,
+            gemini: null,
+          },
+        },
+      ],
+    };
+    const snapshotWithoutContext: AppSnapshot = {
+      ...snapshot,
+      contexts: [],
+    };
+
+    expect(resolveWorkspaceActivationTarget("client-acme", settings, snapshotWithoutContext)).toBeNull();
+  });
 });

@@ -63,6 +63,10 @@ export function App() {
     setActiveNav("settings");
   }
 
+  function openContexts() {
+    setActiveNav("contexts");
+  }
+
   function selectNav(id: string) {
     if (id === "profiles") {
       setProfilesRouteState({});
@@ -235,6 +239,7 @@ export function App() {
               snapshot={resolvedSnapshot}
               settings={settings}
               toolCapabilities={toolCapabilities}
+              onOpenContexts={openContexts}
               onOpenProfiles={(tool, expandedProfile, options) => {
                 setProfilesRouteState({ tool, expandedProfile, mode: options?.mode });
                 setActiveNav("profiles");
@@ -256,7 +261,11 @@ export function App() {
             <ContextsPanel snapshot={resolvedSnapshot} settings={settings} />
           ) : null}
           {activeSection === "workspaces" ? (
-            <WorkspacesPanel snapshot={resolvedSnapshot} settings={settings} />
+            <WorkspacesPanel
+              snapshot={resolvedSnapshot}
+              settings={settings}
+              onOpenContexts={openContexts}
+            />
           ) : null}
           {activeSection === "diagnostics" ? (
             <DiagnosticsPanel
@@ -264,6 +273,7 @@ export function App() {
               snapshot={resolvedSnapshot}
               toolCapabilities={toolCapabilities}
               onOpenSettings={openSettings}
+              onOpenContexts={openContexts}
               onOpenProfiles={(tool, expandedProfile) => {
                 setProfilesRouteState({ tool, expandedProfile });
                 setActiveNav("profiles");

@@ -3530,6 +3530,83 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("routes stale workspace recovery from overview into contexts management", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    const staleWorkspaceSnapshot = {
+      ...bootstrap.snapshot,
+      contexts: [],
+      workspace_status: {
+        status: "mismatch",
+        current_context: "work",
+        expected_context: "client-acme",
+        matched_binding: {
+          scope: "path",
+          path: "/code/acme",
+          context: "client-acme",
+        },
+      },
+      project_bindings: {
+        user_bindings: {
+          guard_mode: "warn",
+          default_context: "none",
+          items: [{ scope: "path", path: "/code/acme", context: "client-acme" }],
+        },
+      },
+    };
+    const settingsWithEmptyMatch: DesktopSettings = {
+      ...bootstrap.settings,
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: null, codex: null, gemini: null },
+        },
+      ],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      return (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            settings: settingsWithEmptyMatch,
+            snapshot: staleWorkspaceSnapshot,
+          },
+          get_snapshot: staleWorkspaceSnapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: staleWorkspaceSnapshot.workspace_status },
+          get_project_bindings: { result: staleWorkspaceSnapshot.project_bindings },
+          list_backups: [],
+          get_settings: settingsWithEmptyMatch,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+
+    await waitFor(() => {
+      expect(
+        screen.getByText((_, element) =>
+          element?.tagName === "P" && element.textContent?.trim() === "Expected context: Client Acme",
+        ),
+      ).toBeInTheDocument();
+      expect(screen.getByText("Open contexts")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getAllByText("Open contexts")[0]);
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Contexts" })).toBeInTheDocument();
+    });
+    expect(calls.some((entry) => entry.command === "use_context")).toBe(false);
+    expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(false);
+  });
+
   it("uses saved profile-set labels in CLI context activation results", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     const settingsWithSet: DesktopSettings = {

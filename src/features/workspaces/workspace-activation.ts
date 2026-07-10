@@ -10,7 +10,7 @@ export function resolveWorkspaceActivationTarget(
   expectedContext: string,
   settings: DesktopSettings,
   snapshot: AppSnapshot,
-): WorkspaceActivationTarget {
+): WorkspaceActivationTarget | null {
   const profileSet = settings.profile_sets?.find(
     (set) => set.name === expectedContext && profileSetHasSelections(set),
   );
@@ -24,11 +24,7 @@ export function resolveWorkspaceActivationTarget(
       stateMode: resolveGlobalStateMode(snapshot),
     };
   }
-  return {
-    kind: "context",
-    name: expectedContext,
-    stateMode: resolveGlobalStateMode(snapshot),
-  };
+  return null;
 }
 
 export function workspaceBindingOptions(

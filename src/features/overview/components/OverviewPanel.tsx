@@ -32,6 +32,7 @@ export function OverviewPanel({
   settings,
   toolCapabilities,
   onOpenProfiles,
+  onOpenContexts,
 }: {
   snapshot: AppSnapshot;
   settings: DesktopSettings;
@@ -41,6 +42,7 @@ export function OverviewPanel({
     expandedProfile?: string | null,
     options?: { mode?: ProfileImportMode },
   ) => void;
+  onOpenContexts: () => void;
 }) {
   const queryClient = useQueryClient();
   const {
@@ -87,7 +89,11 @@ export function OverviewPanel({
     ? resolveWorkspaceActivationTarget(workspaceStatus.expectedContext, settings, snapshot)
     : null;
   const workspaceSummaryLabel =
-    expectedWorkspaceTarget?.kind === "profile_set" ? "Expected profile set" : "Expected CLI context";
+    expectedWorkspaceTarget?.kind === "profile_set"
+      ? "Expected profile set"
+      : expectedWorkspaceTarget?.kind === "context"
+        ? "Expected CLI context"
+        : "Expected context";
   const expectedWorkspaceDisplay = contextDisplayLabel(settings, workspaceStatus.expectedContext);
   const currentWorkspaceDisplay = contextDisplayLabel(settings, workspaceStatus.currentContext);
   const workspaceResult = lastCommandResults.global.workspace;
@@ -168,13 +174,17 @@ export function OverviewPanel({
                     settings,
                     snapshot,
                   );
+                  if (!target) {
+                    onOpenContexts();
+                    return;
+                  }
                   activateWorkspaceTargetMutation.mutate({
                     ...target,
                     matchedTarget: workspaceStatus.target,
                   });
                 }}
               >
-                Use expected context now
+                {expectedWorkspaceTarget ? "Use expected context now" : "Open contexts"}
               </button>
             </div>
           ) : null}

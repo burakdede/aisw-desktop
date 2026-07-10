@@ -36,6 +36,7 @@ export function DiagnosticsPanel({
   toolCapabilities,
   onOpenProfiles,
   onOpenSettings,
+  onOpenContexts,
   onOpenProfileSetup,
 }: {
   settings: DesktopSettings;
@@ -43,6 +44,7 @@ export function DiagnosticsPanel({
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
   onOpenProfiles: (tool: string, expandedProfile?: string | null) => void;
   onOpenSettings: (section?: SettingsSection) => void;
+  onOpenContexts: () => void;
   onOpenProfileSetup: (options?: {
     tool?: string;
     mode?: ProfileImportMode;
@@ -107,6 +109,7 @@ export function DiagnosticsPanel({
     activateWorkspaceTarget: activateWorkspaceTargetMutation.mutate,
     applyRepairFixes: (fixes) => applyRepair.mutate(fixes),
     onOpenSettings,
+    onOpenContexts,
     onOpenProfileSetup,
     onRefreshDiagnostics: () =>
       void refreshDiagnostics(queryClient, doctor.refetch, verify.refetch, repair.refetch),
@@ -432,6 +435,7 @@ function buildQuickFixes(
     activateWorkspaceTarget,
     applyRepairFixes,
     onOpenSettings,
+    onOpenContexts,
     onOpenProfileSetup,
     onRefreshDiagnostics,
   }: {
@@ -460,6 +464,7 @@ function buildQuickFixes(
     }) => void;
     applyRepairFixes: (fixes: string[]) => void;
     onOpenSettings: (section?: SettingsSection) => void;
+    onOpenContexts: () => void;
     onOpenProfileSetup: (options?: {
       tool?: string;
       mode?: ProfileImportMode;
@@ -575,19 +580,22 @@ function buildQuickFixes(
   if (hasWorkspaceMismatch) {
     const expectedContextLabel = contextDisplayLabel(settings, workspace.expectedContext);
     const currentContextLabel = contextDisplayLabel(settings, workspace.currentContext);
+    const target = resolveWorkspaceActivationTarget(workspace.expectedContext, settings, snapshot);
     fixes.push({
       title: "Workspace context mismatch",
-      detail: `This folder wants ${expectedContextLabel}, but ${currentContextLabel} is currently active.`,
-      label: "Use expected context now",
+      detail: target
+        ? `This folder wants ${expectedContextLabel}, but ${currentContextLabel} is currently active.`
+        : `This folder wants ${expectedContextLabel}, but no matching CLI context or non-empty profile set is currently available.`,
+      label: target ? "Use expected context now" : "Open contexts",
       status: "warn",
       primary: true,
-      action: () => {
-        const target = resolveWorkspaceActivationTarget(workspace.expectedContext, settings, snapshot);
-        activateWorkspaceTarget({
-          ...target,
-          matchedTarget: workspace.target,
-        });
-      },
+      action: () =>
+        target
+          ? activateWorkspaceTarget({
+              ...target,
+              matchedTarget: workspace.target,
+            })
+          : onOpenContexts(),
     });
   }
 
