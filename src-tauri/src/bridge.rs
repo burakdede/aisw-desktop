@@ -70,6 +70,12 @@ pub struct CliAiswBridge {
     pub aisw_home: Option<PathBuf>,
 }
 
+struct CommandOutput {
+    success: bool,
+    stdout: Vec<u8>,
+    stderr: Vec<u8>,
+}
+
 impl CliAiswBridge {
     pub fn new(
         runtime_kind: RuntimeKind,
@@ -89,18 +95,36 @@ impl CliAiswBridge {
         args: &[&str],
         stdin_payload: Option<&str>,
     ) -> Result<T, DesktopError> {
-        let output = self.run_raw(command_name, args, stdin_payload).await?;
-        serde_json::from_slice::<T>(&output).map_err(|_| DesktopError::InvalidJson {
-            command: command_name.to_owned(),
-        })
+        let output = self.run_command(command_name, args, stdin_payload).await?;
+        if output.success {
+            return serde_json::from_slice::<T>(&output.stdout).map_err(|_| {
+                DesktopError::InvalidJson {
+                    command: command_name.to_owned(),
+                }
+            });
+        }
+
+        if let Ok(value) = serde_json::from_slice::<serde_json::Value>(&output.stdout) {
+            if let Some(error) = map_machine_failure(command_name, &value) {
+                return Err(error);
+            }
+
+            return serde_json::from_value::<T>(value).map_err(|_| DesktopError::InvalidJson {
+                command: command_name.to_owned(),
+            });
+        }
+
+        let stderr = redact_text(&String::from_utf8_lossy(&output.stderr));
+        warn!("aisw command `{command_name}` failed: {stderr}");
+        Err(map_command_failure(command_name, &stderr))
     }
 
-    async fn run_raw(
+    async fn run_command(
         &self,
         command_name: &str,
         args: &[&str],
         stdin_payload: Option<&str>,
-    ) -> Result<Vec<u8>, DesktopError> {
+    ) -> Result<CommandOutput, DesktopError> {
         let binary = self.resolve_binary().await?;
         let mut command = Command::new(binary);
         command.args(args);
@@ -139,13 +163,11 @@ impl CliAiswBridge {
                 remediation: None,
             })?;
 
-        if output.status.success() {
-            return Ok(output.stdout);
-        }
-
-        let stderr = redact_text(&String::from_utf8_lossy(&output.stderr));
-        warn!("aisw command `{command_name}` failed: {stderr}");
-        Err(map_command_failure(command_name, &stderr))
+        Ok(CommandOutput {
+            success: output.status.success(),
+            stdout: output.stdout,
+            stderr: output.stderr,
+        })
     }
 
     pub async fn add_profile_oauth<F>(
@@ -1124,6 +1146,78 @@ printf '{}'
         let bridge = CliAiswBridge::new(RuntimeKind::System, Some(path.clone()), None);
         let resolved = bridge.resolve_binary().await;
         assert_ne!(resolved.ok().as_ref(), Some(&path));
+    }
+
+    #[tokio::test]
+    async fn doctor_returns_json_even_when_checks_fail() {
+        let path = write_fake_aisw(
+            r#"#!/bin/sh
+if [ "$1" = "doctor" ]; then
+  printf '{"checks":[{"name":"shell/hook","status":"fail","detail":"hook missing"}]}'
+  exit 1
+fi
+printf '{}'
+"#,
+        );
+        let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
+        let report = bridge.doctor().await.expect("doctor JSON should still parse");
+
+        assert_eq!(report.raw["checks"].as_array().map(Vec::len), Some(1));
+        assert_eq!(report.raw["checks"][0]["name"], "shell/hook");
+    }
+
+    #[tokio::test]
+    async fn verify_returns_json_even_when_summary_fails() {
+        let path = write_fake_aisw(
+            r#"#!/bin/sh
+if [ "$1" = "verify" ]; then
+  printf '{"summary":{"status":"fail","passed":0,"warnings":0,"failed":1},"tools":[],"doctor":[]}'
+  exit 1
+fi
+printf '{}'
+"#,
+        );
+        let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
+        let report = bridge.verify().await.expect("verify JSON should still parse");
+
+        assert_eq!(report.raw["summary"]["status"], "fail");
+        assert_eq!(report.raw["summary"]["failed"], 1);
+    }
+
+    #[tokio::test]
+    async fn machine_failures_from_json_stdout_map_to_desktop_errors() {
+        let path = write_fake_aisw(
+            r#"#!/bin/sh
+if [ "$1" = "use" ]; then
+  printf '{"ok":false,"error":{"kind":"profile_not_found","message":"profile work not found","remediation":{"command":"aisw list claude","safe":true}}}'
+  exit 1
+fi
+printf '{}'
+"#,
+        );
+        let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
+        let error = bridge
+            .use_profile(crate::models::UseProfileRequest {
+                tool: "claude".to_owned(),
+                profile: "work".to_owned(),
+                state_mode: None,
+            })
+            .await
+            .expect_err("expected machine failure");
+
+        let crate::errors::DesktopError::CommandFailed {
+            kind,
+            message,
+            remediation,
+            ..
+        } = error
+        else {
+            panic!("expected command failure");
+        };
+
+        assert!(matches!(kind, GuiErrorKind::ProfileMissing));
+        assert_eq!(message, "profile work not found");
+        assert_eq!(remediation.as_deref(), Some("aisw list claude"));
     }
 
     #[test]
