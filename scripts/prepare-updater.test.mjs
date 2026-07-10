@@ -81,4 +81,14 @@ describe("prepare-updater", () => {
       "Provide TAURI_SIGNING_PUBLIC_KEY or AISW_DESKTOP_UPDATER_PUBKEY before preparing updater channels.",
     );
   });
+
+  it("fails when a configured updater channel is not HTTPS", () => {
+    const root = createWorkspace();
+    expect(() =>
+      prepareUpdaterConfig(root, {
+        AISW_DESKTOP_UPDATER_ENDPOINT_STABLE: "http://updates.example.com/stable.json",
+        TAURI_SIGNING_PUBLIC_KEY: "minisign-pubkey",
+      }),
+    ).toThrow("AISW_DESKTOP_UPDATER_ENDPOINT_STABLE must use https://");
+  });
 });

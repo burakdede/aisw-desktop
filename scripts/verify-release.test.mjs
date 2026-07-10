@@ -393,6 +393,42 @@ AISW_SIDECAR_URL_LINUX_X64
     );
   });
 
+  it("fails when staged updater endpoints are not HTTPS", () => {
+    const root = createReleaseFixture();
+    writeFixture(
+      root,
+      "src-tauri/tauri.conf.json",
+      JSON.stringify(
+        {
+          bundle: {
+            createUpdaterArtifacts: true,
+            externalBin: ["binaries/aisw"],
+          },
+          plugins: {
+            updater: {
+              channels: {
+                stable: "http://updates.example.com/stable.json",
+              },
+              endpoints: ["http://updates.example.com/fallback.json"],
+              pubkey: "minisign-pubkey",
+            },
+          },
+        },
+        null,
+        2,
+      ),
+    );
+
+    const result = verifyReleaseContract(root);
+    expect(result.ok).toBe(false);
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        label: "tauri updater endpoints stay HTTPS-only",
+        ok: false,
+      }),
+    );
+  });
+
   it("fails when the Tauri desktop permission surface drifts or broad permissions are reintroduced", () => {
     const root = createReleaseFixture();
     writeFixture(

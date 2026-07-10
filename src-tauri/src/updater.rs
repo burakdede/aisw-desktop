@@ -148,6 +148,19 @@ where
             "Set AISW_DESKTOP_UPDATER_ENDPOINT[_CHANNEL] or plugins.updater.channels.<channel> to a valid HTTPS URL.".to_owned(),
         ),
     })?;
+    if endpoint.scheme() != "https" {
+        return Err(DesktopError::CommandFailed {
+            command: "desktop_updater".to_owned(),
+            kind: GuiErrorKind::Unknown,
+            message: format!(
+                "Updater endpoint is invalid: expected https:// URL, got {}://",
+                endpoint.scheme()
+            ),
+            remediation: Some(
+                "Set AISW_DESKTOP_UPDATER_ENDPOINT[_CHANNEL] or plugins.updater.channels.<channel> to a valid HTTPS URL.".to_owned(),
+            ),
+        });
+    }
 
     Ok(Some(UpdaterConfig {
         channel: channel.to_owned(),
@@ -207,6 +220,7 @@ fn map_updater_error(error: tauri_plugin_updater::Error) -> DesktopError {
 #[cfg(test)]
 mod tests {
     use super::{resolve_updater_config_from, GENERIC_ENDPOINT_ENV, PUBKEY_ENV};
+    use crate::errors::DesktopError;
     use serde_json::json;
     use std::collections::HashMap;
 
@@ -319,6 +333,45 @@ mod tests {
         )
         .unwrap_err();
         assert!(error.to_string().contains("desktop_updater"));
+    }
+
+    #[test]
+    fn rejects_non_https_env_endpoint() {
+        let env = HashMap::from([(
+            "AISW_DESKTOP_UPDATER_ENDPOINT_STABLE".to_owned(),
+            "http://updates.example.com/stable.json".to_owned(),
+        )]);
+        let error = resolve_updater_config_from("stable", |key| env.get(key).cloned(), None)
+            .unwrap_err();
+        match error {
+            DesktopError::CommandFailed { message, .. } => {
+                assert!(message.contains("expected https:// URL"));
+            }
+            other => panic!("expected command failure, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn rejects_non_https_plugin_endpoint() {
+        let env = HashMap::<String, String>::new();
+        let plugin_config = json!({
+            "channels": {
+                "stable": "http://releases.example.com/stable.json"
+            },
+            "pubkey": "configured-pubkey"
+        });
+        let error = resolve_updater_config_from(
+            "stable",
+            |key| env.get(key).cloned(),
+            Some(&plugin_config),
+        )
+        .unwrap_err();
+        match error {
+            DesktopError::CommandFailed { message, .. } => {
+                assert!(message.contains("expected https:// URL"));
+            }
+            other => panic!("expected command failure, got {other:?}"),
+        }
     }
 
     #[test]

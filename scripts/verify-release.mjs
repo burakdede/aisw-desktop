@@ -6,6 +6,14 @@ import { fileURLToPath } from "node:url";
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, "..");
 
+function isHttpsUrl(value) {
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export function verifyReleaseContract(rootDir = repoRoot) {
   const packageJson = JSON.parse(readFileSync(resolve(rootDir, "package.json"), "utf8"));
   const tauriConfig = JSON.parse(readFileSync(resolve(rootDir, "src-tauri/tauri.conf.json"), "utf8"));
@@ -56,6 +64,8 @@ export function verifyReleaseContract(rootDir = repoRoot) {
   const mainCapabilityPermissions = Array.isArray(mainCapability.permissions)
     ? mainCapability.permissions
     : [];
+  const updaterChannels = tauriConfig.plugins?.updater?.channels;
+  const updaterEndpoints = tauriConfig.plugins?.updater?.endpoints;
 
   const checks = [
     {
@@ -85,6 +95,18 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         tauriConfig.plugins.updater.channels &&
         typeof tauriConfig.plugins.updater.channels === "object" &&
         Array.isArray(tauriConfig.plugins.updater.endpoints),
+    },
+    {
+      label: "tauri updater endpoints stay HTTPS-only",
+      ok:
+        (!updaterChannels ||
+          Object.values(updaterChannels).every(
+            (value) => typeof value === "string" && value.length > 0 && isHttpsUrl(value),
+          )) &&
+        (!Array.isArray(updaterEndpoints) ||
+          updaterEndpoints.every(
+            (value) => typeof value === "string" && value.length > 0 && isHttpsUrl(value),
+          )),
     },
     {
       label: "tauri desktop permission allowlist matches the registered invoke surface",

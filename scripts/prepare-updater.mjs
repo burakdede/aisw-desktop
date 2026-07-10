@@ -6,13 +6,28 @@ import { fileURLToPath } from "node:url";
 const CHANNEL_PREFIX = "AISW_DESKTOP_UPDATER_ENDPOINT_";
 const PUBKEY_ENV_KEYS = ["TAURI_SIGNING_PUBLIC_KEY", "AISW_DESKTOP_UPDATER_PUBKEY"];
 
+function parseHttpsUrl(value, label) {
+  let url;
+  try {
+    url = new URL(value);
+  } catch (error) {
+    throw new Error(
+      `${label} must be a valid HTTPS URL: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+  if (url.protocol !== "https:") {
+    throw new Error(`${label} must use https://`);
+  }
+  return url.toString();
+}
+
 function collectUpdaterChannels(env = process.env) {
   return Object.entries(env)
     .filter(([key, value]) => key.startsWith(CHANNEL_PREFIX) && key.length > CHANNEL_PREFIX.length && value)
     .sort(([left], [right]) => left.localeCompare(right))
     .reduce((channels, [key, value]) => {
       const channel = key.slice(CHANNEL_PREFIX.length).toLowerCase();
-      channels[channel] = value;
+      channels[channel] = parseHttpsUrl(value, key);
       return channels;
     }, {});
 }
