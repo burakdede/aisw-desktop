@@ -267,6 +267,14 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src-tauri/src/state.rs` requires the full `aisw` desktop feature set at bootstrap, including `api_key_stdin`, `mutation_json`, `progress_json`, non-prompting init, live detection, verify, repair, contexts, and workspace bindings.
   - `src-tauri/src/state.rs` unit tests verify compatible runtimes must advertise every required feature and that missing features are surfaced explicitly in the runtime issue list instead of allowing partial desktop behavior.
 
+### 35. Unsupported live-import entry points fall back to supported profile setup
+
+- Status: implemented
+- Evidence:
+  - `src/features/onboarding/components/SetupPanel.tsx`, `src/features/overview/components/OverviewPanel.tsx`, and `src/features/diagnostics/components/DiagnosticsPanel.tsx` now use the shared profile-capability helpers to suppress direct `from_live` imports when the selected runtime does not advertise that mode for the relevant tool.
+  - `src/App.tsx` carries the fallback profile-setup mode through route state so the Profiles screen opens in the nearest supported import mode.
+  - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify unsupported onboarding and live-mismatch flows land on Profiles with `from_env` selected instead of trying an invalid live import.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:
