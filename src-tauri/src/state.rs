@@ -307,6 +307,26 @@ async fn activate_profile_set_on_bridge(
         }));
     }
 
+    let missing_profiles = missing_profile_set_mappings(set, snapshot);
+    if !missing_profiles.is_empty() {
+        let missing_summary = missing_profiles
+            .iter()
+            .map(|(tool, profile)| format!("{tool}: {profile}"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        return Err(ErrorPayload {
+            kind: GuiErrorKind::ProfileMissing,
+            message: format!(
+                "Profile set {} references missing profiles: {missing_summary}.",
+                set.name
+            ),
+            remediation: Some(
+                "Refresh profile state or recreate the missing mapped profiles before trying this profile set again."
+                    .to_owned(),
+            ),
+        });
+    }
+
     let unique_profiles = selected
         .iter()
         .map(|(_, profile)| profile.clone())
@@ -354,6 +374,23 @@ async fn activate_profile_set_on_bridge(
     }))
 }
 
+fn missing_profile_set_mappings(
+    set: &ProfileSet,
+    snapshot: &AppSnapshot,
+) -> Vec<(String, String)> {
+    set.profiles
+        .iter()
+        .filter_map(|(tool, profile)| profile.as_ref().map(|profile| (tool.clone(), profile.clone())))
+        .filter(|(tool, profile)| {
+            !snapshot
+                .profiles
+                .get(tool)
+                .map(|entry| entry.profiles.iter().any(|candidate| candidate.name == *profile))
+                .unwrap_or(false)
+        })
+        .collect()
+}
+
 pub(crate) fn preferred_global_state_mode(snapshot: Option<&AppSnapshot>) -> Option<String> {
     let Some(snapshot) = snapshot else {
         return Some("isolated".to_owned());
@@ -399,10 +436,13 @@ pub(crate) fn preferred_tool_state_mode(
 #[cfg(test)]
 mod tests {
     use super::{
-        is_compatible, missing_required_features, preferred_global_state_mode,
-        preferred_tool_state_mode,
+        is_compatible, missing_profile_set_mappings, missing_required_features,
+        preferred_global_state_mode, preferred_tool_state_mode,
     };
-    use crate::models::{AppSnapshot, CapabilitiesInfo, ToolCapabilities, ToolStatus, VersionInfo};
+    use crate::models::{
+        AppSnapshot, CapabilitiesInfo, ProfileSet, ToolCapabilities, ToolProfileSummary,
+        ToolProfiles, ToolStatus, VersionInfo,
+    };
     use crate::settings::SettingsStore;
     use std::collections::HashMap;
     use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -429,6 +469,19 @@ mod tests {
         AppSnapshot {
             statuses,
             profiles: HashMap::new(),
+            contexts: vec![],
+            workspace_status: None,
+            project_bindings: None,
+        }
+    }
+
+    fn snapshot_with_profiles(
+        statuses: Vec<ToolStatus>,
+        profiles: HashMap<String, ToolProfiles>,
+    ) -> AppSnapshot {
+        AppSnapshot {
+            statuses,
+            profiles,
             contexts: vec![],
             workspace_status: None,
             project_bindings: None,
@@ -532,6 +585,50 @@ mod tests {
         );
         assert_eq!(preferred_tool_state_mode("codex", Some(&snapshot)).as_deref(), Some("isolated"));
         assert_eq!(preferred_tool_state_mode("gemini", Some(&snapshot)), None);
+    }
+
+    #[test]
+    fn missing_profile_set_mappings_reports_stale_profile_refs() {
+        let snapshot = snapshot_with_profiles(
+            vec![status("claude", Some("isolated")), status("codex", Some("isolated"))],
+            HashMap::from([
+                (
+                    "claude".to_owned(),
+                    ToolProfiles {
+                        active: Some("work".to_owned()),
+                        profiles: vec![ToolProfileSummary {
+                            name: "work".to_owned(),
+                            auth: "oauth".to_owned(),
+                            label: Some("Work".to_owned()),
+                        }],
+                    },
+                ),
+                (
+                    "codex".to_owned(),
+                    ToolProfiles {
+                        active: Some("work".to_owned()),
+                        profiles: vec![ToolProfileSummary {
+                            name: "work".to_owned(),
+                            auth: "api_key".to_owned(),
+                            label: Some("Work".to_owned()),
+                        }],
+                    },
+                ),
+            ]),
+        );
+        let set = ProfileSet {
+            name: "client-acme".to_owned(),
+            label: Some("Client Acme".to_owned()),
+            profiles: HashMap::from([
+                ("claude".to_owned(), Some("work".to_owned())),
+                ("codex".to_owned(), Some("missing".to_owned())),
+            ]),
+        };
+
+        assert_eq!(
+            missing_profile_set_mappings(&set, &snapshot),
+            vec![("codex".to_owned(), "missing".to_owned())]
+        );
     }
 
     #[tokio::test]

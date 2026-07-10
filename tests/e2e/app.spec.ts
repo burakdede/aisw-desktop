@@ -31,6 +31,7 @@ type ScenarioName =
   | "profileLatestBackup"
   | "emptyProfileSet"
   | "emptyProfileSetWorkspaceMismatch"
+  | "staleProfileSet"
   | "staleWorkspaceTarget"
   | "bootstrapError";
 
@@ -1079,6 +1080,29 @@ test("keeps empty profile sets out of activation surfaces", async ({ page }) => 
   await expect(
     page.getByText("Select at least one tool profile before saving this profile set."),
   ).toBeVisible();
+});
+
+test("keeps stale profile sets out of activation surfaces and explains the missing mappings", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "staleProfileSet");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Contexts" }).click();
+
+  const staleSetRow = page.locator(".list-row").filter({ hasText: "Client Acme" });
+  await expect(staleSetRow.getByRole("button", { name: "Activate set" })).toBeDisabled();
+  await expect(
+    staleSetRow.getByText(
+      "Refresh or repair the missing mapped profiles before using this set. Missing: codex: missing",
+    ),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Overview" }).click();
+  await expect(page.getByRole("option", { name: "Profile set: Client Acme" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Workspaces" }).click();
+  await expect(page.getByRole("option", { name: "Profile set: Client Acme" })).toHaveCount(0);
 });
 
 test("prefers a matching CLI context over an empty profile set during workspace recovery", async ({
@@ -3003,6 +3027,66 @@ async function installDesktopMock(
                 },
               },
             ],
+          },
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
+        staleProfileSet: {
+          settings: {
+            ...bootstrapSettings,
+            profile_sets: [
+              {
+                name: "client-acme",
+                label: "Client Acme",
+                profiles: {
+                  claude: "work",
+                  codex: "missing",
+                  gemini: null,
+                },
+              },
+            ],
+          },
+          snapshot: {
+            statuses: [
+              {
+                tool: "claude",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "oauth",
+                credential_backend: "system_keyring",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+              {
+                tool: "codex",
+                binary_found: true,
+                stored_profiles: 1,
+                active_profile: "work",
+                auth_method: "api_key",
+                credential_backend: "file",
+                state_mode: "isolated",
+                active_profile_applied: true,
+                credentials_present: true,
+                permissions_ok: true,
+              },
+            ],
+            profiles: {
+              claude: {
+                active: "work",
+                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+              },
+              codex: {
+                active: "work",
+                profiles: [{ name: "work", auth: "api_key", label: "Work" }],
+              },
+            },
+            contexts: [],
           },
           initReport: {
             result: {

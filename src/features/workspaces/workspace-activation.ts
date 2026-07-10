@@ -1,5 +1,5 @@
 import { AppSnapshot, DesktopSettings } from "../../lib/schemas";
-import { profileSetHasSelections } from "../../lib/profile-display";
+import { profileSetHasUsableSelections } from "../../lib/profile-display";
 import { resolveGlobalStateMode } from "../shared/state-modes";
 
 export type WorkspaceActivationTarget =
@@ -12,7 +12,7 @@ export function resolveWorkspaceActivationTarget(
   snapshot: AppSnapshot,
 ): WorkspaceActivationTarget | null {
   const profileSet = settings.profile_sets?.find(
-    (set) => set.name === expectedContext && profileSetHasSelections(set),
+    (set) => set.name === expectedContext && profileSetHasUsableSelections(snapshot, set),
   );
   if (profileSet) {
     return { kind: "profile_set", name: expectedContext, label: profileSet.label ?? profileSet.name };
@@ -32,7 +32,7 @@ export function workspaceBindingOptions(
   snapshot: AppSnapshot,
 ): Array<{ value: string; label: string }> {
   const profileSets = (settings.profile_sets ?? [])
-    .filter(profileSetHasSelections)
+    .filter((set) => profileSetHasUsableSelections(snapshot, set))
     .map((set) => ({
       value: set.name,
       label: `Profile set: ${set.label ?? set.name}`,

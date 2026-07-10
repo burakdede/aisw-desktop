@@ -3,6 +3,8 @@ import { SectionCard } from "../../../components/SectionCard";
 import {
   contextDisplayLabel,
   profileSetHasSelections,
+  profileSetHasUsableSelections,
+  missingProfileSetSelections,
   profileSetDisplayLabel,
   profileSetIsActive,
   toolProfileDisplayLabel,
@@ -232,7 +234,7 @@ export function ContextsPanel({
                   disabled={
                     mutationLock.isBusy ||
                     profileSetIsActive(snapshot, set) ||
-                    !profileSetHasSelections(set)
+                    !profileSetHasUsableSelections(snapshot, set)
                   }
                   onClick={() => void activateProfileSet(set)}
                 >
@@ -266,6 +268,13 @@ export function ContextsPanel({
               {!profileSetHasSelections(set) ? (
                 <p className="inline-note">
                   Add at least one mapped profile before using this set in overview, tray, or workspace bindings.
+                </p>
+              ) : !profileSetHasUsableSelections(snapshot, set) ? (
+                <p className="inline-note">
+                  Refresh or repair the missing mapped profiles before using this set. Missing:{" "}
+                  {missingProfileSetSelections(snapshot, set)
+                    .map(([tool, profile]) => `${tool}: ${profile}`)
+                    .join(" · ")}
                 </p>
               ) : null}
             </article>

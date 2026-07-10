@@ -5782,6 +5782,64 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("keeps stale profile sets out of activation surfaces and explains missing mappings", async () => {
+    const settingsWithStaleSet: DesktopSettings = {
+      ...bootstrap.settings,
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "missing", gemini: null },
+        },
+      ],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) =>
+      (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            settings: settingsWithStaleSet,
+            snapshot: bootstrap.snapshot,
+          },
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: settingsWithStaleSet,
+        } as Record<string, unknown>
+      )[command];
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Contexts")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Contexts"));
+
+    const staleSetRow = screen
+      .getByText(
+        "Refresh or repair the missing mapped profiles before using this set. Missing: codex: missing",
+      )
+      .closest(".list-row");
+    if (!(staleSetRow instanceof HTMLElement)) {
+      throw new Error("Missing stale profile set row.");
+    }
+    expect(within(staleSetRow).getByText("Activate set")).toBeDisabled();
+    expect(
+      within(staleSetRow).getByText(
+        "Refresh or repair the missing mapped profiles before using this set. Missing: codex: missing",
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Overview"));
+    expect(screen.queryByRole("option", { name: "Profile set: Client Acme" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Workspaces"));
+    expect(screen.queryByRole("option", { name: "Profile set: Client Acme" })).not.toBeInTheDocument();
+  });
+
   it("prefers the native CLI context when a profile set matches it", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     const contextSnapshot = {

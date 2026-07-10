@@ -84,6 +84,24 @@ export function profileSetHasSelections(
   );
 }
 
+export function missingProfileSetSelections(
+  snapshot: AppSnapshot,
+  set: NonNullable<DesktopSettings["profile_sets"]>[number],
+) {
+  return Object.entries(set.profiles)
+    .filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].trim().length > 0)
+    .filter(([tool, profile]) =>
+      !snapshot.profiles[tool]?.profiles.some((candidate) => candidate.name === profile),
+    );
+}
+
+export function profileSetHasUsableSelections(
+  snapshot: AppSnapshot,
+  set: NonNullable<DesktopSettings["profile_sets"]>[number],
+) {
+  return profileSetHasSelections(set) && missingProfileSetSelections(snapshot, set).length === 0;
+}
+
 export function contextDisplayLabel(settings: DesktopSettings, context: string) {
   const profileSet = (settings.profile_sets ?? []).find((entry) => entry.name === context);
   return profileSet ? profileSetDisplayLabel(profileSet) : context;
