@@ -65,6 +65,26 @@ export function activeSetLabel(settings: DesktopSettings, snapshot: AppSnapshot)
   return profileDisplayLabel(settings, snapshot, uniqueProfiles[0]);
 }
 
+export function profileSetDisplayLabel(set: NonNullable<DesktopSettings["profile_sets"]>[number]) {
+  return set.label ?? set.name;
+}
+
+export function profileSetIsActive(
+  snapshot: AppSnapshot,
+  set: NonNullable<DesktopSettings["profile_sets"]>[number],
+) {
+  const selectedProfiles = Object.entries(set.profiles).filter(
+    (entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0,
+  );
+  return (
+    selectedProfiles.length > 0 &&
+    selectedProfiles.every(
+      ([tool, profile]) =>
+        snapshot.statuses.find((status) => status.tool === tool)?.active_profile === profile,
+    )
+  );
+}
+
 function findProfileOverride(settings: DesktopSettings, profile: string) {
   const toolNames = Object.keys(settings.profile_labels ?? {}).sort((left, right) =>
     left.localeCompare(right),

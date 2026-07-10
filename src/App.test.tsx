@@ -3264,6 +3264,21 @@ describe("App", () => {
     let currentSettings: DesktopSettings = bootstrap.settings;
     const snapshotWithoutCliContexts = {
       ...bootstrap.snapshot,
+      statuses: [
+        ...bootstrap.snapshot.statuses,
+        {
+          tool: "codex",
+          binary_found: true,
+          stored_profiles: 1,
+          active_profile: "work",
+          auth_method: "api_key",
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+        },
+      ],
       contexts: [],
     };
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
@@ -3317,14 +3332,9 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
-      expect(screen.getByText("Client Acme")).toBeInTheDocument();
+      expect(screen.getByText(/Client Acme/)).toBeInTheDocument();
       expect(screen.getByText("Saved profile set client-acme.")).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByText("Activate set"));
-
-    await waitFor(() => {
-      expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
+      expect(screen.getByRole("button", { name: "Active set" })).toBeDisabled();
     });
   });
 
@@ -3457,6 +3467,41 @@ describe("App", () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     const contextSnapshot = {
       ...bootstrap.snapshot,
+      statuses: [
+        {
+          ...bootstrap.snapshot.statuses[0],
+          active_profile: "personal",
+        },
+        {
+          tool: "codex",
+          binary_found: true,
+          stored_profiles: 2,
+          active_profile: "personal",
+          auth_method: "api_key",
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+        },
+      ],
+      profiles: {
+        ...bootstrap.snapshot.profiles,
+        claude: {
+          active: "personal",
+          profiles: [
+            { name: "work", auth: "oauth", label: "Work" },
+            { name: "personal", auth: "oauth", label: "Personal" },
+          ],
+        },
+        codex: {
+          active: "personal",
+          profiles: [
+            { name: "work", auth: "api_key", label: "Work" },
+            { name: "personal", auth: "api_key", label: "Personal" },
+          ],
+        },
+      },
       contexts: [
         {
           name: "client-acme",
@@ -3467,11 +3512,32 @@ describe("App", () => {
         },
       ],
     };
+    const activatedSnapshot = {
+      ...contextSnapshot,
+      statuses: contextSnapshot.statuses.map((status) =>
+        status.tool === "claude" || status.tool === "codex"
+          ? { ...status, active_profile: "work" }
+          : status,
+      ),
+      profiles: {
+        ...contextSnapshot.profiles,
+        claude: {
+          ...contextSnapshot.profiles.claude,
+          active: "work",
+        },
+        codex: {
+          ...contextSnapshot.profiles.codex,
+          active: "work",
+        },
+      },
+    };
+    let currentSnapshot = contextSnapshot;
 
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
       if (command === "activate_profile_set") {
-        return { command, snapshot: contextSnapshot };
+        currentSnapshot = activatedSnapshot;
+        return { command, snapshot: activatedSnapshot };
       }
       return (
         {
@@ -3487,9 +3553,9 @@ describe("App", () => {
                 },
               ],
             },
-            snapshot: contextSnapshot,
+            snapshot: currentSnapshot,
           },
-          get_snapshot: contextSnapshot,
+          get_snapshot: currentSnapshot,
           run_init: { result: { live_accounts: [] } },
           run_doctor: { summary: { status: "pass" } },
           run_verify: { summary: { status: "pass" } },
@@ -3518,6 +3584,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
+      expect(screen.getByRole("button", { name: "Active set" })).toBeDisabled();
     });
     expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(false);
     expect(calls.some((entry) => entry.command === "use_profile")).toBe(false);

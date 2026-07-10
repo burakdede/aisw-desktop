@@ -592,6 +592,10 @@ test("activates a local profile set from contexts", async ({ page }) => {
   await page.locator(".list-row").filter({ hasText: "Client Acme" }).getByRole("button", { name: "Activate set" }).click();
 
   await expect(page.getByText("Activated profile set client-acme.")).toBeVisible();
+  await expect(page.getByText("Client Acme ✓")).toBeVisible();
+  await expect(
+    page.locator(".list-row").filter({ hasText: "Client Acme ✓" }).getByRole("button", { name: "Active set" }),
+  ).toBeDisabled();
   await page.getByRole("button", { name: "Workspaces" }).click();
   await expect(page.getByText("Current context: client-acme")).toBeVisible();
 });
@@ -604,6 +608,7 @@ test("uses native profile-set activation when a matching CLI context exists", as
   await page.locator(".list-row").filter({ hasText: "Client Acme" }).getByRole("button", { name: "Activate set" }).click();
 
   await expect(page.getByText("Activated profile set client-acme.")).toBeVisible();
+  await expect(page.getByText("Client Acme ✓")).toBeVisible();
   await expect
     .poll(() =>
       page.evaluate(
@@ -1784,8 +1789,8 @@ async function installDesktopMock(
               {
                 tool: "claude",
                 binary_found: true,
-                stored_profiles: 1,
-                active_profile: "work",
+                stored_profiles: 2,
+                active_profile: "personal",
                 auth_method: "oauth",
                 credential_backend: "system_keyring",
                 state_mode: "isolated",
@@ -1796,8 +1801,8 @@ async function installDesktopMock(
               {
                 tool: "codex",
                 binary_found: true,
-                stored_profiles: 1,
-                active_profile: "work",
+                stored_profiles: 2,
+                active_profile: "personal",
                 auth_method: "api_key",
                 credential_backend: "system_keyring",
                 state_mode: "isolated",
@@ -1808,12 +1813,18 @@ async function installDesktopMock(
             ],
             profiles: {
               claude: {
-                active: "work",
-                profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+                active: "personal",
+                profiles: [
+                  { name: "work", auth: "oauth", label: "Work" },
+                  { name: "personal", auth: "oauth", label: "Personal" },
+                ],
               },
               codex: {
-                active: "work",
-                profiles: [{ name: "work", auth: "api_key", label: "Work" }],
+                active: "personal",
+                profiles: [
+                  { name: "work", auth: "api_key", label: "Work" },
+                  { name: "personal", auth: "api_key", label: "Personal" },
+                ],
               },
             },
             contexts: [

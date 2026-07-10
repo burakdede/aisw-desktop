@@ -1,6 +1,10 @@
 import { FormEvent, useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
-import { toolProfileDisplayLabel } from "../../../lib/profile-display";
+import {
+  profileSetDisplayLabel,
+  profileSetIsActive,
+  toolProfileDisplayLabel,
+} from "../../../lib/profile-display";
 import { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
 import { useDesktopActions } from "../../shared/useDesktopActions";
@@ -163,7 +167,7 @@ export function ContextsPanel({
           {localSets.map((set) => (
             <article key={set.name} className="list-row">
               <div>
-                <strong>{set.label ?? set.name}</strong>
+                <strong>{profileSetDisplayLabel(set)}{profileSetIsActive(snapshot, set) ? " ✓" : ""}</strong>
                 <p>
                   {TOOLS.map((tool) => {
                     const profile = set.profiles[tool];
@@ -178,10 +182,10 @@ export function ContextsPanel({
                 <button
                   className="primary-button"
                   type="button"
-                  disabled={mutationLock.isBusy}
+                  disabled={mutationLock.isBusy || profileSetIsActive(snapshot, set)}
                   onClick={() => void activateProfileSet(set)}
                 >
-                  Activate set
+                  {profileSetIsActive(snapshot, set) ? "Active set" : "Activate set"}
                 </button>
                 <button
                   className="ghost-button"
