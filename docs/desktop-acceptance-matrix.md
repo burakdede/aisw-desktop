@@ -153,6 +153,13 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src/features/profiles/components/ProfilesPanel.tsx` limits credential-backend, live-match, permission, and token-warning details to the desktop-active profile while still showing stored auth metadata for inactive rows.
   - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify inactive profile details show the activation hint instead of the active profile's runtime diagnostics.
 
+### 19. Routed profile details reset when the user switches tools manually
+
+- Status: implemented
+- Evidence:
+  - `src/features/profiles/components/ProfilesPanel.tsx` treats route-provided profile expansion as a one-time navigation state and clears it when the user changes the selected tool locally.
+  - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify overview-driven profile details open correctly, then close when the tool picker changes to another tool.
+
 ## Verification Matrix
 
 Run the full matrix before merging or releasing a behavior slice:
