@@ -1,6 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { DesktopStatusStrip } from "../../../components/DesktopStatusStrip";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { SectionCard } from "../../../components/SectionCard";
 import { SplitView } from "../../../components/SplitView";
@@ -108,26 +107,32 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
       title="Activity"
       kicker="Recent activity"
     >
-      <DesktopStatusStrip
-        ariaLabel="Activity highlights"
-        items={[
-          {
-            label: "Recent activity",
-            value: `${entries.length} session event${entries.length === 1 ? "" : "s"}`,
-            note: "Recent profile changes, verification runs, setup actions, and recovery outcomes stay in one local stream.",
-          },
-          {
-            label: "Ordering",
-            value: "Latest first",
-            note: "Inspect the newest switch, verify, and repair events without opening separate logs.",
-          },
-          {
-            label: "Privacy",
-            value: "Redacted support",
-            pills: ["No tokens", "No API keys", "Local only"],
-          },
-        ]}
-      />
+      <article className="diagnostic-card activity-overview desktop-pane-intro">
+        <div className="desktop-pane-section-header">
+          <div>
+            <p className="card-kicker">Session</p>
+            <h3>{entries.length} event{entries.length === 1 ? "" : "s"} recorded</h3>
+          </div>
+          <span className="pill pill-soft">Latest first</span>
+        </div>
+        <p className="inline-note">
+          Recent profile changes, verification runs, setup actions, and recovery outcomes stay in one local stream.
+        </p>
+        <div className="activity-overview-meta">
+          <div>
+            <span className="overview-current-set-cell-label">Ordering</span>
+            <strong>Newest first</strong>
+          </div>
+          <div>
+            <span className="overview-current-set-cell-label">Privacy</span>
+            <strong>Local only</strong>
+          </div>
+          <div>
+            <span className="overview-current-set-cell-label">Support</span>
+            <strong>Redacted exports</strong>
+          </div>
+        </div>
+      </article>
       <SplitView
         className="activity-layout"
         primaryClassName="activity-list-pane"
@@ -137,7 +142,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
             <article className="diagnostic-card activity-list-card">
               <div className="desktop-pane-section-header">
                 <div>
-                  <p className="card-kicker">Recent activity</p>
+                  <p className="card-kicker">Timeline</p>
                   <h3>Session events</h3>
                 </div>
                 <p className="inline-note">
@@ -232,32 +237,18 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                     <strong>{selectedEntry.status === "success" ? "Success" : "Needs attention"}</strong>
                   </div>
                 </div>
-                <KeyValueGrid
-                  rows={[
-                    {
-                      label: "Command",
-                      value: selectedEntry.command ?? "Desktop command details were not recorded for this event.",
-                    },
-                  ]}
-                />
-                  <div className="activity-detail-copy stack-list">
-                    {selectedEntry.command ? (
-                      <div>
-                        <p className="card-kicker">Recorded command</p>
-                        <pre>{selectedEntry.command}</pre>
-                      </div>
-                    ) : null}
-                    <div>
-                      <p className="card-kicker">What happened</p>
-                      <p className="inline-note">{selectedEntry.message}</p>
-                    </div>
-                    <div>
-                      <p className="card-kicker">Desktop record</p>
-                      <p className="inline-note">
-                        {selectedEntry.resultSummary ??
-                          (selectedEntry.status === "success"
-                          ? "Snapshot updated successfully."
-                          : "The desktop app recorded a recoverable failure for this event.")}
+                <div className="activity-detail-copy stack-list">
+                  <div>
+                    <p className="card-kicker">What happened</p>
+                    <p className="inline-note">{selectedEntry.message}</p>
+                  </div>
+                  <div>
+                    <p className="card-kicker">Desktop record</p>
+                    <p className="inline-note">
+                      {selectedEntry.resultSummary ??
+                        (selectedEntry.status === "success"
+                        ? "Snapshot updated successfully."
+                        : "The desktop app recorded a recoverable failure for this event.")}
                     </p>
                   </div>
                   <div>
@@ -270,6 +261,21 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                       </p>
                     )}
                   </div>
+                  <KeyValueGrid
+                    rows={[
+                      {
+                        label: "Command",
+                        value:
+                          selectedEntry.command ?? "Desktop command details were not recorded for this event.",
+                      },
+                    ]}
+                  />
+                  {selectedEntry.command ? (
+                    <div>
+                      <p className="card-kicker">Recorded command</p>
+                      <pre>{selectedEntry.command}</pre>
+                    </div>
+                  ) : null}
                 </div>
                 {selectedEntry.status === "error" ? (
                   <div className="button-row">
