@@ -2521,24 +2521,24 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Backups")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Backups"));
-    await waitFor(() => expect(screen.getAllByText("Restore and activate")).toHaveLength(2));
+    await waitFor(() => expect(screen.getByText("Restore and activate")).toBeInTheDocument());
     expect(screen.getByText(/Restore replays the saved files only/)).toBeInTheDocument();
-    expect(screen.getByText("Sandbox")).toBeInTheDocument();
+    expect(screen.getAllByText("Sandbox").length).toBeGreaterThan(0);
     expect(
       screen.getByText(
         "Affects Codex / Sandbox. Restore files only unless you explicitly re-activate this profile.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getAllByText(/Created:/)).toHaveLength(2);
+    expect(screen.getByText("20260326T094012Z-codex-personal")).toBeInTheDocument();
     const backupsSection = screen.getAllByRole("heading", { name: "Backups" })[1]?.closest(".section-card");
     const articles = backupsSection?.querySelectorAll(".list-row") ?? [];
     expect(articles[0]?.textContent).toContain("Sandbox");
     expect(articles[1]?.textContent).toContain("Work");
-    fireEvent.click(screen.getAllByText("Copy backup ID")[0]);
+    fireEvent.click(screen.getByText("Copy backup ID"));
     await waitFor(() => {
       expect(screen.getByText("Copied backup id 20260326T094012Z-codex-personal.")).toBeInTheDocument();
     });
-    fireEvent.click(screen.getAllByText("Restore and activate")[0]);
+    fireEvent.click(screen.getByText("Restore and activate"));
     expect(
       screen.getByText(
         "Confirm before restoring and activating Codex / Sandbox. This replays the backup and switches the live profile again.",
@@ -2673,7 +2673,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Backups")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Backups"));
-    await waitFor(() => expect(screen.getAllByText("Copy backup ID")).toHaveLength(2));
+    await waitFor(() => expect(screen.getByText("Copy backup ID")).toBeInTheDocument());
 
     const backupsSection = screen.getAllByRole("heading", { name: "Backups" })[1]?.closest(".section-card");
     const articles = backupsSection?.querySelectorAll(".list-row") ?? [];
@@ -5726,9 +5726,8 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByText("Claude backup · 20260326T120000Z-claude-work"),
-      ).toBeInTheDocument();
+      expect(screen.getByText("20260326T120000Z-claude-work")).toBeInTheDocument();
+      expect(screen.getAllByText("Work").length).toBeGreaterThan(0);
     });
   });
 

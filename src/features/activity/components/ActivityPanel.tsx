@@ -74,20 +74,28 @@ export function ActivityPanel() {
           {entries.length ? `${entries.length} recent event${entries.length === 1 ? "" : "s"} in this session.` : "No local events recorded in this session yet."}
         </p>
       </article>
-      <div className="stack-list desktop-pane-stack">
+      <div className="desktop-pane-section desktop-list-surface">
+        <div className="activity-list-header" aria-hidden="true">
+          <span>Event</span>
+          <span>Scope</span>
+          <span>Status</span>
+          <span>Time</span>
+        </div>
+      </div>
+      <div className="stack-list desktop-pane-stack desktop-list-stack">
         {entries.length ? (
           entries.map((entry) => (
             <article key={entry.key} className={`list-row activity-row activity-row-${entry.status}`}>
-              <div>
+              <div className="activity-main">
                 <strong>{entry.label}</strong>
-                <p>{entry.message}</p>
-                {entry.remediation ? <p>{entry.remediation}</p> : null}
+                <p className="inline-note">{entry.message}</p>
+                {entry.remediation ? <p className="inline-note">{entry.remediation}</p> : null}
               </div>
-              <div className="activity-meta">
+              <div className="activity-columns">
+                <span>{entry.scopeLabel}</span>
                 <span className={`pill ${entry.status === "success" ? "pill-ok" : "pill-warn"}`}>
                   {entry.status === "success" ? "Success" : "Needs attention"}
                 </span>
-                <span>{entry.scopeLabel}</span>
                 <span>{formatTimestamp(entry.at)}</span>
               </div>
             </article>
