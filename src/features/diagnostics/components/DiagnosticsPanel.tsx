@@ -161,21 +161,21 @@ export function DiagnosticsPanel({
               void refreshDiagnostics(queryClient, doctor.refetch, verify.refetch, repair.refetch)
             }
           >
-            Verify again
+            Verify Again
           </button>
           <button
             className="ghost-button"
             onClick={() => setRepairPlanOpen(true)}
             disabled={applyRepair.isPending || !repairActions.length}
           >
-            {applyRepair.isPending ? "Applying repairs…" : "Review repair plan"}
+            {applyRepair.isPending ? "Applying Repairs…" : "Review Repair Plan"}
           </button>
           <button
             className="ghost-button"
             onClick={() => exportBundle.mutate()}
             disabled={exportBundle.isPending}
           >
-            {exportBundle.isPending ? "Exporting report…" : "Export report"}
+            {exportBundle.isPending ? "Exporting Report…" : "Export Report"}
           </button>
         </div>
       }
@@ -410,7 +410,7 @@ export function DiagnosticsPanel({
                         )
                       }
                     >
-                      Open profile details
+                      Open Profile Details
                     </button>
                   </div>
                 ) : null}
@@ -437,11 +437,11 @@ export function DiagnosticsPanel({
                 <h4>{fix.title}</h4>
                 <p className="inline-note">{fix.detail}</p>
                 <div className="button-row">
-                  <button
-                    className={fix.primary ? "primary-button" : "ghost-button"}
-                    type="button"
-                    disabled={mutationLock.isBusy}
-                    onClick={fix.action}
+                    <button
+                      className={fix.primary ? "primary-button" : "ghost-button"}
+                      type="button"
+                      disabled={mutationLock.isBusy}
+                      onClick={fix.action}
                   >
                     {fix.label}
                   </button>
@@ -461,7 +461,7 @@ export function DiagnosticsPanel({
                       type="button"
                       onClick={() => onOpenProfiles(fix.profileTarget!.tool, fix.profileTarget!.profile)}
                     >
-                      Open profile details
+                      Open Profile Details
                     </button>
                   ) : null}
                 </div>
@@ -510,8 +510,8 @@ export function DiagnosticsPanel({
                   ) : (
                     <div className="stack-list">
                       <p className="inline-note">
-                        This runtime does not support one-click capture for {titleCase(fix.importTarget.tool)}.
-                        Open profile setup to choose another sign-in method.
+                        This AI Switch release cannot import the current {toolDisplayName(fix.importTarget.tool)} login
+                        directly. Open profile setup to choose another sign-in method.
                       </p>
                       <button
                         className="ghost-button"
@@ -534,7 +534,7 @@ export function DiagnosticsPanel({
               </article>
             ))}
             {!quickFixes.length ? (
-              <p className="inline-note">No direct fix actions are available from the current diagnostics state.</p>
+              <p className="inline-note">No direct recovery actions are available from the current diagnostics state.</p>
             ) : null}
 
             <div className="desktop-pane-section-header diagnostics-subsection-header">
@@ -575,7 +575,7 @@ export function DiagnosticsPanel({
                       type="button"
                       onClick={() => onOpenProfiles(failure.profileTarget!.tool, failure.profileTarget!.profile)}
                     >
-                      Open profile details
+                      Open Profile Details
                     </button>
                   </div>
                 ) : null}
@@ -642,7 +642,7 @@ export function DiagnosticsPanel({
                   disabled={!repairActions.length || applyRepair.isPending}
                   onClick={() => applyRepair.mutate([])}
                 >
-                  {applyRepair.isPending ? "Applying repairs…" : "Apply safe repairs"}
+                  {applyRepair.isPending ? "Applying Repairs…" : "Apply Safe Repairs"}
                 </button>
               </div>
             </footer>
@@ -736,8 +736,8 @@ function buildDiagnosticCheckRows(
   snapshot?.statuses.forEach((status) => {
     if (!status.binary_found) {
       rows.push({
-        label: `${titleCase(status.tool)} availability`,
-        detail: `${titleCase(status.tool)} is not installed on this Mac yet.`,
+        label: `${toolDisplayName(status.tool)} availability`,
+        detail: `${toolDisplayName(status.tool)} is not installed on this Mac yet.`,
         status: "warn",
       });
       return;
@@ -745,18 +745,18 @@ function buildDiagnosticCheckRows(
 
     if (status.active_profile_applied === false) {
       rows.push({
-        label: `${titleCase(status.tool)} live match`,
-        detail: `${titleCase(status.tool)} no longer matches the active saved profile.`,
+        label: `${toolDisplayName(status.tool)} live match`,
+        detail: `${toolDisplayName(status.tool)} no longer matches the active saved profile.`,
         status: "warn",
       });
       return;
     }
 
     rows.push({
-      label: `${titleCase(status.tool)} status`,
+      label: `${toolDisplayName(status.tool)} status`,
       detail: status.active_profile
         ? `${toolStatusDisplayLabel(status)} is ready.`
-        : `${titleCase(status.tool)} is installed, but no saved profile is configured yet.`,
+        : `${toolDisplayName(status.tool)} is installed, but no saved profile is configured yet.`,
       status: status.active_profile ? "pass" : "warn",
     });
   });
@@ -765,7 +765,20 @@ function buildDiagnosticCheckRows(
 }
 
 function toolStatusDisplayLabel(status: ToolStatus) {
-  return `${titleCase(status.tool)}${status.active_profile ? ` is using ${status.active_profile}` : ""}`;
+  return `${toolDisplayName(status.tool)}${status.active_profile ? ` is using ${status.active_profile}` : ""}`;
+}
+
+function toolDisplayName(tool: string) {
+  switch (tool) {
+    case "claude":
+      return "Claude Code";
+    case "codex":
+      return "Codex CLI";
+    case "gemini":
+      return "Gemini CLI";
+    default:
+      return titleCase(tool);
+  }
 }
 
 function buildQuickFixes(

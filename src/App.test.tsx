@@ -2248,7 +2248,7 @@ describe("App", () => {
       ).toBeInTheDocument();
     });
 
-    fireEvent.click(within(failureCard!).getByText("Open profile details"));
+    fireEvent.click(within(failureCard!).getByText("Open Profile Details"));
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Technical details" })).toBeInTheDocument();
@@ -3076,8 +3076,8 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Backups")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Backups"));
-    await waitFor(() => expect(screen.getByText("Open profile details")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Open profile details"));
+    await waitFor(() => expect(screen.getByText(/Open profile details/i)).toBeInTheDocument());
+    fireEvent.click(screen.getByText(/Open profile details/i));
 
     await waitFor(() => {
       expect(screen.getByLabelText("Current tool")).toHaveValue("claude");
@@ -4606,13 +4606,13 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("Diagnostics")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Diagnostics"));
     await waitFor(() => expect(screen.getByText("1 actions planned")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Review repair plan"));
+    fireEvent.click(screen.getByText("Review Repair Plan"));
 
     await waitFor(() => {
       expect(screen.getByRole("dialog", { name: "Apply Safe Repairs" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Apply safe repairs" }));
+    fireEvent.click(screen.getByRole("button", { name: "Apply Safe Repairs" }));
 
     await waitFor(() => {
       expect(screen.getByText("Last repair run")).toBeInTheDocument();
@@ -4628,7 +4628,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getAllByText("Everything looks good").length).toBeGreaterThan(0);
       expect(
-        screen.getByText("No direct fix actions are available from the current diagnostics state."),
+        screen.getByText("No direct recovery actions are available from the current diagnostics state."),
       ).toBeInTheDocument();
       expect(
         screen.getByText("No safe automatic repairs are currently planned."),
@@ -4746,7 +4746,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Diagnostics")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Diagnostics"));
-    fireEvent.click(screen.getByText("Export report"));
+    fireEvent.click(screen.getByText("Export Report"));
 
     await waitFor(() => {
       expect(screen.getByText("Diagnostic bundle exported")).toBeInTheDocument();
@@ -5059,7 +5059,7 @@ describe("App", () => {
     const mismatchMatches = screen.getAllByText("claude live mismatch");
     const mismatchCard = mismatchMatches[mismatchMatches.length - 1].closest("article");
     expect(mismatchCard).not.toBeNull();
-    fireEvent.click(within(mismatchCard!).getByText("Open profile details"));
+    fireEvent.click(within(mismatchCard!).getByText("Open Profile Details"));
 
     await waitFor(() =>
       expect(screen.getByText("Credential backend: system_keyring")).toBeInTheDocument(),
@@ -6037,7 +6037,7 @@ describe("App", () => {
     });
 
     await waitFor(() => expect(screen.getByText("Verify and recovery")).toBeInTheDocument());
-    expect(screen.getByRole("button", { name: "Verify again" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Verify Again" })).toBeDisabled();
     expect(doctorRuns).toBe(0);
     expect(verifyRuns).toBe(0);
     expect(repairRuns).toBe(0);
@@ -6052,7 +6052,7 @@ describe("App", () => {
       expect(verifyRuns).toBeGreaterThan(0);
       expect(repairRuns).toBeGreaterThan(0);
     });
-    expect(screen.getByRole("button", { name: "Verify again" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Verify Again" })).toBeEnabled();
   });
 
   it("records tray command results and shows a desktop notification", async () => {
