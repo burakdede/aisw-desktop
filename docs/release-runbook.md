@@ -1,8 +1,8 @@
-# AISW Desktop Release Runbook
+# AI Switch Desktop Release Runbook
 
 ## Goal
 
-Produce signed desktop bundles that embed the exact `aisw` binary validated for that OS/architecture.
+Produce signed desktop bundles that embed the exact AI Switch runtime binary validated for that OS/architecture.
 
 ## Sidecar contract
 
@@ -14,7 +14,7 @@ Produce signed desktop bundles that embed the exact `aisw` binary validated for 
 
 ## Prepare a local release build
 
-1. Build or obtain the platform-matching `aisw` binary.
+1. Build or obtain the platform-matching AI Switch runtime binary.
 2. Stage it for Tauri:
 
 ```sh
@@ -56,23 +56,23 @@ npm run tauri:build
 
 - `prepare:sidecar` writes a target-suffixed binary into `src-tauri/binaries/`.
 - `prepare:sidecar` rejects sidecars whose binary format does not match the requested target triple.
-- A packaged build contains an `aisw` sidecar for the host target.
+- A packaged build contains the AI Switch sidecar for the host target.
 - `Bundled` runtime mode reports blocked when no packaged sidecar exists.
-- `System` runtime mode resolves `aisw` from `PATH` without relying on bundled paths.
+- `System` runtime mode resolves the AI Switch runtime from `PATH` without relying on bundled paths.
 - The standard frontend and Rust test suites pass before packaging.
 - CI and publish workflows enforce the same verification matrix used for local release checks.
 
 ## Release test cases
 
 - Positive:
-  - Prepare a valid host `aisw` binary and confirm `npm run tauri:bundle-local` succeeds without signing secrets.
+  - Prepare a valid host AI Switch runtime binary and confirm `npm run tauri:bundle-local` succeeds without signing secrets.
   - After staging updater channels and signing secrets, confirm `npm run tauri:build` succeeds.
   - Launch the packaged app in `Bundled` mode and confirm runtime status resolves the embedded binary path.
   - Switch a profile from the packaged app and confirm tray state updates immediately.
 - Negative:
   - Remove `src-tauri/binaries/aisw-$TARGET_TRIPLE*` and confirm packaged `Bundled` mode reports runtime blocked.
   - Configure `Custom` mode with a missing path and confirm bootstrap shows runtime compatibility issues.
-  - Remove `aisw` from `PATH`, switch to `System` mode, and confirm the app reports `aisw` could not be resolved.
+  - Remove the AI Switch runtime from `PATH`, switch to `System` mode, and confirm the app reports that the runtime could not be resolved.
 
 ## Signing checklist
 
@@ -108,16 +108,16 @@ npm run tauri:build
 2. Configure `plugins.updater.channels` in `src-tauri/tauri.conf.json` for every Linux release channel you publish.
    CI release builds do this with `npm run prepare:updater`.
 3. Validate the generated `.deb`, `.rpm`, and AppImage artifacts on a clean machine or container.
-4. Confirm the packaged app resolves the bundled `aisw` sidecar in `Bundled` mode.
+4. Confirm the packaged app resolves the bundled AI Switch sidecar in `Bundled` mode.
 
 ## Release checklist
 
-- Stage the correct `aisw` sidecar for the target with `npm run prepare:sidecar`.
+- Stage the correct AI Switch sidecar for the target with `npm run prepare:sidecar`.
 - Pass the standard verification matrix:
   `npm test`, `npm run build`, `npm run test:e2e`, `npm run verify:release`, `cargo test --manifest-path src-tauri/Cargo.toml`, `cargo check --manifest-path src-tauri/Cargo.toml`.
 - Run `npm run tauri:bundle-local` to smoke-test an unsigned local bundle before release signing.
 - Build the desktop bundle with `npm run tauri:build`.
-- Launch the packaged app in `Bundled` mode and confirm the embedded `aisw` path resolves in runtime status.
+- Launch the packaged app in `Bundled` mode and confirm the embedded runtime path resolves in runtime status.
 - Switch a profile in the packaged app and confirm the tray summary refreshes immediately.
 - Confirm negative runtime cases:
   missing bundled sidecar blocks `Bundled`, missing `PATH` entry blocks `System`, and a missing custom path surfaces compatibility issues.

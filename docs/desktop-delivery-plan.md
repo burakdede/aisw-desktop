@@ -1,10 +1,10 @@
-# AISW Desktop Delivery Plan
+# AI Switch Desktop Delivery Plan
 
-This document translates the local product specification into a tracked implementation plan for this repository. It is intentionally separate from `docs/aisw-desktop-product-spec.md`, which remains local-only.
+This document translates the local product specification into a tracked implementation plan for this repository. It intentionally stays separate from the local-only UI/UX product spec that remains out of Git.
 
 ## Product Goal
 
-AISW Desktop is a local-first desktop control plane for `aisw`. The desktop app owns onboarding, visibility, diagnostics, workflows, and quick switching. `aisw` remains the single source of truth for credential capture, storage, switching, rollback, backups, and per-tool compatibility.
+AI Switch Desktop is a local-first desktop control plane for the bundled switching engine. The desktop app owns onboarding, visibility, diagnostics, workflows, and quick switching. The switching engine remains the single source of truth for credential capture, storage, switching, rollback, backups, and per-tool compatibility.
 
 ## Supported Platforms
 
@@ -25,11 +25,11 @@ AISW Desktop is a local-first desktop control plane for `aisw`. The desktop app 
    - Typed request and response models
    - Error normalization and redaction
    - Serialized mutation queue
-3. `aisw` bridge
+3. Switching-engine bridge
    - Bundled sidecar first
    - System/custom runtime optional
    - JSON-only contract for reads and mutations
-4. `aisw`
+4. Bundled switching engine
    - Owns profile state, backups, rollback, keyring, shell guidance, and tool-specific auth behavior
 
 ### Non-Negotiable Rules
@@ -39,7 +39,7 @@ AISW Desktop is a local-first desktop control plane for `aisw`. The desktop app 
 - Mutations are serialized and followed by state refresh.
 - Arbitrary shell execution is not exposed to the UI.
 - Shell config changes are guided, never silent.
-- The app remains usable with bundled `aisw` even if a system install is broken.
+- The app remains usable with the bundled switching engine even if a system install is broken.
 
 ## Native UX Strategy
 
@@ -69,8 +69,8 @@ Acceptance criteria:
 - App starts with bundled runtime by default.
 - System and custom runtime paths are visible and selectable.
 - Incompatible runtime contracts block mutation surfaces and explain why.
-- Runtime compatibility requires the full desktop feature contract from `aisw capabilities --json`, not just basic mutation support.
-- Bootstrap reports resolved runtime path, version, channel, and AISW home.
+- Runtime compatibility requires the full desktop feature contract from the engine capabilities contract, not just basic mutation support.
+- Bootstrap reports resolved runtime path, version, channel, and app data location.
 
 Test cases:
 - Loads bundled runtime when compatible.
@@ -262,7 +262,7 @@ cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
 ```
 
-## Remaining External Dependencies On `aisw`
+## Remaining External Dependencies On The Switching Engine
 
 - Stable `version --json` and capability detection
 - Safe API key stdin support

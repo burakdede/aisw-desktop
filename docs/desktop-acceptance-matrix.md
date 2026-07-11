@@ -1,4 +1,4 @@
-# AISW Desktop Acceptance Matrix
+# AI Switch Desktop Acceptance Matrix
 
 This document tracks the shipped desktop architecture, acceptance criteria, and verification evidence for this repository. It intentionally complements `docs/desktop-delivery-plan.md` and does not replace the local-only product spec kept out of Git.
 
@@ -6,14 +6,14 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
 
 ### Runtime model
 
-- The desktop app defaults to a bundled `aisw` sidecar and can switch to system or custom runtimes through Settings.
+- The desktop app defaults to a bundled AI Switch sidecar and can switch to system or custom runtimes through Settings.
 - Sidecar staging validates target-compatible binary formats before release packaging.
-- The Rust bridge is the only layer that executes `aisw` commands.
+- The Rust bridge is the only layer that executes switching-engine commands.
 - The frontend consumes typed JSON responses validated at the boundary.
 
 ### Trust boundary
 
-- `aisw` remains the single source of truth for profile state, switching, rollback, backups, keyring behavior, and tool-specific auth handling.
+- The bundled AI Switch engine remains the single source of truth for profile state, switching, rollback, backups, keyring behavior, and tool-specific auth handling.
 - The desktop frontend never reads provider credential files directly.
 - API keys are submitted through stdin-backed desktop commands and cleared from UI state immediately after submission.
 
@@ -83,7 +83,7 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `src-tauri/src/bridge.rs` verifies API-key profile creation uses `--api-key-stdin` and never serializes the secret into CLI args.
   - `src-tauri/src/redaction.rs` and bridge failure tests verify stderr redaction for known token families.
 
-### 9. Failed switch rolls back through `aisw`; UI refresh shows previous valid state
+### 9. Failed switch rolls back through the switching engine; UI refresh shows previous valid state
 
 - Status: implemented
 - Evidence:
