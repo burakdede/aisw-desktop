@@ -6610,10 +6610,10 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
-      expect(screen.getByText("Client Acme Prime")).toBeInTheDocument();
+      expect(screen.getAllByText("Client Acme Prime").length).toBeGreaterThan(0);
       expect(screen.getByText("Updated profile set Client Acme Prime.")).toBeInTheDocument();
     });
-    expect(screen.queryByText("Client Acme")).not.toBeInTheDocument();
+    expect(screen.queryAllByText("Client Acme")).toHaveLength(0);
     expect(
       currentSettings.profile_sets.map((set) => ({ name: set.name, label: set.label })),
     ).toEqual([{ name: "client-acme-prime", label: "Client Acme Prime" }]);
@@ -6672,7 +6672,10 @@ describe("App", () => {
 
     await renderApp();
     await openSetsSection();
-    const clientRow = screen.getByText("Client Acme").closest(".list-row");
+    const clientRow = screen
+      .getAllByText("Client Acme")
+      .map((node) => node.closest(".list-row"))
+      .find((node): node is HTMLElement => node instanceof HTMLElement);
     if (!(clientRow instanceof HTMLElement)) {
       throw new Error("Missing client profile set row.");
     }
@@ -6731,7 +6734,10 @@ describe("App", () => {
     await renderApp();
     await openSetsSection();
 
-    const emptySetRow = screen.getByText("Empty Set").closest(".list-row");
+    const emptySetRow = screen
+      .getAllByText("Empty Set")
+      .map((node) => node.closest(".list-row"))
+      .find((node): node is HTMLElement => node instanceof HTMLElement);
     if (!(emptySetRow instanceof HTMLElement)) {
       throw new Error("Missing empty profile set row.");
     }
@@ -7189,9 +7195,9 @@ describe("App", () => {
     await renderApp();
     await openSetsSection();
 
-    expect(screen.getAllByText("Client Acme")).toHaveLength(2);
+    expect(screen.getAllByText("Client Acme").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("Imported set id: client-acme")).toBeInTheDocument();
-    expect(screen.getAllByText("claude: Office · codex: Code Work · gemini: none")).toHaveLength(2);
+    expect(screen.getAllByText("claude: Office · codex: Code Work · gemini: none")).toHaveLength(1);
     expect(screen.getAllByRole("option", { name: "Office" }).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("option", { name: "Code Work" })).toBeInTheDocument();
   });

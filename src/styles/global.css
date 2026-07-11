@@ -1196,6 +1196,25 @@ button {
   color: var(--text-secondary);
 }
 
+.set-library-intro,
+.set-library-meta {
+  gap: 12px;
+}
+
+.set-library-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.set-library-meta > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
 .sets-summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1262,6 +1281,12 @@ button {
   color: inherit;
   text-align: left;
   cursor: pointer;
+}
+
+.set-row-actions {
+  align-items: stretch;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
 }
 
 .set-row-header {
@@ -2630,6 +2655,14 @@ button {
 
   .sets-summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .set-library-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .set-row-actions {
+    flex-wrap: wrap;
   }
 
   .settings-summary-grid {

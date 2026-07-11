@@ -83,6 +83,25 @@ export function ContextsPanel({
     [settings, snapshot],
   );
 
+  function resetDraft() {
+    setDraft({
+      sourceName: null,
+      name: "",
+      label: "",
+      profiles: Object.fromEntries(TOOLS.map((tool) => [tool, ""])),
+    });
+  }
+
+  function startEditingSet(set: DesktopSettings["profile_sets"][number]) {
+    setSelectedSetName(set.name);
+    setDraft({
+      sourceName: set.name,
+      name: set.name,
+      label: set.label ?? "",
+      profiles: Object.fromEntries(TOOLS.map((tool) => [tool, set.profiles[tool] ?? ""])),
+    });
+  }
+
   function saveProfileSet(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const name = trimmedDraftName;
@@ -114,12 +133,7 @@ export function ContextsPanel({
           setLastAction(
             `${isEditingExistingSet ? "Updated" : "Saved"} profile set ${draft.label.trim() || name}.`,
           );
-          setDraft({
-            sourceName: null,
-            name: "",
-            label: "",
-            profiles: Object.fromEntries(TOOLS.map((tool) => [tool, ""])),
-          });
+          resetDraft();
         },
       },
     );
@@ -139,12 +153,7 @@ export function ContextsPanel({
       localSets.find((entry) => entry.name === name) ?? { name, label: null, profiles: {} },
     );
     if (draft.sourceName === name || trimmedDraftName === name) {
-      setDraft({
-        sourceName: null,
-        name: "",
-        label: "",
-        profiles: Object.fromEntries(TOOLS.map((tool) => [tool, ""])),
-      });
+      resetDraft();
     }
     if (selectedSetName === name) {
       const remaining = localSets.filter((entry) => entry.name !== name);
@@ -173,14 +182,7 @@ export function ContextsPanel({
         <button
           className="primary-button"
           type="button"
-          onClick={() =>
-            setDraft({
-              sourceName: null,
-              name: "",
-              label: "",
-              profiles: Object.fromEntries(TOOLS.map((tool) => [tool, ""])),
-            })
-          }
+          onClick={resetDraft}
         >
           New Set
         </button>
@@ -192,48 +194,33 @@ export function ContextsPanel({
         secondaryClassName="set-editor-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-          <article className="diagnostic-card desktop-pane-intro">
-            <h3>Set library</h3>
+          <article className="diagnostic-card desktop-pane-intro set-library-intro">
+            <div className="desktop-pane-section-header">
+              <div>
+                <p className="card-kicker">Library</p>
+                <h3>Saved sets</h3>
+              </div>
+            </div>
             <p className="inline-note">
               Build reusable combinations once, then switch them from Overview, Quick Switch, the menu bar, and project rules.
             </p>
+            <div className="set-library-meta">
+              <div>
+                <span className="overview-current-set-cell-label">Current</span>
+                <strong>{activeSetCount ? "One active" : "None active"}</strong>
+              </div>
+              <div>
+                <span className="overview-current-set-cell-label">Ready</span>
+                <strong>{readySetCount} ready</strong>
+              </div>
+              <div>
+                <span className="overview-current-set-cell-label">Imported</span>
+                <strong>{snapshot.contexts.length} available</strong>
+              </div>
+            </div>
           </article>
-          <div className="sets-summary-grid">
-            <article className="diagnostic-card">
-              <p className="card-kicker">Current</p>
-              <h3>{activeSetCount ? "One set is active" : "No saved set is active"}</h3>
-              <p className="inline-note">
-                {activeSetCount
-                  ? "The app is currently aligned to one of your saved switching combinations."
-                  : "Switch a ready set to keep Claude Code, Codex CLI, and Gemini aligned."}
-              </p>
-            </article>
-            <article className="diagnostic-card">
-              <p className="card-kicker">Ready</p>
-              <h3>{readySetCount} ready sets</h3>
-              <p className="inline-note">
-                Ready sets have valid mapped profiles and can be used from Overview, Quick Switch, and the menu bar.
-              </p>
-            </article>
-            <article className="diagnostic-card">
-              <p className="card-kicker">Imported</p>
-              <h3>{snapshot.contexts.length} imported sets</h3>
-              <p className="inline-note">
-                Imported sets stay visible here when the runtime exposes reusable combinations outside your desktop-local set library.
-              </p>
-            </article>
-          </div>
 
           <div className="stack-list">
-            <div className="set-section-header desktop-pane-section-header">
-              <div>
-                <p className="card-kicker">Saved sets</p>
-                <h3>Saved switching sets</h3>
-              </div>
-              <p className="inline-note">
-                Save work, personal, and client bundles once, then switch them from one place.
-              </p>
-            </div>
             <div className="stack-list desktop-list-stack">
               {localSets.map((set) => (
                 <article
@@ -279,15 +266,6 @@ export function ContextsPanel({
                           );
                         })}
                       </div>
-                      <p className="inline-note">
-                        {TOOLS.map((tool) => {
-                          const profile = set.profiles[tool];
-                          const label = profile
-                            ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
-                            : "none";
-                          return `${tool}: ${label}`;
-                        }).join(" · ")}
-                      </p>
                       {!profileSetHasSelections(set) ? (
                         <p className="inline-note">
                           Add at least one mapped profile before using this set in Overview, the menu bar, or project rules.
@@ -302,7 +280,7 @@ export function ContextsPanel({
                       ) : null}
                     </div>
                   </button>
-                  <div className="button-row button-row-column">
+                  <div className="button-row set-row-actions">
                     <button
                       className="primary-button"
                       type="button"
@@ -318,17 +296,7 @@ export function ContextsPanel({
                     <button
                       className="ghost-button"
                       type="button"
-                      onClick={() => {
-                        setSelectedSetName(set.name);
-                        setDraft({
-                          sourceName: set.name,
-                          name: set.name,
-                          label: set.label ?? "",
-                          profiles: Object.fromEntries(
-                            TOOLS.map((tool) => [tool, set.profiles[tool] ?? ""]),
-                          ),
-                        });
-                      }}
+                      onClick={() => startEditingSet(set)}
                     >
                       Edit
                     </button>
@@ -451,6 +419,9 @@ export function ContextsPanel({
                       : "Needs attention"}
                 </span>
               </div>
+              <p className="inline-note">
+                Review the mapped profiles here before switching or editing this saved set.
+              </p>
               <div className="set-detail-grid">
                 {TOOLS.map((tool) => {
                   const profile = detailSet.profiles[tool];
@@ -484,26 +455,32 @@ export function ContextsPanel({
                 <button
                   className="ghost-button"
                   type="button"
-                  onClick={() =>
-                    setDraft({
-                      sourceName: detailSet.name,
-                      name: detailSet.name,
-                      label: detailSet.label ?? "",
-                      profiles: Object.fromEntries(
-                        TOOLS.map((tool) => [tool, detailSet.profiles[tool] ?? ""]),
-                      ),
-                    })
-                  }
+                  onClick={() => startEditingSet(detailSet)}
                 >
                   Edit This Set
                 </button>
               </div>
             </div>
-          ) : null}
+          ) : (
+            <div className="set-detail-summary">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Selected set</p>
+                  <h3>No saved set selected</h3>
+                </div>
+              </div>
+              <p className="inline-note">
+                Select a saved set from the library to review its mapped profiles or switch it.
+              </p>
+            </div>
+          )}
           <div className="stack-list">
-            <div>
-              <p className="card-kicker">{isEditingExistingSet ? "Edit set" : "New set"}</p>
-              <h3>{isEditingExistingSet ? draft.label.trim() || draft.name : "Create a saved set"}</h3>
+            <div className="desktop-pane-section-header">
+              <div>
+                <p className="card-kicker">{isEditingExistingSet ? "Edit set" : "New set"}</p>
+                <h3>{isEditingExistingSet ? draft.label.trim() || draft.name : "Create a saved set"}</h3>
+              </div>
+              <span className="pill pill-soft">{isEditingExistingSet ? "Editing" : "Draft"}</span>
             </div>
             <p className="inline-note">
               Save the profiles you want to switch together so Overview, project rules, and quick switching
@@ -566,14 +543,7 @@ export function ContextsPanel({
                 <button
                   className="ghost-button"
                   type="button"
-                  onClick={() =>
-                    setDraft({
-                      sourceName: null,
-                      name: "",
-                      label: "",
-                      profiles: Object.fromEntries(TOOLS.map((tool) => [tool, ""])),
-                    })
-                  }
+                  onClick={resetDraft}
                 >
                   Cancel edit
                 </button>
