@@ -718,8 +718,19 @@ button {
 
 .backups-hero,
 .activity-hero,
-.sets-hero {
+.sets-hero,
+.workspaces-hero {
   margin-bottom: 14px;
+}
+
+.workspaces-editor-card {
+  gap: 14px;
+}
+
+.workspace-guard-section {
+  gap: 12px;
+  padding-top: 6px;
+  border-top: 1px solid var(--separator);
 }
 
 .profiles-toolbar {

@@ -120,6 +120,20 @@ export function WorkspacesPanel({
 
   return (
     <SectionCard title="Project rules" kicker="Expected sets by folder or remote">
+      <article className="desktop-pane-hero workspaces-hero">
+        <div className="desktop-pane-hero-copy">
+          <p className="card-kicker">Project rules</p>
+          <h3>Match folders and remotes to the right set automatically</h3>
+          <p className="inline-note">
+            Project rules keep the expected set visible for each workspace so the desktop app can warn before you start coding in the wrong account.
+          </p>
+        </div>
+        <div className="desktop-pane-hero-pills" aria-label="Project rule highlights">
+          <span className="status-pill">Folder-aware</span>
+          <span className="status-pill">Remote-aware</span>
+          <span className="status-pill">Mismatch recovery</span>
+        </div>
+      </article>
       <div className="panel-grid panel-grid-2 desktop-pane-grid">
         <div className="stack-list desktop-pane-column">
           <article className="diagnostic-card desktop-pane-intro">
@@ -128,81 +142,101 @@ export function WorkspacesPanel({
               Attach a saved set to the current folder, a path prefix, or a git remote pattern so switching stays predictable.
             </p>
           </article>
-          <form className="stacked-form diagnostic-card" onSubmit={submitBind}>
-          <label>
-            Binding scope
-            <select value={scope} onChange={(event) => setScope(event.target.value as BindScope)}>
-              <option value="default">Default set</option>
-              <option value="path">Path prefix</option>
-              <option value="git_remote">Git remote pattern</option>
-            </select>
-          </label>
-          {scope !== "default" ? (
+          <form className="stacked-form diagnostic-card workspaces-editor-card" onSubmit={submitBind}>
+            <div className="desktop-pane-section-header">
+              <div>
+                <p className="card-kicker">Editor</p>
+                <h3>Save or remove a matching rule</h3>
+              </div>
+              <p className="inline-note">
+                Pick where the rule applies, then choose the set the app should expect in that workspace.
+              </p>
+            </div>
             <label>
-              {scope === "path" ? "Path" : "Git remote pattern"}
-              <input value={targetValue} onChange={(event) => setTargetValue(event.target.value)} />
+              Binding scope
+              <select value={scope} onChange={(event) => setScope(event.target.value as BindScope)}>
+                <option value="default">Default set</option>
+                <option value="path">Path prefix</option>
+                <option value="git_remote">Git remote pattern</option>
+              </select>
             </label>
-          ) : null}
-          <label>
-            Set
-            <select value={context} onChange={(event) => setContext(event.target.value)}>
-              <option value="">Select set</option>
-              {bindingOptions.map((entry) => (
-                <option key={entry.value} value={entry.value}>
-                  {entry.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="button-row">
-            <button className="primary-button" type="submit" disabled={mutationLock.isBusy || !canSaveBinding}>
-              Save rule
-            </button>
-            <button
-              className="ghost-button"
-              type="button"
-              disabled={mutationLock.isBusy || !canRemoveBinding}
-              onClick={() =>
-                workspaceUnbindMutation.mutate(
-                  scope === "default"
-                    ? { scope: "default" }
-                    : scope === "path"
-                      ? { scope: "path", path: trimmedTargetValue }
-                      : { scope: "git_remote", pattern: trimmedTargetValue },
-                )
-              }
-            >
-              Remove rule
-            </button>
-          </div>
-          {!bindingOptions.length ? (
-            <p className="inline-note">
-              No sets are available yet. Create one before saving a project rule.
-            </p>
-          ) : null}
-          {requiresExplicitTarget && trimmedTargetValue.length === 0 ? (
-            <p className="inline-note">
-              Enter a {scope === "path" ? "path prefix" : "git remote pattern"} before saving or removing this binding.
-            </p>
-          ) : null}
-          <div className="button-row">
-            <button
-              className="ghost-button"
-              type="button"
-              disabled={mutationLock.isBusy}
-              onClick={() => workspaceGuardMutation.mutate("warn")}
-            >
-              Guard warn
-            </button>
-            <button
-              className="ghost-button"
-              type="button"
-              disabled={mutationLock.isBusy}
-              onClick={() => workspaceGuardMutation.mutate("strict")}
-            >
-              Guard strict
-            </button>
-          </div>
+            {scope !== "default" ? (
+              <label>
+                {scope === "path" ? "Path" : "Git remote pattern"}
+                <input value={targetValue} onChange={(event) => setTargetValue(event.target.value)} />
+              </label>
+            ) : null}
+            <label>
+              Set
+              <select value={context} onChange={(event) => setContext(event.target.value)}>
+                <option value="">Select set</option>
+                {bindingOptions.map((entry) => (
+                  <option key={entry.value} value={entry.value}>
+                    {entry.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="button-row">
+              <button className="primary-button" type="submit" disabled={mutationLock.isBusy || !canSaveBinding}>
+                Save rule
+              </button>
+              <button
+                className="ghost-button"
+                type="button"
+                disabled={mutationLock.isBusy || !canRemoveBinding}
+                onClick={() =>
+                  workspaceUnbindMutation.mutate(
+                    scope === "default"
+                      ? { scope: "default" }
+                      : scope === "path"
+                        ? { scope: "path", path: trimmedTargetValue }
+                        : { scope: "git_remote", pattern: trimmedTargetValue },
+                  )
+                }
+              >
+                Remove rule
+              </button>
+            </div>
+            {!bindingOptions.length ? (
+              <p className="inline-note">
+                No sets are available yet. Create one before saving a project rule.
+              </p>
+            ) : null}
+            {requiresExplicitTarget && trimmedTargetValue.length === 0 ? (
+              <p className="inline-note">
+                Enter a {scope === "path" ? "path prefix" : "git remote pattern"} before saving or removing this binding.
+              </p>
+            ) : null}
+            <div className="desktop-pane-section workspace-guard-section">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Guard mode</p>
+                  <h3>How strictly should mismatches be enforced?</h3>
+                </div>
+                <p className="inline-note">
+                  Use warnings for flexible workflows or strict mode when a mismatched account should block work immediately.
+                </p>
+              </div>
+              <div className="button-row">
+                <button
+                  className="ghost-button"
+                  type="button"
+                  disabled={mutationLock.isBusy}
+                  onClick={() => workspaceGuardMutation.mutate("warn")}
+                >
+                  Warn on mismatch
+                </button>
+                <button
+                  className="ghost-button"
+                  type="button"
+                  disabled={mutationLock.isBusy}
+                  onClick={() => workspaceGuardMutation.mutate("strict")}
+                >
+                  Block on mismatch
+                </button>
+              </div>
+            </div>
           </form>
         </div>
 
@@ -241,23 +275,23 @@ export function WorkspacesPanel({
             <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Resolution</p>
-                <h3>Current rule state</h3>
+                <h3>Current workspace match</h3>
               </div>
               <p className="inline-note">
                 Review what this folder matched before changing or removing any explicit rule.
               </p>
             </div>
             <article className="diagnostic-card">
-              <h3>Resolved project rule</h3>
+              <h3>Resolved rule</h3>
               <p className="diagnostic-status">{statusCard.status}</p>
               <p className="inline-note">Current set: {currentContextDisplay}</p>
               <p className="inline-note">Expected set: {expectedContextDisplay}</p>
-              <p className="inline-note">Matched scope: {statusCard.scope}</p>
+              <p className="inline-note">Matched using: {statusCard.scope}</p>
               <p className="inline-note">Matched target: {statusCard.target}</p>
             </article>
 
             <article className="diagnostic-card">
-              <h3>Workspace guard</h3>
+              <h3>Protection</h3>
               <p className="inline-note">Guard mode: {bindingsSummary.guardMode}</p>
               <p className="inline-note">
                 Default set: {contextDisplayLabel(settings, bindingsSummary.defaultContext)}
@@ -269,7 +303,7 @@ export function WorkspacesPanel({
             <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Bindings</p>
-                <h3>Explicit rules</h3>
+                <h3>Saved matching rules</h3>
               </div>
               <p className="inline-note">
                 Remove stale path and remote matches here when a project moves or gets renamed.
