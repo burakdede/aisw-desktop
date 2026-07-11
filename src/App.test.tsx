@@ -4172,12 +4172,12 @@ describe("App", () => {
 
     await renderApp();
     await openSetsSection();
-    fireEvent.click(screen.getByText("Use shared group"));
+    fireEvent.click(screen.getByText("Use imported set"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
     });
-    expect(screen.getByText("Last shared-group result: Activated shared group Client Acme.")).toBeInTheDocument();
+    expect(screen.getByText("Last imported-set result: Activated imported set Client Acme.")).toBeInTheDocument();
   });
 
   it("marks the active CLI context in contexts and disables reactivation", async () => {
@@ -4241,7 +4241,7 @@ describe("App", () => {
     await renderApp();
     await openSetsSection();
 
-    const activeContextButton = screen.getByRole("button", { name: "Current shared group" });
+    const activeContextButton = screen.getByRole("button", { name: "Current imported set" });
     expect(activeContextButton).toBeDisabled();
     expect(screen.getByText("Client Acme ✓")).toBeInTheDocument();
   });
@@ -4294,7 +4294,7 @@ describe("App", () => {
     await openProjectRulesSection();
 
     expect(screen.getByRole("option", { name: "Saved set: Client Acme" })).toBeInTheDocument();
-    expect(screen.queryByRole("option", { name: "Shared group: client-acme" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Imported set: client-acme" })).not.toBeInTheDocument();
   });
 
   it("blocks unsupported workspace binding submits until a context and target are available", async () => {
@@ -5990,9 +5990,9 @@ describe("App", () => {
       handlers?.["tray-command-result"]?.({
         scope: "global",
         id: "context",
-        label: "Use shared group",
+        label: "Use imported set",
         status: "success",
-        message: "Activated shared group client-acme.",
+        message: "Activated imported set client-acme.",
       });
       await Promise.resolve();
     });
@@ -6079,22 +6079,22 @@ describe("App", () => {
       handlers?.["tray-command-result"]?.({
         scope: "global",
         id: "context",
-        label: "Use shared group",
+        label: "Use imported set",
         status: "error",
-        message: "Shared group switch failed.",
-        remediation: "Re-open AI Switch and verify the saved shared group.",
+        message: "Imported set switch failed.",
+        remediation: "Re-open AI Switch and verify the saved imported set.",
       });
       await Promise.resolve();
     });
 
     expect(
       screen.getByText(
-        "Last shared-group result: Shared group switch failed. Remediation: Re-open AI Switch and verify the saved shared group.",
+        "Last imported-set result: Imported set switch failed. Remediation: Re-open AI Switch and verify the saved imported set.",
       ),
     ).toBeInTheDocument();
     expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
-      title: "Use shared group",
-      body: "Shared group switch failed. Re-open AI Switch and verify the saved shared group.",
+      title: "Use imported set",
+      body: "Imported set switch failed. Re-open AI Switch and verify the saved imported set.",
     });
   });
 
@@ -6888,7 +6888,7 @@ describe("App", () => {
     await openSetsSection();
 
     expect(screen.getAllByText("Client Acme")).toHaveLength(2);
-    expect(screen.getByText("Shared group id: client-acme")).toBeInTheDocument();
+    expect(screen.getByText("Imported set id: client-acme")).toBeInTheDocument();
     expect(screen.getAllByText("claude: Office · codex: Code Work · gemini: none")).toHaveLength(2);
     expect(screen.getAllByRole("option", { name: "Office" }).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("option", { name: "Code Work" })).toBeInTheDocument();

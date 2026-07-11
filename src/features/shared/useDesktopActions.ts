@@ -212,10 +212,10 @@ export function useDesktopActions() {
     }),
     useContextMutation: useMutation({
       mutationFn: queueMutation(
-        "Use shared group",
+        "Use imported set",
         useContext,
         () => ({ type: "global", id: "context" }),
-        (variables) => `Activated shared group ${variables.label ?? variables.context}.`,
+        (variables) => `Activated imported set ${variables.label ?? variables.context}.`,
       ),
       onSettled: invalidate,
     }),

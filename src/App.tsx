@@ -297,7 +297,7 @@ export function App() {
       const normalizedRemediation = normalizeRuntimeLanguage(payload.remediation);
       const normalizedLabel =
         payload.scope === "global" && payload.id === "context"
-          ? "Use shared group"
+          ? "Use imported set"
           : normalizeRuntimeLanguage(payload.label);
 
       if (payload.scope === "tool") {
@@ -748,9 +748,9 @@ function sectionDetail(section: string, setupFocused = false) {
     case "overview":
       return "Review active accounts, shared sets, and switch readiness across every supported tool without leaving the main window.";
     case "profiles":
-      return "Inspect saved logins, labels, storage mode, and safe activation details in a compact split-view workspace.";
+      return "Inspect saved logins, labels, storage mode, and safe activation details in a compact split-view inspector.";
     case "sets":
-      return "Coordinate reusable work, personal, and client combinations before switching a whole workspace.";
+      return "Coordinate reusable work, personal, and client combinations before switching a whole project identity.";
     case "diagnostics":
       return "Verify runtime health, identify drift, and follow guided repair steps when something blocks switching.";
     case "backups":

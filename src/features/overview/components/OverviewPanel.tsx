@@ -297,7 +297,7 @@ export function OverviewPanel({
                 ) : null}
                 {contextResult ? (
                   <p className={`inline-note overview-recent-item ${contextResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
-                    Last shared-group result: {normalizeRuntimeLanguage(contextResult.message)}
+                    Last imported-set result: {normalizeRuntimeLanguage(contextResult.message)}
                     {contextResult.remediation
                       ? ` Remediation: ${normalizeRuntimeLanguage(contextResult.remediation)}`
                       : ""}

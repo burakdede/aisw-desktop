@@ -128,18 +128,18 @@ export function WorkspacesPanel({
           {
             label: "Project rules",
             value: "Automatic set matching",
-            note: "Keep the expected set visible for each workspace so the app can warn before you start coding in the wrong profile.",
+            note: "Keep the expected set visible for each project so the app can warn before you start coding in the wrong profile.",
           },
           {
             label: "Coverage",
             value: bindingsSummary.bindings.length ? `${bindingsSummary.bindings.length} saved rule${bindingsSummary.bindings.length === 1 ? "" : "s"}` : "No saved rules",
             note: hasWorkspaceMismatch
-              ? "The current workspace does not match the expected set yet."
+              ? "The current project does not match the expected set yet."
               : "Use folder or remote rules to keep switching predictable across projects.",
           },
           {
             label: "Highlights",
-            value: "Workspace-aware",
+            value: "Project-aware",
             pills: ["Folder-aware", "Remote-aware", "Mismatch recovery"],
           },
         ]}
@@ -160,7 +160,7 @@ export function WorkspacesPanel({
                 <h3>Save or remove a matching rule</h3>
               </div>
               <p className="inline-note">
-                Pick where the rule applies, then choose the set the app should expect in that workspace.
+                Pick where the rule applies, then choose the set the app should expect in that project.
               </p>
             </div>
             <label>
@@ -257,7 +257,7 @@ export function WorkspacesPanel({
             <article className="diagnostic-card diagnostic-warn">
               <h3>Project mismatch</h3>
               <p className="inline-note">
-                This folder matches <strong>{expectedContextDisplay}</strong>, but the current
+                This project matches <strong>{expectedContextDisplay}</strong>, but the current
                 active set is <strong>{currentContextDisplay}</strong>.
               </p>
               <p className="inline-note">

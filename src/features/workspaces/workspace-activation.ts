@@ -41,7 +41,7 @@ export function workspaceBindingOptions(
     .filter((context) => !profileSets.some((set) => set.value === context.name))
     .map((context) => ({
       value: context.name,
-      label: `Shared group: ${context.name}`,
+      label: `Imported set: ${context.name}`,
     }));
 
   return [...profileSets, ...contexts].sort((left, right) => left.value.localeCompare(right.value));

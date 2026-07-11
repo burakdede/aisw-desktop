@@ -34,7 +34,7 @@ export function SetsPanel({
           {
             label: "Highlights",
             value: "Shared control",
-            pills: ["Saved sets", "Shared groups", "Project rules"],
+            pills: ["Saved sets", "Imported sets", "Project rules"],
           },
         ]}
       />

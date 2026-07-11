@@ -775,7 +775,7 @@ function buildQuickFixes(
       title: "Project set mismatch",
       detail: target
         ? `This folder wants ${expectedContextLabel}, but ${currentContextLabel} is currently active.`
-        : `This folder wants ${expectedContextLabel}, but no matching shared group or ready saved set is currently available.`,
+        : `This folder wants ${expectedContextLabel}, but no matching imported set or ready saved set is currently available.`,
       label: target ? "Use expected set now" : "Open sets",
       status: "warn",
       primary: true,

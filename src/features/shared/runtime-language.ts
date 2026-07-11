@@ -10,10 +10,10 @@ export function normalizeRuntimeLanguage(text: string | null | undefined): strin
     .replace(/AISW cannot/g, "AI Switch cannot")
     .replace(/AISW Desktop/g, "AI Switch")
     .replace(/\bAISW\b/g, "AI Switch")
-    .replace(/saved imported context/g, "saved shared group")
-    .replace(/Saved imported context/g, "Saved shared group")
-    .replace(/imported context/g, "shared group")
-    .replace(/Imported context/g, "Shared group")
-    .replace(/CLI context/g, "shared group")
-    .replace(/cli context/g, "shared group");
+    .replace(/saved imported context/g, "saved imported set")
+    .replace(/Saved imported context/g, "Saved imported set")
+    .replace(/imported context/g, "imported set")
+    .replace(/Imported context/g, "Imported set")
+    .replace(/CLI context/g, "imported set")
+    .replace(/cli context/g, "imported set");
 }

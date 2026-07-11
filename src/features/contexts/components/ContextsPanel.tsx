@@ -203,9 +203,9 @@ export function ContextsPanel({
             </article>
             <article className="diagnostic-card">
               <p className="card-kicker">Imported</p>
-              <h3>{snapshot.contexts.length} shared groups</h3>
+              <h3>{snapshot.contexts.length} imported sets</h3>
               <p className="inline-note">
-                Shared groups stay visible here when the runtime exposes reusable combinations outside your desktop-local set library.
+                Imported sets stay visible here when the runtime exposes reusable combinations outside your desktop-local set library.
               </p>
             </article>
           </div>
@@ -333,7 +333,7 @@ export function ContextsPanel({
           <div className="stack-list">
             <div className="set-section-header desktop-pane-section-header">
               <div>
-                <p className="card-kicker">Shared groups</p>
+                <p className="card-kicker">Imported sets</p>
                 <h3>Available from the engine</h3>
               </div>
               <p className="inline-note">
@@ -349,11 +349,11 @@ export function ContextsPanel({
                       {activeContext === context.name ? " ✓" : ""}
                     </strong>
                     <span className={`pill ${activeContext === context.name ? "pill-ok" : "pill-soft"}`}>
-                      {activeContext === context.name ? "Current" : "Shared"}
+                      {activeContext === context.name ? "Current" : "Imported"}
                     </span>
                   </div>
                   {contextDisplayLabel(settings, context.name) !== context.name ? (
-                    <p className="inline-note">Shared group id: {context.name}</p>
+                    <p className="inline-note">Imported set id: {context.name}</p>
                   ) : null}
                   <p>
                     {Object.entries(context.profiles)
@@ -378,13 +378,13 @@ export function ContextsPanel({
                     })
                   }
                 >
-                  {activeContext === context.name ? "Current shared group" : "Use shared group"}
+                  {activeContext === context.name ? "Current imported set" : "Use imported set"}
                 </button>
               </article>
             ))}
             {!snapshot.contexts.length ? (
               <p className="inline-note">
-                No shared groups are currently available. Saved sets remain available even when
+                No imported sets are currently available. Saved sets remain available even when
                 runtime-level shared switching support is limited.
               </p>
             ) : null}
@@ -392,7 +392,7 @@ export function ContextsPanel({
 
           {contextResult ? (
             <p className={`inline-note ${contextResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
-              Last shared-group result: {normalizeRuntimeLanguage(contextResult.message)}
+              Last imported-set result: {normalizeRuntimeLanguage(contextResult.message)}
               {contextResult.remediation
                 ? ` Remediation: ${normalizeRuntimeLanguage(contextResult.remediation)}`
                 : ""}
