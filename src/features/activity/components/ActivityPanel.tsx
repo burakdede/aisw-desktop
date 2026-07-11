@@ -49,6 +49,22 @@ export function ActivityPanel() {
 
   return (
     <SectionCard title="Activity" kicker="Recent changes and checks">
+      <article className="desktop-pane-hero activity-hero">
+        <div className="desktop-pane-hero-copy">
+          <p className="card-kicker">Timeline</p>
+          <h3>Keep switching and recovery events in one desktop timeline</h3>
+          <p className="inline-note">
+            Recent profile changes, verification runs, setup actions, and recovery outcomes are shown in one native activity stream instead of separate logs or terminal output.
+          </p>
+        </div>
+        <div className="desktop-pane-hero-pills" aria-label="Activity highlights">
+          <span className="status-pill">
+            {entries.length} session event{entries.length === 1 ? "" : "s"}
+          </span>
+          <span className="status-pill">Latest first</span>
+          <span className="status-pill">Local only</span>
+        </div>
+      </article>
       <article className="diagnostic-card desktop-pane-intro">
         <h3>Session timeline</h3>
         <p className="inline-note">

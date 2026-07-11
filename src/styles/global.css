@@ -716,6 +716,11 @@ button {
   margin-bottom: 14px;
 }
 
+.backups-hero,
+.activity-hero {
+  margin-bottom: 14px;
+}
+
 .profiles-toolbar {
   display: flex;
   gap: 10px;
