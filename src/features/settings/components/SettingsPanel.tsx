@@ -489,7 +489,7 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Terminal</p>
-                    <h3>Current shell status</h3>
+                    <h3>Current terminal session</h3>
                   </div>
                   <p className="inline-note">
                     Terminal integration is optional, but recommended when you want immediate environment exports in the current shell session.
@@ -768,7 +768,16 @@ function findShellHookCheck(report: Record<string, unknown> | undefined) {
         check.status === "pass" || check.status === "warn" || check.status === "fail"
           ? check.status
           : "warn",
-      detail: check.detail ?? "",
+      detail:
+        (check.detail ?? "")
+          .replace(
+            "Shell hook is not active in the current shell session.",
+            "Terminal integration is not active in the current shell session.",
+          )
+          .replace(
+            "Install the shell hook and reload the shell.",
+            "Install terminal integration and reload the shell.",
+          ),
     };
   }
   return null;

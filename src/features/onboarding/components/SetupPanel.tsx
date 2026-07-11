@@ -474,8 +474,8 @@ export function SetupPanel({
                 <h3>Terminal integration</h3>
               </div>
               <p className="inline-note">
-                Optional. The desktop app updates live credential files without a shell hook.
-                Install it later if you want already-open terminal sessions to receive immediate
+                Optional. The desktop app updates live credential files without terminal integration.
+                Turn it on later if you want already-open terminal sessions to receive immediate
                 environment exports.
               </p>
             </div>
@@ -487,7 +487,7 @@ export function SetupPanel({
             <p className="inline-note">
               The desktop app writes live credential files directly. Existing terminal sessions
               only receive immediate environment exports such as <code>CLAUDE_CONFIG_DIR</code> and{" "}
-              <code>CODEX_HOME</code> after you install the shell hook.
+              <code>CODEX_HOME</code> after you enable terminal integration.
             </p>
             <p className="inline-note">
               Shell files should only be updated explicitly from the CLI or a future guided setup

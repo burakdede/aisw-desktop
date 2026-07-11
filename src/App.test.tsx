@@ -4311,8 +4311,8 @@ describe("App", () => {
               {
                 name: "shell_hook",
                 status: "warn",
-                detail: "Shell hook is not active in the current shell session.",
-                remediation: ["Install the shell hook and reload the shell."],
+                detail: "Terminal integration is not active in the current shell session.",
+                remediation: ["Install terminal integration and reload the shell."],
               },
             ],
           },
@@ -5184,8 +5184,8 @@ describe("App", () => {
                 {
                   name: "shell_hook",
                   status: "warn",
-                  detail: "Shell hook is not active in the current shell session.",
-                  remediation: ["Install the shell hook and reload the shell."],
+                  detail: "Terminal integration is not active in the current shell session.",
+                  remediation: ["Install terminal integration and reload the shell."],
                 },
               ],
               summary: { status: "warn" },
@@ -5228,7 +5228,7 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getAllByText("Shell hook is not active in the current shell session.").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Terminal integration is not active in the current shell session.").length).toBeGreaterThan(0);
     });
   });
 

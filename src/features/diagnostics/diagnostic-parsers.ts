@@ -44,6 +44,18 @@ function asNumber(value: unknown, fallback = 0) {
   return typeof value === "number" ? value : fallback;
 }
 
+function normalizeUserFacingIssueText(value: string) {
+  return value
+    .replace(
+      "Shell hook is not active in the current shell session.",
+      "Terminal integration is not active in the current shell session.",
+    )
+    .replace(
+      "Install the shell hook and reload the shell.",
+      "Install terminal integration and reload the shell.",
+    );
+}
+
 export function parseDoctorSummary(payload: Record<string, unknown> | undefined): SummaryCardData {
   const checks = asArray(payload?.checks);
   const pass = checks.filter((check) => asObject(check)?.status === "pass").length;
@@ -96,8 +108,8 @@ export function parseDoctorIssues(payload: Record<string, unknown> | undefined):
     .map((check) => ({
       title: asString(check.name),
       status: asString(check.status) as StatusTone,
-      issues: [asString(check.detail)],
-      remediation: asStringArray(check.remediation),
+      issues: [normalizeUserFacingIssueText(asString(check.detail))],
+      remediation: asStringArray(check.remediation).map(normalizeUserFacingIssueText),
     }));
 }
 
@@ -109,8 +121,8 @@ export function parseVerifyIssues(payload: Record<string, unknown> | undefined):
     .map((tool) => ({
       title: asString(tool.tool),
       status: asString(tool.status) as StatusTone,
-      issues: asArray(tool.issues).map((issue) => asString(issue)),
-      remediation: asArray(tool.remediation).map((item) => asString(item)),
+      issues: asArray(tool.issues).map((issue) => normalizeUserFacingIssueText(asString(issue))),
+      remediation: asArray(tool.remediation).map((item) => normalizeUserFacingIssueText(asString(item))),
     }));
 }
 

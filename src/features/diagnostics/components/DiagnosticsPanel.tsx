@@ -766,18 +766,32 @@ function shellHookDoctorIssue(doctor: Record<string, unknown> | undefined) {
 
   for (const check of checks) {
     const name = asStringValue(check.name)?.toLowerCase() ?? "";
-    const detail = asStringValue(check.detail) ?? "Terminal integration guidance needs attention.";
+    const detail = normalizeTerminalIntegrationText(
+      asStringValue(check.detail) ?? "Terminal integration guidance needs attention.",
+    );
     const status = (asStringValue(check.status) as "warn" | "fail" | undefined) ?? "warn";
     const detailText = detail.toLowerCase();
     if (
       (name.includes("shell") && name.includes("hook")) ||
-      detailText.includes("shell hook")
+      detailText.includes("shell hook") || detailText.includes("terminal integration")
     ) {
       return { detail, status };
     }
   }
 
   return null;
+}
+
+function normalizeTerminalIntegrationText(value: string) {
+  return value
+    .replace(
+      "Shell hook is not active in the current shell session.",
+      "Terminal integration is not active in the current shell session.",
+    )
+    .replace(
+      "Install the shell hook and reload the shell.",
+      "Install terminal integration and reload the shell.",
+    );
 }
 
 function keyringDoctorIssue(doctor: Record<string, unknown> | undefined) {
