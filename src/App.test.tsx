@@ -491,29 +491,29 @@ describe("App", () => {
     };
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("Finish setup before switching")).toBeInTheDocument();
+      expect(screen.getByText("This desktop app needs its included runtime")).toBeInTheDocument();
     });
     expect(
       screen.getByText(
-        "AI Switch can see a runtime on this Mac, but this desktop build needs the bundled AI Switch runtime or a newer compatible one before profiles, diagnostics, backups, or sets can work.",
+        "This Mac already has an AI Switch runtime selected, but it does not support this desktop app release.",
       ),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "The current runtime was found, but it does not report the desktop compatibility details this release needs.",
+        "The selected runtime does not report the desktop compatibility details this app needs.",
       ),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Switch back to the bundled AI Switch runtime, or choose a newer compatible runtime in Advanced Runtime Settings before continuing.",
+        "Switch back to the included AI Switch runtime, or choose a newer compatible runtime in Runtime Settings before continuing.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Why switching is paused")).toBeInTheDocument();
+    expect(screen.getByText("Why this is blocked")).toBeInTheDocument();
     expect(screen.getByText("Runtime version details are unavailable")).toBeInTheDocument();
     expect(screen.getByText("Runtime capability details are unavailable")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Use AI Switch Runtime" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Use Included Runtime" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Advanced Runtime Settings" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Runtime Settings" })).toBeInTheDocument();
     expect(screen.queryByText("Included runtime and advanced overrides")).not.toBeInTheDocument();
     expect(screen.queryByText("Runtime summary")).not.toBeInTheDocument();
     expect(screen.queryByText("Welcome to AI Switch")).not.toBeInTheDocument();
@@ -541,10 +541,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Advanced Runtime Settings" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Runtime Settings" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Advanced Runtime Settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Runtime Settings" }));
 
     await waitFor(() => {
       expect(screen.getByText("Included runtime and advanced overrides")).toBeInTheDocument();
@@ -600,10 +600,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Use AI Switch Runtime" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Use Included Runtime" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Use AI Switch Runtime" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use Included Runtime" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
@@ -2427,7 +2427,7 @@ describe("App", () => {
 
     expect(
       screen.getByText(
-        "This runtime does not support one-click capture for Claude. Open profile setup to choose another sign-in method.",
+        "This AI Switch release cannot import the current Claude login directly. Open profile setup to choose another sign-in method.",
       ),
     ).toBeInTheDocument();
 
@@ -2539,11 +2539,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
-    expect(
-      screen.getByText(
-        "This runtime does not support one-click capture for Claude. Open profile setup to choose another sign-in method.",
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open profile setup" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Open profile setup" }));
 
@@ -3776,7 +3772,7 @@ describe("App", () => {
     });
 
     openSetupStep("Welcome");
-    fireEvent.click(screen.getByRole("button", { name: "Use AI Switch Runtime" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use Included Runtime" }));
 
     await waitFor(() => {
       expect(

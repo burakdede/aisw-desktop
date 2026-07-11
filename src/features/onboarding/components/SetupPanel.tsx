@@ -395,12 +395,12 @@ export function SetupPanel({
                         onClick={() => restoreBundledRuntimeMutation.mutate()}
                       >
                         {restoreBundledRuntimeMutation.isPending
-                          ? "Switching to AI Switch Runtime…"
-                          : "Use AI Switch Runtime"}
+                          ? "Switching to Included Runtime…"
+                          : "Use Included Runtime"}
                       </button>
                     ) : null}
                     <button className="ghost-button" type="button" onClick={() => onOpenSettings("runtime")}>
-                      Advanced Runtime Settings
+                      Runtime Settings
                     </button>
                   </div>
                   {restoreBundledRuntimeMutation.error ? (
@@ -495,8 +495,8 @@ export function SetupPanel({
                 </div>
                 {!supportsProfileImportMode(account.tool, toolCapabilities, "from_live") ? (
                   <p className="inline-note">
-                    This runtime does not support one-click capture for {titleCase(account.tool)}.
-                    Open profile setup to choose another sign-in method.
+                    This AI Switch release cannot import the current {titleCase(account.tool)} login
+                    directly. Open profile setup to choose another sign-in method.
                   </p>
                 ) : null}
                 <div className="stack-list">

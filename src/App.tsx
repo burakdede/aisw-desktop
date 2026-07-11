@@ -706,12 +706,12 @@ export function App() {
     <AppFrame
       mode={showSetupWindow ? "setup" : "standard"}
       title={
-        runtimeRecoveryFocused ? "Runtime Check" : sectionTitle(activeSection, setupFocused)
+        runtimeRecoveryFocused ? "Use Included Runtime" : sectionTitle(activeSection, setupFocused)
       }
       subtitle="Switch Claude Code, Codex CLI, and Gemini CLI profiles from one focused desktop app."
       detail={
         runtimeRecoveryFocused
-          ? "Use a desktop-compatible AI Switch runtime before profile switching, diagnostics, and backups become available."
+          ? "The selected AI Switch runtime does not support this desktop app. Switch back to the included runtime to continue."
           : sectionDetail(activeSection, setupFocused)
       }
       nav={navItems}
@@ -736,12 +736,11 @@ export function App() {
       )}
     >
       {runtimeRecoveryFocused ? (
-        <SectionCard title="Finish setup before switching" kicker="Action required">
+        <SectionCard title="This desktop app needs its included runtime" kicker="Switching paused">
           <div className="stack-list">
             <p className="inline-note">
-              AI Switch can see a runtime on this Mac, but this desktop build needs
-              the bundled AI Switch runtime or a newer compatible one before profiles, diagnostics,
-              backups, or sets can work.
+              This Mac already has an AI Switch runtime selected, but it does not support this
+              desktop app release.
             </p>
             <p className="inline-note">{normalizeRuntimeLanguage(runtimeBlocker.summary)}</p>
             <p className="inline-note">{normalizeRuntimeLanguage(runtimeBlocker.nextStep)}</p>
@@ -754,15 +753,15 @@ export function App() {
                   onClick={() => restoreBundledRuntimeMutation.mutate()}
                 >
                   {restoreBundledRuntimeMutation.isPending
-                    ? "Switching to AI Switch Runtime…"
-                    : "Use AI Switch Runtime"}
+                    ? "Switching to Included Runtime…"
+                    : "Use Included Runtime"}
                 </button>
               ) : null}
               <button className="ghost-button" type="button" onClick={() => void retryRuntimeCheck()}>
                 Try Again
               </button>
               <button className="ghost-button" type="button" onClick={() => setRuntimeRecoveryOpen(true)}>
-                Advanced Runtime Settings
+                Runtime Settings
               </button>
             </div>
             {restoreBundledRuntimeMutation.error ? (
@@ -772,7 +771,7 @@ export function App() {
             ) : null}
             {runtimeStatus.issues.length ? (
               <article className="diagnostic-card">
-                <h3>Why switching is paused</h3>
+                <h3>Why this is blocked</h3>
                 {runtimeStatus.issues.map((issue) => (
                   <p key={issue} className="inline-note">
                     {normalizeRuntimeLanguage(issue)}
@@ -955,25 +954,25 @@ function describeRuntimeBlocker(runtimeStatus: {
   if (hasResolvedRuntime && missingDesktopContract) {
     return {
       summary:
-        "The current runtime was found, but it does not report the desktop compatibility details this release needs.",
+        "The selected runtime does not report the desktop compatibility details this app needs.",
       nextStep:
-        "Switch back to the bundled AI Switch runtime, or choose a newer compatible runtime in Advanced Runtime Settings before continuing.",
+        "Switch back to the included AI Switch runtime, or choose a newer compatible runtime in Runtime Settings before continuing.",
     };
   }
 
   if (hasResolvedRuntime) {
     return {
       summary:
-        "The current runtime was found, but it is not compatible with this desktop build.",
+        "The selected runtime was found, but it is not compatible with this desktop app.",
       nextStep:
-        "Switch back to the bundled AI Switch runtime, or choose a compatible runtime in Advanced Runtime Settings before continuing.",
+        "Switch back to the included AI Switch runtime, or choose a compatible runtime in Runtime Settings before continuing.",
     };
   }
 
   return {
-    summary: "AI Switch could not use the current runtime choice.",
+    summary: "AI Switch could not use the selected runtime.",
     nextStep:
-      "Switch to the bundled AI Switch runtime, or choose a working advanced override in Advanced Runtime Settings before continuing.",
+      "Switch to the included AI Switch runtime, or choose a working advanced override in Runtime Settings before continuing.",
   };
 }
 
