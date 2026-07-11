@@ -225,14 +225,15 @@ button {
 
 .sidebar-brand {
   display: grid;
-  gap: 10px;
-  padding: 10px 10px 12px;
-  border-radius: 12px;
+  gap: 11px;
+  padding: 12px 12px 13px;
+  border-radius: 14px;
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   background:
-    linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
+    radial-gradient(circle at top right, color-mix(in srgb, AccentColor 10%, transparent), transparent 34%),
+    linear-gradient(180deg, color-mix(in srgb, Canvas 99%, transparent), color-mix(in srgb, Canvas 95%, transparent)),
     color-mix(in srgb, Canvas 95%, CanvasText 5%);
-  box-shadow: var(--shadow-panel);
+  box-shadow: 0 10px 20px rgba(17, 24, 39, 0.035), var(--shadow-panel);
 }
 
 .sidebar-brand-copy {
@@ -241,70 +242,71 @@ button {
 
 .brand-mark {
   flex: none;
+  filter: drop-shadow(0 3px 8px rgba(17, 24, 39, 0.08));
 }
 
 .brand-mark-shell {
   fill: color-mix(in srgb, Canvas 90%, CanvasText 10%);
-  stroke: color-mix(in srgb, CanvasText 12%, transparent);
+  stroke: color-mix(in srgb, CanvasText 10%, transparent);
 }
 
 .brand-mark-core {
   fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
-  stroke: color-mix(in srgb, CanvasText 6%, transparent);
+  stroke: color-mix(in srgb, CanvasText 4%, transparent);
 }
 
 .brand-mark-plate {
-  fill: color-mix(in srgb, Canvas 97%, AccentColor 3%);
-  stroke: color-mix(in srgb, CanvasText 5%, transparent);
+  fill: color-mix(in srgb, Canvas 96%, AccentColor 4%);
+  stroke: color-mix(in srgb, CanvasText 6%, transparent);
 }
 
 .brand-mark-lane {
   fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
-  stroke: color-mix(in srgb, CanvasText 9%, transparent);
+  stroke: color-mix(in srgb, CanvasText 8%, transparent);
 }
 
 .brand-mark-lane-accent {
-  fill: color-mix(in srgb, AccentColor 18%, Canvas 82%);
-  stroke: color-mix(in srgb, AccentColor 30%, transparent);
+  fill: color-mix(in srgb, AccentColor 20%, Canvas 80%);
+  stroke: color-mix(in srgb, AccentColor 26%, transparent);
 }
 
 .brand-mark-path {
-  stroke: color-mix(in srgb, CanvasText 38%, transparent);
+  stroke: color-mix(in srgb, CanvasText 34%, transparent);
 }
 
 .brand-mark-path-accent {
-  stroke: color-mix(in srgb, AccentColor 80%, CanvasText 20%);
+  stroke: color-mix(in srgb, AccentColor 82%, CanvasText 18%);
 }
 
 .brand-mark-bridge {
-  stroke: color-mix(in srgb, CanvasText 26%, transparent);
+  stroke: color-mix(in srgb, CanvasText 24%, transparent);
 }
 
 .brand-mark-highlight {
-  stroke: rgba(255, 255, 255, 0.66);
+  stroke: rgba(255, 255, 255, 0.62);
 }
 
 .brand-mark-node {
   fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
-  stroke: color-mix(in srgb, CanvasText 12%, transparent);
+  stroke: color-mix(in srgb, CanvasText 10%, transparent);
 }
 
 .brand-mark-node-accent {
-  fill: color-mix(in srgb, AccentColor 88%, Canvas 12%);
-  stroke: color-mix(in srgb, AccentColor 28%, transparent);
+  fill: color-mix(in srgb, AccentColor 90%, Canvas 10%);
+  stroke: color-mix(in srgb, AccentColor 24%, transparent);
 }
 
 .sidebar-title {
   margin: 1px 0 0;
   font-size: 18px;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+  line-height: 1.12;
+  letter-spacing: -0.025em;
 }
 
 .sidebar-copy {
   margin: 0;
   font-size: 12px;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .sidebar-badge {
@@ -314,8 +316,8 @@ button {
   margin: 0;
   padding: 0 9px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, CanvasText 12%, transparent);
-  background: color-mix(in srgb, CanvasText 4%, transparent);
+  border: 1px solid color-mix(in srgb, AccentColor 16%, transparent);
+  background: color-mix(in srgb, AccentColor 10%, Canvas 90%);
   color: var(--text-secondary);
   font-size: 11px;
   line-height: 1;
@@ -726,37 +728,37 @@ button {
   position: sticky;
   top: 0;
   z-index: 2;
-  min-height: 68px;
-  padding: calc(14px + env(safe-area-inset-top, 0px)) 18px 10px;
+  min-height: 70px;
+  padding: calc(15px + env(safe-area-inset-top, 0px)) 18px 11px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 16px;
   border-bottom: 1px solid var(--separator);
   background:
-    linear-gradient(180deg, color-mix(in srgb, Canvas 90%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, Canvas 88%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
     color-mix(in srgb, Canvas 92%, transparent);
   backdrop-filter: blur(32px);
 }
 
 .window-toolbar-meta {
   display: grid;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
 }
 
 .window-toolbar-copy h2 {
   margin: 0;
-  font-size: 21px;
-  line-height: 1.1;
+  font-size: 22px;
+  line-height: 1.06;
   letter-spacing: -0.03em;
 }
 
 .window-toolbar-subtitle {
   margin: 4px 0 0;
-  max-width: 56ch;
+  max-width: 58ch;
   font-size: 12px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--text-secondary);
 }
 
@@ -768,13 +770,13 @@ button {
 }
 
 .toolbar-cluster {
-  padding: 3px;
+  padding: 4px;
   border: 1px solid color-mix(in srgb, CanvasText 10%, transparent);
-  border-radius: 11px;
+  border-radius: 12px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, Canvas 97%, transparent), color-mix(in srgb, Canvas 94%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 94%, transparent)),
     color-mix(in srgb, Canvas 94%, CanvasText 6%);
-  box-shadow: var(--shadow-panel);
+  box-shadow: 0 4px 14px rgba(17, 24, 39, 0.03), var(--shadow-panel);
 }
 
 .toolbar-action-row button {

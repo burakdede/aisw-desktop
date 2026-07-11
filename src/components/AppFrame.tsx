@@ -58,11 +58,11 @@ export function AppFrame({
                 <div className="brand-lockup">
                   <BrandMark />
                   <div className="sidebar-brand-copy">
-                    <p className="eyebrow">Local Account Control</p>
+                    <p className="eyebrow">Local Profile Switching</p>
                     <h1 className="sidebar-title">AI Switch</h1>
                   </div>
                 </div>
-                <p className="sidebar-badge">Native desktop utility</p>
+                <p className="sidebar-badge">Native Mac utility</p>
                 {subtitle ? <p className="sidebar-copy">{subtitle}</p> : null}
               </div>
               <nav className="nav-list" aria-label="Primary">
@@ -94,7 +94,7 @@ export function AppFrame({
         <div className={cn("content-shell", mode === "setup" && "content-shell-setup")}>
           <header className="window-toolbar">
             <div className="window-toolbar-meta">
-              <p className="window-toolbar-kicker">{mode === "setup" ? "First Launch" : "Desktop"}</p>
+              <p className="window-toolbar-kicker">{mode === "setup" ? "Welcome" : "AI Switch"}</p>
               <div className="window-toolbar-copy">
                 <h2>{title}</h2>
                 {detail ? <p className="window-toolbar-subtitle">{detail}</p> : null}
