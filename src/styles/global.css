@@ -2295,26 +2295,6 @@ button {
   gap: 10px;
 }
 
-.backups-overview,
-.backups-overview-meta {
-  gap: 12px;
-}
-
-.backups-overview-meta {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.backups-overview-meta > div {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-  padding: 10px 11px;
-  border-radius: 10px;
-  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
-}
-
 .activity-overview,
 .activity-overview-meta {
   gap: 12px;

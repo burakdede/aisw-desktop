@@ -109,32 +109,6 @@ export function BackupsPanel({
 
   return (
     <SectionCard title="Backups" kicker="Restore points">
-      <article className="diagnostic-card backups-overview desktop-pane-intro">
-        <div className="desktop-pane-section-header">
-          <div>
-            <p className="card-kicker">Recovery</p>
-            <h3>{sortedBackups.length} restore point{sortedBackups.length === 1 ? "" : "s"} available</h3>
-          </div>
-          <span className="pill pill-soft">Files first</span>
-        </div>
-        <p className="inline-note">
-          Browse and inspect restore points without leaving the main recovery flow.
-        </p>
-        <div className="backups-overview-meta">
-          <div>
-            <span className="overview-current-set-cell-label">Restore</span>
-            <strong>Files first</strong>
-          </div>
-          <div>
-            <span className="overview-current-set-cell-label">Activation</span>
-            <strong>Optional re-activate</strong>
-          </div>
-          <div>
-            <span className="overview-current-set-cell-label">Safety</span>
-            <strong>Review target first</strong>
-          </div>
-        </div>
-      </article>
       <SplitView
         className="backups-layout"
         primaryClassName="backups-list-pane"
@@ -145,14 +119,18 @@ export function BackupsPanel({
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Timeline</p>
-                  <h3>Local backups</h3>
+                  <h3>
+                    {sortedBackups.length
+                      ? `${sortedBackups.length} restore point${sortedBackups.length === 1 ? "" : "s"}`
+                      : "No restore points yet"}
+                  </h3>
                 </div>
-                <p className="inline-note">
-                  {sortedBackups.length
-                    ? `${sortedBackups.length} restore point${sortedBackups.length === 1 ? "" : "s"} available locally.`
-                    : "No saved restore points are available yet."}
-                </p>
+                <span className="pill pill-soft">Files first</span>
               </div>
+              <p className="inline-note">
+                Inspect one restore point at a time. Restoring saved files does not reactivate a profile
+                unless you choose that explicitly.
+              </p>
               <div className="backups-list-columns" aria-hidden="true">
                 <span>Created</span>
                 <span>Tool</span>
@@ -238,7 +216,7 @@ export function BackupsPanel({
                   </div>
                   <div>
                     <span className="overview-current-set-cell-label">Recovery</span>
-                    <strong>Files first</strong>
+                    <strong>Files only by default</strong>
                   </div>
                 </div>
                 <KeyValueGrid
