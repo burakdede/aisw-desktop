@@ -7413,7 +7413,7 @@ describe("App", () => {
       expect(screen.getByText("1. Add the AI Switch line to your shell config.")).toBeInTheDocument();
       expect(screen.getByText("2. Reload the shell config.")).toBeInTheDocument();
       expect(screen.getByText("3. Verify that terminal integration is active.")).toBeInTheDocument();
-      expect(screen.getByText("Show command details")).toBeInTheDocument();
+      expect(screen.getByText("Show advanced terminal commands")).toBeInTheDocument();
     });
   });
 

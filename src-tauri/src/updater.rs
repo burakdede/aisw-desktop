@@ -28,8 +28,7 @@ pub async fn check_for_updates<R: Runtime>(
             endpoint: None,
             update: None,
             message: Some(
-                "Updater is not configured for this build. Set AISW_DESKTOP_UPDATER_ENDPOINT[_CHANNEL] or configure plugins.updater.channels in tauri.conf.json."
-                    .to_owned(),
+                "Updates are not configured for this desktop build yet.".to_owned(),
             ),
         });
     };
@@ -65,8 +64,7 @@ pub async fn install_update<R: Runtime>(
             installed_version: None,
             restart_requested: false,
             message: Some(
-                "Updater is not configured for this build. Set AISW_DESKTOP_UPDATER_ENDPOINT[_CHANNEL] or configure plugins.updater.channels in tauri.conf.json."
-                    .to_owned(),
+                "Updates are not configured for this desktop build yet.".to_owned(),
             ),
         });
     };
@@ -145,7 +143,8 @@ where
         kind: GuiErrorKind::Unknown,
         message: format!("Updater endpoint is invalid: {error}"),
         remediation: Some(
-            "Set AISW_DESKTOP_UPDATER_ENDPOINT[_CHANNEL] or plugins.updater.channels.<channel> to a valid HTTPS URL.".to_owned(),
+            "Configure this desktop build with a valid HTTPS update feed before checking for updates."
+                .to_owned(),
         ),
     })?;
     if endpoint.scheme() != "https" {
@@ -157,7 +156,8 @@ where
                 endpoint.scheme()
             ),
             remediation: Some(
-                "Set AISW_DESKTOP_UPDATER_ENDPOINT[_CHANNEL] or plugins.updater.channels.<channel> to a valid HTTPS URL.".to_owned(),
+                "Configure this desktop build with a valid HTTPS update feed before checking for updates."
+                    .to_owned(),
             ),
         });
     }
@@ -211,7 +211,7 @@ fn map_updater_error(error: tauri_plugin_updater::Error) -> DesktopError {
         kind: GuiErrorKind::Unknown,
         message: format!("Desktop update failed: {error}"),
         remediation: Some(
-            "Verify the updater endpoint, signing key, and generated updater artifacts for this release."
+            "Check the signed update channel, signing key, and release artifacts for this desktop build."
                 .to_owned(),
         ),
     }

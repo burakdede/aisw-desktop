@@ -895,7 +895,7 @@ export function SettingsPanel({
                             void copyText(selectedVariant.install_command, "setup")
                           }
                         >
-                          Copy setup step
+                          Copy install command
                         </button>
                       </div>
                     </div>
@@ -909,7 +909,7 @@ export function SettingsPanel({
                             void copyText(selectedVariant.reload_command, "reload")
                           }
                         >
-                          Copy reload step
+                          Copy reload command
                         </button>
                       </div>
                     </div>
@@ -926,16 +926,19 @@ export function SettingsPanel({
                             void copyText(selectedVariant.verify_command, "verify")
                           }
                         >
-                          Copy verify step
+                          Copy verification command
                         </button>
                       </div>
                     </div>
                   </div>
                   <details className="settings-guide-block">
-                    <summary>Show command details</summary>
+                    <summary>Show advanced terminal commands</summary>
                     <div className="stack-list">
+                      <p className="inline-note">
+                        Most people can skip these raw commands unless they manage shell files manually.
+                      </p>
                       <div>
-                        <p className="inline-note">Setup command</p>
+                        <p className="inline-note">Install command</p>
                         <pre>{selectedVariant.install_command}</pre>
                       </div>
                       <div>
@@ -956,8 +959,11 @@ export function SettingsPanel({
                   <p className="inline-note">{shellGuidance.data.note}</p>
                   {shellGuidance.data.manual_apply_examples.length ? (
                     <details className="settings-guide-block">
-                      <summary>Show advanced command-line examples</summary>
+                      <summary>Show advanced terminal examples</summary>
                       <div className="stack-list">
+                        <p className="inline-note">
+                          These examples are only for people who intentionally apply AI Switch commands from a terminal.
+                        </p>
                         {shellGuidance.data.manual_apply_examples.map((example) => (
                           <pre key={example}>{example}</pre>
                         ))}
