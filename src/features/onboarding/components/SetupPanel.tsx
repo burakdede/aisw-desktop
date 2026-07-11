@@ -130,43 +130,55 @@ export function SetupPanel({
         </button>
       }
     >
-      <div className="desktop-pane-hero">
+      <div className="desktop-pane-hero desktop-pane-hero-onboarding">
         <div className="desktop-pane-hero-copy">
+          <p className="card-kicker">AI Switch</p>
+          <h3>Switch AI coding-agent accounts safely.</h3>
           <p className="inline-note">
-            AI Switch keeps switching local. Bring in existing Claude Code, Codex CLI, and Gemini
-            CLI accounts, confirm the bundled engine is ready, and verify one safe switch without
-            leaving the app.
+            Bring in existing Claude Code, Codex CLI, and Gemini CLI accounts, confirm the bundled
+            engine is ready, and verify one safe switch without leaving this Mac.
           </p>
         </div>
         <div className="desktop-pane-hero-pills" aria-label="Onboarding highlights">
-          <span className="pill pill-soft">Local only</span>
+          <span className="pill pill-soft">Credentials stay local</span>
           <span className="pill pill-soft">Bundled engine</span>
           <span className="pill pill-soft">No telemetry</span>
+          <span className="pill pill-soft">No traffic proxy</span>
         </div>
       </div>
 
-      <div className="panel-grid panel-grid-2 diagnostics-body desktop-pane-grid">
+      <div className="onboarding-trust-grid">
+        <article className="diagnostic-card onboarding-trust-card">
+          <h3>Local-only by default</h3>
+          <div className="trust-list">
+            <p className="trust-list-item">Credentials stay on this Mac</p>
+            <p className="trust-list-item">No telemetry</p>
+            <p className="trust-list-item">No prompt or API traffic proxy</p>
+            <p className="trust-list-item">Bundled engine included</p>
+          </div>
+        </article>
+      </div>
+
+      <div className="panel-grid panel-grid-2 diagnostics-body desktop-pane-grid onboarding-grid">
         <div className="stack-list desktop-pane-column">
           <article className="diagnostic-card desktop-pane-intro">
-            <h3>Ready now</h3>
+            <h3>Runtime check</h3>
             <p className="inline-note">
-              Confirm that this Mac is using the included switching engine and that the local
-              environment is ready for account changes.
+              Confirm that AI Switch is ready to use its bundled switching engine and local
+              storage before you import or switch accounts.
             </p>
           </article>
 
           <article className="diagnostic-card">
-            <h3>Local-only by default</h3>
-            <div className="trust-list">
-              <p className="trust-list-item">Credentials stay on this Mac</p>
-              <p className="trust-list-item">No telemetry</p>
-              <p className="trust-list-item">No prompt or API traffic proxy</p>
-              <p className="trust-list-item">Bundled engine included</p>
+            <div className="desktop-pane-section-header">
+              <div>
+                <p className="card-kicker">Runtime</p>
+                <h3>Included switching engine</h3>
+              </div>
+              <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
+                {bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}
+              </span>
             </div>
-          </article>
-
-          <article className="diagnostic-card">
-            <h3>Included switching engine</h3>
             <p className="inline-note">
               {bootstrap.settings.runtime_kind === "bundled"
                 ? "AI Switch is using its included switching engine."
@@ -208,7 +220,12 @@ export function SetupPanel({
           </article>
 
           <article className="diagnostic-card">
-            <h3>Health check</h3>
+            <div className="desktop-pane-section-header">
+              <div>
+                <p className="card-kicker">Checks</p>
+                <h3>Health check</h3>
+              </div>
+            </div>
             <div className="stack-list">
               {healthItems.map((item) => (
                 <div key={item.label}>
@@ -229,129 +246,141 @@ export function SetupPanel({
 
         <div className="stack-list desktop-pane-column">
           <article className="diagnostic-card desktop-pane-intro">
-            <h3>Bring your accounts in</h3>
+            <h3>Detected tools</h3>
             <p className="inline-note">
-              Capture current sign-ins, add missing tools, and run one shared switch to verify that
-              account changes work end to end.
+              Capture current sign-ins, add missing tools, and save reusable profiles before you
+              run the first shared switch.
             </p>
           </article>
 
-          <div className="desktop-pane-section">
+          <div className="desktop-pane-section onboarding-detection-stack">
             <div className="desktop-pane-section-header">
               <div>
-                <p className="card-kicker">Import</p>
+                <p className="card-kicker">Detection</p>
                 <h3>Existing accounts</h3>
               </div>
               <p className="inline-note">
                 Saved accounts become reusable profiles that you can switch again later.
               </p>
             </div>
-          {liveAccounts.map((account) => (
-            <form
-              key={account.tool}
-              className="list-row list-row-form"
-              onSubmit={(event) => submitImport(event, account.tool)}
-            >
-              <div>
-                <strong>{titleCase(account.tool)}</strong>
-                <p>
-                  {account.outcome ?? "unknown"} · {account.auth_method ?? "unknown"}
-                  {account.matched_profile ? ` · matches ${account.matched_profile}` : ""}
-                </p>
+            {liveAccounts.map((account) => (
+              <form
+                key={account.tool}
+                className="diagnostic-card onboarding-tool-card"
+                onSubmit={(event) => submitImport(event, account.tool)}
+              >
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <h4>{titleCase(account.tool)}</h4>
+                    <p className="inline-note">
+                      {account.outcome ?? "unknown"} · {account.auth_method ?? "unknown"}
+                      {account.matched_profile ? ` · matches ${account.matched_profile}` : ""}
+                    </p>
+                  </div>
+                  <span className="pill pill-ok">Current login detected</span>
+                </div>
                 {!supportsProfileImportMode(account.tool, toolCapabilities, "from_live") ? (
                   <p className="inline-note">
                     This runtime does not support one-click capture for {titleCase(account.tool)}.
                     Open profile setup to choose another sign-in method.
                   </p>
                 ) : null}
-              </div>
-              <div className="inline-form">
-                {supportsProfileImportMode(account.tool, toolCapabilities, "from_live") ? (
-                  <>
-                    <input
-                      aria-label={`${account.tool} profile name`}
-                      placeholder="profile name"
-                      value={profileNames[account.tool] ?? ""}
-                      onChange={(event) =>
-                        setProfileNames((current) => ({
-                          ...current,
-                          [account.tool]: event.target.value,
-                        }))
+                <div className="inline-form">
+                  {supportsProfileImportMode(account.tool, toolCapabilities, "from_live") ? (
+                    <>
+                      <input
+                        aria-label={`${account.tool} profile name`}
+                        placeholder="profile name"
+                        value={profileNames[account.tool] ?? ""}
+                        onChange={(event) =>
+                          setProfileNames((current) => ({
+                            ...current,
+                            [account.tool]: event.target.value,
+                          }))
+                        }
+                      />
+                      <button className="ghost-button" type="submit" disabled={mutationLock.isBusy}>
+                        Import current login
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      disabled={mutationLock.isBusy}
+                      onClick={() =>
+                        onOpenProfiles(account.tool, {
+                          mode: preferredProfileImportMode(account.tool, toolCapabilities, "from_live"),
+                        })
                       }
-                    />
-                    <button className="ghost-button" type="submit" disabled={mutationLock.isBusy}>
-                      Import current login
+                    >
+                      Open profile setup
                     </button>
-                  </>
-                ) : (
-                  <button
-                    className="ghost-button"
-                    type="button"
-                    disabled={mutationLock.isBusy}
-                    onClick={() =>
-                      onOpenProfiles(account.tool, {
-                        mode: preferredProfileImportMode(account.tool, toolCapabilities, "from_live"),
-                      })
-                    }
-                  >
-                    Open profile setup
-                  </button>
-                )}
-              </div>
-            </form>
-          ))}
-          {undetectedInstalledTools.map((status) => (
-            <article key={status.tool} className="list-row list-row-form">
-              <div>
-                <strong>{titleCase(status.tool)}</strong>
-                <p>No live credentials detected</p>
-              </div>
-              <div className="inline-form">
-                <button
-                  className="ghost-button"
-                  type="button"
-                  aria-label={`Add ${status.tool} profile`}
-                  disabled={mutationLock.isBusy}
-                  onClick={() => onOpenProfiles(status.tool)}
-                >
-                  Add profile
-                </button>
-              </div>
-            </article>
-          ))}
-          {missingTools.map((status) => {
-            const binary = toolBinaryName(status.tool);
-            return (
-              <article key={status.tool} className="diagnostic-card diagnostic-warn">
-                <h4>{titleCase(status.tool)} is not installed</h4>
-                <p className="inline-note">
-                  AI Switch cannot detect or switch {titleCase(status.tool)} until the{" "}
-                  <code>{binary}</code> CLI is available on PATH.
-                </p>
-                <div className="diagnostic-remediation">
-                  <code>{installCommandForTool(status.tool)}</code>
-                  <code>{commandForCurrentPlatform(binary, "verify")}</code>
-                  <code>{commandForCurrentPlatform(binary, "path")}</code>
+                  )}
+                </div>
+              </form>
+            ))}
+            {undetectedInstalledTools.map((status) => (
+              <article key={status.tool} className="diagnostic-card onboarding-tool-card">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <h4>{titleCase(status.tool)}</h4>
+                    <p className="inline-note">No live credentials detected</p>
+                  </div>
+                  <span className="pill pill-soft">Needs profile</span>
                 </div>
                 <div className="button-row">
                   <button
                     className="ghost-button"
                     type="button"
-                    onClick={() => openExternalGuide(installGuideUrlForTool(status.tool))}
+                    aria-label={`Add ${status.tool} profile`}
+                    disabled={mutationLock.isBusy}
+                    onClick={() => onOpenProfiles(status.tool)}
                   >
-                    Open installation guide
+                    Add profile
                   </button>
                 </div>
               </article>
-            );
-          })}
-          {!liveAccounts.length ? (
-            undetectedInstalledTools.length || missingTools.length ? null : (
-              <p className="inline-note">
-                Run the setup scan to detect live Claude, Codex, and Gemini accounts.
-              </p>
-            )
-          ) : null}
+            ))}
+            {missingTools.map((status) => {
+              const binary = toolBinaryName(status.tool);
+              return (
+                <article key={status.tool} className="diagnostic-card diagnostic-warn onboarding-tool-card">
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <h4>{titleCase(status.tool)} is not installed</h4>
+                      <p className="inline-note">Missing</p>
+                    </div>
+                    <span className="pill pill-soft">Not installed</span>
+                  </div>
+                  <p className="inline-note">
+                    AI Switch cannot detect or switch {titleCase(status.tool)} until the{" "}
+                    <code>{binary}</code> CLI is available on PATH.
+                  </p>
+                  <div className="diagnostic-remediation">
+                    <code>{installCommandForTool(status.tool)}</code>
+                    <code>{commandForCurrentPlatform(binary, "verify")}</code>
+                    <code>{commandForCurrentPlatform(binary, "path")}</code>
+                  </div>
+                  <div className="button-row">
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      onClick={() => openExternalGuide(installGuideUrlForTool(status.tool))}
+                    >
+                      Open installation guide
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+            {!liveAccounts.length ? (
+              undetectedInstalledTools.length || missingTools.length ? null : (
+                <p className="inline-note">
+                  Run the setup scan to detect live Claude, Codex, and Gemini accounts.
+                </p>
+              )
+            ) : null}
           </div>
 
           <article className="diagnostic-card">
@@ -361,7 +390,7 @@ export function SetupPanel({
                 <h3>First switch</h3>
               </div>
               <p className="inline-note">
-                Re-apply one saved profile across installed tools to confirm switching works end to
+                Re-apply one shared profile across installed tools to confirm switching works end to
                 end.
               </p>
             </div>
@@ -417,8 +446,9 @@ export function SetupPanel({
                 <h3>Terminal integration</h3>
               </div>
               <p className="inline-note">
-                Only needed when you want current shell sessions to react immediately after a
-                switch.
+                Optional. AI Switch updates live credential files without a shell hook. Install it
+                later if you want already-open terminal sessions to receive immediate environment
+                exports.
               </p>
             </div>
             {shellGuidance.data?.detected_shell ? (

@@ -1109,7 +1109,9 @@ describe("App", () => {
     });
 
     expect(screen.getByRole("button", { name: "Refresh state" })).toBeDisabled();
-    const geminiCard = screen.getByText("Gemini").closest(".tool-card");
+    const geminiCard = screen
+      .getByText("Gemini is not available on PATH, so AI Switch cannot switch or verify that tool yet.")
+      .closest(".tool-card");
     if (!(geminiCard instanceof HTMLElement)) {
       throw new Error("Missing Gemini tool card.");
     }

@@ -570,11 +570,44 @@ button {
   max-width: 62ch;
 }
 
+.desktop-pane-hero-onboarding {
+  align-items: center;
+}
+
+.desktop-pane-hero-onboarding h3 {
+  margin: 4px 0 0;
+  font-size: 24px;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
 .desktop-pane-hero-pills {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.onboarding-trust-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.onboarding-trust-card {
+  padding: 12px 14px;
+}
+
+.onboarding-grid {
+  align-items: start;
+}
+
+.onboarding-detection-stack {
+  gap: 10px;
+}
+
+.onboarding-tool-card {
+  display: grid;
+  gap: 10px;
 }
 
 .desktop-pane-stack {
