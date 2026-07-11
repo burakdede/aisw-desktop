@@ -2362,6 +2362,8 @@ button {
   gap: 10px;
 }
 
+.backups-overview-meta,
+.backups-detail-meta,
 .activity-overview-meta,
 .activity-detail-meta {
   display: grid;
@@ -2370,6 +2372,8 @@ button {
 }
 
 .backups-detail-summary > div,
+.backups-overview-meta > div,
+.backups-detail-meta > div,
 .activity-detail-summary > div,
 .activity-overview-meta > div,
 .activity-detail-meta > div,

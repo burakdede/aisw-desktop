@@ -106,6 +106,10 @@ export function BackupsPanel({
       ? `${titleCase(restoreSheetTarget.tool)} / ${restoreSheetLabel}`
       : null;
   const restoreSheetMode = pendingRestore?.mode ?? null;
+  const restorePointCount = sortedBackups.length;
+  const latestBackupTimestamp = selectedBackup
+    ? formatBackupTimestamp(selectedBackup.created_at ?? selectedBackup.backup_id)
+    : "No restore points yet";
 
   return (
     <SectionCard title="Backups" kicker="Restore points">
@@ -131,6 +135,23 @@ export function BackupsPanel({
                 Inspect one restore point at a time. Restoring saved files does not reactivate a profile
                 unless you choose that explicitly.
               </p>
+              <div className="backups-overview-meta">
+                <div>
+                  <span className="overview-current-set-cell-label">Library</span>
+                  <strong>{restorePointCount ? `${restorePointCount} restore point${restorePointCount === 1 ? "" : "s"}` : "Empty"}</strong>
+                  <p className="inline-note">Backups are created before profile changes that could need rollback.</p>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Latest restore point</span>
+                  <strong>{selectedTargetDisplay ?? "No selection"}</strong>
+                  <p className="inline-note">{latestBackupTimestamp}</p>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Restore mode</span>
+                  <strong>Files first</strong>
+                  <p className="inline-note">Activation stays explicit unless you choose restore and activate.</p>
+                </div>
+              </div>
               <div className="backups-list-columns" aria-hidden="true">
                 <span>Created</span>
                 <span>Tool</span>
@@ -217,6 +238,18 @@ export function BackupsPanel({
                   <div>
                     <span className="overview-current-set-cell-label">Recovery</span>
                     <strong>Files only by default</strong>
+                  </div>
+                </div>
+                <div className="backups-detail-meta">
+                  <div>
+                    <span className="overview-current-set-cell-label">Backup target</span>
+                    <strong>{selectedTargetDisplay}</strong>
+                    <p className="inline-note">{titleCase(selectedTarget.tool)} restore point selected from the local history.</p>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Restore outcome</span>
+                    <strong>Activation stays explicit</strong>
+                    <p className="inline-note">Restore files only unless you explicitly re-activate this profile.</p>
                   </div>
                 </div>
                 <KeyValueGrid
