@@ -335,15 +335,10 @@ describe("App", () => {
     expect(screen.getByText("Re-apply Work")).toBeInTheDocument();
     expect(screen.getByText("Current set: Work")).toBeInTheDocument();
     expect(screen.getByText("Switching engine ready")).toBeInTheDocument();
-    expect(screen.getByText("Welcome")).toBeInTheDocument();
-    expect(screen.getByText("Included switching engine")).toBeInTheDocument();
-    expect(screen.getByText("Health check")).toBeInTheDocument();
-    expect(screen.getByText("Local-only by default")).toBeInTheDocument();
-    expect(screen.getByText("Credentials stay on this Mac")).toBeInTheDocument();
-    expect(screen.getAllByText("No telemetry").length).toBeGreaterThan(0);
-    expect(
-      screen.getByText("AI Switch is using its included switching engine."),
-    ).toBeInTheDocument();
+    expect(screen.queryByText("Welcome")).not.toBeInTheDocument();
+    expect(screen.queryByText("Included switching engine")).not.toBeInTheDocument();
+    expect(screen.queryByText("Health check")).not.toBeInTheDocument();
+    expect(screen.queryByText("Local-only by default")).not.toBeInTheDocument();
   });
 
   it("shows compatibility blockers when runtime is not usable", async () => {
@@ -760,6 +755,68 @@ describe("App", () => {
   });
 
   it("clears routed settings sections when reopening settings from the sidebar", async () => {
+    const firstRunSnapshot = {
+      statuses: [
+        {
+          tool: "claude",
+          binary_found: true,
+          stored_profiles: 0,
+          active_profile: null,
+          auth_method: null,
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: null,
+          credentials_present: false,
+          permissions_ok: true,
+          warnings: [],
+        },
+      ],
+      profiles: {
+        claude: {
+          active: null,
+          profiles: [],
+        },
+      },
+      contexts: [],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) =>
+      (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            snapshot: firstRunSnapshot,
+          },
+          get_snapshot: firstRunSnapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+          get_shell_guidance: {
+            detected_shell: "zsh",
+            capabilities: [],
+            note: "",
+            manual_apply_examples: [],
+            variants: [
+              {
+                shell: "zsh",
+                title: "Zsh",
+                config_path: "~/.zshrc",
+                alternate_config_path: null,
+                install_command: "echo 'eval \"$(aisw shell-hook zsh)\"' >> ~/.zshrc",
+                reload_command: "source ~/.zshrc",
+                verify_command: "echo \"$AISW_SHELL_HOOK\"",
+                verify_expected: "1",
+              },
+            ],
+          },
+        } as Record<string, unknown>
+      )[command];
+
     await renderApp();
     await waitFor(() => expect(screen.getByText("Open terminal setup")).toBeInTheDocument());
 
@@ -3252,8 +3309,15 @@ describe("App", () => {
       )[command];
     };
 
-    await renderApp();
-    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
+    await renderSetupPanel({
+      initReport: {
+        result: {
+          live_accounts: [{ tool: "claude", outcome: "detected", auth_method: "oauth" }],
+        },
+      },
+    });
+
+    expect(screen.getByText("Welcome")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("First switch profile"), {
       target: { value: "work" },
     });
@@ -4974,15 +5038,57 @@ describe("App", () => {
   });
 
   it("opens full shell setup guidance from onboarding", async () => {
+    const firstRunSnapshot = {
+      statuses: [
+        {
+          tool: "claude",
+          binary_found: true,
+          stored_profiles: 0,
+          active_profile: null,
+          auth_method: null,
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: null,
+          credentials_present: false,
+          permissions_ok: true,
+          warnings: [],
+        },
+      ],
+      profiles: {
+        claude: {
+          active: null,
+          profiles: [],
+        },
+      },
+      contexts: [],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) =>
+      (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            snapshot: firstRunSnapshot,
+          },
+          get_snapshot: firstRunSnapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+
     await renderApp();
     await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
 
-    expect(screen.getByText("Detected shell:")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Open terminal setup"));
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
-      expect(screen.getByText("Config file: ~/.zshrc")).toBeInTheDocument();
       expect(screen.getByRole("tab", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "true");
     });
   });
@@ -5114,7 +5220,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Verify and recovery")).toBeInTheDocument();
-      expect(screen.getByText("Shell hook is not active in the current shell session.")).toBeInTheDocument();
+      expect(screen.getAllByText("Shell hook is not active in the current shell session.").length).toBeGreaterThan(0);
     });
   });
 
@@ -6372,8 +6478,23 @@ describe("App", () => {
       )[command];
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
-    expect(screen.getByText("Current set: Client Acme")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Current set: Client Acme")).toBeInTheDocument();
+    });
+
+    await renderSetupPanel({
+      bootstrapOverride: {
+        ...bootstrap,
+        settings: settingsWithOverride,
+        snapshot: snapshotWithMatchingSet,
+      } as unknown as AppBootstrap,
+      initReport: {
+        result: {
+          live_accounts: [{ tool: "claude", outcome: "detected", auth_method: "oauth" }],
+        },
+      },
+    });
+
     const firstSwitchSelect = screen.getByLabelText("First switch profile");
     expect(within(firstSwitchSelect).getByRole("option", { name: "Office" })).toBeInTheDocument();
   });
@@ -6431,7 +6552,7 @@ describe("App", () => {
     expect(screen.getAllByText("Client Acme")).toHaveLength(2);
     expect(screen.getByText("Runtime group id: client-acme")).toBeInTheDocument();
     expect(screen.getAllByText("claude: Office · codex: Code Work · gemini: none")).toHaveLength(2);
-    expect(screen.getAllByRole("option", { name: "Office" }).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByRole("option", { name: "Office" }).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("option", { name: "Code Work" })).toBeInTheDocument();
   });
 

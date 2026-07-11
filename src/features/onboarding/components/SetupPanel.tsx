@@ -75,6 +75,13 @@ export function SetupPanel({
       ),
     [liveAccountTools, snapshot.statuses],
   );
+  const installedToolsNeedingProfile = useMemo(
+    () =>
+      undetectedInstalledTools.filter(
+        (status) => (snapshot.profiles[status.tool]?.profiles.length ?? 0) === 0,
+      ),
+    [snapshot.profiles, undetectedInstalledTools],
+  );
   const missingTools = useMemo(
     () => snapshot.statuses.filter((status) => !status.binary_found),
     [snapshot.statuses],
@@ -90,8 +97,7 @@ export function SetupPanel({
   const shouldShowSetup =
     totalProfiles === 0 ||
     liveAccounts.length > 0 ||
-    undetectedInstalledTools.length > 0 ||
-    missingTools.length > 0;
+    installedToolsNeedingProfile.length > 0;
 
   function submitImport(event: FormEvent<HTMLFormElement>, tool: string) {
     event.preventDefault();
@@ -320,7 +326,7 @@ export function SetupPanel({
                 </div>
               </form>
             ))}
-            {undetectedInstalledTools.map((status) => (
+            {installedToolsNeedingProfile.map((status) => (
               <article key={status.tool} className="diagnostic-card onboarding-tool-card">
                 <div className="desktop-pane-section-header">
                   <div>
@@ -375,7 +381,7 @@ export function SetupPanel({
               );
             })}
             {!liveAccounts.length ? (
-              undetectedInstalledTools.length || missingTools.length ? null : (
+              installedToolsNeedingProfile.length || missingTools.length ? null : (
                 <p className="inline-note">
                   Run the setup scan to detect live Claude, Codex, and Gemini accounts.
                 </p>
