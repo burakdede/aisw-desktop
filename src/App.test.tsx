@@ -385,7 +385,7 @@ describe("App", () => {
     expect(
       screen.getByText((_, element) => element?.textContent?.trim() === "SwitchingReady"),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Welcome")).not.toBeInTheDocument();
+    expect(screen.queryByText("Set Up AI Switch")).not.toBeInTheDocument();
     expect(screen.queryByText("Included runtime")).not.toBeInTheDocument();
     expect(screen.queryByText("Health check")).not.toBeInTheDocument();
     expect(screen.queryByText("Local-only by default")).not.toBeInTheDocument();
@@ -490,7 +490,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Advanced Engine Settings" })).toBeInTheDocument();
     expect(screen.queryByText("Included engine and advanced overrides")).not.toBeInTheDocument();
     expect(screen.queryByText("Engine summary")).not.toBeInTheDocument();
-    expect(screen.queryByText("Welcome")).not.toBeInTheDocument();
+    expect(screen.queryByText("Set Up AI Switch")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Overview" })).not.toBeInTheDocument();
   });
 
@@ -1031,7 +1031,9 @@ describe("App", () => {
       )[command];
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0),
+    );
     openSetupStep("Terminal");
     await waitFor(() => expect(screen.getByText("Open terminal setup")).toBeInTheDocument());
 
@@ -1204,7 +1206,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getAllByRole("heading", { name: "Work" }).length).toBeGreaterThan(0));
     const quickSwitchDialog = await openQuickSwitchDialog();
-    fireEvent.click(quickSwitchDialog.getByRole("button", { name: /Work.*across matching tools/i }));
+    fireEvent.click(quickSwitchDialog.getByRole("button", { name: /Work.*Across/i }));
 
     await waitFor(() => {
       expect(screen.getAllByRole("heading", { name: "Personal" }).length).toBeGreaterThan(0);
@@ -2438,7 +2440,9 @@ describe("App", () => {
         },
       } as InitReport,
     });
-    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0),
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Import current login" }));
 
@@ -3480,7 +3484,41 @@ describe("App", () => {
 
     await renderApp();
     const quickSwitchDialog = await openQuickSwitchDialog();
-    fireEvent.click(quickSwitchDialog.getByRole("button", { name: /Work.*across matching tools/i }));
+    fireEvent.click(quickSwitchDialog.getByRole("button", { name: /Work.*Across/i }));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
+    });
+  });
+
+  it("supports Command-Enter in quick switch for matching profiles", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "use_all_profiles") {
+        return { command, snapshot: bootstrap.snapshot };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    const quickSwitchDialog = await openQuickSwitchDialog();
+    const matchingProfileButton = quickSwitchDialog.getByRole("button", { name: /Work.*Across/i });
+    fireEvent.mouseEnter(matchingProfileButton);
+    fireEvent.keyDown(window, { key: "Enter", metaKey: true });
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
@@ -3545,7 +3583,7 @@ describe("App", () => {
 
     await renderApp();
     const quickSwitchDialog = await openQuickSwitchDialog();
-    fireEvent.click(quickSwitchDialog.getByRole("button", { name: /Work.*across matching tools/i }));
+    fireEvent.click(quickSwitchDialog.getByRole("button", { name: /Work.*Across/i }));
 
     await waitFor(() => {
       expect(
@@ -3596,7 +3634,7 @@ describe("App", () => {
       },
     });
 
-    expect(screen.getByText("Welcome")).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0);
     openSetupStep("Verify");
     fireEvent.change(screen.getByLabelText("First switch profile"), {
       target: { value: "work" },
@@ -5042,7 +5080,7 @@ describe("App", () => {
     });
   });
 
-  it("reruns setup detection when Get Started is clicked", async () => {
+  it("reruns setup detection when Check This Mac is clicked", async () => {
     let initCalls = 0;
     const firstRunSnapshot = {
       ...bootstrap.snapshot,
@@ -5087,14 +5125,16 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0),
+    );
     openSetupStep("Accounts");
     await waitFor(() => {
       expect(screen.getByText("Run the setup scan to detect live Claude, Codex, and Gemini accounts.")).toBeInTheDocument();
     });
     expect(initCalls).toBe(0);
 
-    fireEvent.click(screen.getByRole("button", { name: "Get Started" }));
+    fireEvent.click(screen.getByRole("button", { name: "Check This Mac" }));
 
     await waitFor(() => {
       expect(screen.getByText("detected · oauth")).toBeInTheDocument();
@@ -5149,7 +5189,9 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0),
+    );
     await waitFor(() => {
       expect(screen.getByText("No live credentials detected")).toBeInTheDocument();
     });
@@ -5227,7 +5269,9 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0),
+    );
     expect(screen.getAllByText("No live credentials detected").length).toBeGreaterThan(0);
     expect(screen.getByLabelText("Add codex profile")).toBeInTheDocument();
   });
@@ -5296,8 +5340,13 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
-    const setupSection = screen.getByRole("heading", { name: "Welcome" }).closest(".section-card");
+    await waitFor(() =>
+      expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0),
+    );
+    const setupHeading = screen
+      .getAllByRole("heading", { name: "Set Up AI Switch" })
+      .find((element) => element.closest(".section-card"));
+    const setupSection = setupHeading?.closest(".section-card");
     if (!(setupSection instanceof HTMLElement)) {
       throw new Error("Missing onboarding section.");
     }
@@ -5361,7 +5410,9 @@ describe("App", () => {
       )[command];
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0),
+    );
     openSetupStep("Terminal");
 
     fireEvent.click(screen.getByText("Open terminal setup"));
@@ -5427,7 +5478,9 @@ describe("App", () => {
       )[command];
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0),
+    );
     openSetupStep("Verify");
     fireEvent.click(screen.getByText("Open profile setup"));
 
@@ -6744,7 +6797,7 @@ describe("App", () => {
 
     await renderApp();
     const quickSwitchDialog = await openQuickSwitchDialog();
-    expect(quickSwitchDialog.getByRole("button", { name: /Office.*across matching tools/i })).toBeInTheDocument();
+    expect(quickSwitchDialog.getByRole("button", { name: /Office.*Across/i })).toBeInTheDocument();
   });
 
   it("uses saved profile labels in onboarding first switch options and sidebar badge", async () => {
@@ -7206,7 +7259,7 @@ describe("App", () => {
       },
     });
 
-    expect(screen.getByText("Welcome")).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0);
     expect(calls).not.toContain("run_doctor");
     expect(calls).not.toContain("get_shell_guidance");
 
@@ -7218,7 +7271,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls).toContain("run_doctor");
       expect(calls).toContain("get_shell_guidance");
-      expect(screen.getByText("Get Started")).toBeInTheDocument();
+      expect(screen.getByText("Check This Mac")).toBeInTheDocument();
     });
   });
 

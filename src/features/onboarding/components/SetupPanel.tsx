@@ -206,7 +206,7 @@ export function SetupPanel({
 
   return (
     <SectionCard
-      title="Welcome"
+      title="Set Up AI Switch"
       kicker="First launch"
       actions={
         <button
@@ -214,7 +214,7 @@ export function SetupPanel({
           disabled={mutationLock.isBusy}
           onClick={() => initMutation.mutate()}
         >
-          {initMutation.isPending ? "Checking this Mac…" : "Get Started"}
+          {initMutation.isPending ? "Checking this Mac…" : "Check This Mac"}
         </button>
       }
     >
@@ -222,8 +222,8 @@ export function SetupPanel({
         ariaLabel="Onboarding highlights"
         items={[
           {
-            label: "Desktop app",
-            value: "Safe profile switching",
+            label: "AI Switch",
+            value: "Safe local account switching",
             note: "Bring in existing Claude Code, Codex CLI, and Gemini CLI accounts, confirm the included engine is ready, and verify one safe switch without leaving this Mac.",
           },
           {
@@ -248,7 +248,7 @@ export function SetupPanel({
         primary={
           <div className="stack-list desktop-pane-column">
             <article className="diagnostic-card onboarding-trust-card">
-              <h3>Local-only by default</h3>
+              <h3>Private on this Mac</h3>
               <div className="trust-list">
                 <p className="trust-list-item">Credentials stay on this Mac</p>
                 <p className="trust-list-item">No telemetry</p>
@@ -260,7 +260,7 @@ export function SetupPanel({
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Setup</p>
-                  <h3>Steps</h3>
+                  <h3>Checklist</h3>
                 </div>
                 <span className={`pill ${needsAttentionCount ? "pill-soft" : "pill-ok"}`}>
                   {needsAttentionCount ? `${needsAttentionCount} action${needsAttentionCount === 1 ? "" : "s"}` : "Ready"}

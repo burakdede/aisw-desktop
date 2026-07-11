@@ -718,7 +718,7 @@ function describeRuntimeBlocker(runtimeStatus: {
 
 function sectionTitle(section: string, setupFocused = false) {
   if (setupFocused) {
-    return "Get Started";
+    return "Set Up AI Switch";
   }
   switch (section) {
     case "overview":
