@@ -57,7 +57,7 @@ export function AppFrame({
               <div className="sidebar-brand">
                 <div className="brand-lockup">
                   <BrandMark />
-                  <div>
+                  <div className="sidebar-brand-copy">
                     <p className="eyebrow">Desktop Switchboard</p>
                     <h1 className="sidebar-title">AI Switch</h1>
                   </div>
