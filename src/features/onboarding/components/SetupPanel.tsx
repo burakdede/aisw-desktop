@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { DesktopStatusStrip } from "../../../components/DesktopStatusStrip";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SectionCard } from "../../../components/SectionCard";
 import { SplitView } from "../../../components/SplitView";
@@ -217,23 +218,28 @@ export function SetupPanel({
         </button>
       }
     >
-      <div className="desktop-pane-hero desktop-pane-hero-onboarding">
-        <div className="desktop-pane-hero-copy">
-          <p className="card-kicker">Desktop app</p>
-          <h3>Switch AI coding-agent accounts safely.</h3>
-          <p className="inline-note">
-            Bring in existing Claude Code, Codex CLI, and Gemini CLI accounts, confirm the
-            included switching engine is ready, and verify one safe switch without leaving this
-            Mac.
-          </p>
-        </div>
-        <div className="desktop-pane-hero-pills" aria-label="Onboarding highlights">
-          <span className="pill pill-soft">Credentials stay local</span>
-          <span className="pill pill-soft">Bundled runtime</span>
-          <span className="pill pill-soft">No telemetry</span>
-          <span className="pill pill-soft">No traffic proxy</span>
-        </div>
-      </div>
+      <DesktopStatusStrip
+        ariaLabel="Onboarding highlights"
+        items={[
+          {
+            label: "Desktop app",
+            value: "Safe profile switching",
+            note: "Bring in existing Claude Code, Codex CLI, and Gemini CLI accounts, confirm the included engine is ready, and verify one safe switch without leaving this Mac.",
+          },
+          {
+            label: "Progress",
+            value: needsAttentionCount ? `${needsAttentionCount} setup action${needsAttentionCount === 1 ? "" : "s"}` : "Ready to switch",
+            note: switchReady
+              ? "At least one reusable profile is ready for shared switching."
+              : "Finish import or setup once, then verify the first shared switch.",
+          },
+          {
+            label: "Trust",
+            value: "Local only",
+            pills: ["Credentials stay local", "Included engine", "No telemetry", "No traffic proxy"],
+          },
+        ]}
+      />
 
       <SplitView
         className="onboarding-layout onboarding-layout-compact"

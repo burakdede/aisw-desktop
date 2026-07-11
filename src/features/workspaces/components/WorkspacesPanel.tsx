@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { DesktopStatusStrip } from "../../../components/DesktopStatusStrip";
 import { getProjectBindings, getWorkspaceStatus } from "../../../lib/client";
 import { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { SectionCard } from "../../../components/SectionCard";
@@ -121,20 +122,28 @@ export function WorkspacesPanel({
 
   return (
     <SectionCard title="Project rules" kicker="Expected sets by folder or remote">
-      <article className="desktop-pane-hero workspaces-hero">
-        <div className="desktop-pane-hero-copy">
-          <p className="card-kicker">Project rules</p>
-          <h3>Match folders and remotes to the right set automatically</h3>
-          <p className="inline-note">
-            Project rules keep the expected set visible for each workspace so the desktop app can warn before you start coding in the wrong account.
-          </p>
-        </div>
-        <div className="desktop-pane-hero-pills" aria-label="Project rule highlights">
-          <span className="status-pill">Folder-aware</span>
-          <span className="status-pill">Remote-aware</span>
-          <span className="status-pill">Mismatch recovery</span>
-        </div>
-      </article>
+      <DesktopStatusStrip
+        ariaLabel="Project rule highlights"
+        items={[
+          {
+            label: "Project rules",
+            value: "Automatic set matching",
+            note: "Keep the expected set visible for each workspace so the app can warn before you start coding in the wrong profile.",
+          },
+          {
+            label: "Coverage",
+            value: bindingsSummary.bindings.length ? `${bindingsSummary.bindings.length} saved rule${bindingsSummary.bindings.length === 1 ? "" : "s"}` : "No saved rules",
+            note: hasWorkspaceMismatch
+              ? "The current workspace does not match the expected set yet."
+              : "Use folder or remote rules to keep switching predictable across projects.",
+          },
+          {
+            label: "Highlights",
+            value: "Workspace-aware",
+            pills: ["Folder-aware", "Remote-aware", "Mismatch recovery"],
+          },
+        ]}
+      />
       <SplitView
         primary={
           <div className="stack-list desktop-pane-column">
