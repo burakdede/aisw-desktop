@@ -276,7 +276,7 @@ pub async fn export_diagnostic_bundle(
 
     let payload = serde_json::json!({
         "app": {
-            "name": "AISW Desktop",
+            "name": "AI Switch",
             "version": env!("CARGO_PKG_VERSION"),
             "platform": std::env::consts::OS,
             "arch": std::env::consts::ARCH,

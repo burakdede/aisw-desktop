@@ -252,8 +252,8 @@ describe("App", () => {
       run_verify: { summary: { status: "pass" } },
       run_repair: { result: { mode: "dry_run" } },
       export_diagnostic_bundle: {
-        path: "/tmp/aisw-desktop/aisw-desktop-diagnostics-123.json",
-        filename: "aisw-desktop-diagnostics-123.json",
+        path: "/tmp/ai-switch/ai-switch-diagnostics-123.json",
+        filename: "ai-switch-diagnostics-123.json",
         generated_at: "unix:123",
       },
       get_workspace_status: { result: { status: "match" } },
@@ -266,7 +266,7 @@ describe("App", () => {
           "Apply CLAUDE_CONFIG_DIR, CODEX_HOME, and GEMINI_API_KEY into the current shell session when you switch profiles from the AI Switch runtime.",
           "Enforce workspace guardrails before `claude`, `codex`, or `gemini` launch from that shell.",
         ],
-        note: "Without the shell hook, AI Switch still updates live credential files and `~/.aisw/config.json`. The hook is only required for current-shell exports and workspace checks.",
+        note: "Without terminal integration, AI Switch still updates local credential files and its managed configuration. Terminal integration is only required for current-shell exports and workspace checks.",
         manual_apply_examples: [
           'eval "$(aisw use claude work --emit-env)"',
           'eval "$(aisw context use client-acme --emit-env)"',
@@ -1808,8 +1808,8 @@ describe("App", () => {
           run_verify: { summary: { status: "pass" } },
           run_repair: { result: { mode: "dry_run" } },
           export_diagnostic_bundle: {
-            path: "/tmp/aisw-desktop/aisw-desktop-diagnostics-123.json",
-            filename: "aisw-desktop-diagnostics-123.json",
+            path: "/tmp/ai-switch/ai-switch-diagnostics-123.json",
+            filename: "ai-switch-diagnostics-123.json",
             generated_at: "unix:123",
           },
           get_workspace_status: { result: { status: "match" } },
@@ -1819,7 +1819,7 @@ describe("App", () => {
           get_shell_guidance: {
             detected_shell: "zsh",
             capabilities: [],
-            note: "Without the shell hook, AI Switch still writes live credential files.",
+            note: "Without terminal integration, AI Switch still updates local credential files.",
             manual_apply_examples: [],
             variants: [],
           },
@@ -1857,7 +1857,7 @@ describe("App", () => {
         throw {
           kind: "ConfigLockTimeout",
           message: "config lock is busy",
-          remediation: "Close other AISW sessions or wait for the config lock to clear, then retry.",
+          remediation: "Close other AI Switch windows or wait for the local config lock to clear, then retry.",
         };
       }
       return (
@@ -1883,7 +1883,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(
         screen.getByText(
-          "Last result: config lock is busy Remediation: Close other AISW sessions or wait for the config lock to clear, then retry.",
+          "Last result: config lock is busy Remediation: Close other AI Switch windows or wait for the local config lock to clear, then retry.",
         ),
       ).toBeInTheDocument();
     });
@@ -1898,7 +1898,7 @@ describe("App", () => {
       expect(within(failureCard).getByText("config lock is busy")).toBeInTheDocument();
       expect(
         within(failureCard).getByText(
-          "Close other AISW sessions or wait for the config lock to clear, then retry.",
+          "Close other AI Switch windows or wait for the local config lock to clear, then retry.",
         ),
       ).toBeInTheDocument();
     });
@@ -2083,7 +2083,7 @@ describe("App", () => {
 
     expect(
       screen.getByText(
-        "This runtime does not advertise live import for Claude. Open profile setup to use a supported flow.",
+        "This runtime does not support one-click capture for Claude. Open profile setup to choose another sign-in method.",
       ),
     ).toBeInTheDocument();
 
@@ -2131,7 +2131,7 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
     expect(
       screen.getByText(
-        "This runtime does not advertise live import for Claude. Open profile setup to use a supported flow.",
+        "This runtime does not support one-click capture for Claude. Open profile setup to choose another sign-in method.",
       ),
     ).toBeInTheDocument();
 
@@ -4147,8 +4147,8 @@ describe("App", () => {
           run_verify: { summary: { status: "pass" } },
           run_repair: { result: { summary: { status: "pass", actions_planned: 0, actions_applied: 0, issues_remaining: 0 }, actions: [] } },
           export_diagnostic_bundle: {
-            path: "/tmp/aisw-desktop/aisw-desktop-diagnostics-456.json",
-            filename: "aisw-desktop-diagnostics-456.json",
+            path: "/tmp/ai-switch/ai-switch-diagnostics-456.json",
+            filename: "ai-switch-diagnostics-456.json",
             generated_at: "unix:456",
           },
           get_workspace_status: { result: { status: "match" } },
@@ -4160,7 +4160,7 @@ describe("App", () => {
             capabilities: [
               "Apply CLAUDE_CONFIG_DIR, CODEX_HOME, and GEMINI_API_KEY into the current shell session when you switch profiles from the AI Switch runtime.",
             ],
-            note: "Without the shell hook, AI Switch still updates live credential files and `~/.aisw/config.json`.",
+            note: "Without terminal integration, AI Switch still updates local credential files and its managed configuration.",
             manual_apply_examples: ['eval "$(aisw use claude work --emit-env)"'],
             variants: [
               {
@@ -4186,14 +4186,14 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Diagnostic bundle exported")).toBeInTheDocument();
-      expect(screen.getByText("/tmp/aisw-desktop/aisw-desktop-diagnostics-456.json")).toBeInTheDocument();
+      expect(screen.getByText("/tmp/ai-switch/ai-switch-diagnostics-456.json")).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText("Copy bundle path"));
 
     await waitFor(() => {
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-        "/tmp/aisw-desktop/aisw-desktop-diagnostics-456.json",
+        "/tmp/ai-switch/ai-switch-diagnostics-456.json",
       );
     });
     expect(calls.some((entry) => entry.command === "export_diagnostic_bundle")).toBe(true);
@@ -5241,7 +5241,7 @@ describe("App", () => {
           get_shell_guidance: {
             detected_shell: "zsh",
             capabilities: [],
-            note: "Without the shell hook, AI Switch still writes live credential files.",
+            note: "Without terminal integration, AI Switch still updates local credential files.",
             manual_apply_examples: [],
             variants: [
               {
@@ -6661,8 +6661,8 @@ describe("App", () => {
           run_verify: { summary: { status: "pass" } },
           run_repair: { result: { mode: "dry_run" } },
           export_diagnostic_bundle: {
-            path: "/tmp/aisw-desktop/aisw-desktop-diagnostics-123.json",
-            filename: "aisw-desktop-diagnostics-123.json",
+            path: "/tmp/ai-switch/ai-switch-diagnostics-123.json",
+            filename: "ai-switch-diagnostics-123.json",
             generated_at: "unix:123",
           },
           get_workspace_status: { result: { status: "match" } },
@@ -6747,7 +6747,7 @@ describe("App", () => {
       expect(
         screen.getByText("Current runtime path: /Applications/AI Switch.app/Contents/Resources/aisw"),
       ).toBeInTheDocument();
-      expect(screen.getAllByText("AI Switch data folder: ~/.aisw").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Local data folder: Default managed location").length).toBeGreaterThan(0);
       expect(
         screen.getAllByText("Bundled switching runtime: /Applications/AI Switch.app/Contents/Resources/aisw").length,
       ).toBeGreaterThan(0);

@@ -173,7 +173,7 @@ export function SetupPanel({
             Resolved path: {bootstrap.runtime_status.resolved_path ?? "No runtime resolved"}
           </p>
           <p className="inline-note">
-            AI Switch data folder: {bootstrap.settings.aisw_home ?? "~/.aisw"}
+            Local data folder: {bootstrap.settings.aisw_home ?? "Default managed location"}
           </p>
           <p className="inline-note">
             Runtime version: {bootstrap.runtime_status.version?.version ?? "unknown"}
@@ -225,7 +225,8 @@ export function SetupPanel({
                 </p>
                 {!supportsProfileImportMode(account.tool, toolCapabilities, "from_live") ? (
                   <p className="inline-note">
-                    This runtime does not advertise live import for {titleCase(account.tool)}. Open profile setup to use a supported flow.
+                    This runtime does not support one-click capture for {titleCase(account.tool)}.
+                    Open profile setup to choose another sign-in method.
                   </p>
                 ) : null}
               </div>

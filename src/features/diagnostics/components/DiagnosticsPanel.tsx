@@ -357,7 +357,8 @@ export function DiagnosticsPanel({
                 ) : (
                   <div className="stack-list">
                     <p className="inline-note">
-                      This runtime does not advertise live import for {titleCase(fix.importTarget.tool)}. Open profile setup to use a supported flow.
+                      This runtime does not support one-click capture for {titleCase(fix.importTarget.tool)}.
+                      Open profile setup to choose another sign-in method.
                     </p>
                     <button
                       className="ghost-button"

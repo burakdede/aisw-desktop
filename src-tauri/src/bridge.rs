@@ -799,7 +799,7 @@ fn remediation_for_kind(kind: &GuiErrorKind) -> Option<String> {
                 .to_owned(),
         ),
         GuiErrorKind::PermissionDenied => Some(
-            "Check filesystem and credential-store permissions for AISW and the selected tool.".to_owned(),
+            "Check filesystem and credential-store permissions for AI Switch and the selected tool.".to_owned(),
         ),
         GuiErrorKind::OAuthTimeout => Some(
             "Retry the guided OAuth flow and complete the upstream login before the timeout expires."
@@ -810,11 +810,11 @@ fn remediation_for_kind(kind: &GuiErrorKind) -> Option<String> {
                 .to_owned(),
         ),
         GuiErrorKind::ConfigLockTimeout => Some(
-            "Close other AISW sessions or wait for the config lock to clear, then retry."
+            "Close other AI Switch windows or wait for the local config lock to clear, then retry."
                 .to_owned(),
         ),
         GuiErrorKind::InvalidStateMode => Some(
-            "Pick a state mode supported by this tool and aisw build.".to_owned(),
+            "Pick a state mode supported by this tool and the selected switching runtime.".to_owned(),
         ),
         _ => None,
     }

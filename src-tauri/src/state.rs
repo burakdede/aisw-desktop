@@ -202,7 +202,7 @@ impl AppState {
         if let Some(version) = &version {
             if version.cli_api_version != 1 || version.json_schema_version != 1 {
                 issues.push(
-                    "aisw contract version is not supported by this desktop build".to_owned(),
+                    "The selected switching runtime uses an unsupported desktop contract version.".to_owned(),
                 );
             }
         } else {
@@ -210,7 +210,7 @@ impl AppState {
         }
         if let Some(capabilities) = &capabilities {
             for feature in missing_required_features(capabilities) {
-                issues.push(format!("aisw does not advertise {feature} support"));
+                issues.push(format!("The selected switching runtime does not include {feature} support"));
             }
         } else {
             issues.push("Runtime capability details are unavailable".to_owned());

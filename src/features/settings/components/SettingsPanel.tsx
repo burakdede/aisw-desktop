@@ -223,7 +223,7 @@ export function SettingsPanel({
             )}
 
             <label>
-              AI Switch data folder override
+              Local data folder override
               <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
             </label>
             <label>
@@ -254,7 +254,7 @@ export function SettingsPanel({
                 Current runtime path: {runtimeStatus.resolved_path ?? "No runtime resolved"}
               </p>
               <p className="inline-note">
-                AI Switch data folder: {settings.aisw_home ?? "~/.aisw"}
+                Local data folder: {settings.aisw_home ?? "Default managed location"}
               </p>
               <p className="inline-note">
                 Bundled switching runtime: {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
@@ -387,7 +387,7 @@ export function SettingsPanel({
                 {shellCheck.detail ? ` · ${shellCheck.detail}` : ""}
               </p>
             ) : (
-              <p className="inline-note">Run diagnostics to verify whether the shell hook is active.</p>
+              <p className="inline-note">Run diagnostics to verify whether terminal integration is active.</p>
             )}
             <p className="inline-note">
               Detected shell:{" "}
@@ -457,8 +457,9 @@ export function SettingsPanel({
             ) : null}
             {shellGuidance.data ? (
               <article className="diagnostic-card">
-                <h3>Without the hook</h3>
+                <h3>Without terminal integration</h3>
                 <p className="inline-note">{shellGuidance.data.note}</p>
+                <p className="inline-note">Advanced command-line examples:</p>
                 {shellGuidance.data.manual_apply_examples.map((example) => (
                   <pre key={example}>{example}</pre>
                 ))}

@@ -18,7 +18,7 @@ pub fn write_redacted_bundle<T: Serialize>(
     std::fs::create_dir_all(output_dir)?;
 
     let timestamp = bundle_timestamp();
-    let filename = format!("aisw-desktop-diagnostics-{timestamp}.json");
+    let filename = format!("ai-switch-diagnostics-{timestamp}.json");
     let path = output_dir.join(&filename);
     let generated_at = iso_timestamp();
     let json = serde_json::to_string_pretty(payload)?;
@@ -33,7 +33,7 @@ pub fn write_redacted_bundle<T: Serialize>(
 }
 
 pub fn default_output_dir() -> PathBuf {
-    std::env::temp_dir().join("aisw-desktop")
+    std::env::temp_dir().join("ai-switch")
 }
 
 fn bundle_timestamp() -> String {
