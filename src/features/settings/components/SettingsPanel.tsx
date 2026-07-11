@@ -178,69 +178,76 @@ export function SettingsPanel({
 
   return (
     <SectionCard title="Settings" kicker={sectionKicker(selectedSection)}>
-      <div className="settings-status-strip" aria-label="Settings highlights">
-        <article className="settings-status-card">
-          <p className="card-kicker">Section</p>
-          <p className="settings-status-value">{sectionLabel(selectedSection)}</p>
-          <p className="inline-note">{sourceListSummary(selectedSection)}</p>
-        </article>
-        <article className="settings-status-card">
-          <p className="card-kicker">Behavior</p>
-          <p className="settings-status-value">{sectionHeading(selectedSection)}</p>
-          <p className="inline-note">{sectionDescription(selectedSection)}</p>
-        </article>
-        <article className="settings-status-card">
-          <p className="card-kicker">Highlights</p>
-          <div className="settings-status-pill-stack">
-            {sectionPills(selectedSection).map((pill) => (
-              <span key={pill} className="status-pill">
-                {pill}
-              </span>
-            ))}
-          </div>
-        </article>
-      </div>
       <SplitView
         className="settings-split"
         primaryClassName="settings-nav-pane"
         secondaryClassName="settings-detail-pane"
         primary={
-          <article className="diagnostic-card desktop-source-card settings-nav-card">
-            <div className="desktop-pane-section-header">
-              <div>
-                <p className="card-kicker">Categories</p>
-                <h3>Settings</h3>
+          <div className="stack-list">
+            <article className="diagnostic-card settings-overview-card">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Preferences</p>
+                  <h3>Settings overview</h3>
+                </div>
+                <span className="pill pill-soft">{sourceListSummary(selectedSection)}</span>
               </div>
-            </div>
-            <div className="desktop-source-list" aria-label="Settings sections">
-              {SETTINGS_SECTIONS.map((section) => (
-                <button
-                  key={section}
-                  type="button"
-                  aria-label={sectionLabel(section)}
-                  aria-describedby={`settings-section-summary-${section}`}
-                  aria-pressed={selectedSection === section}
-                  className={`desktop-source-row ${
-                    selectedSection === section ? "desktop-source-row-selected" : ""
-                  }`}
-                  onClick={() => setSelectedSection(section)}
-                >
-                  <div>
-                    <strong>{sectionLabel(section)}</strong>
-                    <p
-                      id={`settings-section-summary-${section}`}
-                      className="inline-note"
-                    >
-                      {sourceListSummary(section)}
-                    </p>
-                  </div>
-                  <span className="desktop-source-chevron" aria-hidden="true">
-                    ›
+              <p className="inline-note">{sectionDescription(selectedSection)}</p>
+              <div className="settings-overview-meta">
+                <div>
+                  <span className="overview-current-set-cell-label">Section</span>
+                  <strong>{sectionLabel(selectedSection)}</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Focus</span>
+                  <strong>{sectionHeading(selectedSection)}</strong>
+                </div>
+              </div>
+              <div className="desktop-status-pill-stack">
+                {sectionPills(selectedSection).map((pill) => (
+                  <span key={pill} className="status-pill">
+                    {pill}
                   </span>
-                </button>
-              ))}
-            </div>
-          </article>
+                ))}
+              </div>
+            </article>
+            <article className="diagnostic-card desktop-source-card settings-nav-card">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Sections</p>
+                  <h3>Settings</h3>
+                </div>
+              </div>
+              <div className="desktop-source-list" aria-label="Settings sections">
+                {SETTINGS_SECTIONS.map((section) => (
+                  <button
+                    key={section}
+                    type="button"
+                    aria-label={sectionLabel(section)}
+                    aria-describedby={`settings-section-summary-${section}`}
+                    aria-pressed={selectedSection === section}
+                    className={`desktop-source-row ${
+                      selectedSection === section ? "desktop-source-row-selected" : ""
+                    }`}
+                    onClick={() => setSelectedSection(section)}
+                  >
+                    <div>
+                      <strong>{sectionLabel(section)}</strong>
+                      <p
+                        id={`settings-section-summary-${section}`}
+                        className="inline-note"
+                      >
+                        {sourceListSummary(section)}
+                      </p>
+                    </div>
+                    <span className="desktop-source-chevron" aria-hidden="true">
+                      ›
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </article>
+          </div>
         }
         secondary={
       <div className="settings-pane">

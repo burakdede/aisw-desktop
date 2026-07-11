@@ -1,6 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { DesktopStatusStrip } from "../../../components/DesktopStatusStrip";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SectionCard } from "../../../components/SectionCard";
 import { SplitView } from "../../../components/SplitView";
@@ -242,37 +241,65 @@ export function SetupPanel({
         </button>
       }
     >
-      <DesktopStatusStrip
-        ariaLabel="Onboarding highlights"
-        items={[
-          {
-            label: "Welcome",
-            value: "Safe local account switching",
-            note: "Bring in the accounts you already use, confirm the included runtime is ready, and verify one shared switch without leaving this Mac.",
-          },
-          {
-            label: "Progress",
-            value: needsAttentionCount ? `${needsAttentionCount} setup action${needsAttentionCount === 1 ? "" : "s"}` : "Ready to switch",
-            note: switchReady
-              ? "At least one reusable profile is ready for a first switch."
-              : "Save one profile first, then verify the first shared switch.",
-          },
-          {
-            label: "Trust",
-            value: "Local only",
-            pills: ["Credentials stay local", "Included runtime", "No telemetry", "No traffic proxy"],
-          },
-        ]}
-      />
-
       <SplitView
         className="onboarding-layout onboarding-layout-compact"
         primaryClassName="onboarding-summary-pane"
         secondaryClassName="onboarding-actions-pane"
         primary={
           <div className="stack-list desktop-pane-column">
+            <article className="diagnostic-card onboarding-overview">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Welcome</p>
+                  <h3>Safe local account switching</h3>
+                </div>
+                <span className={`pill ${needsAttentionCount ? "pill-soft" : "pill-ok"}`}>
+                  {needsAttentionCount
+                    ? `${needsAttentionCount} action${needsAttentionCount === 1 ? "" : "s"}`
+                    : "Ready"}
+                </span>
+              </div>
+              <p className="inline-note">
+                Bring in the accounts you already use, confirm the included runtime is ready,
+                and verify one shared switch without leaving this Mac.
+              </p>
+              <div className="onboarding-overview-meta">
+                <div>
+                  <span className="overview-current-set-cell-label">Privacy</span>
+                  <strong>Local only</strong>
+                  <p className="inline-note">Credentials stay on this Mac with no telemetry or traffic proxy.</p>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Progress</span>
+                  <strong>
+                    {switchReady ? "Ready to switch" : "Needs one saved profile"}
+                  </strong>
+                  <p className="inline-note">
+                    {switchReady
+                      ? "At least one reusable profile is ready for a first switch."
+                      : "Save one profile first, then verify the first shared switch."}
+                  </p>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Runtime</span>
+                  <strong>{bootstrap.runtime_status.compatible ? "Included runtime ready" : "Needs attention"}</strong>
+                  <p className="inline-note">
+                    {bootstrap.runtime_status.compatible
+                      ? "This build can switch accounts with the included runtime."
+                      : "Resolve runtime setup before switching across tools."}
+                  </p>
+                </div>
+              </div>
+              <div className="desktop-status-pill-stack">
+                {["Credentials stay local", "Included runtime", "No telemetry", "No traffic proxy"].map((pill) => (
+                  <span key={pill} className="status-pill">
+                    {pill}
+                  </span>
+                ))}
+              </div>
+            </article>
             <article className="diagnostic-card onboarding-trust-card">
-              <h3>Private and local</h3>
+              <h3>What stays local</h3>
               <p className="inline-note">
                 AI Switch is a local control center for coding-agent accounts. It keeps the
                 active account clear, switching fast, and recovery safe.
@@ -336,7 +363,7 @@ export function SetupPanel({
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Runtime</p>
-                  <h3>Bundled AI Switch runtime</h3>
+                  <h3>Included AI Switch runtime</h3>
                 </div>
                 <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
                   {bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}
@@ -372,7 +399,7 @@ export function SetupPanel({
                   <div className="desktop-pane-section-header">
                     <div>
                       <p className="card-kicker">Runtime</p>
-                      <h3>Bundled AI Switch runtime</h3>
+                      <h3>Included AI Switch runtime</h3>
                     </div>
                     <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
                       {bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}

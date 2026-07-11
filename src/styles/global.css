@@ -842,6 +842,26 @@ button {
   padding: 12px 14px;
 }
 
+.onboarding-overview {
+  display: grid;
+  gap: 12px;
+}
+
+.onboarding-overview-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.onboarding-overview-meta > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
 .onboarding-layout {
   grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
 }
@@ -931,8 +951,28 @@ button {
   align-content: start;
 }
 
+.settings-overview-card {
+  display: grid;
+  gap: 12px;
+}
+
+.settings-overview-meta {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-overview-meta > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
 .settings-split {
   grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+  align-items: start;
 }
 
 .settings-nav-pane,
@@ -2737,6 +2777,10 @@ button {
   }
 
   .backups-overview-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .onboarding-overview-meta {
     grid-template-columns: 1fr;
   }
 
