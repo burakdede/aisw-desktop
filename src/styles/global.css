@@ -638,8 +638,8 @@ button {
   padding: 12px 14px;
 }
 
-.onboarding-grid {
-  align-items: start;
+.onboarding-layout {
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
 }
 
 .onboarding-detection-stack {
@@ -1322,7 +1322,9 @@ button {
 .profiles-inspector-pane,
 .set-editor-pane,
 .overview-summary-pane,
-.overview-tools-pane {
+.overview-tools-pane,
+.onboarding-summary-pane,
+.onboarding-actions-pane {
   min-width: 0;
 }
 

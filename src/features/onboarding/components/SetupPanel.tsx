@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SectionCard } from "../../../components/SectionCard";
+import { SplitView } from "../../../components/SplitView";
 import { getShellGuidance, runDoctor } from "../../../lib/client";
 import { sharedProfileEntries } from "../../../lib/profile-display";
 import { AppBootstrap, AppSnapshot, InitReport } from "../../../lib/schemas";
@@ -165,8 +166,12 @@ export function SetupPanel({
         </article>
       </div>
 
-      <div className="panel-grid panel-grid-2 diagnostics-body desktop-pane-grid onboarding-grid">
-        <div className="stack-list desktop-pane-column">
+      <SplitView
+        className="onboarding-layout"
+        primaryClassName="onboarding-summary-pane"
+        secondaryClassName="onboarding-actions-pane"
+        primary={
+          <div className="stack-list desktop-pane-column">
           <article className="diagnostic-card desktop-pane-intro">
             <h3>Runtime check</h3>
             <p className="inline-note">
@@ -248,9 +253,10 @@ export function SetupPanel({
               ) : null}
             </div>
           </article>
-        </div>
-
-        <div className="stack-list desktop-pane-column">
+          </div>
+        }
+        secondary={
+          <div className="stack-list desktop-pane-column">
           <article className="diagnostic-card desktop-pane-intro">
             <h3>Detected tools</h3>
             <p className="inline-note">
@@ -477,8 +483,9 @@ export function SetupPanel({
               </button>
             </div>
           </article>
-        </div>
-      </div>
+          </div>
+        }
+      />
     </SectionCard>
   );
 }
