@@ -955,11 +955,6 @@ button {
   align-content: start;
 }
 
-.settings-overview-card {
-  display: grid;
-  gap: 12px;
-}
-
 .settings-overview-meta {
   display: grid;
   gap: 10px;

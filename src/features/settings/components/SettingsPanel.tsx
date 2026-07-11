@@ -185,11 +185,11 @@ export function SettingsPanel({
         secondaryClassName="settings-detail-pane"
         primary={
           <div className="stack-list">
-            <article className="diagnostic-card settings-overview-card">
+            <article className="diagnostic-card desktop-source-card settings-nav-card">
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Preferences</p>
-                  <h3>Settings overview</h3>
+                  <h3>Settings</h3>
                 </div>
                 <span className="pill pill-soft">{sourceListSummary(selectedSection)}</span>
               </div>
@@ -210,14 +210,6 @@ export function SettingsPanel({
                     {pill}
                   </span>
                 ))}
-              </div>
-            </article>
-            <article className="diagnostic-card desktop-source-card settings-nav-card">
-              <div className="desktop-pane-section-header">
-                <div>
-                  <p className="card-kicker">Sections</p>
-                  <h3>Settings</h3>
-                </div>
               </div>
               <div className="desktop-source-list" aria-label="Settings sections">
                 {SETTINGS_SECTIONS.map((section) => (
