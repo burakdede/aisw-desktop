@@ -1729,15 +1729,40 @@ button {
   gap: 12px;
 }
 
+.profiles-table-card,
+.profiles-detail-card,
+.profiles-actions-card {
+  min-width: 0;
+}
+
+.profiles-table-card {
+  padding: 12px;
+}
+
+.profiles-table-rows {
+  gap: 0;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
+  overflow: hidden;
+  background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
+}
+
 .profile-list-row {
   display: grid;
   grid-template-columns: minmax(180px, 1.4fr) minmax(0, 1.8fr) auto;
   gap: 12px;
   align-items: center;
   width: 100%;
-  background: color-mix(in srgb, Canvas 98%, CanvasText 2%);
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
+  background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
   text-align: left;
   cursor: pointer;
+}
+
+.profiles-table-rows > .profile-list-row:last-child {
+  border-bottom: 0;
 }
 
 .profile-list-row-active {
@@ -1754,6 +1779,15 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.profile-list-main p,
+.profile-list-columns span {
+  color: var(--text-secondary);
+}
+
+.profiles-detail-hero {
+  align-items: flex-start;
 }
 
 .profile-list-row-chevron {

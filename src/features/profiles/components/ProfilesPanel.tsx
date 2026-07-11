@@ -453,7 +453,7 @@ export function ProfilesPanel({
         secondaryClassName="profiles-inspector-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-            <div className="desktop-pane-section desktop-list-surface">
+            <article className="diagnostic-card profiles-table-card">
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Library</p>
@@ -471,8 +471,7 @@ export function ProfilesPanel({
                 <span>State</span>
                 <span>Last checked</span>
               </div>
-            </div>
-            <div className="stack-list desktop-list-stack">
+              <div className="stack-list desktop-list-stack profiles-table-rows">
               {filteredInventoryProfiles.map((inventoryEntry) => (
                 <button
                   key={`${inventoryEntry.tool}:${inventoryEntry.name}`}
@@ -504,12 +503,20 @@ export function ProfilesPanel({
                 >
                   <div className="profile-list-main">
                     <div className="profile-list-row-title">
+                      <span
+                        className={`health-dot health-dot-${
+                          inventoryEntry.state === "Drifted"
+                            ? "warning"
+                            : inventoryEntry.active
+                              ? "ok"
+                              : "neutral"
+                        }`}
+                        aria-hidden="true"
+                      />
                       <strong>{inventoryEntry.label}</strong>
                       {inventoryEntry.active ? <span className="pill pill-ok">Active</span> : null}
                     </div>
-                    <p>
-                      {inventoryEntry.name} · {inventoryEntry.auth}
-                    </p>
+                    <p>{inventoryEntry.name}</p>
                   </div>
                   <div className="profile-list-columns">
                     <span>{titleCase(inventoryEntry.tool)}</span>
@@ -531,7 +538,8 @@ export function ProfilesPanel({
                   </p>
                 </article>
               ) : null}
-            </div>
+              </div>
+            </article>
           </div>
         }
         secondary={
@@ -590,331 +598,409 @@ export function ProfilesPanel({
             </article>
           <div className="stack-list">
             {selectedProfileEntry ? (
-              <article className="diagnostic-card">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Inspector</p>
-                    <h3>{selectedProfileDisplay}</h3>
+              <>
+                <article className="diagnostic-card profiles-detail-card">
+                  <div className="desktop-pane-section-header profiles-detail-hero">
+                    <div>
+                      <p className="card-kicker">Inspector</p>
+                      <h3>{titleCase(tool)} / {selectedProfileDisplay}</h3>
+                    </div>
+                    <span
+                      className={`pill ${
+                        snapshot.profiles[tool]?.active === selectedProfileEntry.name
+                          ? toolStatus?.active_profile_applied === false
+                            ? "pill-warn"
+                            : "pill-ok"
+                          : "pill-soft"
+                      }`}
+                    >
+                      {profileStatusSummary(snapshot, tool, selectedProfileEntry.name, toolStatus)}
+                    </span>
                   </div>
                   <p className="inline-note">
-                    Review activation status, labels, backups, and safe recovery actions for this saved profile.
+                    {selectedProfileEntry.name} · {selectedProfileEntry.auth}
                   </p>
-                </div>
-                <p className="inline-note">
-                  {selectedProfileEntry.name} · {selectedProfileEntry.auth}
-                </p>
-                <KeyValueGrid
-                  rows={[
-                    {
-                      label: "Status",
-                      value:
-                        snapshot.profiles[tool]?.active === selectedProfileEntry.name ? "Active" : "Stored",
-                    },
-                    {
-                      label: "Live match",
-                      value:
-                        snapshot.profiles[tool]?.active === selectedProfileEntry.name
-                          ? toolStatus?.active_profile_applied === undefined ||
-                            toolStatus?.active_profile_applied === null
-                            ? "Unknown"
-                            : toolStatus.active_profile_applied
-                              ? "Yes"
-                              : "No"
-                          : "Available after activation",
-                    },
-                    {
-                      label: "Credential backend",
-                      value:
-                        snapshot.profiles[tool]?.active === selectedProfileEntry.name
-                          ? toolStatus?.credential_backend ?? "unknown"
-                          : selectedInventoryEntry?.backend ?? "Stored",
-                    },
-                    {
-                      label: "Last checked",
-                      value: selectedInventoryEntry?.lastChecked ?? "Available locally",
-                    },
-                  ]}
-                />
-              <div className="inline-form inline-form-compact">
-                <input
-                  aria-label={`rename ${selectedProfileEntry.name}`}
-                  placeholder="new name"
-                  value={selectedRenameDraft}
-                  onChange={(event) =>
-                    setRenameDrafts((current) => ({
-                      ...current,
-                      [selectedProfileEntry.name]: event.target.value,
-                    }))
-                  }
-                />
-                <button
-                  className="ghost-button"
-                  type="button"
-                  disabled={mutationLock.isBusy || Boolean(selectedRenameDuplicate)}
-                  onClick={() => {
-                    const newName = selectedRenameDraft.trim();
-                    if (!newName) return;
-                    setPendingRemoval(null);
-                    renameProfileMutation.mutate({
-                      tool,
-                      oldName: selectedProfileEntry.name,
-                      newName,
-                    });
-                  }}
-                >
-                  Rename
-                </button>
-              </div>
-              {selectedRenameDuplicate ? (
-                <p className="inline-note">
-                  {duplicateWarning(tool, selectedRenameDraft.trim())}
-                </p>
-              ) : null}
-              <div className="inline-form inline-form-compact">
-                <input
-                  aria-label={`label ${selectedProfileEntry.name}`}
-                  placeholder="display label"
-                  value={
-                    labelDrafts[selectedProfileEntry.name] ??
-                    effectiveLabel(tool, selectedProfileEntry.name, selectedProfileEntry.label, settings) ??
-                    ""
-                  }
-                  onChange={(event) =>
-                    setLabelDrafts((current) => ({
-                      ...current,
-                      [selectedProfileEntry.name]: event.target.value,
-                    }))
-                  }
-                />
-                <button
-                  className="ghost-button"
-                  type="button"
-                  disabled={mutationLock.isBusy}
-                  onClick={() => {
-                    const nextLabel = labelDrafts[selectedProfileEntry.name]?.trim() ?? "";
-                    setPendingRemoval(null);
-                    updateSettingsMutation.mutate({
-                      runtime_kind: settings.runtime_kind,
-                      runtime_path: settings.runtime_path ?? null,
-                      aisw_home: settings.aisw_home ?? null,
-                      update_channel: settings.update_channel,
-                      profile_sets: settings.profile_sets,
-                      profile_labels: mergeProfileLabel(
-                        settings,
-                        tool,
-                        selectedProfileEntry.name,
-                        nextLabel || null,
-                      ),
-                    });
-                  }}
-                >
-                  Relabel
-                </button>
-              </div>
-              <div className="button-row">
-                <button
-                  className="primary-button"
-                  type="button"
-                  disabled={mutationLock.isBusy}
-                  onClick={() =>
-                    useProfileMutation.mutate({
-                      tool,
-                      profile: selectedProfileEntry.name,
-                      stateMode: availableStateModes.length ? stateMode : null,
-                      label: selectedProfileDisplay ?? selectedProfileEntry.name,
-                    })
-                  }
-                >
-                  Activate
-                </button>
-                <button
-                  className="ghost-button"
-                  type="button"
-                  onClick={() =>
-                    setOpenDiagnosticDetails((current) =>
-                      current === selectedProfileEntry.name ? null : selectedProfileEntry.name,
-                    )
-                  }
-                >
-                  {openDiagnosticDetails === selectedProfileEntry.name
-                    ? "Hide technical details"
-                    : "View technical details"}
-                </button>
-              </div>
-              {openDiagnosticDetails === selectedProfileEntry.name ? (
-                <article className="diagnostic-card">
-                  <h4>Technical details</h4>
-                  <p className="inline-note">
-                    Auth method: {selectedProfileEntry.auth}
-                  </p>
-                  <p className="inline-note">
-                    Desktop active: {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? "yes" : "no"}
-                  </p>
-                  {selectedLatestBackup ? (
-                    <p className="inline-note">
-                      Latest backup: {formatBackupTimestamp(selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id)}
-                    </p>
-                  ) : null}
-                  {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? (
-                    <>
-                      <p className="inline-note">
-                        Credential backend: {toolStatus?.credential_backend ?? "unknown"}
-                      </p>
-                      <p className="inline-note">
-                        Live match:{" "}
-                        {toolStatus?.active_profile_applied === undefined ||
-                        toolStatus?.active_profile_applied === null
-                          ? "unknown"
-                          : toolStatus.active_profile_applied
-                            ? "yes"
-                            : "no"}
-                      </p>
-                      <p className="inline-note">
-                        Credentials present:{" "}
-                        {toolStatus?.credentials_present === undefined ||
-                        toolStatus?.credentials_present === null
-                          ? "unknown"
-                          : toolStatus.credentials_present
-                            ? "yes"
-                            : "no"}
-                      </p>
-                      <p className="inline-note">
-                        Permissions OK:{" "}
-                        {toolStatus?.permissions_ok === undefined || toolStatus?.permissions_ok === null
-                          ? "unknown"
-                          : toolStatus.permissions_ok
-                            ? "yes"
-                            : "no"}
-                      </p>
-                      {toolStatus?.token_warning ? (
-                        <p className="inline-note">
-                          Token warning: {formatProfileTokenWarning(toolStatus)}
-                        </p>
-                      ) : null}
-                      {toolStatus?.warnings.length ? (
-                        <div className="stack-list">
-                          {toolStatus.warnings.map((warning, index) => (
-                            <p
-                              key={`${warning.code ?? warning.message ?? "warning"}-${index}`}
-                              className="inline-note"
-                            >
-                              Warning: {formatProfileWarning(warning)}
-                            </p>
-                          ))}
-                        </div>
-                      ) : null}
-                      {!toolStatus?.token_warning && !toolStatus?.warnings.length ? (
-                        <p className="inline-note">
-                          No additional token or runtime warnings are currently reported for this tool.
-                        </p>
-                      ) : null}
-                    </>
-                  ) : (
-                    <p className="inline-note">
-                      Live runtime diagnostics are only available for the active profile. Activate this
-                      profile to verify backend, live-match, token, and permission state.
-                    </p>
-                  )}
+                  <KeyValueGrid
+                    rows={[
+                      {
+                        label: "Active profile",
+                        value:
+                          snapshot.profiles[tool]?.active === selectedProfileEntry.name ? "Yes" : "No",
+                      },
+                      {
+                        label: "Live match",
+                        value: profileLiveMatchValue(snapshot, tool, selectedProfileEntry.name, toolStatus),
+                      },
+                      {
+                        label: "Auth method",
+                        value: selectedProfileEntry.auth,
+                      },
+                      {
+                        label: "Credential backend",
+                        value:
+                          snapshot.profiles[tool]?.active === selectedProfileEntry.name
+                            ? toolStatus?.credential_backend ?? "unknown"
+                            : selectedInventoryEntry?.backend ?? "Stored",
+                      },
+                      {
+                        label: "State mode",
+                        value:
+                          snapshot.profiles[tool]?.active === selectedProfileEntry.name
+                            ? toolStatus?.state_mode ?? "n/a"
+                            : selectedInventoryEntry?.state ?? "Stored",
+                      },
+                      {
+                        label: "Last checked",
+                        value: selectedInventoryEntry?.lastChecked ?? "Available locally",
+                      },
+                    ]}
+                  />
                 </article>
-              ) : null}
-              {selectedLatestBackup ? (
-                <div className="button-row">
-                  <button
-                    className="ghost-button"
-                    type="button"
-                    disabled={mutationLock.isBusy}
-                    onClick={() =>
-                      setPendingRestore({
-                        profile: selectedProfileEntry.name,
-                        mode: "files",
-                      })
-                    }
-                  >
-                    Restore latest
-                  </button>
-                  <button
-                    className="ghost-button"
-                    type="button"
-                    disabled={mutationLock.isBusy}
-                    onClick={() =>
-                      setPendingRestore({
-                        profile: selectedProfileEntry.name,
-                        mode: "activate",
-                      })
-                    }
-                  >
-                    Restore latest + activate
-                  </button>
-                </div>
-              ) : null}
-              {isPendingRestoreFiles ? (
-                <>
-                  <p className="inline-note">
-                    Confirm before restoring the latest backup for {selectedRestoreTargetDisplay}. This replays the saved files only.
-                  </p>
-                  <div className="button-row">
-                    <button
-                      className="ghost-button danger-button"
-                      type="button"
-                      disabled={mutationLock.isBusy}
-                      onClick={() =>
-                        restoreBackupMutation.mutate(selectedLatestBackup!.backup_id, {
-                          onSuccess: () => setPendingRestore(null),
-                        })
-                      }
-                    >
-                      Confirm restore latest
-                    </button>
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      onClick={() => setPendingRestore(null)}
-                    >
-                      Cancel
-                    </button>
+                <article className="diagnostic-card profiles-actions-card">
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <p className="card-kicker">Actions</p>
+                      <h3>Profile actions</h3>
+                    </div>
+                    <p className="inline-note">
+                      Switch, restore, rename, and remove this saved profile without leaving the inspector.
+                    </p>
                   </div>
-                </>
-              ) : null}
-              {isPendingRestoreAndActivate ? (
-                <>
-                  <p className="inline-note">
-                    Confirm before restoring and activating the latest backup for {selectedRestoreTargetDisplay}. This replays the backup and switches the live profile again.
-                  </p>
                   <div className="button-row">
                     <button
                       className="primary-button"
                       type="button"
                       disabled={mutationLock.isBusy}
                       onClick={() =>
-                        restoreBackupMutation.mutate(selectedLatestBackup!.backup_id, {
-                          onSuccess: () => {
-                            setPendingRestore(null);
-                            useProfileMutation.mutate({
-                              tool,
-                              profile: selectedProfileEntry.name,
-                              stateMode: resolveStateModeRequest(tool, toolCapabilities, stateMode),
-                              label: selectedProfileDisplay ?? selectedProfileEntry.name,
-                            });
-                          },
+                        useProfileMutation.mutate({
+                          tool,
+                          profile: selectedProfileEntry.name,
+                          stateMode: availableStateModes.length ? stateMode : null,
+                          label: selectedProfileDisplay ?? selectedProfileEntry.name,
                         })
                       }
                     >
-                      Confirm restore latest and activate
+                      Activate
                     </button>
                     <button
                       className="ghost-button"
                       type="button"
-                      onClick={() => setPendingRestore(null)}
+                      onClick={() =>
+                        setOpenDiagnosticDetails((current) =>
+                          current === selectedProfileEntry.name ? null : selectedProfileEntry.name,
+                        )
+                      }
                     >
-                      Cancel
+                      {openDiagnosticDetails === selectedProfileEntry.name
+                        ? "Hide technical details"
+                        : "View technical details"}
                     </button>
                   </div>
-                </>
-              ) : null}
-              <div className="button-row">
-                {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? (
-                  pendingRemoval === selectedProfileEntry.name ? (
-                    <>
+                  {selectedLatestBackup ? (
+                    <div className="button-row">
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        disabled={mutationLock.isBusy}
+                        onClick={() =>
+                          setPendingRestore({
+                            profile: selectedProfileEntry.name,
+                            mode: "files",
+                          })
+                        }
+                      >
+                        Restore latest
+                      </button>
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        disabled={mutationLock.isBusy}
+                        onClick={() =>
+                          setPendingRestore({
+                            profile: selectedProfileEntry.name,
+                            mode: "activate",
+                          })
+                        }
+                      >
+                        Restore latest + activate
+                      </button>
+                    </div>
+                  ) : null}
+                </article>
+                <article className="diagnostic-card profiles-actions-card">
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <p className="card-kicker">Names</p>
+                      <h3>Rename and relabel</h3>
+                    </div>
+                    <p className="inline-note">
+                      Keep the stable profile name and visible label easy to manage separately.
+                    </p>
+                  </div>
+                  <div className="inline-form inline-form-compact">
+                    <input
+                      aria-label={`rename ${selectedProfileEntry.name}`}
+                      placeholder="new name"
+                      value={selectedRenameDraft}
+                      onChange={(event) =>
+                        setRenameDrafts((current) => ({
+                          ...current,
+                          [selectedProfileEntry.name]: event.target.value,
+                        }))
+                      }
+                    />
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      disabled={mutationLock.isBusy || Boolean(selectedRenameDuplicate)}
+                      onClick={() => {
+                        const newName = selectedRenameDraft.trim();
+                        if (!newName) return;
+                        setPendingRemoval(null);
+                        renameProfileMutation.mutate({
+                          tool,
+                          oldName: selectedProfileEntry.name,
+                          newName,
+                        });
+                      }}
+                    >
+                      Rename
+                    </button>
+                  </div>
+                  {selectedRenameDuplicate ? (
+                    <p className="inline-note">
+                      {duplicateWarning(tool, selectedRenameDraft.trim())}
+                    </p>
+                  ) : null}
+                  <div className="inline-form inline-form-compact">
+                    <input
+                      aria-label={`label ${selectedProfileEntry.name}`}
+                      placeholder="display label"
+                      value={
+                        labelDrafts[selectedProfileEntry.name] ??
+                        effectiveLabel(tool, selectedProfileEntry.name, selectedProfileEntry.label, settings) ??
+                        ""
+                      }
+                      onChange={(event) =>
+                        setLabelDrafts((current) => ({
+                          ...current,
+                          [selectedProfileEntry.name]: event.target.value,
+                        }))
+                      }
+                    />
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      disabled={mutationLock.isBusy}
+                      onClick={() => {
+                        const nextLabel = labelDrafts[selectedProfileEntry.name]?.trim() ?? "";
+                        setPendingRemoval(null);
+                        updateSettingsMutation.mutate({
+                          runtime_kind: settings.runtime_kind,
+                          runtime_path: settings.runtime_path ?? null,
+                          aisw_home: settings.aisw_home ?? null,
+                          update_channel: settings.update_channel,
+                          profile_sets: settings.profile_sets,
+                          profile_labels: mergeProfileLabel(
+                            settings,
+                            tool,
+                            selectedProfileEntry.name,
+                            nextLabel || null,
+                          ),
+                        });
+                      }}
+                    >
+                      Relabel
+                    </button>
+                  </div>
+                </article>
+                {openDiagnosticDetails === selectedProfileEntry.name ? (
+                  <article className="diagnostic-card profiles-actions-card">
+                    <h4>Technical details</h4>
+                    <p className="inline-note">
+                      Auth method: {selectedProfileEntry.auth}
+                    </p>
+                    <p className="inline-note">
+                      Desktop active: {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? "yes" : "no"}
+                    </p>
+                    {selectedLatestBackup ? (
+                      <p className="inline-note">
+                        Latest backup: {formatBackupTimestamp(selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id)}
+                      </p>
+                    ) : null}
+                    {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? (
+                      <>
+                        <p className="inline-note">
+                          Credential backend: {toolStatus?.credential_backend ?? "unknown"}
+                        </p>
+                        <p className="inline-note">
+                          Live match:{" "}
+                          {toolStatus?.active_profile_applied === undefined ||
+                          toolStatus?.active_profile_applied === null
+                            ? "unknown"
+                            : toolStatus.active_profile_applied
+                              ? "yes"
+                              : "no"}
+                        </p>
+                        <p className="inline-note">
+                          Credentials present:{" "}
+                          {toolStatus?.credentials_present === undefined ||
+                          toolStatus?.credentials_present === null
+                            ? "unknown"
+                            : toolStatus.credentials_present
+                              ? "yes"
+                              : "no"}
+                        </p>
+                        <p className="inline-note">
+                          Permissions OK:{" "}
+                          {toolStatus?.permissions_ok === undefined || toolStatus?.permissions_ok === null
+                            ? "unknown"
+                            : toolStatus.permissions_ok
+                              ? "yes"
+                              : "no"}
+                        </p>
+                        {toolStatus?.token_warning ? (
+                          <p className="inline-note">
+                            Token warning: {formatProfileTokenWarning(toolStatus)}
+                          </p>
+                        ) : null}
+                        {toolStatus?.warnings.length ? (
+                          <div className="stack-list">
+                            {toolStatus.warnings.map((warning, index) => (
+                              <p
+                                key={`${warning.code ?? warning.message ?? "warning"}-${index}`}
+                                className="inline-note"
+                              >
+                                Warning: {formatProfileWarning(warning)}
+                              </p>
+                            ))}
+                          </div>
+                        ) : null}
+                        {!toolStatus?.token_warning && !toolStatus?.warnings.length ? (
+                          <p className="inline-note">
+                            No additional token or runtime warnings are currently reported for this tool.
+                          </p>
+                        ) : null}
+                      </>
+                    ) : (
+                      <p className="inline-note">
+                        Live runtime diagnostics are only available for the active profile. Activate this
+                        profile to verify backend, live-match, token, and permission state.
+                      </p>
+                    )}
+                  </article>
+                ) : null}
+                {isPendingRestoreFiles ? (
+                  <article className="diagnostic-card profiles-actions-card">
+                    <p className="inline-note">
+                      Confirm before restoring the latest backup for {selectedRestoreTargetDisplay}. This replays the saved files only.
+                    </p>
+                    <div className="button-row">
+                      <button
+                        className="ghost-button danger-button"
+                        type="button"
+                        disabled={mutationLock.isBusy}
+                        onClick={() =>
+                          restoreBackupMutation.mutate(selectedLatestBackup!.backup_id, {
+                            onSuccess: () => setPendingRestore(null),
+                          })
+                        }
+                      >
+                        Confirm restore latest
+                      </button>
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        onClick={() => setPendingRestore(null)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </article>
+                ) : null}
+                {isPendingRestoreAndActivate ? (
+                  <article className="diagnostic-card profiles-actions-card">
+                    <p className="inline-note">
+                      Confirm before restoring and activating the latest backup for {selectedRestoreTargetDisplay}. This replays the backup and switches the live profile again.
+                    </p>
+                    <div className="button-row">
+                      <button
+                        className="primary-button"
+                        type="button"
+                        disabled={mutationLock.isBusy}
+                        onClick={() =>
+                          restoreBackupMutation.mutate(selectedLatestBackup!.backup_id, {
+                            onSuccess: () => {
+                              setPendingRestore(null);
+                              useProfileMutation.mutate({
+                                tool,
+                                profile: selectedProfileEntry.name,
+                                stateMode: resolveStateModeRequest(tool, toolCapabilities, stateMode),
+                                label: selectedProfileDisplay ?? selectedProfileEntry.name,
+                              });
+                            },
+                          })
+                        }
+                      >
+                        Confirm restore latest and activate
+                      </button>
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        onClick={() => setPendingRestore(null)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </article>
+                ) : null}
+                <article className="diagnostic-card profiles-actions-card">
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <p className="card-kicker">Removal</p>
+                      <h3>Remove profile</h3>
+                    </div>
+                    <p className="inline-note">
+                      Removing an active profile requires an extra confirmation before the saved login is deleted.
+                    </p>
+                  </div>
+                  <div className="button-row">
+                    {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? (
+                      pendingRemoval === selectedProfileEntry.name ? (
+                        <>
+                          <button
+                            className="ghost-button danger-button"
+                            type="button"
+                            disabled={mutationLock.isBusy}
+                            onClick={() => {
+                              setPendingRemoval(null);
+                              removeProfileMutation.mutate({
+                                tool,
+                                profile: selectedProfileEntry.name,
+                                force: true,
+                              });
+                            }}
+                          >
+                            Confirm remove active
+                          </button>
+                          <button
+                            className="ghost-button"
+                            type="button"
+                            onClick={() => setPendingRemoval(null)}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className="ghost-button danger-button"
+                          type="button"
+                          onClick={() => setPendingRemoval(selectedProfileEntry.name)}
+                        >
+                          Remove active…
+                        </button>
+                      )
+                    ) : (
                       <button
                         className="ghost-button danger-button"
                         type="button"
@@ -924,48 +1010,16 @@ export function ProfilesPanel({
                           removeProfileMutation.mutate({
                             tool,
                             profile: selectedProfileEntry.name,
-                            force: true,
+                            force: false,
                           });
                         }}
                       >
-                        Confirm remove active
+                        Remove
                       </button>
-                      <button
-                        className="ghost-button"
-                        type="button"
-                        onClick={() => setPendingRemoval(null)}
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      className="ghost-button danger-button"
-                      type="button"
-                      onClick={() => setPendingRemoval(selectedProfileEntry.name)}
-                    >
-                      Remove active…
-                    </button>
-                  )
-                ) : (
-                  <button
-                    className="ghost-button danger-button"
-                    type="button"
-                    disabled={mutationLock.isBusy}
-                    onClick={() => {
-                      setPendingRemoval(null);
-                      removeProfileMutation.mutate({
-                        tool,
-                        profile: selectedProfileEntry.name,
-                        force: false,
-                      });
-                    }}
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-              </article>
+                    )}
+                  </div>
+                </article>
+              </>
             ) : (
               <article className="diagnostic-card">
                 <h3>Profile details</h3>
@@ -1449,6 +1503,36 @@ function formatProfileWarning(
 ) {
   const detail = warning.message ?? warning.code ?? "Warning reported by the desktop app.";
   return warning.remediation ? `${detail} Remediation: ${warning.remediation}` : detail;
+}
+
+function profileLiveMatchValue(
+  snapshot: AppSnapshot,
+  tool: string,
+  profileName: string,
+  toolStatus: AppSnapshot["statuses"][number] | undefined,
+) {
+  if (snapshot.profiles[tool]?.active !== profileName) {
+    return "Available after activation";
+  }
+  if (toolStatus?.active_profile_applied === undefined || toolStatus?.active_profile_applied === null) {
+    return "Unknown";
+  }
+  return toolStatus.active_profile_applied ? "Yes" : "No";
+}
+
+function profileStatusSummary(
+  snapshot: AppSnapshot,
+  tool: string,
+  profileName: string,
+  toolStatus: AppSnapshot["statuses"][number] | undefined,
+) {
+  if (snapshot.profiles[tool]?.active !== profileName) {
+    return "Stored";
+  }
+  if (toolStatus?.active_profile_applied === false) {
+    return "Live mismatch";
+  }
+  return "Active";
 }
 
 function formatBackupTimestamp(value: string) {
