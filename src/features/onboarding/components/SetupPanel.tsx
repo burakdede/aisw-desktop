@@ -118,21 +118,22 @@ export function SetupPanel({
 
   return (
     <SectionCard
-      title="First-run setup"
-      kicker="Onboarding"
+      title="Welcome"
+      kicker="Getting started"
       actions={
         <button
           className="primary-button"
           disabled={mutationLock.isBusy}
           onClick={() => initMutation.mutate()}
         >
-          {initMutation.isPending ? "Scanning…" : "Start setup"}
+          {initMutation.isPending ? "Scanning…" : "Get Started"}
         </button>
       }
         >
       <p className="inline-note">
         AI Switch manages local account profiles for Claude Code, Codex CLI, and Gemini CLI.
-        It includes the compatible switching runtime it needs, so there is no extra command-line setup for normal use.
+        It includes the compatible switching runtime it needs, so most people never need to touch
+        Terminal setup just to start switching accounts.
       </p>
 
       <article className="diagnostic-card diagnostics-body">
@@ -147,17 +148,17 @@ export function SetupPanel({
 
       <div className="panel-grid panel-grid-2 diagnostics-body">
         <article className="diagnostic-card">
-          <h3>App runtime</h3>
+          <h3>Included runtime</h3>
           <p className="inline-note">
             {bootstrap.settings.runtime_kind === "bundled"
-              ? "AI Switch is using its bundled runtime."
+              ? "AI Switch is using its included runtime."
               : `AI Switch is using an advanced ${titleCase(bootstrap.settings.runtime_kind)} runtime override.`}
           </p>
           <p className="inline-note">
-            Selected runtime: <strong>{titleCase(bootstrap.settings.runtime_kind)}</strong>
+            Runtime mode: <strong>{titleCase(bootstrap.settings.runtime_kind)}</strong>
           </p>
           <p className="inline-note">
-            Bundled runtime: {bootstrap.runtime_status.inventory.bundled_path ?? "Not available in this build"}
+            Included runtime path: {bootstrap.runtime_status.inventory.bundled_path ?? "Not available in this build"}
           </p>
           {bootstrap.settings.runtime_kind !== "bundled" ? (
             <p className="inline-note">
@@ -173,7 +174,7 @@ export function SetupPanel({
             Resolved path: {bootstrap.runtime_status.resolved_path ?? "No runtime resolved"}
           </p>
           <p className="inline-note">
-            Local data folder: {bootstrap.settings.aisw_home ?? "Default managed location"}
+            Managed data folder: {bootstrap.settings.aisw_home ?? "Default managed location"}
           </p>
           <p className="inline-note">
             Runtime version: {bootstrap.runtime_status.version?.version ?? "unknown"}
@@ -412,11 +413,11 @@ function buildHealthItems(
     : [];
   const items: HealthItem[] = [
     {
-      label: "Runtime compatibility",
+      label: "Desktop runtime",
       status: bootstrap.runtime_status.compatible ? "pass" : "fail",
       detail: bootstrap.runtime_status.compatible
         ? bootstrap.settings.runtime_kind === "bundled"
-          ? "Bundled runtime is compatible with this desktop build."
+          ? "Included runtime is compatible with this desktop build."
           : "Selected runtime override is compatible with this desktop build."
         : bootstrap.runtime_status.issues.join(" · ") || "Compatibility checks failed.",
     },

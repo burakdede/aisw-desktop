@@ -214,7 +214,7 @@ export function SettingsPanel({
               )}
 
               <label>
-                Local data folder override
+                Managed data folder override
                 <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
               </label>
               <button
@@ -238,10 +238,10 @@ export function SettingsPanel({
                   Current runtime path: {runtimeStatus.resolved_path ?? "No runtime resolved"}
                 </p>
                 <p className="inline-note">
-                  Local data folder: {settings.aisw_home ?? "Default managed location"}
+                  Managed data folder: {settings.aisw_home ?? "Default managed location"}
                 </p>
                 <p className="inline-note">
-                  Bundled switching runtime: {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
+                  Bundled runtime path: {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
                 </p>
                 {showAdvancedRuntime || runtimeKind !== "bundled" ? (
                   <p className="inline-note">
@@ -257,7 +257,7 @@ export function SettingsPanel({
                   Selected update channel: <strong>{titleCase(updateChannel)}</strong>
                 </p>
                 <p className="inline-note">
-                  Selected runtime: <strong>{titleCase(runtimeKind)}</strong>
+                  Runtime mode: <strong>{titleCase(runtimeKind)}</strong>
                 </p>
                 <p className="inline-note">
                   Runtime version: {runtimeStatus.version?.version ?? "unknown"}

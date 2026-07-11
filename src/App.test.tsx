@@ -304,14 +304,14 @@ describe("App", () => {
     expect(screen.getByText("Re-apply Work")).toBeInTheDocument();
     expect(screen.getByText("Current set: Work")).toBeInTheDocument();
     expect(screen.getByText("Ready to switch")).toBeInTheDocument();
-    expect(screen.getByText("First-run setup")).toBeInTheDocument();
-    expect(screen.getByText("App runtime")).toBeInTheDocument();
+    expect(screen.getByText("Welcome")).toBeInTheDocument();
+    expect(screen.getByText("Included runtime")).toBeInTheDocument();
     expect(screen.getByText("Health check")).toBeInTheDocument();
     expect(screen.getByText("Local-only by default")).toBeInTheDocument();
     expect(screen.getByText("✓ Credentials stay on this Mac")).toBeInTheDocument();
     expect(screen.getByText("✓ No telemetry")).toBeInTheDocument();
     expect(
-      screen.getByText("AI Switch is using its bundled runtime."),
+      screen.getByText("AI Switch is using its included runtime."),
     ).toBeInTheDocument();
   });
 
@@ -334,11 +334,11 @@ describe("App", () => {
     };
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("Runtime compatibility")).toBeInTheDocument();
+      expect(screen.getByText("Finish runtime setup")).toBeInTheDocument();
     });
     expect(
       screen.getByText(
-        "AI Switch found a runtime binary, but it does not support the desktop integration features required by this release.",
+        "AI Switch includes the switching runtime it needs, but the current runtime choice on this Mac is not compatible with this build.",
       ),
     ).toBeInTheDocument();
     expect(
@@ -346,12 +346,12 @@ describe("App", () => {
         "Open Settings and switch back to the bundled runtime, or choose a newer compatible runtime before continuing.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Technical details")).toBeInTheDocument();
+    expect(screen.getByText("Why AI Switch paused setup")).toBeInTheDocument();
     expect(screen.getByText("Runtime version details are unavailable")).toBeInTheDocument();
     expect(screen.getByText("Runtime capability details are unavailable")).toBeInTheDocument();
     expect(screen.getByText("Runtime and local storage")).toBeInTheDocument();
     expect(screen.getByText("Runtime details")).toBeInTheDocument();
-    expect(screen.queryByText("First-run setup")).not.toBeInTheDocument();
+    expect(screen.queryByText("Welcome")).not.toBeInTheDocument();
     expect(screen.queryByText("Control Center")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Overview" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Profiles" })).toBeDisabled();
@@ -3216,7 +3216,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
     fireEvent.change(screen.getByLabelText("First switch profile"), {
       target: { value: "work" },
     });
@@ -3225,7 +3225,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
       expect(screen.getByText("Shell guidance")).toBeInTheDocument();
-      expect(screen.getByText(/Runtime compatibility/)).toBeInTheDocument();
+      expect(screen.getByText(/Desktop runtime/)).toBeInTheDocument();
     });
   });
 
@@ -4664,7 +4664,7 @@ describe("App", () => {
     });
   });
 
-  it("reruns setup detection when Start setup is clicked", async () => {
+  it("reruns setup detection when Get Started is clicked", async () => {
     let initCalls = 0;
     const firstRunSnapshot = {
       ...bootstrap.snapshot,
@@ -4709,13 +4709,13 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
     await waitFor(() => {
       expect(screen.getByText("Run the setup scan to detect live Claude, Codex, and Gemini accounts.")).toBeInTheDocument();
     });
     expect(initCalls).toBe(0);
 
-    fireEvent.click(screen.getByText("Start setup"));
+    fireEvent.click(screen.getByText("Get Started"));
 
     await waitFor(() => {
       expect(screen.getByText("detected · oauth")).toBeInTheDocument();
@@ -4770,7 +4770,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
     await waitFor(() => {
       expect(screen.getByText("No live credentials detected")).toBeInTheDocument();
     });
@@ -4847,7 +4847,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
     expect(screen.getAllByText("No live credentials detected").length).toBeGreaterThan(0);
     expect(screen.getByLabelText("Add codex profile")).toBeInTheDocument();
   });
@@ -4916,8 +4916,8 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
-    const setupSection = screen.getByRole("heading", { name: "First-run setup" }).closest(".section-card");
+    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
+    const setupSection = screen.getByRole("heading", { name: "Welcome" }).closest(".section-card");
     if (!(setupSection instanceof HTMLElement)) {
       throw new Error("Missing onboarding section.");
     }
@@ -4937,7 +4937,7 @@ describe("App", () => {
 
   it("opens full shell setup guidance from onboarding", async () => {
     await renderApp();
-    await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
 
     expect(screen.getByText("Detected shell:")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Open terminal setup"));
@@ -5004,7 +5004,7 @@ describe("App", () => {
       )[command];
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Open profile setup"));
 
     await waitFor(() => {
@@ -6335,7 +6335,7 @@ describe("App", () => {
       )[command];
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("First-run setup")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
     expect(screen.getByText("Current set: Client Acme")).toBeInTheDocument();
     const firstSwitchSelect = screen.getByLabelText("First switch profile");
     expect(within(firstSwitchSelect).getByRole("option", { name: "Office" })).toBeInTheDocument();
@@ -6710,7 +6710,7 @@ describe("App", () => {
       },
     });
 
-    expect(screen.getByText("First-run setup")).toBeInTheDocument();
+    expect(screen.getByText("Welcome")).toBeInTheDocument();
     expect(calls).not.toContain("run_doctor");
     expect(calls).not.toContain("get_shell_guidance");
 
@@ -6722,7 +6722,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls).toContain("run_doctor");
       expect(calls).toContain("get_shell_guidance");
-      expect(screen.getByText("Start setup")).toBeInTheDocument();
+      expect(screen.getByText("Get Started")).toBeInTheDocument();
     });
   });
 
@@ -6750,16 +6750,16 @@ describe("App", () => {
       expect(
         screen.getByText("Current runtime path: /Applications/AI Switch.app/Contents/Resources/aisw"),
       ).toBeInTheDocument();
-      expect(screen.getAllByText("Local data folder: Default managed location").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Managed data folder: Default managed location").length).toBeGreaterThan(0);
       expect(
-        screen.getAllByText("Bundled switching runtime: /Applications/AI Switch.app/Contents/Resources/aisw").length,
+        screen.getAllByText("Bundled runtime path: /Applications/AI Switch.app/Contents/Resources/aisw").length,
       ).toBeGreaterThan(0);
       expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
       expect(
         screen.getByText((_, element) => element?.textContent?.trim() === "Selected update channel: Stable"),
       ).toBeInTheDocument();
       expect(
-        screen.getAllByText((_, element) => element?.textContent?.trim() === "Selected runtime: Bundled").length,
+        screen.getAllByText((_, element) => element?.textContent?.trim() === "Runtime mode: Bundled").length,
       ).toBeGreaterThan(0);
       expect(screen.getAllByText("Runtime version: 0.3.7").length).toBeGreaterThan(0);
       expect(screen.getByText("CLI API 1 · JSON schema 1 · Progress schema 1")).toBeInTheDocument();

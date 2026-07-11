@@ -158,15 +158,15 @@ button {
 
 .brand-mark-panel {
   fill: color-mix(in srgb, Canvas 90%, CanvasText 10%);
-  stroke: color-mix(in srgb, CanvasText 12%, transparent);
+  stroke: color-mix(in srgb, CanvasText 10%, transparent);
 }
 
 .brand-mark-panel-secondary {
-  fill: color-mix(in srgb, Canvas 94%, CanvasText 6%);
+  fill: color-mix(in srgb, Canvas 97%, CanvasText 3%);
 }
 
 .brand-mark-panel-accent {
-  fill: color-mix(in srgb, AccentColor 18%, Canvas 82%);
+  fill: color-mix(in srgb, AccentColor 16%, Canvas 84%);
 }
 
 .brand-mark-flow {

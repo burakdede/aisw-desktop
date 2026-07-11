@@ -169,7 +169,7 @@ export function OverviewPanel({
             <article className="overview-current-set">
               <div className="overview-current-set-copy">
                 <p className="card-kicker">Current set</p>
-                <h3>{currentSetLabel ?? "No shared set active"}</h3>
+                <h3>{currentSetLabel ?? "No set selected"}</h3>
                 <p className="inline-note">
                   {snapshot.statuses.filter((status) => status.active_profile).length} of{" "}
                   {snapshot.statuses.length} tools are ready to switch.

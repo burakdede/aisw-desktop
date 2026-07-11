@@ -385,22 +385,23 @@ export function App() {
       }
       statusBadge={
         <div>
-          <strong>{currentActiveSet ? `Current set: ${currentActiveSet}` : "No shared set active"}</strong>
+          <strong>{currentActiveSet ? `Current set: ${currentActiveSet}` : "No set selected"}</strong>
           <p>{runtimeStatus.compatible ? "Ready to switch" : "Needs attention"}</p>
           <p>{runtimeStatus.resolved_path ?? "No runtime resolved"}</p>
         </div>
       }
     >
       {!runtimeStatus.compatible ? (
-        <SectionCard title="Runtime compatibility" kicker="Onboarding blocker">
+        <SectionCard title="Finish runtime setup" kicker="Startup required">
           <div className="stack-list">
             <p className="inline-note">
-              {runtimeBlocker.summary}
+              AI Switch includes the switching runtime it needs, but the current runtime choice on
+              this Mac is not compatible with this build.
             </p>
             <p className="inline-note">{runtimeBlocker.nextStep}</p>
             {runtimeStatus.issues.length ? (
               <article className="diagnostic-card">
-                <h3>Technical details</h3>
+                <h3>Why AI Switch paused setup</h3>
                 {runtimeStatus.issues.map((issue) => (
                   <p key={issue} className="inline-note">
                     {issue}
