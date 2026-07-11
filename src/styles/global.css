@@ -1320,8 +1320,14 @@ button {
   grid-template-columns: minmax(0, 1.1fr) minmax(320px, 380px);
 }
 
+.diagnostics-layout {
+  grid-template-columns: minmax(0, 1.08fr) minmax(320px, 380px);
+}
+
 .backups-list-pane,
-.backups-detail-pane {
+.backups-detail-pane,
+.diagnostics-checks-pane,
+.diagnostics-recovery-pane {
   min-width: 0;
 }
 
@@ -1406,6 +1412,14 @@ button {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-tertiary);
+}
+
+.diagnostics-summary-grid {
+  margin-top: 14px;
+}
+
+.diagnostics-subsection-header {
+  margin-top: 4px;
 }
 
 .profile-list-main {

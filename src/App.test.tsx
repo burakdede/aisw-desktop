@@ -4168,9 +4168,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Diagnostics"));
 
     await waitFor(() => {
-      expect(
-        screen.getByText("No failing or warning diagnostics are currently reported."),
-      ).toBeInTheDocument();
+      expect(screen.getByText("Everything looks good")).toBeInTheDocument();
       expect(
         screen.getByText("No direct fix actions are available from the current diagnostics state."),
       ).toBeInTheDocument();

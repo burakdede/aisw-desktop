@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { SplitView } from "../../../components/SplitView";
 import { SectionCard } from "../../../components/SectionCard";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import { exportDiagnosticBundle, runDoctor, runRepair, runVerify } from "../../../lib/client";
@@ -216,7 +217,7 @@ export function DiagnosticsPanel({
         </article>
       ) : null}
 
-      <div className="panel-grid panel-grid-3">
+      <div className="panel-grid panel-grid-3 diagnostics-summary-grid">
         {summaryCards.map((card) => (
           <article key={card.title} className={`diagnostic-card diagnostic-${card.status}`}>
             <h3>{card.title}</h3>
@@ -258,217 +259,224 @@ export function DiagnosticsPanel({
         </article>
       ) : null}
 
-      <div className="panel-grid panel-grid-2 diagnostics-body desktop-pane-grid">
-        <div className="stack-list desktop-pane-column">
-          <div className="desktop-pane-section-header">
-            <div>
-              <p className="card-kicker">Checks</p>
-              <h3>Checks and details</h3>
-            </div>
-            <p className="inline-note">
-              Expand the failing areas first, then use the recommended fix actions below.
-            </p>
-          </div>
-          {issueCards.map((card) => (
-            <article key={`${card.title}-${card.status}`} className={`diagnostic-card diagnostic-${card.status}`}>
-              <h4>{card.title}</h4>
-              {card.issues.map((issue) => (
-                <p key={issue} className="inline-note">
-                  {issue}
-                </p>
-              ))}
-              {card.remediation.length ? (
-                <div className="diagnostic-remediation">
-                  {card.remediation.map((item) => (
-                    <code key={item}>{item}</code>
-                  ))}
-                </div>
-              ) : null}
-              {resolveIssueProfileTarget(card, snapshot) ? (
-                <div className="button-row">
-                  <button
-                    className="ghost-button"
-                    type="button"
-                    onClick={() => {
-                      const target = resolveIssueProfileTarget(card, snapshot);
-                      if (!target) return;
-                      onOpenProfiles(target.tool, target.profile);
-                    }}
-                  >
-                    Open profile details
-                  </button>
-                </div>
-              ) : null}
-            </article>
-          ))}
-          {!issueCards.length ? (
-            <p className="inline-note">No failing or warning diagnostics are currently reported.</p>
-          ) : null}
-        </div>
-
-        <div className="stack-list desktop-pane-column">
-          <div className="desktop-pane-section-header">
-            <div>
-              <p className="card-kicker">Actions</p>
-              <h3>Recommended fixes</h3>
-            </div>
-            <p className="inline-note">
-              Apply the safest repair path first, then rerun verification from this pane.
-            </p>
-          </div>
-          {quickFixes.map((fix) => (
-            <article key={quickFixKey(fix)} className={`diagnostic-card diagnostic-${fix.status}`}>
-              <h4>{fix.title}</h4>
-              <p className="inline-note">{fix.detail}</p>
-              <div className="button-row">
-                <button
-                  className={fix.primary ? "primary-button" : "ghost-button"}
-                  type="button"
-                  disabled={mutationLock.isBusy}
-                  onClick={fix.action}
-                >
-                  {fix.label}
-                </button>
-                {fix.secondaryAction ? (
-                  <button
-                    className="ghost-button"
-                    type="button"
-                    disabled={mutationLock.isBusy}
-                    onClick={() => void fix.secondaryAction?.action()}
-                  >
-                    {fix.secondaryAction?.label}
-                  </button>
-                ) : null}
-                {fix.profileTarget ? (
-                  <button
-                    className="ghost-button"
-                    type="button"
-                    onClick={() => onOpenProfiles(fix.profileTarget!.tool, fix.profileTarget!.profile)}
-                  >
-                    Open profile details
-                  </button>
-                ) : null}
+      <SplitView
+        className="diagnostics-layout diagnostics-body"
+        primaryClassName="diagnostics-checks-pane"
+        secondaryClassName="diagnostics-recovery-pane"
+        primary={
+          <div className="stack-list desktop-pane-column">
+            <div className="desktop-pane-section-header">
+              <div>
+                <p className="card-kicker">Checks</p>
+                <h3>Checks and details</h3>
               </div>
-              {fix.importTarget ? (
-                supportsProfileImportMode(fix.importTarget.tool, toolCapabilities, "from_live") ? (
-                  <div className="inline-form">
-                    <input
-                      aria-label={`import ${fix.importTarget.tool} current login from diagnostics`}
-                      placeholder="new profile name"
-                      value={importDrafts[quickFixKey(fix)] ?? ""}
-                      onChange={(event) =>
-                        setImportDrafts((current) => ({
-                          ...current,
-                          [quickFixKey(fix)]: event.target.value,
-                        }))
-                      }
-                    />
+              <p className="inline-note">
+                Review failing areas first, then move to the recovery actions in the right pane.
+              </p>
+            </div>
+            {issueCards.map((card) => (
+              <article key={`${card.title}-${card.status}`} className={`diagnostic-card diagnostic-${card.status}`}>
+                <h4>{card.title}</h4>
+                {card.issues.map((issue) => (
+                  <p key={issue} className="inline-note">
+                    {issue}
+                  </p>
+                ))}
+                {card.remediation.length ? (
+                  <div className="diagnostic-remediation">
+                    {card.remediation.map((item) => (
+                      <code key={item}>{item}</code>
+                    ))}
+                  </div>
+                ) : null}
+                {resolveIssueProfileTarget(card, snapshot) ? (
+                  <div className="button-row">
                     <button
                       className="ghost-button"
                       type="button"
-                      disabled={mutationLock.isBusy || !importDrafts[quickFixKey(fix)]?.trim()}
                       onClick={() => {
-                        const profile = importDrafts[quickFixKey(fix)]?.trim();
-                        if (!profile) return;
-                        addProfileMutation.mutate(
-                          {
-                            tool: fix.importTarget!.tool,
-                            profile,
-                            label: titleCase(profile),
-                            stateMode: fix.importTarget!.stateMode,
-                            importMode: { kind: "from_live" },
-                          },
-                          {
-                            onSuccess: () =>
-                              setImportDrafts((current) => ({
-                                ...current,
-                                [quickFixKey(fix)]: "",
-                              })),
-                          },
-                        );
+                        const target = resolveIssueProfileTarget(card, snapshot);
+                        if (!target) return;
+                        onOpenProfiles(target.tool, target.profile);
                       }}
                     >
-                      Import current as new
+                      Open profile details
                     </button>
                   </div>
-                ) : (
-                  <div className="stack-list">
-                    <p className="inline-note">
-                      This runtime does not support one-click capture for {titleCase(fix.importTarget.tool)}.
-                      Open profile setup to choose another sign-in method.
-                    </p>
+                ) : null}
+              </article>
+            ))}
+            {!issueCards.length ? (
+              <article className="diagnostic-card diagnostic-pass">
+                <h3>Everything looks good</h3>
+                <p className="inline-note">All configured tools match their active desktop profiles.</p>
+              </article>
+            ) : null}
+          </div>
+        }
+        secondary={
+          <div className="stack-list desktop-pane-column">
+            <div className="desktop-pane-section-header">
+              <div>
+                <p className="card-kicker">Recovery</p>
+                <h3>Recommended fixes</h3>
+              </div>
+              <p className="inline-note">
+                Apply the safest repair path first, then rerun verification from this pane.
+              </p>
+            </div>
+            {quickFixes.map((fix) => (
+              <article key={quickFixKey(fix)} className={`diagnostic-card diagnostic-${fix.status}`}>
+                <h4>{fix.title}</h4>
+                <p className="inline-note">{fix.detail}</p>
+                <div className="button-row">
+                  <button
+                    className={fix.primary ? "primary-button" : "ghost-button"}
+                    type="button"
+                    disabled={mutationLock.isBusy}
+                    onClick={fix.action}
+                  >
+                    {fix.label}
+                  </button>
+                  {fix.secondaryAction ? (
                     <button
                       className="ghost-button"
                       type="button"
                       disabled={mutationLock.isBusy}
-                      onClick={() =>
-                        onOpenProfileSetup({
-                          tool: fix.importTarget?.tool,
-                          mode: fix.importFallbackMode ?? preferredProfileImportMode(fix.importTarget!.tool, toolCapabilities, "from_live"),
-                        })
-                      }
+                      onClick={() => void fix.secondaryAction?.action()}
                     >
-                      Open profile setup
+                      {fix.secondaryAction?.label}
+                    </button>
+                  ) : null}
+                  {fix.profileTarget ? (
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      onClick={() => onOpenProfiles(fix.profileTarget!.tool, fix.profileTarget!.profile)}
+                    >
+                      Open profile details
+                    </button>
+                  ) : null}
+                </div>
+                {fix.importTarget ? (
+                  supportsProfileImportMode(fix.importTarget.tool, toolCapabilities, "from_live") ? (
+                    <div className="inline-form">
+                      <input
+                        aria-label={`import ${fix.importTarget.tool} current login from diagnostics`}
+                        placeholder="new profile name"
+                        value={importDrafts[quickFixKey(fix)] ?? ""}
+                        onChange={(event) =>
+                          setImportDrafts((current) => ({
+                            ...current,
+                            [quickFixKey(fix)]: event.target.value,
+                          }))
+                        }
+                      />
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        disabled={mutationLock.isBusy || !importDrafts[quickFixKey(fix)]?.trim()}
+                        onClick={() => {
+                          const profile = importDrafts[quickFixKey(fix)]?.trim();
+                          if (!profile) return;
+                          addProfileMutation.mutate(
+                            {
+                              tool: fix.importTarget!.tool,
+                              profile,
+                              label: titleCase(profile),
+                              stateMode: fix.importTarget!.stateMode,
+                              importMode: { kind: "from_live" },
+                            },
+                            {
+                              onSuccess: () =>
+                                setImportDrafts((current) => ({
+                                  ...current,
+                                  [quickFixKey(fix)]: "",
+                                })),
+                            },
+                          );
+                        }}
+                      >
+                        Import current as new
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="stack-list">
+                      <p className="inline-note">
+                        This runtime does not support one-click capture for {titleCase(fix.importTarget.tool)}.
+                        Open profile setup to choose another sign-in method.
+                      </p>
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        disabled={mutationLock.isBusy}
+                        onClick={() =>
+                          onOpenProfileSetup({
+                            tool: fix.importTarget?.tool,
+                            mode:
+                              fix.importFallbackMode ??
+                              preferredProfileImportMode(fix.importTarget!.tool, toolCapabilities, "from_live"),
+                          })
+                        }
+                      >
+                        Open profile setup
+                      </button>
+                    </div>
+                  )
+                ) : null}
+              </article>
+            ))}
+            {!quickFixes.length ? (
+              <p className="inline-note">No direct fix actions are available from the current diagnostics state.</p>
+            ) : null}
+
+            <div className="desktop-pane-section-header diagnostics-subsection-header">
+              <div>
+                <p className="card-kicker">Repair plan</p>
+                <h3>Planned repairs</h3>
+              </div>
+            </div>
+            {repairActions.map((action) => (
+              <article key={`${action.title}-${action.detail}`} className="diagnostic-card">
+                <h4>{action.title}</h4>
+                <p className="inline-note">{action.detail}</p>
+                <p className="diagnostic-status">{action.status}</p>
+              </article>
+            ))}
+            {!repairActions.length ? (
+              <p className="inline-note">No safe automatic repairs are currently planned.</p>
+            ) : null}
+
+            <div className="desktop-pane-section-header diagnostics-subsection-header">
+              <div>
+                <p className="card-kicker">History</p>
+                <h3>Recent problems</h3>
+              </div>
+            </div>
+            {recentFailures.map((failure) => (
+              <article key={failure.key} className="diagnostic-card diagnostic-fail">
+                <h4>{failure.title}</h4>
+                <p className="inline-note">{failure.message}</p>
+                {failure.remediation ? <p className="inline-note">{failure.remediation}</p> : null}
+                {failure.profileTarget ? (
+                  <div className="button-row">
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      onClick={() => onOpenProfiles(failure.profileTarget!.tool, failure.profileTarget!.profile)}
+                    >
+                      Open profile details
                     </button>
                   </div>
-                )
-              ) : null}
-            </article>
-          ))}
-          {!quickFixes.length ? (
-            <p className="inline-note">No direct fix actions are available from the current diagnostics state.</p>
-          ) : null}
-        </div>
-
-        <div className="stack-list desktop-pane-column">
-          <div className="desktop-pane-section-header">
-            <div>
-              <p className="card-kicker">History</p>
-              <h3>Recent problems</h3>
-            </div>
+                ) : null}
+              </article>
+            ))}
+            {!recentFailures.length ? (
+              <p className="inline-note">No recent command failures are recorded in this session.</p>
+            ) : null}
           </div>
-          {recentFailures.map((failure) => (
-            <article key={failure.key} className="diagnostic-card diagnostic-fail">
-              <h4>{failure.title}</h4>
-              <p className="inline-note">{failure.message}</p>
-              {failure.remediation ? <p className="inline-note">{failure.remediation}</p> : null}
-              {failure.profileTarget ? (
-                <div className="button-row">
-                  <button
-                    className="ghost-button"
-                    type="button"
-                    onClick={() => onOpenProfiles(failure.profileTarget!.tool, failure.profileTarget!.profile)}
-                  >
-                    Open profile details
-                  </button>
-                </div>
-              ) : null}
-            </article>
-          ))}
-          {!recentFailures.length ? (
-            <p className="inline-note">No recent command failures are recorded in this session.</p>
-          ) : null}
-        </div>
-
-        <div className="stack-list desktop-pane-column">
-          <div className="desktop-pane-section-header">
-            <div>
-              <p className="card-kicker">Repair plan</p>
-              <h3>Planned repairs</h3>
-            </div>
-          </div>
-          {repairActions.map((action) => (
-            <article key={`${action.title}-${action.detail}`} className="diagnostic-card">
-              <h4>{action.title}</h4>
-              <p className="inline-note">{action.detail}</p>
-              <p className="diagnostic-status">{action.status}</p>
-            </article>
-          ))}
-          {!repairActions.length ? (
-            <p className="inline-note">No safe automatic repairs are currently planned.</p>
-          ) : null}
-        </div>
-      </div>
+        }
+      />
     </SectionCard>
   );
 }
