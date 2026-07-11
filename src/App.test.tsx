@@ -461,10 +461,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("Gemini is not available on PATH, so AI Switch cannot switch or verify that tool yet.")).toBeInTheDocument();
+      expect(screen.getByText("Gemini is not available on PATH, so this Mac cannot switch or verify that tool yet.")).toBeInTheDocument();
     });
     const overviewCard = screen
-      .getByText("Gemini is not available on PATH, so AI Switch cannot switch or verify that tool yet.")
+      .getByText("Gemini is not available on PATH, so this Mac cannot switch or verify that tool yet.")
       .closest(".tool-card");
     if (!(overviewCard instanceof HTMLElement)) {
       throw new Error("Missing Gemini overview card.");
@@ -1110,7 +1110,7 @@ describe("App", () => {
 
     expect(screen.getByRole("button", { name: "Refresh state" })).toBeDisabled();
     const geminiCard = screen
-      .getByText("Gemini is not available on PATH, so AI Switch cannot switch or verify that tool yet.")
+      .getByText("Gemini is not available on PATH, so this Mac cannot switch or verify that tool yet.")
       .closest(".tool-card");
     if (!(geminiCard instanceof HTMLElement)) {
       throw new Error("Missing Gemini tool card.");
@@ -3317,7 +3317,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "add_profile")).toBe(true);
-      expect(screen.getByText("Live credentials changed outside AI Switch. Re-apply the active profile or import the current login as a new profile.")).toBeInTheDocument();
+      expect(screen.getByText("Live credentials changed outside the app. Re-apply the active profile or import the current login as a new profile.")).toBeInTheDocument();
     });
   });
 

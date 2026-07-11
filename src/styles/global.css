@@ -834,6 +834,11 @@ button {
   gap: 12px;
 }
 
+.overview-hero,
+.profiles-hero {
+  margin-bottom: 14px;
+}
+
 .overview-summary-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.9fr);

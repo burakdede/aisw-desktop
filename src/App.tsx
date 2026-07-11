@@ -622,7 +622,7 @@ function sectionDetail(section: string) {
     case "backups":
       return "Replay a previous profile state or restore the latest known-good backup without leaving the app.";
     case "activity":
-      return "Track recent desktop actions, command outcomes, and changes applied by AI Switch.";
+      return "Track recent desktop actions, command outcomes, and changes applied by the switching engine.";
     case "settings":
       return "Control the bundled engine, updates, terminal integration, and local storage behavior.";
     default:

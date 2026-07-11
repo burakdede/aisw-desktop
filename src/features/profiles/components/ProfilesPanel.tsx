@@ -418,6 +418,22 @@ export function ProfilesPanel({
         </div>
       }
     >
+      <article className="desktop-pane-hero profiles-hero">
+        <div className="desktop-pane-hero-copy">
+          <p className="card-kicker">Profiles</p>
+          <h3>Manage saved logins with one inspector-driven workflow</h3>
+          <p className="inline-note">
+            Browse saved profiles on the left, inspect the selected login on the right, and use focused sheets for adding new accounts instead of long setup pages.
+          </p>
+        </div>
+        <div className="desktop-pane-hero-pills" aria-label="Profiles highlights">
+          <span className="status-pill">
+            {inventoryProfiles.length} saved profile{inventoryProfiles.length === 1 ? "" : "s"}
+          </span>
+          <span className="status-pill">{tool === "claude" ? "Claude focused" : tool === "codex" ? "Codex focused" : "Gemini focused"}</span>
+          <span className="status-pill">Sheet-based setup</span>
+        </div>
+      </article>
       <div className="panel-grid panel-grid-2 profiles-layout desktop-pane-grid">
         <div className="stack-list profiles-inventory-pane desktop-pane-column">
           <article className="diagnostic-card desktop-pane-intro">

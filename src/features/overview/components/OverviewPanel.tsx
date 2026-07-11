@@ -111,6 +111,23 @@ export function OverviewPanel({
         </div>
       }
     >
+      <article className="desktop-pane-hero overview-hero">
+        <div className="desktop-pane-hero-copy">
+          <p className="card-kicker">Overview</p>
+          <h3>See what is active and switch safely from one place</h3>
+          <p className="inline-note">
+            The overview keeps active profiles, shared sets, workspace expectations, and live drift warnings in one compact desktop control surface.
+          </p>
+        </div>
+        <div className="desktop-pane-hero-pills" aria-label="Overview highlights">
+          <span className="status-pill">
+            {snapshot.statuses.filter((status) => status.active_profile).length} active profile
+            {snapshot.statuses.filter((status) => status.active_profile).length === 1 ? "" : "s"}
+          </span>
+          <span className="status-pill">{currentSetLabel ? "Shared set ready" : "No shared set"}</span>
+          <span className="status-pill">{hasWorkspaceMismatch ? "Workspace mismatch" : "Ready to switch"}</span>
+        </div>
+      </article>
       <div className="overview-stack">
         <div className="overview-summary-grid">
           {currentSetLabel || currentSetProfiles.length ? (
@@ -424,7 +441,7 @@ function ToolCard({
       {activeState === false ? (
         <div className="stack-list">
           <p className="inline-note">
-            Live credentials changed outside AI Switch. Re-apply the active profile or import the current
+            Live credentials changed outside the app. Re-apply the active profile or import the current
             login as a new profile.
           </p>
           {supportsLiveImport ? (
@@ -536,7 +553,7 @@ function MissingBinaryGuidance({
   return (
     <div className="stack-list">
       <p className="inline-note">
-        {titleCase(tool)} is not available on PATH, so AI Switch cannot switch or verify that
+        {titleCase(tool)} is not available on PATH, so this Mac cannot switch or verify that
         tool yet.
       </p>
       <p className="inline-note">
@@ -585,7 +602,7 @@ function formatTokenWarning(status: ToolStatus) {
 function formatDiagnosticWarning(
   warning: ToolStatus["warnings"][number],
 ) {
-  const detail = warning.message ?? warning.code ?? "Warning reported by AI Switch.";
+  const detail = warning.message ?? warning.code ?? "Warning reported by the switching engine.";
   return warning.remediation ? `${detail} Remediation: ${warning.remediation}` : detail;
 }
 
