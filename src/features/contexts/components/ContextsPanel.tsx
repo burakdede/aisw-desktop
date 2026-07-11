@@ -167,8 +167,8 @@ export function ContextsPanel({
 
   return (
     <SectionCard
-      title="Sets"
-      kicker="Saved switching combinations"
+      title="Set Library"
+      kicker="Saved switching sets"
       actions={
         <button
           className="primary-button"
@@ -182,7 +182,7 @@ export function ContextsPanel({
             })
           }
         >
-          New set
+          New Set
         </button>
       }
     >
@@ -228,7 +228,7 @@ export function ContextsPanel({
             <div className="set-section-header desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Saved sets</p>
-                <h3>Reusable switching combinations</h3>
+                <h3>Saved switching sets</h3>
               </div>
               <p className="inline-note">
                 Save work, personal, and client bundles once, then switch them from one place.
@@ -478,8 +478,8 @@ export function ContextsPanel({
                   onClick={() => void activateProfileSet(detailSet)}
                 >
                   {profileSetIsActive(snapshot, detailSet)
-                    ? "Selected set active"
-                    : "Switch selected set"}
+                    ? "Already Active"
+                    : "Switch This Set"}
                 </button>
                 <button
                   className="ghost-button"
@@ -495,7 +495,7 @@ export function ContextsPanel({
                     })
                   }
                 >
-                  Edit selected set
+                  Edit This Set
                 </button>
               </div>
             </div>
@@ -503,7 +503,7 @@ export function ContextsPanel({
           <div className="stack-list">
             <div>
               <p className="card-kicker">{isEditingExistingSet ? "Edit set" : "New set"}</p>
-              <h3>{isEditingExistingSet ? draft.label.trim() || draft.name : "Create a reusable set"}</h3>
+              <h3>{isEditingExistingSet ? draft.label.trim() || draft.name : "Create a saved set"}</h3>
             </div>
             <p className="inline-note">
               Save the profiles you want to switch together so Overview, project rules, and quick switching

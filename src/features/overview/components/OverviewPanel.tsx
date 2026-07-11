@@ -232,7 +232,7 @@ export function OverviewPanel({
                       Switch Set…
                     </button>
                     <button className="ghost-button" type="button" onClick={onOpenContexts}>
-                      Open Sets
+                      Set Library
                     </button>
                   </div>
                 </div>
@@ -357,7 +357,7 @@ export function OverviewPanel({
                       });
                     }}
                   >
-                    {expectedWorkspaceTarget ? "Use expected set now" : "Open sets"}
+                    {expectedWorkspaceTarget ? "Use expected set now" : "Set library"}
                   </button>
                 ) : null}
               </article>

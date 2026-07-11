@@ -1010,7 +1010,7 @@ function sectionDetail(section: string, setupFocused = false) {
     case "profiles":
       return "Inspect saved logins, labels, storage mode, and safe activation details in a compact split-view inspector.";
     case "sets":
-      return "Coordinate reusable work, personal, and client combinations before switching a whole project identity.";
+      return "Manage saved sets and project rules in one compact split view before switching a whole project identity.";
     case "diagnostics":
       return "Verify runtime health, identify drift, and follow guided repair steps when something blocks switching.";
     case "backups":

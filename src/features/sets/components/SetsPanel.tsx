@@ -47,15 +47,15 @@ export function SetsPanel({
             <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Categories</p>
-                <h3>Sets and rules</h3>
+                <h3>Sets</h3>
               </div>
             </div>
             <div className="desktop-source-list" aria-label="Sets sections">
               {[
                 {
                   value: "sets" as const,
-                  label: "Sets",
-                  summary: "Reusable switching combinations",
+                  label: "Set Library",
+                  summary: "Saved switching sets",
                 },
                 {
                   value: "rules" as const,
