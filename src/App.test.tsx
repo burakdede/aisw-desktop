@@ -424,18 +424,23 @@ describe("App", () => {
     };
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("Finish runtime setup")).toBeInTheDocument();
+      expect(screen.getByText("Finish setup")).toBeInTheDocument();
     });
-    expect(
-      screen.getByText(
-        "This app includes the runtime it needs. The current advanced runtime choice on this Mac does not match this desktop build.",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Open Settings and switch back to the bundled runtime, or choose a newer compatible runtime before continuing.",
-      ),
-    ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "AI Switch already includes the switching engine it expects. The current advanced engine choice on this Mac is blocking desktop setup.",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "The selected engine was found, but it does not support the desktop features required by this release.",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Open Settings and switch back to the included engine, or choose a newer compatible engine before continuing.",
+        ),
+      ).toBeInTheDocument();
     expect(screen.getByText("Why setup is paused")).toBeInTheDocument();
     expect(screen.getByText("Engine version details are unavailable")).toBeInTheDocument();
     expect(screen.getByText("Engine capability details are unavailable")).toBeInTheDocument();
@@ -820,7 +825,7 @@ describe("App", () => {
     expect(screen.queryByText("Technical details")).not.toBeInTheDocument();
   });
 
-  it("clears routed settings sections when reopening settings from the sidebar", async () => {
+  it("clears routed settings sections when reopening settings from a fresh entry point", async () => {
     const firstRunSnapshot = {
       statuses: [
         {
@@ -893,8 +898,14 @@ describe("App", () => {
       expect(screen.getByRole("button", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "true");
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Overview" }));
-    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["menu-open-settings"]?.({});
+      await Promise.resolve();
+    });
 
     await waitFor(() => {
       expect(screen.getByText("Engine and local storage")).toBeInTheDocument();
@@ -4829,7 +4840,7 @@ describe("App", () => {
     });
   });
 
-  it("reruns setup detection when Scan this Mac is clicked", async () => {
+  it("reruns setup detection when Get Started is clicked", async () => {
     let initCalls = 0;
     const firstRunSnapshot = {
       ...bootstrap.snapshot,
@@ -4880,7 +4891,7 @@ describe("App", () => {
     });
     expect(initCalls).toBe(0);
 
-    fireEvent.click(screen.getByText("Scan this Mac"));
+    fireEvent.click(screen.getByRole("button", { name: "Get Started" }));
 
     await waitFor(() => {
       expect(screen.getByText("detected · oauth")).toBeInTheDocument();
@@ -6953,7 +6964,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls).toContain("run_doctor");
       expect(calls).toContain("get_shell_guidance");
-      expect(screen.getByText("Scan this Mac")).toBeInTheDocument();
+      expect(screen.getByText("Get Started")).toBeInTheDocument();
     });
   });
 
@@ -6981,7 +6992,11 @@ describe("App", () => {
       expect(
         screen.getByText((_, element) => element?.textContent?.trim() === "Engine source: Included with this app"),
       ).toBeInTheDocument();
-      expect(screen.getByText("AI Switch data folder: Managed automatically")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          (_, element) => element?.textContent?.trim() === "Local data location: Managed automatically",
+        ),
+      ).toBeInTheDocument();
       expect(
         screen.getByText(
           (_, element) => element?.textContent?.trim() === "Compatibility: Ready for desktop switching",

@@ -277,14 +277,14 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Storage</p>
-                    <h3>AI Switch data folder</h3>
+                    <h3>Local data location</h3>
                   </div>
                   <p className="inline-note">
                     Leave this empty to use the default desktop storage location.
                   </p>
                 </div>
                 <label>
-                  AI Switch data folder override
+                  Local data location override
                   <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
                 </label>
               </article>
@@ -325,7 +325,7 @@ export function SettingsPanel({
                   </strong>
                 </p>
                 <p className="inline-note">
-                  AI Switch data folder:{" "}
+                  Local data location:{" "}
                   {settings.aisw_home ? `Custom folder (${settings.aisw_home})` : "Managed automatically"}
                 </p>
                 <p className="inline-note">

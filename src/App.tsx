@@ -370,6 +370,7 @@ export function App() {
   return (
     <>
     <AppFrame
+      mode={setupFocused ? "setup" : "standard"}
       title={sectionTitle(activeSection, setupFocused)}
       subtitle="Switch Claude Code, Codex CLI, and Gemini CLI accounts from one compact desktop utility."
       detail={sectionDetail(activeSection, setupFocused)}
@@ -421,12 +422,13 @@ export function App() {
       )}
     >
       {!runtimeStatus.compatible ? (
-        <SectionCard title="Finish runtime setup" kicker="Startup required">
+        <SectionCard title="Finish setup" kicker="Startup required">
           <div className="stack-list">
             <p className="inline-note">
-              This app includes the runtime it needs. The current advanced runtime choice on this
-              Mac does not match this desktop build.
+              AI Switch already includes the switching engine it expects. The current advanced
+              engine choice on this Mac is blocking desktop setup.
             </p>
+            <p className="inline-note">{runtimeBlocker.summary}</p>
             <p className="inline-note">{runtimeBlocker.nextStep}</p>
             {runtimeStatus.issues.length ? (
               <article className="diagnostic-card">
@@ -590,25 +592,25 @@ function describeRuntimeBlocker(runtimeStatus: {
   if (hasResolvedRuntime && missingDesktopContract) {
     return {
       summary:
-        "The selected runtime was found, but it does not support the desktop integration features required by this release.",
+        "The selected engine was found, but it does not support the desktop features required by this release.",
       nextStep:
-        "Open Settings and switch back to the bundled runtime, or choose a newer compatible runtime before continuing.",
+        "Open Settings and switch back to the included engine, or choose a newer compatible engine before continuing.",
     };
   }
 
   if (hasResolvedRuntime) {
     return {
       summary:
-        "The selected runtime was found, but it is not compatible with this desktop build.",
+        "The selected engine was found, but it is not compatible with this desktop build.",
       nextStep:
-        "Open Settings and switch back to the bundled runtime, or choose a compatible runtime before continuing.",
+        "Open Settings and switch back to the included engine, or choose a compatible engine before continuing.",
     };
   }
 
   return {
-    summary: "AI Switch could not use the selected runtime.",
+    summary: "AI Switch could not use the selected engine.",
     nextStep:
-      "Open Settings and switch to a working bundled runtime or choose an advanced override before continuing.",
+      "Open Settings and switch to the included engine or choose a working advanced override before continuing.",
   };
 }
 
@@ -638,7 +640,7 @@ function sectionTitle(section: string, setupFocused = false) {
 
 function sectionDetail(section: string, setupFocused = false) {
   if (setupFocused) {
-    return "Set up AI Switch on this Mac before you start switching agent accounts.";
+    return "Set up AI Switch on this Mac before you switch coding-agent accounts.";
   }
   switch (section) {
     case "overview":

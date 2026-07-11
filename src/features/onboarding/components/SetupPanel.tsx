@@ -149,7 +149,7 @@ export function SetupPanel({
           disabled={mutationLock.isBusy}
           onClick={() => initMutation.mutate()}
         >
-          {initMutation.isPending ? "Scanning…" : "Scan this Mac"}
+          {initMutation.isPending ? "Checking this Mac…" : "Get Started"}
         </button>
       }
     >
@@ -158,8 +158,9 @@ export function SetupPanel({
           <p className="card-kicker">Desktop app</p>
           <h3>Switch AI coding-agent accounts safely.</h3>
           <p className="inline-note">
-            Bring in existing Claude Code, Codex CLI, and Gemini CLI accounts, confirm the bundled
-            runtime is ready, and verify one safe switch without leaving this Mac.
+            Bring in existing Claude Code, Codex CLI, and Gemini CLI accounts, confirm the
+            included switching engine is ready, and verify one safe switch without leaving this
+            Mac.
           </p>
         </div>
         <div className="desktop-pane-hero-pills" aria-label="Onboarding highlights">
@@ -191,8 +192,8 @@ export function SetupPanel({
           <article className="diagnostic-card desktop-pane-intro">
             <h3>Runtime check</h3>
             <p className="inline-note">
-              Confirm that the desktop app is ready to use its bundled runtime and local storage
-              before you import or switch accounts.
+              Confirm that the desktop app is ready to use its included switching engine and local
+              storage before you import or switch accounts.
             </p>
           </article>
 
@@ -208,8 +209,8 @@ export function SetupPanel({
             </div>
             <p className="inline-note">
               {bootstrap.settings.runtime_kind === "bundled"
-                ? "The desktop app is using its included runtime."
-                : `The desktop app is using an advanced ${titleCase(bootstrap.settings.runtime_kind)} runtime override.`}
+                ? "The desktop app is using its included switching engine."
+                : `The desktop app is using an advanced ${titleCase(bootstrap.settings.runtime_kind)} engine override.`}
             </p>
             <p className="inline-note">
               Engine source:{" "}
@@ -222,7 +223,7 @@ export function SetupPanel({
               </strong>
             </p>
             <p className="inline-note">
-              Runtime mode: <strong>{titleCase(bootstrap.settings.runtime_kind)}</strong>
+              Engine mode: <strong>{titleCase(bootstrap.settings.runtime_kind)}</strong>
             </p>
             <p className="inline-note">
               Compatibility:{" "}
@@ -231,7 +232,7 @@ export function SetupPanel({
               </strong>
             </p>
             <p className="inline-note">
-              AI Switch data folder: {bootstrap.settings.aisw_home ?? "Managed automatically"}
+              Local data location: {bootstrap.settings.aisw_home ?? "Managed automatically"}
             </p>
             <p className="inline-note">
               Runtime version: {bootstrap.runtime_status.version?.version ?? "unknown"}

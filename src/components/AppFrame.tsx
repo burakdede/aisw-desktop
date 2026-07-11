@@ -18,6 +18,7 @@ interface AppFrameProps {
   onSelectNav: (id: string) => void;
   statusBadge?: ReactNode;
   toolbar?: ReactNode;
+  mode?: "standard" | "setup";
   children: ReactNode;
 }
 
@@ -30,6 +31,7 @@ export function AppFrame({
   onSelectNav,
   statusBadge,
   toolbar,
+  mode = "standard",
   children,
 }: AppFrameProps) {
   const groups = nav.reduce<Record<string, NavItem[]>>((acc, item) => {
@@ -39,58 +41,60 @@ export function AppFrame({
   }, {});
 
   return (
-    <main className="app-shell app-shell-window">
-      <div className="layout-shell">
-        <aside className="sidebar">
-          <div className="sidebar-window-chrome" aria-hidden="true">
-            <div className="traffic-lights">
-              <span className="traffic-light traffic-light-close" />
-              <span className="traffic-light traffic-light-minimize" />
-              <span className="traffic-light traffic-light-zoom" />
-            </div>
-            <span className="window-caption">AI Switch</span>
-          </div>
-          <div className="sidebar-scroll">
-            <div className="sidebar-brand">
-              <div className="brand-lockup">
-                <BrandMark />
-                <div>
-                  <p className="eyebrow">Control Center</p>
-                  <h1 className="sidebar-title">AI Switch</h1>
-                </div>
+    <main className={cn("app-shell", mode === "setup" ? "app-shell-setup-window" : "app-shell-window")}>
+      <div className={cn("layout-shell", mode === "setup" && "layout-shell-setup")}>
+        {mode === "setup" ? null : (
+          <aside className="sidebar">
+            <div className="sidebar-window-chrome" aria-hidden="true">
+              <div className="traffic-lights">
+                <span className="traffic-light traffic-light-close" />
+                <span className="traffic-light traffic-light-minimize" />
+                <span className="traffic-light traffic-light-zoom" />
               </div>
-              <p className="sidebar-badge">Local account switching</p>
-              {subtitle ? <p className="sidebar-copy">{subtitle}</p> : null}
+              <span className="window-caption">AI Switch</span>
             </div>
-            <nav className="nav-list" aria-label="Primary">
-              {Object.entries(groups).map(([group, items]) => (
-                <div key={group} className="nav-group">
-                  <p className="nav-group-label">{group}</p>
-                  <div className="nav-group-items">
-                    {items.map((item) => (
-                      <button
-                        key={item.id}
-                        className={cn("nav-button", activeNav === item.id && "nav-button-active")}
-                        disabled={item.disabled}
-                        onClick={() => onSelectNav(item.id)}
-                      >
-                        <span className="nav-button-icon" aria-hidden="true">
-                          <SidebarIcon id={item.id} />
-                        </span>
-                        <span className="nav-button-label">{item.label}</span>
-                      </button>
-                    ))}
+            <div className="sidebar-scroll">
+              <div className="sidebar-brand">
+                <div className="brand-lockup">
+                  <BrandMark />
+                  <div>
+                    <p className="eyebrow">Control Center</p>
+                    <h1 className="sidebar-title">AI Switch</h1>
                   </div>
                 </div>
-              ))}
-            </nav>
-          </div>
-          {statusBadge ? <div className="status-badge sidebar-status-card">{statusBadge}</div> : null}
-        </aside>
-        <div className="content-shell">
+                <p className="sidebar-badge">Local account switching</p>
+                {subtitle ? <p className="sidebar-copy">{subtitle}</p> : null}
+              </div>
+              <nav className="nav-list" aria-label="Primary">
+                {Object.entries(groups).map(([group, items]) => (
+                  <div key={group} className="nav-group">
+                    <p className="nav-group-label">{group}</p>
+                    <div className="nav-group-items">
+                      {items.map((item) => (
+                        <button
+                          key={item.id}
+                          className={cn("nav-button", activeNav === item.id && "nav-button-active")}
+                          disabled={item.disabled}
+                          onClick={() => onSelectNav(item.id)}
+                        >
+                          <span className="nav-button-icon" aria-hidden="true">
+                            <SidebarIcon id={item.id} />
+                          </span>
+                          <span className="nav-button-label">{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </nav>
+            </div>
+            {statusBadge ? <div className="status-badge sidebar-status-card">{statusBadge}</div> : null}
+          </aside>
+        )}
+        <div className={cn("content-shell", mode === "setup" && "content-shell-setup")}>
           <header className="window-toolbar">
             <div className="window-toolbar-meta">
-              <p className="window-toolbar-kicker">Desktop</p>
+              <p className="window-toolbar-kicker">{mode === "setup" ? "First Launch" : "Desktop"}</p>
               <div className="window-toolbar-copy">
                 <h2>{title}</h2>
                 {detail ? <p className="window-toolbar-subtitle">{detail}</p> : null}

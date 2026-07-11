@@ -71,6 +71,14 @@ button {
   background: linear-gradient(180deg, rgba(250, 251, 252, 0.94), rgba(241, 244, 247, 0.98));
 }
 
+.app-shell-setup-window {
+  display: grid;
+  padding: 18px;
+  background:
+    radial-gradient(circle at top left, rgba(116, 146, 189, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(250, 251, 252, 0.94), rgba(241, 244, 247, 0.98));
+}
+
 .hero-card {
   width: min(560px, 100%);
   margin: auto;
@@ -139,6 +147,13 @@ button {
     linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 95%, transparent)),
     color-mix(in srgb, Canvas 97%, transparent);
   box-shadow: var(--shadow-window);
+}
+
+.layout-shell-setup {
+  min-height: calc(100vh - 36px);
+  grid-template-columns: minmax(0, 1fr);
+  width: min(1240px, 100%);
+  margin: 0 auto;
 }
 
 .sidebar {
@@ -515,6 +530,10 @@ button {
     var(--content-bg);
 }
 
+.content-shell-setup {
+  border-radius: 16px;
+}
+
 .window-toolbar {
   z-index: 2;
   min-height: 74px;
@@ -603,6 +622,15 @@ button {
   gap: 10px;
   align-content: start;
   min-width: 0;
+}
+
+.content-shell-setup .content-main {
+  padding: 18px 20px 20px;
+}
+
+.content-shell-setup .content-stage {
+  width: min(1160px, 100%);
+  margin: 0 auto;
 }
 
 .section-card,
