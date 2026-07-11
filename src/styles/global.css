@@ -1125,6 +1125,40 @@ button {
   border-color: color-mix(in srgb, var(--warning) 22%, var(--separator));
 }
 
+.settings-status-strip {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr) minmax(220px, 280px);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.settings-status-card {
+  display: grid;
+  gap: 6px;
+  min-height: 104px;
+  padding: 14px 15px;
+  border-radius: 12px;
+  border: 1px solid var(--separator);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, Canvas 99%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
+    color-mix(in srgb, Canvas 98%, CanvasText 2%);
+  box-shadow: var(--shadow-card);
+}
+
+.settings-status-value {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.settings-status-pill-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-content: flex-start;
+}
+
 .profiles-status-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1984,6 +2018,10 @@ button {
   }
 
   .profiles-status-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-status-strip {
     grid-template-columns: 1fr;
   }
 

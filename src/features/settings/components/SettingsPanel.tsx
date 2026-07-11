@@ -178,20 +178,28 @@ export function SettingsPanel({
 
   return (
     <SectionCard title="Settings" kicker={sectionKicker(selectedSection)}>
-      <article className="desktop-pane-hero settings-hero">
-        <div className="desktop-pane-hero-copy">
-          <p className="card-kicker">Preferences</p>
-          <h3>{sectionHeading(selectedSection)}</h3>
+      <div className="settings-status-strip" aria-label="Settings highlights">
+        <article className="settings-status-card">
+          <p className="card-kicker">Section</p>
+          <p className="settings-status-value">{sectionLabel(selectedSection)}</p>
+          <p className="inline-note">{sourceListSummary(selectedSection)}</p>
+        </article>
+        <article className="settings-status-card">
+          <p className="card-kicker">Behavior</p>
+          <p className="settings-status-value">{sectionHeading(selectedSection)}</p>
           <p className="inline-note">{sectionDescription(selectedSection)}</p>
-        </div>
-        <div className="desktop-pane-hero-pills settings-hero-pills">
-          {sectionPills(selectedSection).map((pill) => (
-            <span key={pill} className="status-pill">
-              {pill}
-            </span>
-          ))}
-        </div>
-      </article>
+        </article>
+        <article className="settings-status-card">
+          <p className="card-kicker">Highlights</p>
+          <div className="settings-status-pill-stack">
+            {sectionPills(selectedSection).map((pill) => (
+              <span key={pill} className="status-pill">
+                {pill}
+              </span>
+            ))}
+          </div>
+        </article>
+      </div>
       <SplitView
         className="settings-split"
         primaryClassName="settings-nav-pane"
