@@ -99,7 +99,13 @@ export function ProfilesPanel({
   const [expandedDetails, setExpandedDetails] = useState<string | null>(null);
   const [openDiagnosticDetails, setOpenDiagnosticDetails] = useState<string | null>(null);
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
+  const [openRowActions, setOpenRowActions] = useState<{
+    tool: (typeof TOOLS)[number];
+    name: string;
+  } | null>(null);
+  const [focusRenameOnSelection, setFocusRenameOnSelection] = useState(false);
   const apiKeyInputRef = useRef<HTMLInputElement | null>(null);
+  const renameInputRef = useRef<HTMLInputElement | null>(null);
 
   const profiles = useMemo(() => snapshot.profiles[tool]?.profiles ?? [], [snapshot, tool]);
   const readEnabled = useMutationAwareQueryEnabled();
@@ -328,6 +334,42 @@ export function ProfilesPanel({
     };
   }, []);
 
+  useEffect(() => {
+    if (!openRowActions) {
+      return;
+    }
+
+    function closeActions(event: MouseEvent) {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("[data-profile-row-actions]")) {
+        return;
+      }
+      setOpenRowActions(null);
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpenRowActions(null);
+      }
+    }
+
+    document.addEventListener("mousedown", closeActions);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeActions);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [openRowActions]);
+
+  useEffect(() => {
+    if (!focusRenameOnSelection || !selectedProfileEntry) {
+      return;
+    }
+    renameInputRef.current?.focus();
+    renameInputRef.current?.select();
+    setFocusRenameOnSelection(false);
+  }, [focusRenameOnSelection, selectedProfileEntry]);
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!profile.trim() || hasDuplicateProfileName) {
@@ -408,6 +450,21 @@ export function ProfilesPanel({
     );
   }
 
+  function selectInventoryEntry(entryTool: (typeof TOOLS)[number], name: string) {
+    setTool(entryTool);
+    setOpenDiagnosticDetails(null);
+    setExpandedDetails(name);
+  }
+
+  function activateInventoryEntry(entry: InventoryEntry) {
+    useProfileMutation.mutate({
+      tool: entry.tool,
+      profile: entry.name,
+      stateMode: supportedStateModes(entry.tool, toolCapabilities).length ? stateMode : null,
+      label: entry.label,
+    });
+  }
+
   return (
     <SectionCard
       title="Profiles"
@@ -486,13 +543,12 @@ export function ProfilesPanel({
                 <span>Backend</span>
                 <span>State</span>
                 <span>Last checked</span>
+                <span>Actions</span>
               </div>
               <div className="stack-list desktop-list-stack profiles-table-rows">
               {filteredInventoryProfiles.map((inventoryEntry) => (
-                <button
+                <div
                   key={`${inventoryEntry.tool}:${inventoryEntry.name}`}
-                  type="button"
-                  aria-label={`Inspect ${titleCase(inventoryEntry.tool)} ${inventoryEntry.label}`}
                   className={`list-row profile-list-row ${
                     inventoryEntry.active ? "profile-list-row-active" : ""
                   } ${
@@ -500,51 +556,118 @@ export function ProfilesPanel({
                       ? "profile-list-row-selected"
                       : ""
                   }`}
-                  onClick={() => {
-                    setTool(inventoryEntry.tool);
-                    setOpenDiagnosticDetails(null);
-                    setExpandedDetails(inventoryEntry.name);
-                  }}
-                  onDoubleClick={() => {
-                    setTool(inventoryEntry.tool);
-                    useProfileMutation.mutate({
-                      tool: inventoryEntry.tool,
-                      profile: inventoryEntry.name,
-                      stateMode: supportedStateModes(inventoryEntry.tool, toolCapabilities).length
-                        ? stateMode
-                        : null,
-                      label: inventoryEntry.label,
-                    });
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
+                    setOpenRowActions({ tool: inventoryEntry.tool, name: inventoryEntry.name });
                   }}
                 >
-                  <div className="profile-list-main">
-                    <div className="profile-list-row-title">
-                      <span
-                        className={`health-dot health-dot-${
-                          inventoryEntry.state === "Drifted"
-                            ? "warning"
-                            : inventoryEntry.active
-                              ? "ok"
-                              : "neutral"
-                        }`}
-                        aria-hidden="true"
-                      />
-                      <strong>{inventoryEntry.label}</strong>
-                      {inventoryEntry.active ? <span className="pill pill-ok">Active</span> : null}
+                  <button
+                    type="button"
+                    aria-label={`Inspect ${titleCase(inventoryEntry.tool)} ${inventoryEntry.label}`}
+                    className="profile-list-row-button"
+                    onClick={() => selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name)}
+                    onDoubleClick={() => activateInventoryEntry(inventoryEntry)}
+                  >
+                    <div className="profile-list-main">
+                      <div className="profile-list-row-title">
+                        <span
+                          className={`health-dot health-dot-${
+                            inventoryEntry.state === "Drifted"
+                              ? "warning"
+                              : inventoryEntry.active
+                                ? "ok"
+                                : "neutral"
+                          }`}
+                          aria-hidden="true"
+                        />
+                        <strong>{inventoryEntry.label}</strong>
+                        {inventoryEntry.active ? <span className="pill pill-ok">Active</span> : null}
+                      </div>
+                      <p>{inventoryEntry.name}</p>
                     </div>
-                    <p>{inventoryEntry.name}</p>
+                    <div className="profile-list-columns">
+                      <span>{titleCase(inventoryEntry.tool)}</span>
+                      <span>{inventoryEntry.auth}</span>
+                      <span>{inventoryEntry.backend}</span>
+                      <span>{inventoryEntry.state}</span>
+                      <span>{inventoryEntry.lastChecked}</span>
+                    </div>
+                    <span className="profile-list-row-chevron" aria-hidden="true">
+                      ›
+                    </span>
+                  </button>
+                  <div className="profile-row-actions" data-profile-row-actions>
+                    <button
+                      className="ghost-button profile-row-actions-trigger"
+                      type="button"
+                      aria-label={`Open actions for ${titleCase(inventoryEntry.tool)} ${inventoryEntry.label}`}
+                      aria-expanded={
+                        openRowActions?.tool === inventoryEntry.tool &&
+                        openRowActions?.name === inventoryEntry.name
+                      }
+                      onClick={() => {
+                        selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
+                        setOpenRowActions((current) =>
+                          current?.tool === inventoryEntry.tool && current?.name === inventoryEntry.name
+                            ? null
+                            : { tool: inventoryEntry.tool, name: inventoryEntry.name },
+                        );
+                      }}
+                    >
+                      •••
+                    </button>
+                    {openRowActions?.tool === inventoryEntry.tool &&
+                    openRowActions?.name === inventoryEntry.name ? (
+                      <div className="profile-row-actions-menu" role="menu" aria-label="Profile row actions">
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
+                            setOpenRowActions(null);
+                          }}
+                        >
+                          Open Details
+                        </button>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          disabled={mutationLock.isBusy}
+                          onClick={() => {
+                            setOpenRowActions(null);
+                            activateInventoryEntry(inventoryEntry);
+                          }}
+                        >
+                          Activate
+                        </button>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
+                            setOpenRowActions(null);
+                            setFocusRenameOnSelection(true);
+                          }}
+                        >
+                          Rename…
+                        </button>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          className="profile-row-actions-danger"
+                          onClick={() => {
+                            selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
+                            setOpenRowActions(null);
+                            setPendingRemoval(inventoryEntry.name);
+                          }}
+                        >
+                          Remove…
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
-                  <div className="profile-list-columns">
-                    <span>{titleCase(inventoryEntry.tool)}</span>
-                    <span>{inventoryEntry.auth}</span>
-                    <span>{inventoryEntry.backend}</span>
-                    <span>{inventoryEntry.state}</span>
-                    <span>{inventoryEntry.lastChecked}</span>
-                  </div>
-                  <span className="profile-list-row-chevron" aria-hidden="true">
-                    ›
-                  </span>
-                </button>
+                </div>
               ))}
               {!filteredInventoryProfiles.length ? (
                 <article className="diagnostic-card">
@@ -787,6 +910,7 @@ export function ProfilesPanel({
                       </p>
                       <div className="inline-form inline-form-compact">
                         <input
+                          ref={renameInputRef}
                           aria-label={`rename ${selectedProfileEntry.name}`}
                           placeholder="new name"
                           value={selectedRenameDraft}

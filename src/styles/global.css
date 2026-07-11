@@ -2221,20 +2221,34 @@ button {
 
 .profile-list-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1.4fr) minmax(0, 1.8fr) auto;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
   align-items: center;
   width: 100%;
+  padding: 0 8px 0 0;
   border: 0;
   border-radius: 0;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
   background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
   text-align: left;
-  cursor: pointer;
 }
 
 .profiles-table-rows > .profile-list-row:last-child {
   border-bottom: 0;
+}
+
+.profile-list-row-button {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) minmax(0, 1.8fr) auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  padding: 12px 10px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
 }
 
 .profile-list-row-active {
@@ -2266,6 +2280,60 @@ button {
   font-size: 18px;
   line-height: 1;
   color: var(--text-tertiary);
+}
+
+.profile-row-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-row-actions-trigger {
+  min-width: 34px;
+  padding: 0 10px;
+  letter-spacing: 0.08em;
+}
+
+.profile-row-actions-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 4;
+  display: grid;
+  min-width: 168px;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, CanvasText 10%, transparent);
+  background: color-mix(in srgb, Canvas 98%, CanvasText 2%);
+  box-shadow: var(--shadow-panel);
+}
+
+.profile-row-actions-menu button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.profile-row-actions-menu button:hover,
+.profile-row-actions-menu button:focus-visible {
+  background: color-mix(in srgb, AccentColor 10%, Canvas 90%);
+  outline: none;
+}
+
+.profile-row-actions-menu button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.profile-row-actions-danger {
+  color: #b42318;
 }
 
 .backup-list-row {

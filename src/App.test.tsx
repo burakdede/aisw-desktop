@@ -3246,6 +3246,43 @@ describe("App", () => {
     });
   });
 
+  it("opens profile row actions and routes remove through the confirmation sheet", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Profiles"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Open actions for Claude Work" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("menu", { name: "Profile row actions" })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("menuitem", { name: "Remove…" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { name: "Remove Profile" })).toBeInTheDocument();
+      expect(screen.getByText("Claude / Work")).toBeInTheDocument();
+    });
+  });
+
+  it("focuses the rename field when rename is chosen from a profile row menu", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Profiles"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Open actions for Claude Work" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("menuitem", { name: "Rename…" })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("menuitem", { name: "Rename…" }));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("rename work")).toHaveFocus();
+    });
+  });
+
   it("uses saved labels in latest profile backup confirmations", async () => {
     const labeledSettings: DesktopSettings = {
       ...bootstrap.settings,
