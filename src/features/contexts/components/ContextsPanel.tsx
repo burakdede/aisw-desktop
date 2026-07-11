@@ -47,6 +47,9 @@ export function ContextsPanel({
     profiles: Object.fromEntries(TOOLS.map((tool) => [tool, ""])),
   });
   const [lastAction, setLastAction] = useState("");
+  const [selectedSetName, setSelectedSetName] = useState<string | null>(
+    (settings.profile_sets ?? [])[0]?.name ?? null,
+  );
   const activeContext = parseWorkspaceStatus(snapshot.workspace_status ?? undefined).currentContext;
 
   const localSets = settings.profile_sets ?? [];
@@ -61,6 +64,11 @@ export function ContextsPanel({
       (entry) => entry.name === trimmedDraftName && entry.name !== draft.sourceName,
     );
   const contextResult = lastCommandResults.global.context;
+  const selectedSet =
+    localSets.find((set) => set.name === selectedSetName) ?? localSets[0] ?? null;
+  const detailSet = isEditingExistingSet
+    ? localSets.find((set) => set.name === draft.sourceName) ?? null
+    : selectedSet;
   const profileOptions = useMemo(
     () =>
       Object.fromEntries(
@@ -102,6 +110,7 @@ export function ContextsPanel({
       },
       {
         onSuccess: () => {
+          setSelectedSetName(name);
           setLastAction(
             `${isEditingExistingSet ? "Updated" : "Saved"} profile set ${draft.label.trim() || name}.`,
           );
@@ -117,6 +126,7 @@ export function ContextsPanel({
   }
 
   async function activateProfileSet(set: DesktopSettings["profile_sets"][number]) {
+    setSelectedSetName(set.name);
     await activateProfileSetMutation.mutateAsync({
       name: set.name,
       label: profileSetDisplayLabel(set),
@@ -135,6 +145,10 @@ export function ContextsPanel({
         label: "",
         profiles: Object.fromEntries(TOOLS.map((tool) => [tool, ""])),
       });
+    }
+    if (selectedSetName === name) {
+      const remaining = localSets.filter((entry) => entry.name !== name);
+      setSelectedSetName(remaining[0]?.name ?? null);
     }
     updateSettingsMutation.mutate(
       {
@@ -220,105 +234,116 @@ export function ContextsPanel({
                 Save work, personal, and client bundles once, then switch them from one place.
               </p>
             </div>
-            {localSets.map((set) => (
-              <article
-                key={set.name}
-                className={`list-row set-row ${profileSetIsActive(snapshot, set) ? "set-row-active" : ""}`}
-              >
-                <div className="set-row-main">
-                  <div className="set-row-header">
-                    <strong>{profileSetDisplayLabel(set)}</strong>
-                    <span
-                      className={`pill ${
-                        profileSetIsActive(snapshot, set)
-                          ? "pill-ok"
-                          : profileSetHasUsableSelections(snapshot, set)
-                            ? "pill-soft"
-                            : "pill-warn"
-                      }`}
-                    >
-                      {profileSetIsActive(snapshot, set)
-                        ? "Current"
-                        : profileSetHasUsableSelections(snapshot, set)
-                          ? "Ready"
-                          : "Needs attention"}
-                    </span>
-                  </div>
-                  <div className="set-profile-grid">
-                    {TOOLS.map((tool) => {
-                      const profile = set.profiles[tool];
-                      const label = profile
-                        ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
-                        : "Not configured";
-                      return (
-                        <p key={tool} className="inline-note">
-                          <strong>{titleCase(tool)}:</strong> {label}
+            <div className="stack-list desktop-list-stack">
+              {localSets.map((set) => (
+                <article
+                  key={set.name}
+                  className={`list-row set-row ${
+                    profileSetIsActive(snapshot, set) ? "set-row-active" : ""
+                  } ${selectedSetName === set.name ? "set-row-selected" : ""}`}
+                >
+                  <button
+                    className="set-row-select"
+                    type="button"
+                    onClick={() => setSelectedSetName(set.name)}
+                  >
+                    <div className="set-row-main">
+                      <div className="set-row-header">
+                        <strong>{profileSetDisplayLabel(set)}</strong>
+                        <span
+                          className={`pill ${
+                            profileSetIsActive(snapshot, set)
+                              ? "pill-ok"
+                              : profileSetHasUsableSelections(snapshot, set)
+                                ? "pill-soft"
+                                : "pill-warn"
+                          }`}
+                        >
+                          {profileSetIsActive(snapshot, set)
+                            ? "Current"
+                            : profileSetHasUsableSelections(snapshot, set)
+                              ? "Ready"
+                              : "Needs attention"}
+                        </span>
+                      </div>
+                      <div className="set-profile-grid">
+                        {TOOLS.map((tool) => {
+                          const profile = set.profiles[tool];
+                          const label = profile
+                            ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
+                            : "Not configured";
+                          return (
+                            <p key={tool} className="inline-note">
+                              <strong>{titleCase(tool)}:</strong> {label}
+                            </p>
+                          );
+                        })}
+                      </div>
+                      <p className="inline-note">
+                        {TOOLS.map((tool) => {
+                          const profile = set.profiles[tool];
+                          const label = profile
+                            ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
+                            : "none";
+                          return `${tool}: ${label}`;
+                        }).join(" · ")}
+                      </p>
+                      {!profileSetHasSelections(set) ? (
+                        <p className="inline-note">
+                          Add at least one mapped profile before using this set in Overview, the menu bar, or project rules.
                         </p>
-                      );
-                    })}
+                      ) : !profileSetHasUsableSelections(snapshot, set) ? (
+                        <p className="inline-note">
+                          Refresh or repair the missing mapped profiles before using this set. Missing:{" "}
+                          {missingProfileSetSelections(snapshot, set)
+                            .map(([tool, profile]) => `${tool}: ${profile}`)
+                            .join(" · ")}
+                        </p>
+                      ) : null}
+                    </div>
+                  </button>
+                  <div className="button-row button-row-column">
+                    <button
+                      className="primary-button"
+                      type="button"
+                      disabled={
+                        mutationLock.isBusy ||
+                        profileSetIsActive(snapshot, set) ||
+                        !profileSetHasUsableSelections(snapshot, set)
+                      }
+                      onClick={() => void activateProfileSet(set)}
+                    >
+                      {profileSetIsActive(snapshot, set) ? "Current set" : "Switch to set"}
+                    </button>
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      onClick={() => {
+                        setSelectedSetName(set.name);
+                        setDraft({
+                          sourceName: set.name,
+                          name: set.name,
+                          label: set.label ?? "",
+                          profiles: Object.fromEntries(
+                            TOOLS.map((tool) => [tool, set.profiles[tool] ?? ""]),
+                          ),
+                        });
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="ghost-button danger-button"
+                      type="button"
+                      disabled={mutationLock.isBusy}
+                      onClick={() => deleteProfileSet(set.name)}
+                    >
+                      Delete
+                    </button>
                   </div>
-                  <p className="inline-note">
-                    {TOOLS.map((tool) => {
-                      const profile = set.profiles[tool];
-                      const label = profile
-                        ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
-                        : "none";
-                      return `${tool}: ${label}`;
-                    }).join(" · ")}
-                  </p>
-                  {!profileSetHasSelections(set) ? (
-                    <p className="inline-note">
-                      Add at least one mapped profile before using this set in Overview, the menu bar, or project rules.
-                    </p>
-                  ) : !profileSetHasUsableSelections(snapshot, set) ? (
-                    <p className="inline-note">
-                      Refresh or repair the missing mapped profiles before using this set. Missing:{" "}
-                      {missingProfileSetSelections(snapshot, set)
-                        .map(([tool, profile]) => `${tool}: ${profile}`)
-                        .join(" · ")}
-                    </p>
-                  ) : null}
-                </div>
-                <div className="button-row button-row-column">
-                  <button
-                    className="primary-button"
-                    type="button"
-                    disabled={
-                      mutationLock.isBusy ||
-                      profileSetIsActive(snapshot, set) ||
-                      !profileSetHasUsableSelections(snapshot, set)
-                    }
-                    onClick={() => void activateProfileSet(set)}
-                  >
-                    {profileSetIsActive(snapshot, set) ? "Current set" : "Switch to set"}
-                  </button>
-                  <button
-                    className="ghost-button"
-                    type="button"
-                    onClick={() =>
-                      setDraft({
-                        sourceName: set.name,
-                        name: set.name,
-                        label: set.label ?? "",
-                        profiles: Object.fromEntries(
-                          TOOLS.map((tool) => [tool, set.profiles[tool] ?? ""]),
-                        ),
-                      })
-                    }
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="ghost-button danger-button"
-                    type="button"
-                    disabled={mutationLock.isBusy}
-                    onClick={() => deleteProfileSet(set.name)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </article>
-            ))}
+                </article>
+              ))}
+            </div>
             {!localSets.length ? (
               <article className="diagnostic-card">
                 <h3>No saved sets yet</h3>
@@ -403,6 +428,78 @@ export function ContextsPanel({
         }
         secondary={
           <article className="diagnostic-card set-editor-card desktop-pane-column">
+          {detailSet ? (
+            <div className="set-detail-summary">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Selected set</p>
+                  <h3>Set details</h3>
+                </div>
+                <span
+                  className={`pill ${
+                    profileSetIsActive(snapshot, detailSet)
+                      ? "pill-ok"
+                      : profileSetHasUsableSelections(snapshot, detailSet)
+                        ? "pill-soft"
+                        : "pill-warn"
+                  }`}
+                >
+                  {profileSetIsActive(snapshot, detailSet)
+                    ? "Current"
+                    : profileSetHasUsableSelections(snapshot, detailSet)
+                      ? "Ready"
+                      : "Needs attention"}
+                </span>
+              </div>
+              <div className="set-detail-grid">
+                {TOOLS.map((tool) => {
+                  const profile = detailSet.profiles[tool];
+                  return (
+                    <div key={tool} className="set-detail-cell">
+                      <span className="overview-current-set-cell-label">{titleCase(tool)}</span>
+                      <strong>
+                        {profile
+                          ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
+                          : "Not configured"}
+                      </strong>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="button-row">
+                <button
+                  className="primary-button"
+                  type="button"
+                  disabled={
+                    mutationLock.isBusy ||
+                    profileSetIsActive(snapshot, detailSet) ||
+                    !profileSetHasUsableSelections(snapshot, detailSet)
+                  }
+                  onClick={() => void activateProfileSet(detailSet)}
+                >
+                  {profileSetIsActive(snapshot, detailSet)
+                    ? "Selected set active"
+                    : "Switch selected set"}
+                </button>
+                <button
+                  className="ghost-button"
+                  type="button"
+                  onClick={() =>
+                    setDraft({
+                      sourceName: detailSet.name,
+                      name: detailSet.name,
+                      label: detailSet.label ?? "",
+                      profiles: Object.fromEntries(
+                        TOOLS.map((tool) => [tool, detailSet.profiles[tool] ?? ""]),
+                      ),
+                    })
+                  }
+                >
+                  Edit selected set
+                </button>
+              </div>
+            </div>
+          ) : null}
           <div className="stack-list">
             <div>
               <p className="card-kicker">{isEditingExistingSet ? "Edit set" : "New set"}</p>

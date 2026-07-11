@@ -1147,6 +1147,11 @@ button {
   align-items: center;
 }
 
+.set-row-selected {
+  border-color: color-mix(in srgb, AccentColor 20%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, AccentColor 14%, transparent);
+}
+
 .set-row-active {
   border-color: color-mix(in srgb, AccentColor 32%, transparent);
   background: color-mix(in srgb, AccentColor 8%, Canvas 92%);
@@ -1176,6 +1181,17 @@ button {
   gap: 8px;
 }
 
+.set-row-select {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .set-row-header {
   display: flex;
   justify-content: space-between;
@@ -1187,6 +1203,29 @@ button {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px 12px;
+}
+
+.set-detail-summary {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--separator);
+}
+
+.set-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.set-detail-cell {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, transparent);
 }
 
 .overview-stack {
