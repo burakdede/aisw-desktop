@@ -5,13 +5,13 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --app-bg: color-mix(in srgb, Canvas 96%, #d8dde6 4%);
-  --sidebar-bg: color-mix(in srgb, Canvas 82%, transparent);
-  --content-bg: color-mix(in srgb, Canvas 98%, #edf1f5 2%);
-  --card-bg: color-mix(in srgb, Canvas 97%, CanvasText 3%);
+  --app-bg: color-mix(in srgb, Canvas 97%, #d8dde6 3%);
+  --sidebar-bg: color-mix(in srgb, Canvas 88%, transparent);
+  --content-bg: color-mix(in srgb, Canvas 98%, #eef2f6 2%);
+  --card-bg: color-mix(in srgb, Canvas 98%, CanvasText 2%);
   --soft-fill: color-mix(in srgb, CanvasText 6%, transparent);
   --soft-fill-strong: color-mix(in srgb, CanvasText 10%, transparent);
-  --separator: color-mix(in srgb, CanvasText 14%, transparent);
+  --separator: color-mix(in srgb, CanvasText 12%, transparent);
   --text-primary: CanvasText;
   --text-secondary: color-mix(in srgb, CanvasText 66%, transparent);
   --text-tertiary: color-mix(in srgb, CanvasText 48%, transparent);
@@ -19,8 +19,9 @@
   --ok: #248a3d;
   --warning: #b26a00;
   --danger: #c42b1c;
-  --shadow-window: 0 18px 48px rgba(0, 0, 0, 0.08);
-  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-window: 0 20px 52px rgba(19, 30, 47, 0.11);
+  --shadow-card: 0 10px 24px rgba(19, 30, 47, 0.06);
+  --shadow-panel: inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 * {
@@ -36,8 +37,9 @@ body,
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top left, rgba(112, 170, 255, 0.12), transparent 32%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(241, 244, 248, 0.92)),
+    radial-gradient(circle at top left, rgba(112, 170, 255, 0.14), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.45), transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(241, 244, 248, 0.96)),
     var(--app-bg);
   color: var(--text-primary);
 }
@@ -66,10 +68,10 @@ button {
 
 .app-shell-window {
   display: grid;
-  padding: 12px;
+  padding: 10px;
   background:
-    radial-gradient(circle at top left, rgba(107, 164, 255, 0.14), transparent 26%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(241, 244, 248, 0.92)),
+    radial-gradient(circle at top left, rgba(107, 164, 255, 0.16), transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(241, 244, 248, 0.95)),
     color-mix(in srgb, Canvas 99%, #e5e9ef 1%);
 }
 
@@ -130,27 +132,35 @@ button {
 }
 
 .layout-shell {
-  min-height: calc(100vh - 24px);
+  min-height: calc(100vh - 20px);
   display: grid;
   grid-template-columns: 236px minmax(0, 1fr);
   gap: 0;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
-  border-radius: 22px;
-  background: color-mix(in srgb, Canvas 97%, transparent);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, Canvas 97%, transparent), color-mix(in srgb, Canvas 95%, transparent)),
+    color-mix(in srgb, Canvas 97%, transparent);
   box-shadow: var(--shadow-window);
 }
 
 .sidebar {
-  padding: calc(18px + env(safe-area-inset-top, 0px)) 14px 14px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, Canvas 94%, transparent), color-mix(in srgb, Canvas 88%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, Canvas 93%, transparent), color-mix(in srgb, Canvas 88%, transparent)),
     color-mix(in srgb, Canvas 90%, transparent);
   border-right: 1px solid var(--separator);
   backdrop-filter: blur(20px);
+}
+
+.sidebar-scroll {
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  gap: 18px;
+  padding: calc(18px + env(safe-area-inset-top, 0px)) 14px 14px;
 }
 
 .sidebar-brand,
@@ -169,20 +179,16 @@ button {
 }
 
 .brand-mark-panel {
-  fill: color-mix(in srgb, Canvas 92%, CanvasText 8%);
+  fill: color-mix(in srgb, Canvas 94%, CanvasText 6%);
   stroke: color-mix(in srgb, CanvasText 12%, transparent);
 }
 
 .brand-mark-panel-secondary {
-  fill: color-mix(in srgb, Canvas 98%, CanvasText 2%);
-}
-
-.brand-mark-rail {
-  fill: color-mix(in srgb, CanvasText 14%, Canvas 86%);
+  fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
 }
 
 .brand-mark-flow {
-  stroke: color-mix(in srgb, CanvasText 58%, transparent);
+  stroke: color-mix(in srgb, CanvasText 64%, transparent);
 }
 
 .brand-mark-flow-accent {
@@ -191,13 +197,13 @@ button {
 
 .brand-mark-node {
   fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
-  stroke: color-mix(in srgb, CanvasText 26%, transparent);
-  stroke-width: 1;
+  stroke: color-mix(in srgb, CanvasText 18%, transparent);
+  stroke-width: 1.2;
 }
 
 .brand-mark-node-accent {
-  fill: color-mix(in srgb, AccentColor 84%, Canvas 16%);
-  stroke: color-mix(in srgb, AccentColor 30%, transparent);
+  fill: color-mix(in srgb, AccentColor 82%, Canvas 18%);
+  stroke: color-mix(in srgb, AccentColor 38%, transparent);
 }
 
 .brand-mark-highlight {
@@ -219,6 +225,21 @@ button {
   margin: 10px 0 0;
   font-size: 12px;
   line-height: 1.55;
+}
+
+.sidebar-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  margin: 12px 0 0;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, AccentColor 20%, transparent);
+  background: color-mix(in srgb, AccentColor 10%, Canvas 90%);
+  color: color-mix(in srgb, AccentColor 74%, CanvasText 26%);
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 600;
 }
 
 .nav-list {
@@ -297,12 +318,12 @@ button {
 }
 
 .sidebar-status-card {
-  margin: auto 10px 10px;
+  margin: 0 10px 10px;
   padding: 12px;
   border: 1px solid color-mix(in srgb, CanvasText 10%, transparent);
   border-radius: 12px;
-  background: color-mix(in srgb, Canvas 95%, CanvasText 5%);
-  box-shadow: var(--shadow-card);
+  background: color-mix(in srgb, Canvas 96%, CanvasText 4%);
+  box-shadow: var(--shadow-panel);
 }
 
 .status-badge strong {
@@ -433,27 +454,29 @@ button {
   min-width: 0;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  background: var(--content-bg);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, Canvas 96%, transparent), color-mix(in srgb, Canvas 98%, transparent)),
+    var(--content-bg);
 }
 
 .window-toolbar {
-  position: sticky;
-  top: 0;
   z-index: 2;
-  min-height: 72px;
-  padding: calc(18px + env(safe-area-inset-top, 0px)) 18px 14px;
+  min-height: 78px;
+  padding: calc(18px + env(safe-area-inset-top, 0px)) 18px 12px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 16px;
   border-bottom: 1px solid var(--separator);
-  background: color-mix(in srgb, Canvas 90%, transparent);
-  backdrop-filter: blur(24px);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, Canvas 88%, transparent), color-mix(in srgb, Canvas 92%, transparent)),
+    color-mix(in srgb, Canvas 90%, transparent);
+  backdrop-filter: blur(30px);
 }
 
 .window-toolbar-copy h2 {
   margin: 2px 0 0;
-  font-size: 22px;
+  font-size: 24px;
   line-height: 1.1;
   letter-spacing: -0.03em;
 }
@@ -470,15 +493,30 @@ button {
   display: flex;
   gap: 8px;
   align-items: center;
+  justify-content: flex-end;
+}
+
+.toolbar-cluster {
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, CanvasText 10%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, Canvas 94%, CanvasText 6%);
+  box-shadow: var(--shadow-panel);
 }
 
 .content-main {
   min-height: 0;
   overflow: auto;
-  padding: 16px 18px 18px;
+  padding: 14px 18px 18px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, Canvas 99%, transparent), color-mix(in srgb, Canvas 97%, transparent));
+}
+
+.content-stage {
   display: grid;
   gap: 14px;
   align-content: start;
+  min-width: 0;
 }
 
 .section-card,
@@ -487,11 +525,11 @@ button {
 .list-row {
   border: 1px solid var(--separator);
   background: var(--card-bg);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-panel);
 }
 
 .section-card {
-  padding: 18px;
+  padding: 16px;
   border-radius: 14px;
 }
 
@@ -500,7 +538,7 @@ button {
   justify-content: space-between;
   gap: 12px;
   align-items: flex-start;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .section-header h2 {
@@ -521,12 +559,11 @@ button {
   justify-content: space-between;
   gap: 16px;
   align-items: flex-start;
-  margin-bottom: 16px;
   padding: 14px 16px;
   border-radius: 12px;
   border: 1px solid var(--separator);
-  background: color-mix(in srgb, Canvas 97%, CanvasText 3%);
-  box-shadow: var(--shadow-card);
+  background: color-mix(in srgb, Canvas 98%, CanvasText 2%);
+  box-shadow: var(--shadow-panel);
 }
 
 .desktop-pane-hero-copy {
@@ -991,12 +1028,14 @@ button {
   background: color-mix(in srgb, AccentColor 82%, white 18%);
   color: white;
   font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24);
 }
 
 .ghost-button {
   border: 1px solid var(--separator);
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
   color: var(--text-primary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32);
 }
 
 .primary-button:disabled,

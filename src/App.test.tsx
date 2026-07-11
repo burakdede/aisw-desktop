@@ -317,7 +317,7 @@ describe("App", () => {
     });
     expect(screen.getByText("Re-apply Work")).toBeInTheDocument();
     expect(screen.getByText("Current set: Work")).toBeInTheDocument();
-    expect(screen.getByText("Ready to switch")).toBeInTheDocument();
+    expect(screen.getByText("Switching engine ready")).toBeInTheDocument();
     expect(screen.getByText("Welcome")).toBeInTheDocument();
     expect(screen.getByText("Included switching engine")).toBeInTheDocument();
     expect(screen.getByText("Health check")).toBeInTheDocument();

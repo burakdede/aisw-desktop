@@ -12,6 +12,7 @@ interface NavItem {
 interface AppFrameProps {
   title: string;
   subtitle?: string;
+  detail?: string;
   nav: NavItem[];
   activeNav: string;
   onSelectNav: (id: string) => void;
@@ -23,6 +24,7 @@ interface AppFrameProps {
 export function AppFrame({
   title,
   subtitle,
+  detail,
   nav,
   activeNav,
   onSelectNav,
@@ -40,16 +42,18 @@ export function AppFrame({
     <main className="app-shell app-shell-window">
       <div className="layout-shell">
         <aside className="sidebar">
-          <div className="sidebar-brand">
-            <div className="brand-lockup">
-              <BrandMark />
-              <div>
-                <p className="eyebrow">AI Switch</p>
-                <h1 className="sidebar-title">AI Switch</h1>
+          <div className="sidebar-scroll">
+            <div className="sidebar-brand">
+              <div className="brand-lockup">
+                <BrandMark />
+                <div>
+                  <p className="eyebrow">AI Switch</p>
+                  <h1 className="sidebar-title">AI Switch</h1>
+                </div>
               </div>
+              <p className="sidebar-badge">Local agent control center</p>
+              {subtitle ? <p className="sidebar-copy">{subtitle}</p> : null}
             </div>
-            {subtitle ? <p className="sidebar-copy">{subtitle}</p> : null}
-          </div>
           <nav className="nav-list" aria-label="Primary">
             {Object.entries(groups).map(([group, items]) => (
               <div key={group} className="nav-group">
@@ -72,18 +76,21 @@ export function AppFrame({
               </div>
             ))}
           </nav>
+          </div>
           {statusBadge ? <div className="status-badge sidebar-status-card">{statusBadge}</div> : null}
         </aside>
         <div className="content-shell">
           <header className="window-toolbar">
             <div className="window-toolbar-copy">
-              <p className="window-toolbar-kicker">AI Switch</p>
+              <p className="window-toolbar-kicker">Workspace</p>
               <h2>{title}</h2>
-              {subtitle ? <p className="window-toolbar-subtitle">{subtitle}</p> : null}
+              {detail ? <p className="window-toolbar-subtitle">{detail}</p> : null}
             </div>
-            {toolbar ? <div className="window-toolbar-actions">{toolbar}</div> : null}
+            {toolbar ? <div className="window-toolbar-actions toolbar-cluster">{toolbar}</div> : null}
           </header>
-          <div className="content-main">{children}</div>
+          <div className="content-main">
+            <div className="content-stage">{children}</div>
+          </div>
         </div>
       </div>
     </main>

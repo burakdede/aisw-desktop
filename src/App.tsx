@@ -359,7 +359,8 @@ export function App() {
     <>
     <AppFrame
       title={sectionTitle(activeSection)}
-      subtitle="Manage Claude Code, Codex CLI, and Gemini CLI identities from a compact local Mac utility."
+      subtitle="Switch between Claude Code, Codex CLI, and Gemini CLI accounts without leaving a native desktop workspace."
+      detail={sectionDetail(activeSection)}
       nav={navItems}
       activeNav={activeSection}
       onSelectNav={selectNav}
@@ -391,9 +392,9 @@ export function App() {
       }
       statusBadge={
         <div>
-          <strong>{currentActiveSet ? `Current set: ${currentActiveSet}` : "No set selected"}</strong>
-          <p>{runtimeStatus.compatible ? "Ready to switch" : "Needs attention"}</p>
-          <p>{runtimeStatus.resolved_path ?? "No engine resolved"}</p>
+          <strong>{currentActiveSet ? `Current set: ${currentActiveSet}` : "No active set"}</strong>
+          <p>{runtimeStatus.compatible ? "Switching engine ready" : "Needs attention"}</p>
+          <p>{runtimeStatus.resolved_path ?? "Bundled engine unavailable"}</p>
         </div>
       }
     >
@@ -604,5 +605,26 @@ function sectionTitle(section: string) {
       return "Settings";
     default:
       return "AI Switch";
+  }
+}
+
+function sectionDetail(section: string) {
+  switch (section) {
+    case "overview":
+      return "Review active accounts, shared sets, and switch readiness across every supported tool.";
+    case "profiles":
+      return "Inspect saved logins, labels, storage mode, and safe activation details with minimal scrolling.";
+    case "sets":
+      return "Coordinate reusable work, personal, and client combinations before switching a whole workspace.";
+    case "diagnostics":
+      return "Verify runtime health, identify drift, and follow guided repair steps when something blocks switching.";
+    case "backups":
+      return "Replay a previous profile state or restore the latest known-good backup without leaving the app.";
+    case "activity":
+      return "Track recent desktop actions, command outcomes, and changes applied by AI Switch.";
+    case "settings":
+      return "Control the bundled engine, updates, terminal integration, and local storage behavior.";
+    default:
+      return "";
   }
 }
