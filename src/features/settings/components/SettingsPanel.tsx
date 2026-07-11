@@ -270,20 +270,14 @@ export function SettingsPanel({
                   </div>
                 </div>
               </article>
-              <article className="diagnostic-card settings-pane-intro">
-                <h3>General</h3>
-                <p className="inline-note">
-                  Keep the app aligned with the operating system and preserve one consistent desktop switching model.
-                </p>
-              </article>
               <article className="diagnostic-card settings-pane-section">
                 <div className="desktop-pane-section-header">
                   <div>
-                    <p className="card-kicker">Appearance</p>
+                    <p className="card-kicker">General</p>
                     <h3>Desktop appearance</h3>
                   </div>
                   <p className="inline-note">
-                    Choose whether AI Switch follows the system or pins the window to a light or dark appearance.
+                    Keep the app aligned with the operating system and choose whether AI Switch follows the system or pins the window to a light or dark appearance.
                   </p>
                 </div>
                 <label>
@@ -638,21 +632,15 @@ export function SettingsPanel({
                   </div>
                 </div>
               </article>
-              <article className="diagnostic-card settings-pane-intro">
-                <h3>Signed desktop releases</h3>
-                <p className="inline-note">
-                  Choose the release track for this Mac, then check for signed desktop updates.
-                </p>
-              </article>
               <form className="stacked-form settings-form" onSubmit={submit}>
                 <article className="diagnostic-card settings-pane-section">
                   <div className="desktop-pane-section-header">
                     <div>
-                      <p className="card-kicker">Updates</p>
+                      <p className="card-kicker">Signed desktop releases</p>
                       <h3>Release track</h3>
                     </div>
                     <p className="inline-note">
-                      Stable is recommended for day-to-day switching. Beta is for earlier builds.
+                      Choose the release track for this Mac. Stable is recommended for day-to-day switching. Beta is for earlier builds.
                     </p>
                   </div>
                   <label>
@@ -805,23 +793,19 @@ export function SettingsPanel({
                   </div>
                 </div>
               </article>
-              <article className="diagnostic-card settings-pane-intro">
-                <h3>Terminal Integration</h3>
-                <p className="inline-note">
-                  AI Switch can switch accounts without terminal integration. Turn it on only when you
-                  want already-open terminal windows to react immediately after a switch.
-                </p>
-              </article>
               <article className="diagnostic-card settings-pane-section">
                 <div className="desktop-pane-section-header">
                   <div>
-                    <p className="card-kicker">Terminal</p>
-                    <h3>Current terminal session</h3>
+                    <p className="card-kicker">Terminal integration</p>
+                    <h3>Terminal Integration</h3>
                   </div>
                   <p className="inline-note">
-                    Recommended only when you want immediate environment updates in the current shell session.
+                    AI Switch can switch accounts without terminal integration. Turn it on only when you want already-open terminal windows to react immediately after a switch.
                   </p>
                 </div>
+                <p className="inline-note">
+                  Current terminal session
+                </p>
                 {shellCheck ? (
                   <p className={`diagnostic-status diagnostic-status-${shellCheck.status}`}>
                     {shellCheck.status === "pass" ? "✓" : shellCheck.status === "warn" ? "!" : "✕"}{" "}
@@ -1018,22 +1002,17 @@ export function SettingsPanel({
                   </div>
                 </div>
               </article>
-              <article className="diagnostic-card settings-pane-intro">
-                <h3>Security</h3>
-                <p className="inline-note">
-                  The desktop app keeps credentials local and leans on the operating system for secure storage.
-                </p>
-              </article>
               <article className="diagnostic-card diagnostic-pass settings-pane-section">
                 <div className="desktop-pane-section-header">
                   <div>
-                    <p className="card-kicker">Privacy</p>
-                    <h3>Privacy and storage</h3>
+                    <p className="card-kicker">Security</p>
+                    <h3>Security</h3>
                   </div>
                   <p className="inline-note">
-                    Review the security model before changing credential or runtime settings.
+                    The desktop app keeps credentials local, leans on the operating system for secure storage, and avoids remote switching proxies.
                   </p>
                 </div>
+                <p className="inline-note">Privacy and storage</p>
                 <p className="inline-note">Credentials stay local to this Mac or workstation.</p>
                 <p className="inline-note">
                   No telemetry or remote credential proxy is used for switching.
