@@ -5932,6 +5932,30 @@ describe("App", () => {
     });
   });
 
+  it("opens AI Switch help from the app menu", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["menu-open-help"]?.({});
+    });
+
+    const dialog = await screen.findByRole("dialog", { name: "AI Switch Help" });
+    expect(within(dialog).getByText("AI Switch at a glance")).toBeInTheDocument();
+    expect(within(dialog).getByText("Local profile switching")).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Open Diagnostics" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Diagnostics" })).toHaveClass("nav-button-active");
+      expect(screen.queryByRole("dialog", { name: "AI Switch Help" })).not.toBeInTheDocument();
+    });
+  });
+
   it("opens import current login from the app menu in the profiles flow", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());

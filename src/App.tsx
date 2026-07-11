@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppFrame } from "./components/AppFrame";
+import { HelpSheet } from "./components/HelpSheet";
 import { QuickSwitchPalette } from "./components/QuickSwitchPalette";
 import { SectionCard } from "./components/SectionCard";
 import {
@@ -103,6 +104,7 @@ export function App() {
     () => loadDesktopPreferences().defaultSection,
   );
   const [quickSwitchOpen, setQuickSwitchOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [profilesRouteState, setProfilesRouteState] = useState<ProfilesRouteState>({});
   const [settingsRouteState, setSettingsRouteState] = useState<SettingsRouteState>({});
   const [runtimeRecoveryOpen, setRuntimeRecoveryOpen] = useState(false);
@@ -462,6 +464,15 @@ export function App() {
     void listenDesktopEvent("menu-open-quick-switch", () => {
       if (!active) return;
       setQuickSwitchOpen(true);
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
+    void listenDesktopEvent("menu-open-help", () => {
+      if (!active) return;
+      setHelpOpen(true);
     }).then((dispose) => {
       if (typeof dispose === "function") {
         disposers.push(dispose);
@@ -957,6 +968,20 @@ export function App() {
         toolCapabilities={toolCapabilities}
       />
     ) : null}
+    <HelpSheet
+      open={helpOpen}
+      onClose={() => setHelpOpen(false)}
+      onOpenProfiles={() => {
+        setProfilesRouteState({});
+        setActiveNav("profiles");
+      }}
+      onOpenDiagnostics={() => {
+        setActiveNav("diagnostics");
+      }}
+      onOpenSettings={() => {
+        openSettings();
+      }}
+    />
     </>
   );
 }

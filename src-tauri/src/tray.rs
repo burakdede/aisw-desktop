@@ -1536,7 +1536,7 @@ mod tests {
             vec![
                 TrayEntry {
                     id: "open".to_owned(),
-                    label: "Open AI Switch".to_owned(),
+                    label: "Open AI Switch Desktop".to_owned(),
                     enabled: true,
                 },
                 TrayEntry {
@@ -1546,7 +1546,7 @@ mod tests {
                 },
                 TrayEntry {
                     id: "quit".to_owned(),
-                    label: "Quit AI Switch".to_owned(),
+                    label: "Quit AI Switch Desktop".to_owned(),
                     enabled: true,
                 },
             ]

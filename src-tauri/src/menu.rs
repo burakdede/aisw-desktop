@@ -15,6 +15,7 @@ pub const MENU_EXPORT_DIAGNOSTICS_EVENT: &str = "menu-export-diagnostics";
 pub const MENU_OPEN_ADD_PROFILE_EVENT: &str = "menu-open-add-profile";
 pub const MENU_RUN_VERIFY_EVENT: &str = "menu-run-verify";
 pub const MENU_OPEN_TROUBLESHOOTING_EVENT: &str = "menu-open-troubleshooting";
+pub const MENU_OPEN_HELP_EVENT: &str = "menu-open-help";
 pub const MENU_REAPPLY_ACTIVE_PROFILE_EVENT: &str = "menu-reapply-active-profile";
 
 const SETTINGS_ID: &str = "menu.settings";
@@ -236,7 +237,7 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
             let _ = app.emit(MENU_EXPORT_DIAGNOSTICS_EVENT, ());
         }
         "menu.help.docs" => {
-            let _ = app.emit(MENU_OPEN_OVERVIEW_EVENT, ());
+            let _ = app.emit(MENU_OPEN_HELP_EVENT, ());
         }
         "menu.help.troubleshooting" => {
             let _ = app.emit(MENU_OPEN_TROUBLESHOOTING_EVENT, ());
