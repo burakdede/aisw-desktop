@@ -138,16 +138,16 @@ export function SetupPanel({
     >
       <div className="desktop-pane-hero desktop-pane-hero-onboarding">
         <div className="desktop-pane-hero-copy">
-          <p className="card-kicker">AI Switch</p>
+          <p className="card-kicker">Desktop app</p>
           <h3>Switch AI coding-agent accounts safely.</h3>
           <p className="inline-note">
             Bring in existing Claude Code, Codex CLI, and Gemini CLI accounts, confirm the bundled
-            engine is ready, and verify one safe switch without leaving this Mac.
+            runtime is ready, and verify one safe switch without leaving this Mac.
           </p>
         </div>
         <div className="desktop-pane-hero-pills" aria-label="Onboarding highlights">
           <span className="pill pill-soft">Credentials stay local</span>
-          <span className="pill pill-soft">Bundled engine</span>
+          <span className="pill pill-soft">Bundled runtime</span>
           <span className="pill pill-soft">No telemetry</span>
           <span className="pill pill-soft">No traffic proxy</span>
         </div>
@@ -160,7 +160,7 @@ export function SetupPanel({
             <p className="trust-list-item">Credentials stay on this Mac</p>
             <p className="trust-list-item">No telemetry</p>
             <p className="trust-list-item">No prompt or API traffic proxy</p>
-            <p className="trust-list-item">Bundled engine included</p>
+            <p className="trust-list-item">Bundled runtime included</p>
           </div>
         </article>
       </div>
@@ -170,8 +170,8 @@ export function SetupPanel({
           <article className="diagnostic-card desktop-pane-intro">
             <h3>Runtime check</h3>
             <p className="inline-note">
-              Confirm that AI Switch is ready to use its bundled switching engine and local
-              storage before you import or switch accounts.
+              Confirm that the desktop app is ready to use its bundled runtime and local storage
+              before you import or switch accounts.
             </p>
           </article>
 
@@ -179,7 +179,7 @@ export function SetupPanel({
             <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Runtime</p>
-                <h3>Included switching engine</h3>
+                <h3>Included runtime</h3>
               </div>
               <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
                 {bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}
@@ -187,33 +187,33 @@ export function SetupPanel({
             </div>
             <p className="inline-note">
               {bootstrap.settings.runtime_kind === "bundled"
-                ? "AI Switch is using its included switching engine."
-                : `AI Switch is using an advanced ${titleCase(bootstrap.settings.runtime_kind)} engine override.`}
+                ? "The desktop app is using its included runtime."
+                : `The desktop app is using an advanced ${titleCase(bootstrap.settings.runtime_kind)} runtime override.`}
             </p>
             <p className="inline-note">
-              Engine mode: <strong>{titleCase(bootstrap.settings.runtime_kind)}</strong>
+              Runtime mode: <strong>{titleCase(bootstrap.settings.runtime_kind)}</strong>
             </p>
             <p className="inline-note">
-              Included engine path: {bootstrap.runtime_status.inventory.bundled_path ?? "Not available in this build"}
+              Included runtime path: {bootstrap.runtime_status.inventory.bundled_path ?? "Not available in this build"}
             </p>
             {bootstrap.settings.runtime_kind !== "bundled" ? (
               <p className="inline-note">
-                System engine: {bootstrap.runtime_status.inventory.system_path ?? "Not found on PATH"}
+                System runtime: {bootstrap.runtime_status.inventory.system_path ?? "Not found on PATH"}
               </p>
             ) : null}
             {bootstrap.runtime_status.inventory.configured_path ? (
               <p className="inline-note">
-                Custom engine path: {bootstrap.runtime_status.inventory.configured_path}
+                Custom runtime path: {bootstrap.runtime_status.inventory.configured_path}
               </p>
             ) : null}
             <p className="inline-note">
-              Active engine path: {bootstrap.runtime_status.resolved_path ?? "No engine resolved"}
+              Active runtime path: {bootstrap.runtime_status.resolved_path ?? "No runtime resolved"}
             </p>
             <p className="inline-note">
-              Managed data folder: {bootstrap.settings.aisw_home ?? "Default managed location"}
+              Local data folder: {bootstrap.settings.aisw_home ?? "Default managed location"}
             </p>
             <p className="inline-note">
-              Engine version: {bootstrap.runtime_status.version?.version ?? "unknown"}
+              Runtime version: {bootstrap.runtime_status.version?.version ?? "unknown"}
             </p>
             <p className="inline-note">
               Update channel: {bootstrap.settings.update_channel}
@@ -243,7 +243,7 @@ export function SetupPanel({
               ))}
               {!healthItems.length ? (
                 <p className="inline-note">
-                  Run the setup scan to populate engine, storage, and tool health details.
+                  Run the setup scan to populate runtime, storage, and tool health details.
                 </p>
               ) : null}
             </div>
@@ -360,7 +360,7 @@ export function SetupPanel({
                     <span className="pill pill-soft">Not installed</span>
                   </div>
                   <p className="inline-note">
-                    AI Switch cannot detect or switch {titleCase(status.tool)} until the{" "}
+                    The desktop app cannot detect or switch {titleCase(status.tool)} until the{" "}
                     <code>{binary}</code> CLI is available on PATH.
                   </p>
                   <div className="diagnostic-remediation">
@@ -452,9 +452,9 @@ export function SetupPanel({
                 <h3>Terminal integration</h3>
               </div>
               <p className="inline-note">
-                Optional. AI Switch updates live credential files without a shell hook. Install it
-                later if you want already-open terminal sessions to receive immediate environment
-                exports.
+                Optional. The desktop app updates live credential files without a shell hook.
+                Install it later if you want already-open terminal sessions to receive immediate
+                environment exports.
               </p>
             </div>
             {shellGuidance.data?.detected_shell ? (
@@ -463,8 +463,8 @@ export function SetupPanel({
               </p>
             ) : null}
             <p className="inline-note">
-              AI Switch writes live credential files directly. Existing terminal sessions only
-              receive immediate environment exports such as <code>CLAUDE_CONFIG_DIR</code> and{" "}
+              The desktop app writes live credential files directly. Existing terminal sessions
+              only receive immediate environment exports such as <code>CLAUDE_CONFIG_DIR</code> and{" "}
               <code>CODEX_HOME</code> after you install the shell hook.
             </p>
             <p className="inline-note">

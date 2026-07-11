@@ -314,7 +314,7 @@ export function App() {
           <p className="eyebrow">AI Switch</p>
           <h1>Preparing your local switchboard…</h1>
           <p className="lede">
-            Loading saved profiles, the bundled switching engine, and the current tool state on this Mac.
+            Loading saved profiles, the bundled runtime, and the current tool state on this Mac.
           </p>
         </section>
       </main>
@@ -327,9 +327,9 @@ export function App() {
       <main className="app-shell app-shell-onboarding">
         <section className="hero-card hero-card-compact">
           <p className="eyebrow">AI Switch</p>
-          <h1>AI Switch could not open its local control center.</h1>
+          <h1>AI Switch could not open the local control center.</h1>
           <p className="lede">
-            Check the included switching engine, local permissions, and compatibility details
+            Check the included runtime, local permissions, and compatibility details
             before continuing.
           </p>
           <p className="inline-note">{bootstrapError.message}</p>
@@ -403,17 +403,17 @@ export function App() {
           </div>
           <div className="sidebar-status-row">
             <span className="sidebar-status-label">Path</span>
-            <p>{runtimeStatus.resolved_path ?? "Bundled engine unavailable"}</p>
+            <p>{runtimeStatus.resolved_path ?? "Bundled runtime unavailable"}</p>
           </div>
         </div>
       }
     >
       {!runtimeStatus.compatible ? (
-        <SectionCard title="Finish engine setup" kicker="Startup required">
+        <SectionCard title="Finish runtime setup" kicker="Startup required">
           <div className="stack-list">
             <p className="inline-note">
-              AI Switch includes the switching engine it needs. The current advanced engine choice
-              on this Mac does not match this desktop build.
+              This app includes the runtime it needs. The current advanced runtime choice on this
+              Mac does not match this desktop build.
             </p>
             <p className="inline-note">{runtimeBlocker.nextStep}</p>
             {runtimeStatus.issues.length ? (
@@ -519,7 +519,7 @@ export function App() {
         </>
       ) : (
         <SectionCard title="Waiting for snapshot" kicker="Bootstrap">
-          <p className="inline-note">The switching engine is compatible, but no state snapshot is available yet.</p>
+          <p className="inline-note">The runtime is compatible, but no state snapshot is available yet.</p>
         </SectionCard>
       )}
     </AppFrame>
@@ -576,25 +576,25 @@ function describeRuntimeBlocker(runtimeStatus: {
   if (hasResolvedRuntime && missingDesktopContract) {
     return {
       summary:
-        "AI Switch found a switching engine binary, but it does not support the desktop integration features required by this release.",
+        "The selected runtime was found, but it does not support the desktop integration features required by this release.",
       nextStep:
-        "Open Settings and switch back to the bundled engine, or choose a newer compatible engine before continuing.",
+        "Open Settings and switch back to the bundled runtime, or choose a newer compatible runtime before continuing.",
     };
   }
 
   if (hasResolvedRuntime) {
     return {
       summary:
-        "AI Switch found a switching engine binary, but it is not compatible with this desktop build.",
+        "The selected runtime was found, but it is not compatible with this desktop build.",
       nextStep:
-        "Open Settings and switch back to the bundled engine, or choose a compatible engine before continuing.",
+        "Open Settings and switch back to the bundled runtime, or choose a compatible runtime before continuing.",
     };
   }
 
   return {
-    summary: "AI Switch could not use the selected switching engine.",
+    summary: "AI Switch could not use the selected runtime.",
     nextStep:
-      "Open Settings and switch to a working bundled engine or choose an advanced override before continuing.",
+      "Open Settings and switch to a working bundled runtime or choose an advanced override before continuing.",
   };
 }
 
@@ -632,9 +632,9 @@ function sectionDetail(section: string) {
     case "backups":
       return "Replay a previous profile state or restore the latest known-good backup without leaving the app.";
     case "activity":
-      return "Track recent desktop actions, command outcomes, and changes applied by the switching engine.";
+      return "Track recent desktop actions, command outcomes, and changes applied by the runtime.";
     case "settings":
-      return "Control the bundled engine, updates, terminal integration, and local storage behavior.";
+      return "Control the bundled runtime, updates, terminal integration, and local storage behavior.";
     default:
       return "";
   }

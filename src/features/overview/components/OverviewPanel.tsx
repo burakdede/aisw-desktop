@@ -602,7 +602,7 @@ function formatTokenWarning(status: ToolStatus) {
 function formatDiagnosticWarning(
   warning: ToolStatus["warnings"][number],
 ) {
-  const detail = warning.message ?? warning.code ?? "Warning reported by the switching engine.";
+  const detail = warning.message ?? warning.code ?? "Warning reported by the runtime.";
   return warning.remediation ? `${detail} Remediation: ${warning.remediation}` : detail;
 }
 

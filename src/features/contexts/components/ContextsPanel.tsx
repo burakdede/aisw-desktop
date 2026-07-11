@@ -199,7 +199,7 @@ export function ContextsPanel({
               <p className="card-kicker">Imported</p>
               <h3>{snapshot.contexts.length} imported runtime groups</h3>
               <p className="inline-note">
-                Imported runtime groups stay visible here when the switching engine exposes additional shared combinations outside your desktop-local set library.
+                Imported runtime groups stay visible here when the runtime exposes additional shared combinations outside your desktop-local set library.
               </p>
             </article>
           </div>
@@ -331,7 +331,7 @@ export function ContextsPanel({
                 <h3>Imported runtime groups</h3>
               </div>
               <p className="inline-note">
-                These come directly from the switching engine and remain separate from your desktop-local saved sets.
+                These come directly from the runtime and remain separate from your desktop-local saved sets.
               </p>
             </div>
             {snapshot.contexts.map((context) => (

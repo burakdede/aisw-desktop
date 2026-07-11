@@ -152,30 +152,30 @@ export function SettingsPanel({
               <article className="diagnostic-card settings-pane-intro">
                 <h3>Preferred setup</h3>
                 <p className="inline-note">
-                  Keep AI Switch on the bundled switching engine unless you intentionally need an advanced override.
+                  Keep the desktop app on its bundled runtime unless you intentionally need an advanced override.
                 </p>
               </article>
               <article
                 className={`diagnostic-card ${runtimeKind === "bundled" ? "diagnostic-pass" : "diagnostic-warn"}`}
               >
-                <h3>Recommended engine</h3>
+                <h3>Recommended runtime</h3>
                 <p className="inline-note">
-                  AI Switch ships with a compatible switching engine and uses it by default.
+                  This app ships with a compatible runtime and uses it by default.
                 </p>
                 <p className="inline-note">
-                  Use a system or custom engine only when you intentionally need to override the supported desktop bundle.
+                  Use a system or custom runtime only when you intentionally need to override the supported desktop bundle.
                 </p>
               </article>
 
               {runtimeKind !== "bundled" ? (
                 <article className="diagnostic-card diagnostic-warn">
-                  <h3>Advanced engine override is active</h3>
+                  <h3>Advanced runtime override is active</h3>
                   <p className="inline-note">
                     This desktop session is using a{" "}
-                    {runtimeKind === "system" ? "system" : "custom"} engine binary instead of the bundled engine.
+                    {runtimeKind === "system" ? "system" : "custom"} runtime binary instead of the bundled runtime.
                   </p>
                   <p className="inline-note">
-                    Compatibility for onboarding, switching, and diagnostics is only guaranteed with the bundled engine shipped in this app release.
+                    Compatibility for onboarding, switching, and diagnostics is only guaranteed with the bundled runtime shipped in this app release.
                   </p>
                 </article>
               ) : null}
@@ -184,36 +184,36 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Engine</p>
-                    <h3>Engine source</h3>
+                    <h3>Runtime source</h3>
                   </div>
                   <p className="inline-note">
-                    Keep the bundled engine selected unless you intentionally need a compatibility override.
+                    Keep the bundled runtime selected unless you intentionally need a compatibility override.
                   </p>
                 </div>
                 {showAdvancedRuntime ? (
                   <>
                     <label>
-                      Engine source
+                      Runtime source
                       <select
                         value={runtimeKind}
                         onChange={(event) =>
                           setRuntimeKind(event.target.value as typeof runtimeKind)
                         }
                       >
-                        <option value="bundled">Bundled engine</option>
-                        <option value="system">System engine</option>
+                        <option value="bundled">Bundled runtime</option>
+                        <option value="system">System runtime</option>
                         <option value="custom">Custom path</option>
                       </select>
                     </label>
                     <label>
-                      Engine path
+                      Runtime path
                       <input
                         value={runtimePath}
                         disabled={runtimeKind !== "custom"}
                         placeholder={
                           runtimeKind === "custom"
                             ? "/path/to/engine"
-                            : "Only used for a custom engine"
+                            : "Only used for a custom runtime"
                         }
                         onChange={(event) => setRuntimePath(event.target.value)}
                       />
@@ -225,7 +225,7 @@ export function SettingsPanel({
                           type="button"
                           onClick={() => setShowAdvancedRuntime(false)}
                         >
-                          Hide advanced engine options
+                          Hide advanced runtime options
                         </button>
                       </div>
                     ) : null}
@@ -237,7 +237,7 @@ export function SettingsPanel({
                       type="button"
                       onClick={() => setShowAdvancedRuntime(true)}
                     >
-                      Show advanced engine options
+                      Show advanced runtime options
                     </button>
                   </div>
                 )}
@@ -247,14 +247,14 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Storage</p>
-                    <h3>Managed data folder</h3>
+                    <h3>Local data folder</h3>
                   </div>
                   <p className="inline-note">
-                    Leave this empty to use the default AI Switch desktop storage location.
+                    Leave this empty to use the default desktop storage location.
                   </p>
                 </div>
                 <label>
-                  Managed data folder override
+                  Local data folder override
                   <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
                 </label>
               </article>
@@ -278,41 +278,41 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Status</p>
-                    <h3>Engine details</h3>
+                    <h3>Runtime details</h3>
                   </div>
                   <p className="inline-note">
-                    Review the currently resolved engine, stored location, and compatibility metadata.
+                    Review the currently resolved runtime, stored location, and compatibility metadata.
                   </p>
                 </div>
                 <p className="inline-note">
-                  Current engine path: {runtimeStatus.resolved_path ?? "No engine resolved"}
+                  Current runtime path: {runtimeStatus.resolved_path ?? "No runtime resolved"}
                 </p>
                 <p className="inline-note">
-                  Managed data folder: {settings.aisw_home ?? "Default managed location"}
+                  Local data folder: {settings.aisw_home ?? "Default managed location"}
                 </p>
                 <p className="inline-note">
-                  Bundled engine path:{" "}
+                  Bundled runtime path:{" "}
                   {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
                 </p>
                 {showAdvancedRuntime || runtimeKind !== "bundled" ? (
                   <p className="inline-note">
-                    System engine candidate:{" "}
+                    System runtime candidate:{" "}
                     {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
                   </p>
                 ) : null}
                 {runtimeStatus.inventory.configured_path ? (
                   <p className="inline-note">
-                    Custom engine path: {runtimeStatus.inventory.configured_path}
+                    Custom runtime path: {runtimeStatus.inventory.configured_path}
                   </p>
                 ) : null}
                 <p className="inline-note">
                   Selected update channel: <strong>{titleCase(updateChannel)}</strong>
                 </p>
                 <p className="inline-note">
-                  Engine mode: <strong>{titleCase(runtimeKind)}</strong>
+                  Runtime mode: <strong>{titleCase(runtimeKind)}</strong>
                 </p>
                 <p className="inline-note">
-                  Engine version: {runtimeStatus.version?.version ?? "unknown"}
+                  Runtime version: {runtimeStatus.version?.version ?? "unknown"}
                 </p>
                 {runtimeStatus.version ? (
                   <p className="inline-note">
@@ -332,7 +332,7 @@ export function SettingsPanel({
               <article className="diagnostic-card settings-pane-intro">
                 <h3>Signed desktop releases</h3>
                 <p className="inline-note">
-                  Choose the release track for this Mac, then check for signed AI Switch updates.
+                  Choose the release track for this Mac, then check for signed desktop updates.
                 </p>
               </article>
               <form className="stacked-form settings-form" onSubmit={submit}>
@@ -380,7 +380,7 @@ export function SettingsPanel({
                     <h3>Available releases</h3>
                   </div>
                   <p className="inline-note">
-                    Check for a signed AI Switch release on the selected {updateChannel} channel.
+                    Check for a signed desktop release on the selected {updateChannel} channel.
                   </p>
                 </div>
                 <div className="button-row">
@@ -411,7 +411,7 @@ export function SettingsPanel({
                 </div>
                 {hasPendingSettingsChanges ? (
                   <p className="inline-note">
-                    Save settings before checking for updates so the engine and channel selection match
+                    Save settings before checking for updates so the runtime and channel selection match
                     the persisted desktop configuration.
                   </p>
                 ) : null}
@@ -623,7 +623,7 @@ export function SettingsPanel({
               <article className="diagnostic-card settings-pane-intro">
                 <h3>Security</h3>
                 <p className="inline-note">
-                  AI Switch keeps credentials local and leans on the operating system for secure storage.
+                  The desktop app keeps credentials local and leans on the operating system for secure storage.
                 </p>
               </article>
               <article className="diagnostic-card diagnostic-pass settings-pane-section">
@@ -684,7 +684,7 @@ const KEYRING_GUIDES = [
     backend: "Login keychain",
     steps: [
       "Open Keychain Access and confirm the login keychain is unlocked.",
-      "Approve any keychain access prompts for AI Switch, Claude, Codex, or Gemini.",
+      "Approve any keychain access prompts for the desktop app, Claude, Codex, or Gemini.",
       "If access keeps failing, lock and unlock the login keychain, then rerun diagnostics.",
     ],
     verify: "Rerun diagnostics and confirm the keyring warning disappears.",
@@ -694,7 +694,7 @@ const KEYRING_GUIDES = [
     title: "Windows Credential Manager",
     backend: "Credential Manager / DPAPI",
     steps: [
-      "Stay signed in to a normal desktop session before launching AI Switch.",
+      "Stay signed in to a normal desktop session before launching the desktop app.",
       "Confirm security software is not blocking local credential storage prompts.",
       "If the machine policy reset credentials, sign in again and retry the profile action.",
     ],
@@ -706,7 +706,7 @@ const KEYRING_GUIDES = [
     backend: "Secret Service daemon",
     steps: [
       "Start a Secret Service provider such as gnome-keyring or KeePassXC with Secret Service enabled.",
-      "Make sure the desktop session has an active D-Bus user session before launching AI Switch.",
+      "Make sure the desktop session has an active D-Bus user session before launching the desktop app.",
       "If diagnostics still fail, unlock the keyring collection or restart the secret service daemon.",
     ],
     verify: "Run diagnostics again after the secret service is available.",

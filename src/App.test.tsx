@@ -337,7 +337,7 @@ describe("App", () => {
     expect(screen.getAllByText("Work").length).toBeGreaterThan(0);
     expect(screen.getByText("Ready")).toBeInTheDocument();
     expect(screen.queryByText("Welcome")).not.toBeInTheDocument();
-    expect(screen.queryByText("Included switching engine")).not.toBeInTheDocument();
+    expect(screen.queryByText("Included runtime")).not.toBeInTheDocument();
     expect(screen.queryByText("Health check")).not.toBeInTheDocument();
     expect(screen.queryByText("Local-only by default")).not.toBeInTheDocument();
   });
@@ -361,23 +361,23 @@ describe("App", () => {
     };
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("Finish engine setup")).toBeInTheDocument();
+      expect(screen.getByText("Finish runtime setup")).toBeInTheDocument();
     });
     expect(
       screen.getByText(
-        "AI Switch includes the switching engine it needs. The current advanced engine choice on this Mac does not match this desktop build.",
+        "This app includes the runtime it needs. The current advanced runtime choice on this Mac does not match this desktop build.",
       ),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Open Settings and switch back to the bundled engine, or choose a newer compatible engine before continuing.",
+        "Open Settings and switch back to the bundled runtime, or choose a newer compatible runtime before continuing.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Why setup is paused")).toBeInTheDocument();
     expect(screen.getByText("Engine version details are unavailable")).toBeInTheDocument();
     expect(screen.getByText("Engine capability details are unavailable")).toBeInTheDocument();
     expect(screen.getByText("Engine and local storage")).toBeInTheDocument();
-    expect(screen.getByText("Engine details")).toBeInTheDocument();
+    expect(screen.getByText("Runtime details")).toBeInTheDocument();
     expect(screen.queryByText("Welcome")).not.toBeInTheDocument();
     expect(screen.queryByText("Control Center")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Overview" })).toBeDisabled();
@@ -403,7 +403,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("AI Switch could not open its local control center.")).toBeInTheDocument();
+      expect(screen.getByText("AI Switch could not open the local control center.")).toBeInTheDocument();
     });
     expect(screen.getByText("AI Switch could not resolve a compatible switching engine")).toBeInTheDocument();
     expect(
@@ -6906,22 +6906,22 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Settings"));
 
     await waitFor(() => {
-      expect(screen.getByText("Engine details")).toBeInTheDocument();
+      expect(screen.getByText("Runtime details")).toBeInTheDocument();
       expect(
-        screen.getByText("Current engine path: /Applications/AI Switch.app/Contents/Resources/aisw"),
+        screen.getByText("Current runtime path: /Applications/AI Switch.app/Contents/Resources/aisw"),
       ).toBeInTheDocument();
-      expect(screen.getAllByText("Managed data folder: Default managed location").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Local data folder: Default managed location").length).toBeGreaterThan(0);
       expect(
-        screen.getAllByText("Bundled engine path: /Applications/AI Switch.app/Contents/Resources/aisw").length,
+        screen.getAllByText("Bundled runtime path: /Applications/AI Switch.app/Contents/Resources/aisw").length,
       ).toBeGreaterThan(0);
-      expect(screen.getByText("Show advanced engine options")).toBeInTheDocument();
+      expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
       expect(
         screen.getByText((_, element) => element?.textContent?.trim() === "Selected update channel: Stable"),
       ).toBeInTheDocument();
       expect(
-        screen.getAllByText((_, element) => element?.textContent?.trim() === "Engine mode: Bundled").length,
+        screen.getAllByText((_, element) => element?.textContent?.trim() === "Runtime mode: Bundled").length,
       ).toBeGreaterThan(0);
-      expect(screen.getAllByText("Engine version: 0.3.7").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Runtime version: 0.3.7").length).toBeGreaterThan(0);
       expect(screen.getByText("CLI API 1 · JSON schema 1 · Progress schema 1")).toBeInTheDocument();
     });
   });
@@ -6969,7 +6969,7 @@ describe("App", () => {
       expect(screen.getByText("Settings")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Show advanced engine options")).toBeInTheDocument();
+    expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
 
     await act(async () => {
       rendered.rerender(
@@ -7067,8 +7067,8 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByLabelText("Engine path")).not.toBeInTheDocument();
-      expect(screen.getByText("Show advanced engine options")).toBeInTheDocument();
+      expect(screen.queryByLabelText("Runtime path")).not.toBeInTheDocument();
+      expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
     });
   });
 
@@ -7152,8 +7152,8 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByDisplayValue("System engine")).toBeInTheDocument();
-      expect(screen.getByLabelText("Engine path")).toHaveValue("");
+      expect(screen.getByDisplayValue("System runtime")).toBeInTheDocument();
+      expect(screen.getByLabelText("Runtime path")).toHaveValue("");
     });
   });
 
@@ -7207,11 +7207,11 @@ describe("App", () => {
     });
 
     expect(
-      screen.getByText("Check for a signed AI Switch release on the selected beta channel."),
+      screen.getByText("Check for a signed desktop release on the selected beta channel."),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Save settings before checking for updates so the engine and channel selection match the persisted desktop configuration.",
+        "Save settings before checking for updates so the runtime and channel selection match the persisted desktop configuration.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Check for updates")).toBeDisabled();
@@ -7224,7 +7224,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(
         screen.queryByText(
-          "Save settings before checking for updates so the engine and channel selection match the persisted desktop configuration.",
+          "Save settings before checking for updates so the runtime and channel selection match the persisted desktop configuration.",
         ),
       ).not.toBeInTheDocument();
       expect(screen.getByText("Check for updates")).not.toBeDisabled();

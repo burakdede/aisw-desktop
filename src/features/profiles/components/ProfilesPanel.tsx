@@ -1074,7 +1074,7 @@ export function ProfilesPanel({
                 <div className="diagnostic-card">
                   <h4>Sign-in flow</h4>
                   <p className="inline-note">
-                    AI Switch will launch the tool&apos;s native login flow and stream progress from the bundled switching engine.
+                    The desktop app will launch the tool&apos;s native login flow and stream progress from the bundled runtime.
                   </p>
                   <p className="inline-note">
                     Keep this window open while the browser or terminal login completes.
@@ -1295,7 +1295,7 @@ function buildOauthWizardSteps(
     {
       id: "browser" as const,
       label: "2. Browser opens",
-      fallback: "AI Switch launches the provider login flow.",
+      fallback: "The desktop app launches the provider login flow.",
     },
     {
       id: "login" as const,
@@ -1305,12 +1305,12 @@ function buildOauthWizardSteps(
     {
       id: "capture" as const,
       label: "4. Waiting for credential capture",
-      fallback: "AI Switch waits for the upstream tool to persist the captured credentials.",
+      fallback: "The desktop app waits for the upstream tool to persist the captured credentials.",
     },
     {
       id: "saved" as const,
       label: "5. Profile saved",
-      fallback: "AI Switch stores the captured profile and refreshes desktop state.",
+      fallback: "The desktop app stores the captured profile and refreshes desktop state.",
     },
   ];
 
@@ -1433,7 +1433,7 @@ function formatProfileTokenWarning(
 function formatProfileWarning(
   warning: NonNullable<AppSnapshot["statuses"][number]["warnings"]>[number],
 ) {
-  const detail = warning.message ?? warning.code ?? "Warning reported by AI Switch.";
+  const detail = warning.message ?? warning.code ?? "Warning reported by the desktop app.";
   return warning.remediation ? `${detail} Remediation: ${warning.remediation}` : detail;
 }
 
