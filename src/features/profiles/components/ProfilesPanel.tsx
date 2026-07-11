@@ -1324,8 +1324,12 @@ export function ProfilesPanel({
                 <input value={label} onChange={(event) => setLabel(event.target.value)} />
               </label>
               <label>
-                Import mode
-                <select value={mode} onChange={(event) => setMode(event.target.value as typeof mode)}>
+                Authentication
+                <select
+                  aria-label="Import mode"
+                  value={mode}
+                  onChange={(event) => setMode(event.target.value as typeof mode)}
+                >
                   {availableImportModes.map((entry) => (
                     <option key={entry} value={entry}>
                       {profileImportModeLabel(entry)}
@@ -1333,6 +1337,19 @@ export function ProfilesPanel({
                   ))}
                 </select>
               </label>
+              <article className="diagnostic-card settings-pane-section">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Mode</p>
+                    <h4>{profileImportModeHeading(tool, mode)}</h4>
+                  </div>
+                </div>
+                {profileImportModeNotes(tool, mode).map((note) => (
+                  <p key={note} className="inline-note">
+                    {note}
+                  </p>
+                ))}
+              </article>
               <label>
                 Credential backend
                 <select
@@ -1443,15 +1460,19 @@ export function ProfilesPanel({
                 >
                   {mode === "oauth"
                     ? addProfileOAuthMutation.isPending
-                      ? "Waiting for OAuth…"
-                      : "Start OAuth"
+                      ? "Waiting for sign-in…"
+                      : "Start Sign In"
                     : mode === "api_key"
                       ? apiKeyProfileAction.isPending
                         ? "Saving…"
-                        : "Add profile"
-                      : addProfileMutation.isPending
-                        ? "Saving…"
-                        : "Add profile"}
+                        : "Save Profile"
+                      : mode === "from_env"
+                        ? addProfileMutation.isPending
+                          ? "Saving…"
+                          : "Save Profile"
+                        : addProfileMutation.isPending
+                          ? "Importing…"
+                          : "Import"}
                 </button>
               </div>
               {profileMutationError(
@@ -1490,11 +1511,51 @@ function profileImportModeLabel(mode: ProfileImportMode) {
     case "from_live":
       return "Import current login";
     case "from_env":
-      return "Capture environment";
+      return "Read from environment";
     case "api_key":
-      return "API key via stdin";
+      return "Paste API key";
     case "oauth":
-      return "Guided OAuth capture";
+      return "Sign in with OAuth";
+  }
+}
+
+function profileImportModeHeading(tool: string, mode: ProfileImportMode) {
+  const toolName = toolDisplayName(tool);
+  switch (mode) {
+    case "from_live":
+      return `Import current ${toolName} login`;
+    case "from_env":
+      return "Read from environment";
+    case "api_key":
+      return "Paste API key";
+    case "oauth":
+      return `Sign in to ${toolName}`;
+  }
+}
+
+function profileImportModeNotes(tool: string, mode: ProfileImportMode) {
+  const toolName = toolDisplayName(tool);
+  switch (mode) {
+    case "from_live":
+      return [
+        `AI Switch will capture the credentials ${toolName} is already using and save them as the profile you name here.`,
+        "This keeps the current login local while turning it into a reusable saved profile.",
+      ];
+    case "from_env":
+      return [
+        `AI Switch will read ${expectedEnvVar(tool)} when you save this profile.`,
+        "Use this when the current shell or launch environment already has the provider key exported.",
+      ];
+    case "api_key":
+      return [
+        "Paste the provider key once and AI Switch will hand it to the bundled runtime over stdin instead of writing it into the form state.",
+        "The saved profile stores the resulting local credentials only after the runtime confirms success.",
+      ];
+    case "oauth":
+      return [
+        `AI Switch will open the normal ${toolName} sign-in flow and capture the resulting local credentials after sign-in finishes.`,
+        "Keep this sheet open while the browser or terminal login completes.",
+      ];
   }
 }
 
@@ -1575,6 +1636,19 @@ function expectedEnvVar(tool: string) {
       return "GEMINI_API_KEY";
     default:
       return "API_KEY";
+  }
+}
+
+function toolDisplayName(tool: string) {
+  switch (tool) {
+    case "claude":
+      return "Claude Code";
+    case "codex":
+      return "Codex CLI";
+    case "gemini":
+      return "Gemini CLI";
+    default:
+      return titleCase(tool);
   }
 }
 

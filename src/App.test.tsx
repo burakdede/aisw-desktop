@@ -1807,7 +1807,7 @@ describe("App", () => {
         "Claude already has a profile named work. Choose a different name or rename the existing profile first.",
       ),
     ).toBeInTheDocument();
-    expect(profileDialog.getByRole("button", { name: "Add profile" })).toBeDisabled();
+    expect(profileDialog.getByRole("button", { name: "Import" })).toBeDisabled();
     expect(calls.some((entry) => entry.command === "add_profile")).toBe(false);
   });
 
@@ -1924,7 +1924,7 @@ describe("App", () => {
     fireEvent.change(profileDialog.getByLabelText("Profile name"), {
       target: { value: "travel-next" },
     });
-    fireEvent.click(profileDialog.getByRole("button", { name: "Add profile" }));
+    fireEvent.click(profileDialog.getByRole("button", { name: "Import" }));
 
     await waitFor(() => {
       expect(
@@ -1987,7 +1987,7 @@ describe("App", () => {
     fireEvent.change(profileDialog.getByLabelText("Profile name"), {
       target: { value: "ops" },
     });
-    fireEvent.click(profileDialog.getByRole("button", { name: "Add profile" }));
+    fireEvent.click(profileDialog.getByRole("button", { name: "Import" }));
 
     await waitFor(() => {
       expect(screen.getByText("duplicate profile")).toBeInTheDocument();
@@ -2080,7 +2080,7 @@ describe("App", () => {
     fireEvent.change(profileDialog.getByLabelText("Profile name"), {
       target: { value: "ops" },
     });
-    fireEvent.click(profileDialog.getByRole("button", { name: "Add profile" }));
+    fireEvent.click(profileDialog.getByRole("button", { name: "Import" }));
 
     await waitFor(() => {
       expect(
@@ -2174,7 +2174,7 @@ describe("App", () => {
     fireEvent.change(profileDialog.getByLabelText("Profile name"), {
       target: { value: "ops" },
     });
-    fireEvent.click(profileDialog.getByRole("button", { name: "Add profile" }));
+    fireEvent.click(profileDialog.getByRole("button", { name: "Import" }));
 
     await waitFor(() => {
       expect(screen.getByText(/interactive login required/)).toBeInTheDocument();
@@ -2292,7 +2292,7 @@ describe("App", () => {
     });
 
     expect(profileDialog.getByText("OPENAI_API_KEY")).toBeInTheDocument();
-    fireEvent.click(profileDialog.getByRole("button", { name: "Add profile" }));
+    fireEvent.click(profileDialog.getByRole("button", { name: "Save Profile" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "add_profile")).toBe(true);
@@ -2355,13 +2355,13 @@ describe("App", () => {
     const profileDialog = await openAddProfileDialog();
 
     const importModeSelect = profileDialog.getByLabelText("Import mode");
-    expect(within(importModeSelect).getByRole("option", { name: "Capture environment" })).toBeInTheDocument();
-    expect(within(importModeSelect).getByRole("option", { name: "API key via stdin" })).toBeInTheDocument();
+    expect(within(importModeSelect).getByRole("option", { name: "Read from environment" })).toBeInTheDocument();
+    expect(within(importModeSelect).getByRole("option", { name: "Paste API key" })).toBeInTheDocument();
     expect(
       within(importModeSelect).queryByRole("option", { name: "Import current login" }),
     ).not.toBeInTheDocument();
     expect(
-      within(importModeSelect).queryByRole("option", { name: "Guided OAuth capture" }),
+      within(importModeSelect).queryByRole("option", { name: "Sign in with OAuth" }),
     ).not.toBeInTheDocument();
 
     const backendSelect = profileDialog.getByLabelText("Credential backend");
@@ -2383,9 +2383,9 @@ describe("App", () => {
 
     const importModeSelect = profileDialog.getByLabelText("Import mode");
     expect(within(importModeSelect).getByRole("option", { name: "Import current login" })).toBeInTheDocument();
-    expect(within(importModeSelect).getByRole("option", { name: "Capture environment" })).toBeInTheDocument();
-    expect(within(importModeSelect).getByRole("option", { name: "API key via stdin" })).toBeInTheDocument();
-    expect(within(importModeSelect).getByRole("option", { name: "Guided OAuth capture" })).toBeInTheDocument();
+    expect(within(importModeSelect).getByRole("option", { name: "Read from environment" })).toBeInTheDocument();
+    expect(within(importModeSelect).getByRole("option", { name: "Paste API key" })).toBeInTheDocument();
+    expect(within(importModeSelect).getByRole("option", { name: "Sign in with OAuth" })).toBeInTheDocument();
 
     const backendSelect = profileDialog.getByLabelText("Credential backend");
     expect(backendSelect).not.toBeDisabled();
@@ -2550,7 +2550,7 @@ describe("App", () => {
     await waitFor(() => expect(getAddProfileDialog().getByLabelText("Tool")).toHaveValue("claude"));
     expect(getAddProfileDialog().getByLabelText("Tool")).toHaveValue("claude");
     expect(getAddProfileDialog().getByLabelText("Import mode")).toHaveValue("from_env");
-    expect(getAddProfileDialog().queryByText("Guided OAuth capture")).not.toBeInTheDocument();
+    expect(getAddProfileDialog().queryByText("Sign in with OAuth")).not.toBeInTheDocument();
   });
 
   it("submits API keys via stdin payload and clears the field after save", async () => {
@@ -2599,7 +2599,7 @@ describe("App", () => {
     });
     expect(apiKeyInput.value).toBe("sk-live-secret");
 
-    fireEvent.click(profileDialog.getByRole("button", { name: "Add profile" }));
+    fireEvent.click(profileDialog.getByRole("button", { name: "Save Profile" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "add_profile")).toBe(true);
@@ -2669,7 +2669,7 @@ describe("App", () => {
     });
     expect(apiKeyInput.value).toBe("sk-live-secret");
 
-    fireEvent.click(profileDialog.getByRole("button", { name: "Add profile" }));
+    fireEvent.click(profileDialog.getByRole("button", { name: "Save Profile" }));
 
     await waitFor(() => {
       expect(
@@ -3176,7 +3176,7 @@ describe("App", () => {
     fireEvent.change(profileDialog.getByLabelText("Import mode"), {
       target: { value: "oauth" },
     });
-    fireEvent.click(profileDialog.getByText("Start OAuth"));
+    fireEvent.click(profileDialog.getByText("Start Sign In"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "add_profile_oauth")).toBe(true);
