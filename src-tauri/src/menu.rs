@@ -58,11 +58,11 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let quick_switch =
         MenuItem::with_id(app, QUICK_SWITCH_ID, "Quick Switch…", true, Some("CmdOrCtrl+K"))?;
     let switch_set =
-        MenuItem::with_id(app, SWITCH_SET_ID, "Open Set Library…", true, None::<&str>)?;
+        MenuItem::with_id(app, SWITCH_SET_ID, "Switch Set…", true, None::<&str>)?;
     let verify = MenuItem::with_id(
         app,
         VERIFY_ID,
-        "Run Verification",
+        "Verify Current State",
         true,
         Some("CmdOrCtrl+Shift+V"),
     )?;
@@ -94,7 +94,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let help_docs = MenuItem::with_id(
         app,
         "menu.help.docs",
-        "Quick Start",
+        "AI Switch Documentation",
         true,
         None::<&str>,
     )?;
@@ -108,7 +108,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let help_issues = MenuItem::with_id(
         app,
         "menu.help.issues",
-        "Export Diagnostic Report…",
+        "Export Redacted Diagnostic Report…",
         true,
         None::<&str>,
     )?;
@@ -125,7 +125,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         .iter()
         .map(|item| item as &dyn IsMenuItem<R>)
         .collect::<Vec<_>>();
-    let app_menu = Submenu::with_items(app, "AI Switch", true, &app_refs)?;
+    let app_menu = Submenu::with_items(app, "AI Switch Desktop", true, &app_refs)?;
 
     let file_items: Vec<MenuItemKind<R>> = vec![
         add_profile.kind(),
