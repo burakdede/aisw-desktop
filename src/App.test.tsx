@@ -466,31 +466,31 @@ describe("App", () => {
     };
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("This engine is not ready for AI Switch yet")).toBeInTheDocument();
+      expect(screen.getByText("This runtime is not ready for AI Switch yet")).toBeInTheDocument();
     });
     expect(
       screen.getByText(
-        "AI Switch found a switching engine, but this desktop release cannot use it for switching, diagnostics, backups, or shared sets yet.",
+        "AI Switch found a runtime, but this desktop release cannot use it for switching, diagnostics, backups, or shared sets yet.",
       ),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "The current engine was found, but it does not report the desktop compatibility details required by this release.",
+        "The current runtime was found, but it does not report the desktop compatibility details required by this release.",
       ),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Switch back to the included engine, or choose a newer compatible engine in Advanced Engine Settings before continuing.",
+        "Switch back to the included runtime, or choose a newer compatible runtime in Advanced Runtime Options before continuing.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Why setup is paused")).toBeInTheDocument();
-    expect(screen.getByText("Engine version details are unavailable")).toBeInTheDocument();
-    expect(screen.getByText("Engine capability details are unavailable")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Use Included Engine" })).toBeInTheDocument();
+    expect(screen.getByText("Runtime version details are unavailable")).toBeInTheDocument();
+    expect(screen.getByText("Runtime capability details are unavailable")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Use Included Runtime" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Advanced Engine Settings" })).toBeInTheDocument();
-    expect(screen.queryByText("Included engine and advanced overrides")).not.toBeInTheDocument();
-    expect(screen.queryByText("Engine summary")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Advanced Runtime Options" })).toBeInTheDocument();
+    expect(screen.queryByText("Included runtime and advanced overrides")).not.toBeInTheDocument();
+    expect(screen.queryByText("Runtime summary")).not.toBeInTheDocument();
     expect(screen.queryByText("Set Up AI Switch")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Overview" })).not.toBeInTheDocument();
   });
@@ -516,14 +516,14 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Advanced Engine Settings" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Advanced Runtime Options" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Advanced Engine Settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Advanced Runtime Options" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Included engine and advanced overrides")).toBeInTheDocument();
-      expect(screen.getByText("Engine summary")).toBeInTheDocument();
+      expect(screen.getByText("Included runtime and advanced overrides")).toBeInTheDocument();
+      expect(screen.getByText("Runtime summary")).toBeInTheDocument();
     });
   });
 
@@ -575,10 +575,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Use Included Engine" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Use Included Runtime" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Use Included Engine" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use Included Runtime" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
@@ -605,8 +605,8 @@ describe("App", () => {
       if (command === "get_bootstrap") {
         throw {
           kind: "aisw_not_found",
-          message: "AI Switch could not resolve a compatible switching engine",
-          remediation: "Select a valid bundled, system, or custom switching engine.",
+          message: "AI Switch could not resolve a compatible runtime",
+          remediation: "Select a valid bundled, system, or custom runtime.",
         };
       }
       return undefined;
@@ -616,9 +616,9 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByText("AI Switch could not open the desktop switchboard.")).toBeInTheDocument();
     });
-    expect(screen.getByText("AI Switch could not resolve a compatible switching engine")).toBeInTheDocument();
+    expect(screen.getByText("AI Switch could not resolve a compatible runtime")).toBeInTheDocument();
     expect(
-      screen.getByText("Select a valid bundled, system, or custom switching engine."),
+      screen.getByText("Select a valid bundled, system, or custom runtime."),
     ).toBeInTheDocument();
   });
 
@@ -1055,8 +1055,8 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Included engine and advanced overrides")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Engine" })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByText("Included runtime and advanced overrides")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Runtime" })).toHaveAttribute("aria-pressed", "true");
     });
     expect(screen.getByRole("button", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "false");
   });
@@ -7394,15 +7394,15 @@ describe("App", () => {
     });
   });
 
-  it("shows engine detection details in settings", async () => {
+  it("shows runtime detection details in settings", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Settings"));
-    fireEvent.click(screen.getByRole("button", { name: "Engine" }));
+    fireEvent.click(screen.getByRole("button", { name: "Runtime" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Engine summary")).toBeInTheDocument();
-      expect(screen.getAllByText(/Engine version:/).length).toBeGreaterThan(0);
+      expect(screen.getByText("Runtime summary")).toBeInTheDocument();
+      expect(screen.getAllByText(/Runtime version:/).length).toBeGreaterThan(0);
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Advanced" }));
@@ -7477,7 +7477,7 @@ describe("App", () => {
       expect(screen.getByText("Settings")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Show advanced engine options")).toBeInTheDocument();
+    expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
 
     await act(async () => {
       rendered.rerender(
@@ -7594,8 +7594,8 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByLabelText("Engine path")).not.toBeInTheDocument();
-      expect(screen.getByText("Show advanced engine options")).toBeInTheDocument();
+      expect(screen.queryByLabelText("Runtime path")).not.toBeInTheDocument();
+      expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
     });
   });
 
@@ -7679,8 +7679,8 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByDisplayValue("System engine")).toBeInTheDocument();
-      expect(screen.getByLabelText("Engine path")).toHaveValue("");
+      expect(screen.getByDisplayValue("System runtime")).toBeInTheDocument();
+      expect(screen.getByLabelText("Runtime path")).toHaveValue("");
     });
   });
 

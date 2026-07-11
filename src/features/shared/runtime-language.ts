@@ -4,6 +4,17 @@ export function normalizeRuntimeLanguage(text: string | null | undefined): strin
   }
 
   return text
+    .replace(/switching engine/g, "runtime")
+    .replace(/Switching engine/g, "Runtime")
+    .replace(/included engine/g, "included runtime")
+    .replace(/Included engine/g, "Included runtime")
+    .replace(/current engine/g, "current runtime")
+    .replace(/Current engine/g, "Current runtime")
+    .replace(/compatible engine/g, "compatible runtime")
+    .replace(/Compatible engine/g, "Compatible runtime")
+    .replace(/engine choice/g, "runtime choice")
+    .replace(/Engine version details are unavailable/g, "Runtime version details are unavailable")
+    .replace(/Engine capability details are unavailable/g, "Runtime capability details are unavailable")
     .replace(/AISW_HOME/g, "Desktop storage")
     .replace(/outside AISW/g, "outside AI Switch")
     .replace(/Outside AISW/g, "Outside AI Switch")

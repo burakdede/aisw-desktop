@@ -308,7 +308,7 @@ export function SettingsPanel({
                   </select>
                 </label>
                 <p className="inline-note">
-                  Engine blockers and first-run onboarding still take priority when they need your attention.
+                  Runtime blockers and first-run onboarding still take priority when they need your attention.
                 </p>
                 <div className="button-row">
                   <button className="primary-button" type="button" onClick={saveGeneralPreferences}>
@@ -326,7 +326,7 @@ export function SettingsPanel({
                     <h3>Desktop behavior</h3>
                   </div>
                   <p className="inline-note">
-                    This app stays a local control surface over the switching engine rather than becoming a separate credential manager.
+                    This app stays a local control surface over the switching runtime rather than becoming a separate credential manager.
                   </p>
                 </div>
                 <p className="inline-note">Credentials stay local.</p>
@@ -358,30 +358,30 @@ export function SettingsPanel({
               <article className="diagnostic-card settings-pane-intro">
                 <h3>Preferred setup</h3>
                 <p className="inline-note">
-                  Keep the desktop app on its included engine unless you intentionally need an advanced override.
+                  Keep the desktop app on its included runtime unless you intentionally need an advanced override.
                 </p>
               </article>
               <article
                 className={`diagnostic-card ${runtimeKind === "bundled" ? "diagnostic-pass" : "diagnostic-warn"}`}
               >
-                <h3>Recommended engine</h3>
+                <h3>Recommended runtime</h3>
                 <p className="inline-note">
-                  This app ships with a compatible engine and uses it by default.
+                  This app ships with a compatible runtime and uses it by default.
                 </p>
                 <p className="inline-note">
-                  Use a system or custom engine only when you intentionally need to override the supported desktop bundle.
+                  Use a system or custom runtime only when you intentionally need to override the supported desktop bundle.
                 </p>
               </article>
 
               {runtimeKind !== "bundled" ? (
                 <article className="diagnostic-card diagnostic-warn">
-                  <h3>Advanced engine override is active</h3>
+                  <h3>Advanced runtime override is active</h3>
                   <p className="inline-note">
                     This desktop session is using a{" "}
-                    {runtimeKind === "system" ? "system" : "custom"} engine binary instead of the included engine.
+                    {runtimeKind === "system" ? "system" : "custom"} runtime instead of the included runtime.
                   </p>
                   <p className="inline-note">
-                    Compatibility for onboarding, switching, and diagnostics is only guaranteed with the included engine shipped in this app release.
+                    Compatibility for onboarding, switching, and diagnostics is only guaranteed with the included runtime shipped in this app release.
                   </p>
                 </article>
               ) : null}
@@ -389,37 +389,37 @@ export function SettingsPanel({
               <article className="diagnostic-card settings-pane-section">
                 <div className="desktop-pane-section-header">
                   <div>
-                    <p className="card-kicker">Engine</p>
-                    <h3>Engine source</h3>
+                    <p className="card-kicker">Runtime</p>
+                    <h3>Runtime source</h3>
                   </div>
                   <p className="inline-note">
-                    Keep the included engine selected unless you intentionally need a compatibility override.
+                    Keep the included runtime selected unless you intentionally need a compatibility override.
                   </p>
                 </div>
                 {showAdvancedRuntime ? (
                   <>
                     <label>
-                      Engine source
+                      Runtime source
                       <select
                         value={runtimeKind}
                         onChange={(event) =>
                           setRuntimeKind(event.target.value as typeof runtimeKind)
                         }
                       >
-                        <option value="bundled">Included engine</option>
-                        <option value="system">System engine</option>
+                        <option value="bundled">Included runtime</option>
+                        <option value="system">System runtime</option>
                         <option value="custom">Custom path</option>
                       </select>
                     </label>
                     <label>
-                      Engine path
+                      Runtime path
                       <input
                         value={runtimePath}
                         disabled={runtimeKind !== "custom"}
                         placeholder={
                           runtimeKind === "custom"
-                            ? "/path/to/engine"
-                            : "Only used for a custom engine"
+                            ? "/path/to/runtime"
+                            : "Only used for a custom runtime"
                         }
                         onChange={(event) => setRuntimePath(event.target.value)}
                       />
@@ -431,7 +431,7 @@ export function SettingsPanel({
                           type="button"
                           onClick={() => setShowAdvancedRuntime(false)}
                         >
-                          Hide advanced engine options
+                          Hide advanced runtime options
                         </button>
                       </div>
                     ) : null}
@@ -443,7 +443,7 @@ export function SettingsPanel({
                       type="button"
                       onClick={() => setShowAdvancedRuntime(true)}
                     >
-                      Show advanced engine options
+                      Show advanced runtime options
                     </button>
                   </div>
                 )}
@@ -468,14 +468,14 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Status</p>
-                    <h3>Engine summary</h3>
+                    <h3>Runtime summary</h3>
                   </div>
                   <p className="inline-note">
-                    Keep the current engine model visible without pushing raw paths into the main preferences flow.
+                    Keep the current runtime model visible without pushing raw paths into the main preferences flow.
                   </p>
                 </div>
                 <p className="inline-note">
-                  Engine source:{" "}
+                  Runtime source:{" "}
                   <strong>
                     {runtimeKind === "bundled"
                       ? "Included with this app"
@@ -489,10 +489,10 @@ export function SettingsPanel({
                   <strong>{runtimeStatus.compatible ? "Ready for desktop switching" : "Needs attention"}</strong>
                 </p>
                 <p className="inline-note">
-                  Engine mode: <strong>{titleCase(runtimeKind)}</strong>
+                  Runtime mode: <strong>{titleCase(runtimeKind)}</strong>
                 </p>
                 <p className="inline-note">
-                  Engine version: {runtimeStatus.version?.version ?? "unknown"}
+                  Runtime version: {runtimeStatus.version?.version ?? "unknown"}
                 </p>
               </article>
             </div>
@@ -806,7 +806,7 @@ export function SettingsPanel({
                     <h3>Privacy and storage</h3>
                   </div>
                   <p className="inline-note">
-                    Review the security model before changing credential or engine settings.
+                    Review the security model before changing credential or runtime settings.
                   </p>
                 </div>
                 <p className="inline-note">Credentials stay local to this Mac or workstation.</p>
@@ -1066,7 +1066,7 @@ function sectionLabel(section: SettingsSection) {
     case "general":
       return "General";
     case "runtime":
-      return "Engine";
+      return "Runtime";
     case "updates":
       return "Updates";
     case "shell":
@@ -1083,7 +1083,7 @@ function sectionKicker(section: SettingsSection) {
     case "general":
       return "Appearance, launch, and desktop behavior";
     case "runtime":
-      return "Included engine and advanced overrides";
+      return "Included runtime and advanced overrides";
     case "updates":
       return "Signed desktop releases";
     case "shell":
@@ -1100,7 +1100,7 @@ function sectionHeading(section: SettingsSection) {
     case "general":
       return "Keep the desktop app consistent with the operating system";
     case "runtime":
-      return "Keep one engine model across the desktop app";
+      return "Keep one runtime model across the desktop app";
     case "updates":
       return "Manage signed desktop releases from one place";
     case "shell":
@@ -1117,7 +1117,7 @@ function sectionDescription(section: SettingsSection) {
     case "general":
       return "General preferences should feel like a Mac utility: clear defaults, system-driven appearance, and startup behavior that does not require reading implementation details.";
     case "runtime":
-      return "The desktop app is designed around the bundled engine. Advanced overrides stay available, but the default path is the supported cross-platform experience.";
+      return "The desktop app is designed around the bundled runtime. Advanced overrides stay available, but the default path is the supported cross-platform experience.";
     case "updates":
       return "Choose the release track for this machine, save it once, then check and install signed desktop updates without leaving the app.";
     case "shell":
@@ -1142,7 +1142,7 @@ function sectionPills(section: SettingsSection) {
     case "keyring":
       return ["Credentials stay local", "Native storage", "Recovery guides"];
     case "advanced":
-      return ["Raw paths", "Storage override", "Engine inventory"];
+      return ["Raw paths", "Storage override", "Runtime inventory"];
   }
 }
 
@@ -1151,7 +1151,7 @@ function sourceListSummary(section: SettingsSection) {
     case "general":
       return "Appearance and startup behavior";
     case "runtime":
-      return "Included engine and overrides";
+      return "Included runtime and overrides";
     case "updates":
       return "Release channel and signed installs";
     case "shell":

@@ -362,7 +362,7 @@ export function App() {
           <p className="eyebrow">AI Switch</p>
           <h1>Preparing your local switchboard…</h1>
           <p className="lede">
-            Loading saved profiles, the included engine, and the current tool state on this Mac.
+            Loading saved profiles, the included runtime, and the current tool state on this Mac.
           </p>
         </section>
       </main>
@@ -377,7 +377,7 @@ export function App() {
           <p className="eyebrow">AI Switch</p>
           <h1>AI Switch could not open the desktop switchboard.</h1>
           <p className="lede">
-            Check the included engine, local permissions, and compatibility details
+            Check the included runtime, local permissions, and compatibility details
             before continuing.
           </p>
           <p className="inline-note">{bootstrapError.message}</p>
@@ -422,12 +422,12 @@ export function App() {
     <AppFrame
       mode={showSetupWindow ? "setup" : "standard"}
       title={
-        runtimeRecoveryFocused ? "Engine Check" : sectionTitle(activeSection, setupFocused)
+        runtimeRecoveryFocused ? "Runtime Check" : sectionTitle(activeSection, setupFocused)
       }
       subtitle="Switch Claude Code, Codex CLI, and Gemini CLI profiles from one focused desktop app."
       detail={
         runtimeRecoveryFocused
-          ? "Use a desktop-compatible switching engine before profile switching, diagnostics, and backups become available."
+          ? "Use a desktop-compatible runtime before profile switching, diagnostics, and backups become available."
           : sectionDetail(activeSection, setupFocused)
       }
       nav={navItems}
@@ -471,17 +471,17 @@ export function App() {
             <p>{runtimeStatus.compatible ? "Ready" : "Needs attention"}</p>
           </div>
           <div className="sidebar-status-row">
-            <span className="sidebar-status-label">Engine source</span>
+            <span className="sidebar-status-label">Runtime source</span>
             <p>{runtimeSourceLabel(settings.runtime_kind)}</p>
           </div>
         </div>
       )}
     >
       {runtimeRecoveryFocused ? (
-        <SectionCard title="This engine is not ready for AI Switch yet" kicker="Action required">
+        <SectionCard title="This runtime is not ready for AI Switch yet" kicker="Action required">
           <div className="stack-list">
             <p className="inline-note">
-              AI Switch found a switching engine, but this desktop release cannot use it for
+              AI Switch found a runtime, but this desktop release cannot use it for
               switching, diagnostics, backups, or shared sets yet.
             </p>
             <p className="inline-note">{normalizeRuntimeLanguage(runtimeBlocker.summary)}</p>
@@ -495,15 +495,15 @@ export function App() {
                   onClick={() => restoreBundledRuntimeMutation.mutate()}
                 >
                   {restoreBundledRuntimeMutation.isPending
-                    ? "Switching to Included Engine…"
-                    : "Use Included Engine"}
+                    ? "Switching to Included Runtime…"
+                    : "Use Included Runtime"}
                 </button>
               ) : null}
               <button className="ghost-button" type="button" onClick={() => void retryRuntimeCheck()}>
                 Try Again
               </button>
               <button className="ghost-button" type="button" onClick={() => setRuntimeRecoveryOpen(true)}>
-                Advanced Engine Settings
+                Advanced Runtime Options
               </button>
             </div>
             {restoreBundledRuntimeMutation.error ? (
@@ -694,25 +694,25 @@ function describeRuntimeBlocker(runtimeStatus: {
   if (hasResolvedRuntime && missingDesktopContract) {
     return {
       summary:
-        "The current engine was found, but it does not report the desktop compatibility details required by this release.",
+        "The current runtime was found, but it does not report the desktop compatibility details required by this release.",
       nextStep:
-        "Switch back to the included engine, or choose a newer compatible engine in Advanced Engine Settings before continuing.",
+        "Switch back to the included runtime, or choose a newer compatible runtime in Advanced Runtime Options before continuing.",
     };
   }
 
   if (hasResolvedRuntime) {
     return {
       summary:
-        "The current engine was found, but it is not compatible with this desktop build.",
+        "The current runtime was found, but it is not compatible with this desktop build.",
       nextStep:
-        "Switch back to the included engine, or choose a compatible engine in Advanced Engine Settings before continuing.",
+        "Switch back to the included runtime, or choose a compatible runtime in Advanced Runtime Options before continuing.",
     };
   }
 
   return {
-    summary: "AI Switch could not use the current engine choice.",
+    summary: "AI Switch could not use the current runtime choice.",
     nextStep:
-      "Switch to the included engine, or choose a working advanced override in Advanced Engine Settings before continuing.",
+      "Switch to the included runtime, or choose a working advanced override in Advanced Runtime Options before continuing.",
   };
 }
 
@@ -756,9 +756,9 @@ function sectionDetail(section: string, setupFocused = false) {
     case "backups":
       return "Replay a previous profile state or restore the latest known-good backup without leaving the app.";
     case "activity":
-      return "Track recent desktop actions, command outcomes, and changes applied by the switching engine.";
+      return "Track recent desktop actions, command outcomes, and changes applied by the runtime.";
     case "settings":
-      return "Control the included engine, updates, terminal integration, and local storage behavior.";
+      return "Control the included runtime, updates, terminal integration, and local storage behavior.";
     default:
       return "";
   }
