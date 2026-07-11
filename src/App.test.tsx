@@ -382,7 +382,9 @@ describe("App", () => {
     expect(screen.getByText("Re-apply Work")).toBeInTheDocument();
     expect(screen.getByText("Current set")).toBeInTheDocument();
     expect(screen.getAllByText("Work").length).toBeGreaterThan(0);
-    expect(screen.getByText("Ready")).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent?.trim() === "SwitchingReady"),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Welcome")).not.toBeInTheDocument();
     expect(screen.queryByText("Included runtime")).not.toBeInTheDocument();
     expect(screen.queryByText("Health check")).not.toBeInTheDocument();

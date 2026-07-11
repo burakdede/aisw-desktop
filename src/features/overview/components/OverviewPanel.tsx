@@ -128,23 +128,30 @@ export function OverviewPanel({
         </div>
       }
     >
-      <article className="desktop-pane-hero overview-hero">
-        <div className="desktop-pane-hero-copy">
-          <p className="card-kicker">Overview</p>
-          <h3>Confirm the right accounts are active before you start coding</h3>
+      <div className="overview-status-strip" aria-label="Overview highlights">
+        <article className="overview-status-card">
+          <p className="card-kicker">Active tools</p>
+          <h3>
+            {snapshot.statuses.filter((status) => status.active_profile).length}
+          </h3>
           <p className="inline-note">
-            Review your current set, workspace expectations, and live tool status in one compact desktop overview.
-          </p>
-        </div>
-        <div className="desktop-pane-hero-pills" aria-label="Overview highlights">
-          <span className="status-pill">
             {snapshot.statuses.filter((status) => status.active_profile).length} active profile
             {snapshot.statuses.filter((status) => status.active_profile).length === 1 ? "" : "s"}
-          </span>
-          <span className="status-pill">{currentSetLabel ? "Shared set ready" : "No shared set"}</span>
-          <span className="status-pill">{hasWorkspaceMismatch ? "Workspace mismatch" : "Ready to switch"}</span>
-        </div>
-      </article>
+          </p>
+        </article>
+        <article className="overview-status-card">
+          <p className="card-kicker">Shared set</p>
+          <h3>{currentSetLabel ?? "No active set"}</h3>
+          <p className="inline-note">{currentSetLabel ? "Shared set ready" : "Choose a shared set or switch per tool."}</p>
+        </article>
+        <article className={`overview-status-card ${hasWorkspaceMismatch ? "overview-status-card-warning" : ""}`}>
+          <p className="card-kicker">Workspace</p>
+          <h3>{hasWorkspaceMismatch ? "Needs review" : "Ready"}</h3>
+          <p className="inline-note">
+            {hasWorkspaceMismatch ? "Workspace mismatch" : "Ready to switch"}
+          </p>
+        </article>
+      </div>
       <SplitView
         className="overview-layout"
         primaryClassName="overview-summary-pane"
@@ -287,7 +294,7 @@ export function OverviewPanel({
                 <h3>Live account state</h3>
               </div>
               <p className="inline-note">
-                Review the selected tool in detail while keeping the full local switching inventory visible beside it.
+                Keep the full switching inventory visible while inspecting one tool in detail.
               </p>
             </div>
             <SplitView
