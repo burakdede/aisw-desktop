@@ -15,6 +15,7 @@ import { DesktopCommandError } from "../../../lib/tauri";
 import { listenDesktopEvent } from "../../../lib/tauri";
 import { listBackups, parseOAuthProgressEvent } from "../../../lib/client";
 import { titleCase } from "../../../lib/utils";
+import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import {
   resolveCredentialBackendRequest,
   supportedCredentialBackends,
@@ -1409,15 +1410,19 @@ function profileMutationError(...errors: Array<unknown>) {
 
 function formatDesktopError(error: unknown) {
   if (error instanceof DesktopCommandError) {
-    return error.remediation ? `${error.message} Remediation: ${error.remediation}` : error.message;
+    return error.remediation
+      ? `${normalizeRuntimeLanguage(error.message)} Remediation: ${normalizeRuntimeLanguage(error.remediation)}`
+      : normalizeRuntimeLanguage(error.message);
   }
   if (error instanceof Error) {
-    return error.message;
+    return normalizeRuntimeLanguage(error.message);
   }
   if (typeof error === "object" && error && "message" in error && typeof error.message === "string") {
     const remediation =
       "remediation" in error && typeof error.remediation === "string" ? error.remediation : undefined;
-    return remediation ? `${error.message} Remediation: ${remediation}` : error.message;
+    return remediation
+      ? `${normalizeRuntimeLanguage(error.message)} Remediation: ${normalizeRuntimeLanguage(remediation)}`
+      : normalizeRuntimeLanguage(error.message);
   }
   return "Desktop command failed.";
 }

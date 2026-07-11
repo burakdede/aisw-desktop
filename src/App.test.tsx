@@ -4223,7 +4223,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getAllByText("Local credential store is locked.").length).toBeGreaterThan(0);
-      expect(screen.getAllByText("AISW cannot write the active config path.").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("AI Switch cannot write the active config path.").length).toBeGreaterThan(0);
       expect(screen.getAllByText("Upstream OAuth session timed out.").length).toBeGreaterThan(0);
     });
     expect(screen.getByText("Unlock the local credential store and retry.")).toBeInTheDocument();
@@ -6916,7 +6916,7 @@ describe("App", () => {
       expect(
         screen.getByText((_, element) => element?.textContent?.trim() === "Engine source: Included with this app"),
       ).toBeInTheDocument();
-      expect(screen.getByText("App data folder: Managed automatically")).toBeInTheDocument();
+      expect(screen.getByText("AI Switch data folder: Managed automatically")).toBeInTheDocument();
       expect(
         screen.getByText(
           (_, element) => element?.textContent?.trim() === "Compatibility: Ready for desktop switching",

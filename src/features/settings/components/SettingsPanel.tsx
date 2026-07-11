@@ -6,6 +6,7 @@ import { getShellGuidance, runDoctor } from "../../../lib/client";
 import { DesktopCommandError } from "../../../lib/tauri";
 import { DesktopSettings, AppBootstrap } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
+import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 
@@ -244,14 +245,14 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Storage</p>
-                    <h3>App data folder</h3>
+                    <h3>AI Switch data folder</h3>
                   </div>
                   <p className="inline-note">
                     Leave this empty to use the default desktop storage location.
                   </p>
                 </div>
                 <label>
-                  App data folder override
+                  AI Switch data folder override
                   <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
                 </label>
               </article>
@@ -292,7 +293,7 @@ export function SettingsPanel({
                   </strong>
                 </p>
                 <p className="inline-note">
-                  App data folder:{" "}
+                  AI Switch data folder:{" "}
                   {settings.aisw_home ? `Custom folder (${settings.aisw_home})` : "Managed automatically"}
                 </p>
                 <p className="inline-note">
@@ -742,13 +743,13 @@ function MutationErrorCard({ title, error }: { title: string; error: unknown }) 
 function formatMutationError(error: unknown) {
   if (error instanceof DesktopCommandError) {
     return {
-      message: error.message,
-      remediation: error.remediation,
+      message: normalizeRuntimeLanguage(error.message),
+      remediation: normalizeRuntimeLanguage(error.remediation),
     };
   }
   if (error instanceof Error) {
     return {
-      message: error.message,
+      message: normalizeRuntimeLanguage(error.message),
       remediation: undefined,
     };
   }

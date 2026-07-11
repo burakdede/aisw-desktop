@@ -8,6 +8,7 @@ import { openExternalGuide, installGuideUrlForTool } from "../../../lib/tool-gui
 import { useLastCommandResults } from "../../shared/lastCommandResult";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
+import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import {
   preferredProfileImportMode,
   supportsProfileImportMode,
@@ -279,7 +280,7 @@ export function DiagnosticsPanel({
                 <h4>{card.title}</h4>
                 {card.issues.map((issue) => (
                   <p key={issue} className="inline-note">
-                    {issue}
+                    {normalizeRuntimeLanguage(issue)}
                   </p>
                 ))}
                 {card.remediation.length ? (

@@ -4,6 +4,12 @@ export function normalizeRuntimeLanguage(text: string | null | undefined): strin
   }
 
   return text
+    .replace(/AISW_HOME/g, "AI Switch data folder")
+    .replace(/outside AISW/g, "outside AI Switch")
+    .replace(/Outside AISW/g, "Outside AI Switch")
+    .replace(/AISW cannot/g, "AI Switch cannot")
+    .replace(/AISW Desktop/g, "AI Switch")
+    .replace(/\bAISW\b/g, "AI Switch")
     .replace(/saved imported context/g, "saved shared group")
     .replace(/Saved imported context/g, "Saved shared group")
     .replace(/imported context/g, "shared group")
