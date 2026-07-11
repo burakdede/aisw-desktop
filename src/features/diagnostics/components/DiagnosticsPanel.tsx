@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { DesktopStatusStrip } from "../../../components/DesktopStatusStrip";
 import { SplitView } from "../../../components/SplitView";
 import { SectionCard } from "../../../components/SectionCard";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
@@ -180,30 +179,35 @@ export function DiagnosticsPanel({
         </div>
       }
     >
-      <DesktopStatusStrip
-        ariaLabel="Diagnostics highlights"
-        items={[
-          {
-            label: "Health",
-            value: totalIssues ? `${totalIssues} issue${totalIssues === 1 ? "" : "s"} found` : "System looks healthy",
-            note: "Doctor, verify, and repair stay in the same recovery surface so switching issues use one consistent flow.",
-          },
-          {
-            label: "Recovery",
-            value: repairActions.length ? `${repairActions.length} safe repair${repairActions.length === 1 ? "" : "s"}` : "No repairs queued",
-            note: "Apply safe repairs, rerun verification, and export a support bundle from this pane.",
-          },
-          {
-            label: "Highlights",
-            value: "Quick actions",
-            pills: diagnosticPills,
-          },
-        ]}
-      />
       <article className={`diagnostic-card diagnostics-overview desktop-pane-intro ${totalIssues ? "diagnostic-warn" : "diagnostic-pass"}`}>
-        <h3>{totalIssues ? `${totalIssues} issue${totalIssues === 1 ? "" : "s"} found` : "System looks healthy"}</h3>
+        <div className="desktop-pane-section-header">
+          <div>
+            <p className="card-kicker">Health</p>
+            <h3>{totalIssues ? `${totalIssues} issue${totalIssues === 1 ? "" : "s"} found` : "System looks healthy"}</h3>
+          </div>
+          <span className={`pill ${totalIssues ? "pill-warn" : "pill-ok"}`}>
+            {repairActions.length ? `${repairActions.length} repairs queued` : "Recovery ready"}
+          </span>
+        </div>
+        <p className="inline-note">
+          Doctor, verify, and repair stay in one recovery surface so switching issues use one consistent flow.
+        </p>
+        <div className="diagnostics-overview-meta">
+          <div>
+            <span className="overview-current-set-cell-label">Checks</span>
+            <strong>{checkRows.length} monitored</strong>
+          </div>
+          <div>
+            <span className="overview-current-set-cell-label">Recovery</span>
+            <strong>{repairActions.length ? `${repairActions.length} safe repair${repairActions.length === 1 ? "" : "s"}` : "No repairs queued"}</strong>
+          </div>
+          <div>
+            <span className="overview-current-set-cell-label">Highlights</span>
+            <strong>{diagnosticPills.join(" · ") || "Quick actions"}</strong>
+          </div>
+        </div>
         {summaryHighlights.length ? (
-          <div className="stack-list">
+          <div className="stack-list diagnostics-overview-list">
             {summaryHighlights.map((line) => (
               <p key={line} className="inline-note">{line}</p>
             ))}
@@ -241,20 +245,6 @@ export function DiagnosticsPanel({
           </p>
         </article>
       ) : null}
-
-      <div className="panel-grid panel-grid-3 diagnostics-summary-grid">
-        {summaryCards.map((card) => (
-          <article key={card.title} className={`diagnostic-card diagnostic-${card.status}`}>
-            <h3>{card.title}</h3>
-            <p className="diagnostic-status">{card.status}</p>
-            {card.lines.map((line) => (
-              <p key={line} className="inline-note">
-                {line}
-              </p>
-            ))}
-          </article>
-        ))}
-      </div>
 
       {applyRepair.data ? (
         <article className="diagnostic-card diagnostic-pass diagnostics-body">
@@ -299,6 +289,17 @@ export function DiagnosticsPanel({
                 <p className="inline-note">
                   Read the current system state first, then inspect individual findings only when something needs attention.
                 </p>
+              </div>
+              <div className="diagnostics-check-summary">
+                {summaryCards.map((card) => (
+                  <div key={card.title} className={`diagnostics-check-summary-cell diagnostic-${card.status}`}>
+                    <strong>{card.title}</strong>
+                    <span className={`pill ${card.status === "pass" ? "pill-ok" : "pill-warn"}`}>
+                      {card.status}
+                    </span>
+                    <p className="inline-note">{card.lines[0]}</p>
+                  </div>
+                ))}
               </div>
               <div className="diagnostics-check-list" aria-label="Diagnostics checks">
                 {checkRows.map((row) => (
@@ -423,15 +424,17 @@ export function DiagnosticsPanel({
                 </p>
               </article>
             )}
-            <div className="desktop-pane-section-header">
-              <div>
-                <p className="card-kicker">Recovery</p>
-                <h3>Recommended fixes</h3>
+            <article className="diagnostic-card diagnostics-recovery-intro">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Recovery</p>
+                  <h3>Recommended fixes</h3>
+                </div>
               </div>
               <p className="inline-note">
                 Apply the safest repair path first, then rerun verification from this pane.
               </p>
-            </div>
+            </article>
             {quickFixes.map((fix) => (
               <article key={quickFixKey(fix)} className={`diagnostic-card diagnostic-${fix.status}`}>
                 <h4>{fix.title}</h4>
