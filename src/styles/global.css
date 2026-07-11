@@ -338,6 +338,11 @@ button {
   box-shadow: var(--shadow-window);
 }
 
+.profile-sheet {
+  width: min(560px, 100%);
+  place-self: center;
+}
+
 .quick-switch-header {
   display: flex;
   align-items: flex-start;

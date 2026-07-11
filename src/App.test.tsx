@@ -224,6 +224,20 @@ function getProfilesSection() {
   return within(section);
 }
 
+function getAddProfileDialog() {
+  return within(screen.getByRole("dialog", { name: "Add Profile" }));
+}
+
+async function openAddProfileDialog() {
+  if (!screen.queryByRole("dialog", { name: "Add Profile" })) {
+    fireEvent.click(getProfilesSection().getAllByRole("button", { name: "Add Profile" })[0]);
+  }
+  await waitFor(() => {
+    expect(screen.getByRole("dialog", { name: "Add Profile" })).toBeInTheDocument();
+  });
+  return getAddProfileDialog();
+}
+
 describe("App", () => {
   beforeEach(() => {
     vi.mocked(window.open).mockClear();
@@ -505,6 +519,7 @@ describe("App", () => {
       expect(screen.getByDisplayValue("Codex")).toBeInTheDocument();
       expect(screen.getByText("Technical details")).toBeInTheDocument();
       expect(screen.getByText("No additional token or runtime warnings are currently reported for this tool.")).toBeInTheDocument();
+      expect(screen.getByLabelText("Current tool")).toHaveValue("codex");
     });
   });
 
@@ -654,7 +669,7 @@ describe("App", () => {
       expect(screen.getByText("Auth method: api_key")).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByLabelText("Tool"), {
+    fireEvent.change(screen.getByLabelText("Current tool"), {
       target: { value: "claude" },
     });
 
@@ -1458,7 +1473,8 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
-    fireEvent.change(screen.getByLabelText("Profile name"), {
+    const profileDialog = await openAddProfileDialog();
+    fireEvent.change(profileDialog.getByLabelText("Profile name"), {
       target: { value: "work" },
     });
 
@@ -1467,7 +1483,7 @@ describe("App", () => {
         "Claude already has a profile named work. Choose a different name or rename the existing profile first.",
       ),
     ).toBeInTheDocument();
-    expect(getProfilesSection().getByRole("button", { name: "Add profile" })).toBeDisabled();
+    expect(profileDialog.getByRole("button", { name: "Add profile" })).toBeDisabled();
     expect(calls.some((entry) => entry.command === "add_profile")).toBe(false);
   });
 
@@ -1575,15 +1591,16 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
-    fireEvent.change(screen.getByLabelText("Tool"), {
+    const profileDialog = await openAddProfileDialog();
+    fireEvent.change(profileDialog.getByLabelText("Tool"), {
       target: { value: "gemini" },
     });
 
-    expect(screen.getByDisplayValue("Not configurable")).toBeDisabled();
-    fireEvent.change(screen.getByLabelText("Profile name"), {
+    expect(profileDialog.getByDisplayValue("Not configurable")).toBeDisabled();
+    fireEvent.change(profileDialog.getByLabelText("Profile name"), {
       target: { value: "travel-next" },
     });
-    fireEvent.click(getProfilesSection().getByRole("button", { name: "Add profile" }));
+    fireEvent.click(profileDialog.getByRole("button", { name: "Add profile" }));
 
     await waitFor(() => {
       expect(
@@ -1641,10 +1658,11 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
-    fireEvent.change(screen.getByLabelText("Profile name"), {
+    const profileDialog = await openAddProfileDialog();
+    fireEvent.change(profileDialog.getByLabelText("Profile name"), {
       target: { value: "ops" },
     });
-    fireEvent.click(getProfilesSection().getByRole("button", { name: "Add profile" }));
+    fireEvent.click(profileDialog.getByRole("button", { name: "Add profile" }));
 
     await waitFor(() => {
       expect(screen.getByText("duplicate profile")).toBeInTheDocument();
@@ -1737,10 +1755,11 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
-    fireEvent.change(screen.getByLabelText("Profile name"), {
+    const profileDialog = await openAddProfileDialog();
+    fireEvent.change(profileDialog.getByLabelText("Profile name"), {
       target: { value: "ops" },
     });
-    fireEvent.click(getProfilesSection().getByRole("button", { name: "Add profile" }));
+    fireEvent.click(profileDialog.getByRole("button", { name: "Add profile" }));
 
     await waitFor(() => {
       expect(
@@ -1830,10 +1849,11 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
-    fireEvent.change(screen.getByLabelText("Profile name"), {
+    const profileDialog = await openAddProfileDialog();
+    fireEvent.change(profileDialog.getByLabelText("Profile name"), {
       target: { value: "ops" },
     });
-    fireEvent.click(getProfilesSection().getByRole("button", { name: "Add profile" }));
+    fireEvent.click(profileDialog.getByRole("button", { name: "Add profile" }));
 
     await waitFor(() => {
       expect(screen.getByText(/interactive login required/)).toBeInTheDocument();
@@ -1936,21 +1956,22 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
-    fireEvent.change(screen.getByLabelText("Tool"), {
+    const profileDialog = await openAddProfileDialog();
+    fireEvent.change(profileDialog.getByLabelText("Tool"), {
       target: { value: "codex" },
     });
-    fireEvent.change(screen.getByLabelText("Profile name"), {
+    fireEvent.change(profileDialog.getByLabelText("Profile name"), {
       target: { value: "ci" },
     });
-    fireEvent.change(screen.getByLabelText("Import mode"), {
+    fireEvent.change(profileDialog.getByLabelText("Import mode"), {
       target: { value: "from_env" },
     });
-    fireEvent.change(screen.getByLabelText("Credential backend"), {
+    fireEvent.change(profileDialog.getByLabelText("Credential backend"), {
       target: { value: "system-keyring" },
     });
 
-    expect(screen.getByText("OPENAI_API_KEY")).toBeInTheDocument();
-    fireEvent.click(getProfilesSection().getByRole("button", { name: "Add profile" }));
+    expect(profileDialog.getByText("OPENAI_API_KEY")).toBeInTheDocument();
+    fireEvent.click(profileDialog.getByRole("button", { name: "Add profile" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "add_profile")).toBe(true);
@@ -2010,8 +2031,9 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
+    const profileDialog = await openAddProfileDialog();
 
-    const importModeSelect = screen.getByLabelText("Import mode");
+    const importModeSelect = profileDialog.getByLabelText("Import mode");
     expect(within(importModeSelect).getByRole("option", { name: "Capture environment" })).toBeInTheDocument();
     expect(within(importModeSelect).getByRole("option", { name: "API key via stdin" })).toBeInTheDocument();
     expect(
@@ -2021,11 +2043,11 @@ describe("App", () => {
       within(importModeSelect).queryByRole("option", { name: "Guided OAuth capture" }),
     ).not.toBeInTheDocument();
 
-    const backendSelect = screen.getByLabelText("Credential backend");
+    const backendSelect = profileDialog.getByLabelText("Credential backend");
     expect(backendSelect).toBeDisabled();
     expect(backendSelect).toHaveValue("file");
     expect(
-      screen.getByText("Claude profiles are always stored with file-backed credentials."),
+      profileDialog.getByText("Claude profiles are always stored with file-backed credentials."),
     ).toBeInTheDocument();
   });
 
@@ -2033,17 +2055,18 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
-    fireEvent.change(screen.getByLabelText("Tool"), {
+    const profileDialog = await openAddProfileDialog();
+    fireEvent.change(profileDialog.getByLabelText("Tool"), {
       target: { value: "codex" },
     });
 
-    const importModeSelect = screen.getByLabelText("Import mode");
+    const importModeSelect = profileDialog.getByLabelText("Import mode");
     expect(within(importModeSelect).getByRole("option", { name: "Import current login" })).toBeInTheDocument();
     expect(within(importModeSelect).getByRole("option", { name: "Capture environment" })).toBeInTheDocument();
     expect(within(importModeSelect).getByRole("option", { name: "API key via stdin" })).toBeInTheDocument();
     expect(within(importModeSelect).getByRole("option", { name: "Guided OAuth capture" })).toBeInTheDocument();
 
-    const backendSelect = screen.getByLabelText("Credential backend");
+    const backendSelect = profileDialog.getByLabelText("Credential backend");
     expect(backendSelect).not.toBeDisabled();
     expect(within(backendSelect).getByRole("option", { name: "Automatic" })).toBeInTheDocument();
     expect(within(backendSelect).getByRole("option", { name: "System keyring" })).toBeInTheDocument();
@@ -2137,10 +2160,10 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Open profile setup" }));
 
-    await waitFor(() => expect(screen.getByLabelText("Tool")).toHaveValue("claude"));
-    expect(screen.getByLabelText("Tool")).toHaveValue("claude");
-    expect(screen.getByLabelText("Import mode")).toHaveValue("from_env");
-    expect(screen.queryByText("Guided OAuth capture")).not.toBeInTheDocument();
+    await waitFor(() => expect(getAddProfileDialog().getByLabelText("Tool")).toHaveValue("claude"));
+    expect(getAddProfileDialog().getByLabelText("Tool")).toHaveValue("claude");
+    expect(getAddProfileDialog().getByLabelText("Import mode")).toHaveValue("from_env");
+    expect(getAddProfileDialog().queryByText("Guided OAuth capture")).not.toBeInTheDocument();
   });
 
   it("submits API keys via stdin payload and clears the field after save", async () => {
@@ -2169,26 +2192,27 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
-    fireEvent.change(screen.getByLabelText("Tool"), {
+    const profileDialog = await openAddProfileDialog();
+    fireEvent.change(profileDialog.getByLabelText("Tool"), {
       target: { value: "codex" },
     });
-    fireEvent.change(screen.getByLabelText("Profile name"), {
+    fireEvent.change(profileDialog.getByLabelText("Profile name"), {
       target: { value: "ops" },
     });
-    fireEvent.change(screen.getByLabelText("Import mode"), {
+    fireEvent.change(profileDialog.getByLabelText("Import mode"), {
       target: { value: "api_key" },
     });
-    fireEvent.change(screen.getByLabelText("Credential backend"), {
+    fireEvent.change(profileDialog.getByLabelText("Credential backend"), {
       target: { value: "file" },
     });
 
-    const apiKeyInput = screen.getByLabelText("API key") as HTMLInputElement;
+    const apiKeyInput = profileDialog.getByLabelText("API key") as HTMLInputElement;
     fireEvent.change(apiKeyInput, {
       target: { value: "sk-live-secret" },
     });
     expect(apiKeyInput.value).toBe("sk-live-secret");
 
-    fireEvent.click(getProfilesSection().getByRole("button", { name: "Add profile" }));
+    fireEvent.click(profileDialog.getByRole("button", { name: "Add profile" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "add_profile")).toBe(true);
@@ -2241,23 +2265,24 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
-    fireEvent.change(screen.getByLabelText("Tool"), {
+    const profileDialog = await openAddProfileDialog();
+    fireEvent.change(profileDialog.getByLabelText("Tool"), {
       target: { value: "codex" },
     });
-    fireEvent.change(screen.getByLabelText("Profile name"), {
+    fireEvent.change(profileDialog.getByLabelText("Profile name"), {
       target: { value: "ops" },
     });
-    fireEvent.change(screen.getByLabelText("Import mode"), {
+    fireEvent.change(profileDialog.getByLabelText("Import mode"), {
       target: { value: "api_key" },
     });
 
-    const apiKeyInput = screen.getByLabelText("API key") as HTMLInputElement;
+    const apiKeyInput = profileDialog.getByLabelText("API key") as HTMLInputElement;
     fireEvent.change(apiKeyInput, {
       target: { value: "sk-live-secret" },
     });
     expect(apiKeyInput.value).toBe("sk-live-secret");
 
-    fireEvent.click(getProfilesSection().getByRole("button", { name: "Add profile" }));
+    fireEvent.click(profileDialog.getByRole("button", { name: "Add profile" }));
 
     await waitFor(() => {
       expect(
@@ -2662,7 +2687,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Open profile details"));
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Tool")).toHaveValue("claude");
+      expect(screen.getByLabelText("Current tool")).toHaveValue("claude");
       expect(screen.getByDisplayValue("Claude")).toBeInTheDocument();
       expect(screen.getByText("Hide technical details")).toBeInTheDocument();
     });
@@ -2751,13 +2776,14 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
-    fireEvent.change(screen.getByLabelText("Profile name"), {
+    const profileDialog = await openAddProfileDialog();
+    fireEvent.change(profileDialog.getByLabelText("Profile name"), {
       target: { value: "personal" },
     });
-    fireEvent.change(screen.getByLabelText("Import mode"), {
+    fireEvent.change(profileDialog.getByLabelText("Import mode"), {
       target: { value: "oauth" },
     });
-    fireEvent.click(screen.getByText("Start OAuth"));
+    fireEvent.click(profileDialog.getByText("Start OAuth"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "add_profile_oauth")).toBe(true);
@@ -3001,7 +3027,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
-    fireEvent.change(getProfilesSection().getByLabelText("Tool"), {
+    fireEvent.change(getProfilesSection().getByLabelText("Current tool"), {
       target: { value: "codex" },
     });
     fireEvent.click(getProfilesSection().getByRole("radio", { name: "Shared" }));
@@ -4650,9 +4676,9 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Use file-backed storage" }));
     await waitFor(() => {
-      expect(screen.getByLabelText("Tool")).toBeInTheDocument();
-      expect(screen.getByLabelText("Import mode")).toHaveValue("from_live");
-      expect(screen.getByLabelText("Credential backend")).toHaveValue("file");
+      expect(getAddProfileDialog().getByLabelText("Tool")).toBeInTheDocument();
+      expect(getAddProfileDialog().getByLabelText("Import mode")).toHaveValue("from_live");
+      expect(getAddProfileDialog().getByLabelText("Credential backend")).toHaveValue("file");
     });
 
     fireEvent.click(screen.getByText("Diagnostics"));
@@ -4779,7 +4805,8 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Provisioning")).toBeInTheDocument();
-      expect(screen.getByDisplayValue("Codex")).toBeInTheDocument();
+      expect(screen.getByLabelText("Current tool")).toHaveValue("codex");
+      expect(getAddProfileDialog().getByLabelText("Tool")).toHaveValue("codex");
     });
   });
 
@@ -5008,7 +5035,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Open profile setup"));
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Tool")).toHaveValue("claude");
+      expect(getAddProfileDialog().getByLabelText("Tool")).toHaveValue("claude");
     });
   });
 

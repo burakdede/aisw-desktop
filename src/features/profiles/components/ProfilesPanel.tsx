@@ -94,6 +94,7 @@ export function ProfilesPanel({
   } | null>(null);
   const [expandedDetails, setExpandedDetails] = useState<string | null>(null);
   const [openDiagnosticDetails, setOpenDiagnosticDetails] = useState<string | null>(null);
+  const [profileSheetOpen, setProfileSheetOpen] = useState(false);
   const apiKeyInputRef = useRef<HTMLInputElement | null>(null);
 
   const profiles = useMemo(() => snapshot.profiles[tool]?.profiles ?? [], [snapshot, tool]);
@@ -255,6 +256,15 @@ export function ProfilesPanel({
   }, [initialExpandedProfile, initialTool]);
 
   useEffect(() => {
+    if (
+      initialExpandedProfile == null &&
+      (isSupportedTool(initialTool) || Boolean(initialMode) || Boolean(initialCredentialBackend))
+    ) {
+      setProfileSheetOpen(true);
+    }
+  }, [initialCredentialBackend, initialExpandedProfile, initialMode, initialTool]);
+
+  useEffect(() => {
     if (inventoryFilter === "all") {
       return;
     }
@@ -311,6 +321,7 @@ export function ProfilesPanel({
           onSuccess: () => {
             setProfile("");
             setLabel("");
+            setProfileSheetOpen(false);
           },
           onError: (error) => {
             setOauthError(formatDesktopError(error));
@@ -337,6 +348,7 @@ export function ProfilesPanel({
         .then(() => {
           setProfile("");
           setLabel("");
+          setProfileSheetOpen(false);
         })
         .catch(() => undefined);
       return;
@@ -347,14 +359,23 @@ export function ProfilesPanel({
         ? { kind: "from_env" as const }
         : { kind: "from_live" as const };
 
-    addProfileMutation.mutate({
-      tool,
-      profile,
-      label: label || null,
-      stateMode: availableStateModes.length ? stateMode : null,
-      credentialBackend: resolveCredentialBackendRequest(credentialBackend),
-      importMode,
-    });
+    addProfileMutation.mutate(
+      {
+        tool,
+        profile,
+        label: label || null,
+        stateMode: availableStateModes.length ? stateMode : null,
+        credentialBackend: resolveCredentialBackendRequest(credentialBackend),
+        importMode,
+      },
+      {
+        onSuccess: () => {
+          setProfile("");
+          setLabel("");
+          setProfileSheetOpen(false);
+        },
+      },
+    );
   }
 
   return (
@@ -387,6 +408,13 @@ export function ProfilesPanel({
               </button>
             ))}
           </div>
+          <button
+            className="primary-button"
+            type="button"
+            onClick={() => setProfileSheetOpen(true)}
+          >
+            Add Profile
+          </button>
         </div>
       }
     >
@@ -493,186 +521,50 @@ export function ProfilesPanel({
           ) : null}
         </div>
         <div className="stack-list profiles-inspector-pane desktop-pane-column">
-            <article className="diagnostic-card desktop-pane-intro">
-            <h3>Add profile</h3>
+          <article className="diagnostic-card desktop-pane-intro">
+            <h3>Inspector</h3>
             <p className="inline-note">
-              Capture a current login, start provider OAuth, paste an API key, or read from environment.
+              Review the selected profile, then open a focused sheet when you need to add a new login.
             </p>
-            <form className="stacked-form" onSubmit={submit}>
-              <label>
-                Tool
-                <select
-                  value={tool}
-                  onChange={(event) => {
-                    setTool(event.target.value as typeof tool);
-                    setOpenDiagnosticDetails(null);
-                    setExpandedDetails(null);
-                  }}
-                >
-                  {TOOLS.map((entry) => (
-                    <option key={entry} value={entry}>
-                      {titleCase(entry)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Profile name
-                <input value={profile} onChange={(event) => setProfile(event.target.value)} />
-              </label>
-              {hasDuplicateProfileName ? (
-                <p className="inline-note">
-                  {duplicateWarning(tool, duplicateDraftName)}
-                </p>
-              ) : null}
-              <label>
-                Label
-                <input value={label} onChange={(event) => setLabel(event.target.value)} />
-              </label>
-              <label>
-                Import mode
-                <select value={mode} onChange={(event) => setMode(event.target.value as typeof mode)}>
-                  {availableImportModes.map((entry) => (
-                    <option key={entry} value={entry}>
-                      {profileImportModeLabel(entry)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Credential backend
-                <select
-                  value={credentialBackend}
-                  onChange={(event) =>
-                    setCredentialBackend(event.target.value as typeof credentialBackend)
-                  }
-                  disabled={availableCredentialBackends.length === 1}
-                >
-                  {availableCredentialBackends.map((entry) => (
-                    <option key={entry} value={entry}>
-                      {profileCredentialBackendLabel(entry)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {availableCredentialBackends.length === 1 && availableCredentialBackends[0] === "file" ? (
-                <p className="inline-note">
-                  {titleCase(tool)} profiles are always stored with file-backed credentials.
-                </p>
-              ) : null}
-              {mode === "api_key" ? (
-                <label>
-                  API key
-                  <input
-                    ref={apiKeyInputRef}
-                    type="password"
-                    autoComplete="off"
-                    onChange={() => {
-                      if (apiKeyProfileAction.error) {
-                        apiKeyProfileAction.clearError();
-                      }
-                    }}
-                  />
-                </label>
-              ) : null}
-              {mode === "from_env" ? (
-                <p className="inline-note">
-                  Expected environment variable: <code>{expectedEnvVar(tool)}</code>
-                </p>
-              ) : null}
-              {mode === "oauth" ? (
-                <div className="diagnostic-card">
-                  <h4>Sign-in flow</h4>
-                  <p className="inline-note">
-                    AI Switch will launch the tool&apos;s native login flow and stream progress from the bundled switching engine.
-                  </p>
-                  <p className="inline-note">
-                    Keep this window open while the browser or terminal login completes.
-                  </p>
-                </div>
-              ) : null}
-              {availableStateModes.length ? (
-                <StateModeField
-                  name={`profile-state-mode-${tool}`}
-                  value={stateMode}
-                  options={availableStateModes}
-                  onChange={setStateMode}
-                />
-              ) : (
-                <label>
-                  State mode
-                  <select value="n/a" disabled>
-                    <option value="n/a">Not configurable</option>
-                  </select>
-                </label>
-              )}
-              <button
-                className="primary-button"
-                type="submit"
-                disabled={
-                  mutationLock.isBusy ||
-                  addProfileMutation.isPending ||
-                  addProfileOAuthMutation.isPending ||
-                  apiKeyProfileAction.isPending ||
-                  hasDuplicateProfileName
-                }
+            <label>
+              Current tool
+              <select
+                value={tool}
+                onChange={(event) => {
+                  setTool(event.target.value as typeof tool);
+                  setOpenDiagnosticDetails(null);
+                  setExpandedDetails(null);
+                }}
               >
-                {mode === "oauth"
-                  ? addProfileOAuthMutation.isPending
-                    ? "Waiting for OAuth…"
-                    : "Start OAuth"
-                  : mode === "api_key"
-                    ? apiKeyProfileAction.isPending
-                      ? "Saving…"
-                      : "Add profile"
-                    : addProfileMutation.isPending
-                    ? "Saving…"
-                    : "Add profile"}
+                {TOOLS.map((entry) => (
+                  <option key={entry} value={entry}>
+                    {titleCase(entry)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {availableStateModes.length ? (
+              <StateModeField
+                name={`inspector-state-mode-${tool}`}
+                value={stateMode}
+                options={availableStateModes}
+                onChange={setStateMode}
+              />
+            ) : (
+              <label>
+                State mode
+                <select value="n/a" disabled>
+                  <option value="n/a">Not configurable</option>
+                </select>
+              </label>
+            )}
+            <div className="button-row">
+              <button className="primary-button" type="button" onClick={() => setProfileSheetOpen(true)}>
+                Add Profile
               </button>
-              {profileMutationError(
-                addProfileMutation.error,
-                addProfileOAuthMutation.error,
-                renameProfileMutation.error,
-                removeProfileMutation.error,
-                useProfileMutation.error,
-                apiKeyProfileAction.error,
-              ) ? (
-                <p className="inline-note">
-                  {profileMutationError(
-                    addProfileMutation.error,
-                    addProfileOAuthMutation.error,
-                    renameProfileMutation.error,
-                    removeProfileMutation.error,
-                    useProfileMutation.error,
-                    apiKeyProfileAction.error,
-                  )}
-                </p>
-              ) : null}
-            </form>
+            </div>
           </article>
           <div className="stack-list">
-          {mode === "oauth" ? (
-            <article className="diagnostic-card">
-              <h3>OAuth progress</h3>
-              {oauthWizardSteps.some((step) => step.status !== "pending") ? (
-                <div className="stack-list">
-                  {oauthWizardSteps.map((step) => (
-                    <div key={step.id}>
-                      <p className={`diagnostic-status diagnostic-status-${step.status}`}>
-                        {step.label}
-                      </p>
-                      <p className="inline-note">{step.detail}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="inline-note">
-                  Start OAuth to stream each login step before the profile is captured and saved.
-                </p>
-              )}
-              {oauthError ? <p className="inline-note">{oauthError}</p> : null}
-            </article>
-          ) : null}
           {selectedProfileEntry ? (
             <article className="diagnostic-card">
               <div className="desktop-pane-section-header">
@@ -1061,6 +953,210 @@ export function ProfilesPanel({
           </div>
         </div>
       </div>
+      {profileSheetOpen ? (
+        <div className="quick-switch-overlay" role="presentation" onClick={() => setProfileSheetOpen(false)}>
+          <section
+            className="quick-switch-palette profile-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Add Profile"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="quick-switch-header">
+              <div>
+                <p className="card-kicker">Add Profile</p>
+                <h3>Add a saved login</h3>
+              </div>
+              <button className="ghost-button" type="button" onClick={() => setProfileSheetOpen(false)}>
+                Close
+              </button>
+            </div>
+            <p className="inline-note">
+              Capture a current login, start provider OAuth, paste an API key, or read from the environment in one focused flow.
+            </p>
+            <form className="stacked-form" onSubmit={submit}>
+              <label>
+                Tool
+                <select
+                  value={tool}
+                  onChange={(event) => {
+                    setTool(event.target.value as typeof tool);
+                    setOpenDiagnosticDetails(null);
+                    setExpandedDetails(null);
+                  }}
+                >
+                  {TOOLS.map((entry) => (
+                    <option key={entry} value={entry}>
+                      {titleCase(entry)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Profile name
+                <input value={profile} onChange={(event) => setProfile(event.target.value)} />
+              </label>
+              {hasDuplicateProfileName ? (
+                <p className="inline-note">{duplicateWarning(tool, duplicateDraftName)}</p>
+              ) : null}
+              <label>
+                Label
+                <input value={label} onChange={(event) => setLabel(event.target.value)} />
+              </label>
+              <label>
+                Import mode
+                <select value={mode} onChange={(event) => setMode(event.target.value as typeof mode)}>
+                  {availableImportModes.map((entry) => (
+                    <option key={entry} value={entry}>
+                      {profileImportModeLabel(entry)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Credential backend
+                <select
+                  value={credentialBackend}
+                  onChange={(event) =>
+                    setCredentialBackend(event.target.value as typeof credentialBackend)
+                  }
+                  disabled={availableCredentialBackends.length === 1}
+                >
+                  {availableCredentialBackends.map((entry) => (
+                    <option key={entry} value={entry}>
+                      {profileCredentialBackendLabel(entry)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {availableCredentialBackends.length === 1 && availableCredentialBackends[0] === "file" ? (
+                <p className="inline-note">
+                  {titleCase(tool)} profiles are always stored with file-backed credentials.
+                </p>
+              ) : null}
+              {mode === "api_key" ? (
+                <label>
+                  API key
+                  <input
+                    ref={apiKeyInputRef}
+                    type="password"
+                    autoComplete="off"
+                    onChange={() => {
+                      if (apiKeyProfileAction.error) {
+                        apiKeyProfileAction.clearError();
+                      }
+                    }}
+                  />
+                </label>
+              ) : null}
+              {mode === "from_env" ? (
+                <p className="inline-note">
+                  Expected environment variable: <code>{expectedEnvVar(tool)}</code>
+                </p>
+              ) : null}
+              {mode === "oauth" ? (
+                <div className="diagnostic-card">
+                  <h4>Sign-in flow</h4>
+                  <p className="inline-note">
+                    AI Switch will launch the tool&apos;s native login flow and stream progress from the bundled switching engine.
+                  </p>
+                  <p className="inline-note">
+                    Keep this window open while the browser or terminal login completes.
+                  </p>
+                </div>
+              ) : null}
+              {availableStateModes.length ? (
+                <StateModeField
+                  name={`profile-state-mode-${tool}`}
+                  value={stateMode}
+                  options={availableStateModes}
+                  onChange={setStateMode}
+                />
+              ) : (
+                <label>
+                  State mode
+                  <select value="n/a" disabled>
+                    <option value="n/a">Not configurable</option>
+                  </select>
+                </label>
+              )}
+              {mode === "oauth" ? (
+                <article className="diagnostic-card">
+                  <h4>OAuth progress</h4>
+                  {oauthWizardSteps.some((step) => step.status !== "pending") ? (
+                    <div className="stack-list">
+                      {oauthWizardSteps.map((step) => (
+                        <div key={step.id}>
+                          <p className={`diagnostic-status diagnostic-status-${step.status}`}>
+                            {step.label}
+                          </p>
+                          <p className="inline-note">{step.detail}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="inline-note">
+                      Start OAuth to stream each login step before the profile is captured and saved.
+                    </p>
+                  )}
+                  {oauthError ? <p className="inline-note">{oauthError}</p> : null}
+                </article>
+              ) : null}
+              <div className="button-row">
+                <button
+                  className="ghost-button"
+                  type="button"
+                  onClick={() => setProfileSheetOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="primary-button"
+                  type="submit"
+                  disabled={
+                    mutationLock.isBusy ||
+                    addProfileMutation.isPending ||
+                    addProfileOAuthMutation.isPending ||
+                    apiKeyProfileAction.isPending ||
+                    hasDuplicateProfileName
+                  }
+                >
+                  {mode === "oauth"
+                    ? addProfileOAuthMutation.isPending
+                      ? "Waiting for OAuth…"
+                      : "Start OAuth"
+                    : mode === "api_key"
+                      ? apiKeyProfileAction.isPending
+                        ? "Saving…"
+                        : "Add profile"
+                      : addProfileMutation.isPending
+                        ? "Saving…"
+                        : "Add profile"}
+                </button>
+              </div>
+              {profileMutationError(
+                addProfileMutation.error,
+                addProfileOAuthMutation.error,
+                renameProfileMutation.error,
+                removeProfileMutation.error,
+                useProfileMutation.error,
+                apiKeyProfileAction.error,
+              ) ? (
+                <p className="inline-note">
+                  {profileMutationError(
+                    addProfileMutation.error,
+                    addProfileOAuthMutation.error,
+                    renameProfileMutation.error,
+                    removeProfileMutation.error,
+                    useProfileMutation.error,
+                    apiKeyProfileAction.error,
+                  )}
+                </p>
+              ) : null}
+            </form>
+          </section>
+        </div>
+      ) : null}
     </SectionCard>
   );
 }
