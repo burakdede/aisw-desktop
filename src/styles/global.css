@@ -217,6 +217,9 @@ button {
 }
 
 .nav-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   min-height: 32px;
   border: 0;
   border-radius: 7px;
@@ -237,6 +240,29 @@ button {
   font-weight: 600;
 }
 
+.nav-button-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  opacity: 0.82;
+}
+
+.nav-button-icon svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nav-button-label {
+  min-width: 0;
+}
+
 .nav-button:disabled {
   opacity: 0.42;
   cursor: default;
@@ -245,7 +271,9 @@ button {
 .status-badge {
   margin-top: auto;
   display: grid;
-  gap: 4px;
+  gap: 5px;
+  padding-bottom: 10px;
+  border-top: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
 }
 
 .status-badge strong {
