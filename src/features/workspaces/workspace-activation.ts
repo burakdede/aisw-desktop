@@ -35,13 +35,13 @@ export function workspaceBindingOptions(
     .filter((set) => profileSetHasUsableSelections(snapshot, set))
     .map((set) => ({
       value: set.name,
-      label: `Profile set: ${set.label ?? set.name}`,
+      label: `Saved set: ${set.label ?? set.name}`,
     }));
   const contexts = snapshot.contexts
     .filter((context) => !profileSets.some((set) => set.value === context.name))
     .map((context) => ({
       value: context.name,
-      label: `CLI context: ${context.name}`,
+      label: `Shared group: ${context.name}`,
     }));
 
   return [...profileSets, ...contexts].sort((left, right) => left.value.localeCompare(right.value));

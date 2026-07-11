@@ -212,10 +212,10 @@ export function useDesktopActions() {
     }),
     useContextMutation: useMutation({
       mutationFn: queueMutation(
-        "Switch context",
+        "Use shared group",
         useContext,
         () => ({ type: "global", id: "context" }),
-        (variables) => `Activated context ${variables.label ?? variables.context}.`,
+        (variables) => `Activated shared group ${variables.label ?? variables.context}.`,
       ),
       onSettled: invalidate,
     }),
@@ -306,28 +306,28 @@ export function useDesktopActions() {
     }),
     workspaceBindMutation: useMutation({
       mutationFn: queueMutation(
-        "Save workspace binding",
+        "Save project rule",
         workspaceBind,
         () => ({ type: "global", id: "workspace" }),
-        (variables) => `Saved workspace binding for ${variables.label ?? variables.context}.`,
+        (variables) => `Saved project rule for ${variables.label ?? variables.context}.`,
       ),
       onSuccess: invalidate,
     }),
     workspaceUnbindMutation: useMutation({
       mutationFn: queueMutation(
-        "Remove workspace binding",
+        "Remove project rule",
         workspaceUnbind,
         () => ({ type: "global", id: "workspace" }),
-        () => "Removed workspace binding.",
+        () => "Removed project rule.",
       ),
       onSuccess: invalidate,
     }),
     workspaceGuardMutation: useMutation({
       mutationFn: queueMutation(
-        "Update workspace guard",
+        "Update project rule guard",
         workspaceGuard,
         () => ({ type: "global", id: "workspace" }),
-        (mode) => `Updated workspace guard to ${mode}.`,
+        (mode) => `Updated project rule guard to ${mode}.`,
       ),
       onSuccess: invalidate,
     }),

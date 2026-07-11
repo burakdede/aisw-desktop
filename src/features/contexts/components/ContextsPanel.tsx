@@ -202,9 +202,9 @@ export function ContextsPanel({
             </article>
             <article className="diagnostic-card">
               <p className="card-kicker">Imported</p>
-              <h3>{snapshot.contexts.length} imported runtime groups</h3>
+              <h3>{snapshot.contexts.length} shared groups</h3>
               <p className="inline-note">
-                Imported runtime groups stay visible here when the runtime exposes additional shared combinations outside your desktop-local set library.
+                Shared groups stay visible here when the runtime exposes reusable combinations outside your desktop-local set library.
               </p>
             </article>
           </div>
@@ -332,11 +332,11 @@ export function ContextsPanel({
           <div className="stack-list">
             <div className="set-section-header desktop-pane-section-header">
               <div>
-                <p className="card-kicker">Runtime import</p>
-                <h3>Imported runtime groups</h3>
+                <p className="card-kicker">Shared groups</p>
+                <h3>Available from the runtime</h3>
               </div>
               <p className="inline-note">
-                These come directly from the runtime and remain separate from your desktop-local saved sets.
+                These come directly from the selected runtime and remain separate from your desktop-local saved sets.
               </p>
             </div>
             {snapshot.contexts.map((context) => (
@@ -348,11 +348,11 @@ export function ContextsPanel({
                       {activeContext === context.name ? " ✓" : ""}
                     </strong>
                     <span className={`pill ${activeContext === context.name ? "pill-ok" : "pill-soft"}`}>
-                      {activeContext === context.name ? "Current" : "Imported"}
+                      {activeContext === context.name ? "Current" : "Shared"}
                     </span>
                   </div>
                   {contextDisplayLabel(settings, context.name) !== context.name ? (
-                    <p className="inline-note">Runtime group id: {context.name}</p>
+                    <p className="inline-note">Shared group id: {context.name}</p>
                   ) : null}
                   <p>
                     {Object.entries(context.profiles)
@@ -377,21 +377,21 @@ export function ContextsPanel({
                     })
                   }
                 >
-                  {activeContext === context.name ? "Current imported group" : "Switch to imported group"}
+                  {activeContext === context.name ? "Current shared group" : "Use shared group"}
                 </button>
               </article>
             ))}
             {!snapshot.contexts.length ? (
               <p className="inline-note">
-                No imported runtime groups are currently available. Saved sets remain available even
-                when lower-level shared-group support is limited.
+                No shared groups are currently available. Saved sets remain available even when
+                runtime-level shared switching support is limited.
               </p>
             ) : null}
           </div>
 
           {contextResult ? (
             <p className={`inline-note ${contextResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
-              Last context result: {contextResult.message}
+              Last shared-group result: {contextResult.message}
               {contextResult.remediation ? ` Remediation: ${contextResult.remediation}` : ""}
             </p>
           ) : null}

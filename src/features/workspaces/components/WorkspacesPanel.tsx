@@ -105,8 +105,8 @@ export function WorkspacesPanel({
     event.preventDefault();
     if (!context) return;
     const selectedContext = bindingOptions.find((entry) => entry.value === context);
-    const label = selectedContext?.label.startsWith("Profile set: ")
-      ? selectedContext.label.slice("Profile set: ".length)
+    const label = selectedContext?.label.startsWith("Saved set: ")
+      ? selectedContext.label.slice("Saved set: ".length)
       : undefined;
 
     const target =
@@ -155,7 +155,7 @@ export function WorkspacesPanel({
               </p>
             </div>
             <label>
-              Binding scope
+              Rule scope
               <select value={scope} onChange={(event) => setScope(event.target.value as BindScope)}>
                 <option value="default">Default set</option>
                 <option value="path">Path prefix</option>
@@ -352,7 +352,7 @@ export function WorkspacesPanel({
           </div>
           {workspaceResult ? (
             <p className={`inline-note ${workspaceResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
-              Last workspace result: {workspaceResult.message}
+              Last project-rule result: {workspaceResult.message}
               {workspaceResult.remediation ? ` Remediation: ${workspaceResult.remediation}` : ""}
             </p>
           ) : null}

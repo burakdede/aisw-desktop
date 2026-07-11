@@ -27,7 +27,7 @@ export function SetsPanel({
         </div>
         <div className="desktop-pane-hero-pills" aria-label="Sets highlights">
           <span className="status-pill">Saved sets</span>
-          <span className="status-pill">Imported runtime groups</span>
+          <span className="status-pill">Shared groups</span>
           <span className="status-pill">Project matching rules</span>
         </div>
       </article>

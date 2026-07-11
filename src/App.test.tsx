@@ -3480,7 +3480,7 @@ describe("App", () => {
       expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
     });
     expect(
-      screen.getByText("Last workspace result: Switched to Client Acme for /code/acme."),
+      screen.getByText("Last project-rule result: Switched to Client Acme for /code/acme."),
     ).toBeInTheDocument();
     expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
       title: "Workspace switch",
@@ -3504,7 +3504,7 @@ describe("App", () => {
       expect(screen.queryByText("Workspace mismatch")).not.toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByLabelText("Binding scope"), {
+    fireEvent.change(screen.getByLabelText("Rule scope"), {
       target: { value: "path" },
     });
     fireEvent.change(screen.getByLabelText("Set"), {
@@ -3518,8 +3518,8 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "workspace_bind")).toBe(true);
     });
-    expect(screen.getByText("Last workspace result: Saved workspace binding for Client Acme.")).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "Profile set: Client Acme" })).toBeInTheDocument();
+    expect(screen.getByText("Last project-rule result: Saved project rule for Client Acme.")).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Saved set: Client Acme" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Remove this binding"));
     await waitFor(() => {
@@ -3900,12 +3900,12 @@ describe("App", () => {
 
     await renderApp();
     await openSetsSection();
-    fireEvent.click(screen.getByText("Switch to imported group"));
+    fireEvent.click(screen.getByText("Use shared group"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
     });
-    expect(screen.getByText("Last context result: Activated context Client Acme.")).toBeInTheDocument();
+    expect(screen.getByText("Last shared-group result: Activated shared group Client Acme.")).toBeInTheDocument();
   });
 
   it("marks the active CLI context in contexts and disables reactivation", async () => {
@@ -3969,7 +3969,7 @@ describe("App", () => {
     await renderApp();
     await openSetsSection();
 
-    const activeContextButton = screen.getByRole("button", { name: "Current imported group" });
+    const activeContextButton = screen.getByRole("button", { name: "Current shared group" });
     expect(activeContextButton).toBeDisabled();
     expect(screen.getByText("Client Acme ✓")).toBeInTheDocument();
   });
@@ -4021,8 +4021,8 @@ describe("App", () => {
     await renderApp();
     await openProjectRulesSection();
 
-    expect(screen.getByRole("option", { name: "Profile set: Client Acme" })).toBeInTheDocument();
-    expect(screen.queryByRole("option", { name: "CLI context: client-acme" })).not.toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Saved set: Client Acme" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Shared group: client-acme" })).not.toBeInTheDocument();
   });
 
   it("blocks unsupported workspace binding submits until a context and target are available", async () => {
@@ -4065,7 +4065,7 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Save rule")).toBeDisabled();
 
-    fireEvent.change(screen.getByLabelText("Binding scope"), {
+    fireEvent.change(screen.getByLabelText("Rule scope"), {
       target: { value: "path" },
     });
 
@@ -5661,9 +5661,9 @@ describe("App", () => {
       handlers?.["tray-command-result"]?.({
         scope: "global",
         id: "context",
-        label: "Switch context",
+        label: "Use shared group",
         status: "success",
-        message: "Activated context client-acme.",
+        message: "Activated shared group client-acme.",
       });
       await Promise.resolve();
     });
@@ -5750,7 +5750,7 @@ describe("App", () => {
       handlers?.["tray-command-result"]?.({
         scope: "global",
         id: "context",
-        label: "Switch context",
+        label: "Use shared group",
         status: "error",
         message: "Context switch failed.",
         remediation: "Re-open AI Switch and verify the saved imported context.",
@@ -5764,7 +5764,7 @@ describe("App", () => {
       ),
     ).toBeInTheDocument();
     expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
-      title: "Switch context",
+      title: "Use shared group",
       body: "Context switch failed. Re-open AI Switch and verify the saved imported context.",
     });
   });
@@ -6142,7 +6142,7 @@ describe("App", () => {
 
     await openProjectRulesSection();
     expect(screen.queryByRole("option", { name: "Set: Empty Set" })).not.toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "Profile set: Client Acme" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Saved set: Client Acme" })).toBeInTheDocument();
 
     await openSetsSection();
     fireEvent.change(screen.getByLabelText("Set name"), {
@@ -6205,10 +6205,10 @@ describe("App", () => {
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Overview"));
-    expect(screen.queryByRole("option", { name: "Profile set: Client Acme" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Saved set: Client Acme" })).not.toBeInTheDocument();
 
     await openProjectRulesSection();
-    expect(screen.queryByRole("option", { name: "Profile set: Client Acme" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Saved set: Client Acme" })).not.toBeInTheDocument();
   });
 
   it("prefers the native CLI context when a profile set matches it", async () => {
@@ -6558,7 +6558,7 @@ describe("App", () => {
     await openSetsSection();
 
     expect(screen.getAllByText("Client Acme")).toHaveLength(2);
-    expect(screen.getByText("Runtime group id: client-acme")).toBeInTheDocument();
+    expect(screen.getByText("Shared group id: client-acme")).toBeInTheDocument();
     expect(screen.getAllByText("claude: Office · codex: Code Work · gemini: none")).toHaveLength(2);
     expect(screen.getAllByRole("option", { name: "Office" }).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("option", { name: "Code Work" })).toBeInTheDocument();
