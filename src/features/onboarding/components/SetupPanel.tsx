@@ -191,23 +191,23 @@ export function SetupPanel({
                 : `The desktop app is using an advanced ${titleCase(bootstrap.settings.runtime_kind)} runtime override.`}
             </p>
             <p className="inline-note">
+              Engine source:{" "}
+              <strong>
+                {bootstrap.settings.runtime_kind === "bundled"
+                  ? "Included with this app"
+                  : bootstrap.settings.runtime_kind === "system"
+                    ? "System override"
+                    : "Custom override"}
+              </strong>
+            </p>
+            <p className="inline-note">
               Runtime mode: <strong>{titleCase(bootstrap.settings.runtime_kind)}</strong>
             </p>
             <p className="inline-note">
-              Included runtime path: {bootstrap.runtime_status.inventory.bundled_path ?? "Not available in this build"}
-            </p>
-            {bootstrap.settings.runtime_kind !== "bundled" ? (
-              <p className="inline-note">
-                System runtime: {bootstrap.runtime_status.inventory.system_path ?? "Not found on PATH"}
-              </p>
-            ) : null}
-            {bootstrap.runtime_status.inventory.configured_path ? (
-              <p className="inline-note">
-                Custom runtime path: {bootstrap.runtime_status.inventory.configured_path}
-              </p>
-            ) : null}
-            <p className="inline-note">
-              Active runtime path: {bootstrap.runtime_status.resolved_path ?? "No runtime resolved"}
+              Compatibility:{" "}
+              <strong>
+                {bootstrap.runtime_status.compatible ? "Ready for desktop switching" : "Needs attention"}
+              </strong>
             </p>
             <p className="inline-note">
               App data folder: {bootstrap.settings.aisw_home ?? "Managed automatically"}
