@@ -32,7 +32,7 @@ const bootstrapSettings: DesktopSettings = {
 const bootstrap = {
   settings: bootstrapSettings,
   runtime_status: {
-    resolved_path: "/Applications/AISW.app/Contents/Resources/aisw",
+    resolved_path: "/Applications/AI Switch.app/Contents/Resources/aisw",
     version: {
       version: "0.3.7",
       cli_api_version: 1,
@@ -46,7 +46,7 @@ const bootstrap = {
       tools: {},
     },
     inventory: {
-      bundled_path: "/Applications/AISW.app/Contents/Resources/aisw",
+      bundled_path: "/Applications/AI Switch.app/Contents/Resources/aisw",
       system_path: "/opt/homebrew/bin/aisw",
       configured_path: null,
     },
@@ -263,10 +263,10 @@ describe("App", () => {
       get_shell_guidance: {
         detected_shell: "zsh",
         capabilities: [
-          "Apply CLAUDE_CONFIG_DIR, CODEX_HOME, and GEMINI_API_KEY into the current shell session when you run `aisw use` or `aisw context use`.",
+          "Apply CLAUDE_CONFIG_DIR, CODEX_HOME, and GEMINI_API_KEY into the current shell session when you switch profiles from the AI Switch runtime.",
           "Enforce workspace guardrails before `claude`, `codex`, or `gemini` launch from that shell.",
         ],
-        note: "Without the shell hook, `aisw use` still writes live credential files and updates `~/.aisw/config.json`. The hook is only required for current-shell exports and workspace checks.",
+        note: "Without the shell hook, AI Switch still updates live credential files and `~/.aisw/config.json`. The hook is only required for current-shell exports and workspace checks.",
         manual_apply_examples: [
           'eval "$(aisw use claude work --emit-env)"',
           'eval "$(aisw context use client-acme --emit-env)"',
@@ -325,8 +325,8 @@ describe("App", () => {
           version: null,
           capabilities: null,
           issues: [
-            "aisw version info is unavailable",
-            "aisw capabilities info is unavailable",
+            "Runtime version details are unavailable",
+            "Runtime capability details are unavailable",
           ],
         },
         snapshot: null,
@@ -347,8 +347,8 @@ describe("App", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Technical details")).toBeInTheDocument();
-    expect(screen.getByText("aisw version info is unavailable")).toBeInTheDocument();
-    expect(screen.getByText("aisw capabilities info is unavailable")).toBeInTheDocument();
+    expect(screen.getByText("Runtime version details are unavailable")).toBeInTheDocument();
+    expect(screen.getByText("Runtime capability details are unavailable")).toBeInTheDocument();
     expect(screen.getByText("Runtime and local storage")).toBeInTheDocument();
     expect(screen.getByText("Runtime details")).toBeInTheDocument();
     expect(screen.queryByText("First-run setup")).not.toBeInTheDocument();
@@ -367,8 +367,8 @@ describe("App", () => {
       if (command === "get_bootstrap") {
         throw {
           kind: "aisw_not_found",
-          message: "aisw binary could not be resolved",
-          remediation: "Stage the bundled aisw binary or switch to a working system runtime.",
+          message: "AI Switch could not resolve a compatible switching runtime",
+          remediation: "Select a valid bundled, system, or custom switching runtime.",
         };
       }
       return undefined;
@@ -378,9 +378,9 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByText("AI Switch could not finish startup.")).toBeInTheDocument();
     });
-    expect(screen.getByText("aisw binary could not be resolved")).toBeInTheDocument();
+    expect(screen.getByText("AI Switch could not resolve a compatible switching runtime")).toBeInTheDocument();
     expect(
-      screen.getByText("Stage the bundled aisw binary or switch to a working system runtime."),
+      screen.getByText("Select a valid bundled, system, or custom switching runtime."),
     ).toBeInTheDocument();
   });
 
@@ -1819,7 +1819,7 @@ describe("App", () => {
           get_shell_guidance: {
             detected_shell: "zsh",
             capabilities: [],
-            note: "Without the shell hook, aisw use still writes live credential files.",
+            note: "Without the shell hook, AI Switch still writes live credential files.",
             manual_apply_examples: [],
             variants: [],
           },
@@ -4158,9 +4158,9 @@ describe("App", () => {
           get_shell_guidance: {
             detected_shell: "zsh",
             capabilities: [
-              "Apply CLAUDE_CONFIG_DIR, CODEX_HOME, and GEMINI_API_KEY into the current shell session when you run `aisw use` or `aisw context use`.",
+              "Apply CLAUDE_CONFIG_DIR, CODEX_HOME, and GEMINI_API_KEY into the current shell session when you switch profiles from the AI Switch runtime.",
             ],
-            note: "Without the shell hook, `aisw use` still writes live credential files and updates `~/.aisw/config.json`.",
+            note: "Without the shell hook, AI Switch still updates live credential files and `~/.aisw/config.json`.",
             manual_apply_examples: ['eval "$(aisw use claude work --emit-env)"'],
             variants: [
               {
@@ -5127,7 +5127,7 @@ describe("App", () => {
           get_shell_guidance: {
             detected_shell: "zsh",
             capabilities: [],
-            note: "Without the shell hook, aisw use still writes live credential files.",
+            note: "Without the shell hook, AI Switch still writes live credential files.",
             manual_apply_examples: [],
             variants: [
               {
@@ -5250,7 +5250,7 @@ describe("App", () => {
           get_shell_guidance: {
             detected_shell: "zsh",
             capabilities: [
-              "Apply CLAUDE_CONFIG_DIR, CODEX_HOME, and GEMINI_API_KEY into the current shell session when you run `aisw use` or `aisw context use`.",
+              "Apply CLAUDE_CONFIG_DIR, CODEX_HOME, and GEMINI_API_KEY into the current shell session when you switch profiles from the AI Switch runtime.",
             ],
             note: "Shell hook guidance remains informational.",
             manual_apply_examples: ['eval "$(aisw use claude work --emit-env)"'],
@@ -6631,11 +6631,11 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByText("Runtime details")).toBeInTheDocument();
       expect(
-        screen.getByText("Current resolved path: /Applications/AISW.app/Contents/Resources/aisw"),
+        screen.getByText("Current runtime path: /Applications/AI Switch.app/Contents/Resources/aisw"),
       ).toBeInTheDocument();
-      expect(screen.getByText("Effective local data folder: ~/.aisw")).toBeInTheDocument();
+      expect(screen.getAllByText("AI Switch data folder: ~/.aisw").length).toBeGreaterThan(0);
       expect(
-        screen.getAllByText("Bundled runtime: /Applications/AISW.app/Contents/Resources/aisw").length,
+        screen.getAllByText("Bundled switching runtime: /Applications/AI Switch.app/Contents/Resources/aisw").length,
       ).toBeGreaterThan(0);
       expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
       expect(

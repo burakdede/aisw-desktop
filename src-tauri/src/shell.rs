@@ -6,10 +6,10 @@ pub fn shell_hook_guidance() -> ShellHookGuidance {
     ShellHookGuidance {
         detected_shell: detect_shell(),
         capabilities: vec![
-            "Apply CLAUDE_CONFIG_DIR, CODEX_HOME, and GEMINI_API_KEY into the current shell session when you run `aisw use` or `aisw context use`.".to_owned(),
+            "Apply CLAUDE_CONFIG_DIR, CODEX_HOME, and GEMINI_API_KEY into the current shell session when you switch profiles from the AI Switch runtime.".to_owned(),
             "Enforce workspace guardrails before `claude`, `codex`, or `gemini` launch from that shell.".to_owned(),
         ],
-        note: "Without the shell hook, `aisw use` still writes live credential files and updates `~/.aisw/config.json`. The hook is only required for current-shell exports and workspace checks."
+        note: "Without the shell hook, AI Switch still updates live credential files and `~/.aisw/config.json`. The hook is only required for current-shell exports and workspace checks."
             .to_owned(),
         manual_apply_examples: vec![
             "eval \"$(aisw use claude work --emit-env)\"".to_owned(),

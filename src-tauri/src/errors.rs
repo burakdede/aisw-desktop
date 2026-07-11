@@ -3,11 +3,11 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum DesktopError {
-    #[error("aisw binary could not be resolved")]
+    #[error("AI Switch could not resolve a compatible switching runtime")]
     AiswNotFound,
-    #[error("aisw returned invalid json for {command}")]
+    #[error("AI Switch received invalid runtime data for {command}")]
     InvalidJson { command: String },
-    #[error("aisw command failed for {command}")]
+    #[error("AI Switch runtime command failed for {command}")]
     CommandFailed {
         command: String,
         kind: GuiErrorKind,
@@ -55,14 +55,14 @@ impl From<DesktopError> for ErrorPayload {
                 kind: GuiErrorKind::AiswNotFound,
                 message: value.to_string(),
                 remediation: Some(
-                    "Select a valid bundled, system, or custom aisw binary.".to_owned(),
+                    "Select a valid bundled, system, or custom switching runtime.".to_owned(),
                 ),
             },
             DesktopError::InvalidJson { command } => Self {
                 kind: GuiErrorKind::CommandContractError,
-                message: format!("aisw returned invalid JSON for `{command}`."),
+                message: format!("The selected switching runtime returned invalid data for `{command}`."),
                 remediation: Some(
-                    "Check aisw version compatibility and command contracts.".to_owned(),
+                    "Check runtime compatibility and command support before retrying.".to_owned(),
                 ),
             },
             DesktopError::CommandFailed {

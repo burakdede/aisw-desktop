@@ -223,7 +223,7 @@ export function SettingsPanel({
             )}
 
             <label>
-              Local data folder override
+              AI Switch data folder override
               <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
             </label>
             <label>
@@ -251,17 +251,17 @@ export function SettingsPanel({
             <article className="diagnostic-card">
               <h3>Runtime details</h3>
               <p className="inline-note">
-                Current resolved path: {runtimeStatus.resolved_path ?? "No runtime resolved"}
+                Current runtime path: {runtimeStatus.resolved_path ?? "No runtime resolved"}
               </p>
               <p className="inline-note">
-                Effective local data folder: {settings.aisw_home ?? "~/.aisw"}
+                AI Switch data folder: {settings.aisw_home ?? "~/.aisw"}
               </p>
               <p className="inline-note">
-                Bundled runtime: {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
+                Bundled switching runtime: {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
               </p>
               {showAdvancedRuntime || runtimeKind !== "bundled" ? (
                 <p className="inline-note">
-                  System runtime: {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
+                  System runtime candidate: {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
                 </p>
               ) : null}
               {runtimeStatus.inventory.configured_path ? (

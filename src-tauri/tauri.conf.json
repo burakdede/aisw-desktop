@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "AISW Desktop",
+  "productName": "AI Switch",
   "version": "0.1.0",
   "identifier": "com.aisw.desktop",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "AISW Desktop",
+        "title": "AI Switch",
         "width": 980,
         "height": 680,
         "minWidth": 820,

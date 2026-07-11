@@ -172,29 +172,28 @@ test("shows runtime compatibility blockers when the configured aisw runtime is u
 
   await page.goto("/");
 
-  await expect(page.getByText("Runtime blocked")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Runtime compatibility" })).toBeVisible();
   await expect(
     page.getByText(
-      "AISW Desktop found an `aisw` binary, but this build does not support the desktop integration features yet.",
+      "AI Switch found a runtime binary, but it does not support the desktop integration features required by this release.",
     ),
   ).toBeVisible();
   await expect(
     page.getByText(
-      "Open Settings and switch to the bundled runtime, or point AISW Desktop at a newer `aisw` build before continuing.",
+      "Open Settings and switch back to the bundled runtime, or choose a newer compatible runtime before continuing.",
     ),
   ).toBeVisible();
   await expect(page.getByText("Technical details")).toBeVisible();
-  await expect(page.getByText("aisw version info is unavailable")).toBeVisible();
-  await expect(page.getByText("aisw capabilities info is unavailable")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByText("Runtime version details are unavailable")).toBeVisible();
+  await expect(page.getByText("Runtime capability details are unavailable")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Settings" }).first()).toBeVisible();
   await expect(page.getByText("Runtime details")).toBeVisible();
   await expect(page.getByRole("button", { name: "Overview" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Profiles" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Contexts" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Workspaces" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Sets" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Diagnostics" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Backups" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Activity" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Settings", exact: true })).toBeEnabled();
   await expect(page.getByText("First-run setup")).not.toBeVisible();
 });
@@ -206,10 +205,10 @@ test("shows bootstrap failure remediation when the desktop shell cannot load ini
 
   await page.goto("/");
 
-  await expect(page.getByText("Desktop bootstrap failed.")).toBeVisible();
-  await expect(page.getByText("aisw binary could not be resolved")).toBeVisible();
+  await expect(page.getByText("AI Switch could not finish startup.")).toBeVisible();
+  await expect(page.getByText("AI Switch could not resolve a compatible switching runtime")).toBeVisible();
   await expect(
-    page.getByText("Stage the bundled aisw binary or switch to a working system runtime."),
+    page.getByText("Select a valid bundled, system, or custom switching runtime."),
   ).toBeVisible();
 });
 
@@ -1371,11 +1370,11 @@ test("shows runtime detection and shell guidance in settings", async ({ page }) 
 
   await expect(page.getByRole("heading", { name: "Settings" }).first()).toBeVisible();
   await expect(
-    settingsSection.getByText("Current resolved path: /Applications/AISW.app/Contents/Resources/aisw"),
+    settingsSection.getByText("Current runtime path: /Applications/AI Switch.app/Contents/Resources/aisw"),
   ).toBeVisible();
-  await expect(settingsSection.getByText("Effective local data folder: ~/.aisw")).toBeVisible();
+  await expect(settingsSection.getByText("AI Switch data folder: ~/.aisw")).toBeVisible();
   await expect(
-    settingsSection.getByText("Bundled runtime: /Applications/AISW.app/Contents/Resources/aisw"),
+    settingsSection.getByText("Bundled switching runtime: /Applications/AI Switch.app/Contents/Resources/aisw"),
   ).toBeVisible();
   await expect(settingsSection.getByText("Show advanced runtime options")).toBeVisible();
   await expect(settingsSection.getByText("Selected update channel: Stable")).toBeVisible();
@@ -1494,7 +1493,7 @@ test("clears a saved custom runtime path after switching back to bundled runtime
 
   await expect(page.getByRole("button", { name: "Show advanced runtime options" })).toBeVisible();
   await expect(page.getByText("Selected runtime: Bundled").first()).toBeVisible();
-  await expect(page.getByText("Current resolved path: /Applications/AISW.app/Contents/Resources/aisw")).toBeVisible();
+  await expect(page.getByText("Current runtime path: /Applications/AI Switch.app/Contents/Resources/aisw")).toBeVisible();
 });
 
 test("switches from a custom runtime back to the system aisw selection", async ({ page }) => {
@@ -1514,7 +1513,7 @@ test("switches from a custom runtime back to the system aisw selection", async (
 
   await expect(runtimePath).toHaveValue("");
   await expect(page.getByText("Selected runtime: System").first()).toBeVisible();
-  await expect(page.getByText("Current resolved path: /opt/homebrew/bin/aisw")).toBeVisible();
+  await expect(page.getByText("Current runtime path: /opt/homebrew/bin/aisw")).toBeVisible();
 });
 
 test("creates profiles from environment and API key modes", async ({ page }) => {
@@ -1945,7 +1944,7 @@ async function installDesktopMock(
           resolved_path:
             activeScenario === "customRuntime"
               ? "/opt/aisw/bin/aisw"
-              : "/Applications/AISW.app/Contents/Resources/aisw",
+              : "/Applications/AI Switch.app/Contents/Resources/aisw",
           version: {
             version: "0.3.7",
             cli_api_version: 1,
@@ -1959,7 +1958,7 @@ async function installDesktopMock(
             tools: capabilities,
           },
           inventory: {
-            bundled_path: "/Applications/AISW.app/Contents/Resources/aisw",
+            bundled_path: "/Applications/AI Switch.app/Contents/Resources/aisw",
             system_path: "/opt/homebrew/bin/aisw",
             configured_path:
               activeScenario === "customRuntime" ? "/opt/aisw/bin/aisw" : null,
@@ -3814,8 +3813,8 @@ async function installDesktopMock(
           if (activeScenario === "bootstrapError") {
             throw {
               kind: "aisw_not_found",
-              message: "aisw binary could not be resolved",
-              remediation: "Stage the bundled aisw binary or switch to a working system runtime.",
+              message: "AI Switch could not resolve a compatible switching runtime",
+              remediation: "Select a valid bundled, system, or custom switching runtime.",
             };
           }
           if (activeScenario === "incompatibleRuntime") {
@@ -3827,8 +3826,8 @@ async function installDesktopMock(
                 capabilities: null,
                 compatible: false,
                 issues: [
-                  "aisw version info is unavailable",
-                  "aisw capabilities info is unavailable",
+                  "Runtime version details are unavailable",
+                  "Runtime capability details are unavailable",
                 ],
               },
               snapshot: null,
@@ -4196,7 +4195,7 @@ async function installDesktopMock(
               "Apply CLAUDE_CONFIG_DIR, CODEX_HOME, and GEMINI_API_KEY into the current shell session.",
             ],
             note:
-              "Without the shell hook, aisw use still writes live credential files and updates ~/.aisw/config.json.",
+              "Without the shell hook, AI Switch still updates live credential files and ~/.aisw/config.json.",
             manual_apply_examples: ['eval "$(aisw use claude work --emit-env)"'],
             variants: [
               {

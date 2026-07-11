@@ -173,7 +173,7 @@ export function SetupPanel({
             Resolved path: {bootstrap.runtime_status.resolved_path ?? "No runtime resolved"}
           </p>
           <p className="inline-note">
-            Local data folder: {bootstrap.settings.aisw_home ?? "~/.aisw"}
+            AI Switch data folder: {bootstrap.settings.aisw_home ?? "~/.aisw"}
           </p>
           <p className="inline-note">
             Runtime version: {bootstrap.runtime_status.version?.version ?? "unknown"}

@@ -429,7 +429,7 @@ fn tray_menu_model(
         footer_items: vec![
             TrayEntry {
                 id: OPEN_ID.to_owned(),
-                label: "Open AISW Desktop".to_owned(),
+                label: "Open AI Switch".to_owned(),
             },
             TrayEntry {
                 id: DIAGNOSTICS_ID.to_owned(),
@@ -455,7 +455,7 @@ fn tray_runtime_notice(runtime_compatible: bool) -> Option<&'static str> {
     if runtime_compatible {
         None
     } else {
-        Some("Runtime blocked. Fix aisw in Settings.")
+        Some("Runtime blocked. Fix the switching runtime in Settings.")
     }
 }
 
@@ -1313,7 +1313,7 @@ mod tests {
             vec![
                 TrayEntry {
                     id: "open".to_owned(),
-                    label: "Open AISW Desktop".to_owned(),
+                    label: "Open AI Switch".to_owned(),
                 },
                 TrayEntry {
                     id: "diagnostics".to_owned(),
@@ -1368,7 +1368,7 @@ mod tests {
         assert_eq!(model.active_label, "Active set: Work");
         assert_eq!(
             model.runtime_notice.as_deref(),
-            Some("Runtime blocked. Fix aisw in Settings.")
+            Some("Runtime blocked. Fix the switching runtime in Settings.")
         );
         assert!(model.sections.is_empty());
         assert_eq!(model.footer_items.len(), 3);

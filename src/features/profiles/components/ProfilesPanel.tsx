@@ -573,8 +573,7 @@ export function ProfilesPanel({
                 <div className="diagnostic-card">
                   <h4>OAuth wizard</h4>
                   <p className="inline-note">
-                    AI Switch will launch the tool&apos;s native login flow and stream progress from
-                    <code> aisw add {tool} {profile || "<profile>"} --progress-json</code>.
+                    AI Switch will launch the tool&apos;s native login flow and stream progress from the bundled switching runtime.
                   </p>
                   <p className="inline-note">
                     Keep this window open while the browser or terminal login completes.

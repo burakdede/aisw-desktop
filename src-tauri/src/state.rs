@@ -197,7 +197,7 @@ impl AppState {
             .unwrap_or(false);
         let mut issues = Vec::new();
         if resolved_path.is_none() {
-            issues.push("aisw binary could not be resolved".to_owned());
+            issues.push("AI Switch could not resolve a compatible switching runtime".to_owned());
         }
         if let Some(version) = &version {
             if version.cli_api_version != 1 || version.json_schema_version != 1 {
@@ -206,14 +206,14 @@ impl AppState {
                 );
             }
         } else {
-            issues.push("aisw version info is unavailable".to_owned());
+            issues.push("Runtime version details are unavailable".to_owned());
         }
         if let Some(capabilities) = &capabilities {
             for feature in missing_required_features(capabilities) {
                 issues.push(format!("aisw does not advertise {feature} support"));
             }
         } else {
-            issues.push("aisw capabilities info is unavailable".to_owned());
+            issues.push("Runtime capability details are unavailable".to_owned());
         }
 
         RuntimeStatus {
@@ -263,9 +263,9 @@ fn missing_required_features(capabilities: &CapabilitiesInfo) -> Vec<&'static st
 pub fn incompatible_runtime_error() -> ErrorPayload {
     ErrorPayload {
         kind: GuiErrorKind::AiswIncompatible,
-        message: "The configured aisw runtime is not compatible with AISW Desktop.".to_owned(),
+        message: "The selected switching runtime is not compatible with AI Switch.".to_owned(),
         remediation: Some(
-            "Select a compatible aisw build or switch back to the bundled runtime.".to_owned(),
+            "Select a compatible runtime build or switch back to the bundled runtime.".to_owned(),
         ),
     }
 }
