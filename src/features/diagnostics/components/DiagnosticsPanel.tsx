@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { DesktopStatusStrip } from "../../../components/DesktopStatusStrip";
 import { SplitView } from "../../../components/SplitView";
 import { SectionCard } from "../../../components/SectionCard";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
@@ -173,22 +174,26 @@ export function DiagnosticsPanel({
         </div>
       }
     >
-      <article className="desktop-pane-hero diagnostics-hero">
-        <div className="desktop-pane-hero-copy">
-          <p className="card-kicker">Health</p>
-          <h3>Verify switching health with one consistent recovery flow</h3>
-          <p className="inline-note">
-            Diagnostics, verification, safe repair actions, and export all stay in the same desktop recovery surface so users do not have to learn different patterns for different failures.
-          </p>
-        </div>
-        <div className="desktop-pane-hero-pills" aria-label="Diagnostics highlights">
-          {diagnosticPills.map((pill) => (
-            <span key={pill} className="status-pill">
-              {pill}
-            </span>
-          ))}
-        </div>
-      </article>
+      <DesktopStatusStrip
+        ariaLabel="Diagnostics highlights"
+        items={[
+          {
+            label: "Health",
+            value: totalIssues ? `${totalIssues} issue${totalIssues === 1 ? "" : "s"} found` : "System looks healthy",
+            note: "Doctor, verify, and repair stay in the same recovery surface so switching issues use one consistent flow.",
+          },
+          {
+            label: "Recovery",
+            value: repairActions.length ? `${repairActions.length} safe repair${repairActions.length === 1 ? "" : "s"}` : "No repairs queued",
+            note: "Apply safe repairs, rerun verification, and export a support bundle from this pane.",
+          },
+          {
+            label: "Highlights",
+            value: "Quick actions",
+            pills: diagnosticPills,
+          },
+        ]}
+      />
       <article className={`diagnostic-card diagnostics-overview desktop-pane-intro ${totalIssues ? "diagnostic-warn" : "diagnostic-pass"}`}>
         <h3>{totalIssues ? `${totalIssues} issue${totalIssues === 1 ? "" : "s"} found` : "System looks healthy"}</h3>
         {summaryHighlights.length ? (

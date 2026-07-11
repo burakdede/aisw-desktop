@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DesktopStatusStrip } from "../../../components/DesktopStatusStrip";
 import { SplitView } from "../../../components/SplitView";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { ContextsPanel } from "../../contexts/components/ContextsPanel";
@@ -17,20 +18,26 @@ export function SetsPanel({
 
   return (
     <div className="stack-list desktop-pane-stack">
-      <article className="desktop-pane-hero sets-hero">
-        <div className="desktop-pane-hero-copy">
-          <p className="card-kicker">Sets</p>
-          <h3>Save reusable switching combinations and map them to projects</h3>
-          <p className="inline-note">
-            The Sets area keeps saved combinations and project matching rules in one native workflow so switching stays predictable without extra scrolling.
-          </p>
-        </div>
-        <div className="desktop-pane-hero-pills" aria-label="Sets highlights">
-          <span className="status-pill">Saved sets</span>
-          <span className="status-pill">Shared groups</span>
-          <span className="status-pill">Project matching rules</span>
-        </div>
-      </article>
+      <DesktopStatusStrip
+        ariaLabel="Sets highlights"
+        items={[
+          {
+            label: "Sets",
+            value: mode === "sets" ? "Saved combinations" : "Project rules",
+            note: "Keep reusable switching sets and matching rules in one compact desktop workflow.",
+          },
+          {
+            label: "Navigation",
+            value: mode === "sets" ? "Library mode" : "Rule mode",
+            note: "Use the split view to move between saved sets and project-aware expectations without extra scrolling.",
+          },
+          {
+            label: "Highlights",
+            value: "Shared control",
+            pills: ["Saved sets", "Shared groups", "Project rules"],
+          },
+        ]}
+      />
       <SplitView
         className="sets-mode-split"
         primaryClassName="sets-mode-pane"

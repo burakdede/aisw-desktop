@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { DesktopStatusStrip } from "../../../components/DesktopStatusStrip";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { SectionCard } from "../../../components/SectionCard";
 import { SplitView } from "../../../components/SplitView";
@@ -93,22 +94,26 @@ export function BackupsPanel({
 
   return (
     <SectionCard title="Backups" kicker="Recovery">
-      <article className="desktop-pane-hero backups-hero">
-        <div className="desktop-pane-hero-copy">
-          <p className="card-kicker">Recovery</p>
-          <h3>Restore profiles from one consistent backup flow</h3>
-          <p className="inline-note">
-            Backup browsing, copy, restore, and restore-and-activate all stay in the same interaction pattern used across the rest of the desktop app.
-          </p>
-        </div>
-        <div className="desktop-pane-hero-pills" aria-label="Backup highlights">
-          <span className="status-pill">
-            {sortedBackups.length} local backup{sortedBackups.length === 1 ? "" : "s"}
-          </span>
-          <span className="status-pill">Files-first restore</span>
-          <span className="status-pill">Optional re-activate</span>
-        </div>
-      </article>
+      <DesktopStatusStrip
+        ariaLabel="Backup highlights"
+        items={[
+          {
+            label: "Library",
+            value: `${sortedBackups.length} local backup${sortedBackups.length === 1 ? "" : "s"}`,
+            note: "Browse and inspect restore points without leaving the main recovery flow.",
+          },
+          {
+            label: "Restore",
+            value: "Files first",
+            note: "Restore saved files first, then reactivate explicitly only when you want that profile live again.",
+          },
+          {
+            label: "Safety",
+            value: "Optional re-activate",
+            pills: ["Restore", "Copy ID", "Review target"],
+          },
+        ]}
+      />
       <article className="diagnostic-card desktop-pane-intro">
         <h3>Restore points</h3>
         <p className="inline-note">
