@@ -312,9 +312,9 @@ export function App() {
       <main className="app-shell app-shell-onboarding">
         <section className="hero-card hero-card-compact">
           <p className="eyebrow">AI Switch</p>
-          <h1>Preparing your desktop workspace…</h1>
+          <h1>Preparing your local switchboard…</h1>
           <p className="lede">
-            Loading your local profiles, bundled switching engine, and tool status.
+            Loading saved profiles, the bundled switching engine, and the current tool state on this Mac.
           </p>
         </section>
       </main>
@@ -327,7 +327,7 @@ export function App() {
       <main className="app-shell app-shell-onboarding">
         <section className="hero-card hero-card-compact">
           <p className="eyebrow">AI Switch</p>
-          <h1>AI Switch could not open this workspace.</h1>
+          <h1>AI Switch could not open its local control center.</h1>
           <p className="lede">
             Check the included switching engine, local permissions, and compatibility details
             before continuing.
@@ -359,23 +359,24 @@ export function App() {
     <>
     <AppFrame
       title={sectionTitle(activeSection)}
-      subtitle="Switch between Claude Code, Codex CLI, and Gemini CLI accounts without leaving a native desktop workspace."
+      subtitle="Switch Claude Code, Codex CLI, and Gemini CLI accounts from one compact desktop utility."
       detail={sectionDetail(activeSection)}
       nav={navItems}
       activeNav={activeSection}
       onSelectNav={selectNav}
       toolbar={
-        <div className="button-row">
+        <div className="button-row toolbar-action-row">
           <button
             className="ghost-button"
             type="button"
             disabled={runtimeBlocked}
             onClick={() => setQuickSwitchOpen(true)}
           >
-            Quick Switch
+            <span>Quick Switch</span>
+            <kbd aria-hidden="true">⌘K</kbd>
           </button>
           <button className="ghost-button" type="button" onClick={() => setActiveNav("diagnostics")}>
-            Verify
+            <span>Verify</span>
           </button>
           <button
             className="primary-button"
@@ -386,15 +387,24 @@ export function App() {
               setActiveNav("profiles");
             }}
           >
-            Add Profile
+            <span>Add Profile</span>
           </button>
         </div>
       }
       statusBadge={
-        <div>
-          <strong>{currentActiveSet ? `Current set: ${currentActiveSet}` : "No active set"}</strong>
-          <p>{runtimeStatus.compatible ? "Switching engine ready" : "Needs attention"}</p>
-          <p>{runtimeStatus.resolved_path ?? "Bundled engine unavailable"}</p>
+        <div className="sidebar-status-stack">
+          <div className="sidebar-status-row">
+            <span className="sidebar-status-label">Active set</span>
+            <strong>{currentActiveSet ?? "None"}</strong>
+          </div>
+          <div className="sidebar-status-row">
+            <span className="sidebar-status-label">Engine</span>
+            <p>{runtimeStatus.compatible ? "Ready" : "Needs attention"}</p>
+          </div>
+          <div className="sidebar-status-row">
+            <span className="sidebar-status-label">Path</span>
+            <p>{runtimeStatus.resolved_path ?? "Bundled engine unavailable"}</p>
+          </div>
         </div>
       }
     >
@@ -612,9 +622,9 @@ function sectionTitle(section: string) {
 function sectionDetail(section: string) {
   switch (section) {
     case "overview":
-      return "Review active accounts, shared sets, and switch readiness across every supported tool.";
+      return "Review active accounts, shared sets, and switch readiness across every supported tool without leaving the main window.";
     case "profiles":
-      return "Inspect saved logins, labels, storage mode, and safe activation details with minimal scrolling.";
+      return "Inspect saved logins, labels, storage mode, and safe activation details in a compact split-view workspace.";
     case "sets":
       return "Coordinate reusable work, personal, and client combinations before switching a whole workspace.";
     case "diagnostics":

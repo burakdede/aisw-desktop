@@ -333,8 +333,9 @@ describe("App", () => {
       expect(screen.getByText("Control Center")).toBeInTheDocument();
     });
     expect(screen.getByText("Re-apply Work")).toBeInTheDocument();
-    expect(screen.getByText("Current set: Work")).toBeInTheDocument();
-    expect(screen.getByText("Switching engine ready")).toBeInTheDocument();
+    expect(screen.getByText("Current set")).toBeInTheDocument();
+    expect(screen.getAllByText("Work").length).toBeGreaterThan(0);
+    expect(screen.getByText("Ready")).toBeInTheDocument();
     expect(screen.queryByText("Welcome")).not.toBeInTheDocument();
     expect(screen.queryByText("Included switching engine")).not.toBeInTheDocument();
     expect(screen.queryByText("Health check")).not.toBeInTheDocument();
@@ -402,7 +403,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("AI Switch could not open this workspace.")).toBeInTheDocument();
+      expect(screen.getByText("AI Switch could not open its local control center.")).toBeInTheDocument();
     });
     expect(screen.getByText("AI Switch could not resolve a compatible switching engine")).toBeInTheDocument();
     expect(
@@ -6479,7 +6480,8 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("Current set: Client Acme")).toBeInTheDocument();
+      expect(screen.getByText("Current set")).toBeInTheDocument();
+      expect(screen.getAllByText("Client Acme").length).toBeGreaterThan(0);
     });
 
     await renderSetupPanel({

@@ -47,42 +47,42 @@ export function AppFrame({
               <div className="brand-lockup">
                 <BrandMark />
                 <div>
-                  <p className="eyebrow">AI Switch</p>
+                  <p className="eyebrow">macOS Utility</p>
                   <h1 className="sidebar-title">AI Switch</h1>
                 </div>
               </div>
-              <p className="sidebar-badge">Local agent control center</p>
+              <p className="sidebar-badge">Local agent switching</p>
               {subtitle ? <p className="sidebar-copy">{subtitle}</p> : null}
             </div>
-          <nav className="nav-list" aria-label="Primary">
-            {Object.entries(groups).map(([group, items]) => (
-              <div key={group} className="nav-group">
-                <p className="nav-group-label">{group}</p>
-                <div className="nav-group-items">
-                  {items.map((item) => (
-                    <button
-                      key={item.id}
-                      className={cn("nav-button", activeNav === item.id && "nav-button-active")}
-                      disabled={item.disabled}
-                      onClick={() => onSelectNav(item.id)}
-                    >
-                      <span className="nav-button-icon" aria-hidden="true">
-                        <SidebarIcon id={item.id} />
-                      </span>
-                      <span className="nav-button-label">{item.label}</span>
-                    </button>
-                  ))}
+            <nav className="nav-list" aria-label="Primary">
+              {Object.entries(groups).map(([group, items]) => (
+                <div key={group} className="nav-group">
+                  <p className="nav-group-label">{group}</p>
+                  <div className="nav-group-items">
+                    {items.map((item) => (
+                      <button
+                        key={item.id}
+                        className={cn("nav-button", activeNav === item.id && "nav-button-active")}
+                        disabled={item.disabled}
+                        onClick={() => onSelectNav(item.id)}
+                      >
+                        <span className="nav-button-icon" aria-hidden="true">
+                          <SidebarIcon id={item.id} />
+                        </span>
+                        <span className="nav-button-label">{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </nav>
+              ))}
+            </nav>
           </div>
           {statusBadge ? <div className="status-badge sidebar-status-card">{statusBadge}</div> : null}
         </aside>
         <div className="content-shell">
           <header className="window-toolbar">
             <div className="window-toolbar-copy">
-              <p className="window-toolbar-kicker">Workspace</p>
+              <p className="window-toolbar-kicker">Window</p>
               <h2>{title}</h2>
               {detail ? <p className="window-toolbar-subtitle">{detail}</p> : null}
             </div>
