@@ -46,7 +46,7 @@ type QuickSwitchItem =
   | {
       id: string;
       kind: "tool_profile";
-      group: "Individual tools";
+      group: string;
       badge: string;
       title: string;
       subtitle: string;
@@ -422,10 +422,10 @@ function buildQuickSwitchItems(settings: DesktopSettings, snapshot: AppSnapshot)
       items.push({
         id: `tool:${tool}:${profile.name}`,
         kind: "tool_profile",
-        group: "Individual tools",
-        badge: titleCase(tool),
+        group: quickSwitchToolLabel(tool),
+        badge: "Tool",
         title: label,
-        subtitle: `${titleCase(tool)} · ${profile.name} · ${profile.auth}`,
+        subtitle: `${quickSwitchToolLabel(tool)} · ${profile.name} · ${profile.auth}`,
         searchText: `${tool} ${profile.name} ${profile.auth} ${label}`.toLowerCase(),
         active: snapshot.profiles[tool]?.active === profile.name,
         tool,
@@ -441,7 +441,7 @@ function buildQuickSwitchItems(settings: DesktopSettings, snapshot: AppSnapshot)
 function buildSetSubtitle(set: NonNullable<DesktopSettings["profile_sets"]>[number]) {
   return Object.entries(set.profiles)
     .filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0)
-    .map(([tool, profile]) => `${titleCase(tool)}: ${profile}`)
+    .map(([tool, profile]) => `${quickSwitchToolLabel(tool)}: ${profile}`)
     .join("  ");
 }
 
@@ -450,5 +450,18 @@ function sharedProfileTools(snapshot: AppSnapshot, profileName: string) {
     .filter((tool) =>
       snapshot.profiles[tool]?.profiles.some((profile) => profile.name === profileName),
     )
-    .map((tool) => titleCase(tool));
+    .map((tool) => quickSwitchToolLabel(tool));
+}
+
+function quickSwitchToolLabel(tool: string) {
+  if (tool === "claude") {
+    return "Claude Code";
+  }
+  if (tool === "codex") {
+    return "Codex CLI";
+  }
+  if (tool === "gemini") {
+    return "Gemini CLI";
+  }
+  return titleCase(tool);
 }

@@ -7026,6 +7026,14 @@ describe("App", () => {
     expect(quickSwitchDialog.getByRole("button", { name: /Office.*Across/i })).toBeInTheDocument();
   });
 
+  it("groups quick switch tool profiles under full tool names", async () => {
+    await renderApp();
+    const quickSwitchDialog = await openQuickSwitchDialog();
+
+    expect(quickSwitchDialog.getByText("Claude Code")).toBeInTheDocument();
+    expect(quickSwitchDialog.getByText("Codex CLI")).toBeInTheDocument();
+  });
+
   it("uses saved profile labels in onboarding first switch options and sidebar badge", async () => {
     const settingsWithOverride: DesktopSettings = {
       ...bootstrap.settings,
