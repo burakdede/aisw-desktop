@@ -3,6 +3,11 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
 import { SplitView } from "../../../components/SplitView";
 import { exportDiagnosticBundle, getShellGuidance, runDoctor } from "../../../lib/client";
+import {
+  DEFAULT_SECTIONS,
+  DESKTOP_APPEARANCES,
+  type DesktopPreferences,
+} from "../../../lib/desktop-preferences";
 import { notifyDesktop } from "../../../lib/notifications";
 import { DesktopCommandError } from "../../../lib/tauri";
 import { DesktopSettings, AppBootstrap } from "../../../lib/schemas";
@@ -25,10 +30,14 @@ export function SettingsPanel({
   settings,
   runtimeStatus,
   initialSection,
+  desktopPreferences,
+  onUpdateDesktopPreferences,
 }: {
   settings: DesktopSettings;
   runtimeStatus: AppBootstrap["runtime_status"];
   initialSection?: SettingsSection;
+  desktopPreferences?: DesktopPreferences;
+  onUpdateDesktopPreferences?: (preferences: DesktopPreferences) => void;
 }) {
   const { updateSettingsMutation, checkForUpdatesMutation, installUpdateMutation, mutationLock } =
     useDesktopActions();
@@ -49,6 +58,13 @@ export function SettingsPanel({
   const [selectedShell, setSelectedShell] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
   const [securityMessage, setSecurityMessage] = useState("");
+  const [appearance, setAppearance] = useState<DesktopPreferences["appearance"]>(
+    desktopPreferences?.appearance ?? "system",
+  );
+  const [defaultSection, setDefaultSection] = useState<DesktopPreferences["defaultSection"]>(
+    desktopPreferences?.defaultSection ?? "overview",
+  );
+  const [generalMessage, setGeneralMessage] = useState("");
   const [selectedSection, setSelectedSection] = useState<SettingsSection>(
     initialSection ?? "general",
   );
@@ -104,6 +120,12 @@ export function SettingsPanel({
     setSelectedSection(initialSection ?? "general");
   }, [initialSection]);
 
+  useEffect(() => {
+    setAppearance(desktopPreferences?.appearance ?? "system");
+    setDefaultSection(desktopPreferences?.defaultSection ?? "overview");
+    setGeneralMessage("");
+  }, [desktopPreferences]);
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     updateSettingsMutation.mutate({
@@ -144,6 +166,14 @@ export function SettingsPanel({
         body: message,
       });
     }
+  }
+
+  function saveGeneralPreferences() {
+    onUpdateDesktopPreferences?.({
+      appearance,
+      defaultSection,
+    });
+    setGeneralMessage("General preferences saved.");
   }
 
   return (
@@ -219,35 +249,65 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Appearance</p>
-                    <h3>Desktop style</h3>
+                    <h3>Desktop appearance</h3>
                   </div>
                   <p className="inline-note">
-                    AI Switch follows the current system appearance so the window, controls, and contrast stay native on each supported platform.
+                    Choose whether AI Switch follows the system or pins the window to a light or dark appearance.
                   </p>
                 </div>
+                <label>
+                  Appearance
+                  <select
+                    value={appearance}
+                    onChange={(event) =>
+                      setAppearance(event.target.value as DesktopPreferences["appearance"])
+                    }
+                  >
+                    {DESKTOP_APPEARANCES.map((entry) => (
+                      <option key={entry} value={entry}>
+                        {titleCase(entry)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <p className="inline-note">
-                  Appearance: <strong>Follow system</strong>
-                </p>
-                <p className="inline-note">
-                  The current build uses system fonts, semantic colors, and native contrast handling instead of an app-specific theme toggle.
+                  System keeps the window aligned with the OS. Light and Dark pin the app to one appearance until you change it again.
                 </p>
               </article>
               <article className="diagnostic-card settings-pane-section">
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Launch</p>
-                    <h3>Startup behavior</h3>
+                    <h3>Default section</h3>
                   </div>
                   <p className="inline-note">
-                    Launch-at-login, menu bar persistence, and default landing preferences will be managed from this preferences layout as the desktop settings contract expands.
+                    Choose which section opens first when the desktop app starts normally.
                   </p>
                 </div>
+                <label>
+                  Default section
+                  <select
+                    value={defaultSection}
+                    onChange={(event) =>
+                      setDefaultSection(event.target.value as DesktopPreferences["defaultSection"])
+                    }
+                  >
+                    {DEFAULT_SECTIONS.map((entry) => (
+                      <option key={entry} value={entry}>
+                        {titleCase(entry)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <p className="inline-note">
-                  Preferred first screen: <strong>Overview</strong>
+                  Runtime blockers and first-run onboarding still take priority when they need your attention.
                 </p>
-                <p className="inline-note">
-                  Menu bar access and full-window setup already share the same switching and diagnostics data.
-                </p>
+                <div className="button-row">
+                  <button className="primary-button" type="button" onClick={saveGeneralPreferences}>
+                    Save general preferences
+                  </button>
+                </div>
+                {generalMessage ? <p className="inline-note">{generalMessage}</p> : null}
               </article>
             </div>
             <div className="stack-list">
@@ -276,6 +336,9 @@ export function SettingsPanel({
                   </p>
                 </div>
                 <p className="inline-note">Use the source list on the left to jump directly to the section you need.</p>
+                <p className="inline-note">
+                  Launch-at-login and menu bar persistence stay tied to the signed desktop build and OS-level app settings for now.
+                </p>
               </article>
             </div>
           </div>

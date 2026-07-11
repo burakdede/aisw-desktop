@@ -27,6 +27,12 @@ import { DesktopCommandError } from "./lib/tauri";
 import { listenDesktopEvent, type TrayCommandResultEvent } from "./lib/tauri";
 import { exportDiagnosticBundle } from "./lib/client";
 import type { ProfileImportMode } from "./features/shared/profile-capabilities";
+import {
+  applyAppearancePreference,
+  loadDesktopPreferences,
+  saveDesktopPreferences,
+  type DesktopPreferences,
+} from "./lib/desktop-preferences";
 
 const NAV = [
   { id: "overview", label: "Overview", group: "Main" },
@@ -59,7 +65,12 @@ type SettingsRouteState = {
 
 export function App() {
   const queryClient = useQueryClient();
-  const [activeNav, setActiveNav] = useState<(typeof NAV)[number]["id"]>("overview");
+  const [desktopPreferences, setDesktopPreferences] = useState<DesktopPreferences>(() =>
+    loadDesktopPreferences(),
+  );
+  const [activeNav, setActiveNav] = useState<(typeof NAV)[number]["id"]>(
+    () => loadDesktopPreferences().defaultSection,
+  );
   const [quickSwitchOpen, setQuickSwitchOpen] = useState(false);
   const [profilesRouteState, setProfilesRouteState] = useState<ProfilesRouteState>({});
   const [settingsRouteState, setSettingsRouteState] = useState<SettingsRouteState>({});
@@ -83,6 +94,11 @@ export function App() {
     }
     setActiveNav(id as (typeof NAV)[number]["id"]);
   }
+
+  useEffect(() => {
+    applyAppearancePreference(desktopPreferences.appearance);
+    saveDesktopPreferences(desktopPreferences);
+  }, [desktopPreferences]);
 
   useEffect(() => {
     let active = true;
@@ -465,7 +481,13 @@ export function App() {
       ) : null}
 
       {runtimeBlocked ? (
-        <SettingsPanel settings={settings} runtimeStatus={runtimeStatus} initialSection="runtime" />
+        <SettingsPanel
+          settings={settings}
+          runtimeStatus={runtimeStatus}
+          initialSection="runtime"
+          desktopPreferences={desktopPreferences}
+          onUpdateDesktopPreferences={setDesktopPreferences}
+        />
       ) : resolvedSnapshot ? (
         <>
           {setupFocused ? (
@@ -550,6 +572,8 @@ export function App() {
               settings={settings}
               runtimeStatus={runtimeStatus}
               initialSection={settingsRouteState.section}
+              desktopPreferences={desktopPreferences}
+              onUpdateDesktopPreferences={setDesktopPreferences}
             />
           ) : null}
         </>

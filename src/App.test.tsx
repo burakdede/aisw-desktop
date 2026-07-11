@@ -276,6 +276,30 @@ async function openQuickSwitchDialog() {
 describe("App", () => {
   beforeEach(() => {
     vi.mocked(window.open).mockClear();
+    const values = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => (values.has(key) ? values.get(key)! : null),
+      setItem: (key: string, value: string) => {
+        values.set(key, value);
+      },
+      removeItem: (key: string) => {
+        values.delete(key);
+      },
+      clear: () => {
+        values.clear();
+      },
+      key: (index: number) => Array.from(values.keys())[index] ?? null,
+      get length() {
+        return values.size;
+      },
+    } as Storage;
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      value: storage,
+    });
+    window.localStorage.clear();
+    delete document.documentElement.dataset.appearance;
+    document.documentElement.style.colorScheme = "";
     const notify = window.__AISW_DESKTOP_NOTIFY__;
     if (notify) {
       vi.mocked(notify).mockClear();
@@ -7137,6 +7161,27 @@ describe("App", () => {
     });
   });
 
+  it("saves general desktop preferences from settings", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Settings"));
+
+    fireEvent.change(screen.getByLabelText("Appearance"), {
+      target: { value: "dark" },
+    });
+    fireEvent.change(screen.getByLabelText("Default section"), {
+      target: { value: "profiles" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save general preferences" }));
+
+    await waitFor(() => {
+      expect(window.localStorage.getItem("ai-switch.desktop.appearance")).toBe("dark");
+      expect(window.localStorage.getItem("ai-switch.desktop.default-section")).toBe("profiles");
+      expect(document.documentElement.dataset.appearance).toBe("dark");
+      expect(document.documentElement.style.colorScheme).toBe("dark");
+    });
+  });
+
   it("shows engine detection details in settings", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
@@ -7238,6 +7283,16 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByDisplayValue("/tmp/aisw-home")).toBeInTheDocument();
+    });
+  });
+
+  it("uses the saved default section on launch", async () => {
+    window.localStorage.setItem("ai-switch.desktop.default-section", "profiles");
+
+    await renderApp();
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("heading", { name: "Profiles" }).length).toBeGreaterThan(0);
     });
   });
 
