@@ -468,7 +468,7 @@ export function ProfilesPanel({
   return (
     <SectionCard
       title="Profiles"
-      kicker="Profile library"
+      kicker="Saved profiles"
       actions={
         <div className="profiles-toolbar">
           <input
@@ -653,7 +653,7 @@ export function ProfilesPanel({
                             setOpenRowActions(null);
                           }}
                         >
-                          Open Details
+                          Details
                         </button>
                         <button
                           type="button"
@@ -664,7 +664,7 @@ export function ProfilesPanel({
                             activateInventoryEntry(inventoryEntry);
                           }}
                         >
-                          Activate
+                          Switch to this profile
                         </button>
                         <button
                           type="button"
@@ -879,8 +879,8 @@ export function ProfilesPanel({
                           label: selectedProfileDisplay ?? selectedProfileEntry.name,
                         })
                       }
-                    >
-                      Activate
+                      >
+                      Switch to this profile
                     </button>
                     <button
                       className="ghost-button"
@@ -1090,7 +1090,7 @@ export function ProfilesPanel({
                         </>
                       ) : (
                         <p className="inline-note">
-                          Live runtime diagnostics are only available for the active profile. Activate this profile to verify backend, live-match, token, and permission state.
+                          Live runtime diagnostics are only available for the active profile. Switch to this profile to inspect backend, live-match, token, and permission state.
                         </p>
                       )}
                     </div>

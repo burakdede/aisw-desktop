@@ -231,7 +231,7 @@ async function renderSetupPanel({
 }
 
 function getProfilesSection() {
-  const kicker = screen.getByText("Profile library");
+  const kicker = screen.getByText("Saved profiles", { selector: ".section-kicker" });
   const section = kicker.closest("section");
   if (!section) {
     throw new Error("Profiles section not found.");
@@ -768,7 +768,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open details" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Profile library")).toBeInTheDocument();
+      expect(screen.getByText("Saved profiles", { selector: ".section-kicker" })).toBeInTheDocument();
       expect(screen.getByDisplayValue("Codex")).toBeInTheDocument();
       expect(screen.getByText("Technical details")).toBeInTheDocument();
       expect(screen.getByText("No additional token or runtime warnings are currently reported for this tool.")).toBeInTheDocument();
@@ -1772,7 +1772,7 @@ describe("App", () => {
     expect(screen.getByText("Desktop active: no")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Live runtime diagnostics are only available for the active profile. Activate this profile to verify backend, live-match, token, and permission state.",
+        "Live runtime diagnostics are only available for the active profile. Switch to this profile to inspect backend, live-match, token, and permission state.",
       ),
     ).toBeInTheDocument();
     expect(screen.queryByText(/Credential backend:/)).not.toBeInTheDocument();
@@ -5349,7 +5349,7 @@ describe("App", () => {
     fireEvent.click(screen.getByLabelText("Add codex profile"));
 
     await waitFor(() => {
-      expect(screen.getByText("Profile library")).toBeInTheDocument();
+      expect(screen.getByText("Saved profiles", { selector: ".section-kicker" })).toBeInTheDocument();
       expect(screen.getByLabelText("Current tool")).toHaveValue("codex");
       expect(getAddProfileDialog().getByLabelText("Tool")).toHaveValue("codex");
     });
