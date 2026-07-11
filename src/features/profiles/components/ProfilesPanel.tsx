@@ -1254,7 +1254,7 @@ export function ProfilesPanel({
                 <div className="diagnostic-card">
                   <h4>Sign-in flow</h4>
                   <p className="inline-note">
-                    The desktop app will launch the tool&apos;s native login flow and stream progress from the included engine.
+                    The desktop app will launch the tool&apos;s native login flow and stream progress from the bundled AI Switch runtime.
                   </p>
                   <p className="inline-note">
                     Keep this window open while the browser or terminal login completes.
