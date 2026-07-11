@@ -772,7 +772,7 @@ function buildQuickFixes(
     const currentContextLabel = contextDisplayLabel(settings, workspace.currentContext);
     const target = resolveWorkspaceActivationTarget(workspace.expectedContext, settings, snapshot);
     fixes.push({
-      title: "Workspace set mismatch",
+      title: "Project set mismatch",
       detail: target
         ? `This folder wants ${expectedContextLabel}, but ${currentContextLabel} is currently active.`
         : `This folder wants ${expectedContextLabel}, but no matching shared group or ready saved set is currently available.`,

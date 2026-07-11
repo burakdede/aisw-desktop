@@ -126,7 +126,7 @@ export function useDesktopActions() {
   };
 
   const activateWorkspaceTarget = async (variables: WorkspaceTargetInput) => {
-    const label = "Use expected workspace target";
+    const label = "Use expected project set";
     try {
       const result = await enqueueMutation(label, () =>
         variables.kind === "profile_set"
@@ -145,7 +145,7 @@ export function useDesktopActions() {
         },
       );
       await notifyDesktop({
-        title: "Workspace switch",
+        title: "Project switch",
         body: message,
       });
       await invalidate();
@@ -163,7 +163,7 @@ export function useDesktopActions() {
         },
       );
       await notifyDesktop({
-        title: "Workspace switch",
+        title: "Project switch",
         body:
           resolved instanceof DesktopCommandError && resolved.remediation
             ? `${resolved.message} ${resolved.remediation}`

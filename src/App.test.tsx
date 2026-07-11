@@ -3761,7 +3761,7 @@ describe("App", () => {
       screen.getByText("Last project-rule result: Switched to Client Acme for /code/acme."),
     ).toBeInTheDocument();
     expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
-      title: "Workspace switch",
+      title: "Project switch",
       body: "Switched to Client Acme for /code/acme.",
     });
 
@@ -4758,10 +4758,10 @@ describe("App", () => {
       expect(screen.getByText("Recommended fixes")).toBeInTheDocument();
       expect(screen.getAllByText("codex is missing").length).toBeGreaterThan(0);
       expect(screen.getAllByText("claude live mismatch").length).toBeGreaterThan(0);
-      expect(screen.getByText("Workspace set mismatch")).toBeInTheDocument();
+      expect(screen.getByText("Project set mismatch")).toBeInTheDocument();
     });
 
-    const workspaceMismatchCard = screen.getByText("Workspace set mismatch").closest(".diagnostic-card");
+    const workspaceMismatchCard = screen.getByText("Project set mismatch").closest(".diagnostic-card");
     if (!(workspaceMismatchCard instanceof HTMLElement)) {
       throw new Error("Missing workspace mismatch diagnostic card.");
     }
