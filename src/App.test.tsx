@@ -835,7 +835,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
-      expect(screen.getByRole("tab", { name: "Terminal Integration", selected: true })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "true");
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Overview" }));
@@ -843,9 +843,9 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Engine and local storage")).toBeInTheDocument();
-      expect(screen.getByRole("tab", { name: "Engine", selected: true })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Engine" })).toHaveAttribute("aria-pressed", "true");
     });
-    expect(screen.getByRole("tab", { name: "Terminal Integration", selected: false })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "false");
   });
 
   it("surfaces token warnings in the overview cards", async () => {
@@ -4351,7 +4351,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
-      expect(screen.getByRole("tab", { name: "Terminal Integration", selected: true })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "true");
     });
   });
 
@@ -4764,7 +4764,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Security" })).toBeInTheDocument();
       expect(screen.getByText("Linux Secret Service")).toBeInTheDocument();
-      expect(screen.getByRole("tab", { name: "Security" })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("button", { name: "Security" })).toHaveAttribute("aria-pressed", "true");
     });
   });
 
@@ -5092,7 +5092,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
-      expect(screen.getByRole("tab", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("button", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "true");
     });
   });
 
@@ -5249,7 +5249,7 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole("tab", { name: "Updates", selected: true })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Updates" })).toHaveAttribute("aria-pressed", "true");
       expect(screen.getByRole("button", { name: "Check for updates" })).toBeInTheDocument();
     });
   });
@@ -6616,7 +6616,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Settings"));
-    fireEvent.click(screen.getByRole("tab", { name: "Updates" }));
+    fireEvent.click(screen.getByRole("button", { name: "Updates" }));
     fireEvent.click(screen.getByText("Check for updates"));
 
     await waitFor(() => {
@@ -6659,7 +6659,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Settings"));
-    fireEvent.click(screen.getByRole("tab", { name: "Updates" }));
+    fireEvent.click(screen.getByRole("button", { name: "Updates" }));
     fireEvent.click(screen.getByText("Check for updates"));
 
     await waitFor(() => {
@@ -6715,7 +6715,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Settings"));
-    fireEvent.click(screen.getByRole("tab", { name: "Updates" }));
+    fireEvent.click(screen.getByRole("button", { name: "Updates" }));
     fireEvent.click(screen.getByText("Check for updates"));
 
     await waitFor(() => {
@@ -6739,7 +6739,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Settings"));
-    fireEvent.click(screen.getByRole("tab", { name: "Terminal Integration" }));
+    fireEvent.click(screen.getByRole("button", { name: "Terminal Integration" }));
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
@@ -7225,7 +7225,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Settings"));
-    fireEvent.click(screen.getByRole("tab", { name: "Updates" }));
+    fireEvent.click(screen.getByRole("button", { name: "Updates" }));
     fireEvent.change(screen.getByDisplayValue("Stable"), {
       target: { value: "beta" },
     });

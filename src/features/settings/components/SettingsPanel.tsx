@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
-import { SegmentedControl } from "../../../components/SegmentedControl";
+import { SplitView } from "../../../components/SplitView";
 import { getShellGuidance, runDoctor } from "../../../lib/client";
 import { DesktopCommandError } from "../../../lib/tauri";
 import { DesktopSettings, AppBootstrap } from "../../../lib/schemas";
@@ -132,17 +132,49 @@ export function SettingsPanel({
           ))}
         </div>
       </article>
-      <SegmentedControl
-        ariaLabel="Settings sections"
-        className="settings-nav"
-        kind="tabs"
-        options={SETTINGS_SECTIONS.map((section) => ({
-          value: section,
-          label: sectionLabel(section),
-        }))}
-        value={selectedSection}
-        onChange={setSelectedSection}
-      />
+      <SplitView
+        className="settings-split"
+        primaryClassName="settings-nav-pane"
+        secondaryClassName="settings-detail-pane"
+        primary={
+          <article className="diagnostic-card settings-nav-card">
+            <div className="desktop-pane-section-header">
+              <div>
+                <p className="card-kicker">Categories</p>
+                <h3>Preferences</h3>
+              </div>
+            </div>
+            <div className="settings-source-list" aria-label="Settings sections">
+              {SETTINGS_SECTIONS.map((section) => (
+                <button
+                  key={section}
+                  type="button"
+                  aria-label={sectionLabel(section)}
+                  aria-describedby={`settings-section-summary-${section}`}
+                  aria-pressed={selectedSection === section}
+                  className={`settings-source-row ${
+                    selectedSection === section ? "settings-source-row-selected" : ""
+                  }`}
+                  onClick={() => setSelectedSection(section)}
+                >
+                  <div>
+                    <strong>{sectionLabel(section)}</strong>
+                    <p
+                      id={`settings-section-summary-${section}`}
+                      className="inline-note"
+                    >
+                      {sourceListSummary(section)}
+                    </p>
+                  </div>
+                  <span className="settings-source-chevron" aria-hidden="true">
+                    ›
+                  </span>
+                </button>
+              ))}
+            </div>
+          </article>
+        }
+        secondary={
       <div className="settings-pane">
         {selectedSection === "runtime" ? (
           <div className="panel-grid panel-grid-2 settings-layout">
@@ -688,6 +720,8 @@ export function SettingsPanel({
           </div>
         ) : null}
       </div>
+        }
+      />
     </SectionCard>
   );
 }
@@ -853,5 +887,18 @@ function sectionPills(section: SettingsSection) {
       return ["Optional setup", "Shell-aware", "Copy and verify"];
     case "keyring":
       return ["Credentials stay local", "Native storage", "Recovery guides"];
+  }
+}
+
+function sourceListSummary(section: SettingsSection) {
+  switch (section) {
+    case "runtime":
+      return "Bundled engine and local storage";
+    case "updates":
+      return "Release channel and signed installs";
+    case "shell":
+      return "Terminal integration guidance";
+    case "keyring":
+      return "Credential storage and recovery";
   }
 }
