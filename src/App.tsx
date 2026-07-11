@@ -150,6 +150,16 @@ export function App() {
       }
     });
 
+    void listenDesktopEvent("menu-open-import-current-login", () => {
+      if (!active) return;
+      setProfilesRouteState({ tool: "claude", expandedProfile: null, mode: "from_live" });
+      setActiveNav("profiles");
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
     void listenDesktopEvent("menu-open-overview", () => {
       if (!active) return;
       setActiveNav("overview");
@@ -238,6 +248,16 @@ export function App() {
     void listenDesktopEvent("menu-open-docs", () => {
       if (!active) return;
       window.open("https://github.com/bdewey/aisw", "_blank", "noopener,noreferrer");
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
+    void listenDesktopEvent("menu-open-troubleshooting", () => {
+      if (!active) return;
+      setActiveNav("diagnostics");
+      invalidateDiagnostics();
     }).then((dispose) => {
       if (typeof dispose === "function") {
         disposers.push(dispose);

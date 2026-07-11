@@ -5424,6 +5424,61 @@ describe("App", () => {
     );
   });
 
+  it("opens import current login from the app menu in the profiles flow", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["menu-open-import-current-login"]?.({});
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Profiles" })).toHaveClass("nav-button-active");
+      expect(screen.getByText("Import current login")).toBeInTheDocument();
+    });
+  });
+
+  it("opens troubleshooting from the app menu in diagnostics", async () => {
+    let doctorRuns = 0;
+    let verifyRuns = 0;
+    const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "run_doctor") {
+        doctorRuns += 1;
+        return { checks: [], summary: { status: "pass" } };
+      }
+      if (command === "run_verify") {
+        verifyRuns += 1;
+        return { summary: { status: "pass" }, tools: [] };
+      }
+      return defaultMock[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["menu-open-troubleshooting"]?.({});
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Diagnostics" })).toHaveClass("nav-button-active");
+      expect(doctorRuns).toBeGreaterThan(0);
+      expect(verifyRuns).toBeGreaterThan(0);
+    });
+  });
+
   it("defers diagnostics refetches until an active mutation completes", async () => {
     let doctorRuns = 0;
     let verifyRuns = 0;

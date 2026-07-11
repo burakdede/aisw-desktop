@@ -4,6 +4,7 @@ use tauri::{AppHandle, Emitter, Runtime};
 pub const MENU_OPEN_SETTINGS_EVENT: &str = "menu-open-settings";
 pub const MENU_OPEN_SETTINGS_UPDATES_EVENT: &str = "menu-open-settings-updates";
 pub const MENU_OPEN_PROFILES_EVENT: &str = "menu-open-profiles";
+pub const MENU_OPEN_IMPORT_CURRENT_LOGIN_EVENT: &str = "menu-open-import-current-login";
 pub const MENU_OPEN_OVERVIEW_EVENT: &str = "menu-open-overview";
 pub const MENU_OPEN_SETS_EVENT: &str = "menu-open-sets";
 pub const MENU_OPEN_DIAGNOSTICS_EVENT: &str = "menu-open-diagnostics";
@@ -14,11 +15,13 @@ pub const MENU_EXPORT_DIAGNOSTICS_EVENT: &str = "menu-export-diagnostics";
 pub const MENU_OPEN_ADD_PROFILE_EVENT: &str = "menu-open-add-profile";
 pub const MENU_RUN_VERIFY_EVENT: &str = "menu-run-verify";
 pub const MENU_OPEN_DOCS_EVENT: &str = "menu-open-docs";
+pub const MENU_OPEN_TROUBLESHOOTING_EVENT: &str = "menu-open-troubleshooting";
 pub const MENU_OPEN_ISSUES_EVENT: &str = "menu-open-issues";
 
 const SETTINGS_ID: &str = "menu.settings";
 const CHECK_UPDATES_ID: &str = "menu.check-updates";
 const ADD_PROFILE_ID: &str = "menu.add-profile";
+const IMPORT_CURRENT_LOGIN_ID: &str = "menu.import-current-login";
 const EXPORT_REPORT_ID: &str = "menu.export-report";
 const QUICK_SWITCH_ID: &str = "menu.quick-switch";
 const VERIFY_ID: &str = "menu.verify";
@@ -36,6 +39,13 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
 
     let add_profile =
         MenuItem::with_id(app, ADD_PROFILE_ID, "Add Profile…", true, Some("CmdOrCtrl+N"))?;
+    let import_current_login = MenuItem::with_id(
+        app,
+        IMPORT_CURRENT_LOGIN_ID,
+        "Import Current Login…",
+        true,
+        None::<&str>,
+    )?;
     let export_report = MenuItem::with_id(
         app,
         EXPORT_REPORT_ID,
@@ -71,10 +81,27 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let activity =
         MenuItem::with_id(app, VIEW_ACTIVITY_ID, "Activity", true, Some("CmdOrCtrl+6"))?;
 
-    let help_docs =
-        MenuItem::with_id(app, "menu.help.docs", "AI Switch Help", true, None::<&str>)?;
-    let help_issues =
-        MenuItem::with_id(app, "menu.help.issues", "Report an Issue", true, None::<&str>)?;
+    let help_docs = MenuItem::with_id(
+        app,
+        "menu.help.docs",
+        "AI Switch Documentation",
+        true,
+        None::<&str>,
+    )?;
+    let help_troubleshooting = MenuItem::with_id(
+        app,
+        "menu.help.troubleshooting",
+        "Troubleshooting",
+        true,
+        None::<&str>,
+    )?;
+    let help_issues = MenuItem::with_id(
+        app,
+        "menu.help.issues",
+        "Open GitHub Issues",
+        true,
+        None::<&str>,
+    )?;
 
     let app_items: Vec<MenuItemKind<R>> = vec![
         PredefinedMenuItem::about(app, Some("About AI Switch"), None)?.kind(),
@@ -90,7 +117,11 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         .collect::<Vec<_>>();
     let app_menu = Submenu::with_items(app, "AI Switch", true, &app_refs)?;
 
-    let file_items: Vec<MenuItemKind<R>> = vec![add_profile.kind(), export_report.kind()];
+    let file_items: Vec<MenuItemKind<R>> = vec![
+        add_profile.kind(),
+        import_current_login.kind(),
+        export_report.kind(),
+    ];
     let file_refs = file_items
         .iter()
         .map(|item| item as &dyn IsMenuItem<R>)
@@ -118,7 +149,11 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         .collect::<Vec<_>>();
     let view_menu = Submenu::with_items(app, "View", true, &view_refs)?;
 
-    let help_items: Vec<MenuItemKind<R>> = vec![help_docs.kind(), help_issues.kind()];
+    let help_items: Vec<MenuItemKind<R>> = vec![
+        help_docs.kind(),
+        help_troubleshooting.kind(),
+        help_issues.kind(),
+    ];
     let help_refs = help_items
         .iter()
         .map(|item| item as &dyn IsMenuItem<R>)
@@ -147,6 +182,9 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
         }
         ADD_PROFILE_ID => {
             let _ = app.emit(MENU_OPEN_ADD_PROFILE_EVENT, ());
+        }
+        IMPORT_CURRENT_LOGIN_ID => {
+            let _ = app.emit(MENU_OPEN_IMPORT_CURRENT_LOGIN_EVENT, ());
         }
         QUICK_SWITCH_ID => {
             let _ = app.emit(MENU_OPEN_QUICK_SWITCH_EVENT, ());
@@ -178,6 +216,9 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
         }
         "menu.help.docs" => {
             let _ = app.emit(MENU_OPEN_DOCS_EVENT, ());
+        }
+        "menu.help.troubleshooting" => {
+            let _ = app.emit(MENU_OPEN_TROUBLESHOOTING_EVENT, ());
         }
         "menu.help.issues" => {
             let _ = app.emit(MENU_OPEN_ISSUES_EVENT, ());
