@@ -1611,14 +1611,14 @@ button {
 .overview-current-set {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
+  gap: 14px;
   align-items: flex-start;
-  padding: 16px;
+  padding: 15px;
 }
 
 .overview-current-set-copy {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .overview-current-set-header {
@@ -1646,6 +1646,33 @@ button {
   gap: 4px;
 }
 
+.overview-current-set-list {
+  display: grid;
+  gap: 8px;
+}
+
+.overview-current-set-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
+  background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
+}
+
+.overview-current-set-row-title {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.overview-current-set-row-title strong {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
 .overview-current-set-cell {
   display: grid;
   gap: 3px;
@@ -1664,6 +1691,7 @@ button {
 
 .overview-current-set-actions {
   flex: none;
+  min-width: 164px;
 }
 
 .overview-focus-card {

@@ -173,16 +173,16 @@ export function OverviewPanel({
                       </p>
                     </div>
                     <div className="overview-current-set-cell">
-                      <span className="overview-current-set-cell-label">Selected tool</span>
-                      <strong>{selectedToolLabel}</strong>
-                      <p className="inline-note">{selectedToolSummary}</p>
-                    </div>
-                    <div className="overview-current-set-cell">
                       <span className="overview-current-set-cell-label">Project</span>
                       <strong>{hasWorkspaceMismatch ? "Needs review" : "Ready"}</strong>
                       <p className="inline-note">
                         {hasWorkspaceMismatch ? "This project expects a different set." : "No project drift is blocking work."}
                       </p>
+                    </div>
+                    <div className="overview-current-set-cell">
+                      <span className="overview-current-set-cell-label">Focus tool</span>
+                      <strong>{selectedToolLabel}</strong>
+                      <p className="inline-note">{selectedToolSummary}</p>
                     </div>
                   </div>
                   <div className="overview-current-set-inline">
@@ -193,11 +193,20 @@ export function OverviewPanel({
                       Shared switching stays available when profile names line up across installed tools.
                     </p>
                   </div>
-                  <div className="overview-current-set-grid">
+                  <div className="overview-current-set-list" aria-label="Current set profiles">
                     {currentSetProfiles.map((entry) => (
-                      <div key={entry.tool} className="overview-current-set-cell">
-                        <span className="overview-current-set-cell-label">{toolDisplayName(entry.tool)}</span>
-                        <strong>{entry.label ?? "Not configured"}</strong>
+                      <div key={entry.tool} className="overview-current-set-row">
+                        <div className="overview-current-set-row-title">
+                          <span className="overview-current-set-cell-label">{toolDisplayName(entry.tool)}</span>
+                          <strong>{entry.label ?? "Not configured"}</strong>
+                        </div>
+                        <span
+                          className={`pill ${
+                            entry.label ? "pill-ok" : "pill-soft"
+                          }`}
+                        >
+                          {entry.label ? "Ready" : "Add profile"}
+                        </span>
                       </div>
                     ))}
                   </div>
