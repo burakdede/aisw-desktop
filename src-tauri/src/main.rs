@@ -4,6 +4,7 @@ mod bridge;
 mod commands;
 mod diagnostic_bundle;
 mod errors;
+mod menu;
 mod models;
 mod redaction;
 mod settings;
@@ -22,6 +23,10 @@ fn main() {
     let app_state = AppState::new(SettingsStore::new(resolve_settings_dir()));
     tauri::Builder::default()
         .manage(app_state)
+        .menu(|app| menu::build_menu(app))
+        .on_menu_event(|app, event| {
+            menu::handle_menu_event(app, event.id().as_ref());
+        })
         .setup(|app| {
             app.handle().plugin(tauri_plugin_notification::init())?;
             app.handle()
@@ -60,7 +65,7 @@ fn main() {
             commands::workspace_guard
         ])
         .run(tauri::generate_context!())
-        .expect("failed to run AISW Desktop");
+        .expect("failed to run AI Switch");
 }
 
 fn resolve_settings_dir() -> std::path::PathBuf {

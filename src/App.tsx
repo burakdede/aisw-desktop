@@ -21,6 +21,7 @@ import { notifyDesktop } from "./lib/notifications";
 import { activeSetLabel } from "./lib/profile-display";
 import { DesktopCommandError } from "./lib/tauri";
 import { listenDesktopEvent, type TrayCommandResultEvent } from "./lib/tauri";
+import { exportDiagnosticBundle } from "./lib/client";
 import type { ProfileImportMode } from "./features/shared/profile-capabilities";
 
 const NAV = [
@@ -82,6 +83,11 @@ export function App() {
   useEffect(() => {
     let active = true;
     const disposers: Array<() => void> = [];
+    const invalidateDiagnostics = () => {
+      for (const queryKey of DIAGNOSTICS_QUERY_KEYS) {
+        void queryClient.invalidateQueries({ queryKey: [...queryKey] });
+      }
+    };
 
     void listenDesktopEvent("tray-open-diagnostics", () => {
       if (!active) return;
@@ -95,9 +101,148 @@ export function App() {
     void listenDesktopEvent("tray-run-diagnostics", () => {
       if (!active) return;
       setActiveNav("diagnostics");
-      for (const queryKey of DIAGNOSTICS_QUERY_KEYS) {
-        void queryClient.invalidateQueries({ queryKey: [...queryKey] });
+      invalidateDiagnostics();
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
       }
+    });
+
+    void listenDesktopEvent("menu-open-settings", () => {
+      if (!active) return;
+      openSettings("runtime");
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
+    void listenDesktopEvent("menu-open-settings-updates", () => {
+      if (!active) return;
+      openSettings("updates");
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
+    void listenDesktopEvent("menu-open-profiles", () => {
+      if (!active) return;
+      setProfilesRouteState({});
+      setActiveNav("profiles");
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
+    void listenDesktopEvent("menu-open-add-profile", () => {
+      if (!active) return;
+      setProfilesRouteState({ tool: "claude", expandedProfile: null });
+      setActiveNav("profiles");
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
+    void listenDesktopEvent("menu-open-overview", () => {
+      if (!active) return;
+      setActiveNav("overview");
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
+    void listenDesktopEvent("menu-open-sets", () => {
+      if (!active) return;
+      setActiveNav("sets");
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
+    void listenDesktopEvent("menu-open-diagnostics", () => {
+      if (!active) return;
+      setActiveNav("diagnostics");
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
+    void listenDesktopEvent("menu-run-verify", () => {
+      if (!active) return;
+      setActiveNav("diagnostics");
+      invalidateDiagnostics();
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
+    void listenDesktopEvent("menu-open-backups", () => {
+      if (!active) return;
+      setActiveNav("backups");
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
+    void listenDesktopEvent("menu-open-activity", () => {
+      if (!active) return;
+      setActiveNav("activity");
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
+    void listenDesktopEvent("menu-open-quick-switch", () => {
+      if (!active) return;
+      setQuickSwitchOpen(true);
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
+    void listenDesktopEvent("menu-export-diagnostics", () => {
+      if (!active) return;
+      void exportDiagnosticBundle()
+        .then((result) =>
+          notifyDesktop({
+            title: "Diagnostic report exported",
+            body: `Saved ${result.filename}.`,
+          }),
+        )
+        .catch((error) =>
+          notifyDesktop({
+            title: "Diagnostic export failed",
+            body: error instanceof Error ? error.message : "Desktop command failed.",
+          }),
+        );
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
+    void listenDesktopEvent("menu-open-docs", () => {
+      if (!active) return;
+      window.open("https://github.com/bdewey/aisw", "_blank", "noopener,noreferrer");
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
+    void listenDesktopEvent("menu-open-issues", () => {
+      if (!active) return;
+      window.open("https://github.com/bdewey/aisw/issues", "_blank", "noopener,noreferrer");
     }).then((dispose) => {
       if (typeof dispose === "function") {
         disposers.push(dispose);

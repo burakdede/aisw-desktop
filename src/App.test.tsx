@@ -5081,6 +5081,120 @@ describe("App", () => {
     });
   });
 
+  it("opens the updates settings section when the app menu requests it", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["menu-open-settings-updates"]?.({});
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Signed desktop releases")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Check for updates" })).toBeInTheDocument();
+    });
+  });
+
+  it("opens quick switch when the app menu requests it", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["menu-open-quick-switch"]?.({});
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { name: "Quick Switch" })).toBeInTheDocument();
+      expect(screen.getByLabelText("Search Quick Switch")).toBeInTheDocument();
+    });
+  });
+
+  it("exports diagnostics when the app menu requests it", async () => {
+    const calls: string[] = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      calls.push(command);
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_doctor: { summary: { status: "pass" } },
+          run_init: { result: { live_accounts: [] } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          export_diagnostic_bundle: {
+            path: "/tmp/ai-switch/diagnostics-123.json",
+            filename: "diagnostics-123.json",
+            generated_at: "unix:123",
+          },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+          get_shell_guidance: {
+            detected_shell: "zsh",
+            capabilities: [],
+            note: "Shell hook guidance remains informational.",
+            manual_apply_examples: [],
+            variants: [],
+          },
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["menu-export-diagnostics"]?.({});
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(calls).toContain("export_diagnostic_bundle");
+      expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
+        title: "Diagnostic report exported",
+        body: "Saved diagnostics-123.json.",
+      });
+    });
+  });
+
+  it("opens help destinations from the app menu", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["menu-open-docs"]?.({});
+      handlers?.["menu-open-issues"]?.({});
+    });
+
+    expect(window.open).toHaveBeenCalledWith(
+      "https://github.com/bdewey/aisw",
+      "_blank",
+      "noopener,noreferrer",
+    );
+    expect(window.open).toHaveBeenCalledWith(
+      "https://github.com/bdewey/aisw/issues",
+      "_blank",
+      "noopener,noreferrer",
+    );
+  });
+
   it("defers diagnostics refetches until an active mutation completes", async () => {
     let doctorRuns = 0;
     let verifyRuns = 0;

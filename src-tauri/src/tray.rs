@@ -889,7 +889,7 @@ mod tests {
         assert_eq!(tray_status_label(false, None), "Runtime blocked");
         assert_eq!(
             tray_runtime_notice(false),
-            Some("Runtime blocked. Fix aisw in Settings.")
+            Some("Runtime blocked. Fix the switching runtime in Settings.")
         );
         assert_eq!(tray_runtime_notice(true), None);
     }
