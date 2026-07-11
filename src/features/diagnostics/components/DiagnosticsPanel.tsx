@@ -135,6 +135,10 @@ export function DiagnosticsPanel({
     repairCount: repairActions.length,
     exportReady: Boolean(exportBundle.data),
   });
+  const checkRows = useMemo(
+    () => buildDiagnosticCheckRows(summaryCards, snapshot),
+    [snapshot, summaryCards],
+  );
   useEffect(() => {
     if (selectedFindingKey && findings.some((finding) => finding.key === selectedFindingKey)) {
       return;
@@ -286,6 +290,33 @@ export function DiagnosticsPanel({
         secondaryClassName="diagnostics-recovery-pane"
         primary={
           <div className="stack-list desktop-pane-column">
+            <article className="diagnostic-card diagnostics-check-card">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Checks</p>
+                  <h3>Health checks</h3>
+                </div>
+                <p className="inline-note">
+                  Read the current system state first, then inspect individual findings only when something needs attention.
+                </p>
+              </div>
+              <div className="diagnostics-check-list" aria-label="Diagnostics checks">
+                {checkRows.map((row) => (
+                  <div key={row.label} className="diagnostics-check-row">
+                    <span
+                      className={`diagnostics-check-indicator diagnostics-check-indicator-${row.status}`}
+                      aria-hidden="true"
+                    >
+                      {row.status === "pass" ? "✓" : row.status === "warn" ? "▲" : "●"}
+                    </span>
+                    <div className="diagnostics-check-copy">
+                      <strong>{row.label}</strong>
+                      <p className="inline-note">{row.detail}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </article>
             <div className="desktop-pane-section desktop-list-surface">
               <div className="desktop-pane-section-header">
                 <div>
@@ -349,16 +380,22 @@ export function DiagnosticsPanel({
                     {selectedFinding.scopeLabel}
                   </span>
                 </div>
+                <div className="diagnostics-inspector-section">
+                  <p className="card-kicker">What this means</p>
                 {selectedFinding.lines.map((line) => (
                   <p key={line} className="inline-note">
                     {normalizeRuntimeLanguage(line)}
                   </p>
                 ))}
+                </div>
                 {selectedFinding.remediation.length ? (
-                  <div className="diagnostic-remediation">
+                  <div className="diagnostics-inspector-section">
+                    <p className="card-kicker">Recommended fix</p>
+                    <div className="diagnostic-remediation">
                     {selectedFinding.remediation.map((item) => (
                       <code key={item}>{item}</code>
                     ))}
+                    </div>
                   </div>
                 ) : null}
                 {selectedFinding.profileTarget ? (
@@ -616,6 +653,12 @@ export function DiagnosticsPanel({
   );
 }
 
+type DiagnosticCheckRow = {
+  label: string;
+  detail: string;
+  status: "pass" | "warn" | "fail";
+};
+
 type QuickFixCard = {
   title: string;
   detail: string;
@@ -677,6 +720,52 @@ function buildDiagnosticFindings(
   });
 
   return findings;
+}
+
+function buildDiagnosticCheckRows(
+  summaryCards: SummaryCardData[],
+  snapshot: AppSnapshot | undefined,
+): DiagnosticCheckRow[] {
+  const rows: DiagnosticCheckRow[] = summaryCards.map((card) => ({
+    label: card.title,
+    detail: card.lines.join(" · "),
+    status:
+      card.status === "fail" ? "fail" : card.status === "warn" ? "warn" : "pass",
+  }));
+
+  snapshot?.statuses.forEach((status) => {
+    if (!status.binary_found) {
+      rows.push({
+        label: `${titleCase(status.tool)} availability`,
+        detail: `${titleCase(status.tool)} is not installed on this Mac yet.`,
+        status: "warn",
+      });
+      return;
+    }
+
+    if (status.active_profile_applied === false) {
+      rows.push({
+        label: `${titleCase(status.tool)} live match`,
+        detail: `${titleCase(status.tool)} no longer matches the active saved profile.`,
+        status: "warn",
+      });
+      return;
+    }
+
+    rows.push({
+      label: `${titleCase(status.tool)} status`,
+      detail: status.active_profile
+        ? `${toolStatusDisplayLabel(status)} is ready.`
+        : `${titleCase(status.tool)} is installed, but no saved profile is configured yet.`,
+      status: status.active_profile ? "pass" : "warn",
+    });
+  });
+
+  return rows;
+}
+
+function toolStatusDisplayLabel(status: ToolStatus) {
+  return `${titleCase(status.tool)}${status.active_profile ? ` is using ${status.active_profile}` : ""}`;
 }
 
 function buildQuickFixes(

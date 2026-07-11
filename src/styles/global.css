@@ -1924,6 +1924,58 @@ button {
   gap: 8px;
 }
 
+.diagnostics-check-card,
+.diagnostics-inspector-section {
+  display: grid;
+  gap: 10px;
+}
+
+.diagnostics-check-list {
+  display: grid;
+  gap: 8px;
+}
+
+.diagnostics-check-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
+.diagnostics-check-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.diagnostics-check-indicator-pass {
+  color: var(--ok);
+}
+
+.diagnostics-check-indicator-warn {
+  color: var(--warning);
+}
+
+.diagnostics-check-indicator-fail {
+  color: var(--danger);
+}
+
+.diagnostics-check-copy {
+  min-width: 0;
+}
+
+.diagnostics-check-copy strong,
+.diagnostics-check-copy p {
+  display: block;
+}
+
 .diagnostic-remediation {
   margin-top: 10px;
   display: grid;
