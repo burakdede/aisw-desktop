@@ -3,7 +3,10 @@ import { act, fireEvent, render, renderHook, screen, waitFor, within } from "@te
 import type { ReactNode } from "react";
 import { App } from "./App";
 import { SetupPanel } from "./features/onboarding/components/SetupPanel";
-import { resetLastCommandResultsForTests } from "./features/shared/lastCommandResult";
+import {
+  recordCommandResult,
+  resetLastCommandResultsForTests,
+} from "./features/shared/lastCommandResult";
 import { useDesktopActions } from "./features/shared/useDesktopActions";
 import { enqueueMutation, resetMutationQueueForTests } from "./features/shared/mutationQueue";
 import { SettingsPanel } from "./features/settings/components/SettingsPanel";
@@ -345,6 +348,57 @@ describe("App", () => {
     expect(screen.queryByText("Included runtime")).not.toBeInTheDocument();
     expect(screen.queryByText("Health check")).not.toBeInTheDocument();
     expect(screen.queryByText("Local-only by default")).not.toBeInTheDocument();
+  });
+
+  it("shows activity in a timeline and inspector layout", async () => {
+    recordCommandResult(
+      { type: "global", id: "settings" },
+      {
+        label: "Saved settings",
+        status: "success",
+        message: "Updated the bundled runtime preference.",
+      },
+    );
+    recordCommandResult(
+      { type: "tool", tool: "claude" },
+      {
+        label: "Switched Claude Code",
+        status: "error",
+        message: "The selected profile needs attention before it can be applied.",
+        remediation: "Open the profile and refresh credentials.",
+      },
+    );
+
+    await renderApp();
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Activity" })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Activity" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Inspect Switched Claude Code" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Inspect Saved settings" })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Inspect Switched Claude Code" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Switched Claude Code" })).toBeInTheDocument();
+      expect(
+        screen.getAllByText("The selected profile needs attention before it can be applied.").length,
+      ).toBeGreaterThan(0);
+      expect(screen.getAllByText("Open the profile and refresh credentials.").length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Inspect Saved settings" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Saved settings" })).toBeInTheDocument();
+      expect(screen.getAllByText("Updated the bundled runtime preference.").length).toBeGreaterThan(0);
+      expect(
+        screen.getByText("No extra recovery steps were recorded for this event."),
+      ).toBeInTheDocument();
+    });
   });
 
   it("shows compatibility blockers when runtime is not usable", async () => {

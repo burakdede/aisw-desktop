@@ -1513,10 +1513,13 @@ button {
   grid-template-columns: minmax(0, 1.1fr) minmax(320px, 380px);
 }
 
+.activity-layout,
 .diagnostics-layout {
   grid-template-columns: minmax(0, 1.08fr) minmax(320px, 380px);
 }
 
+.activity-list-pane,
+.activity-detail-pane,
 .backups-list-pane,
 .backups-detail-pane,
 .diagnostics-checks-pane,
@@ -1588,14 +1591,14 @@ button {
 }
 
 .backup-list-main,
-.activity-main {
+.activity-list-main {
   min-width: 0;
 }
 
 .backup-list-main strong,
 .backup-list-main p,
-.activity-main strong,
-.activity-main p {
+.activity-list-main strong,
+.activity-list-main p {
   display: block;
   white-space: nowrap;
   overflow: hidden;
@@ -1603,24 +1606,12 @@ button {
 }
 
 .backup-list-meta,
-.activity-columns {
+.activity-list-meta {
   display: grid;
   gap: 6px;
   font-size: 12px;
   line-height: 1.35;
   color: var(--text-secondary);
-}
-
-.activity-list-header {
-  display: grid;
-  grid-template-columns: minmax(220px, 1.4fr) minmax(110px, 0.7fr) minmax(110px, 0.7fr) minmax(80px, 0.5fr);
-  gap: 12px;
-  padding: 0 6px;
-  font-size: 11px;
-  line-height: 1.2;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
 }
 
 .diagnostics-summary-grid {
@@ -1684,20 +1675,38 @@ button {
   align-items: stretch;
 }
 
-.activity-row {
+.activity-list-row {
+  width: 100%;
   display: grid;
-  grid-template-columns: minmax(220px, 1.4fr) minmax(110px, 0.7fr) minmax(110px, 0.7fr) minmax(80px, 0.5fr);
+  grid-template-columns: minmax(220px, 1.5fr) minmax(110px, 0.7fr) auto;
   gap: 12px;
   align-items: center;
+  text-align: left;
+  cursor: pointer;
+  background: color-mix(in srgb, Canvas 98%, CanvasText 2%);
 }
 
-.activity-meta {
-  display: grid;
-  justify-items: end;
-  gap: 6px;
-  font-size: 12px;
-  line-height: 1.3;
+.activity-list-row-selected {
+  border-color: color-mix(in srgb, AccentColor 42%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, AccentColor 22%, transparent);
+  background: color-mix(in srgb, AccentColor 8%, Canvas 92%);
+}
+
+.activity-list-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.activity-row-chevron {
+  font-size: 18px;
+  line-height: 1;
   color: var(--text-tertiary);
+}
+
+.activity-detail-card,
+.activity-detail-copy {
+  gap: 12px;
 }
 
 .segmented-control {
@@ -1828,11 +1837,11 @@ button {
   }
 
   .backup-list-row,
-  .activity-row,
-  .activity-list-header {
+  .activity-list-row {
     grid-template-columns: 1fr;
   }
 
+  .activity-list-meta,
   .profile-list-columns {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
