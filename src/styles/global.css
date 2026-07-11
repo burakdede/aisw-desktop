@@ -837,15 +837,6 @@ button {
   flex-wrap: wrap;
 }
 
-.onboarding-trust-grid {
-  display: grid;
-  gap: 12px;
-}
-
-.onboarding-trust-card {
-  padding: 12px 14px;
-}
-
 .onboarding-overview {
   display: grid;
   gap: 12px;
@@ -853,7 +844,7 @@ button {
 
 .onboarding-overview-meta {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -885,10 +876,6 @@ button {
 }
 
 .onboarding-step-card {
-  gap: 12px;
-}
-
-.onboarding-status-stack {
   gap: 12px;
 }
 
@@ -1883,23 +1870,9 @@ button {
 
 .tool-card-meta,
 .stacked-form,
-.stack-list,
-.trust-list {
+.stack-list {
   display: grid;
   gap: 10px;
-}
-
-.trust-list {
-  gap: 8px;
-}
-
-.trust-list-item {
-  margin: 0;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
-  font-size: 13px;
-  line-height: 1.45;
 }
 
 .tool-card-meta {

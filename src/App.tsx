@@ -782,25 +782,22 @@ export function App() {
               AI Switch found another runtime on this Mac, but this desktop release is designed to
               use the included runtime by default.
             </p>
-            <div className="stack-list">
-              <article className="list-row">
-                <div>
-                  <strong>Current selection</strong>
-                  <p>{runtimeSelectionLabel(settings.runtime_kind)}</p>
-                </div>
-              </article>
-              <article className="list-row">
-                <div>
-                  <strong>Recommended</strong>
-                  <p>Included runtime managed by this desktop app</p>
-                </div>
-              </article>
-              <article className="list-row">
-                <div>
-                  <strong>What happens next</strong>
-                  <p>{normalizeRuntimeLanguage(runtimeBlocker.nextStep)}</p>
-                </div>
-              </article>
+            <p className="inline-note">
+              Switching stays paused until this Mac is back on a compatible runtime.
+            </p>
+            <div className="settings-summary-grid">
+              <div>
+                <span className="overview-current-set-cell-label">Current selection</span>
+                <strong>{runtimeSelectionLabel(settings.runtime_kind)}</strong>
+              </div>
+              <div>
+                <span className="overview-current-set-cell-label">Recommended</span>
+                <strong>Included runtime managed by this desktop app</strong>
+              </div>
+              <div>
+                <span className="overview-current-set-cell-label">Next step</span>
+                <strong>{normalizeRuntimeLanguage(runtimeBlocker.nextStep)}</strong>
+              </div>
             </div>
             <div className="button-row">
               {settings.runtime_kind !== "bundled" ? (

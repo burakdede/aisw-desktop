@@ -298,56 +298,8 @@ export function SetupPanel({
                       : "Resolve runtime setup before switching across tools."}
                   </p>
                 </div>
-              </div>
-              <div className="desktop-status-pill-stack">
-                {["Credentials stay local", "Included runtime", "No telemetry", "No traffic proxy"].map((pill) => (
-                  <span key={pill} className="status-pill">
-                    {pill}
-                  </span>
-                ))}
-              </div>
-              <div className="stack-list onboarding-status-stack">
                 <div>
-                  <p className={`diagnostic-status diagnostic-status-${bootstrap.runtime_status.compatible ? "pass" : "warn"}`}>
-                    Runtime
-                  </p>
-                  <p className="inline-note">
-                    {bootstrap.runtime_status.compatible
-                      ? "The included runtime is ready for desktop switching."
-                      : "Runtime setup needs attention before switching."}
-                  </p>
-                </div>
-                <div>
-                  <p className="diagnostic-status diagnostic-status-warn">Profiles</p>
-                  <p className="inline-note">
-                    {needsAttentionCount
-                      ? `${needsAttentionCount} import, install, or setup action${needsAttentionCount === 1 ? "" : "s"} remain.`
-                      : "Installed tools already have reusable profiles."}
-                  </p>
-                </div>
-                <div>
-                  <p className={`diagnostic-status ${switchReady ? "diagnostic-status-pass" : "diagnostic-status-warn"}`}>
-                    Shared switch
-                  </p>
-                  <p className="inline-note">
-                    {switchReady
-                      ? "A matching shared profile is ready for a first switch check."
-                      : "Add at least one reusable profile before trying a shared switch."}
-                  </p>
-                </div>
-              </div>
-            </article>
-            <article className="diagnostic-card onboarding-launch-card">
-              <div className="desktop-pane-section-header">
-                <div>
-                  <p className="card-kicker">Before you begin</p>
-                  <h3>Local desktop setup</h3>
-                </div>
-                <span className="pill pill-soft">{runtimeSummary.source}</span>
-              </div>
-              <div className="onboarding-overview-meta">
-                <div>
-                  <span className="overview-current-set-cell-label">Runtime</span>
+                  <span className="overview-current-set-cell-label">Runtime source</span>
                   <strong>{runtimeSummary.source}</strong>
                   <p className="inline-note">Version {bootstrap.runtime_status.version?.version ?? "unknown"}</p>
                 </div>
@@ -357,12 +309,9 @@ export function SetupPanel({
                   <p className="inline-note">Secure storage: {secureStorage}</p>
                 </div>
               </div>
-              <div className="trust-list">
-                <p className="trust-list-item">Credentials stay on this Mac</p>
-                <p className="trust-list-item">No telemetry</p>
-                <p className="trust-list-item">No prompt or API traffic proxy</p>
-                <p className="trust-list-item">Terminal integration is optional</p>
-              </div>
+              <p className="inline-note">
+                Terminal integration is optional. Most people can finish setup without touching shell configuration.
+              </p>
             </article>
           </div>
         }
@@ -370,17 +319,10 @@ export function SetupPanel({
           <div className="stack-list desktop-pane-column">
             {activeStep === "runtime" ? (
               <>
-                <article className="diagnostic-card desktop-pane-intro">
-                  <h3>Confirm this Mac is ready</h3>
-                  <p className="inline-note">
-                    AI Switch uses the included runtime by default. Confirm that local storage
-                    and secure storage are ready, then save your first profile.
-                  </p>
-                </article>
                 <article className="diagnostic-card">
                   <div className="desktop-pane-section-header">
                     <div>
-                      <p className="card-kicker">Runtime</p>
+                      <p className="card-kicker">Welcome</p>
                       <h3>Included runtime</h3>
                     </div>
                     <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
@@ -388,8 +330,10 @@ export function SetupPanel({
                     </span>
                   </div>
                   <p className="inline-note">
-                    {runtimeSummary.description}
+                    AI Switch uses the included runtime by default. Confirm that local storage and
+                    secure storage are ready, then save your first profile.
                   </p>
+                  <p className="inline-note">{runtimeSummary.description}</p>
                   <div className="stack-list">
                     {runtimeRows.map((item) => (
                       <div key={item.label}>
