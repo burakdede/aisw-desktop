@@ -76,9 +76,11 @@ export function DiagnosticsPanel({
   const [importDrafts, setImportDrafts] = useState<Record<string, string>>({});
   const [bundleCopyMessage, setBundleCopyMessage] = useState("");
   const [selectedFindingKey, setSelectedFindingKey] = useState<string | null>(null);
+  const [repairPlanOpen, setRepairPlanOpen] = useState(false);
   const applyRepair = useMutation({
     mutationFn: (fixes: string[]) => runRepair({ apply: true, fixes }),
     onSuccess: async () => {
+      setRepairPlanOpen(false);
       await queryClient.invalidateQueries({ queryKey: ["repair", "dry-run"] });
       await queryClient.invalidateQueries({ queryKey: ["doctor"] });
       await queryClient.invalidateQueries({ queryKey: ["verify"] });
@@ -158,11 +160,11 @@ export function DiagnosticsPanel({
             Verify again
           </button>
           <button
-            className="primary-button"
-            onClick={() => applyRepair.mutate([])}
+            className="ghost-button"
+            onClick={() => setRepairPlanOpen(true)}
             disabled={applyRepair.isPending || !repairActions.length}
           >
-            {applyRepair.isPending ? "Applying repairs…" : "Apply safe repairs"}
+            {applyRepair.isPending ? "Applying repairs…" : "Review repair plan"}
           </button>
           <button
             className="ghost-button"
@@ -252,7 +254,7 @@ export function DiagnosticsPanel({
 
       {applyRepair.data ? (
         <article className="diagnostic-card diagnostic-pass diagnostics-body">
-          <h3>Last applied repair</h3>
+          <h3>Last repair run</h3>
           <p className="diagnostic-status">
             {String(
               ((applyRepair.data.result as { summary?: { status?: string } } | undefined)
@@ -501,8 +503,11 @@ export function DiagnosticsPanel({
             <div className="desktop-pane-section-header diagnostics-subsection-header">
               <div>
                 <p className="card-kicker">Repair plan</p>
-                <h3>Planned repairs</h3>
+                <h3>Safe automatic repairs</h3>
               </div>
+              <p className="inline-note">
+                Review the planned safe repairs before applying them.
+              </p>
             </div>
             {repairActions.map((action) => (
               <article key={`${action.title}-${action.detail}`} className="diagnostic-card">
@@ -545,6 +550,68 @@ export function DiagnosticsPanel({
           </div>
         }
       />
+      {repairPlanOpen ? (
+        <div className="quick-switch-overlay" role="presentation" onClick={() => setRepairPlanOpen(false)}>
+          <section
+            className="quick-switch-palette profile-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Apply Safe Repairs"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="quick-switch-header">
+              <div>
+                <p className="card-kicker">Repair plan</p>
+                <h3>Apply safe repairs</h3>
+                <p className="inline-note">
+                  AI Switch only applies repairs that do not switch accounts or overwrite stored profiles.
+                </p>
+              </div>
+              <button className="ghost-button" type="button" onClick={() => setRepairPlanOpen(false)}>
+                Close
+              </button>
+            </div>
+            {repairActions.length ? (
+              <div className="stack-list">
+                {repairActions.map((action) => (
+                  <article key={`sheet-${action.title}-${action.detail}`} className="diagnostic-card">
+                    <h4>{action.title}</h4>
+                    <p className="inline-note">{action.detail}</p>
+                    <p className="diagnostic-status">{action.status}</p>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <article className="diagnostic-card diagnostic-pass">
+                <h3>No safe repairs queued</h3>
+                <p className="inline-note">
+                  Diagnostics did not find any safe automatic repairs to apply right now.
+                </p>
+              </article>
+            )}
+            <footer className="quick-switch-footer">
+              <div className="quick-switch-selection">
+                <p className="card-kicker">Repairs</p>
+                <strong>{repairActions.length} planned</strong>
+                <p>Profile re-apply, restore, and removal actions still require their own explicit flow.</p>
+              </div>
+              <div className="button-row">
+                <button className="ghost-button" type="button" onClick={() => setRepairPlanOpen(false)}>
+                  Cancel
+                </button>
+                <button
+                  className="primary-button"
+                  type="button"
+                  disabled={!repairActions.length || applyRepair.isPending}
+                  onClick={() => applyRepair.mutate([])}
+                >
+                  {applyRepair.isPending ? "Applying repairs…" : "Apply safe repairs"}
+                </button>
+              </div>
+            </footer>
+          </section>
+        </div>
+      ) : null}
     </SectionCard>
   );
 }

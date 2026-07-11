@@ -4518,10 +4518,16 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("Diagnostics")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Diagnostics"));
     await waitFor(() => expect(screen.getByText("1 actions planned")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Apply safe repairs"));
+    fireEvent.click(screen.getByText("Review repair plan"));
 
     await waitFor(() => {
-      expect(screen.getByText("Last applied repair")).toBeInTheDocument();
+      expect(screen.getByRole("dialog", { name: "Apply Safe Repairs" })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Apply safe repairs" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Last repair run")).toBeInTheDocument();
       expect(screen.getByText("1 actions applied")).toBeInTheDocument();
     });
   });
