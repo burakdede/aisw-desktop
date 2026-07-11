@@ -9,6 +9,7 @@ type SourceListPanelProps = {
   children: ReactNode;
   className?: string;
   listLabel?: string;
+  listRole?: string;
 };
 
 export function SourceListPanel({
@@ -20,6 +21,7 @@ export function SourceListPanel({
   children,
   className,
   listLabel,
+  listRole,
 }: SourceListPanelProps) {
   return (
     <article className={["source-list-panel", className].filter(Boolean).join(" ")}>
@@ -32,7 +34,7 @@ export function SourceListPanel({
       </div>
       {note ? <p className="inline-note source-list-note">{note}</p> : null}
       {meta ? <div className="source-list-meta">{meta}</div> : null}
-      <div className="desktop-source-list" aria-label={listLabel}>
+      <div className="desktop-source-list" aria-label={listLabel} role={listRole}>
         {children}
       </div>
     </article>

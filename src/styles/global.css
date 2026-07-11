@@ -867,6 +867,16 @@ button {
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
 
+.onboarding-step-row {
+  align-items: flex-start;
+}
+
+.onboarding-step-row-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
 .onboarding-layout {
   grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
 }

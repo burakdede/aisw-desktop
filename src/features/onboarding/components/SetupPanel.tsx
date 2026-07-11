@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SectionCard } from "../../../components/SectionCard";
+import { SourceListPanel } from "../../../components/SourceListPanel";
 import { SplitView } from "../../../components/SplitView";
 import { getShellGuidance, runDoctor, updateSettings } from "../../../lib/client";
 import { sharedProfileEntries } from "../../../lib/profile-display";
@@ -250,65 +250,87 @@ export function SetupPanel({
         primary={
           <div className="stack-list desktop-pane-column">
             <article className="diagnostic-card onboarding-overview">
-              <div className="desktop-pane-section-header">
-                <div>
-                  <p className="card-kicker">Welcome</p>
-                  <h3>Safe local account switching</h3>
-                </div>
-                <span className={`pill ${needsAttentionCount ? "pill-soft" : "pill-ok"}`}>
-                  {needsAttentionCount
-                    ? `${needsAttentionCount} action${needsAttentionCount === 1 ? "" : "s"}`
-                    : "Ready"}
-                </span>
-              </div>
-              <p className="inline-note">
-                Bring in the accounts you already use, confirm the included runtime is ready,
-                and try one shared switch without leaving this Mac.
-              </p>
-              <SegmentedControl
-                ariaLabel="Setup steps"
-                options={setupSteps}
-                value={activeStep}
-                onChange={setActiveStep}
-                kind="tabs"
-              />
-              <div className="onboarding-overview-meta">
-                <div>
-                  <span className="overview-current-set-cell-label">Privacy</span>
-                  <strong>Local only</strong>
-                  <p className="inline-note">Credentials stay on this Mac with no telemetry or traffic proxy.</p>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Progress</span>
-                  <strong>
-                    {switchReady ? "Ready to switch" : "Needs one saved profile"}
-                  </strong>
-                  <p className="inline-note">
-                    {switchReady
-                      ? "At least one reusable profile is ready for a first switch."
-                      : "Save one profile first, then try the first shared switch."}
-                  </p>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Runtime</span>
-                  <strong>{bootstrap.runtime_status.compatible ? "Included runtime ready" : "Needs attention"}</strong>
-                  <p className="inline-note">
-                    {bootstrap.runtime_status.compatible
-                      ? "This build can switch accounts with the included runtime."
-                      : "Resolve runtime setup before switching across tools."}
-                  </p>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Runtime source</span>
-                  <strong>{runtimeSummary.source}</strong>
-                  <p className="inline-note">Version {bootstrap.runtime_status.version?.version ?? "unknown"}</p>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Data folder</span>
-                  <strong>{bootstrap.settings.aisw_home ?? "Managed automatically"}</strong>
-                  <p className="inline-note">Secure storage: {secureStorage}</p>
-                </div>
-              </div>
+              <SourceListPanel
+                kicker="Welcome"
+                title="Safe local account switching"
+                listLabel="Setup steps"
+                listRole="tablist"
+                badge={
+                  <span className={`pill ${needsAttentionCount ? "pill-soft" : "pill-ok"}`}>
+                    {needsAttentionCount
+                      ? `${needsAttentionCount} action${needsAttentionCount === 1 ? "" : "s"}`
+                      : "Ready"}
+                  </span>
+                }
+                note="Bring in the accounts you already use, confirm the included runtime is ready, and try one shared switch without leaving this Mac."
+                meta={
+                  <div className="onboarding-overview-meta">
+                    <div>
+                      <span className="overview-current-set-cell-label">Privacy</span>
+                      <strong>Local only</strong>
+                      <p className="inline-note">Credentials stay on this Mac with no telemetry or traffic proxy.</p>
+                    </div>
+                    <div>
+                      <span className="overview-current-set-cell-label">Progress</span>
+                      <strong>
+                        {switchReady ? "Ready to switch" : "Needs one saved profile"}
+                      </strong>
+                      <p className="inline-note">
+                        {switchReady
+                          ? "At least one reusable profile is ready for a first switch."
+                          : "Save one profile first, then try the first shared switch."}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="overview-current-set-cell-label">Runtime</span>
+                      <strong>{bootstrap.runtime_status.compatible ? "Included runtime ready" : "Needs attention"}</strong>
+                      <p className="inline-note">
+                        {bootstrap.runtime_status.compatible
+                          ? "This build can switch accounts with the included runtime."
+                          : "Resolve runtime setup before switching across tools."}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="overview-current-set-cell-label">Runtime source</span>
+                      <strong>{runtimeSummary.source}</strong>
+                      <p className="inline-note">Version {bootstrap.runtime_status.version?.version ?? "unknown"}</p>
+                    </div>
+                    <div>
+                      <span className="overview-current-set-cell-label">Data folder</span>
+                      <strong>{bootstrap.settings.aisw_home ?? "Managed automatically"}</strong>
+                      <p className="inline-note">Secure storage: {secureStorage}</p>
+                    </div>
+                  </div>
+                }
+              >
+                {setupSteps.map((step) => (
+                  <button
+                    key={step.value}
+                    type="button"
+                    role="tab"
+                    aria-label={step.label}
+                    aria-describedby={`setup-step-summary-${step.value}`}
+                    aria-selected={activeStep === step.value}
+                    className={`desktop-source-row onboarding-step-row ${
+                      activeStep === step.value ? "desktop-source-row-selected" : ""
+                    }`}
+                    onClick={() => setActiveStep(step.value)}
+                  >
+                    <div className="onboarding-step-row-main">
+                      <strong>{step.label}</strong>
+                      <p
+                        id={`setup-step-summary-${step.value}`}
+                        className="inline-note"
+                      >
+                        {setupStepSummary(step.value)}
+                      </p>
+                    </div>
+                    <span className="desktop-source-chevron" aria-hidden="true">
+                      ›
+                    </span>
+                  </button>
+                ))}
+              </SourceListPanel>
               <p className="inline-note">
                 Terminal integration is optional. Most people can finish setup without touching shell configuration.
               </p>
@@ -724,6 +746,19 @@ function defaultSetupStep(snapshot: AppSnapshot, initReport: InitReport | undefi
   }
 
   return "runtime";
+}
+
+function setupStepSummary(step: SetupStep) {
+  switch (step) {
+    case "runtime":
+      return "Confirm the included runtime, data folder, and secure storage.";
+    case "accounts":
+      return "Import current logins or add the first saved profiles you need.";
+    case "switch":
+      return "Run one safe shared switch before you start coding.";
+    case "terminal":
+      return "Optional setup for already-open terminal sessions.";
+  }
 }
 
 function readLiveAccounts(initReport: InitReport | undefined): LiveAccount[] {
