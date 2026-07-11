@@ -2362,8 +2362,17 @@ button {
   gap: 10px;
 }
 
+.activity-overview-meta,
+.activity-detail-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .backups-detail-summary > div,
 .activity-detail-summary > div,
+.activity-overview-meta > div,
+.activity-detail-meta > div,
 .backups-detail-block > div {
   display: grid;
   gap: 4px;
@@ -2732,6 +2741,10 @@ button {
 .activity-detail-card,
 .activity-detail-copy {
   gap: 12px;
+}
+
+.activity-session-card {
+  gap: 8px;
 }
 
 .diagnostic-finding-row {

@@ -78,6 +78,8 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
       ].sort((left, right) => right.at - left.at),
     [lastCommandResults.global, lastCommandResults.tool],
   );
+  const errorCount = entries.filter((entry) => entry.status === "error").length;
+  const latestEntry = entries[0] ?? null;
 
   useEffect(() => {
     if (selectedEntryKey && entries.some((entry) => entry.key === selectedEntryKey)) {
@@ -139,6 +141,25 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                 Latest first. Review local switch, verification, setup, and recovery events in one
                 desktop session stream.
               </p>
+              <div className="activity-overview-meta">
+                <div>
+                  <span className="overview-current-set-cell-label">Session</span>
+                  <strong>{entries.length ? `${entries.length} event${entries.length === 1 ? "" : "s"}` : "Idle"}</strong>
+                  <p className="inline-note">Only events from the current desktop session are shown here.</p>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Latest scope</span>
+                  <strong>{latestEntry?.scopeLabel ?? "No activity yet"}</strong>
+                  <p className="inline-note">{latestEntry ? latestEntry.label : "Run a switch, verification, or settings change to populate the timeline."}</p>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Needs attention</span>
+                  <strong>{errorCount ? `${errorCount} item${errorCount === 1 ? "" : "s"}` : "None"}</strong>
+                  <p className="inline-note">
+                    {errorCount ? "Open the failing event and export a report if you need support." : "Recent recorded events completed without extra recovery steps."}
+                  </p>
+                </div>
+              </div>
               <div className="activity-list-columns" aria-hidden="true">
                 <span>Time</span>
                 <span>Event</span>
@@ -225,6 +246,18 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                     <strong>{selectedEntry.status === "success" ? "Success" : "Needs attention"}</strong>
                   </div>
                 </div>
+                <div className="activity-detail-meta">
+                  <div>
+                    <span className="overview-current-set-cell-label">Timeline</span>
+                    <strong>{formatTimestamp(selectedEntry.at)}</strong>
+                    <p className="inline-note">Latest session events stay local to this desktop app.</p>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Recorded scope</span>
+                    <strong>{selectedEntry.scopeLabel}</strong>
+                    <p className="inline-note">{selectedEntry.label}</p>
+                  </div>
+                </div>
                 <div className="activity-detail-copy stack-list">
                   <div>
                     <p className="card-kicker">What happened</p>
@@ -287,19 +320,19 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
               </article>
             )}
             {clearMessage ? (
-              <article className="diagnostic-card">
+              <article className="diagnostic-card activity-session-card">
                 <h3>Timeline cleared</h3>
                 <p className="inline-note">{clearMessage}</p>
               </article>
             ) : null}
             {exportBundleMutation.data ? (
-              <article className="diagnostic-card diagnostic-pass">
+              <article className="diagnostic-card diagnostic-pass activity-session-card">
                 <h3>Support report ready</h3>
                 <p className="inline-note">Saved {exportBundleMutation.data.filename}.</p>
               </article>
             ) : null}
             {exportBundleMutation.error ? (
-              <article className="diagnostic-card diagnostic-warn">
+              <article className="diagnostic-card diagnostic-warn activity-session-card">
                 <h3>Support report could not be exported</h3>
                 <p className="inline-note">
                   {exportBundleMutation.error instanceof Error
