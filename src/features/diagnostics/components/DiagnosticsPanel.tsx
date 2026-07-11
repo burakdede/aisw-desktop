@@ -180,46 +180,6 @@ export function DiagnosticsPanel({
         </div>
       }
     >
-      <article className={`diagnostic-card diagnostics-overview desktop-pane-intro ${totalIssues ? "diagnostic-warn" : "diagnostic-pass"}`}>
-        <div className="desktop-pane-section-header">
-          <div>
-            <p className="card-kicker">Health</p>
-            <h3>{totalIssues ? `${totalIssues} issue${totalIssues === 1 ? "" : "s"} found` : "System looks healthy"}</h3>
-          </div>
-          <span className={`pill ${totalIssues ? "pill-warn" : "pill-ok"}`}>
-            {repairActions.length ? `${repairActions.length} repairs queued` : "Recovery ready"}
-          </span>
-        </div>
-        <p className="inline-note">
-          Health checks, live matching, and repair stay in one recovery surface so switching issues
-          use one consistent flow.
-        </p>
-        <div className="diagnostics-overview-meta">
-          <div>
-            <span className="overview-current-set-cell-label">Checks</span>
-            <strong>{checkRows.length} monitored</strong>
-          </div>
-          <div>
-            <span className="overview-current-set-cell-label">Recovery</span>
-            <strong>{repairActions.length ? `${repairActions.length} safe repair${repairActions.length === 1 ? "" : "s"}` : "No repairs queued"}</strong>
-          </div>
-          <div>
-            <span className="overview-current-set-cell-label">Highlights</span>
-            <strong>{diagnosticPills.join(" · ") || "Quick actions"}</strong>
-          </div>
-        </div>
-        {summaryHighlights.length ? (
-          <div className="stack-list diagnostics-overview-list">
-            {summaryHighlights.map((line) => (
-              <p key={line} className="inline-note">{line}</p>
-            ))}
-          </div>
-        ) : (
-          <p className="inline-note">
-            Active profiles, local storage, and repair checks are currently passing.
-          </p>
-        )}
-      </article>
       {exportBundle.data ? (
         <article className="diagnostic-card diagnostic-pass diagnostics-body">
           <h3>Support report ready</h3>
@@ -282,16 +242,45 @@ export function DiagnosticsPanel({
         secondaryClassName="diagnostics-recovery-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-            <article className="diagnostic-card diagnostics-check-card">
+            <article className={`diagnostic-card diagnostics-check-card ${totalIssues ? "diagnostic-warn" : "diagnostic-pass"}`}>
               <div className="desktop-pane-section-header">
                 <div>
-                  <p className="card-kicker">Checks</p>
-                  <h3>Health checks</h3>
+                  <p className="card-kicker">Health</p>
+                  <h3>{totalIssues ? `${totalIssues} issue${totalIssues === 1 ? "" : "s"} found` : "System looks healthy"}</h3>
                 </div>
-                <p className="inline-note">
-                  Read the current system state first, then inspect individual findings only when something needs attention.
-                </p>
+                <span className={`pill ${totalIssues ? "pill-warn" : "pill-ok"}`}>
+                  {repairActions.length ? `${repairActions.length} repairs queued` : "Recovery ready"}
+                </span>
               </div>
+              <p className="inline-note">
+                Health checks, live matching, and repair stay in one recovery surface so switching issues
+                use one consistent flow.
+              </p>
+              <div className="diagnostics-overview-meta">
+                <div>
+                  <span className="overview-current-set-cell-label">Checks</span>
+                  <strong>{checkRows.length} monitored</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Recovery</span>
+                  <strong>{repairActions.length ? `${repairActions.length} safe repair${repairActions.length === 1 ? "" : "s"}` : "No repairs queued"}</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Highlights</span>
+                  <strong>{diagnosticPills.join(" · ") || "Quick actions"}</strong>
+                </div>
+              </div>
+              {summaryHighlights.length ? (
+                <div className="stack-list diagnostics-overview-list">
+                  {summaryHighlights.map((line) => (
+                    <p key={line} className="inline-note">{line}</p>
+                  ))}
+                </div>
+              ) : (
+                <p className="inline-note">
+                  Active profiles, local storage, and repair checks are currently passing.
+                </p>
+              )}
               <div className="diagnostics-check-summary">
                 {summaryCards.map((card) => (
                   <div key={card.title} className={`diagnostics-check-summary-cell diagnostic-${card.status}`}>
@@ -541,54 +530,61 @@ export function DiagnosticsPanel({
             {!quickFixes.length ? (
               <p className="inline-note">No direct recovery actions are available from the current diagnostics state.</p>
             ) : null}
-
-            <div className="desktop-pane-section-header diagnostics-subsection-header">
-              <div>
-                <p className="card-kicker">Repair plan</p>
-                <h3>Safe automatic repairs</h3>
+            <article className="diagnostic-card diagnostics-repair-plan-card">
+              <div className="desktop-pane-section-header diagnostics-subsection-header">
+                <div>
+                  <p className="card-kicker">Repair plan</p>
+                  <h3>Safe automatic repairs</h3>
+                </div>
+                <p className="inline-note">
+                  Review the planned safe repairs before applying them.
+                </p>
               </div>
-              <p className="inline-note">
-                Review the planned safe repairs before applying them.
-              </p>
-            </div>
-            {repairActions.map((action) => (
-              <article key={`${action.title}-${action.detail}`} className="diagnostic-card">
-                <h4>{action.title}</h4>
-                <p className="inline-note">{action.detail}</p>
-                <p className="diagnostic-status">{action.status}</p>
-              </article>
-            ))}
-            {!repairActions.length ? (
-              <p className="inline-note">No safe automatic repairs are currently planned.</p>
-            ) : null}
-
-            <div className="desktop-pane-section-header diagnostics-subsection-header">
-              <div>
-                <p className="card-kicker">History</p>
-                <h3>Recent problems</h3>
-              </div>
-            </div>
-            {recentFailures.map((failure) => (
-              <article key={failure.key} className="diagnostic-card diagnostic-fail">
-                <h4>{failure.title}</h4>
-                <p className="inline-note">{failure.message}</p>
-                {failure.remediation ? <p className="inline-note">{failure.remediation}</p> : null}
-                {failure.profileTarget ? (
-                  <div className="button-row">
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      onClick={() => onOpenProfiles(failure.profileTarget!.tool, failure.profileTarget!.profile)}
-                    >
-                      Open profile
-                    </button>
-                  </div>
+              <div className="stack-list">
+                {repairActions.map((action) => (
+                  <article key={`${action.title}-${action.detail}`} className="diagnostic-card">
+                    <h4>{action.title}</h4>
+                    <p className="inline-note">{action.detail}</p>
+                    <p className="diagnostic-status">{action.status}</p>
+                  </article>
+                ))}
+                {!repairActions.length ? (
+                  <p className="inline-note">No safe automatic repairs are currently planned.</p>
                 ) : null}
-              </article>
-            ))}
-            {!recentFailures.length ? (
-              <p className="inline-note">No recent command failures are recorded in this session.</p>
-            ) : null}
+              </div>
+            </article>
+
+            <article className="diagnostic-card diagnostics-history-card">
+              <div className="desktop-pane-section-header diagnostics-subsection-header">
+                <div>
+                  <p className="card-kicker">History</p>
+                  <h3>Recent problems</h3>
+                </div>
+              </div>
+              <div className="stack-list">
+                {recentFailures.map((failure) => (
+                  <article key={failure.key} className="diagnostic-card diagnostic-fail">
+                    <h4>{failure.title}</h4>
+                    <p className="inline-note">{failure.message}</p>
+                    {failure.remediation ? <p className="inline-note">{failure.remediation}</p> : null}
+                    {failure.profileTarget ? (
+                      <div className="button-row">
+                        <button
+                          className="ghost-button"
+                          type="button"
+                          onClick={() => onOpenProfiles(failure.profileTarget!.tool, failure.profileTarget!.profile)}
+                        >
+                          Open profile
+                        </button>
+                      </div>
+                    ) : null}
+                  </article>
+                ))}
+                {!recentFailures.length ? (
+                  <p className="inline-note">No recent command failures are recorded in this session.</p>
+                ) : null}
+              </div>
+            </article>
           </div>
         }
       />

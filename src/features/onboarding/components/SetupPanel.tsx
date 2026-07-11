@@ -879,7 +879,7 @@ function buildRuntimeRows(
       label: "Data folder",
       status: "pass",
       detail: bootstrap.settings.aisw_home
-        ? `Custom folder set to ${bootstrap.settings.aisw_home}.`
+        ? `Custom data folder set to ${bootstrap.settings.aisw_home}.`
         : "Managed automatically inside the standard AI Switch data location.",
     },
     {

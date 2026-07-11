@@ -1140,7 +1140,7 @@ export function SettingsPanel({
                 </div>
                 <p className="inline-note">
                   Data folder:{" "}
-                  {settings.aisw_home ? `Custom folder (${settings.aisw_home})` : "Managed automatically"}
+                  {settings.aisw_home ? `Custom data folder (${settings.aisw_home})` : "Managed automatically"}
                 </p>
                 <p className="inline-note">
                   Release track: <strong>{titleCase(updateChannel)}</strong>
