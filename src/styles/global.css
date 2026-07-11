@@ -165,8 +165,8 @@ button {
   display: flex;
   flex-direction: column;
   background:
-    linear-gradient(180deg, color-mix(in srgb, Canvas 92%, transparent), color-mix(in srgb, Canvas 87%, transparent)),
-    color-mix(in srgb, Canvas 89%, transparent);
+    linear-gradient(180deg, color-mix(in srgb, Canvas 93%, transparent), color-mix(in srgb, Canvas 89%, transparent)),
+    color-mix(in srgb, Canvas 90%, transparent);
   border-right: 1px solid var(--separator);
   backdrop-filter: blur(30px);
 }
@@ -192,15 +192,15 @@ button {
 
 .sidebar-brand {
   display: grid;
-  gap: 11px;
-  padding: 14px 14px 15px;
+  gap: 9px;
+  padding: 10px 10px 12px;
   border-radius: 14px;
-  border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
+  border: 1px solid color-mix(in srgb, CanvasText 6%, transparent);
   background:
-    radial-gradient(circle at top right, color-mix(in srgb, AccentColor 10%, transparent), transparent 34%),
-    linear-gradient(180deg, color-mix(in srgb, Canvas 99%, transparent), color-mix(in srgb, Canvas 95%, transparent)),
+    radial-gradient(circle at top right, color-mix(in srgb, AccentColor 8%, transparent), transparent 36%),
+    linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 95%, transparent)),
     color-mix(in srgb, Canvas 95%, CanvasText 5%);
-  box-shadow: 0 10px 20px rgba(17, 24, 39, 0.035), var(--shadow-panel);
+  box-shadow: var(--shadow-panel);
 }
 
 .sidebar-brand-copy {
@@ -266,30 +266,41 @@ button {
   letter-spacing: -0.025em;
 }
 
-.sidebar-copy {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.5;
+.sidebar-meta {
+  display: grid;
+  gap: 6px;
 }
 
-.sidebar-badge {
+.sidebar-meta-badge {
   display: inline-flex;
   align-items: center;
-  min-height: 22px;
-  margin: 0;
-  padding: 0 9px;
+  width: fit-content;
+  min-height: 20px;
+  padding: 0 8px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, AccentColor 16%, transparent);
-  background: color-mix(in srgb, AccentColor 10%, Canvas 90%);
+  border: 1px solid color-mix(in srgb, AccentColor 14%, transparent);
+  background: color-mix(in srgb, AccentColor 8%, Canvas 92%);
   color: var(--text-secondary);
   font-size: 11px;
   line-height: 1;
   font-weight: 600;
 }
 
+.sidebar-meta-copy {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-tertiary);
+}
+
+.sidebar-copy {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .nav-list {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .nav-group {
@@ -306,10 +317,10 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 32px;
+  min-height: 30px;
   border: 0;
   border-radius: 7px;
-  padding: 0 12px;
+  padding: 0 10px;
   background: transparent;
   color: var(--text-primary);
   text-align: left;
@@ -326,8 +337,8 @@ button {
 
 .nav-button-active {
   background:
-    linear-gradient(180deg, color-mix(in srgb, AccentColor 14%, Canvas 86%), color-mix(in srgb, AccentColor 10%, Canvas 92%));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, AccentColor 16%, transparent);
+    linear-gradient(180deg, color-mix(in srgb, AccentColor 12%, Canvas 88%), color-mix(in srgb, AccentColor 8%, Canvas 94%));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, AccentColor 14%, transparent);
   color: color-mix(in srgb, AccentColor 74%, CanvasText 26%);
   font-weight: 600;
 }
@@ -376,13 +387,12 @@ button {
 
 .sidebar-status-card {
   margin: 0;
-  padding: 12px 12px 11px;
-  border: 1px solid color-mix(in srgb, CanvasText 10%, transparent);
+  padding: 11px 11px 10px;
+  border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   border-radius: 12px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 95%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
     color-mix(in srgb, Canvas 96%, CanvasText 4%);
-  box-shadow: var(--shadow-panel);
 }
 
 .sidebar-status-stack {
@@ -713,8 +723,8 @@ button {
   gap: 16px;
   border-bottom: 1px solid var(--separator);
   background:
-    linear-gradient(180deg, color-mix(in srgb, Canvas 88%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
-    color-mix(in srgb, Canvas 92%, transparent);
+    linear-gradient(180deg, color-mix(in srgb, Canvas 91%, transparent), color-mix(in srgb, Canvas 97%, transparent)),
+    color-mix(in srgb, Canvas 94%, transparent);
   backdrop-filter: blur(32px);
 }
 
@@ -748,12 +758,12 @@ button {
 
 .toolbar-cluster {
   padding: 4px;
-  border: 1px solid color-mix(in srgb, CanvasText 10%, transparent);
+  border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   border-radius: 12px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 94%, transparent)),
-    color-mix(in srgb, Canvas 94%, CanvasText 6%);
-  box-shadow: 0 4px 14px rgba(17, 24, 39, 0.03), var(--shadow-panel);
+    linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 95%, transparent)),
+    color-mix(in srgb, Canvas 95%, CanvasText 5%);
+  box-shadow: 0 2px 10px rgba(17, 24, 39, 0.025);
 }
 
 .toolbar-action-row button {

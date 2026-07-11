@@ -51,11 +51,14 @@ export function AppFrame({
                 <div className="brand-lockup">
                   <BrandMark />
                   <div className="sidebar-brand-copy">
-                    <p className="eyebrow">Desktop Control Center</p>
+                    <p className="eyebrow">Desktop</p>
                     <h1 className="sidebar-title">AI Switch</h1>
                   </div>
                 </div>
-                <p className="sidebar-badge">Local account switching</p>
+                <div className="sidebar-meta" aria-label="App scope">
+                  <span className="sidebar-meta-badge">Local profile switching</span>
+                  <span className="sidebar-meta-copy">Claude Code, Codex CLI, Gemini CLI</span>
+                </div>
                 {subtitle ? <p className="sidebar-copy">{subtitle}</p> : null}
               </div>
               <nav className="nav-list" aria-label="Primary">
