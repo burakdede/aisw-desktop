@@ -47,11 +47,11 @@ export function AppFrame({
               <div className="brand-lockup">
                 <BrandMark />
                 <div>
-                  <p className="eyebrow">macOS Utility</p>
+                  <p className="eyebrow">Desktop App</p>
                   <h1 className="sidebar-title">AI Switch</h1>
                 </div>
               </div>
-              <p className="sidebar-badge">Local agent switching</p>
+              <p className="sidebar-badge">Local account switching</p>
               {subtitle ? <p className="sidebar-copy">{subtitle}</p> : null}
             </div>
             <nav className="nav-list" aria-label="Primary">
@@ -82,7 +82,7 @@ export function AppFrame({
         <div className="content-shell">
           <header className="window-toolbar">
             <div className="window-toolbar-copy">
-              <p className="window-toolbar-kicker">Window</p>
+              <p className="window-toolbar-kicker">Section</p>
               <h2>{title}</h2>
               {detail ? <p className="window-toolbar-subtitle">{detail}</p> : null}
             </div>

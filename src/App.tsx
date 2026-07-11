@@ -403,12 +403,12 @@ export function App() {
             <strong>{currentActiveSet ?? "None"}</strong>
           </div>
           <div className="sidebar-status-row">
-            <span className="sidebar-status-label">Engine</span>
+            <span className="sidebar-status-label">Switching</span>
             <p>{runtimeStatus.compatible ? "Ready" : "Needs attention"}</p>
           </div>
           <div className="sidebar-status-row">
-            <span className="sidebar-status-label">Path</span>
-            <p>{runtimeStatus.resolved_path ?? "Bundled runtime unavailable"}</p>
+            <span className="sidebar-status-label">Engine source</span>
+            <p>{runtimeSourceLabel(settings.runtime_kind)}</p>
           </div>
         </div>
       )}
@@ -650,5 +650,18 @@ function sectionDetail(section: string, setupFocused = false) {
       return "Control the bundled runtime, updates, terminal integration, and local storage behavior.";
     default:
       return "";
+  }
+}
+
+function runtimeSourceLabel(runtimeKind: "bundled" | "system" | "custom") {
+  switch (runtimeKind) {
+    case "bundled":
+      return "Included";
+    case "system":
+      return "System override";
+    case "custom":
+      return "Custom override";
+    default:
+      return "Included";
   }
 }

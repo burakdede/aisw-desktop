@@ -200,7 +200,7 @@ export function SetupPanel({
             <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Runtime</p>
-                <h3>Included runtime</h3>
+                <h3>Included engine</h3>
               </div>
               <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
                 {bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}
@@ -526,7 +526,7 @@ function buildHealthItems(
       status: bootstrap.runtime_status.compatible ? "pass" : "fail",
       detail: bootstrap.runtime_status.compatible
         ? bootstrap.settings.runtime_kind === "bundled"
-          ? "Included runtime is compatible with this desktop build."
+          ? "Included engine is compatible with this desktop build."
           : "Selected runtime override is compatible with this desktop build."
         : bootstrap.runtime_status.issues.join(" · ") || "Compatibility checks failed.",
     },
