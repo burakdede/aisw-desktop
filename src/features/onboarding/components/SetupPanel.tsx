@@ -210,7 +210,7 @@ export function SetupPanel({
               Active runtime path: {bootstrap.runtime_status.resolved_path ?? "No runtime resolved"}
             </p>
             <p className="inline-note">
-              Local data folder: {bootstrap.settings.aisw_home ?? "Default managed location"}
+              App data folder: {bootstrap.settings.aisw_home ?? "Managed automatically"}
             </p>
             <p className="inline-note">
               Runtime version: {bootstrap.runtime_status.version?.version ?? "unknown"}

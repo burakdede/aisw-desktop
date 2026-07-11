@@ -244,14 +244,14 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Storage</p>
-                    <h3>Local data folder</h3>
+                    <h3>App data folder</h3>
                   </div>
                   <p className="inline-note">
                     Leave this empty to use the default desktop storage location.
                   </p>
                 </div>
                 <label>
-                  Local data folder override
+                  App data folder override
                   <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
                 </label>
               </article>
@@ -278,35 +278,32 @@ export function SettingsPanel({
                     <h3>Runtime details</h3>
                   </div>
                   <p className="inline-note">
-                    Review the currently resolved runtime, stored location, and compatibility metadata.
+                    Review the selected engine mode and storage state. Raw paths stay in the advanced runtime view.
                   </p>
                 </div>
                 <p className="inline-note">
-                  Current runtime path: {runtimeStatus.resolved_path ?? "No runtime resolved"}
+                  Engine source:{" "}
+                  <strong>
+                    {runtimeKind === "bundled"
+                      ? "Included with this app"
+                      : runtimeKind === "system"
+                        ? "System override"
+                        : "Custom override"}
+                  </strong>
                 </p>
                 <p className="inline-note">
-                  Local data folder: {settings.aisw_home ?? "Default managed location"}
+                  App data folder:{" "}
+                  {settings.aisw_home ? `Custom folder (${settings.aisw_home})` : "Managed automatically"}
                 </p>
                 <p className="inline-note">
-                  Bundled runtime path:{" "}
-                  {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
-                </p>
-                {showAdvancedRuntime || runtimeKind !== "bundled" ? (
-                  <p className="inline-note">
-                    System runtime candidate:{" "}
-                    {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
-                  </p>
-                ) : null}
-                {runtimeStatus.inventory.configured_path ? (
-                  <p className="inline-note">
-                    Custom runtime path: {runtimeStatus.inventory.configured_path}
-                  </p>
-                ) : null}
-                <p className="inline-note">
-                  Selected update channel: <strong>{titleCase(updateChannel)}</strong>
+                  Compatibility:{" "}
+                  <strong>{runtimeStatus.compatible ? "Ready for desktop switching" : "Needs attention"}</strong>
                 </p>
                 <p className="inline-note">
                   Runtime mode: <strong>{titleCase(runtimeKind)}</strong>
+                </p>
+                <p className="inline-note">
+                  Selected update channel: <strong>{titleCase(updateChannel)}</strong>
                 </p>
                 <p className="inline-note">
                   Runtime version: {runtimeStatus.version?.version ?? "unknown"}
@@ -316,6 +313,26 @@ export function SettingsPanel({
                     CLI API {runtimeStatus.version.cli_api_version} · JSON schema{" "}
                     {runtimeStatus.version.json_schema_version} · Progress schema{" "}
                     {runtimeStatus.version.progress_schema_version}
+                  </p>
+                ) : null}
+                {showAdvancedRuntime || runtimeKind !== "bundled" ? (
+                  <>
+                    <p className="inline-note">
+                      Active engine path: {runtimeStatus.resolved_path ?? "No runtime resolved"}
+                    </p>
+                    <p className="inline-note">
+                      Included engine path:{" "}
+                      {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
+                    </p>
+                    <p className="inline-note">
+                      System engine candidate:{" "}
+                      {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
+                    </p>
+                  </>
+                ) : null}
+                {runtimeStatus.inventory.configured_path && (showAdvancedRuntime || runtimeKind !== "bundled") ? (
+                  <p className="inline-note">
+                    Custom engine path: {runtimeStatus.inventory.configured_path}
                   </p>
                 ) : null}
               </article>

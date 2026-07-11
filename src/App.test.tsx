@@ -6905,12 +6905,14 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByText("Runtime details")).toBeInTheDocument();
       expect(
-        screen.getByText("Current runtime path: /Applications/AI Switch.app/Contents/Resources/aisw"),
+        screen.getByText((_, element) => element?.textContent?.trim() === "Engine source: Included with this app"),
       ).toBeInTheDocument();
-      expect(screen.getAllByText("Local data folder: Default managed location").length).toBeGreaterThan(0);
+      expect(screen.getByText("App data folder: Managed automatically")).toBeInTheDocument();
       expect(
-        screen.getAllByText("Bundled runtime path: /Applications/AI Switch.app/Contents/Resources/aisw").length,
-      ).toBeGreaterThan(0);
+        screen.getByText(
+          (_, element) => element?.textContent?.trim() === "Compatibility: Ready for desktop switching",
+        ),
+      ).toBeInTheDocument();
       expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
       expect(
         screen.getByText((_, element) => element?.textContent?.trim() === "Selected update channel: Stable"),
@@ -6920,6 +6922,18 @@ describe("App", () => {
       ).toBeGreaterThan(0);
       expect(screen.getAllByText("Runtime version: 0.3.7").length).toBeGreaterThan(0);
       expect(screen.getByText("CLI API 1 · JSON schema 1 · Progress schema 1")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("Show advanced runtime options"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Active engine path: /Applications/AI Switch.app/Contents/Resources/aisw"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Included engine path: /Applications/AI Switch.app/Contents/Resources/aisw"),
+      ).toBeInTheDocument();
+      expect(screen.getByText("System engine candidate: /opt/homebrew/bin/aisw")).toBeInTheDocument();
     });
   });
 
