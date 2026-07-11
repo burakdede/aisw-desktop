@@ -13,6 +13,7 @@ import { DesktopCommandError } from "../../../lib/tauri";
 import { DesktopSettings, AppBootstrap } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
 import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
+import { normalizeTerminalIntegrationText } from "../../shared/terminal-integration-language";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 
@@ -1272,16 +1273,7 @@ function findShellHookCheck(report: Record<string, unknown> | undefined) {
         check.status === "pass" || check.status === "warn" || check.status === "fail"
           ? check.status
           : "warn",
-      detail:
-        (check.detail ?? "")
-          .replace(
-            "Shell hook is not active in the current shell session.",
-            "Terminal integration is not active in the current shell session.",
-          )
-          .replace(
-            "Install the shell hook and reload the shell.",
-            "Install terminal integration and reload the shell.",
-          ),
+      detail: normalizeTerminalIntegrationText(check.detail ?? ""),
     };
   }
   return null;

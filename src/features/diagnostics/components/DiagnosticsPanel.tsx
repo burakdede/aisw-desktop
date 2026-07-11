@@ -9,6 +9,7 @@ import { useLastCommandResults } from "../../shared/lastCommandResult";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
+import { normalizeTerminalIntegrationText } from "../../shared/terminal-integration-language";
 import {
   preferredProfileImportMode,
   supportsProfileImportMode,
@@ -1067,18 +1068,6 @@ function shellHookDoctorIssue(doctor: Record<string, unknown> | undefined) {
   }
 
   return null;
-}
-
-function normalizeTerminalIntegrationText(value: string) {
-  return value
-    .replace(
-      "Shell hook is not active in the current shell session.",
-      "Terminal integration is not active in the current shell session.",
-    )
-    .replace(
-      "Install the shell hook and reload the shell.",
-      "Install terminal integration and reload the shell.",
-    );
 }
 
 function keyringDoctorIssue(doctor: Record<string, unknown> | undefined) {

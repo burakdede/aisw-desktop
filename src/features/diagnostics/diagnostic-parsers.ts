@@ -1,3 +1,5 @@
+import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
+
 type StatusTone = "pass" | "warn" | "fail" | "unknown";
 
 export interface SummaryCardData {
@@ -45,15 +47,7 @@ function asNumber(value: unknown, fallback = 0) {
 }
 
 function normalizeUserFacingIssueText(value: string) {
-  return value
-    .replace(
-      "Shell hook is not active in the current shell session.",
-      "Terminal integration is not active in the current shell session.",
-    )
-    .replace(
-      "Install the shell hook and reload the shell.",
-      "Install terminal integration and reload the shell.",
-    );
+  return normalizeTerminalIntegrationText(value);
 }
 
 export function parseDoctorSummary(payload: Record<string, unknown> | undefined): SummaryCardData {

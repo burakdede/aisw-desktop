@@ -825,13 +825,13 @@ function MissingBinaryGuidance({
         tool yet.
       </p>
       <p className="inline-note">
-        Install: <code>{installCommand}</code>
+        Install command: <code>{installCommand}</code>
       </p>
       <p className="inline-note">
-        Verify binary: <code>{verifyCommand}</code>
+        Confirm installation: <code>{verifyCommand}</code>
       </p>
       <p className="inline-note">
-        Check PATH: <code>{pathCommand}</code>
+        Check terminal path: <code>{pathCommand}</code>
       </p>
       <p className="inline-note">
         Refresh state after the CLI is installed or after you update your shell PATH.

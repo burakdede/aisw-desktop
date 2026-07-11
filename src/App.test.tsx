@@ -702,8 +702,11 @@ describe("App", () => {
       throw new Error("Missing Gemini overview card.");
     }
     const overview = within(overviewCard);
+    expect(overview.getByText("Install command:")).toBeInTheDocument();
     expect(overview.getByText("npm install -g @google/gemini-cli")).toBeInTheDocument();
+    expect(overview.getByText("Confirm installation:")).toBeInTheDocument();
     expect(overview.getByText("gemini --version")).toBeInTheDocument();
+    expect(overview.getByText("Check terminal path:")).toBeInTheDocument();
     expect(overview.getByText("which gemini")).toBeInTheDocument();
 
     fireEvent.click(overview.getByText("Open installation guide"));
