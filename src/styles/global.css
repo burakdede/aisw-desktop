@@ -712,6 +712,10 @@ button {
   letter-spacing: -0.01em;
 }
 
+.diagnostics-hero {
+  margin-bottom: 14px;
+}
+
 .profiles-toolbar {
   display: flex;
   gap: 10px;

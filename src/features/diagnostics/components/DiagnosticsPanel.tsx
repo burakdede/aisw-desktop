@@ -120,6 +120,11 @@ export function DiagnosticsPanel({
     ...issueCards.flatMap((card) => card.issues).slice(0, 2),
     ...recentFailures.slice(0, 1).map((failure) => failure.title),
   ].slice(0, 3);
+  const diagnosticPills = buildDiagnosticPills({
+    totalIssues,
+    repairCount: repairActions.length,
+    exportReady: Boolean(exportBundle.data),
+  });
 
   return (
     <SectionCard
@@ -153,6 +158,22 @@ export function DiagnosticsPanel({
         </div>
       }
     >
+      <article className="desktop-pane-hero diagnostics-hero">
+        <div className="desktop-pane-hero-copy">
+          <p className="card-kicker">Health</p>
+          <h3>Verify switching health with one consistent recovery flow</h3>
+          <p className="inline-note">
+            Diagnostics, verification, safe repair actions, and export all stay in the same desktop recovery surface so users do not have to learn different patterns for different failures.
+          </p>
+        </div>
+        <div className="desktop-pane-hero-pills" aria-label="Diagnostics highlights">
+          {diagnosticPills.map((pill) => (
+            <span key={pill} className="status-pill">
+              {pill}
+            </span>
+          ))}
+        </div>
+      </article>
       <article className={`diagnostic-card diagnostics-overview desktop-pane-intro ${totalIssues ? "diagnostic-warn" : "diagnostic-pass"}`}>
         <h3>{totalIssues ? `${totalIssues} issue${totalIssues === 1 ? "" : "s"} found` : "System looks healthy"}</h3>
         {summaryHighlights.length ? (
@@ -868,6 +889,22 @@ function buildRecentFailureCards(
   }
 
   return failures.sort((left, right) => right.at - left.at);
+}
+
+function buildDiagnosticPills({
+  totalIssues,
+  repairCount,
+  exportReady,
+}: {
+  totalIssues: number;
+  repairCount: number;
+  exportReady: boolean;
+}) {
+  return [
+    totalIssues ? `${totalIssues} active issue${totalIssues === 1 ? "" : "s"}` : "No active issues",
+    repairCount ? `${repairCount} safe repair${repairCount === 1 ? "" : "s"}` : "Manual review only",
+    exportReady ? "Report exported" : "Bundle export ready",
+  ];
 }
 
 function recentFailureTitle(input: {
