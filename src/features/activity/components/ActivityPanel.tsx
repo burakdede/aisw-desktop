@@ -106,13 +106,13 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
   return (
     <SectionCard
       title="Activity"
-      kicker="Recent changes and checks"
+      kicker="Recent activity"
     >
       <DesktopStatusStrip
         ariaLabel="Activity highlights"
         items={[
           {
-            label: "Timeline",
+            label: "Recent activity",
             value: `${entries.length} session event${entries.length === 1 ? "" : "s"}`,
             note: "Recent profile changes, verification runs, setup actions, and recovery outcomes stay in one local stream.",
           },
@@ -137,7 +137,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
             <article className="diagnostic-card activity-list-card">
               <div className="desktop-pane-section-header">
                 <div>
-                  <p className="card-kicker">Timeline</p>
+                  <p className="card-kicker">Recent activity</p>
                   <h3>Session events</h3>
                 </div>
                 <p className="inline-note">
@@ -240,22 +240,22 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                     },
                   ]}
                 />
-                <div className="activity-detail-copy stack-list">
-                  {selectedEntry.command ? (
+                  <div className="activity-detail-copy stack-list">
+                    {selectedEntry.command ? (
+                      <div>
+                        <p className="card-kicker">Recorded command</p>
+                        <pre>{selectedEntry.command}</pre>
+                      </div>
+                    ) : null}
                     <div>
-                      <p className="card-kicker">Command</p>
-                      <pre>{selectedEntry.command}</pre>
+                      <p className="card-kicker">What happened</p>
+                      <p className="inline-note">{selectedEntry.message}</p>
                     </div>
-                  ) : null}
-                  <div>
-                    <p className="card-kicker">Output</p>
-                    <p className="inline-note">{selectedEntry.message}</p>
-                  </div>
-                  <div>
-                    <p className="card-kicker">Recorded result</p>
-                    <p className="inline-note">
-                      {selectedEntry.resultSummary ??
-                        (selectedEntry.status === "success"
+                    <div>
+                      <p className="card-kicker">Desktop record</p>
+                      <p className="inline-note">
+                        {selectedEntry.resultSummary ??
+                          (selectedEntry.status === "success"
                           ? "Snapshot updated successfully."
                           : "The desktop app recorded a recoverable failure for this event.")}
                     </p>

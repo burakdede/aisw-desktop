@@ -109,12 +109,12 @@ export function BackupsPanel({
   const restoreSheetMode = pendingRestore?.mode ?? null;
 
   return (
-    <SectionCard title="Backups" kicker="Recovery">
+    <SectionCard title="Backups" kicker="Restore points">
       <DesktopStatusStrip
         ariaLabel="Backup highlights"
         items={[
           {
-            label: "Library",
+            label: "Restore points",
             value: `${sortedBackups.length} local backup${sortedBackups.length === 1 ? "" : "s"}`,
             note: "Browse and inspect restore points without leaving the main recovery flow.",
           },
@@ -139,7 +139,7 @@ export function BackupsPanel({
             <article className="diagnostic-card backups-list-card">
               <div className="desktop-pane-section-header">
                 <div>
-                  <p className="card-kicker">Timeline</p>
+                  <p className="card-kicker">Restore points</p>
                   <h3>Local backups</h3>
                 </div>
                 <p className="inline-note">
@@ -219,7 +219,7 @@ export function BackupsPanel({
                     <h3>{selectedProfileLabel}</h3>
                   </div>
                   <p className="inline-note">
-                    Restore files only by default, then reactivate explicitly only when you want to switch the live profile again.
+                    Restore saved files first, then reactivate explicitly only when you want that profile live again.
                   </p>
                 </div>
                 <div className="backups-detail-summary">
@@ -245,7 +245,7 @@ export function BackupsPanel({
                 />
                 <div className="backups-detail-block">
                   <div>
-                    <p className="card-kicker">Contains</p>
+                    <p className="card-kicker">Saved state</p>
                     <p className="inline-note">
                       {titleCase(selectedTarget.tool)} profile <strong>{selectedProfileLabel}</strong> and its saved config snapshot.
                     </p>
@@ -310,7 +310,7 @@ export function BackupsPanel({
               <article className="diagnostic-card">
                 <h3>No backup selected</h3>
                 <p className="inline-note">
-                  Choose a backup from the list to inspect its scope and restore actions.
+                  Choose a restore point from the list to inspect its scope and restore actions.
                 </p>
               </article>
             )}
@@ -328,7 +328,7 @@ export function BackupsPanel({
           >
             <div className="quick-switch-header">
               <div>
-                <p className="card-kicker">Backup</p>
+                <p className="card-kicker">Restore point</p>
                 <h3>Restore backup?</h3>
                 <p className="inline-note">
                   Review the restore scope before AI Switch changes any saved files.
