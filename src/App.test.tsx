@@ -5653,7 +5653,7 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Verify and recovery")).toBeInTheDocument();
+      expect(screen.getByText("Checks and recovery")).toBeInTheDocument();
     });
   });
 
@@ -5704,7 +5704,7 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Verify and recovery")).toBeInTheDocument();
+      expect(screen.getByText("Checks and recovery")).toBeInTheDocument();
       expect(doctorRuns).toBe(1);
     });
 
@@ -5925,7 +5925,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Diagnostics" })).toHaveClass("nav-button-active");
-      expect(screen.getByText("Verify and recovery")).toBeInTheDocument();
+      expect(screen.getByText("Checks and recovery")).toBeInTheDocument();
     });
   });
 
@@ -6066,8 +6066,8 @@ describe("App", () => {
       handlers?.["tray-run-diagnostics"]?.({});
     });
 
-    await waitFor(() => expect(screen.getByText("Verify and recovery")).toBeInTheDocument());
-    expect(screen.getByRole("button", { name: "Verify Again" })).toBeDisabled();
+    await waitFor(() => expect(screen.getByText("Checks and recovery")).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Refresh Checks" })).toBeDisabled();
     expect(doctorRuns).toBe(0);
     expect(verifyRuns).toBe(0);
     expect(repairRuns).toBe(0);
@@ -6082,7 +6082,7 @@ describe("App", () => {
       expect(verifyRuns).toBeGreaterThan(0);
       expect(repairRuns).toBeGreaterThan(0);
     });
-    expect(screen.getByRole("button", { name: "Verify Again" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Refresh Checks" })).toBeEnabled();
   });
 
   it("records tray command results and shows a desktop notification", async () => {

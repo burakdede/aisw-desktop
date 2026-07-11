@@ -62,7 +62,7 @@ export function parseDoctorSummary(payload: Record<string, unknown> | undefined)
   const warn = checks.filter((check) => asObject(check)?.status === "warn").length;
   const fail = checks.filter((check) => asObject(check)?.status === "fail").length;
   return {
-    title: "Doctor",
+    title: "Health scan",
     status: fail > 0 ? "fail" : warn > 0 ? "warn" : checks.length ? "pass" : "unknown",
     lines: [
       `${checks.length} checks`,
@@ -76,7 +76,7 @@ export function parseDoctorSummary(payload: Record<string, unknown> | undefined)
 export function parseVerifySummary(payload: Record<string, unknown> | undefined): SummaryCardData {
   const summary = asObject(payload?.summary);
   return {
-    title: "Verify",
+    title: "Live match",
     status: (summary?.status as StatusTone) ?? "unknown",
     lines: [
       `${asNumber(summary?.passed)} passed`,
@@ -90,7 +90,7 @@ export function parseRepairSummary(payload: Record<string, unknown> | undefined)
   const result = asObject(payload?.result);
   const summary = asObject(result?.summary);
   return {
-    title: "Repair preview",
+    title: "Repair plan",
     status: (summary?.status as StatusTone) ?? "unknown",
     lines: [
       `${asNumber(summary?.actions_planned)} actions planned`,

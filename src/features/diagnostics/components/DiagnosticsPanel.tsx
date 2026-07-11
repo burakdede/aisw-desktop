@@ -150,7 +150,7 @@ export function DiagnosticsPanel({
   return (
     <SectionCard
       title="Diagnostics"
-      kicker="Verify and recovery"
+      kicker="Checks and recovery"
       actions={
         <div className="button-row">
           <button
@@ -160,7 +160,7 @@ export function DiagnosticsPanel({
               void refreshDiagnostics(queryClient, doctor.refetch, verify.refetch, repair.refetch)
             }
           >
-            Verify Again
+            Refresh Checks
           </button>
           <button
             className="ghost-button"
@@ -190,7 +190,8 @@ export function DiagnosticsPanel({
           </span>
         </div>
         <p className="inline-note">
-          Doctor, verify, and repair stay in one recovery surface so switching issues use one consistent flow.
+          Health checks, live matching, and repair stay in one recovery surface so switching issues
+          use one consistent flow.
         </p>
         <div className="diagnostics-overview-meta">
           <div>
@@ -432,7 +433,7 @@ export function DiagnosticsPanel({
                 </div>
               </div>
               <p className="inline-note">
-                Apply the safest repair path first, then rerun verification from this pane.
+                Apply the safest repair path first, then refresh checks from this pane.
               </p>
             </article>
             {quickFixes.map((fix) => (
