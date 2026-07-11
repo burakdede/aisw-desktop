@@ -137,14 +137,14 @@ export function SettingsPanel({
         primaryClassName="settings-nav-pane"
         secondaryClassName="settings-detail-pane"
         primary={
-          <article className="diagnostic-card settings-nav-card">
+          <article className="diagnostic-card desktop-source-card settings-nav-card">
             <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Categories</p>
                 <h3>Preferences</h3>
               </div>
             </div>
-            <div className="settings-source-list" aria-label="Settings sections">
+            <div className="desktop-source-list" aria-label="Settings sections">
               {SETTINGS_SECTIONS.map((section) => (
                 <button
                   key={section}
@@ -152,8 +152,8 @@ export function SettingsPanel({
                   aria-label={sectionLabel(section)}
                   aria-describedby={`settings-section-summary-${section}`}
                   aria-pressed={selectedSection === section}
-                  className={`settings-source-row ${
-                    selectedSection === section ? "settings-source-row-selected" : ""
+                  className={`desktop-source-row ${
+                    selectedSection === section ? "desktop-source-row-selected" : ""
                   }`}
                   onClick={() => setSelectedSection(section)}
                 >
@@ -166,7 +166,7 @@ export function SettingsPanel({
                       {sourceListSummary(section)}
                     </p>
                   </div>
-                  <span className="settings-source-chevron" aria-hidden="true">
+                  <span className="desktop-source-chevron" aria-hidden="true">
                     ›
                   </span>
                 </button>

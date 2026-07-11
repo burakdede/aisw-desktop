@@ -152,18 +152,15 @@ async function openSetsSection() {
   }
   fireEvent.click(within(sidebar).getByRole("button", { name: "Sets" }));
   if (!screen.queryByLabelText("Set name")) {
-    const segmentedSets = screen.getAllByRole("button", { name: "Sets" }).find((button) =>
-      button.className.includes("segmented-control-button"),
-    );
-    if (segmentedSets) {
-      fireEvent.click(segmentedSets);
-    }
+    const setsSections = screen.getByLabelText("Sets sections");
+    fireEvent.click(within(setsSections).getByRole("button", { name: "Sets" }));
   }
 }
 
 async function openProjectRulesSection() {
   await openSetsSection();
-  fireEvent.click(screen.getByRole("button", { name: "Project rules" }));
+  const setsSections = screen.getByLabelText("Sets sections");
+  fireEvent.click(within(setsSections).getByRole("button", { name: "Project rules" }));
 }
 
 function selectOverviewTool(tool: string) {

@@ -770,16 +770,17 @@ button {
   min-width: 0;
 }
 
+.desktop-source-card,
 .settings-nav-card {
   gap: 12px;
 }
 
-.settings-source-list {
+.desktop-source-list {
   display: grid;
   gap: 6px;
 }
 
-.settings-source-row {
+.desktop-source-row {
   width: 100%;
   display: flex;
   justify-content: space-between;
@@ -793,28 +794,28 @@ button {
   cursor: pointer;
 }
 
-.settings-source-row:hover {
+.desktop-source-row:hover {
   background: var(--soft-fill);
 }
 
-.settings-source-row-selected {
+.desktop-source-row-selected {
   border-color: color-mix(in srgb, AccentColor 24%, transparent);
   background:
     linear-gradient(180deg, color-mix(in srgb, AccentColor 10%, Canvas 92%), color-mix(in srgb, AccentColor 6%, Canvas 96%));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, AccentColor 16%, transparent);
 }
 
-.settings-source-row strong {
+.desktop-source-row strong {
   display: block;
   font-size: 13px;
   line-height: 1.25;
 }
 
-.settings-source-row p {
+.desktop-source-row p {
   margin: 4px 0 0;
 }
 
-.settings-source-chevron {
+.desktop-source-chevron {
   font-size: 18px;
   line-height: 1;
   color: var(--text-tertiary);
@@ -926,6 +927,15 @@ button {
 
 .sets-layout {
   grid-template-columns: minmax(0, 1.25fr) minmax(300px, 360px);
+}
+
+.sets-mode-split {
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+}
+
+.sets-mode-pane,
+.sets-detail-pane {
+  min-width: 0;
 }
 
 .sets-summary-grid {
@@ -1748,7 +1758,8 @@ button {
   .profiles-layout,
   .sets-layout,
   .overview-tools-split,
-  .settings-split {
+  .settings-split,
+  .sets-mode-split {
     grid-template-columns: 1fr;
   }
 
