@@ -364,12 +364,12 @@ export function SettingsPanel({
               <article
                 className={`diagnostic-card ${runtimeKind === "bundled" ? "diagnostic-pass" : "diagnostic-warn"}`}
               >
-                <h3>Recommended runtime</h3>
+                <h3>Recommended engine</h3>
                 <p className="inline-note">
-                  This app ships with a compatible runtime and uses it by default.
+                  This app ships with a compatible engine and uses it by default.
                 </p>
                 <p className="inline-note">
-                  Use a system or custom runtime only when you intentionally need to override the supported desktop bundle.
+                  Use a system or custom engine only when you intentionally need to override the supported desktop bundle.
                 </p>
               </article>
 
