@@ -230,7 +230,7 @@ button {
   border-radius: 12px;
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   background:
-    linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 95%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
     color-mix(in srgb, Canvas 95%, CanvasText 5%);
   box-shadow: var(--shadow-panel);
 }
@@ -244,38 +244,45 @@ button {
 }
 
 .brand-mark-shell {
-  fill: color-mix(in srgb, Canvas 94%, CanvasText 6%);
-  stroke: color-mix(in srgb, CanvasText 14%, transparent);
-}
-
-.brand-mark-rail {
-  fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
+  fill: color-mix(in srgb, Canvas 92%, CanvasText 8%);
   stroke: color-mix(in srgb, CanvasText 12%, transparent);
 }
 
-.brand-mark-rail-accent {
-  fill: color-mix(in srgb, AccentColor 22%, Canvas 78%);
-  stroke: color-mix(in srgb, AccentColor 36%, transparent);
+.brand-mark-core {
+  fill: color-mix(in srgb, Canvas 98%, CanvasText 2%);
+  stroke: color-mix(in srgb, CanvasText 8%, transparent);
 }
 
-.brand-mark-flow {
-  fill: color-mix(in srgb, AccentColor 72%, Canvas 28%);
-  stroke: color-mix(in srgb, AccentColor 32%, transparent);
-  stroke-width: 0.65;
+.brand-mark-lane {
+  fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
+  stroke: color-mix(in srgb, CanvasText 10%, transparent);
 }
 
-.brand-mark-beam {
-  stroke: color-mix(in srgb, CanvasText 34%, transparent);
+.brand-mark-lane-accent {
+  fill: color-mix(in srgb, AccentColor 16%, Canvas 84%);
+  stroke: color-mix(in srgb, AccentColor 24%, transparent);
+}
+
+.brand-mark-path {
+  stroke: color-mix(in srgb, CanvasText 42%, transparent);
+}
+
+.brand-mark-path-accent {
+  stroke: color-mix(in srgb, AccentColor 78%, CanvasText 22%);
+}
+
+.brand-mark-bridge {
+  stroke: color-mix(in srgb, CanvasText 26%, transparent);
 }
 
 .brand-mark-node {
   fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
-  stroke: color-mix(in srgb, CanvasText 16%, transparent);
+  stroke: color-mix(in srgb, CanvasText 12%, transparent);
 }
 
 .brand-mark-node-accent {
-  fill: color-mix(in srgb, AccentColor 82%, Canvas 18%);
-  stroke: color-mix(in srgb, AccentColor 34%, transparent);
+  fill: color-mix(in srgb, AccentColor 88%, Canvas 12%);
+  stroke: color-mix(in srgb, AccentColor 28%, transparent);
 }
 
 .sidebar-title {
@@ -298,9 +305,9 @@ button {
   margin: 0;
   padding: 0 9px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, AccentColor 20%, transparent);
-  background: color-mix(in srgb, AccentColor 10%, Canvas 90%);
-  color: color-mix(in srgb, AccentColor 74%, CanvasText 26%);
+  border: 1px solid color-mix(in srgb, CanvasText 12%, transparent);
+  background: color-mix(in srgb, CanvasText 4%, transparent);
+  color: var(--text-secondary);
   font-size: 11px;
   line-height: 1;
   font-weight: 600;

@@ -58,11 +58,11 @@ export function AppFrame({
                 <div className="brand-lockup">
                   <BrandMark />
                   <div className="sidebar-brand-copy">
-                    <p className="eyebrow">Desktop Switchboard</p>
+                    <p className="eyebrow">Local Account Control</p>
                     <h1 className="sidebar-title">AI Switch</h1>
                   </div>
                 </div>
-                <p className="sidebar-badge">Coding agent switching</p>
+                <p className="sidebar-badge">Native desktop utility</p>
                 {subtitle ? <p className="sidebar-copy">{subtitle}</p> : null}
               </div>
               <nav className="nav-list" aria-label="Primary">
