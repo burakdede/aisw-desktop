@@ -140,11 +140,11 @@ export function SettingsPanel({
 
   async function copyText(value: string, label: string) {
     if (!navigator.clipboard?.writeText) {
-      setCopyMessage(`Clipboard access is unavailable. Copy the ${label} command manually.`);
+      setCopyMessage(`Clipboard access is unavailable. Copy the ${label} step manually.`);
       return;
     }
     await navigator.clipboard.writeText(value);
-    setCopyMessage(`Copied ${label} command.`);
+    setCopyMessage(`Copied ${label} step.`);
   }
 
   async function exportReport() {
@@ -641,7 +641,8 @@ export function SettingsPanel({
               <article className="diagnostic-card settings-pane-intro">
                 <h3>Terminal Integration</h3>
                 <p className="inline-note">
-                  Install terminal integration only when you want current shells to react immediately after a switch.
+                  AI Switch can switch accounts without terminal integration. Turn it on only when you
+                  want already-open terminal windows to react immediately after a switch.
                 </p>
               </article>
               <article className="diagnostic-card settings-pane-section">
@@ -651,7 +652,7 @@ export function SettingsPanel({
                     <h3>Current terminal session</h3>
                   </div>
                   <p className="inline-note">
-                    Terminal integration is optional, but recommended when you want immediate environment exports in the current shell session.
+                    Recommended only when you want immediate environment updates in the current shell session.
                   </p>
                 </div>
                 {shellCheck ? (
@@ -672,6 +673,13 @@ export function SettingsPanel({
                       ? titleCase(shellGuidance.data.detected_shell)
                       : "Unknown"}
                   </strong>
+                </p>
+                <p className="inline-note">
+                  Without terminal integration, AI Switch still updates saved profiles and live credential files.
+                </p>
+                <p className="inline-note">
+                  Terminal integration is only needed for already-open terminals that should receive
+                  environment updates right away.
                 </p>
                 {shellGuidance.data ? (
                   <>
@@ -710,11 +718,12 @@ export function SettingsPanel({
                 <article className="diagnostic-card settings-pane-section">
                   <div className="desktop-pane-section-header">
                     <div>
-                      <p className="card-kicker">Guide</p>
-                      <h3>{selectedVariant.title} shell setup</h3>
+                      <p className="card-kicker">Guided setup</p>
+                      <h3>{selectedVariant.title} terminal setup</h3>
                     </div>
                     <p className="inline-note">
-                      Copy the setup, reload, and verify commands for this shell.
+                      Install later unless you know you need immediate environment updates in
+                      already-open terminal windows.
                     </p>
                   </div>
                   <p className="inline-note">Config file: {selectedVariant.config_path}</p>
@@ -725,8 +734,7 @@ export function SettingsPanel({
                   ) : null}
                   <div className="stack-list">
                     <div>
-                      <p className="inline-note">Install</p>
-                      <pre>{selectedVariant.install_command}</pre>
+                      <p className="inline-note">1. Add the AI Switch line to your shell config.</p>
                       <div className="button-row">
                         <button
                           type="button"
@@ -735,13 +743,12 @@ export function SettingsPanel({
                             void copyText(selectedVariant.install_command, "setup")
                           }
                         >
-                          Copy setup command
+                          Copy setup step
                         </button>
                       </div>
                     </div>
                     <div>
-                      <p className="inline-note">Reload</p>
-                      <pre>{selectedVariant.reload_command}</pre>
+                      <p className="inline-note">2. Reload the shell config.</p>
                       <div className="button-row">
                         <button
                           type="button"
@@ -750,13 +757,12 @@ export function SettingsPanel({
                             void copyText(selectedVariant.reload_command, "reload")
                           }
                         >
-                          Copy reload command
+                          Copy reload step
                         </button>
                       </div>
                     </div>
                     <div>
-                      <p className="inline-note">Verify</p>
-                      <pre>{selectedVariant.verify_command}</pre>
+                      <p className="inline-note">3. Verify that terminal integration is active.</p>
                       <p className="inline-note">
                         Expected output: {selectedVariant.verify_expected}
                       </p>
@@ -768,21 +774,44 @@ export function SettingsPanel({
                             void copyText(selectedVariant.verify_command, "verify")
                           }
                         >
-                          Copy verify command
+                          Copy verify step
                         </button>
                       </div>
                     </div>
                   </div>
+                  <details className="settings-guide-block">
+                    <summary>Show command details</summary>
+                    <div className="stack-list">
+                      <div>
+                        <p className="inline-note">Setup command</p>
+                        <pre>{selectedVariant.install_command}</pre>
+                      </div>
+                      <div>
+                        <p className="inline-note">Reload command</p>
+                        <pre>{selectedVariant.reload_command}</pre>
+                      </div>
+                      <div>
+                        <p className="inline-note">Verify command</p>
+                        <pre>{selectedVariant.verify_command}</pre>
+                      </div>
+                    </div>
+                  </details>
                 </article>
               ) : null}
               {shellGuidance.data ? (
                 <article className="diagnostic-card">
                   <h3>Without terminal integration</h3>
                   <p className="inline-note">{shellGuidance.data.note}</p>
-                  <p className="inline-note">Advanced command-line examples:</p>
-                  {shellGuidance.data.manual_apply_examples.map((example) => (
-                    <pre key={example}>{example}</pre>
-                  ))}
+                  {shellGuidance.data.manual_apply_examples.length ? (
+                    <details className="settings-guide-block">
+                      <summary>Show advanced command-line examples</summary>
+                      <div className="stack-list">
+                        {shellGuidance.data.manual_apply_examples.map((example) => (
+                          <pre key={example}>{example}</pre>
+                        ))}
+                      </div>
+                    </details>
+                  ) : null}
                 </article>
               ) : null}
               {copyMessage ? <p className="inline-note">{copyMessage}</p> : null}

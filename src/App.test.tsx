@@ -7168,7 +7168,7 @@ describe("App", () => {
     });
   });
 
-  it("shows explicit shell hook guidance in settings", async () => {
+  it("shows desktop-first terminal guidance in settings", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Settings"));
@@ -7178,9 +7178,10 @@ describe("App", () => {
       expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
       expect(screen.getAllByText(/Detected shell:/).length).toBeGreaterThan(0);
       expect(screen.getByText("Config file: ~/.zshrc")).toBeInTheDocument();
-      expect(screen.getByText("echo 'eval \"$(aisw shell-hook zsh)\"' >> ~/.zshrc")).toBeInTheDocument();
-      expect(screen.getByText("source ~/.zshrc")).toBeInTheDocument();
-      expect(screen.getByText("echo \"$AISW_SHELL_HOOK\"")).toBeInTheDocument();
+      expect(screen.getByText("1. Add the AI Switch line to your shell config.")).toBeInTheDocument();
+      expect(screen.getByText("2. Reload the shell config.")).toBeInTheDocument();
+      expect(screen.getByText("3. Verify that terminal integration is active.")).toBeInTheDocument();
+      expect(screen.getByText("Show command details")).toBeInTheDocument();
     });
   });
 
