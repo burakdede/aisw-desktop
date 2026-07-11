@@ -641,7 +641,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
     let shared_profiles = shared_profile_entries(settings, snapshot);
     if !shared_profiles.is_empty() {
         sections.push(TraySection {
-            title: "Shared Profiles".to_owned(),
+            title: "Switch Matching Profiles".to_owned(),
             items: shared_profiles
                 .into_iter()
                 .map(|(profile, label)| TrayEntry {
@@ -655,7 +655,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
 
     if !snapshot.contexts.is_empty() {
         sections.push(TraySection {
-            title: "Imported Sets".to_owned(),
+            title: "Switch Imported Set".to_owned(),
             items: snapshot
                 .contexts
                 .iter()
@@ -673,7 +673,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
         .unwrap_or_default();
     if !profile_sets.is_empty() {
         sections.push(TraySection {
-            title: "Saved Sets".to_owned(),
+            title: "Switch Saved Set".to_owned(),
             items: profile_sets,
         });
     }
@@ -686,7 +686,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
             continue;
         }
         sections.push(TraySection {
-            title: tool_display_name(tool),
+            title: format!("Switch {}", tool_display_name(tool)),
             items: entry
                 .profiles
                 .iter()
@@ -752,7 +752,7 @@ fn tray_diagnostics_section(snapshot: &AppSnapshot) -> TraySection {
     let summaries = tray_warning_summaries(snapshot);
     let mut items = vec![TrayEntry {
         id: DIAGNOSTICS_ID.to_owned(),
-        label: "Run Verification".to_owned(),
+        label: "Verify Now".to_owned(),
         enabled: true,
     }];
 
@@ -1237,7 +1237,7 @@ mod tests {
             ),
             vec![
                 TraySection {
-                    title: "Shared Profiles".to_owned(),
+                    title: "Switch Matching Profiles".to_owned(),
                     items: vec![TrayEntry {
                         id: "switch-all:work".to_owned(),
                         label: "Work".to_owned(),
@@ -1245,7 +1245,7 @@ mod tests {
                     }],
                 },
                 TraySection {
-                    title: "Imported Sets".to_owned(),
+                    title: "Switch Imported Set".to_owned(),
                     items: vec![TrayEntry {
                         id: "context:client-acme".to_owned(),
                         label: "Client Acme ✓".to_owned(),
@@ -1253,7 +1253,7 @@ mod tests {
                     }],
                 },
                 TraySection {
-                    title: "Saved Sets".to_owned(),
+                    title: "Switch Saved Set".to_owned(),
                     items: vec![TrayEntry {
                         id: "profile-set:personal-focus".to_owned(),
                         label: "personal-focus".to_owned(),
@@ -1261,7 +1261,7 @@ mod tests {
                     }],
                 },
                 TraySection {
-                    title: "Claude Code".to_owned(),
+                    title: "Switch Claude Code".to_owned(),
                     items: vec![
                         TrayEntry {
                             id: "profile:claude:work".to_owned(),
@@ -1276,7 +1276,7 @@ mod tests {
                     ],
                 },
                 TraySection {
-                    title: "Codex CLI".to_owned(),
+                    title: "Switch Codex CLI".to_owned(),
                     items: vec![TrayEntry {
                         id: "profile:codex:work".to_owned(),
                         label: "Work ✓".to_owned(),
@@ -1288,7 +1288,7 @@ mod tests {
                     items: vec![
                         TrayEntry {
                             id: "diagnostics".to_owned(),
-                            label: "Run Verification".to_owned(),
+                            label: "Verify Now".to_owned(),
                             enabled: true,
                         },
                         TrayEntry {
@@ -1438,7 +1438,7 @@ mod tests {
             tray_sections(Some(&settings), &snapshot),
             vec![
                 TraySection {
-                    title: "Shared Profiles".to_owned(),
+                    title: "Switch Matching Profiles".to_owned(),
                     items: vec![TrayEntry {
                         id: "switch-all:work".to_owned(),
                         label: "Office".to_owned(),
@@ -1446,7 +1446,7 @@ mod tests {
                     }],
                 },
                 TraySection {
-                    title: "Claude Code".to_owned(),
+                    title: "Switch Claude Code".to_owned(),
                     items: vec![TrayEntry {
                         id: "profile:claude:work".to_owned(),
                         label: "Office ✓".to_owned(),
@@ -1454,7 +1454,7 @@ mod tests {
                     }],
                 },
                 TraySection {
-                    title: "Codex CLI".to_owned(),
+                    title: "Switch Codex CLI".to_owned(),
                     items: vec![TrayEntry {
                         id: "profile:codex:work".to_owned(),
                         label: "Work ✓".to_owned(),
@@ -1466,7 +1466,7 @@ mod tests {
                     items: vec![
                         TrayEntry {
                             id: "diagnostics".to_owned(),
-                            label: "Run Verification".to_owned(),
+                            label: "Verify Now".to_owned(),
                             enabled: true,
                         },
                         TrayEntry {
@@ -1617,7 +1617,7 @@ mod tests {
                 items: vec![
                     TrayEntry {
                         id: "diagnostics".to_owned(),
-                        label: "Run Verification".to_owned(),
+                        label: "Verify Now".to_owned(),
                         enabled: true,
                     },
                     TrayEntry {
