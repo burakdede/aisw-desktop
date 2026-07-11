@@ -1011,6 +1011,25 @@ button {
   align-items: start;
 }
 
+.settings-summary-card {
+  gap: 12px;
+}
+
+.settings-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.settings-summary-grid > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
 .settings-pane-intro h3 {
   font-size: 18px;
 }
@@ -2401,6 +2420,10 @@ button {
   }
 
   .sets-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-summary-grid {
     grid-template-columns: 1fr;
   }
 

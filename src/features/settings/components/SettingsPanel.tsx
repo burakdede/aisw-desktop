@@ -247,6 +247,29 @@ export function SettingsPanel({
         {selectedSection === "general" ? (
           <div className="panel-grid panel-grid-2 settings-layout">
             <div className="stack-list">
+              <article className="diagnostic-card settings-summary-card">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Current setup</p>
+                    <h3>Desktop defaults</h3>
+                  </div>
+                  <span className="pill pill-soft">Recommended</span>
+                </div>
+                <div className="settings-summary-grid">
+                  <div>
+                    <span className="overview-current-set-cell-label">Appearance</span>
+                    <strong>{titleCase(appearance)}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Start section</span>
+                    <strong>{titleCase(defaultSection)}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Behavior</span>
+                    <strong>Local control</strong>
+                  </div>
+                </div>
+              </article>
               <article className="diagnostic-card settings-pane-intro">
                 <h3>General</h3>
                 <p className="inline-note">
@@ -355,6 +378,31 @@ export function SettingsPanel({
         {selectedSection === "runtime" ? (
           <div className="panel-grid panel-grid-2 settings-layout">
             <form className="stacked-form settings-form" onSubmit={submit}>
+              <article className={`diagnostic-card settings-summary-card ${runtimeKind === "bundled" ? "diagnostic-pass" : "diagnostic-warn"}`}>
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Current setup</p>
+                    <h3>Runtime selection</h3>
+                  </div>
+                  <span className={`pill ${runtimeKind === "bundled" ? "pill-ok" : "pill-warn"}`}>
+                    {runtimeKind === "bundled" ? "Included runtime" : titleCase(runtimeKind)}
+                  </span>
+                </div>
+                <div className="settings-summary-grid">
+                  <div>
+                    <span className="overview-current-set-cell-label">Compatibility</span>
+                    <strong>{runtimeStatus.compatible ? "Ready" : "Needs attention"}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Version</span>
+                    <strong>{runtimeStatus.version?.version ?? "unknown"}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Recommended</span>
+                    <strong>Bundled</strong>
+                  </div>
+                </div>
+              </article>
               <article className="diagnostic-card settings-pane-intro">
                 <h3>Preferred setup</h3>
                 <p className="inline-note">
@@ -502,6 +550,29 @@ export function SettingsPanel({
         {selectedSection === "updates" ? (
           <div className="panel-grid panel-grid-2 settings-layout">
             <div className="stack-list">
+              <article className="diagnostic-card settings-summary-card">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Current setup</p>
+                    <h3>Release track</h3>
+                  </div>
+                  <span className="pill pill-soft">{titleCase(updateChannel)}</span>
+                </div>
+                <div className="settings-summary-grid">
+                  <div>
+                    <span className="overview-current-set-cell-label">Channel</span>
+                    <strong>{titleCase(updateChannel)}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Runtime</span>
+                    <strong>{runtimeKind === "bundled" ? "Bundled" : titleCase(runtimeKind)}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Updates</span>
+                    <strong>Signed desktop releases</strong>
+                  </div>
+                </div>
+              </article>
               <article className="diagnostic-card settings-pane-intro">
                 <h3>Signed desktop releases</h3>
                 <p className="inline-note">
@@ -638,6 +709,37 @@ export function SettingsPanel({
         {selectedSection === "shell" ? (
           <div className="panel-grid panel-grid-2 settings-layout">
             <div className="stack-list">
+              <article className="diagnostic-card settings-summary-card">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Current setup</p>
+                    <h3>Terminal integration</h3>
+                  </div>
+                  <span className={`pill ${
+                    shellCheck?.status === "pass" ? "pill-ok" : shellCheck?.status === "warn" ? "pill-warn" : "pill-soft"
+                  }`}>
+                    {shellCheck?.status === "pass" ? "Active" : shellCheck?.status === "warn" ? "Optional" : "Unknown"}
+                  </span>
+                </div>
+                <div className="settings-summary-grid">
+                  <div>
+                    <span className="overview-current-set-cell-label">Detected shell</span>
+                    <strong>
+                      {shellGuidance.data?.detected_shell
+                        ? titleCase(shellGuidance.data.detected_shell)
+                        : "Unknown"}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Session state</span>
+                    <strong>{shellCheck ? titleCase(shellCheck.status) : "Unknown"}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Recommended</span>
+                    <strong>Install later</strong>
+                  </div>
+                </div>
+              </article>
               <article className="diagnostic-card settings-pane-intro">
                 <h3>Terminal Integration</h3>
                 <p className="inline-note">
@@ -822,6 +924,29 @@ export function SettingsPanel({
         {selectedSection === "keyring" ? (
           <div className="panel-grid panel-grid-2 settings-layout">
             <div className="stack-list">
+              <article className="diagnostic-card settings-summary-card diagnostic-pass">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Current setup</p>
+                    <h3>Local credential model</h3>
+                  </div>
+                  <span className="pill pill-ok">Local only</span>
+                </div>
+                <div className="settings-summary-grid">
+                  <div>
+                    <span className="overview-current-set-cell-label">Storage</span>
+                    <strong>Native keyrings first</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Network</span>
+                    <strong>No proxy</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Support</span>
+                    <strong>Redacted bundles</strong>
+                  </div>
+                </div>
+              </article>
               <article className="diagnostic-card settings-pane-intro">
                 <h3>Security</h3>
                 <p className="inline-note">
@@ -895,6 +1020,29 @@ export function SettingsPanel({
         {selectedSection === "advanced" ? (
           <div className="panel-grid panel-grid-2 settings-layout">
             <form className="stacked-form settings-form" onSubmit={submit}>
+              <article className="diagnostic-card settings-summary-card">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Current setup</p>
+                    <h3>Low-level overrides</h3>
+                  </div>
+                  <span className="pill pill-soft">Advanced</span>
+                </div>
+                <div className="settings-summary-grid">
+                  <div>
+                    <span className="overview-current-set-cell-label">Data folder</span>
+                    <strong>{aiswHome ? "Custom override" : "Managed automatically"}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Runtime source</span>
+                    <strong>{runtimeKind === "bundled" ? "Included" : titleCase(runtimeKind)}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Release track</span>
+                    <strong>{titleCase(updateChannel)}</strong>
+                  </div>
+                </div>
+              </article>
               <article className="diagnostic-card settings-pane-intro">
                 <h3>Advanced</h3>
                 <p className="inline-note">
