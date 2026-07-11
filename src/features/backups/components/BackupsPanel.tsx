@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { DesktopStatusStrip } from "../../../components/DesktopStatusStrip";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { SectionCard } from "../../../components/SectionCard";
 import { SplitView } from "../../../components/SplitView";
@@ -110,26 +109,32 @@ export function BackupsPanel({
 
   return (
     <SectionCard title="Backups" kicker="Restore points">
-      <DesktopStatusStrip
-        ariaLabel="Backup highlights"
-        items={[
-          {
-            label: "Restore points",
-            value: `${sortedBackups.length} local backup${sortedBackups.length === 1 ? "" : "s"}`,
-            note: "Browse and inspect restore points without leaving the main recovery flow.",
-          },
-          {
-            label: "Restore",
-            value: "Files first",
-            note: "Restore saved files first, then reactivate explicitly only when you want that profile live again.",
-          },
-          {
-            label: "Safety",
-            value: "Optional re-activate",
-            pills: ["Restore", "Copy ID", "Review target"],
-          },
-        ]}
-      />
+      <article className="diagnostic-card backups-overview desktop-pane-intro">
+        <div className="desktop-pane-section-header">
+          <div>
+            <p className="card-kicker">Recovery</p>
+            <h3>{sortedBackups.length} restore point{sortedBackups.length === 1 ? "" : "s"} available</h3>
+          </div>
+          <span className="pill pill-soft">Files first</span>
+        </div>
+        <p className="inline-note">
+          Browse and inspect restore points without leaving the main recovery flow.
+        </p>
+        <div className="backups-overview-meta">
+          <div>
+            <span className="overview-current-set-cell-label">Restore</span>
+            <strong>Files first</strong>
+          </div>
+          <div>
+            <span className="overview-current-set-cell-label">Activation</span>
+            <strong>Optional re-activate</strong>
+          </div>
+          <div>
+            <span className="overview-current-set-cell-label">Safety</span>
+            <strong>Review target first</strong>
+          </div>
+        </div>
+      </article>
       <SplitView
         className="backups-layout"
         primaryClassName="backups-list-pane"
@@ -139,7 +144,7 @@ export function BackupsPanel({
             <article className="diagnostic-card backups-list-card">
               <div className="desktop-pane-section-header">
                 <div>
-                  <p className="card-kicker">Restore points</p>
+                  <p className="card-kicker">Timeline</p>
                   <h3>Local backups</h3>
                 </div>
                 <p className="inline-note">
@@ -215,7 +220,7 @@ export function BackupsPanel({
               <article className="diagnostic-card">
                 <div className="desktop-pane-section-header">
                   <div>
-                    <p className="card-kicker">Backup</p>
+                    <p className="card-kicker">Inspector</p>
                     <h3>{selectedProfileLabel}</h3>
                   </div>
                   <p className="inline-note">
