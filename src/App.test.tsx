@@ -735,7 +735,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Terminal Integration", pressed: true })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: "Terminal Integration", selected: true })).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Overview" }));
@@ -743,9 +743,9 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Runtime and local storage")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Runtime", pressed: true })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: "Runtime", selected: true })).toBeInTheDocument();
     });
-    expect(screen.getByRole("button", { name: "Terminal Integration", pressed: false })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Terminal Integration", selected: false })).toBeInTheDocument();
   });
 
   it("surfaces token warnings in the overview cards", async () => {
@@ -4246,8 +4246,8 @@ describe("App", () => {
     fireEvent.click(within(shellHookFix!).getByText("Open terminal setup"));
 
     await waitFor(() => {
-      expect(screen.getByText("Runtime and local storage")).toBeInTheDocument();
       expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: "Terminal Integration", selected: true })).toBeInTheDocument();
     });
   });
 
@@ -4658,10 +4658,9 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Diagnostics"));
     fireEvent.click(screen.getByText("Show keyring setup"));
     await waitFor(() => {
-      expect(screen.getByText("Runtime and local storage")).toBeInTheDocument();
       expect(screen.getByRole("heading", { name: "Security" })).toBeInTheDocument();
       expect(screen.getByText("Linux Secret Service")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Security" })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("tab", { name: "Security" })).toHaveAttribute("aria-pressed", "true");
     });
   });
 
@@ -4946,7 +4945,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
       expect(screen.getByText("Config file: ~/.zshrc")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("tab", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "true");
     });
   });
 
@@ -5094,7 +5093,7 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Signed desktop releases")).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: "Updates", selected: true })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Check for updates" })).toBeInTheDocument();
     });
   });
@@ -6447,6 +6446,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Settings"));
+    fireEvent.click(screen.getByRole("tab", { name: "Updates" }));
     fireEvent.click(screen.getByText("Check for updates"));
 
     await waitFor(() => {
@@ -6489,6 +6489,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Settings"));
+    fireEvent.click(screen.getByRole("tab", { name: "Updates" }));
     fireEvent.click(screen.getByText("Check for updates"));
 
     await waitFor(() => {
@@ -6544,6 +6545,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Settings"));
+    fireEvent.click(screen.getByRole("tab", { name: "Updates" }));
     fireEvent.click(screen.getByText("Check for updates"));
 
     await waitFor(() => {
@@ -6567,6 +6569,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Settings"));
+    fireEvent.click(screen.getByRole("tab", { name: "Terminal Integration" }));
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
@@ -6724,7 +6727,7 @@ describe("App", () => {
   });
 
   it("shows cross-platform keyring setup guidance in settings", async () => {
-    await renderSettingsPanel(bootstrap.settings);
+    await renderSettingsPanel(bootstrap.settings, "keyring");
 
     expect(screen.getByRole("heading", { name: "Security" })).toBeInTheDocument();
     expect(screen.getByText("macOS Keychain")).toBeInTheDocument();
@@ -6807,7 +6810,6 @@ describe("App", () => {
     });
 
     expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Stable")).toBeInTheDocument();
 
     await act(async () => {
       rendered.rerender(
@@ -6822,7 +6824,6 @@ describe("App", () => {
       expect(screen.getByDisplayValue("Custom path")).toBeInTheDocument();
       expect(screen.getByDisplayValue("/opt/aisw/bin/aisw")).toBeInTheDocument();
       expect(screen.getByDisplayValue("/tmp/aisw-home")).toBeInTheDocument();
-      expect(screen.getByDisplayValue("Beta")).toBeInTheDocument();
     });
   });
 
@@ -6895,7 +6896,11 @@ describe("App", () => {
     await act(async () => {
       rendered.rerender(
         <QueryClientProvider client={rendered.queryClient}>
-          <SettingsPanel settings={currentSettings} runtimeStatus={bootstrap.runtime_status} />
+          <SettingsPanel
+            settings={currentSettings}
+            runtimeStatus={bootstrap.runtime_status}
+            initialSection="runtime"
+          />
         </QueryClientProvider>,
       );
       await Promise.resolve();
@@ -6976,7 +6981,11 @@ describe("App", () => {
     await act(async () => {
       rendered.rerender(
         <QueryClientProvider client={rendered.queryClient}>
-          <SettingsPanel settings={currentSettings} runtimeStatus={bootstrap.runtime_status} />
+          <SettingsPanel
+            settings={currentSettings}
+            runtimeStatus={bootstrap.runtime_status}
+            initialSection="runtime"
+          />
         </QueryClientProvider>,
       );
       await Promise.resolve();
@@ -7032,6 +7041,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Settings"));
+    fireEvent.click(screen.getByRole("tab", { name: "Updates" }));
     fireEvent.change(screen.getByDisplayValue("Stable"), {
       target: { value: "beta" },
     });
@@ -7114,7 +7124,7 @@ describe("App", () => {
       )[command];
     };
 
-    const rendered = await renderSettingsPanel(currentSettings);
+    const rendered = await renderSettingsPanel(currentSettings, "updates");
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Check for updates"));
 
@@ -7139,7 +7149,11 @@ describe("App", () => {
     await act(async () => {
       rendered.rerender(
         <QueryClientProvider client={rendered.queryClient}>
-          <SettingsPanel settings={currentSettings} runtimeStatus={bootstrap.runtime_status} />
+          <SettingsPanel
+            settings={currentSettings}
+            runtimeStatus={bootstrap.runtime_status}
+            initialSection="updates"
+          />
         </QueryClientProvider>,
       );
       await Promise.resolve();

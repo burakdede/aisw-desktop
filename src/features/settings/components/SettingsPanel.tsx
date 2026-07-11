@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
 import { getShellGuidance, runDoctor } from "../../../lib/client";
 import { DesktopCommandError } from "../../../lib/tauri";
@@ -41,10 +41,6 @@ export function SettingsPanel({
   const [selectedSection, setSelectedSection] = useState<SettingsSection>(
     initialSection ?? "runtime",
   );
-  const runtimeRef = useRef<HTMLDivElement | null>(null);
-  const updatesRef = useRef<HTMLDivElement | null>(null);
-  const shellRef = useRef<HTMLDivElement | null>(null);
-  const keyringRef = useRef<HTMLDivElement | null>(null);
 
   const shellCheck = useMemo(() => findShellHookCheck(doctor.data), [doctor.data]);
   const selectedVariant = useMemo(() => {
@@ -97,20 +93,6 @@ export function SettingsPanel({
     setSelectedSection(initialSection ?? "runtime");
   }, [initialSection]);
 
-  useEffect(() => {
-    const target =
-      selectedSection === "runtime"
-        ? runtimeRef.current
-        : selectedSection === "updates"
-          ? updatesRef.current
-          : selectedSection === "shell"
-            ? shellRef.current
-            : keyringRef.current;
-    if (target && typeof target.scrollIntoView === "function") {
-      target.scrollIntoView({ block: "start", behavior: "smooth" });
-    }
-  }, [selectedSection]);
-
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     updateSettingsMutation.mutate({
@@ -133,166 +115,195 @@ export function SettingsPanel({
   }
 
   return (
-    <>
-      <div ref={runtimeRef}>
-        <SectionCard title="Settings" kicker="Runtime and local storage">
-          <div className="button-row">
-            {SETTINGS_SECTIONS.map((section) => (
-              <button
-                key={section}
-                className={selectedSection === section ? "primary-button" : "ghost-button"}
-                type="button"
-                aria-pressed={selectedSection === section}
-                onClick={() => setSelectedSection(section)}
-              >
-                {sectionLabel(section)}
-              </button>
-            ))}
-          </div>
-          <form className="stacked-form settings-form" onSubmit={submit}>
-            <article className={`diagnostic-card ${runtimeKind === "bundled" ? "diagnostic-pass" : "diagnostic-warn"}`}>
-              <h3>Recommended runtime</h3>
-              <p className="inline-note">
-                AI Switch ships with a compatible runtime and uses it by default.
-              </p>
-              <p className="inline-note">
-                Use a system or custom runtime only when you intentionally need to override the supported desktop bundle.
-              </p>
-            </article>
-
-            {runtimeKind !== "bundled" ? (
-              <article className="diagnostic-card diagnostic-warn">
-                <h3>Advanced runtime override is active</h3>
+    <SectionCard title="Settings" kicker={sectionKicker(selectedSection)}>
+      <div className="settings-nav" role="tablist" aria-label="Settings sections">
+        {SETTINGS_SECTIONS.map((section) => (
+          <button
+            key={section}
+            className={selectedSection === section ? "primary-button" : "ghost-button"}
+            type="button"
+            role="tab"
+            aria-selected={selectedSection === section}
+            aria-pressed={selectedSection === section}
+            onClick={() => setSelectedSection(section)}
+          >
+            {sectionLabel(section)}
+          </button>
+        ))}
+      </div>
+      <div className="settings-pane">
+        {selectedSection === "runtime" ? (
+          <>
+            <form className="stacked-form settings-form" onSubmit={submit}>
+              <article className="diagnostic-card settings-pane-intro">
+                <h3>Preferred setup</h3>
                 <p className="inline-note">
-                  This desktop session is using a {runtimeKind === "system" ? "system" : "custom"} runtime binary instead of the bundled runtime.
-                </p>
-                <p className="inline-note">
-                  Compatibility for onboarding, switching, and diagnostics is only guaranteed with the bundled runtime shipped in this app release.
+                  Keep AI Switch on the bundled runtime unless you intentionally need an advanced override.
                 </p>
               </article>
-            ) : null}
+              <article className={`diagnostic-card ${runtimeKind === "bundled" ? "diagnostic-pass" : "diagnostic-warn"}`}>
+                <h3>Recommended runtime</h3>
+                <p className="inline-note">
+                  AI Switch ships with a compatible runtime and uses it by default.
+                </p>
+                <p className="inline-note">
+                  Use a system or custom runtime only when you intentionally need to override the supported desktop bundle.
+                </p>
+              </article>
 
-            {showAdvancedRuntime ? (
-              <>
-                <label>
-                  Runtime source
-                  <select
-                    value={runtimeKind}
-                    onChange={(event) => setRuntimeKind(event.target.value as typeof runtimeKind)}
-                  >
-                    <option value="bundled">Bundled runtime</option>
-                    <option value="system">System runtime</option>
-                    <option value="custom">Custom path</option>
-                  </select>
-                </label>
-                <label>
-                  Runtime path
-                  <input
-                    value={runtimePath}
-                    disabled={runtimeKind !== "custom"}
-                    placeholder={
-                      runtimeKind === "custom"
-                        ? "/path/to/runtime"
-                        : "Only used for custom runtime"
-                    }
-                    onChange={(event) => setRuntimePath(event.target.value)}
-                  />
-                </label>
-                {runtimeKind === "bundled" ? (
-                  <div className="button-row">
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      onClick={() => setShowAdvancedRuntime(false)}
+              {runtimeKind !== "bundled" ? (
+                <article className="diagnostic-card diagnostic-warn">
+                  <h3>Advanced runtime override is active</h3>
+                  <p className="inline-note">
+                    This desktop session is using a {runtimeKind === "system" ? "system" : "custom"} runtime binary instead of the bundled runtime.
+                  </p>
+                  <p className="inline-note">
+                    Compatibility for onboarding, switching, and diagnostics is only guaranteed with the bundled runtime shipped in this app release.
+                  </p>
+                </article>
+              ) : null}
+
+              {showAdvancedRuntime ? (
+                <>
+                  <label>
+                    Runtime source
+                    <select
+                      value={runtimeKind}
+                      onChange={(event) => setRuntimeKind(event.target.value as typeof runtimeKind)}
                     >
-                      Hide advanced runtime options
-                    </button>
-                  </div>
+                      <option value="bundled">Bundled runtime</option>
+                      <option value="system">System runtime</option>
+                      <option value="custom">Custom path</option>
+                    </select>
+                  </label>
+                  <label>
+                    Runtime path
+                    <input
+                      value={runtimePath}
+                      disabled={runtimeKind !== "custom"}
+                      placeholder={
+                        runtimeKind === "custom"
+                          ? "/path/to/runtime"
+                          : "Only used for custom runtime"
+                      }
+                      onChange={(event) => setRuntimePath(event.target.value)}
+                    />
+                  </label>
+                  {runtimeKind === "bundled" ? (
+                    <div className="button-row">
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        onClick={() => setShowAdvancedRuntime(false)}
+                      >
+                        Hide advanced runtime options
+                      </button>
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                <div className="button-row">
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    onClick={() => setShowAdvancedRuntime(true)}
+                  >
+                    Show advanced runtime options
+                  </button>
+                </div>
+              )}
+
+              <label>
+                Local data folder override
+                <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
+              </label>
+              <button
+                className="primary-button"
+                type="submit"
+                disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
+              >
+                {updateSettingsMutation.isPending ? "Saving…" : "Save settings"}
+              </button>
+            </form>
+            {updateSettingsMutation.error ? (
+              <MutationErrorCard
+                title="Settings could not be saved"
+                error={updateSettingsMutation.error}
+              />
+            ) : null}
+            <div className="stack-list diagnostics-body">
+              <article className="diagnostic-card">
+                <h3>Runtime details</h3>
+                <p className="inline-note">
+                  Current runtime path: {runtimeStatus.resolved_path ?? "No runtime resolved"}
+                </p>
+                <p className="inline-note">
+                  Local data folder: {settings.aisw_home ?? "Default managed location"}
+                </p>
+                <p className="inline-note">
+                  Bundled switching runtime: {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
+                </p>
+                {showAdvancedRuntime || runtimeKind !== "bundled" ? (
+                  <p className="inline-note">
+                    System runtime candidate: {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
+                  </p>
                 ) : null}
-              </>
-            ) : (
-              <div className="button-row">
-                <button
-                  className="ghost-button"
-                  type="button"
-                  onClick={() => setShowAdvancedRuntime(true)}
-                >
-                  Show advanced runtime options
-                </button>
-              </div>
-            )}
+                {runtimeStatus.inventory.configured_path ? (
+                  <p className="inline-note">
+                    Configured custom path: {runtimeStatus.inventory.configured_path}
+                  </p>
+                ) : null}
+                <p className="inline-note">
+                  Selected update channel: <strong>{titleCase(updateChannel)}</strong>
+                </p>
+                <p className="inline-note">
+                  Selected runtime: <strong>{titleCase(runtimeKind)}</strong>
+                </p>
+                <p className="inline-note">
+                  Runtime version: {runtimeStatus.version?.version ?? "unknown"}
+                </p>
+                {runtimeStatus.version ? (
+                  <p className="inline-note">
+                    CLI API {runtimeStatus.version.cli_api_version} · JSON schema{" "}
+                    {runtimeStatus.version.json_schema_version} · Progress schema{" "}
+                    {runtimeStatus.version.progress_schema_version}
+                  </p>
+                ) : null}
+              </article>
+            </div>
+          </>
+        ) : null}
 
-            <label>
-              Local data folder override
-              <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
-            </label>
-            <label>
-              Update channel
-              <select value={updateChannel} onChange={(event) => setUpdateChannel(event.target.value)}>
-                <option value="stable">Stable</option>
-                <option value="beta">Beta</option>
-              </select>
-            </label>
-            <button
-              className="primary-button"
-              type="submit"
-              disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
-            >
-              {updateSettingsMutation.isPending ? "Saving…" : "Save settings"}
-            </button>
-          </form>
-          {updateSettingsMutation.error ? (
-            <MutationErrorCard
-              title="Settings could not be saved"
-              error={updateSettingsMutation.error}
-            />
-          ) : null}
-          <div className="stack-list diagnostics-body">
-            <article className="diagnostic-card">
-              <h3>Runtime details</h3>
-              <p className="inline-note">
-                Current runtime path: {runtimeStatus.resolved_path ?? "No runtime resolved"}
-              </p>
-              <p className="inline-note">
-                Local data folder: {settings.aisw_home ?? "Default managed location"}
-              </p>
-              <p className="inline-note">
-                Bundled switching runtime: {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
-              </p>
-              {showAdvancedRuntime || runtimeKind !== "bundled" ? (
-                <p className="inline-note">
-                  System runtime candidate: {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
-                </p>
-              ) : null}
-              {runtimeStatus.inventory.configured_path ? (
-                <p className="inline-note">
-                  Configured custom path: {runtimeStatus.inventory.configured_path}
-                </p>
-              ) : null}
-              <p className="inline-note">
-                Selected update channel: <strong>{titleCase(updateChannel)}</strong>
-              </p>
-              <p className="inline-note">
-                Selected runtime: <strong>{titleCase(runtimeKind)}</strong>
-              </p>
-              <p className="inline-note">
-                Runtime version: {runtimeStatus.version?.version ?? "unknown"}
-              </p>
-              {runtimeStatus.version ? (
-                <p className="inline-note">
-                  CLI API {runtimeStatus.version.cli_api_version} · JSON schema{" "}
-                  {runtimeStatus.version.json_schema_version} · Progress schema{" "}
-                  {runtimeStatus.version.progress_schema_version}
-                </p>
-              ) : null}
-            </article>
-          </div>
-        </SectionCard>
-      </div>
-
-      <div ref={updatesRef}>
-        <SectionCard title="Updates" kicker="Signed desktop releases">
+        {selectedSection === "updates" ? (
           <div className="stack-list">
+            <article className="diagnostic-card settings-pane-intro">
+              <h3>Signed desktop releases</h3>
+              <p className="inline-note">
+                Choose the release track for this Mac, then check for signed AI Switch updates.
+              </p>
+            </article>
+            <form className="stacked-form settings-form" onSubmit={submit}>
+              <label>
+                Update channel
+                <select value={updateChannel} onChange={(event) => setUpdateChannel(event.target.value)}>
+                  <option value="stable">Stable</option>
+                  <option value="beta">Beta</option>
+                </select>
+              </label>
+              <button
+                className="primary-button"
+                type="submit"
+                disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
+              >
+                {updateSettingsMutation.isPending ? "Saving…" : "Save settings"}
+              </button>
+            </form>
+            {updateSettingsMutation.error ? (
+              <MutationErrorCard
+                title="Settings could not be saved"
+                error={updateSettingsMutation.error}
+              />
+            ) : null}
             <p className="inline-note">
               Check for a signed AI Switch release on the selected {updateChannel} channel.
             </p>
@@ -370,12 +381,16 @@ export function SettingsPanel({
               />
             ) : null}
           </div>
-        </SectionCard>
-      </div>
+        ) : null}
 
-      <div ref={shellRef}>
-        <SectionCard title="Terminal Integration" kicker="Shell setup and current-session switching">
+        {selectedSection === "shell" ? (
           <div className="stack-list">
+            <article className="diagnostic-card settings-pane-intro">
+              <h3>Terminal Integration</h3>
+              <p className="inline-note">
+                Install terminal integration only when you want current shells to react immediately after a switch.
+              </p>
+            </article>
             <p className="inline-note">
               Terminal integration is optional, but recommended when you want immediate environment
               exports in the current shell session and workspace guardrails before agent launch.
@@ -467,12 +482,16 @@ export function SettingsPanel({
             ) : null}
             {copyMessage ? <p className="inline-note">{copyMessage}</p> : null}
           </div>
-        </SectionCard>
-      </div>
+        ) : null}
 
-      <div ref={keyringRef}>
-        <SectionCard title="Security" kicker="Local credential storage and recovery">
+        {selectedSection === "keyring" ? (
           <div className="stack-list">
+            <article className="diagnostic-card settings-pane-intro">
+              <h3>Security</h3>
+              <p className="inline-note">
+                AI Switch keeps credentials local and leans on the operating system for secure storage.
+              </p>
+            </article>
             <p className="inline-note">
               AI Switch keeps credentials on this machine. When diagnostics report a keyring
               failure, use the guidance below to restore the OS-native secret store before retrying.
@@ -497,9 +516,9 @@ export function SettingsPanel({
               </article>
             ))}
           </div>
-        </SectionCard>
+        ) : null}
       </div>
-    </>
+    </SectionCard>
   );
 }
 
@@ -603,5 +622,18 @@ function sectionLabel(section: SettingsSection) {
       return "Terminal Integration";
     case "keyring":
       return "Security";
+  }
+}
+
+function sectionKicker(section: SettingsSection) {
+  switch (section) {
+    case "runtime":
+      return "Runtime and local storage";
+    case "updates":
+      return "Signed desktop releases";
+    case "shell":
+      return "Shell setup and current-session switching";
+    case "keyring":
+      return "Local credential storage and recovery";
   }
 }

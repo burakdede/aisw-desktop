@@ -446,6 +446,23 @@ button {
   flex-wrap: wrap;
 }
 
+.settings-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.settings-pane {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.settings-pane-intro h3 {
+  font-size: 18px;
+}
+
 .profiles-toolbar {
   display: flex;
   gap: 10px;
