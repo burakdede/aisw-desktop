@@ -445,7 +445,7 @@ export function App() {
       ) : null}
 
       {runtimeBlocked ? (
-        <SettingsPanel settings={settings} runtimeStatus={runtimeStatus} />
+        <SettingsPanel settings={settings} runtimeStatus={runtimeStatus} initialSection="runtime" />
       ) : resolvedSnapshot ? (
         <>
           {setupFocused ? (

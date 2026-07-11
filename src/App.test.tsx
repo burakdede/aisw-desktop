@@ -113,7 +113,7 @@ async function renderApp() {
 
 async function renderSettingsPanel(
   settings: DesktopSettings,
-  initialSection?: "runtime" | "updates" | "shell" | "keyring",
+  initialSection?: "general" | "runtime" | "updates" | "shell" | "keyring" | "advanced",
 ) {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -130,7 +130,7 @@ async function renderSettingsPanel(
         <SettingsPanel
           settings={settings}
           runtimeStatus={bootstrap.runtime_status}
-          initialSection={initialSection}
+          initialSection={initialSection ?? "runtime"}
         />
       </QueryClientProvider>,
     );
@@ -190,7 +190,9 @@ async function renderSetupPanel({
     tool: string,
     options?: { mode?: "from_live" | "from_env" | "api_key" | "oauth" },
   ) => void;
-  onOpenSettings?: (section?: "runtime" | "updates" | "shell" | "keyring") => void;
+  onOpenSettings?: (
+    section?: "general" | "runtime" | "updates" | "shell" | "keyring" | "advanced",
+  ) => void;
 } = {}) {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -444,8 +446,8 @@ describe("App", () => {
     expect(screen.getByText("Why setup is paused")).toBeInTheDocument();
     expect(screen.getByText("Engine version details are unavailable")).toBeInTheDocument();
     expect(screen.getByText("Engine capability details are unavailable")).toBeInTheDocument();
-    expect(screen.getByText("Engine and local storage")).toBeInTheDocument();
-    expect(screen.getByText("Runtime details")).toBeInTheDocument();
+    expect(screen.getByText("Bundled engine and override choices")).toBeInTheDocument();
+    expect(screen.getByText("Runtime summary")).toBeInTheDocument();
     expect(screen.queryByText("Welcome")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Overview" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Overview" })).toBeDisabled();
@@ -908,8 +910,8 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Engine and local storage")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Engine" })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByText("Bundled engine and override choices")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Runtime" })).toHaveAttribute("aria-pressed", "true");
     });
     expect(screen.getByRole("button", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "false");
   });
@@ -6986,36 +6988,26 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Settings"));
+    fireEvent.click(screen.getByRole("button", { name: "Runtime" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Runtime summary")).toBeInTheDocument();
+      expect(screen.getAllByText(/Runtime version:/).length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Advanced" }));
 
     await waitFor(() => {
       expect(screen.getByText("Runtime details")).toBeInTheDocument();
-      expect(
-        screen.getByText((_, element) => element?.textContent?.trim() === "Engine source: Included with this app"),
-      ).toBeInTheDocument();
       expect(
         screen.getByText(
           (_, element) => element?.textContent?.trim() === "Local data location: Managed automatically",
         ),
       ).toBeInTheDocument();
       expect(
-        screen.getByText(
-          (_, element) => element?.textContent?.trim() === "Compatibility: Ready for desktop switching",
-        ),
-      ).toBeInTheDocument();
-      expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
-      expect(
         screen.getByText((_, element) => element?.textContent?.trim() === "Selected update channel: Stable"),
       ).toBeInTheDocument();
-      expect(
-        screen.getAllByText((_, element) => element?.textContent?.trim() === "Runtime mode: Bundled").length,
-      ).toBeGreaterThan(0);
-      expect(screen.getAllByText("Runtime version: 0.3.7").length).toBeGreaterThan(0);
       expect(screen.getByText("CLI API 1 · JSON schema 1 · Progress schema 1")).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByText("Show advanced runtime options"));
-
-    await waitFor(() => {
       expect(
         screen.getByText("Active engine path: /Applications/AI Switch.app/Contents/Resources/aisw"),
       ).toBeInTheDocument();
@@ -7074,7 +7066,11 @@ describe("App", () => {
     await act(async () => {
       rendered.rerender(
         <QueryClientProvider client={rendered.queryClient}>
-          <SettingsPanel settings={nextSettings} runtimeStatus={bootstrap.runtime_status} />
+          <SettingsPanel
+            settings={nextSettings}
+            runtimeStatus={bootstrap.runtime_status}
+            initialSection="runtime"
+          />
         </QueryClientProvider>,
       );
       await Promise.resolve();
@@ -7083,6 +7079,11 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByDisplayValue("Custom path")).toBeInTheDocument();
       expect(screen.getByDisplayValue("/opt/aisw/bin/aisw")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Advanced" }));
+
+    await waitFor(() => {
       expect(screen.getByDisplayValue("/tmp/aisw-home")).toBeInTheDocument();
     });
   });

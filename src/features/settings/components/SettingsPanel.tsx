@@ -10,7 +10,14 @@ import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 
-export const SETTINGS_SECTIONS = ["runtime", "updates", "shell", "keyring"] as const;
+export const SETTINGS_SECTIONS = [
+  "general",
+  "runtime",
+  "shell",
+  "keyring",
+  "updates",
+  "advanced",
+] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
 export function SettingsPanel({
@@ -41,7 +48,7 @@ export function SettingsPanel({
   const [selectedShell, setSelectedShell] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
   const [selectedSection, setSelectedSection] = useState<SettingsSection>(
-    initialSection ?? "runtime",
+    initialSection ?? "general",
   );
 
   const shellCheck = useMemo(() => findShellHookCheck(doctor.data), [doctor.data]);
@@ -92,7 +99,7 @@ export function SettingsPanel({
   ]);
 
   useEffect(() => {
-    setSelectedSection(initialSection ?? "runtime");
+    setSelectedSection(initialSection ?? "general");
   }, [initialSection]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -176,6 +183,81 @@ export function SettingsPanel({
         }
         secondary={
       <div className="settings-pane">
+        {selectedSection === "general" ? (
+          <div className="panel-grid panel-grid-2 settings-layout">
+            <div className="stack-list">
+              <article className="diagnostic-card settings-pane-intro">
+                <h3>General</h3>
+                <p className="inline-note">
+                  Keep the app aligned with the operating system and preserve one consistent desktop switching model.
+                </p>
+              </article>
+              <article className="diagnostic-card settings-pane-section">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Appearance</p>
+                    <h3>Desktop style</h3>
+                  </div>
+                  <p className="inline-note">
+                    AI Switch follows the current system appearance so the window, controls, and contrast stay native on each supported platform.
+                  </p>
+                </div>
+                <p className="inline-note">
+                  Appearance: <strong>Follow system</strong>
+                </p>
+                <p className="inline-note">
+                  The current build uses system fonts, semantic colors, and native contrast handling instead of an app-specific theme toggle.
+                </p>
+              </article>
+              <article className="diagnostic-card settings-pane-section">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Launch</p>
+                    <h3>Startup behavior</h3>
+                  </div>
+                  <p className="inline-note">
+                    Launch-at-login, menu bar persistence, and default landing preferences will be managed from this preferences layout as the desktop settings contract expands.
+                  </p>
+                </div>
+                <p className="inline-note">
+                  Preferred first screen: <strong>Overview</strong>
+                </p>
+                <p className="inline-note">
+                  Menu bar access and full-window setup already share the same switching and diagnostics data.
+                </p>
+              </article>
+            </div>
+            <div className="stack-list">
+              <article className="diagnostic-card diagnostic-pass settings-pane-section">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Model</p>
+                    <h3>Desktop behavior</h3>
+                  </div>
+                  <p className="inline-note">
+                    This app stays a local control surface over the switching engine rather than becoming a separate credential manager.
+                  </p>
+                </div>
+                <p className="inline-note">Credentials stay local.</p>
+                <p className="inline-note">No telemetry or prompt proxy is used.</p>
+                <p className="inline-note">Every switch, verify, and repair flow uses the same desktop interaction model.</p>
+              </article>
+              <article className="diagnostic-card settings-pane-section">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Navigation</p>
+                    <h3>Preference sections</h3>
+                  </div>
+                  <p className="inline-note">
+                    The preferences window is split into native-style categories so runtime, terminal, security, updates, and advanced details stay focused instead of appearing in one long settings page.
+                  </p>
+                </div>
+                <p className="inline-note">Use the source list on the left to jump directly to the section you need.</p>
+              </article>
+            </div>
+          </div>
+        ) : null}
+
         {selectedSection === "runtime" ? (
           <div className="panel-grid panel-grid-2 settings-layout">
             <form className="stacked-form settings-form" onSubmit={submit}>
@@ -273,22 +355,6 @@ export function SettingsPanel({
                 )}
               </article>
 
-              <article className="diagnostic-card settings-pane-section">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Storage</p>
-                    <h3>Local data location</h3>
-                  </div>
-                  <p className="inline-note">
-                    Leave this empty to use the default desktop storage location.
-                  </p>
-                </div>
-                <label>
-                  Local data location override
-                  <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
-                </label>
-              </article>
-
               <button
                 className="primary-button"
                 type="submit"
@@ -308,10 +374,10 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Status</p>
-                    <h3>Runtime details</h3>
+                    <h3>Runtime summary</h3>
                   </div>
                   <p className="inline-note">
-                    Review the selected engine mode and storage state. Raw paths stay in the advanced runtime view.
+                    Keep the current engine model visible without pushing raw paths into the main preferences flow.
                   </p>
                 </div>
                 <p className="inline-note">
@@ -325,10 +391,6 @@ export function SettingsPanel({
                   </strong>
                 </p>
                 <p className="inline-note">
-                  Local data location:{" "}
-                  {settings.aisw_home ? `Custom folder (${settings.aisw_home})` : "Managed automatically"}
-                </p>
-                <p className="inline-note">
                   Compatibility:{" "}
                   <strong>{runtimeStatus.compatible ? "Ready for desktop switching" : "Needs attention"}</strong>
                 </p>
@@ -336,38 +398,8 @@ export function SettingsPanel({
                   Runtime mode: <strong>{titleCase(runtimeKind)}</strong>
                 </p>
                 <p className="inline-note">
-                  Selected update channel: <strong>{titleCase(updateChannel)}</strong>
-                </p>
-                <p className="inline-note">
                   Runtime version: {runtimeStatus.version?.version ?? "unknown"}
                 </p>
-                {runtimeStatus.version ? (
-                  <p className="inline-note">
-                    CLI API {runtimeStatus.version.cli_api_version} · JSON schema{" "}
-                    {runtimeStatus.version.json_schema_version} · Progress schema{" "}
-                    {runtimeStatus.version.progress_schema_version}
-                  </p>
-                ) : null}
-                {showAdvancedRuntime || runtimeKind !== "bundled" ? (
-                  <>
-                    <p className="inline-note">
-                      Active engine path: {runtimeStatus.resolved_path ?? "No runtime resolved"}
-                    </p>
-                    <p className="inline-note">
-                      Included engine path:{" "}
-                      {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
-                    </p>
-                    <p className="inline-note">
-                      System engine candidate:{" "}
-                      {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
-                    </p>
-                  </>
-                ) : null}
-                {runtimeStatus.inventory.configured_path && (showAdvancedRuntime || runtimeKind !== "bundled") ? (
-                  <p className="inline-note">
-                    Custom engine path: {runtimeStatus.inventory.configured_path}
-                  </p>
-                ) : null}
               </article>
             </div>
           </div>
@@ -719,6 +751,90 @@ export function SettingsPanel({
             </div>
           </div>
         ) : null}
+
+        {selectedSection === "advanced" ? (
+          <div className="panel-grid panel-grid-2 settings-layout">
+            <form className="stacked-form settings-form" onSubmit={submit}>
+              <article className="diagnostic-card settings-pane-intro">
+                <h3>Advanced</h3>
+                <p className="inline-note">
+                  Keep storage overrides, raw runtime paths, and low-level desktop details in one place so the main preferences stay approachable.
+                </p>
+              </article>
+              <article className="diagnostic-card settings-pane-section">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Storage</p>
+                    <h3>Local data location</h3>
+                  </div>
+                  <p className="inline-note">
+                    Leave this empty to use the managed desktop data location.
+                  </p>
+                </div>
+                <label>
+                  Local data location override
+                  <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
+                </label>
+              </article>
+              <button
+                className="primary-button"
+                type="submit"
+                disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
+              >
+                {updateSettingsMutation.isPending ? "Saving…" : "Save settings"}
+              </button>
+            </form>
+            <div className="stack-list">
+              {updateSettingsMutation.error ? (
+                <MutationErrorCard
+                  title="Settings could not be saved"
+                  error={updateSettingsMutation.error}
+                />
+              ) : null}
+              <article className="diagnostic-card settings-pane-section">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Status</p>
+                    <h3>Runtime details</h3>
+                  </div>
+                  <p className="inline-note">
+                    Review raw engine paths, storage state, and release metadata without cluttering the main runtime preferences.
+                  </p>
+                </div>
+                <p className="inline-note">
+                  Local data location:{" "}
+                  {settings.aisw_home ? `Custom folder (${settings.aisw_home})` : "Managed automatically"}
+                </p>
+                <p className="inline-note">
+                  Selected update channel: <strong>{titleCase(updateChannel)}</strong>
+                </p>
+                {runtimeStatus.version ? (
+                  <p className="inline-note">
+                    CLI API {runtimeStatus.version.cli_api_version} · JSON schema{" "}
+                    {runtimeStatus.version.json_schema_version} · Progress schema{" "}
+                    {runtimeStatus.version.progress_schema_version}
+                  </p>
+                ) : null}
+                <p className="inline-note">
+                  Active engine path: {runtimeStatus.resolved_path ?? "No runtime resolved"}
+                </p>
+                <p className="inline-note">
+                  Included engine path:{" "}
+                  {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
+                </p>
+                <p className="inline-note">
+                  System engine candidate:{" "}
+                  {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
+                </p>
+                {runtimeStatus.inventory.configured_path ? (
+                  <p className="inline-note">
+                    Custom engine path: {runtimeStatus.inventory.configured_path}
+                  </p>
+                ) : null}
+              </article>
+            </div>
+          </div>
+        ) : null}
       </div>
         }
       />
@@ -827,32 +943,42 @@ function effectiveRuntimePath(runtimeKind: DesktopSettings["runtime_kind"], runt
 
 function sectionLabel(section: SettingsSection) {
   switch (section) {
+    case "general":
+      return "General";
     case "runtime":
-      return "Engine";
+      return "Runtime";
     case "updates":
       return "Updates";
     case "shell":
       return "Terminal Integration";
     case "keyring":
       return "Security";
+    case "advanced":
+      return "Advanced";
   }
 }
 
 function sectionKicker(section: SettingsSection) {
   switch (section) {
+    case "general":
+      return "Appearance, launch, and desktop behavior";
     case "runtime":
-      return "Engine and local storage";
+      return "Bundled engine and override choices";
     case "updates":
       return "Signed desktop releases";
     case "shell":
       return "Shell setup and current-session switching";
     case "keyring":
       return "Local credential storage and recovery";
+    case "advanced":
+      return "Low-level paths, storage, and release details";
   }
 }
 
 function sectionHeading(section: SettingsSection) {
   switch (section) {
+    case "general":
+      return "Keep the desktop app consistent with the operating system";
     case "runtime":
       return "Keep one engine model across the desktop app";
     case "updates":
@@ -861,11 +987,15 @@ function sectionHeading(section: SettingsSection) {
       return "Use the same terminal integration flow everywhere";
     case "keyring":
       return "Keep credentials local with native OS storage";
+    case "advanced":
+      return "Move low-level runtime details out of the main preference flow";
   }
 }
 
 function sectionDescription(section: SettingsSection) {
   switch (section) {
+    case "general":
+      return "General preferences should feel like a Mac utility: clear defaults, system-driven appearance, and startup behavior that does not require reading implementation details.";
     case "runtime":
       return "The desktop app is designed around the bundled engine. Advanced overrides stay available, but the default path is the supported cross-platform experience.";
     case "updates":
@@ -874,11 +1004,15 @@ function sectionDescription(section: SettingsSection) {
       return "Terminal integration follows the same copy-and-verify pattern across supported shells so the experience stays predictable for non-terminal users.";
     case "keyring":
       return "Security guidance, storage behavior, and recovery steps should feel consistent regardless of the operating system underneath.";
+    case "advanced":
+      return "Advanced details stay available for debugging and override workflows, but they should not dominate the default desktop settings experience.";
   }
 }
 
 function sectionPills(section: SettingsSection) {
   switch (section) {
+    case "general":
+      return ["System-driven", "Desktop-first", "Local control"];
     case "runtime":
       return ["Bundled default", "Cross-platform", "Advanced override"];
     case "updates":
@@ -887,18 +1021,24 @@ function sectionPills(section: SettingsSection) {
       return ["Optional setup", "Shell-aware", "Copy and verify"];
     case "keyring":
       return ["Credentials stay local", "Native storage", "Recovery guides"];
+    case "advanced":
+      return ["Raw paths", "Storage override", "Engine inventory"];
   }
 }
 
 function sourceListSummary(section: SettingsSection) {
   switch (section) {
+    case "general":
+      return "Appearance and startup behavior";
     case "runtime":
-      return "Bundled engine and local storage";
+      return "Bundled engine and overrides";
     case "updates":
       return "Release channel and signed installs";
     case "shell":
       return "Terminal integration guidance";
     case "keyring":
       return "Credential storage and recovery";
+    case "advanced":
+      return "Raw paths and local data location";
   }
 }
