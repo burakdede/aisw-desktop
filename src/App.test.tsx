@@ -238,6 +238,23 @@ async function openAddProfileDialog() {
   return getAddProfileDialog();
 }
 
+function getQuickSwitchDialog() {
+  return within(screen.getByRole("dialog", { name: "Quick Switch" }));
+}
+
+async function openQuickSwitchDialog() {
+  if (!screen.queryByRole("dialog", { name: "Quick Switch" })) {
+    await waitFor(() => {
+      expect(screen.getAllByRole("button", { name: "Quick Switch" }).length).toBeGreaterThan(0);
+    });
+    fireEvent.click(screen.getAllByRole("button", { name: "Quick Switch" })[0]);
+  }
+  await waitFor(() => {
+    expect(screen.getByRole("dialog", { name: "Quick Switch" })).toBeInTheDocument();
+  });
+  return getQuickSwitchDialog();
+}
+
 describe("App", () => {
   beforeEach(() => {
     vi.mocked(window.open).mockClear();
@@ -908,10 +925,8 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getAllByRole("heading", { name: "Work" }).length).toBeGreaterThan(0));
-    fireEvent.change(screen.getByDisplayValue("Switch a set or saved profile…"), {
-      target: { value: "profile:work" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Switch all" }));
+    const quickSwitchDialog = await openQuickSwitchDialog();
+    fireEvent.click(quickSwitchDialog.getByRole("button", { name: /Work.*across matching tools/i }));
 
     await waitFor(() => {
       expect(screen.getAllByRole("heading", { name: "Personal" }).length).toBeGreaterThan(0);
@@ -3126,11 +3141,8 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByRole("button", { name: "Switch all" })).toBeInTheDocument());
-    fireEvent.change(screen.getByDisplayValue("Switch a set or saved profile…"), {
-      target: { value: "profile:work" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Switch all" }));
+    const quickSwitchDialog = await openQuickSwitchDialog();
+    fireEvent.click(quickSwitchDialog.getByRole("button", { name: /Work.*across matching tools/i }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
@@ -3194,11 +3206,8 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByRole("button", { name: "Switch all" })).toBeInTheDocument());
-    fireEvent.change(screen.getByDisplayValue("Switch a set or saved profile…"), {
-      target: { value: "profile:work" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Switch all" }));
+    const quickSwitchDialog = await openQuickSwitchDialog();
+    fireEvent.click(quickSwitchDialog.getByRole("button", { name: /Work.*across matching tools/i }));
 
     await waitFor(() => {
       expect(
@@ -6011,8 +6020,10 @@ describe("App", () => {
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Overview"));
-    expect(screen.queryByRole("option", { name: "Set: Empty Set" })).not.toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "Set: Client Acme" })).toBeInTheDocument();
+    const quickSwitchDialog = await openQuickSwitchDialog();
+    expect(quickSwitchDialog.queryByText("Empty Set")).not.toBeInTheDocument();
+    expect(quickSwitchDialog.getByText("Client Acme")).toBeInTheDocument();
+    fireEvent.click(quickSwitchDialog.getByRole("button", { name: "Close" }));
 
     await openProjectRulesSection();
     expect(screen.queryByRole("option", { name: "Set: Empty Set" })).not.toBeInTheDocument();
@@ -6249,11 +6260,8 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByRole("button", { name: "Switch all" })).toBeInTheDocument());
-    fireEvent.change(screen.getByDisplayValue("Switch a set or saved profile…"), {
-      target: { value: "set:client-acme" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Switch all" }));
+    const quickSwitchDialog = await openQuickSwitchDialog();
+    fireEvent.click(quickSwitchDialog.getByText("Client Acme").closest("button") as HTMLButtonElement);
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
@@ -6291,8 +6299,8 @@ describe("App", () => {
       )[command];
 
     await renderApp();
-    await waitFor(() => expect(screen.getByRole("button", { name: "Switch all" })).toBeInTheDocument());
-    expect(screen.getByRole("option", { name: "Saved profile: Office" })).toBeInTheDocument();
+    const quickSwitchDialog = await openQuickSwitchDialog();
+    expect(quickSwitchDialog.getByRole("button", { name: /Office.*across matching tools/i })).toBeInTheDocument();
   });
 
   it("uses saved profile labels in onboarding first switch options and sidebar badge", async () => {

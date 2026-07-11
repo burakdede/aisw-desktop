@@ -9,14 +9,12 @@ import {
   openExternalGuide,
   toolBinaryName,
 } from "../../../lib/tool-guidance";
-import { resolveGlobalStateMode, supportedStateModes } from "../../shared/state-modes";
+import { supportedStateModes } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { StateModeField } from "../../shared/components/StateModeField";
 import {
   activeSetLabel,
   contextDisplayLabel,
-  profileSetHasUsableSelections,
-  sharedProfileEntries,
   toolProfileDisplayLabel,
 } from "../../../lib/profile-display";
 import { titleCase } from "../../../lib/utils";
@@ -34,6 +32,7 @@ export function OverviewPanel({
   toolCapabilities,
   onOpenProfiles,
   onOpenContexts,
+  onOpenQuickSwitch,
 }: {
   snapshot: AppSnapshot;
   settings: DesktopSettings;
@@ -44,35 +43,16 @@ export function OverviewPanel({
     options?: { mode?: ProfileImportMode },
   ) => void;
   onOpenContexts: () => void;
+  onOpenQuickSwitch: () => void;
 }) {
   const queryClient = useQueryClient();
   const {
     addProfileMutation,
     activateWorkspaceTargetMutation,
-    activateProfileSetMutation,
     useProfileMutation,
-    useAllProfilesMutation,
     mutationLock,
     lastCommandResults,
   } = useDesktopActions();
-  const [quickSwitch, setQuickSwitch] = useState("");
-  const sharedProfiles = useMemo(() => sharedProfileEntries(settings, snapshot), [settings, snapshot]);
-  const quickSwitchOptions = useMemo(() => {
-    const profileSets = [...(settings.profile_sets ?? [])]
-      .filter((set) => profileSetHasUsableSelections(snapshot, set))
-      .sort((left, right) => left.name.localeCompare(right.name))
-      .map((set) => ({
-        value: `set:${set.name}`,
-        label: `Set: ${set.label ?? set.name}`,
-      }));
-    return [
-      ...profileSets,
-      ...sharedProfiles.map((profile) => ({
-        value: `profile:${profile.name}`,
-        label: `Saved profile: ${profile.label}`,
-      })),
-    ];
-  }, [settings, sharedProfiles, snapshot]);
 
   const refresh = useMutation({
     mutationFn: async () => {
@@ -112,45 +92,13 @@ export function OverviewPanel({
       kicker="Safety and switching"
       actions={
         <div className="button-row">
-          <select
-            aria-label="Quick Switch"
-            value={quickSwitch}
-            onChange={(event) => setQuickSwitch(event.target.value)}
-          >
-            <option value="">Switch a set or saved profile…</option>
-            {quickSwitchOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
           <button
             className="primary-button"
-            aria-label="Switch all"
+            aria-label="Open Quick Switch"
             disabled={mutationLock.isBusy}
-            onClick={() => {
-              if (!quickSwitch) return;
-              if (quickSwitch.startsWith("set:")) {
-                const name = quickSwitch.slice("set:".length);
-                const profileSet = settings.profile_sets?.find((set) => set.name === name);
-                activateProfileSetMutation.mutate({
-                  name,
-                  label: profileSet?.label ?? profileSet?.name,
-                });
-                return;
-              }
-              if (quickSwitch.startsWith("profile:")) {
-                const profileName = quickSwitch.slice("profile:".length);
-                const sharedProfile = sharedProfiles.find((profile) => profile.name === profileName);
-                useAllProfilesMutation.mutate({
-                  profile: profileName,
-                  stateMode: resolveGlobalStateMode(snapshot),
-                  label: sharedProfile?.label,
-                });
-              }
-            }}
+            onClick={onOpenQuickSwitch}
           >
-            Apply selection
+            Quick Switch…
           </button>
           <button
             className="ghost-button"
@@ -165,11 +113,11 @@ export function OverviewPanel({
     >
       <div className="overview-stack">
         <div className="overview-summary-grid">
-          {currentSetLabel || quickSwitchOptions.length ? (
+          {currentSetLabel || currentSetProfiles.length ? (
             <article className="overview-current-set">
               <div className="overview-current-set-copy">
                 <p className="card-kicker">Current set</p>
-                <h3>{currentSetLabel ?? "No set selected"}</h3>
+                <h3>{currentSetLabel ?? "No active set"}</h3>
                 <p className="inline-note">
                   {snapshot.statuses.filter((status) => status.active_profile).length} of{" "}
                   {snapshot.statuses.length} tools are ready to switch.
@@ -183,36 +131,19 @@ export function OverviewPanel({
                 </div>
               </div>
               <div className="overview-current-set-actions">
-                <button
-                  className="ghost-button"
-                  type="button"
-                  disabled={mutationLock.isBusy}
-                  onClick={() => {
-                    if (!quickSwitch) {
-                      return;
-                    }
-                    if (quickSwitch.startsWith("set:")) {
-                      const name = quickSwitch.slice("set:".length);
-                      const profileSet = settings.profile_sets?.find((set) => set.name === name);
-                      activateProfileSetMutation.mutate({
-                        name,
-                        label: profileSet?.label ?? profileSet?.name,
-                      });
-                      return;
-                    }
-                    if (quickSwitch.startsWith("profile:")) {
-                      const profileName = quickSwitch.slice("profile:".length);
-                      const sharedProfile = sharedProfiles.find((profile) => profile.name === profileName);
-                      useAllProfilesMutation.mutate({
-                        profile: profileName,
-                        stateMode: resolveGlobalStateMode(snapshot),
-                        label: sharedProfile?.label,
-                      });
-                    }
-                  }}
-                >
-                  Switch set…
-                </button>
+                <div className="button-row button-row-column">
+                  <button
+                    className="primary-button"
+                    type="button"
+                    disabled={mutationLock.isBusy}
+                    onClick={onOpenQuickSwitch}
+                  >
+                    Switch Set…
+                  </button>
+                  <button className="ghost-button" type="button" onClick={onOpenContexts}>
+                    Open Sets
+                  </button>
+                </div>
               </div>
             </article>
           ) : null}
@@ -229,30 +160,28 @@ export function OverviewPanel({
                 Matched via {workspaceStatus.scope}: {workspaceStatus.target}
               </p>
               {hasWorkspaceMismatch ? (
-                <div className="button-row">
-                  <button
-                    className="primary-button"
-                    type="button"
-                    disabled={mutationLock.isBusy}
-                    onClick={() => {
-                      const target = resolveWorkspaceActivationTarget(
-                        workspaceStatus.expectedContext,
-                        settings,
-                        snapshot,
-                      );
-                      if (!target) {
-                        onOpenContexts();
-                        return;
-                      }
-                      activateWorkspaceTargetMutation.mutate({
-                        ...target,
-                        matchedTarget: workspaceStatus.target,
-                      });
-                    }}
-                  >
-                    {expectedWorkspaceTarget ? "Use expected set now" : "Open sets"}
-                  </button>
-                </div>
+                <button
+                  className="primary-button"
+                  type="button"
+                  disabled={mutationLock.isBusy}
+                  onClick={() => {
+                    const target = resolveWorkspaceActivationTarget(
+                      workspaceStatus.expectedContext,
+                      settings,
+                      snapshot,
+                    );
+                    if (!target) {
+                      onOpenContexts();
+                      return;
+                    }
+                    activateWorkspaceTargetMutation.mutate({
+                      ...target,
+                      matchedTarget: workspaceStatus.target,
+                    });
+                  }}
+                >
+                  {expectedWorkspaceTarget ? "Use expected set now" : "Open sets"}
+                </button>
               ) : null}
             </article>
           ) : null}

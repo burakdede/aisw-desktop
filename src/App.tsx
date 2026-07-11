@@ -440,6 +440,7 @@ export function App() {
               settings={settings}
               toolCapabilities={toolCapabilities}
               onOpenContexts={openContexts}
+              onOpenQuickSwitch={() => setQuickSwitchOpen(true)}
               onOpenProfiles={(tool, expandedProfile, options) => {
                 setProfilesRouteState({ tool, expandedProfile, mode: options?.mode });
                 setActiveNav("profiles");
