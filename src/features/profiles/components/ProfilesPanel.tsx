@@ -468,7 +468,7 @@ export function ProfilesPanel({
   return (
     <SectionCard
       title="Profiles"
-      kicker="Provisioning"
+      kicker="Profile library"
       actions={
         <div className="profiles-toolbar">
           <input
@@ -499,21 +499,21 @@ export function ProfilesPanel({
     >
       <div className="profiles-status-strip" aria-label="Profiles highlights">
         <article className="profiles-status-card">
-          <p className="card-kicker">Library</p>
+          <p className="card-kicker">Profiles</p>
           <h3>{inventoryProfiles.length}</h3>
           <p className="inline-note">
             Saved profile{inventoryProfiles.length === 1 ? "" : "s"}
           </p>
         </article>
         <article className="profiles-status-card">
-          <p className="card-kicker">Focused tool</p>
+          <p className="card-kicker">Filter</p>
           <h3>{titleCase(tool)}</h3>
           <p className="inline-note">
-            {tool === "claude" ? "Claude focused" : tool === "codex" ? "Codex focused" : "Gemini focused"}
+            {tool === "claude" ? "Claude Code filter" : tool === "codex" ? "Codex filter" : "Gemini filter"}
           </p>
         </article>
         <article className="profiles-status-card">
-          <p className="card-kicker">Active login</p>
+          <p className="card-kicker">Active profile</p>
           <h3>{currentToolActiveProfile}</h3>
           <p className="inline-note">
             {activeProfilesCount} active profile{activeProfilesCount === 1 ? "" : "s"} across supported tools
@@ -529,11 +529,11 @@ export function ProfilesPanel({
             <article className="diagnostic-card profiles-table-card">
               <div className="desktop-pane-section-header">
                 <div>
-                  <p className="card-kicker">Library</p>
+                  <p className="card-kicker">Profile list</p>
                   <h3>Saved profiles</h3>
                 </div>
                 <p className="inline-note">
-                  Select a row to inspect it. Double-click to activate the saved login immediately.
+                  Select a row to inspect it. Double-click to switch to that saved login immediately.
                 </p>
               </div>
               <div className="profiles-list-header" aria-hidden="true">
@@ -683,19 +683,19 @@ export function ProfilesPanel({
         }
         secondary={
           <div className="stack-list desktop-pane-column">
-            <div className="desktop-pane-section-header">
-              <div>
-                <p className="card-kicker">Inspector</p>
-                <h3>Profile details</h3>
-              </div>
-              <p className="inline-note">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Inspector</p>
+                  <h3>Selected profile</h3>
+                </div>
+                <p className="inline-note">
                 Inspect the selected login, apply recovery actions, or open the sheet-based add flow.
-              </p>
-            </div>
+                </p>
+              </div>
             <article className="diagnostic-card desktop-pane-intro profiles-tool-focus-card">
               <div className="profiles-tool-focus-header">
                 <div>
-                  <p className="card-kicker">Focused tool</p>
+                  <p className="card-kicker">Current tool</p>
                   <h3>{titleCase(tool)}</h3>
                 </div>
                 <span
@@ -835,7 +835,7 @@ export function ProfilesPanel({
                   <div className="desktop-pane-section-header">
                     <div>
                       <p className="card-kicker">Manage</p>
-                      <h3>Activation and management</h3>
+                      <h3>Actions</h3>
                     </div>
                     <p className="inline-note">
                       Switch, restore, rename, relabel, inspect diagnostics, and remove this saved profile without leaving the inspector.
@@ -868,7 +868,7 @@ export function ProfilesPanel({
                     >
                       {openDiagnosticDetails === selectedProfileEntry.name
                         ? "Hide technical details"
-                        : "View technical details"}
+                        : "Show technical details"}
                     </button>
                   </div>
                   {selectedLatestBackup ? (
@@ -1006,7 +1006,7 @@ export function ProfilesPanel({
                       </p>
                       {selectedLatestBackup ? (
                         <p className="inline-note">
-                          Latest backup: {formatBackupTimestamp(selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id)}
+                          Latest restore point: {formatBackupTimestamp(selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id)}
                         </p>
                       ) : null}
                       {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? (
@@ -1100,7 +1100,7 @@ export function ProfilesPanel({
               </>
             ) : (
               <article className="diagnostic-card">
-                <h3>Profile details</h3>
+                <h3>No profile selected</h3>
                 <p className="inline-note">
                   Select a saved profile from the library to inspect activation state, health details, backups, and edit actions.
                 </p>

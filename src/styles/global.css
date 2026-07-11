@@ -2215,7 +2215,7 @@ button {
 
 .profiles-table-rows {
   gap: 0;
-  border-radius: 10px;
+  border-radius: 11px;
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   overflow: hidden;
   background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
@@ -2224,7 +2224,7 @@ button {
 .profile-list-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   width: 100%;
   padding: 0 8px 0 0;
@@ -2242,11 +2242,11 @@ button {
 .profile-list-row-button {
   display: grid;
   grid-template-columns: minmax(180px, 1.4fr) minmax(0, 1.8fr) auto;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
   width: 100%;
   min-width: 0;
-  padding: 12px 10px;
+  padding: 10px 10px;
   border: 0;
   background: transparent;
   text-align: left;
@@ -2266,7 +2266,7 @@ button {
 .profile-list-row-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
 }
 
 .profile-list-main p,
@@ -2420,7 +2420,7 @@ button {
 .profile-list-columns {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
   font-size: 12px;
   line-height: 1.35;
   color: var(--text-secondary);

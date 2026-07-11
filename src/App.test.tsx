@@ -231,7 +231,7 @@ async function renderSetupPanel({
 }
 
 function getProfilesSection() {
-  const kicker = screen.getByText("Provisioning");
+  const kicker = screen.getByText("Profile library");
   const section = kicker.closest("section");
   if (!section) {
     throw new Error("Profiles section not found.");
@@ -766,7 +766,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open details" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Provisioning")).toBeInTheDocument();
+      expect(screen.getByText("Profile library")).toBeInTheDocument();
       expect(screen.getByDisplayValue("Codex")).toBeInTheDocument();
       expect(screen.getByText("Technical details")).toBeInTheDocument();
       expect(screen.getByText("No additional token or runtime warnings are currently reported for this tool.")).toBeInTheDocument();
@@ -1669,7 +1669,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
-    fireEvent.click(screen.getByText("View technical details"));
+    fireEvent.click(screen.getByText("Show technical details"));
 
     await waitFor(() => {
       expect(screen.getByText("Technical details")).toBeInTheDocument();
@@ -1761,7 +1761,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Profiles"));
 
     selectProfileInventory("Claude", "Personal");
-    fireEvent.click(screen.getByText("View technical details"));
+    fireEvent.click(screen.getByText("Show technical details"));
 
     await waitFor(() => {
       expect(screen.getByText("Technical details")).toBeInTheDocument();
@@ -5347,7 +5347,7 @@ describe("App", () => {
     fireEvent.click(screen.getByLabelText("Add codex profile"));
 
     await waitFor(() => {
-      expect(screen.getByText("Provisioning")).toBeInTheDocument();
+      expect(screen.getByText("Profile library")).toBeInTheDocument();
       expect(screen.getByLabelText("Current tool")).toHaveValue("codex");
       expect(getAddProfileDialog().getByLabelText("Tool")).toHaveValue("codex");
     });
