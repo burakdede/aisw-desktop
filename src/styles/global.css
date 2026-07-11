@@ -506,13 +506,6 @@ button {
   background: color-mix(in srgb, Canvas 97%, CanvasText 3%);
 }
 
-.quick-switch-body {
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(220px, 0.9fr);
-  gap: 14px;
-}
-
 .quick-switch-results {
   min-height: 0;
   overflow: auto;
@@ -521,58 +514,38 @@ button {
   padding-right: 4px;
 }
 
-.quick-switch-inspector {
-  min-height: 0;
-  display: grid;
-  align-content: start;
-  gap: 12px;
-  padding: 14px;
-  border: 1px solid color-mix(in srgb, CanvasText 10%, transparent);
-  border-radius: 14px;
-  background: color-mix(in srgb, Canvas 97%, CanvasText 2%);
-}
-
-.quick-switch-inspector h4,
-.quick-switch-empty-state h4 {
-  margin: 0;
-  font-size: 18px;
-  line-height: 1.2;
-}
-
-.quick-switch-inspector .inline-note,
-.quick-switch-empty-state .inline-note {
-  margin: 0;
-}
-
-.quick-switch-inspector-header {
+.quick-switch-hint-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  min-height: 34px;
+  padding: 0 2px;
+  color: var(--text-secondary);
 }
 
-.quick-switch-inspector-grid {
-  margin: 0;
-  display: grid;
-  gap: 12px;
-}
-
-.quick-switch-inspector-grid div {
-  display: grid;
-  gap: 3px;
-}
-
-.quick-switch-inspector-grid dt {
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-
-.quick-switch-inspector-grid dd {
-  margin: 0;
-  font-size: 13px;
+.quick-switch-hint-bar strong {
   color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.quick-switch-hint-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, CanvasText 12%, transparent);
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--text-secondary);
+}
+
+.quick-switch-hint-copy {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-secondary);
 }
 
 .quick-switch-footer {
@@ -2713,13 +2686,18 @@ button {
     align-items: stretch;
   }
 
-  .quick-switch-search-row,
-  .quick-switch-body {
+  .quick-switch-search-row {
     grid-template-columns: 1fr;
   }
 
   .quick-switch-shortcuts {
     justify-content: flex-start;
+  }
+
+  .quick-switch-hint-bar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .activity-list-meta,

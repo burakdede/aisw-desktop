@@ -34,7 +34,7 @@ type QuickSwitchItem =
   | {
       id: string;
       kind: "shared_profile";
-      group: "Matching profiles";
+      group: "Matching Profiles";
       badge: "Match";
       title: string;
       subtitle: string;
@@ -232,9 +232,9 @@ export function QuickSwitchPalette({
         <div className="quick-switch-header">
           <div>
             <p className="card-kicker">Quick Switch</p>
-            <h3>Switch accounts without leaving the current view</h3>
+            <h3>Switch profiles without leaving the current view</h3>
             <p className="inline-note">
-              Search sets, matching profiles, or individual tool accounts.
+              Search sets, matching profiles, or individual tool profiles.
             </p>
           </div>
           <button className="ghost-button" type="button" onClick={onClose}>
@@ -248,7 +248,7 @@ export function QuickSwitchPalette({
             aria-label="Search Quick Switch"
             aria-controls="quick-switch-results-listbox"
             aria-activedescendant={selectedItem ? `quick-switch-option-${selectedItem.id}` : undefined}
-            placeholder="Search sets, profiles, or tools"
+            placeholder="Search profiles or sets"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
@@ -256,109 +256,78 @@ export function QuickSwitchPalette({
             {filteredItems.length} result{filteredItems.length === 1 ? "" : "s"}
           </span>
         </div>
-        <div className="quick-switch-body">
-          <div
-            className="quick-switch-results"
-            role="listbox"
-            id="quick-switch-results-listbox"
-            aria-label="Quick Switch results"
-          >
-            {filteredItems.length ? (
-              Object.entries(groupedItems).map(([group, groupItems]) => (
-                <div key={group} className="quick-switch-group">
-                  <p className="nav-group-label">{group}</p>
-                  <div className="quick-switch-options">
-                    {groupItems.map((item) => {
-                      const itemIndex = filteredItems.findIndex((entry) => entry.id === item.id);
-                      return (
-                        <button
-                          key={item.id}
-                          id={`quick-switch-option-${item.id}`}
-                          ref={(node) => {
-                            optionRefs.current[item.id] = node;
-                          }}
-                          className={
-                            itemIndex === selectedIndex
-                              ? "quick-switch-option quick-switch-option-active"
-                              : "quick-switch-option"
-                          }
-                          type="button"
-                          role="option"
-                          aria-selected={itemIndex === selectedIndex}
-                          onMouseEnter={() => setSelectedIndex(itemIndex)}
-                          onClick={() => activateItem(item)}
-                        >
-                          <div className="quick-switch-option-copy">
-                            <div className="quick-switch-option-line">
-                              <strong>{item.title}</strong>
-                              <span className="quick-switch-option-badge">{item.badge}</span>
-                            </div>
-                            <p>{item.subtitle}</p>
+        <div className="quick-switch-hint-bar" aria-live="polite">
+          {selectedItem ? (
+            <>
+              <span className="quick-switch-hint-label">{selectedItem.group}</span>
+              <strong>{selectedItem.title}</strong>
+              <span className="quick-switch-hint-copy">
+                {selectedItem.active ? "Current selection" : selectedItem.subtitle}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="quick-switch-hint-label">Selection</span>
+              <strong>No matches</strong>
+              <span className="quick-switch-hint-copy">Search by set name, tool, profile name, or saved label.</span>
+            </>
+          )}
+        </div>
+        <div
+          className="quick-switch-results"
+          role="listbox"
+          id="quick-switch-results-listbox"
+          aria-label="Quick Switch results"
+        >
+          {filteredItems.length ? (
+            Object.entries(groupedItems).map(([group, groupItems]) => (
+              <div key={group} className="quick-switch-group">
+                <p className="nav-group-label">{group}</p>
+                <div className="quick-switch-options">
+                  {groupItems.map((item) => {
+                    const itemIndex = filteredItems.findIndex((entry) => entry.id === item.id);
+                    return (
+                      <button
+                        key={item.id}
+                        id={`quick-switch-option-${item.id}`}
+                        ref={(node) => {
+                          optionRefs.current[item.id] = node;
+                        }}
+                        className={
+                          itemIndex === selectedIndex
+                            ? "quick-switch-option quick-switch-option-active"
+                            : "quick-switch-option"
+                        }
+                        type="button"
+                        role="option"
+                        aria-selected={itemIndex === selectedIndex}
+                        onMouseEnter={() => setSelectedIndex(itemIndex)}
+                        onClick={() => activateItem(item)}
+                      >
+                        <div className="quick-switch-option-copy">
+                          <div className="quick-switch-option-line">
+                            <strong>{item.title}</strong>
+                            <span className="quick-switch-option-badge">{item.badge}</span>
                           </div>
-                          <span className="quick-switch-option-meta">
-                            {item.active ? "Current" : "Switch"}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                          <p>{item.subtitle}</p>
+                        </div>
+                        <span className="quick-switch-option-meta">
+                          {item.active ? "Current" : "Switch"}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
-              ))
-            ) : (
-              <article className="diagnostic-card">
-                <h3>No matches</h3>
-                <p className="inline-note">
-                  Search by set name, tool, profile name, or saved label.
-                </p>
-              </article>
-            )}
-          </div>
-          <aside className="quick-switch-inspector" aria-live="polite">
-            {selectedItem ? (
-              <>
-                <div className="quick-switch-inspector-header">
-                  <p className="card-kicker">{selectedItem.group}</p>
-                  <span className="quick-switch-option-badge">{selectedItem.badge}</span>
-                </div>
-                <h4>{selectedItem.title}</h4>
-                <p className="inline-note">{selectedItem.subtitle}</p>
-                <dl className="quick-switch-inspector-grid">
-                  <div>
-                    <dt>Status</dt>
-                    <dd>{selectedItem.active ? "Current selection" : "Ready to switch"}</dd>
-                  </div>
-                  <div>
-                    <dt>Action</dt>
-                    <dd>
-                      {selectedItem.kind === "profile_set"
-                        ? "Switch the entire set"
-                        : selectedItem.kind === "shared_profile"
-                          ? "Switch every matching tool"
-                          : `Switch ${titleCase(selectedItem.tool)}`}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Quick key</dt>
-                    <dd>Enter</dd>
-                  </div>
-                  <div>
-                    <dt>Match all</dt>
-                    <dd>
-                      {selectedItem.kind === "profile_set" ? "Uses the full set" : "Command-Enter"}
-                    </dd>
-                  </div>
-                </dl>
-              </>
-            ) : (
-              <div className="quick-switch-empty-state">
-                <p className="card-kicker">Selection</p>
-                <h4>No matches</h4>
-                <p className="inline-note">
-                  Search by set name, tool, profile name, or saved label.
-                </p>
               </div>
-            )}
-          </aside>
+            ))
+          ) : (
+            <article className="diagnostic-card">
+              <h3>No matches</h3>
+              <p className="inline-note">
+                Search by set name, tool, profile name, or saved label.
+              </p>
+            </article>
+          )}
         </div>
         <footer className="quick-switch-footer">
           <div className="quick-switch-selection" aria-live="polite">
@@ -366,7 +335,13 @@ export function QuickSwitchPalette({
               <>
                 <p className="card-kicker">Selected</p>
                 <strong>{selectedItem.title}</strong>
-                <p>{selectedItem.subtitle}</p>
+                <p>
+                  {selectedItem.kind === "profile_set"
+                    ? "Enter switches this set."
+                    : selectedItem.kind === "shared_profile"
+                      ? "Enter switches every matching tool."
+                      : `Enter switches ${titleCase(selectedItem.tool)}.`}
+                </p>
               </>
             ) : (
               <>
@@ -434,7 +409,7 @@ function buildQuickSwitchItems(settings: DesktopSettings, snapshot: AppSnapshot)
     items.push({
       id: `shared:${profile.name}`,
       kind: "shared_profile",
-      group: "Matching profiles",
+      group: "Matching Profiles",
       badge: "Match",
       title: profile.label,
       subtitle: `Across ${matchingTools.join(", ")}`,
