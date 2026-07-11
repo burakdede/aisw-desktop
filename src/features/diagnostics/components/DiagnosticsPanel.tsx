@@ -28,6 +28,7 @@ import {
 import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 import { resolveWorkspaceActivationTarget } from "../../workspaces/workspace-activation";
 import { contextDisplayLabel, toolProfileDisplayLabel } from "../../../lib/profile-display";
+import { toolDisplayName } from "../../../lib/tool-display";
 import { titleCase } from "../../../lib/utils";
 import type { SettingsSection } from "../../settings/components/SettingsPanel";
 
@@ -767,19 +768,6 @@ function buildDiagnosticCheckRows(
 
 function toolStatusDisplayLabel(status: ToolStatus) {
   return `${toolDisplayName(status.tool)}${status.active_profile ? ` is using ${status.active_profile}` : ""}`;
-}
-
-function toolDisplayName(tool: string) {
-  switch (tool) {
-    case "claude":
-      return "Claude Code";
-    case "codex":
-      return "Codex CLI";
-    case "gemini":
-      return "Gemini CLI";
-    default:
-      return titleCase(tool);
-  }
 }
 
 function buildQuickFixes(

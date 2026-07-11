@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { SplitView } from "../../../components/SplitView";
+import { SourceListPanel } from "../../../components/SourceListPanel";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { ContextsPanel } from "../../contexts/components/ContextsPanel";
 import { WorkspacesPanel } from "../../workspaces/components/WorkspacesPanel";
@@ -49,18 +50,14 @@ export function SetsPanel({
       primaryClassName="sets-mode-pane"
       secondaryClassName="sets-detail-pane"
       primary={
-        <article className="diagnostic-card desktop-source-card sets-source-card">
-          <div className="desktop-pane-section-header">
-            <div>
-              <p className="card-kicker">Sets</p>
-              <h3>Sets</h3>
-            </div>
-            <span className="pill pill-soft">{mode === "sets" ? "Library" : "Rules"}</span>
-          </div>
-          <p className="inline-note">
-            Keep reusable switching sets and project-aware expectations in one compact desktop workflow.
-          </p>
-          <div className="desktop-source-list" aria-label="Sets sections">
+        <SourceListPanel
+          className="sets-source-card"
+          kicker="Sets"
+          title="Sets"
+          listLabel="Sets sections"
+          badge={<span className="pill pill-soft">{mode === "sets" ? "Library" : "Rules"}</span>}
+          note="Keep reusable switching sets and project-aware expectations in one compact desktop workflow."
+        >
             {sections.map((section) => (
               <button
                 key={section.value}
@@ -87,8 +84,7 @@ export function SetsPanel({
                 </span>
               </button>
             ))}
-          </div>
-        </article>
+        </SourceListPanel>
       }
       secondary={
         mode === "sets" ? (

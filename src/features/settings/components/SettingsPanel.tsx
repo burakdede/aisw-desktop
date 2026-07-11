@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
+import { SourceListPanel } from "../../../components/SourceListPanel";
 import { SplitView } from "../../../components/SplitView";
 import { exportDiagnosticBundle, getShellGuidance, runDoctor } from "../../../lib/client";
 import {
@@ -185,61 +186,60 @@ export function SettingsPanel({
         secondaryClassName="settings-detail-pane"
         primary={
           <div className="stack-list">
-            <article className="diagnostic-card desktop-source-card settings-nav-card">
-              <div className="desktop-pane-section-header">
-                <div>
-                  <p className="card-kicker">Preferences</p>
-                  <h3>Settings</h3>
-                </div>
-                <span className="pill pill-soft">{sourceListSummary(selectedSection)}</span>
-              </div>
-              <p className="inline-note">{sectionDescription(selectedSection)}</p>
-              <div className="settings-overview-meta">
-                <div>
-                  <span className="overview-current-set-cell-label">Section</span>
-                  <strong>{sectionLabel(selectedSection)}</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Focus</span>
-                  <strong>{sectionHeading(selectedSection)}</strong>
-                </div>
-              </div>
-              <div className="desktop-status-pill-stack">
-                {sectionPills(selectedSection).map((pill) => (
-                  <span key={pill} className="status-pill">
-                    {pill}
+            <SourceListPanel
+              className="settings-nav-card"
+              kicker="Preferences"
+              title="Settings"
+              listLabel="Settings sections"
+              badge={<span className="pill pill-soft">{sourceListSummary(selectedSection)}</span>}
+              note={sectionDescription(selectedSection)}
+              meta={
+                <>
+                  <div>
+                    <span className="overview-current-set-cell-label">Section</span>
+                    <strong>{sectionLabel(selectedSection)}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Focus</span>
+                    <strong>{sectionHeading(selectedSection)}</strong>
+                  </div>
+                  <div className="desktop-status-pill-stack">
+                    {sectionPills(selectedSection).map((pill) => (
+                      <span key={pill} className="status-pill">
+                        {pill}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              }
+            >
+              {SETTINGS_SECTIONS.map((section) => (
+                <button
+                  key={section}
+                  type="button"
+                  aria-label={sectionLabel(section)}
+                  aria-describedby={`settings-section-summary-${section}`}
+                  aria-pressed={selectedSection === section}
+                  className={`desktop-source-row ${
+                    selectedSection === section ? "desktop-source-row-selected" : ""
+                  }`}
+                  onClick={() => setSelectedSection(section)}
+                >
+                  <div>
+                    <strong>{sectionLabel(section)}</strong>
+                    <p
+                      id={`settings-section-summary-${section}`}
+                      className="inline-note"
+                    >
+                      {sourceListSummary(section)}
+                    </p>
+                  </div>
+                  <span className="desktop-source-chevron" aria-hidden="true">
+                    ›
                   </span>
-                ))}
-              </div>
-              <div className="desktop-source-list" aria-label="Settings sections">
-                {SETTINGS_SECTIONS.map((section) => (
-                  <button
-                    key={section}
-                    type="button"
-                    aria-label={sectionLabel(section)}
-                    aria-describedby={`settings-section-summary-${section}`}
-                    aria-pressed={selectedSection === section}
-                    className={`desktop-source-row ${
-                      selectedSection === section ? "desktop-source-row-selected" : ""
-                    }`}
-                    onClick={() => setSelectedSection(section)}
-                  >
-                    <div>
-                      <strong>{sectionLabel(section)}</strong>
-                      <p
-                        id={`settings-section-summary-${section}`}
-                        className="inline-note"
-                      >
-                        {sourceListSummary(section)}
-                      </p>
-                    </div>
-                    <span className="desktop-source-chevron" aria-hidden="true">
-                      ›
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </article>
+                </button>
+              ))}
+            </SourceListPanel>
           </div>
         }
         secondary={

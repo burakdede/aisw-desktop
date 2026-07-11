@@ -14,6 +14,7 @@ import { compareBackupsNewestFirst } from "../../../lib/backups";
 import { DesktopCommandError } from "../../../lib/tauri";
 import { listenDesktopEvent } from "../../../lib/tauri";
 import { listBackups, parseOAuthProgressEvent } from "../../../lib/client";
+import { toolDisplayName } from "../../../lib/tool-display";
 import { titleCase } from "../../../lib/utils";
 import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import {
@@ -1642,19 +1643,6 @@ function expectedEnvVar(tool: string) {
       return "GEMINI_API_KEY";
     default:
       return "API_KEY";
-  }
-}
-
-function toolDisplayName(tool: string) {
-  switch (tool) {
-    case "claude":
-      return "Claude Code";
-    case "codex":
-      return "Codex CLI";
-    case "gemini":
-      return "Gemini CLI";
-    default:
-      return titleCase(tool);
   }
 }
 

@@ -19,6 +19,7 @@ import {
   contextDisplayLabel,
   toolProfileDisplayLabel,
 } from "../../../lib/profile-display";
+import { toolDisplayName } from "../../../lib/tool-display";
 import { titleCase } from "../../../lib/utils";
 import {
   preferredProfileImportMode,
@@ -769,19 +770,6 @@ function formatDiagnosticWarning(
 ) {
   const detail = warning.message ?? warning.code ?? "Warning reported by the runtime.";
   return warning.remediation ? `${detail} Remediation: ${warning.remediation}` : detail;
-}
-
-function toolDisplayName(tool: string) {
-  switch (tool) {
-    case "claude":
-      return "Claude Code";
-    case "codex":
-      return "Codex CLI";
-    case "gemini":
-      return "Gemini CLI";
-    default:
-      return titleCase(tool);
-  }
 }
 
 function credentialBackendLabel(backend: string | null | undefined) {

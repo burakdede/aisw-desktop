@@ -6,6 +6,7 @@ import {
   sharedProfileEntries,
   toolProfileDisplayLabel,
 } from "../lib/profile-display";
+import { toolDisplayName } from "../lib/tool-display";
 import { titleCase } from "../lib/utils";
 import { resolveGlobalStateMode, supportedStateModes } from "../features/shared/state-modes";
 import { useDesktopActions } from "../features/shared/useDesktopActions";
@@ -459,14 +460,5 @@ function sharedProfileTools(snapshot: AppSnapshot, profileName: string) {
 }
 
 function quickSwitchToolLabel(tool: string) {
-  if (tool === "claude") {
-    return "Claude Code";
-  }
-  if (tool === "codex") {
-    return "Codex CLI";
-  }
-  if (tool === "gemini") {
-    return "Gemini CLI";
-  }
-  return titleCase(tool);
+  return toolDisplayName(tool);
 }

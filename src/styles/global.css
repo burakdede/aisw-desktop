@@ -942,6 +942,45 @@ button {
   align-content: start;
 }
 
+.source-list-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--hairline);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, Canvas 96%, AccentColor 2%), color-mix(in srgb, Canvas 98%, CanvasText 2%));
+  box-shadow: var(--card-shadow);
+}
+
+.source-list-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.source-list-header h3 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.source-list-badge {
+  display: flex;
+  align-items: center;
+}
+
+.source-list-note {
+  margin: 0;
+}
+
+.source-list-meta {
+  display: grid;
+  gap: 10px;
+}
+
 .settings-overview-meta {
   display: grid;
   gap: 10px;
@@ -967,7 +1006,8 @@ button {
 }
 
 .desktop-source-card,
-.settings-nav-card {
+.settings-nav-card,
+.sets-source-card {
   gap: 12px;
 }
 
