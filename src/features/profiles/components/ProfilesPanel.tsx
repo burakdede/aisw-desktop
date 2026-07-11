@@ -210,6 +210,16 @@ export function ProfilesPanel({
     selectedProfileEntry &&
     pendingRestore?.profile === selectedProfileEntry.name &&
     pendingRestore.mode === "activate";
+  const activeProfilesCount = inventoryProfiles.filter((entry) => entry.active).length;
+  const currentToolActiveProfile =
+    snapshot.profiles[tool]?.active
+      ? effectiveLabel(
+          tool,
+          snapshot.profiles[tool]?.active ?? "",
+          snapshot.profiles[tool]?.profiles.find((entry) => entry.name === snapshot.profiles[tool]?.active)?.label,
+          settings,
+        ) ?? titleCase(snapshot.profiles[tool]?.active ?? "")
+      : "None";
 
   useEffect(() => {
     if (!availableStateModes.length) {
@@ -414,22 +424,29 @@ export function ProfilesPanel({
         </div>
       }
     >
-      <article className="desktop-pane-hero profiles-hero">
-        <div className="desktop-pane-hero-copy">
-          <p className="card-kicker">Profiles</p>
-          <h3>Manage saved logins with one inspector-driven workflow</h3>
+      <div className="profiles-status-strip" aria-label="Profiles highlights">
+        <article className="profiles-status-card">
+          <p className="card-kicker">Library</p>
+          <h3>{inventoryProfiles.length}</h3>
           <p className="inline-note">
-            Browse saved profiles on the left, inspect the selected login on the right, and use focused sheets for adding new accounts instead of long setup pages.
+            Saved profile{inventoryProfiles.length === 1 ? "" : "s"}
           </p>
-        </div>
-        <div className="desktop-pane-hero-pills" aria-label="Profiles highlights">
-          <span className="status-pill">
-            {inventoryProfiles.length} saved profile{inventoryProfiles.length === 1 ? "" : "s"}
-          </span>
-          <span className="status-pill">{tool === "claude" ? "Claude focused" : tool === "codex" ? "Codex focused" : "Gemini focused"}</span>
-          <span className="status-pill">Sheet-based setup</span>
-        </div>
-      </article>
+        </article>
+        <article className="profiles-status-card">
+          <p className="card-kicker">Focused tool</p>
+          <h3>{titleCase(tool)}</h3>
+          <p className="inline-note">
+            {tool === "claude" ? "Claude focused" : tool === "codex" ? "Codex focused" : "Gemini focused"}
+          </p>
+        </article>
+        <article className="profiles-status-card">
+          <p className="card-kicker">Active login</p>
+          <h3>{currentToolActiveProfile}</h3>
+          <p className="inline-note">
+            {activeProfilesCount} active profile{activeProfilesCount === 1 ? "" : "s"} across supported tools
+          </p>
+        </article>
+      </div>
       <SplitView
         className="profiles-layout"
         primaryClassName="profiles-inventory-pane"
@@ -525,7 +542,7 @@ export function ProfilesPanel({
                 <h3>Profile details</h3>
               </div>
               <p className="inline-note">
-                Inspect the selected login, apply recovery actions, or open the add-profile sheet.
+                Inspect the selected login, apply recovery actions, or open the sheet-based add flow.
               </p>
             </div>
             <article className="diagnostic-card desktop-pane-intro profiles-inspector-controls">

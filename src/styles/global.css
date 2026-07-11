@@ -1125,6 +1125,33 @@ button {
   border-color: color-mix(in srgb, var(--warning) 22%, var(--separator));
 }
 
+.profiles-status-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.profiles-status-card {
+  display: grid;
+  gap: 6px;
+  min-height: 104px;
+  padding: 14px 15px;
+  border-radius: 12px;
+  border: 1px solid var(--separator);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, Canvas 99%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
+    color-mix(in srgb, Canvas 98%, CanvasText 2%);
+  box-shadow: var(--shadow-card);
+}
+
+.profiles-status-card h3 {
+  margin: 0;
+  font-size: 21px;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
 .overview-layout {
   grid-template-columns: minmax(280px, 0.92fr) minmax(0, 1.18fr);
 }
@@ -1132,10 +1159,6 @@ button {
 .overview-tools-split {
   grid-template-columns: minmax(250px, 0.66fr) minmax(320px, 1fr);
   align-items: start;
-}
-
-.profiles-hero {
-  margin-bottom: 14px;
 }
 
 .overview-summary-grid {
@@ -1957,6 +1980,10 @@ button {
   }
 
   .overview-status-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .profiles-status-strip {
     grid-template-columns: 1fr;
   }
 
