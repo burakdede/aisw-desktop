@@ -7307,23 +7307,29 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Advanced" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Engine details")).toBeInTheDocument();
+      expect(screen.getByText("Runtime details")).toBeInTheDocument();
       expect(
         screen.getByText(
-          (_, element) => element?.textContent?.trim() === "App data folder: Managed automatically",
+          (_, element) => element?.textContent?.trim() === "Desktop storage: Managed automatically",
         ),
       ).toBeInTheDocument();
       expect(
-        screen.getByText((_, element) => element?.textContent?.trim() === "Selected update channel: Stable"),
+        screen.getByText((_, element) => element?.textContent?.trim() === "Release track: Stable"),
       ).toBeInTheDocument();
-      expect(screen.getByText("CLI API 1 · JSON schema 1 · Progress schema 1")).toBeInTheDocument();
+      expect(screen.getByText("Runtime API 1 · JSON schema 1 · Progress schema 1")).toBeInTheDocument();
       expect(
-        screen.getByText("Active engine path: /Applications/AI Switch.app/Contents/Resources/aisw"),
+        screen.getByText((_, element) =>
+          element?.textContent?.trim() === "Active runtime source: Included with this app",
+        ),
       ).toBeInTheDocument();
       expect(
-        screen.getByText("Included engine path: /Applications/AI Switch.app/Contents/Resources/aisw"),
+        screen.getByText((_, element) =>
+          element?.textContent?.trim() === "Included runtime: Available in this build",
+        ),
       ).toBeInTheDocument();
-      expect(screen.getByText("System engine candidate: /opt/homebrew/bin/aisw")).toBeInTheDocument();
+      expect(
+        screen.getByText((_, element) => element?.textContent?.trim() === "System runtime: Found on this Mac"),
+      ).toBeInTheDocument();
     });
   });
 

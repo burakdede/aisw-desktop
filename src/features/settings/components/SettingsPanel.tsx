@@ -876,14 +876,14 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Storage</p>
-                    <h3>App data folder</h3>
+                    <h3>Desktop storage</h3>
                   </div>
                   <p className="inline-note">
                     Leave this empty to use the managed desktop data location.
                   </p>
                 </div>
                 <label>
-                  App data folder override
+                  Desktop storage override
                   <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
                 </label>
               </article>
@@ -906,40 +906,49 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Status</p>
-                    <h3>Engine details</h3>
+                    <h3>Runtime details</h3>
                   </div>
                   <p className="inline-note">
-                    Review raw engine paths, storage state, and release metadata without cluttering the main runtime preferences.
+                    Review desktop storage, compatibility, and runtime availability without cluttering the main preferences.
                   </p>
                 </div>
                 <p className="inline-note">
-                  App data folder:{" "}
+                  Desktop storage:{" "}
                   {settings.aisw_home ? `Custom folder (${settings.aisw_home})` : "Managed automatically"}
                 </p>
                 <p className="inline-note">
-                  Selected update channel: <strong>{titleCase(updateChannel)}</strong>
+                  Release track: <strong>{titleCase(updateChannel)}</strong>
                 </p>
                 {runtimeStatus.version ? (
                   <p className="inline-note">
-                    CLI API {runtimeStatus.version.cli_api_version} · JSON schema{" "}
+                    Runtime API {runtimeStatus.version.cli_api_version} · JSON schema{" "}
                     {runtimeStatus.version.json_schema_version} · Progress schema{" "}
                     {runtimeStatus.version.progress_schema_version}
                   </p>
                 ) : null}
                 <p className="inline-note">
-                  Active engine path: {runtimeStatus.resolved_path ?? "No engine resolved"}
+                  Active runtime source:{" "}
+                  <strong>
+                    {runtimeKind === "bundled"
+                      ? "Included with this app"
+                      : runtimeKind === "system"
+                        ? "System override"
+                        : "Custom override"}
+                  </strong>
                 </p>
                 <p className="inline-note">
-                  Included engine path:{" "}
-                  {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
+                  Included runtime:{" "}
+                  <strong>
+                    {runtimeStatus.inventory.bundled_path ? "Available in this build" : "Not included in this build"}
+                  </strong>
                 </p>
                 <p className="inline-note">
-                  System engine candidate:{" "}
-                  {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
+                  System runtime:{" "}
+                  <strong>{runtimeStatus.inventory.system_path ? "Found on this Mac" : "Not found"}</strong>
                 </p>
                 {runtimeStatus.inventory.configured_path ? (
                   <p className="inline-note">
-                    Custom engine path: {runtimeStatus.inventory.configured_path}
+                    Custom runtime override is configured.
                   </p>
                 ) : null}
               </article>

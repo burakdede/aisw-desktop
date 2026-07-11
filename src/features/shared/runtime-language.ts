@@ -4,7 +4,7 @@ export function normalizeRuntimeLanguage(text: string | null | undefined): strin
   }
 
   return text
-    .replace(/AISW_HOME/g, "App data folder")
+    .replace(/AISW_HOME/g, "Desktop storage")
     .replace(/outside AISW/g, "outside AI Switch")
     .replace(/Outside AISW/g, "Outside AI Switch")
     .replace(/AISW cannot/g, "AI Switch cannot")

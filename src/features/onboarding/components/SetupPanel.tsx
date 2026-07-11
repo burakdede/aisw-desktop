@@ -326,7 +326,7 @@ export function SetupPanel({
                 Version: {bootstrap.runtime_status.version?.version ?? "unknown"}
               </p>
               <p className="inline-note">
-                App data folder: {bootstrap.settings.aisw_home ?? "Managed automatically"}
+                Desktop storage: {bootstrap.settings.aisw_home ?? "Managed automatically"}
               </p>
             </article>
           </div>
@@ -377,7 +377,7 @@ export function SetupPanel({
               </strong>
             </p>
             <p className="inline-note">
-              App data folder: {bootstrap.settings.aisw_home ?? "Managed automatically"}
+              Desktop storage: {bootstrap.settings.aisw_home ?? "Managed automatically"}
             </p>
             <p className="inline-note">
               Engine version: {bootstrap.runtime_status.version?.version ?? "unknown"}
@@ -387,7 +387,7 @@ export function SetupPanel({
             </p>
             <div className="button-row">
               <button className="ghost-button" type="button" onClick={() => onOpenSettings("runtime")}>
-                Open engine settings
+                Open runtime settings
               </button>
             </div>
           </article>
