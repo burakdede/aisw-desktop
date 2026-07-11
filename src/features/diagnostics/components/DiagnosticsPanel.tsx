@@ -153,7 +153,7 @@ export function DiagnosticsPanel({
         </div>
       }
     >
-      <article className={`diagnostic-card diagnostics-overview ${totalIssues ? "diagnostic-warn" : "diagnostic-pass"}`}>
+      <article className={`diagnostic-card diagnostics-overview desktop-pane-intro ${totalIssues ? "diagnostic-warn" : "diagnostic-pass"}`}>
         <h3>{totalIssues ? `${totalIssues} issue${totalIssues === 1 ? "" : "s"} found` : "System looks healthy"}</h3>
         {summaryHighlights.length ? (
           <div className="stack-list">
@@ -237,9 +237,17 @@ export function DiagnosticsPanel({
         </article>
       ) : null}
 
-      <div className="panel-grid panel-grid-2 diagnostics-body">
-        <div className="stack-list">
-          <h3>Checks and details</h3>
+      <div className="panel-grid panel-grid-2 diagnostics-body desktop-pane-grid">
+        <div className="stack-list desktop-pane-column">
+          <div className="desktop-pane-section-header">
+            <div>
+              <p className="card-kicker">Checks</p>
+              <h3>Checks and details</h3>
+            </div>
+            <p className="inline-note">
+              Expand the failing areas first, then use the recommended fix actions below.
+            </p>
+          </div>
           {issueCards.map((card) => (
             <article key={`${card.title}-${card.status}`} className={`diagnostic-card diagnostic-${card.status}`}>
               <h4>{card.title}</h4>
@@ -277,8 +285,16 @@ export function DiagnosticsPanel({
           ) : null}
         </div>
 
-        <div className="stack-list">
-          <h3>Recommended fixes</h3>
+        <div className="stack-list desktop-pane-column">
+          <div className="desktop-pane-section-header">
+            <div>
+              <p className="card-kicker">Actions</p>
+              <h3>Recommended fixes</h3>
+            </div>
+            <p className="inline-note">
+              Apply the safest repair path first, then rerun verification from this pane.
+            </p>
+          </div>
           {quickFixes.map((fix) => (
             <article key={quickFixKey(fix)} className={`diagnostic-card diagnostic-${fix.status}`}>
               <h4>{fix.title}</h4>
@@ -383,8 +399,13 @@ export function DiagnosticsPanel({
           ) : null}
         </div>
 
-        <div className="stack-list">
-          <h3>Recent problems</h3>
+        <div className="stack-list desktop-pane-column">
+          <div className="desktop-pane-section-header">
+            <div>
+              <p className="card-kicker">History</p>
+              <h3>Recent problems</h3>
+            </div>
+          </div>
           {recentFailures.map((failure) => (
             <article key={failure.key} className="diagnostic-card diagnostic-fail">
               <h4>{failure.title}</h4>
@@ -408,8 +429,13 @@ export function DiagnosticsPanel({
           ) : null}
         </div>
 
-        <div className="stack-list">
-          <h3>Planned repairs</h3>
+        <div className="stack-list desktop-pane-column">
+          <div className="desktop-pane-section-header">
+            <div>
+              <p className="card-kicker">Repair plan</p>
+              <h3>Planned repairs</h3>
+            </div>
+          </div>
           {repairActions.map((action) => (
             <article key={`${action.title}-${action.detail}`} className="diagnostic-card">
               <h4>{action.title}</h4>

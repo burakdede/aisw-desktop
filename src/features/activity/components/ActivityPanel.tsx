@@ -49,7 +49,16 @@ export function ActivityPanel() {
 
   return (
     <SectionCard title="Activity" kicker="Recent changes and checks">
-      <div className="stack-list">
+      <article className="diagnostic-card desktop-pane-intro">
+        <h3>Session timeline</h3>
+        <p className="inline-note">
+          Review the most recent switch, recovery, verification, and setup actions without leaving the app shell.
+        </p>
+        <p className="inline-note">
+          {entries.length ? `${entries.length} recent event${entries.length === 1 ? "" : "s"} in this session.` : "No local events recorded in this session yet."}
+        </p>
+      </article>
+      <div className="stack-list desktop-pane-stack">
         {entries.length ? (
           entries.map((entry) => (
             <article key={entry.key} className={`list-row activity-row activity-row-${entry.status}`}>

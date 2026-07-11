@@ -65,11 +65,17 @@ export function BackupsPanel({
 
   return (
     <SectionCard title="Backups" kicker="Recovery">
-      <p className="inline-note">
-        Restore replays the saved files only. It does not activate that profile again until you run
-        a matching <code>use</code> action or choose restore and activate here.
-      </p>
-      <div className="stack-list">
+      <article className="diagnostic-card desktop-pane-intro">
+        <h3>Restore points</h3>
+        <p className="inline-note">
+          Restore replays the saved files only. It does not activate that profile again until you run
+          a matching <code>use</code> action or choose restore and activate here.
+        </p>
+        <p className="inline-note">
+          {sortedBackups.length ? `${sortedBackups.length} saved backup${sortedBackups.length === 1 ? "" : "s"} available locally.` : "No saved backups are available yet."}
+        </p>
+      </article>
+      <div className="stack-list desktop-pane-stack">
         {sortedBackups.map((entry) => {
           const target = resolveBackupTarget(entry.tool, entry.profile);
           const profileLabel = toolProfileDisplayLabel(

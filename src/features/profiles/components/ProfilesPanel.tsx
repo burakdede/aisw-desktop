@@ -390,21 +390,32 @@ export function ProfilesPanel({
         </div>
       }
     >
-      <div className="panel-grid panel-grid-2 profiles-layout">
-        <div className="stack-list profiles-inventory-pane">
-          <article className="diagnostic-card">
+      <div className="panel-grid panel-grid-2 profiles-layout desktop-pane-grid">
+        <div className="stack-list profiles-inventory-pane desktop-pane-column">
+          <article className="diagnostic-card desktop-pane-intro">
             <h3>Stored profiles</h3>
             <p className="inline-note">
               Review active state, storage backend, and recent checks before you switch or edit a profile.
             </p>
           </article>
-          <div className="profiles-list-header" aria-hidden="true">
-            <span>Name</span>
-            <span>Tool</span>
-            <span>Auth</span>
-            <span>Backend</span>
-            <span>State</span>
-            <span>Last checked</span>
+          <div className="desktop-pane-section">
+            <div className="desktop-pane-section-header">
+              <div>
+                <p className="card-kicker">Library</p>
+                <h3>Saved profiles</h3>
+              </div>
+              <p className="inline-note">
+                Double-click any row to focus it in the inspector.
+              </p>
+            </div>
+            <div className="profiles-list-header" aria-hidden="true">
+              <span>Name</span>
+              <span>Tool</span>
+              <span>Auth</span>
+              <span>Backend</span>
+              <span>State</span>
+              <span>Last checked</span>
+            </div>
           </div>
           {filteredInventoryProfiles.map((inventoryEntry) => (
             <article
@@ -481,8 +492,8 @@ export function ProfilesPanel({
             </article>
           ) : null}
         </div>
-        <div className="stack-list profiles-inspector-pane">
-          <article className="diagnostic-card">
+        <div className="stack-list profiles-inspector-pane desktop-pane-column">
+          <article className="diagnostic-card desktop-pane-intro">
             <h3>New profile</h3>
             <p className="inline-note">
               Capture a current login, start provider OAuth, paste an API key, or read from environment.

@@ -474,6 +474,55 @@ button {
   flex-wrap: wrap;
 }
 
+.desktop-pane-stack {
+  gap: 14px;
+}
+
+.desktop-pane-grid {
+  align-items: start;
+}
+
+.desktop-pane-column {
+  min-width: 0;
+}
+
+.desktop-pane-intro {
+  display: grid;
+  gap: 8px;
+}
+
+.desktop-pane-intro h3,
+.desktop-pane-section-header h3 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.desktop-pane-mode-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.desktop-pane-section {
+  display: grid;
+  gap: 8px;
+}
+
+.desktop-pane-section-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.desktop-pane-section-header .inline-note {
+  max-width: 34ch;
+  text-align: right;
+}
+
 .settings-nav {
   display: flex;
   gap: 8px;
@@ -1186,6 +1235,16 @@ button {
 
   .overview-current-set-grid {
     grid-template-columns: 1fr;
+  }
+
+  .desktop-pane-mode-card,
+  .desktop-pane-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .desktop-pane-section-header .inline-note {
+    text-align: left;
   }
 }
 
