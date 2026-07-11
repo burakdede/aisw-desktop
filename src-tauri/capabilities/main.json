@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "main-capability",
-  "description": "Grants the main AISW Desktop window access only to its invoke surface, OAuth progress events, and local notifications.",
+  "description": "Grants the main AI Switch Desktop window access only to its invoke surface, OAuth progress events, and local notifications.",
   "windows": [
     "main"
   ],

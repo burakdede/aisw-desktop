@@ -4,7 +4,7 @@
   "permission": [
     {
       "identifier": "desktop-commands",
-      "description": "Allows the AISW Desktop invoke commands exposed to the main window.",
+      "description": "Allows the AI Switch Desktop invoke commands exposed to the main window.",
       "commands": {
         "allow": [
           "get_bootstrap",
