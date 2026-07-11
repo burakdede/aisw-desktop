@@ -12,6 +12,7 @@ import {
 } from "../../../lib/tool-guidance";
 import { supportedStateModes } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
+import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import { StateModeField } from "../../shared/components/StateModeField";
 import {
   activeSetLabel,
@@ -247,8 +248,10 @@ export function OverviewPanel({
                 ) : null}
                 {contextResult ? (
                   <p className={`inline-note ${contextResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
-                    Last context result: {contextResult.message}
-                    {contextResult.remediation ? ` Remediation: ${contextResult.remediation}` : ""}
+                    Last shared-group result: {normalizeRuntimeLanguage(contextResult.message)}
+                    {contextResult.remediation
+                      ? ` Remediation: ${normalizeRuntimeLanguage(contextResult.remediation)}`
+                      : ""}
                   </p>
                 ) : null}
                 {!lastCommandResults.global["switch-all"] &&

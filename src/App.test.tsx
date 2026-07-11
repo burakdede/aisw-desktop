@@ -4474,10 +4474,10 @@ describe("App", () => {
       expect(screen.getByText("Recommended fixes")).toBeInTheDocument();
       expect(screen.getAllByText("codex is missing").length).toBeGreaterThan(0);
       expect(screen.getAllByText("claude live mismatch").length).toBeGreaterThan(0);
-      expect(screen.getByText("Workspace context mismatch")).toBeInTheDocument();
+      expect(screen.getByText("Workspace set mismatch")).toBeInTheDocument();
     });
 
-    const workspaceMismatchCard = screen.getByText("Workspace context mismatch").closest(".diagnostic-card");
+    const workspaceMismatchCard = screen.getByText("Workspace set mismatch").closest(".diagnostic-card");
     if (!(workspaceMismatchCard instanceof HTMLElement)) {
       throw new Error("Missing workspace mismatch diagnostic card.");
     }
@@ -5753,19 +5753,19 @@ describe("App", () => {
         label: "Use shared group",
         status: "error",
         message: "Context switch failed.",
-        remediation: "Re-open AI Switch and verify the saved imported context.",
+        remediation: "Re-open AI Switch and verify the saved shared group.",
       });
       await Promise.resolve();
     });
 
     expect(
       screen.getByText(
-        "Last context result: Context switch failed. Remediation: Re-open AI Switch and verify the saved imported context.",
+        "Last shared-group result: Context switch failed. Remediation: Re-open AI Switch and verify the saved shared group.",
       ),
     ).toBeInTheDocument();
     expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
       title: "Use shared group",
-      body: "Context switch failed. Re-open AI Switch and verify the saved imported context.",
+      body: "Context switch failed. Re-open AI Switch and verify the saved shared group.",
     });
   });
 

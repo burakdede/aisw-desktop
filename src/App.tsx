@@ -4,6 +4,7 @@ import { AppFrame } from "./components/AppFrame";
 import { QuickSwitchPalette } from "./components/QuickSwitchPalette";
 import { SectionCard } from "./components/SectionCard";
 import { recordCommandResult } from "./features/shared/lastCommandResult";
+import { normalizeRuntimeLanguage } from "./features/shared/runtime-language";
 import { BackupsPanel } from "./features/backups/components/BackupsPanel";
 import { DiagnosticsPanel } from "./features/diagnostics/components/DiagnosticsPanel";
 import {
@@ -254,37 +255,43 @@ export function App() {
 
     void listenDesktopEvent<TrayCommandResultEvent>("tray-command-result", (payload) => {
       if (!active) return;
+      const normalizedMessage = normalizeRuntimeLanguage(payload.message);
+      const normalizedRemediation = normalizeRuntimeLanguage(payload.remediation);
+      const normalizedLabel =
+        payload.scope === "global" && payload.id === "context"
+          ? "Use shared group"
+          : normalizeRuntimeLanguage(payload.label);
 
       if (payload.scope === "tool") {
         recordCommandResult(
           { type: "tool", tool: payload.tool },
           {
-            label: payload.label,
+            label: normalizedLabel,
             status: payload.status,
-            message: payload.message,
+            message: normalizedMessage,
             kind: "kind" in payload && typeof payload.kind === "string" ? payload.kind : undefined,
-            remediation: payload.remediation,
+            remediation: normalizedRemediation,
           },
         );
       } else {
         recordCommandResult(
           { type: "global", id: payload.id },
           {
-            label: payload.label,
+            label: normalizedLabel,
             status: payload.status,
-            message: payload.message,
+            message: normalizedMessage,
             kind: "kind" in payload && typeof payload.kind === "string" ? payload.kind : undefined,
-            remediation: payload.remediation,
+            remediation: normalizedRemediation,
           },
         );
       }
 
       void notifyDesktop({
-        title: payload.label,
+        title: normalizedLabel,
         body:
           payload.status === "success"
-            ? payload.message
-            : [payload.message, payload.remediation].filter(Boolean).join(" "),
+            ? normalizedMessage
+            : [normalizedMessage, normalizedRemediation].filter(Boolean).join(" "),
       });
       void invalidatePostMutationQueries(queryClient);
     }).then((dispose) => {

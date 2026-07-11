@@ -13,6 +13,7 @@ import {
 import { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
 import { resolveGlobalStateMode } from "../../shared/state-modes";
+import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 
@@ -391,8 +392,10 @@ export function ContextsPanel({
 
           {contextResult ? (
             <p className={`inline-note ${contextResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
-              Last shared-group result: {contextResult.message}
-              {contextResult.remediation ? ` Remediation: ${contextResult.remediation}` : ""}
+              Last shared-group result: {normalizeRuntimeLanguage(contextResult.message)}
+              {contextResult.remediation
+                ? ` Remediation: ${normalizeRuntimeLanguage(contextResult.remediation)}`
+                : ""}
             </p>
           ) : null}
           {lastAction ? <p className="inline-note">{lastAction}</p> : null}
