@@ -819,7 +819,7 @@ export function App() {
                 Try Again
               </button>
               <button className="ghost-button" type="button" onClick={() => setRuntimeRecoveryOpen(true)}>
-                Advanced Runtime Options
+                Runtime Settings
               </button>
             </div>
             {restoreBundledRuntimeMutation.error ? (
@@ -828,7 +828,7 @@ export function App() {
               </p>
             ) : null}
             <details className="diagnostic-card runtime-blocker-details">
-              <summary>Advanced details</summary>
+              <summary>Compatibility details</summary>
               <div className="stack-list">
                 <p className="inline-note">{normalizeRuntimeLanguage(runtimeBlocker.summary)}</p>
                 {runtimeStatus.issues.length ? (
@@ -1049,7 +1049,7 @@ function describeRuntimeBlocker(runtimeStatus: {
       summary:
         "The selected runtime does not report the desktop compatibility details this app needs.",
       nextStep:
-        "Switch back to the included AI Switch runtime, or choose a newer compatible runtime in Runtime Settings before continuing.",
+        "Switch back to the included runtime, or choose a newer compatible runtime in Runtime Settings before continuing.",
     };
   }
 
@@ -1058,14 +1058,14 @@ function describeRuntimeBlocker(runtimeStatus: {
       summary:
         "The selected runtime was found, but it is not compatible with this desktop app.",
       nextStep:
-        "Switch back to the included AI Switch runtime, or choose a compatible runtime in Runtime Settings before continuing.",
+        "Switch back to the included runtime, or choose a compatible runtime in Runtime Settings before continuing.",
     };
   }
 
   return {
     summary: "AI Switch could not use the selected runtime.",
     nextStep:
-      "Switch to the included AI Switch runtime, or choose a working advanced override in Runtime Settings before continuing.",
+      "Switch to the included runtime, or choose a working runtime source in Runtime Settings before continuing.",
   };
 }
 

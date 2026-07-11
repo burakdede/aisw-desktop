@@ -500,7 +500,7 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Switch back to the included AI Switch runtime, or choose a newer compatible runtime in Runtime Settings before continuing.",
+        "Switch back to the included runtime, or choose a newer compatible runtime in Runtime Settings before continuing.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Current selection")).toBeInTheDocument();
@@ -508,11 +508,11 @@ describe("App", () => {
     expect(screen.getByText("Recommended")).toBeInTheDocument();
     expect(screen.getByText("Included runtime managed by this desktop app")).toBeInTheDocument();
     expect(
-      screen.getByText("Advanced details"),
+      screen.getByText("Compatibility details"),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Use Included Runtime" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Advanced Runtime Options" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Runtime Settings" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Runtime" })).not.toBeInTheDocument();
     expect(screen.queryByText("Runtime summary")).not.toBeInTheDocument();
     expect(screen.queryByText("Welcome to AI Switch")).not.toBeInTheDocument();
@@ -540,10 +540,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Advanced Runtime Options" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Runtime Settings" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Advanced Runtime Options" }));
+    fireEvent.click(screen.getByRole("button", { name: "Runtime Settings" }));
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Runtime" })).toHaveAttribute("aria-pressed", "true");
@@ -7656,7 +7656,7 @@ describe("App", () => {
       expect(screen.getAllByText(/Runtime version:/).length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Advanced" }));
+    fireEvent.click(screen.getByRole("button", { name: "Storage & Paths" }));
 
     await waitFor(() => {
       expect(screen.getByText("Runtime details")).toBeInTheDocument();
@@ -7728,7 +7728,7 @@ describe("App", () => {
       expect(screen.getByLabelText("Settings sections")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
+    expect(screen.getByText("Show manual runtime options")).toBeInTheDocument();
 
     await act(async () => {
       rendered.rerender(
@@ -7748,7 +7748,7 @@ describe("App", () => {
       expect(screen.getByDisplayValue("/opt/aisw/bin/aisw")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Advanced" }));
+    fireEvent.click(screen.getByRole("button", { name: "Storage & Paths" }));
 
     await waitFor(() => {
       expect(screen.getByDisplayValue("/tmp/aisw-home")).toBeInTheDocument();
@@ -7846,7 +7846,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.queryByLabelText("Runtime path")).not.toBeInTheDocument();
-      expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
+      expect(screen.getByText("Show manual runtime options")).toBeInTheDocument();
     });
   });
 

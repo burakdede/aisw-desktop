@@ -457,7 +457,7 @@ export function SettingsPanel({
               <article className="diagnostic-card settings-pane-intro">
                 <h3>Preferred setup</h3>
                 <p className="inline-note">
-                  Keep the desktop app on its included runtime unless you intentionally need an advanced override.
+                  Keep the desktop app on its included runtime unless you intentionally need a manual runtime source.
                 </p>
               </article>
               <article
@@ -468,13 +468,13 @@ export function SettingsPanel({
                   This app ships with a compatible runtime and uses it by default.
                 </p>
                 <p className="inline-note">
-                  Use a system or custom runtime only when you intentionally need to override the supported desktop bundle.
+                  Use a system or custom runtime only when you intentionally need to replace the supported desktop bundle.
                 </p>
               </article>
 
               {runtimeKind !== "bundled" ? (
                 <article className="diagnostic-card diagnostic-warn">
-                  <h3>Advanced runtime override is active</h3>
+                  <h3>Manual runtime source is active</h3>
                   <p className="inline-note">
                     This desktop session is using a{" "}
                     {runtimeKind === "system" ? "system" : "custom"} runtime instead of the included runtime.
@@ -492,7 +492,7 @@ export function SettingsPanel({
                     <h3>Runtime source</h3>
                   </div>
                   <p className="inline-note">
-                    Keep the included runtime selected unless you intentionally need a compatibility override.
+                    Keep the included runtime selected unless you intentionally need a different runtime source.
                   </p>
                 </div>
                 {showAdvancedRuntime ? (
@@ -530,7 +530,7 @@ export function SettingsPanel({
                           type="button"
                           onClick={() => setShowAdvancedRuntime(false)}
                         >
-                          Hide advanced runtime options
+                          Hide manual runtime options
                         </button>
                       </div>
                     ) : null}
@@ -542,7 +542,7 @@ export function SettingsPanel({
                       type="button"
                       onClick={() => setShowAdvancedRuntime(true)}
                     >
-                      Show advanced runtime options
+                      Show manual runtime options
                     </button>
                   </div>
                 )}
@@ -1081,14 +1081,14 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Current setup</p>
-                    <h3>Low-level overrides</h3>
+                    <h3>Storage and paths</h3>
                   </div>
-                  <span className="pill pill-soft">Advanced</span>
+                  <span className="pill pill-soft">Custom</span>
                 </div>
                 <div className="settings-summary-grid">
                   <div>
                     <span className="overview-current-set-cell-label">Data folder</span>
-                    <strong>{aiswHome ? "Custom override" : "Managed automatically"}</strong>
+                    <strong>{aiswHome ? "Custom location" : "Managed automatically"}</strong>
                   </div>
                   <div>
                     <span className="overview-current-set-cell-label">Runtime source</span>
@@ -1101,9 +1101,9 @@ export function SettingsPanel({
                 </div>
               </article>
               <article className="diagnostic-card settings-pane-intro">
-                <h3>Advanced</h3>
+                <h3>Storage &amp; Paths</h3>
                 <p className="inline-note">
-                  Keep storage overrides, raw runtime paths, and low-level desktop details in one place so the main preferences stay approachable.
+                  Keep custom data locations and runtime details in one place so the main settings stay approachable.
                 </p>
               </article>
               <article className="diagnostic-card settings-pane-section">
@@ -1117,7 +1117,7 @@ export function SettingsPanel({
                   </p>
                 </div>
                 <label>
-                  Data folder override
+                  Custom data folder
                   <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
                 </label>
               </article>
@@ -1126,7 +1126,7 @@ export function SettingsPanel({
                 type="submit"
                 disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
               >
-                {updateSettingsMutation.isPending ? "Saving…" : "Save Advanced Settings"}
+                {updateSettingsMutation.isPending ? "Saving…" : "Save Storage Settings"}
               </button>
             </form>
             <div className="stack-list">
@@ -1182,7 +1182,7 @@ export function SettingsPanel({
                 </p>
                 {runtimeStatus.inventory.configured_path ? (
                   <p className="inline-note">
-                    Custom runtime override is configured.
+                    A custom runtime path is configured.
                   </p>
                 ) : null}
               </article>
@@ -1299,7 +1299,7 @@ function sectionLabel(section: SettingsSection) {
     case "keyring":
       return "Security";
     case "advanced":
-      return "Advanced";
+      return "Storage & Paths";
   }
 }
 
@@ -1316,7 +1316,7 @@ function sectionKicker(section: SettingsSection) {
     case "keyring":
       return "Local credential storage";
     case "advanced":
-      return "Advanced paths and storage";
+      return "Storage, paths, and app data";
   }
 }
 
@@ -1333,7 +1333,7 @@ function sectionHeading(section: SettingsSection) {
     case "keyring":
       return "Keep credentials local with native OS storage";
     case "advanced":
-      return "Keep low-level overrides out of the main settings flow";
+      return "Keep custom paths out of the main settings flow";
   }
 }
 
@@ -1350,7 +1350,7 @@ function sectionDescription(section: SettingsSection) {
     case "keyring":
       return "Security guidance, storage behavior, and recovery steps should stay clear without exposing unnecessary implementation detail.";
     case "advanced":
-      return "Advanced details stay available for debugging and overrides, but they should not dominate the default desktop settings experience.";
+      return "Storage and path details stay available for recovery and debugging, but they should not dominate the default desktop settings experience.";
   }
 }
 
@@ -1367,7 +1367,7 @@ function sectionPills(section: SettingsSection) {
     case "keyring":
       return ["Credentials stay local", "Native storage", "Recovery guides"];
     case "advanced":
-      return ["Raw paths", "Storage override", "Runtime inventory"];
+      return ["Custom paths", "App data", "Runtime inventory"];
   }
 }
 
