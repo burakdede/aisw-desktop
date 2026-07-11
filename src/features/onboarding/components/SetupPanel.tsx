@@ -1,10 +1,10 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DesktopStatusStrip } from "../../../components/DesktopStatusStrip";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SectionCard } from "../../../components/SectionCard";
 import { SplitView } from "../../../components/SplitView";
-import { getShellGuidance, runDoctor } from "../../../lib/client";
+import { getShellGuidance, runDoctor, updateSettings } from "../../../lib/client";
 import { sharedProfileEntries } from "../../../lib/profile-display";
 import { AppBootstrap, AppSnapshot, InitReport } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
@@ -22,6 +22,7 @@ import {
 import { resolveGlobalStateMode } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
+import { invalidatePostMutationQueries } from "../../shared/postMutationRefresh";
 import type { SettingsSection } from "../../settings/components/SettingsPanel";
 import type { ProfileImportMode } from "../../shared/profile-capabilities";
 
@@ -78,6 +79,7 @@ export function SetupPanel({
   onOpenSettings: (section?: SettingsSection) => void;
 }) {
   const settings = bootstrap.settings;
+  const queryClient = useQueryClient();
   const toolCapabilities = bootstrap.runtime_status.capabilities?.tools ?? {};
   const { initMutation, addProfileMutation, useAllProfilesMutation, mutationLock } =
     useDesktopActions();
@@ -124,6 +126,20 @@ export function SetupPanel({
   const [activeStep, setActiveStep] = useState<SetupStep>(() =>
     defaultSetupStep(snapshot, initReport),
   );
+  const restoreBundledRuntimeMutation = useMutation({
+    mutationFn: async () =>
+      updateSettings({
+        runtime_kind: "bundled",
+        runtime_path: null,
+        aisw_home: settings.aisw_home ?? null,
+        update_channel: settings.update_channel,
+        profile_labels: settings.profile_labels,
+        profile_sets: settings.profile_sets,
+      }),
+    onSuccess: async () => {
+      await invalidatePostMutationQueries(queryClient);
+    },
+  });
   const pendingProfileName = pendingLiveImport ? profileNames[pendingLiveImport.tool] ?? "" : "";
   const pendingProfileLabel = pendingLiveImport ? profileLabels[pendingLiveImport.tool] ?? "" : "";
 
@@ -196,13 +212,16 @@ export function SetupPanel({
 
   const setupSteps = [
     { value: "accounts", label: "Accounts" },
-    { value: "runtime", label: "Engine" },
+    { value: "runtime", label: "Runtime" },
     { value: "switch", label: "Verify" },
     { value: "terminal", label: "Terminal" },
   ] satisfies Array<{ value: SetupStep; label: string }>;
   const needsAttentionCount =
     liveAccounts.length + installedToolsNeedingProfile.length + missingTools.length;
   const switchReady = switchableProfiles.length > 0;
+  const secureStorage = describeSecureStorage(snapshot, toolCapabilities);
+  const runtimeSummary = summarizeRuntime(settings.runtime_kind);
+  const runtimeRows = buildRuntimeRows(bootstrap, snapshot, toolCapabilities);
 
   return (
     <SectionCard
@@ -236,7 +255,7 @@ export function SetupPanel({
           {
             label: "Trust",
             value: "Local only",
-            pills: ["Credentials stay local", "Included engine", "No telemetry", "No traffic proxy"],
+            pills: ["Credentials stay local", "Included runtime", "No telemetry", "No traffic proxy"],
           },
         ]}
       />
@@ -253,7 +272,7 @@ export function SetupPanel({
                 <p className="trust-list-item">Credentials stay on this Mac</p>
                 <p className="trust-list-item">No telemetry</p>
                 <p className="trust-list-item">No prompt or API traffic proxy</p>
-                <p className="trust-list-item">Included engine</p>
+                <p className="trust-list-item">Included runtime</p>
               </div>
             </article>
             <article className="diagnostic-card onboarding-step-card">
@@ -275,11 +294,13 @@ export function SetupPanel({
               />
               <div className="stack-list onboarding-status-stack">
                 <div>
-                  <p className="diagnostic-status diagnostic-status-pass">Desktop engine</p>
+                  <p className={`diagnostic-status diagnostic-status-${bootstrap.runtime_status.compatible ? "pass" : "warn"}`}>
+                    App runtime
+                  </p>
                   <p className="inline-note">
                     {bootstrap.runtime_status.compatible
-                      ? "Included engine is ready for desktop switching."
-                      : "Engine details need attention before switching."}
+                      ? "The included runtime is ready for desktop switching."
+                      : "Runtime details need attention before switching."}
                   </p>
                 </div>
                 <div>
@@ -305,28 +326,24 @@ export function SetupPanel({
             <article className="diagnostic-card">
               <div className="desktop-pane-section-header">
                 <div>
-                  <p className="card-kicker">Engine</p>
-                  <h3>Included engine</h3>
+                  <p className="card-kicker">Runtime</p>
+                  <h3>Included runtime</h3>
                 </div>
                 <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
                   {bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}
                 </span>
               </div>
               <p className="inline-note">
-                Source:{" "}
-                <strong>
-                  {bootstrap.settings.runtime_kind === "bundled"
-                    ? "Included with this app"
-                    : bootstrap.settings.runtime_kind === "system"
-                      ? "System override"
-                      : "Custom override"}
-                </strong>
+                Source: <strong>{runtimeSummary.source}</strong>
               </p>
               <p className="inline-note">
                 Version: {bootstrap.runtime_status.version?.version ?? "unknown"}
               </p>
               <p className="inline-note">
                 Desktop storage: {bootstrap.settings.aisw_home ?? "Managed automatically"}
+              </p>
+              <p className="inline-note">
+                Secure storage: {secureStorage}
               </p>
             </article>
           </div>
@@ -336,85 +353,82 @@ export function SetupPanel({
             {activeStep === "runtime" ? (
               <>
                 <article className="diagnostic-card desktop-pane-intro">
-                  <h3>Engine check</h3>
+                  <h3>Runtime check</h3>
                   <p className="inline-note">
-                    Confirm that the desktop app is ready to use its included switching engine and local
-                    storage before you import or switch accounts.
+                    AI Switch works best with the included runtime. Check that local storage and secure
+                    storage are ready before you import or switch accounts.
                   </p>
                 </article>
                 <article className="diagnostic-card">
-            <div className="desktop-pane-section-header">
-              <div>
-                <p className="card-kicker">Engine</p>
-                <h3>Included engine</h3>
-              </div>
-              <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
-                {bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}
-              </span>
-            </div>
-            <p className="inline-note">
-              {bootstrap.settings.runtime_kind === "bundled"
-                ? "The desktop app is using its included switching engine."
-                : `The desktop app is using an advanced ${titleCase(bootstrap.settings.runtime_kind)} engine override.`}
-            </p>
-            <p className="inline-note">
-              Engine source:{" "}
-              <strong>
-                {bootstrap.settings.runtime_kind === "bundled"
-                  ? "Included with this app"
-                  : bootstrap.settings.runtime_kind === "system"
-                    ? "System override"
-                    : "Custom override"}
-              </strong>
-            </p>
-            <p className="inline-note">
-              Engine mode: <strong>{titleCase(bootstrap.settings.runtime_kind)}</strong>
-            </p>
-            <p className="inline-note">
-              Compatibility:{" "}
-              <strong>
-                {bootstrap.runtime_status.compatible ? "Ready for desktop switching" : "Needs attention"}
-              </strong>
-            </p>
-            <p className="inline-note">
-              Desktop storage: {bootstrap.settings.aisw_home ?? "Managed automatically"}
-            </p>
-            <p className="inline-note">
-              Engine version: {bootstrap.runtime_status.version?.version ?? "unknown"}
-            </p>
-            <p className="inline-note">
-              Update channel: {bootstrap.settings.update_channel}
-            </p>
-            <div className="button-row">
-              <button className="ghost-button" type="button" onClick={() => onOpenSettings("runtime")}>
-                Open runtime settings
-              </button>
-            </div>
-          </article>
-
-          <article className="diagnostic-card">
-            <div className="desktop-pane-section-header">
-              <div>
-                <p className="card-kicker">Checks</p>
-                <h3>Health check</h3>
-              </div>
-            </div>
-            <div className="stack-list">
-              {healthItems.map((item) => (
-                <div key={item.label}>
-                  <p className={`diagnostic-status diagnostic-status-${item.status}`}>
-                    {item.status === "pass" ? "✓" : item.status === "warn" ? "!" : "✕"} {item.label}
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <p className="card-kicker">Runtime</p>
+                      <h3>Included runtime</h3>
+                    </div>
+                    <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
+                      {bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}
+                    </span>
+                  </div>
+                  <p className="inline-note">
+                    {runtimeSummary.description}
                   </p>
-                  <p className="inline-note">{item.detail}</p>
-                </div>
-              ))}
-              {!healthItems.length ? (
-                <p className="inline-note">
-                  Run the setup scan to populate engine, storage, and tool health details.
-                </p>
-              ) : null}
-            </div>
-          </article>
+                  <div className="stack-list">
+                    {runtimeRows.map((item) => (
+                      <div key={item.label}>
+                        <p className={`diagnostic-status diagnostic-status-${item.status}`}>
+                          {item.status === "pass" ? "✓" : item.status === "warn" ? "!" : "✕"} {item.label}
+                        </p>
+                        <p className="inline-note">{item.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="button-row">
+                    {settings.runtime_kind !== "bundled" ? (
+                      <button
+                        className="primary-button"
+                        type="button"
+                        disabled={restoreBundledRuntimeMutation.isPending}
+                        onClick={() => restoreBundledRuntimeMutation.mutate()}
+                      >
+                        {restoreBundledRuntimeMutation.isPending ? "Switching to Included Runtime…" : "Use Included Runtime"}
+                      </button>
+                    ) : null}
+                    <button className="ghost-button" type="button" onClick={() => onOpenSettings("runtime")}>
+                      Advanced Runtime Options
+                    </button>
+                  </div>
+                  {restoreBundledRuntimeMutation.error ? (
+                    <p className="inline-note">
+                      {restoreBundledRuntimeMutation.error instanceof Error
+                        ? restoreBundledRuntimeMutation.error.message
+                        : "Could not switch back to the included runtime."}
+                    </p>
+                  ) : null}
+                </article>
+
+                <article className="diagnostic-card">
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <p className="card-kicker">Checks</p>
+                      <h3>Health check</h3>
+                    </div>
+                  </div>
+                  <div className="stack-list">
+                    {healthItems.map((item) => (
+                      <div key={item.label}>
+                        <p className={`diagnostic-status diagnostic-status-${item.status}`}>
+                          {item.status === "pass" ? "✓" : item.status === "warn" ? "!" : "✕"} {item.label}
+                        </p>
+                        <p className="inline-note">{item.detail}</p>
+                      </div>
+                    ))}
+                    {!healthItems.length ? (
+                      <p className="inline-note">
+                        Run the setup scan to populate runtime, storage, and tool health details.
+                      </p>
+                    ) : null}
+                  </div>
+                </article>
               </>
             ) : null}
 
@@ -759,12 +773,12 @@ function buildHealthItems(
     : [];
   const items: HealthItem[] = [
     {
-      label: "Desktop engine",
+      label: "Desktop runtime",
       status: bootstrap.runtime_status.compatible ? "pass" : "fail",
       detail: bootstrap.runtime_status.compatible
         ? bootstrap.settings.runtime_kind === "bundled"
-          ? "Included engine is compatible with this desktop build."
-          : "Selected engine override is compatible with this desktop build."
+          ? "Included runtime is compatible with this desktop build."
+          : "Selected runtime override is compatible with this desktop build."
         : bootstrap.runtime_status.issues.join(" · ") || "Compatibility checks failed.",
     },
   ];
@@ -793,4 +807,85 @@ function buildHealthItems(
   });
 
   return items;
+}
+
+function summarizeRuntime(runtimeKind: AppBootstrap["settings"]["runtime_kind"]) {
+  if (runtimeKind === "bundled") {
+    return {
+      source: "Included with this app",
+      description: "AI Switch is already set to use the runtime bundled with this app.",
+    };
+  }
+  if (runtimeKind === "system") {
+    return {
+      source: "System override",
+      description:
+        "AI Switch is currently pointing at a system-installed runtime instead of the included one.",
+    };
+  }
+  return {
+    source: "Custom override",
+    description:
+      "AI Switch is currently pointing at a custom runtime path instead of the included one.",
+  };
+}
+
+function buildRuntimeRows(
+  bootstrap: AppBootstrap,
+  snapshot: AppSnapshot,
+  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"],
+): HealthItem[] {
+  return [
+    {
+      label: "Included runtime",
+      status: bootstrap.runtime_status.compatible ? "pass" : "warn",
+      detail: bootstrap.settings.runtime_kind === "bundled"
+        ? `Ready. Version ${bootstrap.runtime_status.version?.version ?? "unknown"}.`
+        : `Available, but AI Switch is currently using ${summarizeRuntime(bootstrap.settings.runtime_kind).source.toLowerCase()}.`,
+    },
+    {
+      label: "Desktop storage",
+      status: "pass",
+      detail: bootstrap.settings.aisw_home
+        ? `Custom folder set to ${bootstrap.settings.aisw_home}.`
+        : "Managed automatically inside the standard AI Switch storage location.",
+    },
+    {
+      label: "Secure storage",
+      status: supportsSecureStorage(snapshot, toolCapabilities) ? "pass" : "warn",
+      detail: describeSecureStorage(snapshot, toolCapabilities),
+    },
+  ];
+}
+
+function supportsSecureStorage(
+  snapshot: AppSnapshot,
+  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"],
+) {
+  return (
+    snapshot.statuses.some((status) =>
+      status.credential_backend === "system_keyring" || status.credential_backend === "system-keyring",
+    ) ||
+    Object.values(toolCapabilities).some((capability) =>
+      capability.credential_backends.includes("system-keyring"),
+    )
+  );
+}
+
+function describeSecureStorage(
+  snapshot: AppSnapshot,
+  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"],
+) {
+  if (!supportsSecureStorage(snapshot, toolCapabilities)) {
+    return "Secure storage has not been confirmed yet. You can still continue with local file-based profiles.";
+  }
+
+  const platform = typeof navigator === "undefined" ? "" : navigator.platform.toLowerCase();
+  if (platform.includes("mac")) {
+    return "Login Keychain available for local credential storage.";
+  }
+  if (platform.includes("win")) {
+    return "Windows Credential Manager available for local credential storage.";
+  }
+  return "System keyring available for local credential storage.";
 }

@@ -10,6 +10,7 @@ import {
 import { useDesktopActions } from "./features/shared/useDesktopActions";
 import { enqueueMutation, resetMutationQueueForTests } from "./features/shared/mutationQueue";
 import { SettingsPanel } from "./features/settings/components/SettingsPanel";
+import { desktopSettingsSchema } from "./lib/schemas";
 import type { AppBootstrap, AppSnapshot, DesktopSettings, InitReport } from "./lib/schemas";
 
 Object.assign(navigator, {
@@ -246,7 +247,7 @@ function getOnboardingImportDialog(tool = "Claude") {
   return within(screen.getByRole("dialog", { name: `Import ${tool} Login` }));
 }
 
-function openSetupStep(label: "Accounts" | "Engine" | "Verify" | "Terminal") {
+function openSetupStep(label: "Accounts" | "Runtime" | "Verify" | "Terminal") {
   const tabs = screen.getByLabelText("Setup steps");
   fireEvent.click(within(tabs).getByRole("tab", { name: label }));
 }
@@ -3643,7 +3644,60 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
-      expect(screen.getByText(/Desktop engine/)).toBeInTheDocument();
+      expect(screen.getByText(/App runtime/)).toBeInTheDocument();
+    });
+  });
+
+  it("switches back to the included runtime from onboarding", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    let currentSettings: DesktopSettings = {
+      ...bootstrap.settings,
+      runtime_kind: "system",
+      runtime_path: "/opt/homebrew/bin/aisw",
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "update_settings") {
+        currentSettings = desktopSettingsSchema.parse((args as { request?: unknown }).request);
+        return currentSettings;
+      }
+      return (
+        {
+          run_doctor: { checks: [], summary: { status: "pass" } },
+          get_shell_guidance: { detected_shell: "zsh", capabilities: [], note: "", manual_apply_examples: [], variants: [] },
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderSetupPanel({
+      bootstrapOverride: {
+        ...bootstrap,
+        settings: currentSettings,
+        runtime_status: {
+          ...bootstrap.runtime_status,
+          compatible: false,
+          issues: ["Engine capability details are unavailable"],
+        },
+      } as unknown as AppBootstrap,
+      initReport: {
+        result: {
+          live_accounts: [{ tool: "claude", outcome: "detected", auth_method: "oauth" }],
+        },
+      },
+    });
+
+    openSetupStep("Runtime");
+    fireEvent.click(screen.getByRole("button", { name: "Use Included Runtime" }));
+
+    await waitFor(() => {
+      expect(
+        calls.some(
+          (entry) =>
+            entry.command === "update_settings" &&
+            (entry.args as { request?: { runtime_kind?: string } })?.request?.runtime_kind === "bundled",
+        ),
+      ).toBe(true);
     });
   });
 
