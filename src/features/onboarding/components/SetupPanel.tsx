@@ -196,7 +196,7 @@ export function SetupPanel({
 
   const setupSteps = [
     { value: "accounts", label: "Accounts" },
-    { value: "runtime", label: "Runtime" },
+    { value: "runtime", label: "Engine" },
     { value: "switch", label: "Verify" },
     { value: "terminal", label: "Terminal" },
   ] satisfies Array<{ value: SetupStep; label: string }>;
@@ -253,7 +253,7 @@ export function SetupPanel({
                 <p className="trust-list-item">Credentials stay on this Mac</p>
                 <p className="trust-list-item">No telemetry</p>
                 <p className="trust-list-item">No prompt or API traffic proxy</p>
-                <p className="trust-list-item">Bundled runtime included</p>
+                <p className="trust-list-item">Included engine</p>
               </div>
             </article>
             <article className="diagnostic-card onboarding-step-card">
@@ -275,11 +275,11 @@ export function SetupPanel({
               />
               <div className="stack-list onboarding-status-stack">
                 <div>
-                  <p className="diagnostic-status diagnostic-status-pass">Desktop runtime</p>
+                  <p className="diagnostic-status diagnostic-status-pass">Desktop engine</p>
                   <p className="inline-note">
                     {bootstrap.runtime_status.compatible
                       ? "Included engine is ready for desktop switching."
-                      : "Runtime details need attention before switching."}
+                      : "Engine details need attention before switching."}
                   </p>
                 </div>
                 <div>
@@ -305,7 +305,7 @@ export function SetupPanel({
             <article className="diagnostic-card">
               <div className="desktop-pane-section-header">
                 <div>
-                  <p className="card-kicker">Runtime</p>
+                  <p className="card-kicker">Engine</p>
                   <h3>Included engine</h3>
                 </div>
                 <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
@@ -336,7 +336,7 @@ export function SetupPanel({
             {activeStep === "runtime" ? (
               <>
                 <article className="diagnostic-card desktop-pane-intro">
-                  <h3>Runtime check</h3>
+                  <h3>Engine check</h3>
                   <p className="inline-note">
                     Confirm that the desktop app is ready to use its included switching engine and local
                     storage before you import or switch accounts.
@@ -345,7 +345,7 @@ export function SetupPanel({
                 <article className="diagnostic-card">
             <div className="desktop-pane-section-header">
               <div>
-                <p className="card-kicker">Runtime</p>
+                <p className="card-kicker">Engine</p>
                 <h3>Included engine</h3>
               </div>
               <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
@@ -380,14 +380,14 @@ export function SetupPanel({
               App data folder: {bootstrap.settings.aisw_home ?? "Managed automatically"}
             </p>
             <p className="inline-note">
-              Runtime version: {bootstrap.runtime_status.version?.version ?? "unknown"}
+              Engine version: {bootstrap.runtime_status.version?.version ?? "unknown"}
             </p>
             <p className="inline-note">
               Update channel: {bootstrap.settings.update_channel}
             </p>
             <div className="button-row">
               <button className="ghost-button" type="button" onClick={() => onOpenSettings("runtime")}>
-                Open runtime settings
+                Open engine settings
               </button>
             </div>
           </article>
@@ -410,7 +410,7 @@ export function SetupPanel({
               ))}
               {!healthItems.length ? (
                 <p className="inline-note">
-                  Run the setup scan to populate runtime, storage, and tool health details.
+                  Run the setup scan to populate engine, storage, and tool health details.
                 </p>
               ) : null}
             </div>
@@ -759,12 +759,12 @@ function buildHealthItems(
     : [];
   const items: HealthItem[] = [
     {
-      label: "Desktop runtime",
+      label: "Desktop engine",
       status: bootstrap.runtime_status.compatible ? "pass" : "fail",
       detail: bootstrap.runtime_status.compatible
         ? bootstrap.settings.runtime_kind === "bundled"
           ? "Included engine is compatible with this desktop build."
-          : "Selected runtime override is compatible with this desktop build."
+          : "Selected engine override is compatible with this desktop build."
         : bootstrap.runtime_status.issues.join(" · ") || "Compatibility checks failed.",
     },
   ];

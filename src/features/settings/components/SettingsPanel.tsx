@@ -308,7 +308,7 @@ export function SettingsPanel({
                   </select>
                 </label>
                 <p className="inline-note">
-                  Runtime blockers and first-run onboarding still take priority when they need your attention.
+                  Engine blockers and first-run onboarding still take priority when they need your attention.
                 </p>
                 <div className="button-row">
                   <button className="primary-button" type="button" onClick={saveGeneralPreferences}>
@@ -358,7 +358,7 @@ export function SettingsPanel({
               <article className="diagnostic-card settings-pane-intro">
                 <h3>Preferred setup</h3>
                 <p className="inline-note">
-                  Keep the desktop app on its bundled runtime unless you intentionally need an advanced override.
+                  Keep the desktop app on its included engine unless you intentionally need an advanced override.
                 </p>
               </article>
               <article
@@ -375,13 +375,13 @@ export function SettingsPanel({
 
               {runtimeKind !== "bundled" ? (
                 <article className="diagnostic-card diagnostic-warn">
-                  <h3>Advanced runtime override is active</h3>
+                  <h3>Advanced engine override is active</h3>
                   <p className="inline-note">
                     This desktop session is using a{" "}
-                    {runtimeKind === "system" ? "system" : "custom"} runtime binary instead of the bundled runtime.
+                    {runtimeKind === "system" ? "system" : "custom"} engine binary instead of the included engine.
                   </p>
                   <p className="inline-note">
-                    Compatibility for onboarding, switching, and diagnostics is only guaranteed with the bundled runtime shipped in this app release.
+                    Compatibility for onboarding, switching, and diagnostics is only guaranteed with the included engine shipped in this app release.
                   </p>
                 </article>
               ) : null}
@@ -390,36 +390,36 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Engine</p>
-                    <h3>Runtime source</h3>
+                    <h3>Engine source</h3>
                   </div>
                   <p className="inline-note">
-                    Keep the bundled runtime selected unless you intentionally need a compatibility override.
+                    Keep the included engine selected unless you intentionally need a compatibility override.
                   </p>
                 </div>
                 {showAdvancedRuntime ? (
                   <>
                     <label>
-                      Runtime source
+                      Engine source
                       <select
                         value={runtimeKind}
                         onChange={(event) =>
                           setRuntimeKind(event.target.value as typeof runtimeKind)
                         }
                       >
-                        <option value="bundled">Bundled runtime</option>
-                        <option value="system">System runtime</option>
+                        <option value="bundled">Included engine</option>
+                        <option value="system">System engine</option>
                         <option value="custom">Custom path</option>
                       </select>
                     </label>
                     <label>
-                      Runtime path
+                      Engine path
                       <input
                         value={runtimePath}
                         disabled={runtimeKind !== "custom"}
                         placeholder={
                           runtimeKind === "custom"
                             ? "/path/to/engine"
-                            : "Only used for a custom runtime"
+                            : "Only used for a custom engine"
                         }
                         onChange={(event) => setRuntimePath(event.target.value)}
                       />
@@ -431,7 +431,7 @@ export function SettingsPanel({
                           type="button"
                           onClick={() => setShowAdvancedRuntime(false)}
                         >
-                          Hide advanced runtime options
+                          Hide advanced engine options
                         </button>
                       </div>
                     ) : null}
@@ -443,7 +443,7 @@ export function SettingsPanel({
                       type="button"
                       onClick={() => setShowAdvancedRuntime(true)}
                     >
-                      Show advanced runtime options
+                      Show advanced engine options
                     </button>
                   </div>
                 )}
@@ -468,7 +468,7 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Status</p>
-                    <h3>Runtime summary</h3>
+                    <h3>Engine summary</h3>
                   </div>
                   <p className="inline-note">
                     Keep the current engine model visible without pushing raw paths into the main preferences flow.
@@ -489,10 +489,10 @@ export function SettingsPanel({
                   <strong>{runtimeStatus.compatible ? "Ready for desktop switching" : "Needs attention"}</strong>
                 </p>
                 <p className="inline-note">
-                  Runtime mode: <strong>{titleCase(runtimeKind)}</strong>
+                  Engine mode: <strong>{titleCase(runtimeKind)}</strong>
                 </p>
                 <p className="inline-note">
-                  Runtime version: {runtimeStatus.version?.version ?? "unknown"}
+                  Engine version: {runtimeStatus.version?.version ?? "unknown"}
                 </p>
               </article>
             </div>
@@ -806,7 +806,7 @@ export function SettingsPanel({
                     <h3>Privacy and storage</h3>
                   </div>
                   <p className="inline-note">
-                    Review the security model before changing credential or runtime settings.
+                    Review the security model before changing credential or engine settings.
                   </p>
                 </div>
                 <p className="inline-note">Credentials stay local to this Mac or workstation.</p>
@@ -906,7 +906,7 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Status</p>
-                    <h3>Runtime details</h3>
+                    <h3>Engine details</h3>
                   </div>
                   <p className="inline-note">
                     Review raw engine paths, storage state, and release metadata without cluttering the main runtime preferences.
@@ -927,7 +927,7 @@ export function SettingsPanel({
                   </p>
                 ) : null}
                 <p className="inline-note">
-                  Active engine path: {runtimeStatus.resolved_path ?? "No runtime resolved"}
+                  Active engine path: {runtimeStatus.resolved_path ?? "No engine resolved"}
                 </p>
                 <p className="inline-note">
                   Included engine path:{" "}
@@ -1057,7 +1057,7 @@ function sectionLabel(section: SettingsSection) {
     case "general":
       return "General";
     case "runtime":
-      return "Runtime";
+      return "Engine";
     case "updates":
       return "Updates";
     case "shell":
@@ -1142,7 +1142,7 @@ function sourceListSummary(section: SettingsSection) {
     case "general":
       return "Appearance and startup behavior";
     case "runtime":
-      return "Bundled engine and overrides";
+      return "Included engine and overrides";
     case "updates":
       return "Release channel and signed installs";
     case "shell":

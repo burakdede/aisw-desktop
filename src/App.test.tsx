@@ -246,7 +246,7 @@ function getOnboardingImportDialog(tool = "Claude") {
   return within(screen.getByRole("dialog", { name: `Import ${tool} Login` }));
 }
 
-function openSetupStep(label: "Accounts" | "Runtime" | "Verify" | "Terminal") {
+function openSetupStep(label: "Accounts" | "Engine" | "Verify" | "Terminal") {
   const tabs = screen.getByLabelText("Setup steps");
   fireEvent.click(within(tabs).getByRole("tab", { name: label }));
 }
@@ -479,7 +479,7 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Switch back to the included engine, or choose a newer compatible engine in Advanced Runtime Settings before continuing.",
+        "Switch back to the included engine, or choose a newer compatible engine in Advanced Engine Settings before continuing.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Why setup is paused")).toBeInTheDocument();
@@ -487,9 +487,9 @@ describe("App", () => {
     expect(screen.getByText("Engine capability details are unavailable")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Use Included Engine" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Advanced Runtime Settings" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Advanced Engine Settings" })).toBeInTheDocument();
     expect(screen.queryByText("Included engine and advanced overrides")).not.toBeInTheDocument();
-    expect(screen.queryByText("Runtime summary")).not.toBeInTheDocument();
+    expect(screen.queryByText("Engine summary")).not.toBeInTheDocument();
     expect(screen.queryByText("Welcome")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Overview" })).not.toBeInTheDocument();
   });
@@ -515,14 +515,14 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Advanced Runtime Settings" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Advanced Engine Settings" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Advanced Runtime Settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Advanced Engine Settings" }));
 
     await waitFor(() => {
       expect(screen.getByText("Included engine and advanced overrides")).toBeInTheDocument();
-      expect(screen.getByText("Runtime summary")).toBeInTheDocument();
+      expect(screen.getByText("Engine summary")).toBeInTheDocument();
     });
   });
 
@@ -1053,7 +1053,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Included engine and advanced overrides")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Runtime" })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("button", { name: "Engine" })).toHaveAttribute("aria-pressed", "true");
     });
     expect(screen.getByRole("button", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "false");
   });
@@ -3605,7 +3605,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
-      expect(screen.getByText(/Desktop runtime/)).toBeInTheDocument();
+      expect(screen.getByText(/Desktop engine/)).toBeInTheDocument();
     });
   });
 
@@ -7297,17 +7297,17 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Settings"));
-    fireEvent.click(screen.getByRole("button", { name: "Runtime" }));
+    fireEvent.click(screen.getByRole("button", { name: "Engine" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Runtime summary")).toBeInTheDocument();
-      expect(screen.getAllByText(/Runtime version:/).length).toBeGreaterThan(0);
+      expect(screen.getByText("Engine summary")).toBeInTheDocument();
+      expect(screen.getAllByText(/Engine version:/).length).toBeGreaterThan(0);
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Advanced" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Runtime details")).toBeInTheDocument();
+      expect(screen.getByText("Engine details")).toBeInTheDocument();
       expect(
         screen.getByText(
           (_, element) => element?.textContent?.trim() === "App data folder: Managed automatically",
@@ -7370,7 +7370,7 @@ describe("App", () => {
       expect(screen.getByText("Settings")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
+    expect(screen.getByText("Show advanced engine options")).toBeInTheDocument();
 
     await act(async () => {
       rendered.rerender(
@@ -7487,8 +7487,8 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByLabelText("Runtime path")).not.toBeInTheDocument();
-      expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
+      expect(screen.queryByLabelText("Engine path")).not.toBeInTheDocument();
+      expect(screen.getByText("Show advanced engine options")).toBeInTheDocument();
     });
   });
 
@@ -7572,8 +7572,8 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByDisplayValue("System runtime")).toBeInTheDocument();
-      expect(screen.getByLabelText("Runtime path")).toHaveValue("");
+      expect(screen.getByDisplayValue("System engine")).toBeInTheDocument();
+      expect(screen.getByLabelText("Engine path")).toHaveValue("");
     });
   });
 

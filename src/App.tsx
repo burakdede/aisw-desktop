@@ -422,7 +422,7 @@ export function App() {
     <AppFrame
       mode={showSetupWindow ? "setup" : "standard"}
       title={
-        runtimeRecoveryFocused ? "Runtime Check" : sectionTitle(activeSection, setupFocused)
+        runtimeRecoveryFocused ? "Engine Check" : sectionTitle(activeSection, setupFocused)
       }
       subtitle="Switch Claude Code, Codex CLI, and Gemini CLI profiles from one focused desktop app."
       detail={
@@ -503,7 +503,7 @@ export function App() {
                 Try Again
               </button>
               <button className="ghost-button" type="button" onClick={() => setRuntimeRecoveryOpen(true)}>
-                Advanced Runtime Settings
+                Advanced Engine Settings
               </button>
             </div>
             {restoreBundledRuntimeMutation.error ? (
@@ -696,7 +696,7 @@ function describeRuntimeBlocker(runtimeStatus: {
       summary:
         "The current engine was found, but it does not report the desktop compatibility details required by this release.",
       nextStep:
-        "Switch back to the included engine, or choose a newer compatible engine in Advanced Runtime Settings before continuing.",
+        "Switch back to the included engine, or choose a newer compatible engine in Advanced Engine Settings before continuing.",
     };
   }
 
@@ -705,14 +705,14 @@ function describeRuntimeBlocker(runtimeStatus: {
       summary:
         "The current engine was found, but it is not compatible with this desktop build.",
       nextStep:
-        "Switch back to the included engine, or choose a compatible engine in Advanced Runtime Settings before continuing.",
+        "Switch back to the included engine, or choose a compatible engine in Advanced Engine Settings before continuing.",
     };
   }
 
   return {
     summary: "AI Switch could not use the current engine choice.",
     nextStep:
-      "Switch to the included engine, or choose a working advanced override in Advanced Runtime Settings before continuing.",
+      "Switch to the included engine, or choose a working advanced override in Advanced Engine Settings before continuing.",
   };
 }
 
