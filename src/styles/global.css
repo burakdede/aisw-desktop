@@ -666,14 +666,50 @@ button {
   margin-bottom: 14px;
 }
 
+.settings-hero {
+  margin-bottom: 14px;
+}
+
+.settings-hero-pills {
+  max-width: 320px;
+}
+
 .settings-pane {
   display: grid;
   gap: 14px;
   align-content: start;
 }
 
+.settings-layout {
+  align-items: start;
+}
+
 .settings-pane-intro h3 {
   font-size: 18px;
+}
+
+.settings-pane-section {
+  display: grid;
+  gap: 12px;
+}
+
+.settings-guide-block {
+  display: grid;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--separator);
+}
+
+.settings-guide-block:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.settings-guide-block h4 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
 }
 
 .profiles-toolbar {
