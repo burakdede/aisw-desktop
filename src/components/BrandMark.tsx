@@ -10,27 +10,16 @@ export function BrandMark({ size = 28 }: { size?: number }) {
       xmlns="http://www.w3.org/2000/svg"
     >
       <rect x="4" y="4" width="24" height="24" rx="8.5" className="brand-mark-shell" />
-      <rect x="6.25" y="6.25" width="19.5" height="19.5" rx="6.9" className="brand-mark-shell-inner" />
+      <rect x="8" y="7.5" width="7" height="17" rx="3.5" className="brand-mark-panel" />
+      <rect x="17" y="7.5" width="7" height="17" rx="3.5" className="brand-mark-panel brand-mark-panel-accent" />
       <path
-        d="M10.25 11.25H21.75"
-        className="brand-mark-rail"
-        strokeWidth="2.4"
+        d="M14 11.25C15.65 11.25 16.75 12.35 16.75 14V18C16.75 19.65 17.85 20.75 19.5 20.75"
+        className="brand-mark-beam"
+        strokeWidth="2.15"
         strokeLinecap="round"
       />
-      <path
-        d="M10.25 20.75H21.75"
-        className="brand-mark-rail brand-mark-rail-accent"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-      />
-      <circle cx="12.25" cy="11.25" r="3.25" className="brand-mark-thumb" />
-      <circle cx="19.75" cy="20.75" r="3.25" className="brand-mark-thumb brand-mark-thumb-accent" />
-      <path
-        d="M14.85 13.95L17.15 18.05"
-        className="brand-mark-connector"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-      />
+      <circle cx="14" cy="11.25" r="1.85" className="brand-mark-node" />
+      <circle cx="19.5" cy="20.75" r="1.85" className="brand-mark-node brand-mark-node-accent" />
     </svg>
   );
 }

@@ -465,7 +465,7 @@ describe("App", () => {
     };
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("This engine cannot drive AI Switch yet")).toBeInTheDocument();
+      expect(screen.getByText("This engine is not ready for AI Switch yet")).toBeInTheDocument();
     });
     expect(
       screen.getByText(
@@ -613,7 +613,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("AI Switch could not open the local control center.")).toBeInTheDocument();
+      expect(screen.getByText("AI Switch could not open the desktop switchboard.")).toBeInTheDocument();
     });
     expect(screen.getByText("AI Switch could not resolve a compatible switching engine")).toBeInTheDocument();
     expect(
@@ -7310,7 +7310,7 @@ describe("App", () => {
       expect(screen.getByText("Runtime details")).toBeInTheDocument();
       expect(
         screen.getByText(
-          (_, element) => element?.textContent?.trim() === "AI Switch data folder: Managed automatically",
+          (_, element) => element?.textContent?.trim() === "App data folder: Managed automatically",
         ),
       ).toBeInTheDocument();
       expect(

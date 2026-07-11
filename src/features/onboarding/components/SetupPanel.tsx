@@ -320,7 +320,7 @@ export function SetupPanel({
                 Version: {bootstrap.runtime_status.version?.version ?? "unknown"}
               </p>
               <p className="inline-note">
-                AI Switch data folder: {bootstrap.settings.aisw_home ?? "Managed automatically"}
+                App data folder: {bootstrap.settings.aisw_home ?? "Managed automatically"}
               </p>
             </article>
           </div>
@@ -371,7 +371,7 @@ export function SetupPanel({
               </strong>
             </p>
             <p className="inline-note">
-              AI Switch data folder: {bootstrap.settings.aisw_home ?? "Managed automatically"}
+              App data folder: {bootstrap.settings.aisw_home ?? "Managed automatically"}
             </p>
             <p className="inline-note">
               Runtime version: {bootstrap.runtime_status.version?.version ?? "unknown"}

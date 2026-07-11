@@ -362,7 +362,7 @@ export function App() {
           <p className="eyebrow">AI Switch</p>
           <h1>Preparing your local switchboard…</h1>
           <p className="lede">
-            Loading saved profiles, the bundled runtime, and the current tool state on this Mac.
+            Loading saved profiles, the included engine, and the current tool state on this Mac.
           </p>
         </section>
       </main>
@@ -375,9 +375,9 @@ export function App() {
       <main className="app-shell app-shell-onboarding">
         <section className="hero-card hero-card-compact">
           <p className="eyebrow">AI Switch</p>
-          <h1>AI Switch could not open the local control center.</h1>
+          <h1>AI Switch could not open the desktop switchboard.</h1>
           <p className="lede">
-            Check the included runtime, local permissions, and compatibility details
+            Check the included engine, local permissions, and compatibility details
             before continuing.
           </p>
           <p className="inline-note">{bootstrapError.message}</p>
@@ -424,7 +424,7 @@ export function App() {
       title={
         runtimeRecoveryFocused ? "Runtime Check" : sectionTitle(activeSection, setupFocused)
       }
-      subtitle="Switch Claude Code, Codex CLI, and Gemini CLI accounts from one compact desktop utility."
+      subtitle="Switch Claude Code, Codex CLI, and Gemini CLI profiles from one focused desktop app."
       detail={
         runtimeRecoveryFocused
           ? "Use a desktop-compatible switching engine before profile switching, diagnostics, and backups become available."
@@ -478,7 +478,7 @@ export function App() {
       )}
     >
       {runtimeRecoveryFocused ? (
-        <SectionCard title="This engine cannot drive AI Switch yet" kicker="Action required">
+        <SectionCard title="This engine is not ready for AI Switch yet" kicker="Action required">
           <div className="stack-list">
             <p className="inline-note">
               AI Switch found a switching engine, but this desktop release cannot use it for
@@ -670,7 +670,7 @@ function describeBootstrapError(error: unknown) {
   }
 
   return {
-    message: "AI Switch could not load its initial local state.",
+    message: "AI Switch could not load its local desktop state.",
     remediation: undefined,
   };
 }
@@ -710,7 +710,7 @@ function describeRuntimeBlocker(runtimeStatus: {
   }
 
   return {
-    summary: "AI Switch could not use the current engine selection.",
+    summary: "AI Switch could not use the current engine choice.",
     nextStep:
       "Switch to the included engine, or choose a working advanced override in Advanced Runtime Settings before continuing.",
   };
@@ -742,7 +742,7 @@ function sectionTitle(section: string, setupFocused = false) {
 
 function sectionDetail(section: string, setupFocused = false) {
   if (setupFocused) {
-    return "Set up AI Switch on this Mac before you switch coding-agent accounts.";
+    return "Set up AI Switch on this Mac before you switch coding-agent profiles.";
   }
   switch (section) {
     case "overview":
@@ -756,9 +756,9 @@ function sectionDetail(section: string, setupFocused = false) {
     case "backups":
       return "Replay a previous profile state or restore the latest known-good backup without leaving the app.";
     case "activity":
-      return "Track recent desktop actions, command outcomes, and changes applied by the runtime.";
+      return "Track recent desktop actions, command outcomes, and changes applied by the switching engine.";
     case "settings":
-      return "Control the bundled runtime, updates, terminal integration, and local storage behavior.";
+      return "Control the included engine, updates, terminal integration, and local storage behavior.";
     default:
       return "";
   }

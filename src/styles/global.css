@@ -232,30 +232,28 @@ button {
   stroke: color-mix(in srgb, CanvasText 14%, transparent);
 }
 
-.brand-mark-shell-inner {
-  fill: color-mix(in srgb, Canvas 98%, CanvasText 1%);
+.brand-mark-panel {
+  fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
+  stroke: color-mix(in srgb, CanvasText 12%, transparent);
 }
 
-.brand-mark-rail {
-  stroke: color-mix(in srgb, CanvasText 28%, transparent);
+.brand-mark-panel-accent {
+  fill: color-mix(in srgb, AccentColor 22%, Canvas 78%);
+  stroke: color-mix(in srgb, AccentColor 36%, transparent);
 }
 
-.brand-mark-rail-accent {
-  stroke: color-mix(in srgb, AccentColor 70%, CanvasText 30%);
+.brand-mark-beam {
+  stroke: color-mix(in srgb, CanvasText 34%, transparent);
 }
 
-.brand-mark-thumb {
+.brand-mark-node {
   fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
   stroke: color-mix(in srgb, CanvasText 16%, transparent);
 }
 
-.brand-mark-thumb-accent {
-  fill: color-mix(in srgb, AccentColor 80%, Canvas 20%);
-  stroke: color-mix(in srgb, AccentColor 32%, transparent);
-}
-
-.brand-mark-connector {
-  stroke: color-mix(in srgb, CanvasText 32%, transparent);
+.brand-mark-node-accent {
+  fill: color-mix(in srgb, AccentColor 82%, Canvas 18%);
+  stroke: color-mix(in srgb, AccentColor 34%, transparent);
 }
 
 .sidebar-title {
