@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
 import { SplitView } from "../../../components/SplitView";
-import { getShellGuidance, runDoctor } from "../../../lib/client";
+import { exportDiagnosticBundle, getShellGuidance, runDoctor } from "../../../lib/client";
+import { notifyDesktop } from "../../../lib/notifications";
 import { DesktopCommandError } from "../../../lib/tauri";
 import { DesktopSettings, AppBootstrap } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
@@ -47,6 +48,7 @@ export function SettingsPanel({
   const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor, enabled: readEnabled });
   const [selectedShell, setSelectedShell] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
+  const [securityMessage, setSecurityMessage] = useState("");
   const [selectedSection, setSelectedSection] = useState<SettingsSection>(
     initialSection ?? "general",
   );
@@ -121,6 +123,27 @@ export function SettingsPanel({
     }
     await navigator.clipboard.writeText(value);
     setCopyMessage(`Copied ${label} command.`);
+  }
+
+  async function exportReport() {
+    setSecurityMessage("");
+    try {
+      const result = await exportDiagnosticBundle();
+      const message = `Saved ${result.filename}.`;
+      setSecurityMessage(message);
+      void notifyDesktop({
+        title: "Diagnostic report exported",
+        body: message,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Desktop command failed.";
+      setSecurityMessage(message);
+      void notifyDesktop({
+        title: "Diagnostic export failed",
+        body: message,
+      });
+    }
   }
 
   return (
@@ -725,6 +748,23 @@ export function SettingsPanel({
               </article>
             </div>
             <div className="stack-list">
+              <article className="diagnostic-card settings-pane-section">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Diagnostics</p>
+                    <h3>Redacted support report</h3>
+                  </div>
+                  <p className="inline-note">
+                    Export a redacted bundle before sharing troubleshooting details or filing a support request.
+                  </p>
+                </div>
+                <div className="button-row">
+                  <button className="ghost-button" type="button" onClick={() => void exportReport()}>
+                    Export redacted diagnostic report
+                  </button>
+                </div>
+                {securityMessage ? <p className="inline-note">{securityMessage}</p> : null}
+              </article>
               <article className="diagnostic-card settings-pane-section">
                 <div className="desktop-pane-section-header">
                   <div>

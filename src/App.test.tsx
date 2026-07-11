@@ -7107,6 +7107,36 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("exports a redacted diagnostic report from security settings", async () => {
+    const calls: string[] = [];
+    const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      calls.push(command);
+      return (
+        {
+          export_diagnostic_bundle: {
+            path: "/tmp/ai-switch/ai-switch-diagnostics-123.json",
+            filename: "ai-switch-diagnostics-123.json",
+            generated_at: "unix:123",
+          },
+          run_doctor: { summary: { status: "pass" }, checks: [] },
+        } as Record<string, unknown>
+      )[command] ?? defaultMock[command];
+    };
+
+    await renderSettingsPanel(bootstrap.settings, "keyring");
+    fireEvent.click(screen.getByRole("button", { name: "Export redacted diagnostic report" }));
+
+    await waitFor(() => {
+      expect(calls).toContain("export_diagnostic_bundle");
+      expect(screen.getByText("Saved ai-switch-diagnostics-123.json.")).toBeInTheDocument();
+      expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
+        title: "Diagnostic report exported",
+        body: "Saved ai-switch-diagnostics-123.json.",
+      });
+    });
+  });
+
   it("shows engine detection details in settings", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
