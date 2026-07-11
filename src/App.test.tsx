@@ -170,6 +170,10 @@ function selectOverviewTool(tool: string) {
   fireEvent.click(screen.getByRole("button", { name: `Inspect ${tool}` }));
 }
 
+function selectProfileInventory(tool: string, label: string) {
+  fireEvent.click(screen.getByRole("button", { name: `Inspect ${tool} ${label}` }));
+}
+
 async function renderSetupPanel({
   initReport = undefined,
   bootstrapOverride,
@@ -1510,11 +1514,7 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
 
-    const personalRow = screen
-      .getByText("personal · oauth")
-      .closest(".list-row") as HTMLElement | null;
-    expect(personalRow).not.toBeNull();
-    fireEvent.click(within(personalRow!).getByText("Open details"));
+    selectProfileInventory("Claude", "Personal");
     fireEvent.click(screen.getByText("View technical details"));
 
     await waitFor(() => {
@@ -1792,11 +1792,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
-    const personalRow = screen
-      .getByText("personal · oauth")
-      .closest(".list-row") as HTMLElement | null;
-    expect(personalRow).not.toBeNull();
-    fireEvent.click(within(personalRow!).getByText("Open details"));
+    selectProfileInventory("Claude", "Personal");
     fireEvent.change(screen.getByLabelText("rename personal"), {
       target: { value: "work" },
     });

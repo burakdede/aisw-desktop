@@ -443,7 +443,7 @@ export function ProfilesPanel({
                   <h3>Saved profiles</h3>
                 </div>
                 <p className="inline-note">
-                  Select a row to inspect it. Double-click to focus the login immediately.
+                  Select a row to inspect it. Double-click to activate the saved login immediately.
                 </p>
               </div>
               <div className="profiles-list-header" aria-hidden="true">
@@ -457,8 +457,10 @@ export function ProfilesPanel({
             </div>
             <div className="stack-list desktop-list-stack">
               {filteredInventoryProfiles.map((inventoryEntry) => (
-                <article
+                <button
                   key={`${inventoryEntry.tool}:${inventoryEntry.name}`}
+                  type="button"
+                  aria-label={`Inspect ${titleCase(inventoryEntry.tool)} ${inventoryEntry.label}`}
                   className={`list-row profile-list-row ${
                     inventoryEntry.active ? "profile-list-row-active" : ""
                   } ${
@@ -466,14 +468,28 @@ export function ProfilesPanel({
                       ? "profile-list-row-selected"
                       : ""
                   }`}
-                  onDoubleClick={() => {
+                  onClick={() => {
                     setTool(inventoryEntry.tool);
                     setOpenDiagnosticDetails(null);
                     setExpandedDetails(inventoryEntry.name);
                   }}
+                  onDoubleClick={() => {
+                    setTool(inventoryEntry.tool);
+                    useProfileMutation.mutate({
+                      tool: inventoryEntry.tool,
+                      profile: inventoryEntry.name,
+                      stateMode: supportedStateModes(inventoryEntry.tool, toolCapabilities).length
+                        ? stateMode
+                        : null,
+                      label: inventoryEntry.label,
+                    });
+                  }}
                 >
                   <div className="profile-list-main">
-                    <strong>{inventoryEntry.label}</strong>
+                    <div className="profile-list-row-title">
+                      <strong>{inventoryEntry.label}</strong>
+                      {inventoryEntry.active ? <span className="pill pill-ok">Active</span> : null}
+                    </div>
                     <p>
                       {inventoryEntry.name} · {inventoryEntry.auth}
                     </p>
@@ -485,42 +501,10 @@ export function ProfilesPanel({
                     <span>{inventoryEntry.state}</span>
                     <span>{inventoryEntry.lastChecked}</span>
                   </div>
-                  <div className="button-row">
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      onClick={() => {
-                        setTool(inventoryEntry.tool);
-                        useProfileMutation.mutate({
-                          tool: inventoryEntry.tool,
-                          profile: inventoryEntry.name,
-                          stateMode: supportedStateModes(inventoryEntry.tool, toolCapabilities).length
-                            ? stateMode
-                            : null,
-                          label: inventoryEntry.label,
-                        });
-                      }}
-                      disabled={mutationLock.isBusy}
-                    >
-                      Activate
-                    </button>
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      onClick={() => {
-                        setTool(inventoryEntry.tool);
-                        setOpenDiagnosticDetails(null);
-                        setExpandedDetails((current) =>
-                          current === inventoryEntry.name ? null : inventoryEntry.name,
-                        );
-                      }}
-                    >
-                      {expandedDetails === inventoryEntry.name && tool === inventoryEntry.tool
-                        ? "Close details"
-                        : "Open details"}
-                    </button>
-                  </div>
-                </article>
+                  <span className="profile-list-row-chevron" aria-hidden="true">
+                    ›
+                  </span>
+                </button>
               ))}
               {!filteredInventoryProfiles.length ? (
                 <article className="diagnostic-card">

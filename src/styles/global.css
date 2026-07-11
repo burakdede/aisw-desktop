@@ -1483,6 +1483,10 @@ button {
   grid-template-columns: minmax(180px, 1.4fr) minmax(0, 1.8fr) auto;
   gap: 12px;
   align-items: center;
+  width: 100%;
+  background: color-mix(in srgb, Canvas 98%, CanvasText 2%);
+  text-align: left;
+  cursor: pointer;
 }
 
 .profile-list-row-active {
@@ -1493,6 +1497,18 @@ button {
 .profile-list-row-selected {
   border-color: color-mix(in srgb, AccentColor 42%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, AccentColor 22%, transparent);
+}
+
+.profile-list-row-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-list-row-chevron {
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text-tertiary);
 }
 
 .backup-list-row {
