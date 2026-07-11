@@ -330,14 +330,15 @@ export function App() {
     },
   });
 
+  function invalidateDiagnostics() {
+    for (const queryKey of DIAGNOSTICS_QUERY_KEYS) {
+      void queryClient.invalidateQueries({ queryKey: [...queryKey] });
+    }
+  }
+
   useEffect(() => {
     let active = true;
     const disposers: Array<() => void> = [];
-    const invalidateDiagnostics = () => {
-      for (const queryKey of DIAGNOSTICS_QUERY_KEYS) {
-        void queryClient.invalidateQueries({ queryKey: [...queryKey] });
-      }
-    };
 
     void listenDesktopEvent("tray-open-diagnostics", () => {
       if (!active) return;
@@ -644,6 +645,11 @@ export function App() {
     await queryClient.invalidateQueries({ queryKey: ["init"] });
   }
 
+  function runVerifyFlow() {
+    setActiveNav("diagnostics");
+    invalidateDiagnostics();
+  }
+
   function openAddProfile() {
     setProfilesRouteState({ tool: "claude", expandedProfile: null });
     setActiveNav("profiles");
@@ -737,7 +743,7 @@ export function App() {
           <span>Quick Switch</span>
           <kbd aria-hidden="true">⌘K</kbd>
         </button>
-        <button className="ghost-button" type="button" onClick={() => setActiveNav("diagnostics")}>
+        <button className="ghost-button" type="button" onClick={runVerifyFlow}>
           <span>Verify</span>
         </button>
         <button
