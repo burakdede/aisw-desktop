@@ -762,6 +762,11 @@ button {
   grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
 }
 
+.onboarding-layout-compact {
+  grid-template-columns: minmax(270px, 320px) minmax(0, 1fr);
+  align-items: start;
+}
+
 .onboarding-detection-stack {
   gap: 10px;
 }
@@ -769,6 +774,14 @@ button {
 .onboarding-tool-card {
   display: grid;
   gap: 10px;
+}
+
+.onboarding-step-card {
+  gap: 12px;
+}
+
+.onboarding-status-stack {
+  gap: 12px;
 }
 
 .desktop-pane-stack {

@@ -246,6 +246,11 @@ function getOnboardingImportDialog(tool = "Claude") {
   return within(screen.getByRole("dialog", { name: `Import ${tool} Login` }));
 }
 
+function openSetupStep(label: "Accounts" | "Runtime" | "Verify" | "Terminal") {
+  const tabs = screen.getByLabelText("Setup steps");
+  fireEvent.click(within(tabs).getByRole("tab", { name: label }));
+}
+
 async function openAddProfileDialog() {
   if (!screen.queryByRole("dialog", { name: "Add Profile" })) {
     fireEvent.click(getProfilesSection().getAllByRole("button", { name: "Add Profile" })[0]);
@@ -1024,6 +1029,8 @@ describe("App", () => {
       )[command];
 
     await renderApp();
+    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
+    openSetupStep("Terminal");
     await waitFor(() => expect(screen.getByText("Open terminal setup")).toBeInTheDocument());
 
     fireEvent.click(screen.getByText("Open terminal setup"));
@@ -3588,6 +3595,7 @@ describe("App", () => {
     });
 
     expect(screen.getByText("Welcome")).toBeInTheDocument();
+    openSetupStep("Verify");
     fireEvent.change(screen.getByLabelText("First switch profile"), {
       target: { value: "work" },
     });
@@ -3595,7 +3603,6 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
-      expect(screen.getByText("Terminal integration")).toBeInTheDocument();
       expect(screen.getByText(/Desktop runtime/)).toBeInTheDocument();
     });
   });
@@ -5085,6 +5092,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
+    openSetupStep("Accounts");
     await waitFor(() => {
       expect(screen.getByText("Run the setup scan to detect live Claude, Codex, and Gemini accounts.")).toBeInTheDocument();
     });
@@ -5358,6 +5366,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
+    openSetupStep("Terminal");
 
     fireEvent.click(screen.getByText("Open terminal setup"));
 
@@ -5423,6 +5432,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
+    openSetupStep("Verify");
     fireEvent.click(screen.getByText("Open profile setup"));
 
     await waitFor(() => {
@@ -6826,6 +6836,7 @@ describe("App", () => {
       },
     });
 
+    openSetupStep("Verify");
     const firstSwitchSelect = screen.getByLabelText("First switch profile");
     expect(within(firstSwitchSelect).getByRole("option", { name: "Office" })).toBeInTheDocument();
   });

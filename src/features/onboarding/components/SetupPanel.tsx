@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SectionCard } from "../../../components/SectionCard";
 import { SplitView } from "../../../components/SplitView";
 import { getShellGuidance, runDoctor } from "../../../lib/client";
@@ -35,6 +36,8 @@ type HealthItem = {
   status: "pass" | "warn" | "fail";
   detail: string;
 };
+
+type SetupStep = "accounts" | "runtime" | "switch" | "terminal";
 
 export function shouldShowSetupFlow(
   snapshot: AppSnapshot,
@@ -117,6 +120,9 @@ export function SetupPanel({
     [settings, snapshot],
   );
   const shouldShowSetup = shouldShowSetupFlow(snapshot, initReport);
+  const [activeStep, setActiveStep] = useState<SetupStep>(() =>
+    defaultSetupStep(snapshot, initReport),
+  );
   const pendingProfileName = pendingLiveImport ? profileNames[pendingLiveImport.tool] ?? "" : "";
   const pendingProfileLabel = pendingLiveImport ? profileLabels[pendingLiveImport.tool] ?? "" : "";
 
@@ -187,6 +193,16 @@ export function SetupPanel({
     return null;
   }
 
+  const setupSteps = [
+    { value: "accounts", label: "Accounts" },
+    { value: "runtime", label: "Runtime" },
+    { value: "switch", label: "Verify" },
+    { value: "terminal", label: "Terminal" },
+  ] satisfies Array<{ value: SetupStep; label: string }>;
+  const needsAttentionCount =
+    liveAccounts.length + installedToolsNeedingProfile.length + missingTools.length;
+  const switchReady = switchableProfiles.length > 0;
+
   return (
     <SectionCard
       title="Welcome"
@@ -219,33 +235,108 @@ export function SetupPanel({
         </div>
       </div>
 
-      <div className="onboarding-trust-grid">
-        <article className="diagnostic-card onboarding-trust-card">
-          <h3>Local-only by default</h3>
-          <div className="trust-list">
-            <p className="trust-list-item">Credentials stay on this Mac</p>
-            <p className="trust-list-item">No telemetry</p>
-            <p className="trust-list-item">No prompt or API traffic proxy</p>
-            <p className="trust-list-item">Bundled runtime included</p>
-          </div>
-        </article>
-      </div>
-
       <SplitView
-        className="onboarding-layout"
+        className="onboarding-layout onboarding-layout-compact"
         primaryClassName="onboarding-summary-pane"
         secondaryClassName="onboarding-actions-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-          <article className="diagnostic-card desktop-pane-intro">
-            <h3>Runtime check</h3>
-            <p className="inline-note">
-              Confirm that the desktop app is ready to use its included switching engine and local
-              storage before you import or switch accounts.
-            </p>
-          </article>
-
-          <article className="diagnostic-card">
+            <article className="diagnostic-card onboarding-trust-card">
+              <h3>Local-only by default</h3>
+              <div className="trust-list">
+                <p className="trust-list-item">Credentials stay on this Mac</p>
+                <p className="trust-list-item">No telemetry</p>
+                <p className="trust-list-item">No prompt or API traffic proxy</p>
+                <p className="trust-list-item">Bundled runtime included</p>
+              </div>
+            </article>
+            <article className="diagnostic-card onboarding-step-card">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Setup</p>
+                  <h3>Steps</h3>
+                </div>
+                <span className={`pill ${needsAttentionCount ? "pill-soft" : "pill-ok"}`}>
+                  {needsAttentionCount ? `${needsAttentionCount} action${needsAttentionCount === 1 ? "" : "s"}` : "Ready"}
+                </span>
+              </div>
+              <SegmentedControl
+                ariaLabel="Setup steps"
+                options={setupSteps}
+                value={activeStep}
+                onChange={setActiveStep}
+                kind="tabs"
+              />
+              <div className="stack-list onboarding-status-stack">
+                <div>
+                  <p className="diagnostic-status diagnostic-status-pass">Desktop runtime</p>
+                  <p className="inline-note">
+                    {bootstrap.runtime_status.compatible
+                      ? "Included engine is ready for desktop switching."
+                      : "Runtime details need attention before switching."}
+                  </p>
+                </div>
+                <div>
+                  <p className="diagnostic-status diagnostic-status-warn">Accounts</p>
+                  <p className="inline-note">
+                    {needsAttentionCount
+                      ? `${needsAttentionCount} import, install, or setup action${needsAttentionCount === 1 ? "" : "s"} remain.`
+                      : "Installed tools already have reusable profiles."}
+                  </p>
+                </div>
+                <div>
+                  <p className={`diagnostic-status ${switchReady ? "diagnostic-status-pass" : "diagnostic-status-warn"}`}>
+                    Shared switch
+                  </p>
+                  <p className="inline-note">
+                    {switchReady
+                      ? "A matching shared profile is ready for a first switch check."
+                      : "Add matching profile names across tools before verifying a shared switch."}
+                  </p>
+                </div>
+              </div>
+            </article>
+            <article className="diagnostic-card">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Runtime</p>
+                  <h3>Included engine</h3>
+                </div>
+                <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
+                  {bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}
+                </span>
+              </div>
+              <p className="inline-note">
+                Source:{" "}
+                <strong>
+                  {bootstrap.settings.runtime_kind === "bundled"
+                    ? "Included with this app"
+                    : bootstrap.settings.runtime_kind === "system"
+                      ? "System override"
+                      : "Custom override"}
+                </strong>
+              </p>
+              <p className="inline-note">
+                Version: {bootstrap.runtime_status.version?.version ?? "unknown"}
+              </p>
+              <p className="inline-note">
+                AI Switch data folder: {bootstrap.settings.aisw_home ?? "Managed automatically"}
+              </p>
+            </article>
+          </div>
+        }
+        secondary={
+          <div className="stack-list desktop-pane-column">
+            {activeStep === "runtime" ? (
+              <>
+                <article className="diagnostic-card desktop-pane-intro">
+                  <h3>Runtime check</h3>
+                  <p className="inline-note">
+                    Confirm that the desktop app is ready to use its included switching engine and local
+                    storage before you import or switch accounts.
+                  </p>
+                </article>
+                <article className="diagnostic-card">
             <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Runtime</p>
@@ -318,19 +409,20 @@ export function SetupPanel({
               ) : null}
             </div>
           </article>
-          </div>
-        }
-        secondary={
-          <div className="stack-list desktop-pane-column">
-          <article className="diagnostic-card desktop-pane-intro">
-            <h3>Detected tools</h3>
-            <p className="inline-note">
-              Capture current sign-ins, add missing tools, and save reusable profiles before you
-              run the first shared switch.
-            </p>
-          </article>
+              </>
+            ) : null}
 
-          <div className="desktop-pane-section onboarding-detection-stack">
+            {activeStep === "accounts" ? (
+              <>
+                <article className="diagnostic-card desktop-pane-intro">
+                  <h3>Detected tools</h3>
+                  <p className="inline-note">
+                    Capture current sign-ins, add missing tools, and save reusable profiles before you
+                    run the first shared switch.
+                  </p>
+                </article>
+
+                <div className="desktop-pane-section onboarding-detection-stack">
             <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Detection</p>
@@ -457,96 +549,102 @@ export function SetupPanel({
                 </p>
               )
             ) : null}
-          </div>
+                </div>
+              </>
+            ) : null}
 
-          <article className="diagnostic-card">
-            <div className="desktop-pane-section-header">
-              <div>
-                <p className="card-kicker">Verify</p>
-                <h3>First switch</h3>
-              </div>
-              <p className="inline-note">
-                Re-apply one shared profile across installed tools to confirm switching works end to
-                end.
-              </p>
-            </div>
-            <div className="inline-form">
-            <select
-              aria-label="First switch profile"
-              value={firstSwitchProfile}
-              onChange={(event) => setFirstSwitchProfile(event.target.value)}
-            >
-              <option value="">Select profile</option>
-              {switchableProfiles.map((profile) => (
-                <option key={profile.name} value={profile.name}>
-                  {profile.label}
-                </option>
-              ))}
-            </select>
-            <button
-              className="primary-button"
-              type="button"
-              disabled={!firstSwitchProfile || mutationLock.isBusy || useAllProfilesMutation.isPending}
-              onClick={() =>
-                useAllProfilesMutation.mutate({
-                  profile: firstSwitchProfile,
-                  stateMode: resolveGlobalStateMode(snapshot),
-                  label:
-                    switchableProfiles.find((profile) => profile.name === firstSwitchProfile)?.label ??
-                    undefined,
-                })
-              }
-            >
-              {useAllProfilesMutation.isPending ? "Switching…" : "Switch now"}
-            </button>
-            </div>
-            {!switchableProfiles.length ? (
-              <div className="stack-list">
-                <p className="inline-note">
-                  Import or create matching profile names across tools before running a shared
-                  switch check.
-                </p>
-                <div className="button-row">
-                  <button className="ghost-button" type="button" onClick={() => onOpenProfiles("claude")}>
-                    Open profile setup
+            {activeStep === "switch" ? (
+              <article className="diagnostic-card">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Verify</p>
+                    <h3>First switch</h3>
+                  </div>
+                  <p className="inline-note">
+                    Re-apply one shared profile across installed tools to confirm switching works end to
+                    end.
+                  </p>
+                </div>
+                <div className="inline-form">
+                  <select
+                    aria-label="First switch profile"
+                    value={firstSwitchProfile}
+                    onChange={(event) => setFirstSwitchProfile(event.target.value)}
+                  >
+                    <option value="">Select profile</option>
+                    {switchableProfiles.map((profile) => (
+                      <option key={profile.name} value={profile.name}>
+                        {profile.label}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    className="primary-button"
+                    type="button"
+                    disabled={!firstSwitchProfile || mutationLock.isBusy || useAllProfilesMutation.isPending}
+                    onClick={() =>
+                      useAllProfilesMutation.mutate({
+                        profile: firstSwitchProfile,
+                        stateMode: resolveGlobalStateMode(snapshot),
+                        label:
+                          switchableProfiles.find((profile) => profile.name === firstSwitchProfile)?.label ??
+                          undefined,
+                      })
+                    }
+                  >
+                    {useAllProfilesMutation.isPending ? "Switching…" : "Switch now"}
                   </button>
                 </div>
-              </div>
+                {!switchableProfiles.length ? (
+                  <div className="stack-list">
+                    <p className="inline-note">
+                      Import or create matching profile names across tools before running a shared
+                      switch check.
+                    </p>
+                    <div className="button-row">
+                      <button className="ghost-button" type="button" onClick={() => onOpenProfiles("claude")}>
+                        Open profile setup
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </article>
             ) : null}
-          </article>
 
-          <article className="diagnostic-card">
-            <div className="desktop-pane-section-header">
-              <div>
-                <p className="card-kicker">Optional</p>
-                <h3>Terminal integration</h3>
-              </div>
-              <p className="inline-note">
-                Optional. The desktop app updates live credential files without terminal integration.
-                Turn it on later if you want already-open terminal sessions to receive immediate
-                environment exports.
-              </p>
-            </div>
-            {shellGuidance.data?.detected_shell ? (
-              <p className="inline-note">
-                Detected shell: <strong>{titleCase(shellGuidance.data.detected_shell)}</strong>
-              </p>
+            {activeStep === "terminal" ? (
+              <article className="diagnostic-card">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Optional</p>
+                    <h3>Terminal integration</h3>
+                  </div>
+                  <p className="inline-note">
+                    Optional. The desktop app updates live credential files without terminal integration.
+                    Turn it on later if you want already-open terminal sessions to receive immediate
+                    environment exports.
+                  </p>
+                </div>
+                {shellGuidance.data?.detected_shell ? (
+                  <p className="inline-note">
+                    Detected shell: <strong>{titleCase(shellGuidance.data.detected_shell)}</strong>
+                  </p>
+                ) : null}
+                <p className="inline-note">
+                  The desktop app writes live credential files directly. Existing terminal sessions
+                  only receive immediate environment exports such as <code>CLAUDE_CONFIG_DIR</code> and{" "}
+                  <code>CODEX_HOME</code> after you enable terminal integration.
+                </p>
+                <p className="inline-note">
+                  Shell files should only be updated explicitly from the CLI or a future guided setup
+                  action, never silently.
+                </p>
+                <div className="button-row">
+                  <button className="ghost-button" type="button" onClick={() => onOpenSettings("shell")}>
+                    Open terminal setup
+                  </button>
+                </div>
+              </article>
             ) : null}
-            <p className="inline-note">
-              The desktop app writes live credential files directly. Existing terminal sessions
-              only receive immediate environment exports such as <code>CLAUDE_CONFIG_DIR</code> and{" "}
-              <code>CODEX_HOME</code> after you enable terminal integration.
-            </p>
-            <p className="inline-note">
-              Shell files should only be updated explicitly from the CLI or a future guided setup
-              action, never silently.
-            </p>
-            <div className="button-row">
-              <button className="ghost-button" type="button" onClick={() => onOpenSettings("shell")}>
-                Open terminal setup
-              </button>
-            </div>
-          </article>
           </div>
         }
       />
@@ -619,6 +717,24 @@ export function SetupPanel({
       ) : null}
     </SectionCard>
   );
+}
+
+function defaultSetupStep(snapshot: AppSnapshot, initReport: InitReport | undefined): SetupStep {
+  const liveAccounts = readLiveAccounts(initReport);
+  const liveAccountTools = new Set(liveAccounts.map((account) => account.tool));
+  const missingTools = snapshot.statuses.filter((status) => !status.binary_found);
+  const installedToolsNeedingProfile = snapshot.statuses.filter(
+    (status) =>
+      status.binary_found &&
+      !liveAccountTools.has(status.tool) &&
+      (snapshot.profiles[status.tool]?.profiles.length ?? 0) === 0,
+  );
+
+  if (liveAccounts.length || installedToolsNeedingProfile.length || missingTools.length) {
+    return "accounts";
+  }
+
+  return "runtime";
 }
 
 function readLiveAccounts(initReport: InitReport | undefined): LiveAccount[] {
