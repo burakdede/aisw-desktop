@@ -46,24 +46,16 @@ export function AppFrame({
       <div className={cn("layout-shell", mode === "setup" && "layout-shell-setup")}>
         {mode === "setup" ? null : (
           <aside className="sidebar">
-            <div className="sidebar-window-chrome" aria-hidden="true">
-              <div className="traffic-lights">
-                <span className="traffic-light traffic-light-close" />
-                <span className="traffic-light traffic-light-minimize" />
-                <span className="traffic-light traffic-light-zoom" />
-              </div>
-              <span className="window-caption">AI Switch</span>
-            </div>
             <div className="sidebar-scroll">
               <div className="sidebar-brand">
                 <div className="brand-lockup">
                   <BrandMark />
                   <div className="sidebar-brand-copy">
-                    <p className="eyebrow">Local Profile Switching</p>
+                    <p className="eyebrow">Desktop Control Center</p>
                     <h1 className="sidebar-title">AI Switch</h1>
                   </div>
                 </div>
-                <p className="sidebar-badge">Native Mac utility</p>
+                <p className="sidebar-badge">Local account switching</p>
                 {subtitle ? <p className="sidebar-copy">{subtitle}</p> : null}
               </div>
               <nav className="nav-list" aria-label="Primary">
