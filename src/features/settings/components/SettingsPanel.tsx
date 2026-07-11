@@ -306,7 +306,7 @@ export function SettingsPanel({
                     <h3>Launch behavior</h3>
                   </div>
                   <p className="inline-note">
-                    Native launch controls are shown here, but this unsigned development build keeps them managed by the operating system and signed app bundle.
+                    Native launch controls live here, but this development build keeps them read-only so the app still behaves like a predictable Mac utility.
                   </p>
                 </div>
                 <div className="settings-toggle-list" aria-label="Launch behavior controls">
@@ -314,7 +314,7 @@ export function SettingsPanel({
                     <span className="settings-toggle-copy">
                       <strong>Launch at login</strong>
                       <span className="inline-note">
-                        Available from the signed desktop app once the login item is registered with macOS.
+                        Read-only in this build. Signed releases should mirror the macOS login item instead of using a separate in-app model.
                       </span>
                     </span>
                     <input type="checkbox" aria-label="Launch at login" disabled />
@@ -323,7 +323,7 @@ export function SettingsPanel({
                     <span className="settings-toggle-copy">
                       <strong>Show menu bar icon</strong>
                       <span className="inline-note">
-                        The menu bar extra stays visible in this build so quick switching and diagnostics remain reachable.
+                        Kept on in this build so quick switching, verification, and diagnostics stay one click away.
                       </span>
                     </span>
                     <input
@@ -336,7 +336,7 @@ export function SettingsPanel({
                   </label>
                 </div>
                 <p className="inline-note">
-                  When these controls become available, the desktop app should mirror the native macOS login-item and menu-bar behavior instead of inventing a separate model.
+                  AI Switch should follow native macOS login-item and menu-bar behavior here rather than inventing app-only toggles.
                 </p>
               </article>
               <article className="diagnostic-card settings-pane-section">
@@ -405,7 +405,7 @@ export function SettingsPanel({
                 </div>
                 <p className="inline-note">Use the source list on the left to jump directly to the section you need.</p>
                 <p className="inline-note">
-                  Launch at login and menu bar visibility stay tied to the signed desktop build and OS-level app settings for now.
+                  Login-item and menu-bar visibility remain OS-managed in this build.
                 </p>
               </article>
             </div>

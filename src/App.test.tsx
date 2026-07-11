@@ -7618,7 +7618,7 @@ describe("App", () => {
     expect(screen.getByLabelText("Show menu bar icon")).toBeChecked();
     expect(
       screen.getByText(
-        "Available from the signed desktop app once the login item is registered with macOS.",
+        "Read-only in this build. Signed releases should mirror the macOS login item instead of using a separate in-app model.",
       ),
     ).toBeInTheDocument();
 
