@@ -70,12 +70,7 @@ export function OverviewPanel({
   const expectedWorkspaceTarget = showWorkspaceSummary
     ? resolveWorkspaceActivationTarget(workspaceStatus.expectedContext, settings, snapshot)
     : null;
-  const workspaceSummaryLabel =
-    expectedWorkspaceTarget?.kind === "profile_set"
-      ? "Expected set"
-      : expectedWorkspaceTarget?.kind === "context"
-        ? "Expected imported set"
-        : "Expected set";
+  const workspaceSummaryLabel = "Expected set";
   const expectedWorkspaceDisplay = contextDisplayLabel(settings, workspaceStatus.expectedContext);
   const currentWorkspaceDisplay = contextDisplayLabel(settings, workspaceStatus.currentContext);
   const workspaceResult = lastCommandResults.global.workspace;

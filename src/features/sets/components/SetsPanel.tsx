@@ -38,7 +38,7 @@ export function SetsPanel({
       value: "rules" as const,
       label: "Project rules",
       summary: "Folder and remote matching",
-      note: "Attach a saved set to a workspace so AI Switch can warn before you code in the wrong profile.",
+      note: "Attach a saved set to a folder or remote pattern so AI Switch can warn before you code in the wrong profile.",
       badge: "Rules",
     },
   ];
@@ -52,7 +52,7 @@ export function SetsPanel({
         <article className="diagnostic-card desktop-source-card sets-source-card">
           <div className="desktop-pane-section-header">
             <div>
-              <p className="card-kicker">Workspace</p>
+              <p className="card-kicker">Project rules</p>
               <h3>Sets</h3>
             </div>
             <span className="pill pill-soft">{mode === "sets" ? "Library" : "Rules"}</span>

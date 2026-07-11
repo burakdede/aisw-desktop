@@ -127,7 +127,7 @@ export function WorkspacesPanel({
           <article className="diagnostic-card desktop-pane-intro">
             <div className="desktop-pane-section-header">
               <div>
-                <p className="card-kicker">Workspace</p>
+                <p className="card-kicker">Project rules</p>
                 <h3>Rule editor</h3>
               </div>
               <span className="pill pill-soft">
@@ -137,7 +137,7 @@ export function WorkspacesPanel({
               </span>
             </div>
             <p className="inline-note">
-              Attach a saved set to the current folder, a path prefix, or a git remote pattern so switching stays predictable.
+              Attach a saved set to the current folder, a path prefix, or a git remote pattern so project switching stays predictable.
             </p>
             <div className="workspaces-intro-meta">
               <div>
@@ -158,7 +158,7 @@ export function WorkspacesPanel({
             <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Editor</p>
-                <h3>Save or remove a matching rule</h3>
+                <h3>Save or remove a project rule</h3>
               </div>
               <p className="inline-note">
                 Pick where the rule applies, then choose the set the app should expect in that project.
@@ -262,7 +262,7 @@ export function WorkspacesPanel({
                 active set is <strong>{currentContextDisplay}</strong>.
               </p>
               <p className="inline-note">
-                Matched from this {statusCard.scope} rule: {statusCard.target}
+                Matched by this {statusCard.scope} rule: {statusCard.target}
               </p>
               <div className="button-row">
                 <button
@@ -299,7 +299,7 @@ export function WorkspacesPanel({
               <p className="diagnostic-status">{statusCard.status}</p>
               <p className="inline-note">Current set: {currentContextDisplay}</p>
               <p className="inline-note">Expected set: {expectedContextDisplay}</p>
-              <p className="inline-note">Matched using: {statusCard.scope}</p>
+              <p className="inline-note">Rule type: {statusCard.scope}</p>
               <p className="inline-note">Matched target: {statusCard.target}</p>
             </article>
 
@@ -319,7 +319,7 @@ export function WorkspacesPanel({
                 <h3>Saved matching rules</h3>
               </div>
               <p className="inline-note">
-                Remove stale path and remote matches here when a project moves or gets renamed.
+                Remove stale path and remote rules here when a project moves or gets renamed.
               </p>
             </div>
             {bindingsSummary.bindings.map((binding) => {

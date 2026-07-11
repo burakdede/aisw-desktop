@@ -4165,7 +4165,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
     await waitFor(() => {
-      expect(screen.getByText("Expected imported set")).toBeInTheDocument();
+      expect(screen.getByText("Expected set")).toBeInTheDocument();
       expect(screen.getByText("client-acme")).toBeInTheDocument();
     });
 
