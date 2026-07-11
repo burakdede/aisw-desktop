@@ -265,6 +265,13 @@ export function SetupPanel({
                 Bring in the accounts you already use, confirm the included runtime is ready,
                 and try one shared switch without leaving this Mac.
               </p>
+              <SegmentedControl
+                ariaLabel="Setup steps"
+                options={setupSteps}
+                value={activeStep}
+                onChange={setActiveStep}
+                kind="tabs"
+              />
               <div className="onboarding-overview-meta">
                 <div>
                   <span className="overview-current-set-cell-label">Privacy</span>
@@ -299,37 +306,6 @@ export function SetupPanel({
                   </span>
                 ))}
               </div>
-            </article>
-            <article className="diagnostic-card onboarding-trust-card">
-              <h3>What stays local</h3>
-              <p className="inline-note">
-                AI Switch is a local control center for coding-agent accounts. It keeps the
-                active account clear, switching fast, and recovery safe.
-              </p>
-              <div className="trust-list">
-                <p className="trust-list-item">Credentials stay on this Mac</p>
-                <p className="trust-list-item">No telemetry</p>
-                <p className="trust-list-item">No prompt or API traffic proxy</p>
-                <p className="trust-list-item">Included runtime</p>
-              </div>
-            </article>
-            <article className="diagnostic-card onboarding-step-card">
-              <div className="desktop-pane-section-header">
-                <div>
-                  <p className="card-kicker">Setup</p>
-                  <h3>First launch</h3>
-                </div>
-                <span className={`pill ${needsAttentionCount ? "pill-soft" : "pill-ok"}`}>
-                  {needsAttentionCount ? `${needsAttentionCount} action${needsAttentionCount === 1 ? "" : "s"}` : "Ready"}
-                </span>
-              </div>
-              <SegmentedControl
-                ariaLabel="Setup steps"
-                options={setupSteps}
-                value={activeStep}
-                onChange={setActiveStep}
-                kind="tabs"
-              />
               <div className="stack-list onboarding-status-stack">
                 <div>
                   <p className={`diagnostic-status diagnostic-status-${bootstrap.runtime_status.compatible ? "pass" : "warn"}`}>
@@ -361,28 +337,32 @@ export function SetupPanel({
                 </div>
               </div>
             </article>
-            <article className="diagnostic-card">
+            <article className="diagnostic-card onboarding-launch-card">
               <div className="desktop-pane-section-header">
                 <div>
-                  <p className="card-kicker">Runtime</p>
-                  <h3>Included runtime</h3>
+                  <p className="card-kicker">Before you begin</p>
+                  <h3>Local desktop setup</h3>
                 </div>
-                <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
-                  {bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}
-                </span>
+                <span className="pill pill-soft">{runtimeSummary.source}</span>
               </div>
-              <p className="inline-note">
-                Source: <strong>{runtimeSummary.source}</strong>
-              </p>
-              <p className="inline-note">
-                Version: {bootstrap.runtime_status.version?.version ?? "unknown"}
-              </p>
-              <p className="inline-note">
-                Data folder: {bootstrap.settings.aisw_home ?? "Managed automatically"}
-              </p>
-              <p className="inline-note">
-                Secure storage: {secureStorage}
-              </p>
+              <div className="onboarding-overview-meta">
+                <div>
+                  <span className="overview-current-set-cell-label">Runtime</span>
+                  <strong>{runtimeSummary.source}</strong>
+                  <p className="inline-note">Version {bootstrap.runtime_status.version?.version ?? "unknown"}</p>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Data folder</span>
+                  <strong>{bootstrap.settings.aisw_home ?? "Managed automatically"}</strong>
+                  <p className="inline-note">Secure storage: {secureStorage}</p>
+                </div>
+              </div>
+              <div className="trust-list">
+                <p className="trust-list-item">Credentials stay on this Mac</p>
+                <p className="trust-list-item">No telemetry</p>
+                <p className="trust-list-item">No prompt or API traffic proxy</p>
+                <p className="trust-list-item">Terminal integration is optional</p>
+              </div>
             </article>
           </div>
         }
