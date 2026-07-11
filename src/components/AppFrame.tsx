@@ -42,12 +42,20 @@ export function AppFrame({
     <main className="app-shell app-shell-window">
       <div className="layout-shell">
         <aside className="sidebar">
+          <div className="sidebar-window-chrome" aria-hidden="true">
+            <div className="traffic-lights">
+              <span className="traffic-light traffic-light-close" />
+              <span className="traffic-light traffic-light-minimize" />
+              <span className="traffic-light traffic-light-zoom" />
+            </div>
+            <span className="window-caption">AI Switch</span>
+          </div>
           <div className="sidebar-scroll">
             <div className="sidebar-brand">
               <div className="brand-lockup">
                 <BrandMark />
                 <div>
-                  <p className="eyebrow">Desktop App</p>
+                  <p className="eyebrow">Control Center</p>
                   <h1 className="sidebar-title">AI Switch</h1>
                 </div>
               </div>
@@ -81,10 +89,12 @@ export function AppFrame({
         </aside>
         <div className="content-shell">
           <header className="window-toolbar">
-            <div className="window-toolbar-copy">
-              <p className="window-toolbar-kicker">Section</p>
-              <h2>{title}</h2>
-              {detail ? <p className="window-toolbar-subtitle">{detail}</p> : null}
+            <div className="window-toolbar-meta">
+              <p className="window-toolbar-kicker">Desktop</p>
+              <div className="window-toolbar-copy">
+                <h2>{title}</h2>
+                {detail ? <p className="window-toolbar-subtitle">{detail}</p> : null}
+              </div>
             </div>
             {toolbar ? <div className="window-toolbar-actions toolbar-cluster">{toolbar}</div> : null}
           </header>

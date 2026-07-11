@@ -11,31 +11,37 @@ export function BrandMark({ size = 28 }: { size?: number }) {
     >
       <rect x="4" y="4" width="24" height="24" rx="8.5" className="brand-mark-panel" />
       <rect x="6.5" y="6.5" width="19" height="19" rx="6.75" className="brand-mark-panel-secondary" />
-      <rect x="10.15" y="8.85" width="3.5" height="14.3" rx="1.75" className="brand-mark-rail" />
-      <rect x="18.35" y="8.85" width="3.5" height="14.3" rx="1.75" className="brand-mark-rail" />
       <path
-        d="M12 11.25H16C18.3472 11.25 20.25 13.1528 20.25 15.5C20.25 17.8472 18.3472 19.75 16 19.75H12"
-        className="brand-mark-flow brand-mark-flow-accent"
-        strokeWidth="2.2"
+        d="M11.5 10.25H18.9C21.1644 10.25 23 12.0856 23 14.35C23 16.6144 21.1644 18.45 18.9 18.45H13.6"
+        className="brand-mark-track"
+        strokeWidth="2.15"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
-        d="M12 15.5H20"
-        className="brand-mark-flow"
+        d="M20.5 21.75H13.1C10.8356 21.75 9 19.9144 9 17.65C9 15.3856 10.8356 13.55 13.1 13.55H18.4"
+        className="brand-mark-track brand-mark-track-accent"
+        strokeWidth="2.15"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <rect x="9" y="9" width="6.1" height="3.5" rx="1.75" className="brand-mark-switch" />
+      <rect x="16.9" y="19.5" width="6.1" height="3.5" rx="1.75" className="brand-mark-switch brand-mark-switch-accent" />
+      <circle cx="11.1" cy="10.75" r="0.9" className="brand-mark-switch-dot" />
+      <circle cx="20.9" cy="21.25" r="0.9" className="brand-mark-switch-dot brand-mark-switch-dot-accent" />
+      <path
+        d="M15.5 15.95H18.65"
+        className="brand-mark-bridge"
         strokeWidth="1.45"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx="12" cy="11.25" r="2.05" className="brand-mark-node" />
-      <circle cx="20" cy="15.5" r="2.3" className="brand-mark-node brand-mark-node-accent" />
-      <circle cx="12" cy="19.75" r="2.05" className="brand-mark-node" />
-      <path d="M11.55 10.85H14.95" className="brand-mark-highlight" strokeWidth="0.82" strokeLinecap="round" />
       <path
-        d="M11.55 19.35H14.95"
-        className="brand-mark-highlight brand-mark-highlight-soft"
-        strokeWidth="0.82"
+        d="M13.35 16.05H16.5"
+        className="brand-mark-bridge brand-mark-bridge-accent"
+        strokeWidth="1.45"
         strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );
