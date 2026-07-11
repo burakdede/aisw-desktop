@@ -638,7 +638,7 @@ mod tests {
             .unwrap_or(Duration::from_secs(0))
             .as_nanos();
         let state = super::AppState::new(SettingsStore::new(
-            std::env::temp_dir().join(format!("aisw-desktop-state-test-{unique}")),
+            std::env::temp_dir().join(format!("ai-switch-desktop-state-test-{unique}")),
         ));
         let (events_tx, mut events_rx) = mpsc::unbounded_channel::<&'static str>();
         let (release_first_tx, release_first_rx) = oneshot::channel::<()>();

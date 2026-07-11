@@ -69,12 +69,25 @@ fn main() {
 }
 
 fn resolve_settings_dir() -> std::path::PathBuf {
-    std::env::var_os("AISW_DESKTOP_CONFIG_DIR")
+    std::env::var_os("AI_SWITCH_DESKTOP_CONFIG_DIR")
         .map(std::path::PathBuf::from)
+        .or_else(|| std::env::var_os("AISW_DESKTOP_CONFIG_DIR").map(std::path::PathBuf::from))
         .or_else(|| {
             std::env::current_exe()
                 .ok()
                 .and_then(|path| path.parent().map(|parent| parent.join("config")))
         })
-        .unwrap_or_else(|| std::path::PathBuf::from(".aisw-desktop"))
+        .unwrap_or_else(|| {
+            let current_dir =
+                std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
+            let preferred = current_dir.join(".ai-switch-desktop");
+            let legacy = current_dir.join(".aisw-desktop");
+            if preferred.exists() {
+                preferred
+            } else if legacy.exists() {
+                legacy
+            } else {
+                preferred
+            }
+        })
 }
