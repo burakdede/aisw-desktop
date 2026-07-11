@@ -81,12 +81,27 @@ export function OverviewPanel({
   const workspaceResult = lastCommandResults.global.workspace;
   const contextResult = lastCommandResults.global.context;
   const currentSetLabel = activeSetLabel(settings, snapshot);
+  const [selectedTool, setSelectedTool] = useState(snapshot.statuses[0]?.tool ?? "");
   const currentSetProfiles = snapshot.statuses.map((status) => ({
     tool: status.tool,
     label: status.active_profile
       ? toolProfileDisplayLabel(settings, snapshot, status.tool, status.active_profile)
       : null,
   }));
+  const selectedToolStatus =
+    snapshot.statuses.find((status) => status.tool === selectedTool) ?? snapshot.statuses[0] ?? null;
+
+  useEffect(() => {
+    if (!snapshot.statuses.length) {
+      if (selectedTool) {
+        setSelectedTool("");
+      }
+      return;
+    }
+    if (!snapshot.statuses.some((status) => status.tool === selectedTool)) {
+      setSelectedTool(snapshot.statuses[0].tool);
+    }
+  }, [selectedTool, snapshot.statuses]);
 
   return (
     <SectionCard
@@ -272,49 +287,100 @@ export function OverviewPanel({
                 <h3>Live account state</h3>
               </div>
               <p className="inline-note">
-                Active profile, match status, secure storage, and drift warnings are surfaced here first.
+                Review the selected tool in detail while keeping the full local switching inventory visible beside it.
               </p>
             </div>
-            <div className="tool-grid overview-tool-grid">
-              {snapshot.statuses.map((status) => (
-                <ToolCard
-                  key={status.tool}
-                  status={status}
-                  profiles={snapshot.profiles[status.tool]?.profiles ?? []}
-                  lastResult={lastCommandResults.tool[status.tool]}
-                  mutationLocked={mutationLock.isBusy}
-                  refreshLocked={mutationLock.isBusy || refresh.isPending}
-                  onRefresh={() => refresh.mutate()}
-                  stateModes={supportedStateModes(status.tool, toolCapabilities)}
-                  settings={settings}
-                  snapshot={snapshot}
-                  onImport={(tool, profile, stateMode) =>
-                    supportsProfileImportMode(tool, toolCapabilities, "from_live")
-                      ? addProfileMutation.mutate({
-                          tool,
-                          profile,
-                          label: titleCase(profile),
-                          stateMode,
-                          importMode: { kind: "from_live" },
-                        })
-                      : onOpenProfiles(tool, null, {
-                          mode: preferredProfileImportMode(tool, toolCapabilities, "from_live"),
-                        })
-                  }
-                  onUse={(tool, profile, stateMode) =>
-                    useProfileMutation.mutate({
-                      tool,
-                      profile,
-                      stateMode,
-                      label: toolProfileDisplayLabel(settings, snapshot, tool, profile),
-                    })
-                  }
-                  onAddProfile={(tool) => onOpenProfiles(tool)}
-                  onOpenDetails={(tool, profile) => onOpenProfiles(tool, profile)}
-                  toolCapabilities={toolCapabilities}
-                />
-              ))}
-            </div>
+            <SplitView
+              className="overview-tools-split"
+              primaryClassName="overview-tool-list-pane"
+              secondaryClassName="overview-tool-detail-pane"
+              primary={
+                <div className="stack-list desktop-pane-column">
+                  <div className="overview-tool-list-header">
+                    <p className="inline-note">
+                      Select a tool to inspect its active account, state mode, and recovery actions.
+                    </p>
+                  </div>
+                  <div className="stack-list desktop-list-stack">
+                    {snapshot.statuses.map((status) => (
+                      <button
+                        key={status.tool}
+                        type="button"
+                        aria-label={`Inspect ${titleCase(status.tool)}`}
+                        className={`list-row overview-tool-row ${
+                          selectedTool === status.tool ? "overview-tool-row-selected" : ""
+                        } overview-tool-row-${resolveCardState(status)}`}
+                        onClick={() => setSelectedTool(status.tool)}
+                      >
+                        <div className="overview-tool-row-main">
+                          <div className="overview-tool-row-title">
+                            <strong>{titleCase(status.tool)}</strong>
+                            <span className={`pill ${pillClassForStatus(status)}`}>
+                              {statusPillLabel(status)}
+                            </span>
+                          </div>
+                          <p className="inline-note">
+                            {status.active_profile
+                              ? toolProfileDisplayLabel(settings, snapshot, status.tool, status.active_profile)
+                              : "No saved profile"}
+                          </p>
+                        </div>
+                        <div className="overview-tool-row-meta">
+                          <span>{status.active_profile_applied === false ? "Drifted" : status.auth_method ?? "Unknown"}</span>
+                          <span>{status.state_mode ?? "n/a"}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              }
+              secondary={
+                selectedToolStatus ? (
+                  <ToolInspector
+                    status={selectedToolStatus}
+                    profiles={snapshot.profiles[selectedToolStatus.tool]?.profiles ?? []}
+                    lastResult={lastCommandResults.tool[selectedToolStatus.tool]}
+                    mutationLocked={mutationLock.isBusy}
+                    refreshLocked={mutationLock.isBusy || refresh.isPending}
+                    onRefresh={() => refresh.mutate()}
+                    stateModes={supportedStateModes(selectedToolStatus.tool, toolCapabilities)}
+                    settings={settings}
+                    snapshot={snapshot}
+                    onImport={(tool, profile, stateMode) =>
+                      supportsProfileImportMode(tool, toolCapabilities, "from_live")
+                        ? addProfileMutation.mutate({
+                            tool,
+                            profile,
+                            label: titleCase(profile),
+                            stateMode,
+                            importMode: { kind: "from_live" },
+                          })
+                        : onOpenProfiles(tool, null, {
+                            mode: preferredProfileImportMode(tool, toolCapabilities, "from_live"),
+                          })
+                    }
+                    onUse={(tool, profile, stateMode) =>
+                      useProfileMutation.mutate({
+                        tool,
+                        profile,
+                        stateMode,
+                        label: toolProfileDisplayLabel(settings, snapshot, tool, profile),
+                      })
+                    }
+                    onAddProfile={(tool) => onOpenProfiles(tool)}
+                    onOpenDetails={(tool, profile) => onOpenProfiles(tool, profile)}
+                    toolCapabilities={toolCapabilities}
+                  />
+                ) : (
+                  <article className="diagnostic-card">
+                    <h3>No tools detected</h3>
+                    <p className="inline-note">
+                      Add or detect a supported CLI before switching can begin.
+                    </p>
+                  </article>
+                )
+              }
+            />
           </div>
         }
       />
@@ -322,7 +388,7 @@ export function OverviewPanel({
   );
 }
 
-function ToolCard({
+function ToolInspector({
   status,
   profiles,
   lastResult,
@@ -393,8 +459,9 @@ function ToolCard({
     <article className={`tool-card overview-tool-card overview-tool-card-${resolveCardState(status)}`}>
       <header className="overview-tool-card-header">
         <div>
-          <p className="card-kicker">{titleCase(status.tool)}</p>
+          <p className="card-kicker">Selected tool</p>
           <h3>{activeProfileLabel ?? "Not configured"}</h3>
+          <p className="inline-note">{titleCase(status.tool)}</p>
         </div>
         <div className="overview-tool-status">
           <span className={`health-dot health-dot-${resolveCardState(status)}`} aria-hidden="true" />

@@ -950,6 +950,11 @@ button {
   grid-template-columns: minmax(280px, 0.92fr) minmax(0, 1.18fr);
 }
 
+.overview-tools-split {
+  grid-template-columns: minmax(250px, 0.66fr) minmax(320px, 1fr);
+  align-items: start;
+}
+
 .overview-hero,
 .profiles-hero {
   margin-bottom: 14px;
@@ -1015,10 +1020,6 @@ button {
   flex: none;
 }
 
-.overview-tool-grid {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-}
-
 .overview-recent-card {
   gap: 10px;
 }
@@ -1041,6 +1042,7 @@ button {
 
 .overview-tool-card {
   gap: 12px;
+  min-height: 100%;
 }
 
 .overview-tool-card-ok {
@@ -1060,6 +1062,76 @@ button {
   justify-content: space-between;
   gap: 12px;
   align-items: flex-start;
+}
+
+.overview-tool-list-pane,
+.overview-tool-detail-pane {
+  min-width: 0;
+}
+
+.overview-tool-list-header {
+  padding: 2px 2px 0;
+}
+
+.overview-tool-row {
+  width: 100%;
+  border: 1px solid var(--separator);
+  background: color-mix(in srgb, Canvas 98%, CanvasText 2%);
+  text-align: left;
+  cursor: pointer;
+  align-items: center;
+  padding: 12px 13px;
+}
+
+.overview-tool-row-main,
+.overview-tool-row-meta {
+  min-width: 0;
+}
+
+.overview-tool-row-main strong,
+.overview-tool-row-main p,
+.overview-tool-row-meta span {
+  display: block;
+}
+
+.overview-tool-row-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.overview-tool-row-title strong {
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.overview-tool-row-meta {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 1.25;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+}
+
+.overview-tool-row-selected {
+  border-color: color-mix(in srgb, AccentColor 36%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, AccentColor 10%, Canvas 92%), color-mix(in srgb, AccentColor 6%, Canvas 96%));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, AccentColor 18%, transparent);
+}
+
+.overview-tool-row-ok {
+  border-color: color-mix(in srgb, var(--ok) 14%, var(--separator));
+}
+
+.overview-tool-row-warning {
+  border-color: color-mix(in srgb, var(--warning) 16%, var(--separator));
+}
+
+.overview-tool-row-neutral {
+  border-color: var(--separator);
 }
 
 .overview-tool-status {
@@ -1606,7 +1678,8 @@ button {
 
   .desktop-split-view,
   .profiles-layout,
-  .sets-layout {
+  .sets-layout,
+  .overview-tools-split {
     grid-template-columns: 1fr;
   }
 

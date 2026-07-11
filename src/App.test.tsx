@@ -166,6 +166,10 @@ async function openProjectRulesSection() {
   fireEvent.click(screen.getByRole("button", { name: "Project rules" }));
 }
 
+function selectOverviewTool(tool: string) {
+  fireEvent.click(screen.getByRole("button", { name: `Inspect ${tool}` }));
+}
+
 async function renderSetupPanel({
   initReport = undefined,
   bootstrapOverride,
@@ -457,11 +461,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("Gemini is not available on PATH, so this Mac cannot switch or verify that tool yet.")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Inspect Gemini" })).toBeInTheDocument();
     });
-    const overviewCard = screen
-      .getByText("Gemini is not available on PATH, so this Mac cannot switch or verify that tool yet.")
-      .closest(".tool-card");
+    selectOverviewTool("Gemini");
+    const overviewCard = screen.getByText("Gemini is not available on PATH, so this Mac cannot switch or verify that tool yet.").closest(".tool-card");
     if (!(overviewCard instanceof HTMLElement)) {
       throw new Error("Missing Gemini overview card.");
     }
@@ -525,7 +528,8 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
-    fireEvent.click(screen.getAllByText("Open details")[1]);
+    selectOverviewTool("Codex");
+    fireEvent.click(screen.getByRole("button", { name: "Open details" }));
 
     await waitFor(() => {
       expect(screen.getByText("Provisioning")).toBeInTheDocument();
@@ -674,7 +678,8 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
-    fireEvent.click(screen.getAllByText("Open details")[1]);
+    selectOverviewTool("Codex");
+    fireEvent.click(screen.getByRole("button", { name: "Open details" }));
 
     await waitFor(() => {
       expect(screen.getByDisplayValue("Codex")).toBeInTheDocument();
@@ -739,7 +744,8 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
-    fireEvent.click(screen.getAllByText("Open details")[1]);
+    selectOverviewTool("Codex");
+    fireEvent.click(screen.getByRole("button", { name: "Open details" }));
 
     await waitFor(() => {
       expect(screen.getByDisplayValue("Codex")).toBeInTheDocument();
@@ -1093,6 +1099,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
+    selectOverviewTool("Codex");
     fireEvent.change(screen.getByLabelText("Switch codex profile"), {
       target: { value: "work" },
     });
@@ -1167,9 +1174,8 @@ describe("App", () => {
     });
 
     expect(screen.getByRole("button", { name: "Refresh state" })).toBeDisabled();
-    const geminiCard = screen
-      .getByText("Gemini is not available on PATH, so this Mac cannot switch or verify that tool yet.")
-      .closest(".tool-card");
+    selectOverviewTool("Gemini");
+    const geminiCard = screen.getByText("Gemini is not available on PATH, so this Mac cannot switch or verify that tool yet.").closest(".tool-card");
     if (!(geminiCard instanceof HTMLElement)) {
       throw new Error("Missing Gemini tool card.");
     }
@@ -1244,6 +1250,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
+    selectOverviewTool("Codex");
     fireEvent.change(screen.getByLabelText("Switch codex profile"), {
       target: { value: "work" },
     });
@@ -1689,6 +1696,7 @@ describe("App", () => {
 
     fireEvent.click(screen.getByText("Overview"));
 
+    selectOverviewTool("Gemini");
     const geminiCard = screen.getByText("Travel").closest(".tool-card");
     if (!(geminiCard instanceof HTMLElement)) {
       throw new Error("Missing Gemini overview card.");
