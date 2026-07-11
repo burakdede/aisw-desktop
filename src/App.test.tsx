@@ -439,6 +439,10 @@ describe("App", () => {
     window.__AISW_DESKTOP_MOCK__ = {
       get_bootstrap: {
         ...bootstrap,
+        settings: {
+          ...bootstrap.settings,
+          runtime_kind: "system",
+        },
         runtime_status: {
           ...bootstrap.runtime_status,
           compatible: false,
@@ -454,37 +458,138 @@ describe("App", () => {
     };
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("Finish setup")).toBeInTheDocument();
+      expect(screen.getByText("This engine cannot drive AI Switch yet")).toBeInTheDocument();
     });
-      expect(
-        screen.getByText(
-          "AI Switch already includes the switching engine it expects. The current advanced engine choice on this Mac is blocking desktop setup.",
-        ),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          "The selected engine was found, but it does not support the desktop features required by this release.",
-        ),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          "Open Settings and switch back to the included engine, or choose a newer compatible engine before continuing.",
-        ),
-      ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "AI Switch found a switching engine, but this desktop release cannot use it for switching, diagnostics, backups, or shared sets yet.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "The current engine was found, but it does not report the desktop compatibility details required by this release.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Switch back to the included engine, or choose a newer compatible engine in Advanced Runtime Settings before continuing.",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText("Why setup is paused")).toBeInTheDocument();
     expect(screen.getByText("Engine version details are unavailable")).toBeInTheDocument();
     expect(screen.getByText("Engine capability details are unavailable")).toBeInTheDocument();
-    expect(screen.getByText("Bundled engine and override choices")).toBeInTheDocument();
-    expect(screen.getByText("Runtime summary")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Use Included Engine" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Advanced Runtime Settings" })).toBeInTheDocument();
+    expect(screen.queryByText("Bundled engine and override choices")).not.toBeInTheDocument();
+    expect(screen.queryByText("Runtime summary")).not.toBeInTheDocument();
     expect(screen.queryByText("Welcome")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Overview" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Overview" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Profiles" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Sets" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Diagnostics" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Backups" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Activity" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Settings" })).not.toBeDisabled();
+  });
+
+  it("can open advanced runtime settings from the blocker screen", async () => {
+    window.__AISW_DESKTOP_MOCK__ = {
+      get_bootstrap: {
+        ...bootstrap,
+        settings: {
+          ...bootstrap.settings,
+          runtime_kind: "system",
+        },
+        runtime_status: {
+          ...bootstrap.runtime_status,
+          compatible: false,
+          version: null,
+          capabilities: null,
+          issues: ["Engine capability details are unavailable"],
+        },
+        snapshot: null,
+      },
+    };
+
+    await renderApp();
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Advanced Runtime Settings" })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Advanced Runtime Settings" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Bundled engine and override choices")).toBeInTheDocument();
+      expect(screen.getByText("Runtime summary")).toBeInTheDocument();
+    });
+  });
+
+  it("switches back to the included engine from the blocker screen", async () => {
+    const calls: Array<{ command: string; args?: unknown }> = [];
+    let currentSettings: DesktopSettings = {
+      ...bootstrap.settings,
+      runtime_kind: "system",
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "get_bootstrap") {
+        return {
+          ...bootstrap,
+          settings: currentSettings,
+          runtime_status: {
+            ...bootstrap.runtime_status,
+            compatible: currentSettings.runtime_kind === "bundled",
+            version:
+              currentSettings.runtime_kind === "bundled"
+                ? bootstrap.runtime_status.version
+                : null,
+            capabilities:
+              currentSettings.runtime_kind === "bundled"
+                ? bootstrap.runtime_status.capabilities
+                : null,
+            issues:
+              currentSettings.runtime_kind === "bundled"
+                ? []
+                : ["Engine capability details are unavailable"],
+          },
+          snapshot:
+            currentSettings.runtime_kind === "bundled" ? bootstrap.snapshot : null,
+        };
+      }
+      if (command === "get_snapshot") {
+        return bootstrap.snapshot;
+      }
+      if (command === "update_settings") {
+        currentSettings = {
+          ...currentSettings,
+          ...(args as { request: DesktopSettings }).request,
+        };
+        return currentSettings;
+      }
+      return (window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>)[command];
+    };
+
+    await renderApp();
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Use Included Engine" })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Use Included Engine" }));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
+      expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
+    });
+
+    expect(calls).toContainEqual({
+      command: "update_settings",
+      args: {
+        request: {
+          runtime_kind: "bundled",
+          runtime_path: null,
+          aisw_home: null,
+          update_channel: "stable",
+          profile_labels: {},
+          profile_sets: [],
+        },
+      },
+    });
   });
 
   it("shows bootstrap failure details and remediation", async () => {

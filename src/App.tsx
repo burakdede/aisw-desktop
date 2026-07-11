@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppFrame } from "./components/AppFrame";
 import { QuickSwitchPalette } from "./components/QuickSwitchPalette";
 import { SectionCard } from "./components/SectionCard";
@@ -25,7 +25,7 @@ import { notifyDesktop } from "./lib/notifications";
 import { activeSetLabel } from "./lib/profile-display";
 import { DesktopCommandError } from "./lib/tauri";
 import { listenDesktopEvent, type TrayCommandResultEvent } from "./lib/tauri";
-import { exportDiagnosticBundle } from "./lib/client";
+import { exportDiagnosticBundle, updateSettings } from "./lib/client";
 import type { ProfileImportMode } from "./features/shared/profile-capabilities";
 import {
   applyAppearancePreference,
@@ -33,6 +33,7 @@ import {
   saveDesktopPreferences,
   type DesktopPreferences,
 } from "./lib/desktop-preferences";
+import type { AppBootstrap } from "./lib/schemas";
 
 const NAV = [
   { id: "overview", label: "Overview", group: "Main" },
@@ -74,10 +75,12 @@ export function App() {
   const [quickSwitchOpen, setQuickSwitchOpen] = useState(false);
   const [profilesRouteState, setProfilesRouteState] = useState<ProfilesRouteState>({});
   const [settingsRouteState, setSettingsRouteState] = useState<SettingsRouteState>({});
+  const [runtimeRecoveryOpen, setRuntimeRecoveryOpen] = useState(false);
   const { bootstrap, snapshot, init } = useDesktop();
 
   function openSettings(section?: SettingsSection) {
     setSettingsRouteState({ section });
+    setRuntimeRecoveryOpen(true);
     setActiveNav("settings");
   }
 
@@ -91,6 +94,7 @@ export function App() {
     }
     if (id === "settings") {
       setSettingsRouteState({});
+      setRuntimeRecoveryOpen(true);
     }
     setActiveNav(id as (typeof NAV)[number]["id"]);
   }
@@ -99,6 +103,22 @@ export function App() {
     applyAppearancePreference(desktopPreferences.appearance);
     saveDesktopPreferences(desktopPreferences);
   }, [desktopPreferences]);
+
+  const restoreBundledRuntimeMutation = useMutation({
+    mutationFn: async () =>
+      updateSettings({
+        runtime_kind: "bundled",
+        runtime_path: null,
+        aisw_home: settingsForRecovery(bootstrap.data?.settings).aisw_home ?? null,
+        update_channel: settingsForRecovery(bootstrap.data?.settings).update_channel,
+        profile_labels: settingsForRecovery(bootstrap.data?.settings).profile_labels,
+        profile_sets: settingsForRecovery(bootstrap.data?.settings).profile_sets,
+      }),
+    onSuccess: async () => {
+      setRuntimeRecoveryOpen(false);
+      await invalidatePostMutationQueries(queryClient);
+    },
+  });
 
   useEffect(() => {
     let active = true;
@@ -393,7 +413,12 @@ export function App() {
   const currentActiveSet = resolvedSnapshot ? activeSetLabel(settings, resolvedSnapshot) : null;
   const setupRequired = resolvedSnapshot ? shouldShowSetupFlow(resolvedSnapshot, init.data) : false;
   const runtimeBlocked = !runtimeStatus.compatible;
-  const activeSection = runtimeBlocked ? "settings" : activeNav;
+  const runtimeRecoveryFocused = runtimeBlocked && !runtimeRecoveryOpen;
+  const activeSection = runtimeBlocked
+    ? runtimeRecoveryFocused
+      ? "overview"
+      : "settings"
+    : activeNav;
   const setupFocused = setupRequired && activeSection === "overview";
   const navItems = NAV.map(({ id, label, group }) => ({
     id,
@@ -402,18 +427,31 @@ export function App() {
     disabled: runtimeBlocked && id !== "settings",
   }));
   const runtimeBlocker = describeRuntimeBlocker(runtimeStatus);
+  const showSetupWindow = setupFocused || runtimeRecoveryFocused;
+
+  async function retryRuntimeCheck() {
+    await queryClient.invalidateQueries({ queryKey: ["bootstrap"] });
+    await queryClient.invalidateQueries({ queryKey: ["snapshot"] });
+    await queryClient.invalidateQueries({ queryKey: ["init"] });
+  }
 
   return (
     <>
     <AppFrame
-      mode={setupFocused ? "setup" : "standard"}
-      title={sectionTitle(activeSection, setupFocused)}
+      mode={showSetupWindow ? "setup" : "standard"}
+      title={
+        runtimeRecoveryFocused ? "Runtime Check" : sectionTitle(activeSection, setupFocused)
+      }
       subtitle="Switch Claude Code, Codex CLI, and Gemini CLI accounts from one compact desktop utility."
-      detail={sectionDetail(activeSection, setupFocused)}
+      detail={
+        runtimeRecoveryFocused
+          ? "Use a desktop-compatible switching engine before profile switching, diagnostics, and backups become available."
+          : sectionDetail(activeSection, setupFocused)
+      }
       nav={navItems}
       activeNav={activeSection}
       onSelectNav={selectNav}
-      toolbar={setupFocused ? undefined : (
+      toolbar={showSetupWindow ? undefined : (
         <div className="button-row toolbar-action-row">
           <button
             className="ghost-button"
@@ -440,7 +478,7 @@ export function App() {
           </button>
         </div>
       )}
-      statusBadge={setupFocused ? undefined : (
+      statusBadge={showSetupWindow ? undefined : (
         <div className="sidebar-status-stack">
           <div className="sidebar-status-row">
             <span className="sidebar-status-label">Active set</span>
@@ -457,21 +495,46 @@ export function App() {
         </div>
       )}
     >
-      {!runtimeStatus.compatible ? (
-        <SectionCard title="Finish setup" kicker="Startup required">
+      {runtimeRecoveryFocused ? (
+        <SectionCard title="This engine cannot drive AI Switch yet" kicker="Action required">
           <div className="stack-list">
             <p className="inline-note">
-              AI Switch already includes the switching engine it expects. The current advanced
-              engine choice on this Mac is blocking desktop setup.
+              AI Switch found a switching engine, but this desktop release cannot use it for
+              switching, diagnostics, backups, or shared sets yet.
             </p>
-            <p className="inline-note">{runtimeBlocker.summary}</p>
-            <p className="inline-note">{runtimeBlocker.nextStep}</p>
+            <p className="inline-note">{normalizeRuntimeLanguage(runtimeBlocker.summary)}</p>
+            <p className="inline-note">{normalizeRuntimeLanguage(runtimeBlocker.nextStep)}</p>
+            <div className="button-row">
+              {settings.runtime_kind !== "bundled" ? (
+                <button
+                  className="primary-button"
+                  type="button"
+                  disabled={restoreBundledRuntimeMutation.isPending}
+                  onClick={() => restoreBundledRuntimeMutation.mutate()}
+                >
+                  {restoreBundledRuntimeMutation.isPending
+                    ? "Switching to Included Engine…"
+                    : "Use Included Engine"}
+                </button>
+              ) : null}
+              <button className="ghost-button" type="button" onClick={() => void retryRuntimeCheck()}>
+                Try Again
+              </button>
+              <button className="ghost-button" type="button" onClick={() => setRuntimeRecoveryOpen(true)}>
+                Advanced Runtime Settings
+              </button>
+            </div>
+            {restoreBundledRuntimeMutation.error ? (
+              <p className="inline-note">
+                {describeBootstrapError(restoreBundledRuntimeMutation.error).message}
+              </p>
+            ) : null}
             {runtimeStatus.issues.length ? (
               <article className="diagnostic-card">
                 <h3>Why setup is paused</h3>
                 {runtimeStatus.issues.map((issue) => (
                   <p key={issue} className="inline-note">
-                    {issue}
+                    {normalizeRuntimeLanguage(issue)}
                   </p>
                 ))}
               </article>
@@ -480,7 +543,7 @@ export function App() {
         </SectionCard>
       ) : null}
 
-      {runtimeBlocked ? (
+      {runtimeBlocked && !runtimeRecoveryFocused ? (
         <SettingsPanel
           settings={settings}
           runtimeStatus={runtimeStatus}
@@ -596,6 +659,19 @@ export function App() {
   );
 }
 
+function settingsForRecovery(settings: AppBootstrap["settings"] | undefined) {
+  return (
+    settings ?? {
+      runtime_kind: "bundled" as const,
+      runtime_path: null,
+      aisw_home: null,
+      update_channel: "stable",
+      profile_labels: {},
+      profile_sets: [],
+    }
+  );
+}
+
 function describeBootstrapError(error: unknown) {
   if (error instanceof DesktopCommandError) {
     return {
@@ -636,25 +712,25 @@ function describeRuntimeBlocker(runtimeStatus: {
   if (hasResolvedRuntime && missingDesktopContract) {
     return {
       summary:
-        "The selected engine was found, but it does not support the desktop features required by this release.",
+        "The current engine was found, but it does not report the desktop compatibility details required by this release.",
       nextStep:
-        "Open Settings and switch back to the included engine, or choose a newer compatible engine before continuing.",
+        "Switch back to the included engine, or choose a newer compatible engine in Advanced Runtime Settings before continuing.",
     };
   }
 
   if (hasResolvedRuntime) {
     return {
       summary:
-        "The selected engine was found, but it is not compatible with this desktop build.",
+        "The current engine was found, but it is not compatible with this desktop build.",
       nextStep:
-        "Open Settings and switch back to the included engine, or choose a compatible engine before continuing.",
+        "Switch back to the included engine, or choose a compatible engine in Advanced Runtime Settings before continuing.",
     };
   }
 
   return {
-    summary: "AI Switch could not use the selected engine.",
+    summary: "AI Switch could not use the current engine selection.",
     nextStep:
-      "Open Settings and switch to the included engine or choose a working advanced override before continuing.",
+      "Switch to the included engine, or choose a working advanced override in Advanced Runtime Settings before continuing.",
   };
 }
 
