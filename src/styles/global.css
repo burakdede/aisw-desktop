@@ -227,47 +227,35 @@ button {
   flex: none;
 }
 
-.brand-mark-panel {
+.brand-mark-shell {
   fill: color-mix(in srgb, Canvas 94%, CanvasText 6%);
   stroke: color-mix(in srgb, CanvasText 14%, transparent);
 }
 
-.brand-mark-panel-secondary {
-  fill: color-mix(in srgb, Canvas 98%, CanvasText 2%);
+.brand-mark-shell-inner {
+  fill: color-mix(in srgb, Canvas 98%, CanvasText 1%);
 }
 
-.brand-mark-track {
-  stroke: color-mix(in srgb, CanvasText 46%, transparent);
+.brand-mark-rail {
+  stroke: color-mix(in srgb, CanvasText 28%, transparent);
 }
 
-.brand-mark-track-accent {
-  stroke: color-mix(in srgb, AccentColor 74%, CanvasText 26%);
+.brand-mark-rail-accent {
+  stroke: color-mix(in srgb, AccentColor 70%, CanvasText 30%);
 }
 
-.brand-mark-switch {
+.brand-mark-thumb {
   fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
-  stroke: color-mix(in srgb, CanvasText 14%, transparent);
+  stroke: color-mix(in srgb, CanvasText 16%, transparent);
 }
 
-.brand-mark-switch-accent {
-  fill: color-mix(in srgb, AccentColor 78%, Canvas 22%);
-  stroke: color-mix(in srgb, AccentColor 34%, transparent);
+.brand-mark-thumb-accent {
+  fill: color-mix(in srgb, AccentColor 80%, Canvas 20%);
+  stroke: color-mix(in srgb, AccentColor 32%, transparent);
 }
 
-.brand-mark-switch-dot {
-  fill: color-mix(in srgb, CanvasText 36%, transparent);
-}
-
-.brand-mark-switch-dot-accent {
-  fill: rgba(255, 255, 255, 0.82);
-}
-
-.brand-mark-bridge {
-  stroke: color-mix(in srgb, CanvasText 42%, transparent);
-}
-
-.brand-mark-bridge-accent {
-  stroke: color-mix(in srgb, AccentColor 68%, CanvasText 32%);
+.brand-mark-connector {
+  stroke: color-mix(in srgb, CanvasText 32%, transparent);
 }
 
 .sidebar-title {

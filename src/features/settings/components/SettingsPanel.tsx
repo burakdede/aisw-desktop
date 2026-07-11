@@ -868,14 +868,14 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Storage</p>
-                    <h3>Local data location</h3>
+                    <h3>AI Switch data folder</h3>
                   </div>
                   <p className="inline-note">
                     Leave this empty to use the managed desktop data location.
                   </p>
                 </div>
                 <label>
-                  Local data location override
+                  AI Switch data folder override
                   <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
                 </label>
               </article>
@@ -905,7 +905,7 @@ export function SettingsPanel({
                   </p>
                 </div>
                 <p className="inline-note">
-                  Local data location:{" "}
+                  AI Switch data folder:{" "}
                   {settings.aisw_home ? `Custom folder (${settings.aisw_home})` : "Managed automatically"}
                 </p>
                 <p className="inline-note">
@@ -1066,7 +1066,7 @@ function sectionKicker(section: SettingsSection) {
     case "general":
       return "Appearance, launch, and desktop behavior";
     case "runtime":
-      return "Bundled engine and override choices";
+      return "Included engine and advanced overrides";
     case "updates":
       return "Signed desktop releases";
     case "shell":
@@ -1142,6 +1142,6 @@ function sourceListSummary(section: SettingsSection) {
     case "keyring":
       return "Credential storage and recovery";
     case "advanced":
-      return "Raw paths and local data location";
+      return "Raw paths and AI Switch data folder";
   }
 }

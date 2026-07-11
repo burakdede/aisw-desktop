@@ -280,7 +280,7 @@ export function SetupPanel({
               </strong>
             </p>
             <p className="inline-note">
-              Local data location: {bootstrap.settings.aisw_home ?? "Managed automatically"}
+              AI Switch data folder: {bootstrap.settings.aisw_home ?? "Managed automatically"}
             </p>
             <p className="inline-note">
               Runtime version: {bootstrap.runtime_status.version?.version ?? "unknown"}

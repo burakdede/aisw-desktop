@@ -481,7 +481,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Use Included Engine" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Advanced Runtime Settings" })).toBeInTheDocument();
-    expect(screen.queryByText("Bundled engine and override choices")).not.toBeInTheDocument();
+    expect(screen.queryByText("Included engine and advanced overrides")).not.toBeInTheDocument();
     expect(screen.queryByText("Runtime summary")).not.toBeInTheDocument();
     expect(screen.queryByText("Welcome")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Overview" })).not.toBeInTheDocument();
@@ -514,7 +514,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Advanced Runtime Settings" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Bundled engine and override choices")).toBeInTheDocument();
+      expect(screen.getByText("Included engine and advanced overrides")).toBeInTheDocument();
       expect(screen.getByText("Runtime summary")).toBeInTheDocument();
     });
   });
@@ -1043,7 +1043,7 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Bundled engine and override choices")).toBeInTheDocument();
+      expect(screen.getByText("Included engine and advanced overrides")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Runtime" })).toHaveAttribute("aria-pressed", "true");
     });
     expect(screen.getByRole("button", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "false");
@@ -7304,7 +7304,7 @@ describe("App", () => {
       expect(screen.getByText("Runtime details")).toBeInTheDocument();
       expect(
         screen.getByText(
-          (_, element) => element?.textContent?.trim() === "Local data location: Managed automatically",
+          (_, element) => element?.textContent?.trim() === "AI Switch data folder: Managed automatically",
         ),
       ).toBeInTheDocument();
       expect(
