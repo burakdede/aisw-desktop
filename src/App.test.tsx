@@ -1541,7 +1541,11 @@ describe("App", () => {
     });
     fireEvent.click(screen.getByText("Rename"));
     fireEvent.click(screen.getByText("Remove active…"));
-    fireEvent.click(screen.getByText("Confirm remove active"));
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Remove Profile" })).getByRole("button", {
+        name: "Remove active profile",
+      }),
+    );
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "rename_profile")).toBe(true);
@@ -3225,12 +3229,16 @@ describe("App", () => {
 
     fireEvent.click(screen.getByText("Restore latest + activate"));
     expect(
-      screen.getByText(
-        "Confirm before restoring and activating the latest backup for Claude / Work. This replays the backup and switches the live profile again.",
+      within(screen.getByRole("dialog", { name: "Restore Latest Backup" })).getByText(
+        "It will also switch the live profile again after the restore completes.",
       ),
     ).toBeInTheDocument();
     expect(calls.some((entry) => entry.command === "restore_backup")).toBe(false);
-    fireEvent.click(screen.getByText("Confirm restore latest and activate"));
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Restore Latest Backup" })).getByRole("button", {
+        name: "Restore latest + activate",
+      }),
+    );
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "restore_backup")).toBe(true);
@@ -3280,8 +3288,8 @@ describe("App", () => {
 
     fireEvent.click(screen.getByText("Restore latest + activate"));
     expect(
-      screen.getByText(
-        "Confirm before restoring and activating the latest backup for Claude / Office. This replays the backup and switches the live profile again.",
+      within(screen.getByRole("dialog", { name: "Restore Latest Backup" })).getByText(
+        "This restores the latest saved files for Claude / Office.",
       ),
     ).toBeInTheDocument();
   });
@@ -3326,7 +3334,11 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("Restore latest + activate")).toBeInTheDocument());
 
     fireEvent.click(screen.getByText("Restore latest + activate"));
-    fireEvent.click(screen.getByText("Confirm restore latest and activate"));
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Restore Latest Backup" })).getByRole("button", {
+        name: "Restore latest + activate",
+      }),
+    );
 
     await waitFor(() => {
       expect(
@@ -3423,7 +3435,11 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("Restore latest + activate")).toBeInTheDocument());
 
     fireEvent.click(screen.getByText("Restore latest + activate"));
-    fireEvent.click(screen.getByText("Confirm restore latest and activate"));
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Restore Latest Backup" })).getByRole("button", {
+        name: "Restore latest + activate",
+      }),
+    );
 
     await waitFor(() => {
       expect(
@@ -3477,13 +3493,17 @@ describe("App", () => {
 
     fireEvent.click(screen.getByText("Restore latest"));
     expect(
-      screen.getByText(
-        "Confirm before restoring the latest backup for Claude / Work. This replays the saved files only.",
+      within(screen.getByRole("dialog", { name: "Restore Latest Backup" })).getByText(
+        "It will not activate this profile again until you switch to it explicitly.",
       ),
     ).toBeInTheDocument();
     expect(calls.some((entry) => entry.command === "restore_backup")).toBe(false);
 
-    fireEvent.click(screen.getByText("Confirm restore latest"));
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Restore Latest Backup" })).getByRole("button", {
+        name: "Restore",
+      }),
+    );
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "restore_backup")).toBe(true);

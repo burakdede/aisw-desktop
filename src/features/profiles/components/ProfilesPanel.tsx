@@ -220,6 +220,14 @@ export function ProfilesPanel({
           settings,
         ) ?? titleCase(snapshot.profiles[tool]?.active ?? "")
       : "None";
+  const restoreSheetMode = pendingRestore?.mode ?? null;
+  const removalSheetProfile = pendingRemoval
+    ? profiles.find((entry) => entry.name === pendingRemoval) ?? null
+    : null;
+  const removalSheetDisplay = removalSheetProfile
+    ? effectiveLabel(tool, removalSheetProfile.name, removalSheetProfile.label, settings) ??
+      titleCase(removalSheetProfile.name)
+    : null;
 
   useEffect(() => {
     if (!availableStateModes.length) {
@@ -592,7 +600,7 @@ export function ProfilesPanel({
                   type="button"
                   onClick={() => setProfileSheetOpen(true)}
                 >
-                  Add Profile
+                  + Add Profile
                 </button>
               </div>
             </article>
@@ -890,70 +898,6 @@ export function ProfilesPanel({
                     )}
                   </article>
                 ) : null}
-                {isPendingRestoreFiles ? (
-                  <article className="diagnostic-card profiles-actions-card">
-                    <p className="inline-note">
-                      Confirm before restoring the latest backup for {selectedRestoreTargetDisplay}. This replays the saved files only.
-                    </p>
-                    <div className="button-row">
-                      <button
-                        className="ghost-button danger-button"
-                        type="button"
-                        disabled={mutationLock.isBusy}
-                        onClick={() =>
-                          restoreBackupMutation.mutate(selectedLatestBackup!.backup_id, {
-                            onSuccess: () => setPendingRestore(null),
-                          })
-                        }
-                      >
-                        Confirm restore latest
-                      </button>
-                      <button
-                        className="ghost-button"
-                        type="button"
-                        onClick={() => setPendingRestore(null)}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </article>
-                ) : null}
-                {isPendingRestoreAndActivate ? (
-                  <article className="diagnostic-card profiles-actions-card">
-                    <p className="inline-note">
-                      Confirm before restoring and activating the latest backup for {selectedRestoreTargetDisplay}. This replays the backup and switches the live profile again.
-                    </p>
-                    <div className="button-row">
-                      <button
-                        className="primary-button"
-                        type="button"
-                        disabled={mutationLock.isBusy}
-                        onClick={() =>
-                          restoreBackupMutation.mutate(selectedLatestBackup!.backup_id, {
-                            onSuccess: () => {
-                              setPendingRestore(null);
-                              useProfileMutation.mutate({
-                                tool,
-                                profile: selectedProfileEntry.name,
-                                stateMode: resolveStateModeRequest(tool, toolCapabilities, stateMode),
-                                label: selectedProfileDisplay ?? selectedProfileEntry.name,
-                              });
-                            },
-                          })
-                        }
-                      >
-                        Confirm restore latest and activate
-                      </button>
-                      <button
-                        className="ghost-button"
-                        type="button"
-                        onClick={() => setPendingRestore(null)}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </article>
-                ) : null}
                 <article className="diagnostic-card profiles-actions-card">
                   <div className="desktop-pane-section-header">
                     <div>
@@ -966,53 +910,18 @@ export function ProfilesPanel({
                   </div>
                   <div className="button-row">
                     {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? (
-                      pendingRemoval === selectedProfileEntry.name ? (
-                        <>
-                          <button
-                            className="ghost-button danger-button"
-                            type="button"
-                            disabled={mutationLock.isBusy}
-                            onClick={() => {
-                              setPendingRemoval(null);
-                              removeProfileMutation.mutate({
-                                tool,
-                                profile: selectedProfileEntry.name,
-                                force: true,
-                              });
-                            }}
-                          >
-                            Confirm remove active
-                          </button>
-                          <button
-                            className="ghost-button"
-                            type="button"
-                            onClick={() => setPendingRemoval(null)}
-                          >
-                            Cancel
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          className="ghost-button danger-button"
-                          type="button"
-                          onClick={() => setPendingRemoval(selectedProfileEntry.name)}
-                        >
-                          Remove active…
-                        </button>
-                      )
+                      <button
+                        className="ghost-button danger-button"
+                        type="button"
+                        onClick={() => setPendingRemoval(selectedProfileEntry.name)}
+                      >
+                        Remove active…
+                      </button>
                     ) : (
                       <button
                         className="ghost-button danger-button"
                         type="button"
-                        disabled={mutationLock.isBusy}
-                        onClick={() => {
-                          setPendingRemoval(null);
-                          removeProfileMutation.mutate({
-                            tool,
-                            profile: selectedProfileEntry.name,
-                            force: false,
-                          });
-                        }}
+                        onClick={() => setPendingRemoval(selectedProfileEntry.name)}
                       >
                         Remove
                       </button>
@@ -1033,6 +942,168 @@ export function ProfilesPanel({
           </div>
         }
       />
+      {selectedProfileEntry && selectedLatestBackup && selectedRestoreTargetDisplay && restoreSheetMode ? (
+        <div className="quick-switch-overlay" role="presentation" onClick={() => setPendingRestore(null)}>
+          <section
+            className="quick-switch-palette profile-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Restore Latest Backup"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="quick-switch-header">
+              <div>
+                <p className="card-kicker">Backup</p>
+                <h3>Restore latest backup?</h3>
+                <p className="inline-note">
+                  Review the restore scope before AI Switch changes any saved files.
+                </p>
+              </div>
+              <button className="ghost-button" type="button" onClick={() => setPendingRestore(null)}>
+                Close
+              </button>
+            </div>
+            <KeyValueGrid
+              rows={[
+                { label: "Target", value: selectedRestoreTargetDisplay },
+                {
+                  label: "Created",
+                  value: formatBackupTimestamp(selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id),
+                },
+                { label: "Backup ID", value: selectedLatestBackup.backup_id },
+              ]}
+            />
+            {restoreSheetMode === "files" ? (
+              <div className="stack-list">
+                <p className="inline-note">
+                  This restores the latest saved files for {selectedRestoreTargetDisplay}.
+                </p>
+                <p className="inline-note">
+                  It will not activate this profile again until you switch to it explicitly.
+                </p>
+              </div>
+            ) : (
+              <div className="stack-list">
+                <p className="inline-note">
+                  This restores the latest saved files for {selectedRestoreTargetDisplay}.
+                </p>
+                <p className="inline-note">
+                  It will also switch the live profile again after the restore completes.
+                </p>
+              </div>
+            )}
+            <footer className="quick-switch-footer">
+              <div className="quick-switch-selection">
+                <p className="card-kicker">Action</p>
+                <strong>{restoreSheetMode === "files" ? "Restore latest" : "Restore latest + activate"}</strong>
+                <p>
+                  {restoreSheetMode === "files"
+                    ? "Restore saved files only."
+                    : "Restore saved files, then reactivate this profile."}
+                </p>
+              </div>
+              <div className="button-row">
+                <button className="ghost-button" type="button" onClick={() => setPendingRestore(null)}>
+                  Cancel
+                </button>
+                <button
+                  className={restoreSheetMode === "files" ? "ghost-button danger-button" : "primary-button"}
+                  type="button"
+                  disabled={mutationLock.isBusy}
+                  onClick={() =>
+                    restoreBackupMutation.mutate(selectedLatestBackup.backup_id, {
+                      onSuccess: () => {
+                        setPendingRestore(null);
+                        if (restoreSheetMode === "activate") {
+                          useProfileMutation.mutate({
+                            tool,
+                            profile: selectedProfileEntry.name,
+                            stateMode: resolveStateModeRequest(tool, toolCapabilities, stateMode),
+                            label: selectedProfileDisplay ?? selectedProfileEntry.name,
+                          });
+                        }
+                      },
+                    })
+                  }
+                >
+                  {restoreSheetMode === "files" ? "Restore" : "Restore latest + activate"}
+                </button>
+              </div>
+            </footer>
+          </section>
+        </div>
+      ) : null}
+      {removalSheetProfile && removalSheetDisplay ? (
+        <div className="quick-switch-overlay" role="presentation" onClick={() => setPendingRemoval(null)}>
+          <section
+            className="quick-switch-palette profile-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Remove Profile"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="quick-switch-header">
+              <div>
+                <p className="card-kicker">Removal</p>
+                <h3>Remove profile?</h3>
+                <p className="inline-note">
+                  This removes the saved login from AI Switch. Credential contents are never shown here.
+                </p>
+              </div>
+              <button className="ghost-button" type="button" onClick={() => setPendingRemoval(null)}>
+                Close
+              </button>
+            </div>
+            <KeyValueGrid
+              rows={[
+                { label: "Tool", value: titleCase(tool) },
+                { label: "Profile", value: removalSheetDisplay },
+                {
+                  label: "Active profile",
+                  value: snapshot.profiles[tool]?.active === removalSheetProfile.name ? "Yes" : "No",
+                },
+              ]}
+            />
+            <p className="inline-note">
+              {snapshot.profiles[tool]?.active === removalSheetProfile.name
+                ? "Removing the active profile affects the current desktop selection and needs explicit confirmation."
+                : "This removes the saved profile from the local library only."}
+            </p>
+            <footer className="quick-switch-footer">
+              <div className="quick-switch-selection">
+                <p className="card-kicker">Action</p>
+                <strong>
+                  {snapshot.profiles[tool]?.active === removalSheetProfile.name
+                    ? "Remove active profile"
+                    : "Remove profile"}
+                </strong>
+              </div>
+              <div className="button-row">
+                <button className="ghost-button" type="button" onClick={() => setPendingRemoval(null)}>
+                  Cancel
+                </button>
+                <button
+                  className="ghost-button danger-button"
+                  type="button"
+                  disabled={mutationLock.isBusy}
+                  onClick={() => {
+                    setPendingRemoval(null);
+                    removeProfileMutation.mutate({
+                      tool,
+                      profile: removalSheetProfile.name,
+                      force: snapshot.profiles[tool]?.active === removalSheetProfile.name,
+                    });
+                  }}
+                >
+                  {snapshot.profiles[tool]?.active === removalSheetProfile.name
+                    ? "Remove active profile"
+                    : "Remove"}
+                </button>
+              </div>
+            </footer>
+          </section>
+        </div>
+      ) : null}
       {profileSheetOpen ? (
         <div className="quick-switch-overlay" role="presentation" onClick={() => setProfileSheetOpen(false)}>
           <section
