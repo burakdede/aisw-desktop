@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SectionCard } from "../../../components/SectionCard";
 import { SplitView } from "../../../components/SplitView";
@@ -85,7 +85,9 @@ export function SetupPanel({
     enabled: readEnabled,
   });
   const [profileNames, setProfileNames] = useState<Record<string, string>>({});
+  const [profileLabels, setProfileLabels] = useState<Record<string, string>>({});
   const [firstSwitchProfile, setFirstSwitchProfile] = useState("");
+  const [pendingLiveImport, setPendingLiveImport] = useState<LiveAccount | null>(null);
   const liveAccounts = readLiveAccounts(initReport);
   const liveAccountTools = useMemo(() => new Set(liveAccounts.map((account) => account.tool)), [liveAccounts]);
   const undetectedInstalledTools = useMemo(
@@ -115,6 +117,36 @@ export function SetupPanel({
     [settings, snapshot],
   );
   const shouldShowSetup = shouldShowSetupFlow(snapshot, initReport);
+  const pendingProfileName = pendingLiveImport ? profileNames[pendingLiveImport.tool] ?? "" : "";
+  const pendingProfileLabel = pendingLiveImport ? profileLabels[pendingLiveImport.tool] ?? "" : "";
+
+  useEffect(() => {
+    if (!pendingLiveImport) {
+      return;
+    }
+
+    const name = profileNames[pendingLiveImport.tool]?.trim() ?? "";
+    if (!name) {
+      return;
+    }
+
+    const currentLabel = profileLabels[pendingLiveImport.tool] ?? "";
+    if (currentLabel.trim().length > 0) {
+      return;
+    }
+
+    setProfileLabels((current) => ({
+      ...current,
+      [pendingLiveImport.tool]: `${titleCase(name)} account`,
+    }));
+  }, [pendingLiveImport, profileLabels, profileNames]);
+
+  useEffect(() => {
+    if (!pendingLiveImport || !addProfileMutation.isSuccess) {
+      return;
+    }
+    setPendingLiveImport(null);
+  }, [addProfileMutation.isSuccess, pendingLiveImport]);
 
   function submitImport(event: FormEvent<HTMLFormElement>, tool: string) {
     event.preventDefault();
@@ -129,10 +161,26 @@ export function SetupPanel({
     addProfileMutation.mutate({
       tool,
       profile: value,
-      label: titleCase(value),
+      label: profileLabels[tool]?.trim() || `${titleCase(value)} account`,
       stateMode: tool === "gemini" ? null : "isolated",
       importMode: { kind: "from_live" },
     });
+  }
+
+  function openLiveImport(account: LiveAccount) {
+    setPendingLiveImport(account);
+    setProfileNames((current) => ({
+      ...current,
+      [account.tool]: current[account.tool] ?? "",
+    }));
+    setProfileLabels((current) => ({
+      ...current,
+      [account.tool]: current[account.tool] ?? "",
+    }));
+  }
+
+  function closeLiveImport() {
+    setPendingLiveImport(null);
   }
 
   if (!shouldShowSetup) {
@@ -293,10 +341,9 @@ export function SetupPanel({
               </p>
             </div>
             {liveAccounts.map((account) => (
-              <form
+              <article
                 key={account.tool}
                 className="diagnostic-card onboarding-tool-card"
-                onSubmit={(event) => submitImport(event, account.tool)}
               >
                 <div className="desktop-pane-section-header">
                   <div>
@@ -314,24 +361,24 @@ export function SetupPanel({
                     Open profile setup to choose another sign-in method.
                   </p>
                 ) : null}
-                <div className="inline-form">
+                <div className="stack-list">
                   {supportsProfileImportMode(account.tool, toolCapabilities, "from_live") ? (
-                    <>
-                      <input
-                        aria-label={`${account.tool} profile name`}
-                        placeholder="profile name"
-                        value={profileNames[account.tool] ?? ""}
-                        onChange={(event) =>
-                          setProfileNames((current) => ({
-                            ...current,
-                            [account.tool]: event.target.value,
-                          }))
-                        }
-                      />
-                      <button className="ghost-button" type="submit" disabled={mutationLock.isBusy}>
-                        Import current login
-                      </button>
-                    </>
+                    <p className="inline-note">
+                      Save the current {titleCase(account.tool)} login as a reusable AI Switch
+                      profile in a focused setup sheet.
+                    </p>
+                  ) : null}
+                </div>
+                <div className="button-row">
+                  {supportsProfileImportMode(account.tool, toolCapabilities, "from_live") ? (
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      disabled={mutationLock.isBusy}
+                      onClick={() => openLiveImport(account)}
+                    >
+                      Import current login
+                    </button>
                   ) : (
                     <button
                       className="ghost-button"
@@ -347,7 +394,7 @@ export function SetupPanel({
                     </button>
                   )}
                 </div>
-              </form>
+              </article>
             ))}
             {installedToolsNeedingProfile.map((status) => (
               <article key={status.tool} className="diagnostic-card onboarding-tool-card">
@@ -503,6 +550,73 @@ export function SetupPanel({
           </div>
         }
       />
+      {pendingLiveImport ? (
+        <div className="quick-switch-overlay" role="presentation" onClick={closeLiveImport}>
+          <section
+            className="quick-switch-palette profile-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Import ${titleCase(pendingLiveImport.tool)} Login`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="quick-switch-header">
+              <div>
+                <p className="card-kicker">Import Current Login</p>
+                <h3>Import {titleCase(pendingLiveImport.tool)} login</h3>
+              </div>
+              <button className="ghost-button" type="button" onClick={closeLiveImport}>
+                Close
+              </button>
+            </div>
+            <p className="inline-note">
+              Save the account that {titleCase(pendingLiveImport.tool)} is already using as a
+              reusable AI Switch profile. This imported profile will become the active saved login
+              for this tool.
+            </p>
+            <form className="stacked-form" onSubmit={(event) => submitImport(event, pendingLiveImport.tool)}>
+              <label>
+                Profile name
+                <input
+                  value={pendingProfileName}
+                  onChange={(event) =>
+                    setProfileNames((current) => ({
+                      ...current,
+                      [pendingLiveImport.tool]: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <label>
+                Label
+                <input
+                  value={pendingProfileLabel}
+                  onChange={(event) =>
+                    setProfileLabels((current) => ({
+                      ...current,
+                      [pendingLiveImport.tool]: event.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <div className="button-row">
+                <button className="ghost-button" type="button" onClick={closeLiveImport}>
+                  Cancel
+                </button>
+                <button
+                  className="primary-button"
+                  type="submit"
+                  disabled={mutationLock.isBusy || addProfileMutation.isPending || !pendingProfileName.trim()}
+                >
+                  {addProfileMutation.isPending ? "Importing…" : "Import"}
+                </button>
+              </div>
+              {addProfileMutation.error ? (
+                <p className="inline-note">{addProfileMutation.error.message}</p>
+              ) : null}
+            </form>
+          </section>
+        </div>
+      ) : null}
     </SectionCard>
   );
 }

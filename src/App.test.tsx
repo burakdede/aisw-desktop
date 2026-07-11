@@ -242,6 +242,10 @@ function getAddProfileDialog() {
   return within(screen.getByRole("dialog", { name: "Add Profile" }));
 }
 
+function getOnboardingImportDialog(tool = "Claude") {
+  return within(screen.getByRole("dialog", { name: `Import ${tool} Login` }));
+}
+
 async function openAddProfileDialog() {
   if (!screen.queryByRole("dialog", { name: "Add Profile" })) {
     fireEvent.click(getProfilesSection().getAllByRole("button", { name: "Add Profile" })[0]);
@@ -2260,6 +2264,70 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open profile setup" }));
 
     expect(onOpenProfiles).toHaveBeenCalledWith("claude", { mode: "from_env" });
+  });
+
+  it("uses a focused sheet for onboarding live-account imports", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "add_profile") {
+        return { command, snapshot: bootstrap.snapshot };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: {
+            result: {
+              live_accounts: [{ tool: "claude", outcome: "detected", auth_method: "oauth" }],
+            },
+          },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderSetupPanel({
+      initReport: {
+        result: {
+          live_accounts: [{ tool: "claude", outcome: "detected", auth_method: "oauth" }],
+        },
+      } as InitReport,
+    });
+    await waitFor(() => expect(screen.getByText("Welcome")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "Import current login" }));
+
+    const dialog = getOnboardingImportDialog();
+    expect(dialog.getByLabelText("Profile name")).toHaveValue("");
+
+    fireEvent.change(dialog.getByLabelText("Profile name"), {
+      target: { value: "work" },
+    });
+
+    await waitFor(() => {
+      expect(dialog.getByLabelText("Label")).toHaveValue("Work account");
+    });
+
+    fireEvent.click(dialog.getByRole("button", { name: "Import" }));
+
+    await waitFor(() => {
+      const addProfileCall = calls.find((entry) => entry.command === "add_profile");
+      expect(addProfileCall).toBeDefined();
+      expect(addProfileCall?.args).toMatchObject({
+        request: expect.objectContaining({
+          tool: "claude",
+          profile: "work",
+          label: "Work account",
+        }),
+      });
+    });
   });
 
   it("opens supported profile setup instead of submitting unsupported live imports", async () => {
