@@ -446,16 +446,18 @@ export function SettingsPanel({
                   </div>
                 </div>
               </article>
-              <article className="diagnostic-card settings-pane-intro">
-                <h3>Preferred setup</h3>
-                <p className="inline-note">
-                  Keep the desktop app on its included runtime unless you intentionally need a manual runtime source.
-                </p>
-              </article>
               <article
                 className={`diagnostic-card ${runtimeKind === "bundled" ? "diagnostic-pass" : "diagnostic-warn"}`}
               >
-                <h3>Recommended runtime</h3>
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Preferred setup</p>
+                    <h3>Recommended runtime</h3>
+                  </div>
+                  <span className={`pill ${runtimeKind === "bundled" ? "pill-ok" : "pill-warn"}`}>
+                    {runtimeKind === "bundled" ? "Included runtime" : "Override active"}
+                  </span>
+                </div>
                 <p className="inline-note">
                   This app ships with a compatible runtime and uses it by default.
                 </p>
@@ -564,6 +566,26 @@ export function SettingsPanel({
                   <p className="inline-note">
                     Keep the current runtime model visible without pushing raw paths into the main preferences flow.
                   </p>
+                </div>
+                <div className="settings-summary-grid">
+                  <div>
+                    <span className="overview-current-set-cell-label">Source</span>
+                    <strong>
+                      {runtimeKind === "bundled"
+                        ? "Included with this app"
+                        : runtimeKind === "system"
+                          ? "System override"
+                          : "Custom override"}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Compatibility</span>
+                    <strong>{runtimeStatus.compatible ? "Ready for desktop switching" : "Needs attention"}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Version</span>
+                    <strong>{runtimeStatus.version?.version ?? "unknown"}</strong>
+                  </div>
                 </div>
                 <p className="inline-note">
                   Runtime source:{" "}
@@ -1075,7 +1097,7 @@ export function SettingsPanel({
                     <p className="card-kicker">Current setup</p>
                     <h3>Storage and paths</h3>
                   </div>
-                  <span className="pill pill-soft">Custom</span>
+                  <span className="pill pill-soft">{aiswHome ? "Custom" : "Managed"}</span>
                 </div>
                 <div className="settings-summary-grid">
                   <div>
@@ -1092,22 +1114,19 @@ export function SettingsPanel({
                   </div>
                 </div>
               </article>
-              <article className="diagnostic-card settings-pane-intro">
-                <h3>Storage &amp; Paths</h3>
-                <p className="inline-note">
-                  Keep custom data locations and runtime details in one place so the main settings stay approachable.
-                </p>
-              </article>
               <article className="diagnostic-card settings-pane-section">
                 <div className="desktop-pane-section-header">
                   <div>
-                    <p className="card-kicker">Storage</p>
+                    <p className="card-kicker">Storage &amp; paths</p>
                     <h3>Data folder</h3>
                   </div>
                   <p className="inline-note">
-                    Leave this empty to use the managed app data location.
+                    Keep custom data locations and runtime details in one place so the main settings stay approachable.
                   </p>
                 </div>
+                <p className="inline-note">
+                  Leave this empty to use the managed app data location.
+                </p>
                 <label>
                   Custom data folder
                   <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
@@ -1137,6 +1156,26 @@ export function SettingsPanel({
                   <p className="inline-note">
                     Review the data folder, compatibility, and runtime availability without cluttering the main preferences.
                   </p>
+                </div>
+                <div className="settings-summary-grid">
+                  <div>
+                    <span className="overview-current-set-cell-label">Data folder</span>
+                    <strong>{settings.aisw_home ? "Custom data folder" : "Managed automatically"}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Runtime source</span>
+                    <strong>
+                      {runtimeKind === "bundled"
+                        ? "Included with this app"
+                        : runtimeKind === "system"
+                          ? "System override"
+                          : "Custom override"}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">System runtime</span>
+                    <strong>{runtimeStatus.inventory.system_path ? "Found on this Mac" : "Not found"}</strong>
+                  </div>
                 </div>
                 <p className="inline-note">
                   Data folder:{" "}
