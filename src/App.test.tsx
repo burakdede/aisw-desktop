@@ -3986,11 +3986,8 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
     await waitFor(() => {
-      expect(
-        screen.getByText((_, element) =>
-          element?.tagName === "P" && element.textContent?.trim() === "Expected imported set: client-acme",
-        ),
-      ).toBeInTheDocument();
+      expect(screen.getByText("Expected imported set")).toBeInTheDocument();
+      expect(screen.getByText("client-acme")).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getAllByText("Use expected set now")[0]);
@@ -4071,11 +4068,8 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     await waitFor(() => {
-      expect(
-        screen.getByText((_, element) =>
-          element?.tagName === "P" && element.textContent?.trim() === "Expected set: Client Acme",
-        ),
-      ).toBeInTheDocument();
+      expect(screen.getByText("Expected set")).toBeInTheDocument();
+      expect(screen.getAllByText("Client Acme").length).toBeGreaterThan(0);
       expect(screen.getByText("Open sets")).toBeInTheDocument();
     });
 

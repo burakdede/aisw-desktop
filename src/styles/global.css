@@ -1239,16 +1239,19 @@ button {
   justify-content: space-between;
   gap: 16px;
   align-items: flex-start;
-  padding: 14px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--separator);
-  background: color-mix(in srgb, Canvas 97%, CanvasText 3%);
-  box-shadow: var(--shadow-card);
+  padding: 16px;
 }
 
 .overview-current-set-copy {
   display: grid;
   gap: 8px;
+}
+
+.overview-current-set-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
 }
 
 .overview-current-set-copy h3 {
@@ -1264,12 +1267,56 @@ button {
   gap: 8px 12px;
 }
 
+.overview-current-set-cell {
+  display: grid;
+  gap: 3px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
+.overview-current-set-cell-label {
+  font-size: 11px;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
 .overview-current-set-actions {
   flex: none;
 }
 
+.overview-project-card {
+  gap: 12px;
+}
+
+.overview-project-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.overview-project-grid > div {
+  display: grid;
+  gap: 3px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
 .overview-recent-card {
   gap: 10px;
+}
+
+.overview-recent-list {
+  gap: 8px;
+}
+
+.overview-recent-item {
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
 
 .tool-card,
@@ -1321,14 +1368,44 @@ button {
   padding: 2px 2px 0;
 }
 
+.overview-tools-list-card {
+  gap: 10px;
+}
+
+.overview-tool-list-columns {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.3fr) repeat(3, minmax(0, 0.9fr));
+  gap: 12px;
+  padding: 0 6px;
+  font-size: 11px;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.overview-tool-list-stack {
+  gap: 0;
+  border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
+  border-radius: 10px;
+  overflow: hidden;
+  background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
+}
+
 .overview-tool-row {
   width: 100%;
-  border: 1px solid var(--separator);
-  background: color-mix(in srgb, Canvas 98%, CanvasText 2%);
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
+  background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
   text-align: left;
   cursor: pointer;
   align-items: center;
   padding: 12px 13px;
+}
+
+.overview-tool-list-stack > .overview-tool-row:last-child {
+  border-bottom: 0;
 }
 
 .overview-tool-row-main,
@@ -1355,12 +1432,13 @@ button {
 
 .overview-tool-row-meta {
   display: grid;
-  justify-items: end;
-  gap: 4px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
   font-size: 11px;
   line-height: 1.25;
   letter-spacing: 0.04em;
   color: var(--text-tertiary);
+  text-align: right;
 }
 
 .overview-tool-row-selected {
@@ -2102,17 +2180,25 @@ button {
 
 @media (max-width: 880px) {
   .set-profile-grid,
-  .overview-tool-facts {
+  .overview-tool-facts,
+  .overview-project-grid {
     grid-template-columns: 1fr;
   }
 
-  .profiles-list-header {
+  .profiles-list-header,
+  .overview-tool-list-columns {
     display: none;
   }
 
-  .profile-list-row {
+  .profile-list-row,
+  .overview-tool-row {
     grid-template-columns: 1fr;
     align-items: start;
+  }
+
+  .overview-tool-row-meta {
+    grid-template-columns: 1fr;
+    text-align: left;
   }
 
   .backup-list-row,
