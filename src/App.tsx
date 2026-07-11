@@ -3,7 +3,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppFrame } from "./components/AppFrame";
 import { QuickSwitchPalette } from "./components/QuickSwitchPalette";
 import { SectionCard } from "./components/SectionCard";
-import { recordCommandResult } from "./features/shared/lastCommandResult";
+import {
+  clearLastCommandResults,
+  recordCommandResult,
+  useLastCommandResults,
+} from "./features/shared/lastCommandResult";
 import { normalizeRuntimeLanguage } from "./features/shared/runtime-language";
 import { BackupsPanel } from "./features/backups/components/BackupsPanel";
 import { DiagnosticsPanel } from "./features/diagnostics/components/DiagnosticsPanel";
@@ -66,6 +70,7 @@ type SettingsRouteState = {
 
 export function App() {
   const queryClient = useQueryClient();
+  const lastCommandResults = useLastCommandResults();
   const [desktopPreferences, setDesktopPreferences] = useState<DesktopPreferences>(() =>
     loadDesktopPreferences(),
   );
@@ -76,6 +81,7 @@ export function App() {
   const [profilesRouteState, setProfilesRouteState] = useState<ProfilesRouteState>({});
   const [settingsRouteState, setSettingsRouteState] = useState<SettingsRouteState>({});
   const [runtimeRecoveryOpen, setRuntimeRecoveryOpen] = useState(false);
+  const [activityClearSignal, setActivityClearSignal] = useState(0);
   const { bootstrap, snapshot, init } = useDesktop();
 
   function openSettings(section?: SettingsSection) {
@@ -117,6 +123,22 @@ export function App() {
     onSuccess: async () => {
       setRuntimeRecoveryOpen(false);
       await invalidatePostMutationQueries(queryClient);
+    },
+  });
+
+  const exportDiagnosticBundleMutation = useMutation({
+    mutationFn: exportDiagnosticBundle,
+    onSuccess: async (result) => {
+      await notifyDesktop({
+        title: "Support report exported",
+        body: `Saved ${result.filename}.`,
+      });
+    },
+    onError: async (error) => {
+      await notifyDesktop({
+        title: "Support report export failed",
+        body: error instanceof Error ? error.message : "Desktop command failed.",
+      });
     },
   });
 
@@ -410,11 +432,122 @@ export function App() {
   }));
   const runtimeBlocker = describeRuntimeBlocker(runtimeStatus);
   const showSetupWindow = setupFocused || runtimeRecoveryFocused;
+  const hasActivityEntries =
+    Object.values(lastCommandResults.global).some(Boolean) ||
+    Object.values(lastCommandResults.tool).some(Boolean);
 
   async function retryRuntimeCheck() {
     await queryClient.invalidateQueries({ queryKey: ["bootstrap"] });
     await queryClient.invalidateQueries({ queryKey: ["snapshot"] });
     await queryClient.invalidateQueries({ queryKey: ["init"] });
+  }
+
+  function openAddProfile() {
+    setProfilesRouteState({ tool: "claude", expandedProfile: null });
+    setActiveNav("profiles");
+  }
+
+  function renderToolbar() {
+    if (showSetupWindow) {
+      return undefined;
+    }
+
+    if (activeSection === "backups") {
+      return (
+        <div className="button-row toolbar-action-row">
+          <button
+            className="ghost-button"
+            type="button"
+            onClick={() => void queryClient.invalidateQueries({ queryKey: ["backups"] })}
+          >
+            <span>Refresh</span>
+          </button>
+        </div>
+      );
+    }
+
+    if (activeSection === "activity") {
+      return (
+        <div className="button-row toolbar-action-row">
+          <button
+            className="ghost-button"
+            type="button"
+            disabled={!hasActivityEntries}
+            onClick={() => {
+              clearLastCommandResults();
+              setActivityClearSignal((value) => value + 1);
+            }}
+          >
+            <span>Clear</span>
+          </button>
+          <button
+            className="ghost-button"
+            type="button"
+            disabled={exportDiagnosticBundleMutation.isPending}
+            onClick={() => exportDiagnosticBundleMutation.mutate()}
+          >
+            <span>
+              {exportDiagnosticBundleMutation.isPending
+                ? "Exporting…"
+                : "Export Support Report"}
+            </span>
+          </button>
+        </div>
+      );
+    }
+
+    if (activeSection === "settings") {
+      return undefined;
+    }
+
+    if (activeSection === "profiles") {
+      return (
+        <div className="button-row toolbar-action-row">
+          <button
+            className="ghost-button"
+            type="button"
+            disabled={runtimeBlocked}
+            onClick={() => setQuickSwitchOpen(true)}
+          >
+            <span>Quick Switch</span>
+            <kbd aria-hidden="true">⌘K</kbd>
+          </button>
+          <button
+            className="primary-button"
+            type="button"
+            disabled={runtimeBlocked}
+            onClick={openAddProfile}
+          >
+            <span>Add Profile</span>
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="button-row toolbar-action-row">
+        <button
+          className="ghost-button"
+          type="button"
+          disabled={runtimeBlocked}
+          onClick={() => setQuickSwitchOpen(true)}
+        >
+          <span>Quick Switch</span>
+          <kbd aria-hidden="true">⌘K</kbd>
+        </button>
+        <button className="ghost-button" type="button" onClick={() => setActiveNav("diagnostics")}>
+          <span>Verify</span>
+        </button>
+        <button
+          className="primary-button"
+          type="button"
+          disabled={runtimeBlocked}
+          onClick={openAddProfile}
+        >
+          <span>Add Profile</span>
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -433,33 +566,7 @@ export function App() {
       nav={navItems}
       activeNav={activeSection}
       onSelectNav={selectNav}
-      toolbar={showSetupWindow ? undefined : (
-        <div className="button-row toolbar-action-row">
-          <button
-            className="ghost-button"
-            type="button"
-            disabled={runtimeBlocked}
-            onClick={() => setQuickSwitchOpen(true)}
-          >
-            <span>Quick Switch</span>
-            <kbd aria-hidden="true">⌘K</kbd>
-          </button>
-          <button className="ghost-button" type="button" onClick={() => setActiveNav("diagnostics")}>
-            <span>Verify</span>
-          </button>
-          <button
-            className="primary-button"
-            type="button"
-            disabled={runtimeBlocked}
-            onClick={() => {
-              setProfilesRouteState({ tool: "claude", expandedProfile: null });
-              setActiveNav("profiles");
-            }}
-          >
-            <span>Add Profile</span>
-          </button>
-        </div>
-      )}
+      toolbar={renderToolbar()}
       statusBadge={showSetupWindow ? undefined : (
         <div className="sidebar-status-stack">
           <div className="sidebar-status-row">
@@ -612,7 +719,9 @@ export function App() {
               }}
             />
           ) : null}
-          {activeSection === "activity" ? <ActivityPanel /> : null}
+          {activeSection === "activity" ? (
+            <ActivityPanel externalClearSignal={activityClearSignal} />
+          ) : null}
           {activeSection === "settings" ? (
             <SettingsPanel
               settings={settings}

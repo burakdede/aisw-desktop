@@ -109,20 +109,7 @@ export function BackupsPanel({
   const restoreSheetMode = pendingRestore?.mode ?? null;
 
   return (
-    <SectionCard
-      title="Backups"
-      kicker="Recovery"
-      actions={
-        <button
-          className="ghost-button"
-          type="button"
-          disabled={backups.isFetching}
-          onClick={() => void backups.refetch()}
-        >
-          {backups.isFetching ? "Refreshing…" : "Refresh"}
-        </button>
-      }
-    >
+    <SectionCard title="Backups" kicker="Recovery">
       <DesktopStatusStrip
         ariaLabel="Backup highlights"
         items={[

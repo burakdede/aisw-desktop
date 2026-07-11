@@ -23,7 +23,7 @@ type ActivityEntry = {
   at: number;
 };
 
-export function ActivityPanel() {
+export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal?: number }) {
   const lastCommandResults = useLastCommandResults();
   const [selectedEntryKey, setSelectedEntryKey] = useState<string | null>(null);
   const [clearMessage, setClearMessage] = useState("");
@@ -87,6 +87,14 @@ export function ActivityPanel() {
     setSelectedEntryKey(entries[0]?.key ?? null);
   }, [entries, selectedEntryKey]);
 
+  useEffect(() => {
+    if (externalClearSignal < 1) {
+      return;
+    }
+    setSelectedEntryKey(null);
+    setClearMessage("Cleared activity recorded in this desktop session.");
+  }, [externalClearSignal]);
+
   const selectedEntry = entries.find((entry) => entry.key === selectedEntryKey) ?? entries[0] ?? null;
 
   function clearTimeline() {
@@ -99,26 +107,6 @@ export function ActivityPanel() {
     <SectionCard
       title="Activity"
       kicker="Recent changes and checks"
-      actions={
-        <div className="button-row">
-          <button
-            className="ghost-button"
-            type="button"
-            disabled={!entries.length}
-            onClick={clearTimeline}
-          >
-            Clear
-          </button>
-          <button
-            className="ghost-button"
-            type="button"
-            disabled={exportBundleMutation.isPending}
-            onClick={() => exportBundleMutation.mutate()}
-          >
-            {exportBundleMutation.isPending ? "Exporting…" : "Export support report"}
-          </button>
-        </div>
-      }
     >
       <DesktopStatusStrip
         ariaLabel="Activity highlights"
