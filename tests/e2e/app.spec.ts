@@ -871,6 +871,20 @@ test("activates a local profile set from overview quick switch", async ({ page }
   await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "Work" })).toBeVisible();
 });
 
+test("opens the quick switch palette from the keyboard shortcut", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.keyboard.press("Meta+K");
+
+  const palette = page.getByRole("dialog", { name: "Quick Switch" });
+  await expect(palette).toBeVisible();
+  await palette.getByRole("button", { name: /Client Acme/ }).click();
+
+  await expect(page.getByText("Last bulk result: Activated profile set Client Acme.")).toBeVisible();
+  await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "Work" })).toBeVisible();
+});
+
 test("saves and deletes a local profile set from contexts", async ({ page }) => {
   await installDesktopMock(page, "switching");
 

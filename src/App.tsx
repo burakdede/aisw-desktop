@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppFrame } from "./components/AppFrame";
+import { QuickSwitchPalette } from "./components/QuickSwitchPalette";
 import { SectionCard } from "./components/SectionCard";
 import { recordCommandResult } from "./features/shared/lastCommandResult";
 import { BackupsPanel } from "./features/backups/components/BackupsPanel";
@@ -54,6 +55,7 @@ type SettingsRouteState = {
 export function App() {
   const queryClient = useQueryClient();
   const [activeNav, setActiveNav] = useState<(typeof NAV)[number]["id"]>("overview");
+  const [quickSwitchOpen, setQuickSwitchOpen] = useState(false);
   const [profilesRouteState, setProfilesRouteState] = useState<ProfilesRouteState>({});
   const [settingsRouteState, setSettingsRouteState] = useState<SettingsRouteState>({});
   const { bootstrap, snapshot, init } = useDesktop();
@@ -149,6 +151,17 @@ export function App() {
     };
   }, [queryClient]);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setQuickSwitchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   if (bootstrap.isLoading) {
     return (
       <main className="app-shell app-shell-onboarding">
@@ -192,6 +205,7 @@ export function App() {
   const runtimeBlocker = describeRuntimeBlocker(runtimeStatus);
 
   return (
+    <>
     <AppFrame
       title={sectionTitle(activeSection)}
       subtitle="Manage Claude Code, Codex CLI, and Gemini CLI identities from a compact local Mac utility."
@@ -200,7 +214,12 @@ export function App() {
       onSelectNav={selectNav}
       toolbar={
         <div className="button-row">
-          <button className="ghost-button" type="button" onClick={() => setActiveNav("sets")}>
+          <button
+            className="ghost-button"
+            type="button"
+            disabled={runtimeBlocked}
+            onClick={() => setQuickSwitchOpen(true)}
+          >
             Quick Switch
           </button>
           <button className="ghost-button" type="button" onClick={() => setActiveNav("diagnostics")}>
@@ -209,6 +228,7 @@ export function App() {
           <button
             className="primary-button"
             type="button"
+            disabled={runtimeBlocked}
             onClick={() => {
               setProfilesRouteState({ tool: "claude", expandedProfile: null });
               setActiveNav("profiles");
@@ -339,6 +359,16 @@ export function App() {
         </SectionCard>
       )}
     </AppFrame>
+    {!runtimeBlocked && resolvedSnapshot ? (
+      <QuickSwitchPalette
+        open={quickSwitchOpen}
+        onClose={() => setQuickSwitchOpen(false)}
+        settings={settings}
+        snapshot={resolvedSnapshot}
+        toolCapabilities={toolCapabilities}
+      />
+    ) : null}
+    </>
   );
 }
 
