@@ -899,6 +899,10 @@ button {
   gap: 12px;
 }
 
+.overview-layout {
+  grid-template-columns: minmax(280px, 0.92fr) minmax(0, 1.18fr);
+}
+
 .overview-hero,
 .profiles-hero {
   margin-bottom: 14px;
@@ -966,6 +970,10 @@ button {
 
 .overview-tool-grid {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.overview-recent-card {
+  gap: 10px;
 }
 
 .tool-card,
@@ -1312,7 +1320,9 @@ button {
 
 .profiles-inventory-pane,
 .profiles-inspector-pane,
-.set-editor-pane {
+.set-editor-pane,
+.overview-summary-pane,
+.overview-tools-pane {
   min-width: 0;
 }
 

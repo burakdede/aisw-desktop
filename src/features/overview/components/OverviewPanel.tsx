@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
+import { SplitView } from "../../../components/SplitView";
 import { SectionCard } from "../../../components/SectionCard";
 import {
   commandForCurrentPlatform,
@@ -128,165 +129,192 @@ export function OverviewPanel({
           <span className="status-pill">{hasWorkspaceMismatch ? "Workspace mismatch" : "Ready to switch"}</span>
         </div>
       </article>
-      <div className="overview-stack">
-        <div className="overview-summary-grid">
-          {currentSetLabel || currentSetProfiles.length ? (
-            <article className="overview-current-set">
-              <div className="overview-current-set-copy">
-                <p className="card-kicker">Current set</p>
-                <h3>{currentSetLabel ?? "No active set"}</h3>
-                <p className="inline-note">
-                  {snapshot.statuses.filter((status) => status.active_profile).length} of{" "}
-                  {snapshot.statuses.length} tools are ready to switch.
-                </p>
-                <div className="overview-current-set-grid">
-                  {currentSetProfiles.map((entry) => (
-                    <p key={entry.tool} className="inline-note">
-                      <strong>{titleCase(entry.tool)}:</strong> {entry.label ?? "Not configured"}
-                    </p>
-                  ))}
+      <SplitView
+        className="overview-layout"
+        primaryClassName="overview-summary-pane"
+        secondaryClassName="overview-tools-pane"
+        primary={
+          <div className="overview-stack desktop-pane-column">
+            {currentSetLabel || currentSetProfiles.length ? (
+              <article className="overview-current-set">
+                <div className="overview-current-set-copy">
+                  <p className="card-kicker">Current set</p>
+                  <h3>{currentSetLabel ?? "No active set"}</h3>
+                  <p className="inline-note">
+                    {snapshot.statuses.filter((status) => status.active_profile).length} of{" "}
+                    {snapshot.statuses.length} tools are ready to switch.
+                  </p>
+                  <div className="overview-current-set-grid">
+                    {currentSetProfiles.map((entry) => (
+                      <p key={entry.tool} className="inline-note">
+                        <strong>{titleCase(entry.tool)}:</strong> {entry.label ?? "Not configured"}
+                      </p>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="overview-current-set-actions">
-                <div className="button-row button-row-column">
+                <div className="overview-current-set-actions">
+                  <div className="button-row button-row-column">
+                    <button
+                      className="primary-button"
+                      type="button"
+                      disabled={mutationLock.isBusy}
+                      onClick={onOpenQuickSwitch}
+                    >
+                      Switch Set…
+                    </button>
+                    <button className="ghost-button" type="button" onClick={onOpenContexts}>
+                      Open Sets
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ) : null}
+            {showWorkspaceSummary ? (
+              <article className={`diagnostic-card ${hasWorkspaceMismatch ? "diagnostic-warn" : "diagnostic-pass"}`}>
+                <h3>{hasWorkspaceMismatch ? "Workspace wants a different set" : "Workspace match"}</h3>
+                <p className="inline-note">
+                  {workspaceSummaryLabel}: <strong>{expectedWorkspaceDisplay}</strong>
+                </p>
+                <p className="inline-note">
+                  Current set: <strong>{currentWorkspaceDisplay}</strong>
+                </p>
+                <p className="inline-note">
+                  Matched via {workspaceStatus.scope}: {workspaceStatus.target}
+                </p>
+                {hasWorkspaceMismatch ? (
                   <button
                     className="primary-button"
                     type="button"
                     disabled={mutationLock.isBusy}
-                    onClick={onOpenQuickSwitch}
+                    onClick={() => {
+                      const target = resolveWorkspaceActivationTarget(
+                        workspaceStatus.expectedContext,
+                        settings,
+                        snapshot,
+                      );
+                      if (!target) {
+                        onOpenContexts();
+                        return;
+                      }
+                      activateWorkspaceTargetMutation.mutate({
+                        ...target,
+                        matchedTarget: workspaceStatus.target,
+                      });
+                    }}
                   >
-                    Switch Set…
+                    {expectedWorkspaceTarget ? "Use expected set now" : "Open sets"}
                   </button>
-                  <button className="ghost-button" type="button" onClick={onOpenContexts}>
-                    Open Sets
-                  </button>
+                ) : null}
+              </article>
+            ) : null}
+            <article className="diagnostic-card overview-recent-card">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Recent actions</p>
+                  <h3>Latest results</h3>
                 </div>
+                <p className="inline-note">
+                  Keep bulk switches, project rule changes, and imported-set activations visible without leaving Overview.
+                </p>
+              </div>
+              <div className="stack-list">
+                {lastCommandResults.global["switch-all"] || lastCommandResults.global["profile-set"] ? (
+                  <p
+                    className={`inline-note ${
+                      (lastCommandResults.global["profile-set"] ?? lastCommandResults.global["switch-all"])
+                        ?.status === "error"
+                        ? "diagnostic-status-fail"
+                        : ""
+                    }`}
+                  >
+                    Last bulk result:{" "}
+                    {(lastCommandResults.global["profile-set"] ?? lastCommandResults.global["switch-all"])
+                      ?.message}
+                    {(lastCommandResults.global["profile-set"] ?? lastCommandResults.global["switch-all"])
+                      ?.remediation
+                      ? ` Remediation: ${
+                          (lastCommandResults.global["profile-set"] ??
+                            lastCommandResults.global["switch-all"])?.remediation
+                        }`
+                      : ""}
+                  </p>
+                ) : null}
+                {workspaceResult ? (
+                  <p className={`inline-note ${workspaceResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
+                    Last workspace result: {workspaceResult.message}
+                    {workspaceResult.remediation ? ` Remediation: ${workspaceResult.remediation}` : ""}
+                  </p>
+                ) : null}
+                {contextResult ? (
+                  <p className={`inline-note ${contextResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
+                    Last context result: {contextResult.message}
+                    {contextResult.remediation ? ` Remediation: ${contextResult.remediation}` : ""}
+                  </p>
+                ) : null}
+                {!lastCommandResults.global["switch-all"] &&
+                !lastCommandResults.global["profile-set"] &&
+                !workspaceResult &&
+                !contextResult ? (
+                  <p className="inline-note">No recent bulk or workspace changes are recorded in this session.</p>
+                ) : null}
               </div>
             </article>
-          ) : null}
-          {showWorkspaceSummary ? (
-            <article className={`diagnostic-card ${hasWorkspaceMismatch ? "diagnostic-warn" : "diagnostic-pass"}`}>
-              <h3>{hasWorkspaceMismatch ? "Workspace wants a different set" : "Workspace match"}</h3>
-              <p className="inline-note">
-                {workspaceSummaryLabel}: <strong>{expectedWorkspaceDisplay}</strong>
-              </p>
-              <p className="inline-note">
-                Current set: <strong>{currentWorkspaceDisplay}</strong>
-              </p>
-              <p className="inline-note">
-                Matched via {workspaceStatus.scope}: {workspaceStatus.target}
-              </p>
-              {hasWorkspaceMismatch ? (
-                <button
-                  className="primary-button"
-                  type="button"
-                  disabled={mutationLock.isBusy}
-                  onClick={() => {
-                    const target = resolveWorkspaceActivationTarget(
-                      workspaceStatus.expectedContext,
-                      settings,
-                      snapshot,
-                    );
-                    if (!target) {
-                      onOpenContexts();
-                      return;
-                    }
-                    activateWorkspaceTargetMutation.mutate({
-                      ...target,
-                      matchedTarget: workspaceStatus.target,
-                    });
-                  }}
-                >
-                  {expectedWorkspaceTarget ? "Use expected set now" : "Open sets"}
-                </button>
-              ) : null}
-            </article>
-          ) : null}
-        </div>
-
-        <div className="overview-tools-header">
-          <div>
-            <p className="card-kicker">Tools</p>
-            <h3>Live account state</h3>
           </div>
-          <p className="inline-note">
-            Active profile, match status, secure storage, and drift warnings are surfaced here first.
-          </p>
-        </div>
-        <div className="tool-grid overview-tool-grid">
-          {snapshot.statuses.map((status) => (
-            <ToolCard
-              key={status.tool}
-              status={status}
-              profiles={snapshot.profiles[status.tool]?.profiles ?? []}
-              lastResult={lastCommandResults.tool[status.tool]}
-              mutationLocked={mutationLock.isBusy}
-              refreshLocked={mutationLock.isBusy || refresh.isPending}
-              onRefresh={() => refresh.mutate()}
-              stateModes={supportedStateModes(status.tool, toolCapabilities)}
-              settings={settings}
-              snapshot={snapshot}
-              onImport={(tool, profile, stateMode) =>
-                supportsProfileImportMode(tool, toolCapabilities, "from_live")
-                  ? addProfileMutation.mutate({
+        }
+        secondary={
+          <div className="overview-stack desktop-pane-column">
+            <div className="overview-tools-header">
+              <div>
+                <p className="card-kicker">Tools</p>
+                <h3>Live account state</h3>
+              </div>
+              <p className="inline-note">
+                Active profile, match status, secure storage, and drift warnings are surfaced here first.
+              </p>
+            </div>
+            <div className="tool-grid overview-tool-grid">
+              {snapshot.statuses.map((status) => (
+                <ToolCard
+                  key={status.tool}
+                  status={status}
+                  profiles={snapshot.profiles[status.tool]?.profiles ?? []}
+                  lastResult={lastCommandResults.tool[status.tool]}
+                  mutationLocked={mutationLock.isBusy}
+                  refreshLocked={mutationLock.isBusy || refresh.isPending}
+                  onRefresh={() => refresh.mutate()}
+                  stateModes={supportedStateModes(status.tool, toolCapabilities)}
+                  settings={settings}
+                  snapshot={snapshot}
+                  onImport={(tool, profile, stateMode) =>
+                    supportsProfileImportMode(tool, toolCapabilities, "from_live")
+                      ? addProfileMutation.mutate({
+                          tool,
+                          profile,
+                          label: titleCase(profile),
+                          stateMode,
+                          importMode: { kind: "from_live" },
+                        })
+                      : onOpenProfiles(tool, null, {
+                          mode: preferredProfileImportMode(tool, toolCapabilities, "from_live"),
+                        })
+                  }
+                  onUse={(tool, profile, stateMode) =>
+                    useProfileMutation.mutate({
                       tool,
                       profile,
-                      label: titleCase(profile),
                       stateMode,
-                      importMode: { kind: "from_live" },
+                      label: toolProfileDisplayLabel(settings, snapshot, tool, profile),
                     })
-                  : onOpenProfiles(tool, null, {
-                      mode: preferredProfileImportMode(tool, toolCapabilities, "from_live"),
-                    })
-              }
-              onUse={(tool, profile, stateMode) =>
-                useProfileMutation.mutate({
-                  tool,
-                  profile,
-                  stateMode,
-                  label: toolProfileDisplayLabel(settings, snapshot, tool, profile),
-                })
-              }
-              onAddProfile={(tool) => onOpenProfiles(tool)}
-              onOpenDetails={(tool, profile) => onOpenProfiles(tool, profile)}
-              toolCapabilities={toolCapabilities}
-            />
-          ))}
-        </div>
-      </div>
-      {lastCommandResults.global["switch-all"] || lastCommandResults.global["profile-set"] ? (
-        <p
-          className={`inline-note ${
-            (lastCommandResults.global["profile-set"] ?? lastCommandResults.global["switch-all"])
-              ?.status === "error"
-              ? "diagnostic-status-fail"
-              : ""
-          }`}
-        >
-          Last bulk result:{" "}
-          {(lastCommandResults.global["profile-set"] ?? lastCommandResults.global["switch-all"])
-            ?.message}
-          {(lastCommandResults.global["profile-set"] ?? lastCommandResults.global["switch-all"])
-            ?.remediation
-            ? ` Remediation: ${
-                (lastCommandResults.global["profile-set"] ??
-                  lastCommandResults.global["switch-all"])?.remediation
-              }`
-            : ""}
-        </p>
-      ) : null}
-      {workspaceResult ? (
-        <p className={`inline-note ${workspaceResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
-          Last workspace result: {workspaceResult.message}
-          {workspaceResult.remediation ? ` Remediation: ${workspaceResult.remediation}` : ""}
-        </p>
-      ) : null}
-      {contextResult ? (
-        <p className={`inline-note ${contextResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
-          Last context result: {contextResult.message}
-          {contextResult.remediation ? ` Remediation: ${contextResult.remediation}` : ""}
-        </p>
-      ) : null}
+                  }
+                  onAddProfile={(tool) => onOpenProfiles(tool)}
+                  onOpenDetails={(tool, profile) => onOpenProfiles(tool, profile)}
+                  toolCapabilities={toolCapabilities}
+                />
+              ))}
+            </div>
+          </div>
+        }
+      />
     </SectionCard>
   );
 }
