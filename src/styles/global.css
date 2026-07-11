@@ -157,35 +157,35 @@ button {
 }
 
 .brand-mark-panel {
-  fill: color-mix(in srgb, CanvasText 8%, Canvas 92%);
-  stroke: color-mix(in srgb, CanvasText 10%, transparent);
+  fill: color-mix(in srgb, Canvas 90%, CanvasText 10%);
+  stroke: color-mix(in srgb, CanvasText 12%, transparent);
 }
 
-.brand-mark-lane {
-  fill: color-mix(in srgb, CanvasText 7%, Canvas 93%);
+.brand-mark-panel-secondary {
+  fill: color-mix(in srgb, Canvas 94%, CanvasText 6%);
 }
 
-.brand-mark-lane-accent {
-  fill: color-mix(in srgb, AccentColor 20%, Canvas 80%);
+.brand-mark-panel-accent {
+  fill: color-mix(in srgb, AccentColor 18%, Canvas 82%);
 }
 
-.brand-mark-stroke {
-  stroke: color-mix(in srgb, AccentColor 76%, CanvasText 24%);
+.brand-mark-flow {
+  stroke: color-mix(in srgb, CanvasText 64%, transparent);
 }
 
-.brand-mark-stroke-accent {
-  stroke: color-mix(in srgb, AccentColor 88%, CanvasText 12%);
+.brand-mark-flow-accent {
+  stroke: color-mix(in srgb, AccentColor 82%, CanvasText 18%);
 }
 
 .brand-mark-node {
-  fill: color-mix(in srgb, Canvas 92%, CanvasText 8%);
-  stroke: color-mix(in srgb, AccentColor 62%, CanvasText 38%);
-  stroke-width: 1.4;
+  fill: color-mix(in srgb, Canvas 98%, CanvasText 2%);
+  stroke: color-mix(in srgb, CanvasText 28%, transparent);
+  stroke-width: 1.1;
 }
 
 .brand-mark-node-accent {
   fill: color-mix(in srgb, AccentColor 84%, Canvas 16%);
-  stroke: none;
+  stroke: color-mix(in srgb, AccentColor 32%, transparent);
 }
 
 .sidebar-title {
@@ -489,6 +489,20 @@ button {
   align-items: start;
 }
 
+.sets-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sets-summary-grid .diagnostic-card {
+  min-width: 0;
+}
+
+.sets-summary-grid h3 {
+  font-size: 18px;
+}
+
 .set-inventory-pane,
 .set-editor-card {
   min-width: 0;
@@ -505,6 +519,20 @@ button {
 
 .set-row-imported {
   background: color-mix(in srgb, CanvasText 2%, Canvas 98%);
+}
+
+.set-section-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.set-section-header h3 {
+  margin: 2px 0 0;
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 .set-row-main {
@@ -1082,6 +1110,10 @@ button {
   }
 
   .sets-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sets-summary-grid {
     grid-template-columns: 1fr;
   }
 

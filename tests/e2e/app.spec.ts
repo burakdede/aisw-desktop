@@ -889,14 +889,14 @@ test("saves and deletes a local profile set from contexts", async ({ page }) => 
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Contexts" }).click();
+  await page.getByRole("button", { name: "Sets" }).click();
 
   const contextsForm = page.locator("form.stacked-form");
-  await contextsForm.getByLabel("Profile set name").fill("focus-mode");
+  await contextsForm.getByLabel("Set name").fill("focus-mode");
   await contextsForm.getByLabel("Label").fill("Focus Mode");
   await contextsForm.getByLabel("Claude").selectOption("work");
   await contextsForm.getByLabel("Codex").selectOption("work");
-  await contextsForm.getByRole("button", { name: "Save profile set" }).click();
+  await contextsForm.getByRole("button", { name: "Save set" }).click();
 
   await expect(page.getByText("Saved profile set Focus Mode.")).toBeVisible();
   const focusModeRow = page.locator(".list-row").filter({ hasText: "Focus Mode" });
@@ -910,17 +910,17 @@ test("renames a local profile set from contexts without leaving the old entry be
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Contexts" }).click();
+  await page.getByRole("button", { name: "Sets" }).click();
 
   await page.locator(".list-row").filter({ hasText: "Client Acme" }).getByRole("button", { name: "Edit" }).click();
 
   const contextsForm = page.locator("form.stacked-form");
-  await expect(contextsForm.getByLabel("Profile set name")).toHaveValue("client-acme");
-  await expect(contextsForm.getByRole("button", { name: "Update profile set" })).toBeVisible();
+  await expect(contextsForm.getByLabel("Set name")).toHaveValue("client-acme");
+  await expect(contextsForm.getByRole("button", { name: "Update set" })).toBeVisible();
 
-  await contextsForm.getByLabel("Profile set name").fill("client-acme-prime");
+  await contextsForm.getByLabel("Set name").fill("client-acme-prime");
   await contextsForm.getByLabel("Label").fill("Client Acme Prime");
-  await contextsForm.getByRole("button", { name: "Update profile set" }).click();
+  await contextsForm.getByRole("button", { name: "Update set" }).click();
 
   await expect(page.getByText("Updated profile set Client Acme Prime.")).toBeVisible();
   await expect(page.locator(".list-row").filter({ hasText: "Client Acme Prime" })).toHaveCount(1);
@@ -931,16 +931,15 @@ test("activates a local profile set from contexts", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Contexts" }).click();
+  await page.getByRole("button", { name: "Sets" }).click();
 
-  await page.locator(".list-row").filter({ hasText: "Client Acme" }).getByRole("button", { name: "Activate set" }).click();
+  await page.locator(".list-row").filter({ hasText: "Client Acme" }).getByRole("button", { name: "Switch to set" }).click();
 
   await expect(page.getByText("Activated profile set Client Acme.")).toBeVisible();
-  const activeSetRow = page.locator(".list-row").filter({ hasText: "Client Acme ✓" }).first();
-  await expect(activeSetRow).toContainText("Client Acme ✓");
-  await expect(activeSetRow.getByRole("button", { name: "Active set" })).toBeDisabled();
-  await page.getByRole("button", { name: "Workspaces" }).click();
-  await expect(page.getByText("Current context: Client Acme")).toBeVisible();
+  const activeSetRow = page.locator(".list-row").filter({ hasText: "Client Acme" }).first();
+  await expect(activeSetRow.getByRole("button", { name: "Current set" })).toBeDisabled();
+  await page.getByRole("button", { name: "Project rules" }).click();
+  await expect(page.locator(".section-card").filter({ hasText: "Project rules" }).getByText("Current set: Client Acme")).toBeVisible();
 });
 
 test("uses native profile-set activation when a matching CLI context exists", async ({ page }) => {

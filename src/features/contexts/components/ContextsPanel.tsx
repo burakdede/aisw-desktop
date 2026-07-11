@@ -51,6 +51,8 @@ export function ContextsPanel({
   const trimmedDraftName = draft.name.trim();
   const draftHasSelections = Object.values(draft.profiles).some((profile) => profile.trim().length > 0);
   const isEditingExistingSet = draft.sourceName !== null;
+  const readySetCount = localSets.filter((set) => profileSetHasUsableSelections(snapshot, set)).length;
+  const activeSetCount = localSets.filter((set) => profileSetIsActive(snapshot, set)).length;
   const hasDuplicateSetName =
     trimmedDraftName.length > 0 &&
     localSets.some(
@@ -170,7 +172,42 @@ export function ContextsPanel({
     >
       <div className="panel-grid panel-grid-2 sets-layout">
         <div className="stack-list set-inventory-pane">
+          <div className="sets-summary-grid">
+            <article className="diagnostic-card">
+              <p className="card-kicker">Current</p>
+              <h3>{activeSetCount ? "One set is active" : "No saved set is active"}</h3>
+              <p className="inline-note">
+                {activeSetCount
+                  ? "AI Switch is currently aligned to one of your saved switching combinations."
+                  : "Switch a ready set to keep Claude Code, Codex CLI, and Gemini aligned."}
+              </p>
+            </article>
+            <article className="diagnostic-card">
+              <p className="card-kicker">Ready</p>
+              <h3>{readySetCount} ready sets</h3>
+              <p className="inline-note">
+                Ready sets have valid mapped profiles and can be used from Overview, Quick Switch, and the menu bar.
+              </p>
+            </article>
+            <article className="diagnostic-card">
+              <p className="card-kicker">Imported</p>
+              <h3>{snapshot.contexts.length} CLI contexts</h3>
+              <p className="inline-note">
+                Imported contexts stay visible here when the runtime exposes lower-level switching groups from the CLI.
+              </p>
+            </article>
+          </div>
+
           <div className="stack-list">
+            <div className="set-section-header">
+              <div>
+                <p className="card-kicker">Saved sets</p>
+                <h3>Reusable switching combinations</h3>
+              </div>
+              <p className="inline-note">
+                Save work, personal, and client bundles once, then switch them from one place.
+              </p>
+            </div>
             {localSets.map((set) => (
               <article
                 key={set.name}
@@ -282,7 +319,15 @@ export function ContextsPanel({
           </div>
 
           <div className="stack-list">
-            <h3>Imported contexts</h3>
+            <div className="set-section-header">
+              <div>
+                <p className="card-kicker">CLI import</p>
+                <h3>Imported CLI contexts</h3>
+              </div>
+              <p className="inline-note">
+                These come directly from the runtime and remain separate from your desktop-local set library.
+              </p>
+            </div>
             {snapshot.contexts.map((context) => (
               <article key={context.name} className="list-row set-row set-row-imported">
                 <div className="set-row-main">
