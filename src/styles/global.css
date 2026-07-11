@@ -1156,6 +1156,31 @@ button {
   min-width: 0;
 }
 
+.sets-source-card {
+  gap: 12px;
+}
+
+.sets-source-row {
+  align-items: flex-start;
+}
+
+.sets-source-row-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.sets-source-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sets-source-row .inline-note {
+  color: var(--text-secondary);
+}
+
 .sets-summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
