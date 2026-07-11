@@ -10,6 +10,8 @@ export type LastCommandResult = {
   message: string;
   kind?: string;
   remediation?: string;
+  command?: string;
+  resultSummary?: string;
   at: number;
 };
 
@@ -71,6 +73,14 @@ export function recordCommandResult(scope: CommandResultScope, result: Omit<Last
 }
 
 export function resetLastCommandResultsForTests() {
+  currentStore = {
+    tool: {},
+    global: {},
+  };
+  emitChange();
+}
+
+export function clearLastCommandResults() {
   currentStore = {
     tool: {},
     global: {},

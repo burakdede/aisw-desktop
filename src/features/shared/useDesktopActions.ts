@@ -100,10 +100,19 @@ export function useDesktopActions() {
         const result = await enqueueMutation(label, () => mutationFn(variables));
         const scope = scopeForVariables(variables);
         if (scope) {
+          const command =
+            typeof result === "object" &&
+            result !== null &&
+            "command" in result &&
+            typeof (result as { command?: unknown }).command === "string"
+              ? (result as { command: string }).command
+              : undefined;
           recordCommandResult(scope, {
             label,
             status: "success",
             message: successMessage(variables),
+            command,
+            resultSummary: "Snapshot updated successfully.",
           });
         }
         return result;

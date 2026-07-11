@@ -1,9 +1,15 @@
+import { useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { DesktopStatusStrip } from "../../../components/DesktopStatusStrip";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { SectionCard } from "../../../components/SectionCard";
 import { SplitView } from "../../../components/SplitView";
-import { useLastCommandResults } from "../../shared/lastCommandResult";
+import { exportDiagnosticBundle } from "../../../lib/client";
+import { notifyDesktop } from "../../../lib/notifications";
+import {
+  clearLastCommandResults,
+  useLastCommandResults,
+} from "../../shared/lastCommandResult";
 
 type ActivityEntry = {
   key: string;
@@ -12,12 +18,26 @@ type ActivityEntry = {
   status: "success" | "error";
   message: string;
   remediation?: string;
+  command?: string;
+  resultSummary?: string;
   at: number;
 };
 
 export function ActivityPanel() {
   const lastCommandResults = useLastCommandResults();
   const [selectedEntryKey, setSelectedEntryKey] = useState<string | null>(null);
+  const [clearMessage, setClearMessage] = useState("");
+
+  const exportBundleMutation = useMutation({
+    mutationFn: exportDiagnosticBundle,
+    onSuccess: async (result) => {
+      const message = `Saved ${result.filename}.`;
+      await notifyDesktop({
+        title: "Support report exported",
+        body: message,
+      });
+    },
+  });
 
   const entries = useMemo(
     () =>
@@ -32,6 +52,8 @@ export function ActivityPanel() {
                   status: result.status,
                   message: result.message,
                   remediation: result.remediation,
+                  command: result.command,
+                  resultSummary: result.resultSummary,
                   at: result.at,
                 },
               ]
@@ -47,6 +69,8 @@ export function ActivityPanel() {
                   status: result.status,
                   message: result.message,
                   remediation: result.remediation,
+                  command: result.command,
+                  resultSummary: result.resultSummary,
                   at: result.at,
                 },
               ]
@@ -65,8 +89,37 @@ export function ActivityPanel() {
 
   const selectedEntry = entries.find((entry) => entry.key === selectedEntryKey) ?? entries[0] ?? null;
 
+  function clearTimeline() {
+    clearLastCommandResults();
+    setSelectedEntryKey(null);
+    setClearMessage("Cleared activity recorded in this desktop session.");
+  }
+
   return (
-    <SectionCard title="Activity" kicker="Recent changes and checks">
+    <SectionCard
+      title="Activity"
+      kicker="Recent changes and checks"
+      actions={
+        <div className="button-row">
+          <button
+            className="ghost-button"
+            type="button"
+            disabled={!entries.length}
+            onClick={clearTimeline}
+          >
+            Clear
+          </button>
+          <button
+            className="ghost-button"
+            type="button"
+            disabled={exportBundleMutation.isPending}
+            onClick={() => exportBundleMutation.mutate()}
+          >
+            {exportBundleMutation.isPending ? "Exporting…" : "Export support report"}
+          </button>
+        </div>
+      }
+    >
       <DesktopStatusStrip
         ariaLabel="Activity highlights"
         items={[
@@ -81,20 +134,23 @@ export function ActivityPanel() {
             note: "Inspect the newest switch, verify, and repair events without opening separate logs.",
           },
           {
-            label: "Scope",
-            value: "Local only",
-            pills: ["Switches", "Verification", "Recovery"],
+            label: "Privacy",
+            value: "Redacted support",
+            pills: ["No tokens", "No API keys", "Local only"],
           },
         ]}
       />
       <article className="diagnostic-card desktop-pane-intro">
-        <h3>Session timeline</h3>
+        <h3>Recent activity</h3>
         <p className="inline-note">
-          Review the most recent switch, recovery, verification, and setup actions in one compact timeline with a dedicated detail inspector.
+          Review the latest switch, recovery, verification, and setup actions in a compact session timeline with a dedicated inspector.
         </p>
         <p className="inline-note">
-          {entries.length ? `${entries.length} recent event${entries.length === 1 ? "" : "s"} in this session.` : "No local events recorded in this session yet."}
+          {entries.length
+            ? `${entries.length} recent event${entries.length === 1 ? "" : "s"} in this desktop session.`
+            : "No local events recorded in this desktop session yet."}
         </p>
+        {clearMessage ? <p className="inline-note">{clearMessage}</p> : null}
       </article>
       <SplitView
         className="activity-layout"
@@ -106,10 +162,10 @@ export function ActivityPanel() {
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Timeline</p>
-                  <h3>Recent events</h3>
+                  <h3>Session events</h3>
                 </div>
                 <p className="inline-note">
-                  Select an event to inspect its message, remediation, and source.
+                  Select an event to inspect its result, recorded command, and recovery guidance.
                 </p>
               </div>
             </div>
@@ -138,8 +194,8 @@ export function ActivityPanel() {
                       <p className="inline-note">{entry.message}</p>
                     </div>
                     <div className="activity-list-meta">
-                      <span>{entry.scopeLabel}</span>
                       <span>{formatTimestamp(entry.at)}</span>
+                      <span>{entry.scopeLabel}</span>
                     </div>
                     <span className="activity-row-chevron" aria-hidden="true">
                       ›
@@ -178,24 +234,55 @@ export function ActivityPanel() {
                 </div>
                 <KeyValueGrid
                   rows={[
-                    { label: "Scope", value: selectedEntry.scopeLabel },
                     { label: "Time", value: formatFullTimestamp(selectedEntry.at) },
+                    { label: "Scope", value: selectedEntry.scopeLabel },
                     {
-                      label: "Status",
+                      label: "Result",
                       value: selectedEntry.status === "success" ? "Success" : "Needs attention",
+                    },
+                    {
+                      label: "Command",
+                      value: selectedEntry.command ?? "Desktop command details were not recorded for this event.",
                     },
                   ]}
                 />
-                <div className="activity-detail-copy">
-                  <p className="inline-note">{selectedEntry.message}</p>
-                  {selectedEntry.remediation ? (
-                    <p className="inline-note">{selectedEntry.remediation}</p>
-                  ) : (
+                <div className="activity-detail-copy stack-list">
+                  <div>
+                    <p className="card-kicker">Output</p>
+                    <p className="inline-note">{selectedEntry.message}</p>
+                  </div>
+                  <div>
+                    <p className="card-kicker">Recorded result</p>
                     <p className="inline-note">
-                      No extra recovery steps were recorded for this event.
+                      {selectedEntry.resultSummary ??
+                        (selectedEntry.status === "success"
+                          ? "Snapshot updated successfully."
+                          : "The desktop app recorded a recoverable failure for this event.")}
                     </p>
-                  )}
+                  </div>
+                  <div>
+                    <p className="card-kicker">Recovery</p>
+                    {selectedEntry.remediation ? (
+                      <p className="inline-note">{selectedEntry.remediation}</p>
+                    ) : (
+                      <p className="inline-note">
+                        No extra recovery steps were recorded for this event.
+                      </p>
+                    )}
+                  </div>
                 </div>
+                {selectedEntry.status === "error" ? (
+                  <div className="button-row">
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      disabled={exportBundleMutation.isPending}
+                      onClick={() => exportBundleMutation.mutate()}
+                    >
+                      {exportBundleMutation.isPending ? "Exporting…" : "Export support report"}
+                    </button>
+                  </div>
+                ) : null}
               </article>
             ) : (
               <article className="diagnostic-card">
@@ -205,6 +292,22 @@ export function ActivityPanel() {
                 </p>
               </article>
             )}
+            {exportBundleMutation.data ? (
+              <article className="diagnostic-card diagnostic-pass">
+                <h3>Support report ready</h3>
+                <p className="inline-note">Saved {exportBundleMutation.data.filename}.</p>
+              </article>
+            ) : null}
+            {exportBundleMutation.error ? (
+              <article className="diagnostic-card diagnostic-warn">
+                <h3>Support report could not be exported</h3>
+                <p className="inline-note">
+                  {exportBundleMutation.error instanceof Error
+                    ? exportBundleMutation.error.message
+                    : "Desktop command failed."}
+                </p>
+              </article>
+            ) : null}
           </div>
         }
       />

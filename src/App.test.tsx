@@ -393,6 +393,13 @@ describe("App", () => {
   });
 
   it("shows activity in a timeline and inspector layout", async () => {
+    const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
+    const calls: Array<{ command: string; args: unknown }> = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      return defaultMock[command];
+    };
+
     recordCommandResult(
       { type: "global", id: "settings" },
       {
@@ -429,7 +436,17 @@ describe("App", () => {
       expect(
         screen.getAllByText("The selected profile needs attention before it can be applied.").length,
       ).toBeGreaterThan(0);
+      expect(
+        screen.getByText("Desktop command details were not recorded for this event."),
+      ).toBeInTheDocument();
       expect(screen.getAllByText("Open the profile and refresh credentials.").length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Export support report" })[0]);
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "export_diagnostic_bundle")).toBe(true);
+      expect(screen.getByText("Support report ready")).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Inspect Saved settings" }));
@@ -437,9 +454,17 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Saved settings" })).toBeInTheDocument();
       expect(screen.getAllByText("Updated the bundled runtime preference.").length).toBeGreaterThan(0);
+      expect(screen.getByText("Snapshot updated successfully.")).toBeInTheDocument();
       expect(
         screen.getByText("No extra recovery steps were recorded for this event."),
       ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+
+    await waitFor(() => {
+      expect(screen.getAllByText("No recent activity").length).toBeGreaterThan(0);
+      expect(screen.getByText("Cleared activity recorded in this desktop session.")).toBeInTheDocument();
     });
   });
 
