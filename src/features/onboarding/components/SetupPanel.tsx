@@ -36,6 +36,30 @@ type HealthItem = {
   detail: string;
 };
 
+export function shouldShowSetupFlow(
+  snapshot: AppSnapshot,
+  initReport: InitReport | undefined,
+) {
+  const totalProfiles = Object.values(snapshot.profiles).reduce(
+    (sum, entry) => sum + entry.profiles.length,
+    0,
+  );
+  const liveAccounts = readLiveAccounts(initReport);
+  const liveAccountTools = new Set(liveAccounts.map((account) => account.tool));
+  const undetectedInstalledTools = snapshot.statuses.filter(
+    (status) => status.binary_found && !liveAccountTools.has(status.tool),
+  );
+  const installedToolsNeedingProfile = undetectedInstalledTools.filter(
+    (status) => (snapshot.profiles[status.tool]?.profiles.length ?? 0) === 0,
+  );
+
+  return (
+    totalProfiles === 0 ||
+    liveAccounts.length > 0 ||
+    installedToolsNeedingProfile.length > 0
+  );
+}
+
 export function SetupPanel({
   bootstrap,
   snapshot,
@@ -62,11 +86,6 @@ export function SetupPanel({
   });
   const [profileNames, setProfileNames] = useState<Record<string, string>>({});
   const [firstSwitchProfile, setFirstSwitchProfile] = useState("");
-
-  const totalProfiles = useMemo(
-    () => Object.values(snapshot.profiles).reduce((sum, entry) => sum + entry.profiles.length, 0),
-    [snapshot.profiles],
-  );
   const liveAccounts = readLiveAccounts(initReport);
   const liveAccountTools = useMemo(() => new Set(liveAccounts.map((account) => account.tool)), [liveAccounts]);
   const undetectedInstalledTools = useMemo(
@@ -95,10 +114,7 @@ export function SetupPanel({
     () => sharedProfileEntries(settings, snapshot),
     [settings, snapshot],
   );
-  const shouldShowSetup =
-    totalProfiles === 0 ||
-    liveAccounts.length > 0 ||
-    installedToolsNeedingProfile.length > 0;
+  const shouldShowSetup = shouldShowSetupFlow(snapshot, initReport);
 
   function submitImport(event: FormEvent<HTMLFormElement>, tool: string) {
     event.preventDefault();

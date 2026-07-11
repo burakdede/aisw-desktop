@@ -5208,6 +5208,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    expect(doctorRuns).toBe(0);
 
     const handlers = (window as typeof window & {
       __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
@@ -5219,6 +5220,14 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Verify and recovery")).toBeInTheDocument();
+      expect(doctorRuns).toBe(1);
+    });
+
+    await act(async () => {
+      handlers?.["tray-run-diagnostics"]?.({});
+    });
+
+    await waitFor(() => {
       expect(screen.getAllByText("Shell hook is not active in the current shell session.").length).toBeGreaterThan(0);
     });
   });
@@ -5404,7 +5413,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
-    expect(doctorRuns).toBe(1);
+    expect(doctorRuns).toBe(0);
 
     fireEvent.click(screen.getByText("Re-apply Work"));
     await waitFor(() => {
@@ -5421,7 +5430,7 @@ describe("App", () => {
 
     await waitFor(() => expect(screen.getByText("Verify and recovery")).toBeInTheDocument());
     expect(screen.getByRole("button", { name: "Verify again" })).toBeDisabled();
-    expect(doctorRuns).toBe(1);
+    expect(doctorRuns).toBe(0);
     expect(verifyRuns).toBe(0);
     expect(repairRuns).toBe(0);
 
@@ -5431,7 +5440,7 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(doctorRuns).toBeGreaterThan(1);
+      expect(doctorRuns).toBeGreaterThan(0);
       expect(verifyRuns).toBeGreaterThan(0);
       expect(repairRuns).toBeGreaterThan(0);
     });

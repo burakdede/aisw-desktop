@@ -6,7 +6,10 @@ import { SectionCard } from "./components/SectionCard";
 import { recordCommandResult } from "./features/shared/lastCommandResult";
 import { BackupsPanel } from "./features/backups/components/BackupsPanel";
 import { DiagnosticsPanel } from "./features/diagnostics/components/DiagnosticsPanel";
-import { SetupPanel } from "./features/onboarding/components/SetupPanel";
+import {
+  SetupPanel,
+  shouldShowSetupFlow,
+} from "./features/onboarding/components/SetupPanel";
 import { OverviewPanel } from "./features/overview/components/OverviewPanel";
 import { ProfilesPanel } from "./features/profiles/components/ProfilesPanel";
 import { ActivityPanel } from "./features/activity/components/ActivityPanel";
@@ -345,8 +348,10 @@ export function App() {
   const resolvedSnapshot = snapshot.data ?? bootstrap.data.snapshot;
   const toolCapabilities = runtimeStatus.capabilities?.tools ?? {};
   const currentActiveSet = resolvedSnapshot ? activeSetLabel(settings, resolvedSnapshot) : null;
+  const setupRequired = resolvedSnapshot ? shouldShowSetupFlow(resolvedSnapshot, init.data) : false;
   const runtimeBlocked = !runtimeStatus.compatible;
   const activeSection = runtimeBlocked ? "settings" : activeNav;
+  const setupFocused = setupRequired && activeSection === "overview";
   const navItems = NAV.map(({ id, label, group }) => ({
     id,
     label,
@@ -358,13 +363,13 @@ export function App() {
   return (
     <>
     <AppFrame
-      title={sectionTitle(activeSection)}
+      title={sectionTitle(activeSection, setupFocused)}
       subtitle="Switch Claude Code, Codex CLI, and Gemini CLI accounts from one compact desktop utility."
-      detail={sectionDetail(activeSection)}
+      detail={sectionDetail(activeSection, setupFocused)}
       nav={navItems}
       activeNav={activeSection}
       onSelectNav={selectNav}
-      toolbar={
+      toolbar={setupFocused ? undefined : (
         <div className="button-row toolbar-action-row">
           <button
             className="ghost-button"
@@ -390,8 +395,8 @@ export function App() {
             <span>Add Profile</span>
           </button>
         </div>
-      }
-      statusBadge={
+      )}
+      statusBadge={setupFocused ? undefined : (
         <div className="sidebar-status-stack">
           <div className="sidebar-status-row">
             <span className="sidebar-status-label">Active set</span>
@@ -406,7 +411,7 @@ export function App() {
             <p>{runtimeStatus.resolved_path ?? "Bundled runtime unavailable"}</p>
           </div>
         </div>
-      }
+      )}
     >
       {!runtimeStatus.compatible ? (
         <SectionCard title="Finish runtime setup" kicker="Startup required">
@@ -434,17 +439,19 @@ export function App() {
         <SettingsPanel settings={settings} runtimeStatus={runtimeStatus} />
       ) : resolvedSnapshot ? (
         <>
-          <SetupPanel
-            bootstrap={bootstrap.data}
-            snapshot={resolvedSnapshot}
-            initReport={init.data}
-            onOpenProfiles={(tool, options) => {
-              setProfilesRouteState({ tool, expandedProfile: null, mode: options?.mode });
-              setActiveNav("profiles");
-            }}
-            onOpenSettings={openSettings}
-          />
-          {activeSection === "overview" ? (
+          {setupFocused ? (
+            <SetupPanel
+              bootstrap={bootstrap.data}
+              snapshot={resolvedSnapshot}
+              initReport={init.data}
+              onOpenProfiles={(tool, options) => {
+                setProfilesRouteState({ tool, expandedProfile: null, mode: options?.mode });
+                setActiveNav("profiles");
+              }}
+              onOpenSettings={openSettings}
+            />
+          ) : null}
+          {activeSection === "overview" && !setupFocused ? (
             <OverviewPanel
               snapshot={resolvedSnapshot}
               settings={settings}
@@ -598,7 +605,10 @@ function describeRuntimeBlocker(runtimeStatus: {
   };
 }
 
-function sectionTitle(section: string) {
+function sectionTitle(section: string, setupFocused = false) {
+  if (setupFocused) {
+    return "Get Started";
+  }
   switch (section) {
     case "overview":
       return "Overview";
@@ -619,7 +629,10 @@ function sectionTitle(section: string) {
   }
 }
 
-function sectionDetail(section: string) {
+function sectionDetail(section: string, setupFocused = false) {
+  if (setupFocused) {
+    return "Set up AI Switch on this Mac before you start switching agent accounts.";
+  }
   switch (section) {
     case "overview":
       return "Review active accounts, shared sets, and switch readiness across every supported tool without leaving the main window.";
