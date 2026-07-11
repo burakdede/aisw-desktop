@@ -171,9 +171,11 @@ export function OverviewPanel({
           </p>
         </article>
         <article className="overview-status-card">
-          <p className="card-kicker">Shared switch</p>
+          <p className="card-kicker">Current set</p>
           <h3>{currentSetDisplay}</h3>
-          <p className="inline-note">{currentSetLabel ? "Shared switch ready" : "Switch per tool or save a shared set."}</p>
+          <p className="inline-note">
+            {currentSetLabel ? "Set ready" : "Switch per tool or save a set."}
+          </p>
         </article>
         <article className={`overview-status-card ${hasWorkspaceMismatch ? "overview-status-card-warning" : ""}`}>
           <p className="card-kicker">Project</p>
@@ -229,10 +231,10 @@ export function OverviewPanel({
                       disabled={mutationLock.isBusy}
                       onClick={onOpenQuickSwitch}
                     >
-                      Switch Set…
+                      Quick Switch…
                     </button>
                     <button className="ghost-button" type="button" onClick={onOpenContexts}>
-                      Set Library
+                      Open Set Library
                     </button>
                   </div>
                 </div>

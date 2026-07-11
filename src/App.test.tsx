@@ -381,7 +381,7 @@ describe("App", () => {
       expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
     });
     expect(screen.getByText("Re-apply Work")).toBeInTheDocument();
-    expect(screen.getByText("Current set")).toBeInTheDocument();
+    expect(screen.getAllByText("Current set").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Work").length).toBeGreaterThan(0);
     expect(
       screen.getByText((_, element) => element?.textContent?.trim() === "SwitchingReady"),
@@ -7117,7 +7117,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("Current set")).toBeInTheDocument();
+      expect(screen.getAllByText("Current set").length).toBeGreaterThan(0);
       expect(screen.getAllByText("Client Acme").length).toBeGreaterThan(0);
     });
 
