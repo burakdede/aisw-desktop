@@ -211,8 +211,8 @@ export function SetupPanel({
   }
 
   const setupSteps = [
+    { value: "runtime", label: "Welcome" },
     { value: "accounts", label: "Accounts" },
-    { value: "runtime", label: "Runtime" },
     { value: "switch", label: "Verify" },
     { value: "terminal", label: "Terminal" },
   ] satisfies Array<{ value: SetupStep; label: string }>;
@@ -225,7 +225,7 @@ export function SetupPanel({
 
   return (
     <SectionCard
-      title="Set Up AI Switch"
+      title="Welcome to AI Switch"
       kicker="First launch"
       actions={
         <button
@@ -233,7 +233,7 @@ export function SetupPanel({
           disabled={mutationLock.isBusy}
           onClick={() => initMutation.mutate()}
         >
-          {initMutation.isPending ? "Checking this Mac…" : "Check This Mac"}
+          {initMutation.isPending ? "Scanning this Mac…" : "Scan This Mac"}
         </button>
       }
     >
@@ -243,19 +243,19 @@ export function SetupPanel({
           {
             label: "AI Switch",
             value: "Safe local account switching",
-            note: "Bring in existing Claude Code, Codex CLI, and Gemini CLI accounts, confirm the included engine is ready, and verify one safe switch without leaving this Mac.",
+            note: "Bring in existing Claude Code, Codex CLI, and Gemini CLI accounts, confirm the included switching engine is ready, and verify one safe switch without leaving this Mac.",
           },
           {
             label: "Progress",
             value: needsAttentionCount ? `${needsAttentionCount} setup action${needsAttentionCount === 1 ? "" : "s"}` : "Ready to switch",
             note: switchReady
-              ? "At least one reusable profile is ready for shared switching."
-              : "Finish import or setup once, then verify the first shared switch.",
+              ? "At least one reusable profile is ready for a first switch."
+              : "Import one account first, then verify the first shared switch.",
           },
           {
             label: "Trust",
             value: "Local only",
-            pills: ["Credentials stay local", "Included runtime", "No telemetry", "No traffic proxy"],
+            pills: ["Credentials stay local", "Included engine", "No telemetry", "No traffic proxy"],
           },
         ]}
       />
@@ -268,11 +268,15 @@ export function SetupPanel({
           <div className="stack-list desktop-pane-column">
             <article className="diagnostic-card onboarding-trust-card">
               <h3>Private on this Mac</h3>
+              <p className="inline-note">
+                AI Switch stays focused on one job: make active coding-agent accounts obvious,
+                switching fast, and recovery safe.
+              </p>
               <div className="trust-list">
                 <p className="trust-list-item">Credentials stay on this Mac</p>
                 <p className="trust-list-item">No telemetry</p>
                 <p className="trust-list-item">No prompt or API traffic proxy</p>
-                <p className="trust-list-item">Included runtime</p>
+                <p className="trust-list-item">Included switching engine</p>
               </div>
             </article>
             <article className="diagnostic-card onboarding-step-card">
@@ -295,12 +299,12 @@ export function SetupPanel({
               <div className="stack-list onboarding-status-stack">
                 <div>
                   <p className={`diagnostic-status diagnostic-status-${bootstrap.runtime_status.compatible ? "pass" : "warn"}`}>
-                    App runtime
+                    Included engine
                   </p>
                   <p className="inline-note">
                     {bootstrap.runtime_status.compatible
-                      ? "The included runtime is ready for desktop switching."
-                      : "Runtime details need attention before switching."}
+                      ? "The included engine is ready for desktop switching."
+                      : "Engine setup needs attention before switching."}
                   </p>
                 </div>
                 <div>
@@ -318,7 +322,7 @@ export function SetupPanel({
                   <p className="inline-note">
                     {switchReady
                       ? "A matching shared profile is ready for a first switch check."
-                      : "Add matching profile names across tools before verifying a shared switch."}
+                      : "Add at least one reusable profile before verifying a shared switch."}
                   </p>
                 </div>
               </div>
@@ -326,8 +330,8 @@ export function SetupPanel({
             <article className="diagnostic-card">
               <div className="desktop-pane-section-header">
                 <div>
-                  <p className="card-kicker">Runtime</p>
-                  <h3>Included runtime</h3>
+                  <p className="card-kicker">Engine</p>
+                  <h3>Included switching engine</h3>
                 </div>
                 <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
                   {bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}
@@ -353,17 +357,17 @@ export function SetupPanel({
             {activeStep === "runtime" ? (
               <>
                 <article className="diagnostic-card desktop-pane-intro">
-                  <h3>Runtime check</h3>
+                  <h3>Before you switch anything</h3>
                   <p className="inline-note">
-                    AI Switch works best with the included runtime. Check that local storage and secure
-                    storage are ready before you import or switch accounts.
+                    AI Switch uses the included switching engine by default. Confirm that local data
+                    storage and secure storage are ready, then import your first account.
                   </p>
                 </article>
                 <article className="diagnostic-card">
                   <div className="desktop-pane-section-header">
                     <div>
-                      <p className="card-kicker">Runtime</p>
-                      <h3>Included runtime</h3>
+                      <p className="card-kicker">Engine</p>
+                      <h3>Included switching engine</h3>
                     </div>
                     <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
                       {bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}
@@ -390,18 +394,18 @@ export function SetupPanel({
                         disabled={restoreBundledRuntimeMutation.isPending}
                         onClick={() => restoreBundledRuntimeMutation.mutate()}
                       >
-                        {restoreBundledRuntimeMutation.isPending ? "Switching to Included Runtime…" : "Use Included Runtime"}
+                        {restoreBundledRuntimeMutation.isPending ? "Switching to Included Engine…" : "Use Included Engine"}
                       </button>
                     ) : null}
                     <button className="ghost-button" type="button" onClick={() => onOpenSettings("runtime")}>
-                      Advanced Runtime Options
+                      Advanced Runtime Settings
                     </button>
                   </div>
                   {restoreBundledRuntimeMutation.error ? (
                     <p className="inline-note">
                       {restoreBundledRuntimeMutation.error instanceof Error
                         ? restoreBundledRuntimeMutation.error.message
-                        : "Could not switch back to the included runtime."}
+                        : "Could not switch back to the included engine."}
                     </p>
                   ) : null}
                 </article>
@@ -409,11 +413,31 @@ export function SetupPanel({
                 <article className="diagnostic-card">
                   <div className="desktop-pane-section-header">
                     <div>
-                      <p className="card-kicker">Checks</p>
-                      <h3>Health check</h3>
+                      <p className="card-kicker">Next</p>
+                      <h3>What happens after setup</h3>
                     </div>
                   </div>
                   <div className="stack-list">
+                    <div>
+                      <p className="diagnostic-status diagnostic-status-pass">1. Save your first account</p>
+                      <p className="inline-note">
+                        Import the login already open in a supported tool, or add a new profile from
+                        the Profiles section.
+                      </p>
+                    </div>
+                    <div>
+                      <p className="diagnostic-status diagnostic-status-pass">2. Verify one switch</p>
+                      <p className="inline-note">
+                        Re-apply a shared profile once so you know switching works before you start coding.
+                      </p>
+                    </div>
+                    <div>
+                      <p className="diagnostic-status diagnostic-status-pass">3. Add terminal integration later if needed</p>
+                      <p className="inline-note">
+                        Most people can skip terminal integration unless they need already-open shells
+                        to update immediately.
+                      </p>
+                    </div>
                     {healthItems.map((item) => (
                       <div key={item.label}>
                         <p className={`diagnostic-status diagnostic-status-${item.status}`}>
@@ -435,18 +459,18 @@ export function SetupPanel({
             {activeStep === "accounts" ? (
               <>
                 <article className="diagnostic-card desktop-pane-intro">
-                  <h3>Detected tools</h3>
+                  <h3>Bring in the accounts you already use</h3>
                   <p className="inline-note">
-                    Capture current sign-ins, add missing tools, and save reusable profiles before you
-                    run the first shared switch.
+                    Save current logins as reusable profiles, add missing profiles where needed, and
+                    ignore tools you do not use yet.
                   </p>
                 </article>
 
                 <div className="desktop-pane-section onboarding-detection-stack">
-            <div className="desktop-pane-section-header">
+                <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Detection</p>
-                <h3>Existing accounts</h3>
+                <h3>Detected tools and accounts</h3>
               </div>
               <p className="inline-note">
                 Saved accounts become reusable profiles that you can switch again later.
@@ -465,7 +489,7 @@ export function SetupPanel({
                       {account.matched_profile ? ` · matches ${account.matched_profile}` : ""}
                     </p>
                   </div>
-                  <span className="pill pill-ok">Current login detected</span>
+                  <span className="pill pill-ok">Current login</span>
                 </div>
                 {!supportsProfileImportMode(account.tool, toolCapabilities, "from_live") ? (
                   <p className="inline-note">
@@ -489,7 +513,7 @@ export function SetupPanel({
                       disabled={mutationLock.isBusy}
                       onClick={() => openLiveImport(account)}
                     >
-                      Import current login
+                      Import login
                     </button>
                   ) : (
                     <button
@@ -513,7 +537,7 @@ export function SetupPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <h4>{titleCase(status.tool)}</h4>
-                    <p className="inline-note">No live credentials detected</p>
+                    <p className="inline-note">Installed, but no saved profile yet</p>
                   </div>
                   <span className="pill pill-soft">Needs profile</span>
                 </div>
@@ -536,20 +560,15 @@ export function SetupPanel({
                 <article key={status.tool} className="diagnostic-card diagnostic-warn onboarding-tool-card">
                   <div className="desktop-pane-section-header">
                     <div>
-                      <h4>{titleCase(status.tool)} is not installed</h4>
-                      <p className="inline-note">Missing</p>
+                    <h4>{titleCase(status.tool)} is not installed</h4>
+                      <p className="inline-note">Optional for now</p>
                     </div>
                     <span className="pill pill-soft">Not installed</span>
                   </div>
                   <p className="inline-note">
-                    The desktop app cannot detect or switch {titleCase(status.tool)} until the{" "}
-                    <code>{binary}</code> CLI is available on PATH.
+                    AI Switch can start without {titleCase(status.tool)}. Install the{" "}
+                    <code>{binary}</code> tool later when you want to manage that provider here.
                   </p>
-                  <div className="diagnostic-remediation">
-                    <code>{installCommandForTool(status.tool)}</code>
-                    <code>{commandForCurrentPlatform(binary, "verify")}</code>
-                    <code>{commandForCurrentPlatform(binary, "path")}</code>
-                  </div>
                   <div className="button-row">
                     <button
                       className="ghost-button"
@@ -578,11 +597,11 @@ export function SetupPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Verify</p>
-                    <h3>First switch</h3>
+                    <h3>Try one safe switch</h3>
                   </div>
                   <p className="inline-note">
-                    Re-apply one shared profile across installed tools to confirm switching works end to
-                    end.
+                    Re-apply one shared profile across installed tools so you know switching works
+                    before you start coding.
                   </p>
                 </div>
                 <div className="inline-form">
@@ -639,9 +658,9 @@ export function SetupPanel({
                     <h3>Terminal integration</h3>
                   </div>
                   <p className="inline-note">
-                    Optional. The desktop app updates live credential files without terminal integration.
-                    Turn it on later if you want already-open terminal sessions to receive immediate
-                    environment exports.
+                    Optional. AI Switch updates live credential files without terminal integration.
+                    Turn this on later only if already-open terminal sessions need to pick up changes
+                    immediately.
                   </p>
                 </div>
                 {shellGuidance.data?.detected_shell ? (
@@ -650,13 +669,11 @@ export function SetupPanel({
                   </p>
                 ) : null}
                 <p className="inline-note">
-                  The desktop app writes live credential files directly. Existing terminal sessions
-                  only receive immediate environment exports such as <code>CLAUDE_CONFIG_DIR</code> and{" "}
-                  <code>CODEX_HOME</code> after you enable terminal integration.
+                  The desktop app writes live credential files directly. Most people can skip this and
+                  still switch accounts normally.
                 </p>
                 <p className="inline-note">
-                  Shell files should only be updated explicitly from the CLI or a future guided setup
-                  action, never silently.
+                  Shell files should only be updated explicitly from guided setup, never silently.
                 </p>
                 <div className="button-row">
                   <button className="ghost-button" type="button" onClick={() => onOpenSettings("shell")}>
@@ -688,8 +705,8 @@ export function SetupPanel({
             </div>
             <p className="inline-note">
               Save the account that {titleCase(pendingLiveImport.tool)} is already using as a
-              reusable AI Switch profile. This imported profile will become the active saved login
-              for this tool.
+              reusable AI Switch profile. This imported profile becomes the active saved login for
+              this tool.
             </p>
             <form className="stacked-form" onSubmit={(event) => submitImport(event, pendingLiveImport.tool)}>
               <label>

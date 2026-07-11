@@ -427,7 +427,7 @@ export function App() {
       subtitle="Switch Claude Code, Codex CLI, and Gemini CLI profiles from one focused desktop app."
       detail={
         runtimeRecoveryFocused
-          ? "Use a desktop-compatible runtime before profile switching, diagnostics, and backups become available."
+          ? "Use a desktop-compatible switching engine before profile switching, diagnostics, and backups become available."
           : sectionDetail(activeSection, setupFocused)
       }
       nav={navItems}
@@ -478,11 +478,12 @@ export function App() {
       )}
     >
       {runtimeRecoveryFocused ? (
-        <SectionCard title="This runtime is not ready for AI Switch yet" kicker="Action required">
+        <SectionCard title="Finish setup before switching" kicker="Action required">
           <div className="stack-list">
             <p className="inline-note">
-              AI Switch found a runtime, but this desktop release cannot use it for
-              switching, diagnostics, backups, or shared sets yet.
+              AI Switch can see a switching engine on this Mac, but this desktop build needs
+              the included engine or a newer compatible one before profiles, diagnostics,
+              backups, or sets can work.
             </p>
             <p className="inline-note">{normalizeRuntimeLanguage(runtimeBlocker.summary)}</p>
             <p className="inline-note">{normalizeRuntimeLanguage(runtimeBlocker.nextStep)}</p>
@@ -495,15 +496,15 @@ export function App() {
                   onClick={() => restoreBundledRuntimeMutation.mutate()}
                 >
                   {restoreBundledRuntimeMutation.isPending
-                    ? "Switching to Included Runtime…"
-                    : "Use Included Runtime"}
+                    ? "Switching to Included Engine…"
+                    : "Use Included Engine"}
                 </button>
               ) : null}
               <button className="ghost-button" type="button" onClick={() => void retryRuntimeCheck()}>
                 Try Again
               </button>
               <button className="ghost-button" type="button" onClick={() => setRuntimeRecoveryOpen(true)}>
-                Advanced Runtime Options
+                Advanced Runtime Settings
               </button>
             </div>
             {restoreBundledRuntimeMutation.error ? (
@@ -513,7 +514,7 @@ export function App() {
             ) : null}
             {runtimeStatus.issues.length ? (
               <article className="diagnostic-card">
-                <h3>Why setup is paused</h3>
+                <h3>Why switching is paused</h3>
                 {runtimeStatus.issues.map((issue) => (
                   <p key={issue} className="inline-note">
                     {normalizeRuntimeLanguage(issue)}
@@ -694,31 +695,31 @@ function describeRuntimeBlocker(runtimeStatus: {
   if (hasResolvedRuntime && missingDesktopContract) {
     return {
       summary:
-        "The current runtime was found, but it does not report the desktop compatibility details required by this release.",
+        "The current engine was found, but it does not report the desktop compatibility details this release needs.",
       nextStep:
-        "Switch back to the included runtime, or choose a newer compatible runtime in Advanced Runtime Options before continuing.",
+        "Switch back to the included engine, or choose a newer compatible engine in Advanced Runtime Settings before continuing.",
     };
   }
 
   if (hasResolvedRuntime) {
     return {
       summary:
-        "The current runtime was found, but it is not compatible with this desktop build.",
+        "The current engine was found, but it is not compatible with this desktop build.",
       nextStep:
-        "Switch back to the included runtime, or choose a compatible runtime in Advanced Runtime Options before continuing.",
+        "Switch back to the included engine, or choose a compatible engine in Advanced Runtime Settings before continuing.",
     };
   }
 
   return {
-    summary: "AI Switch could not use the current runtime choice.",
+    summary: "AI Switch could not use the current engine choice.",
     nextStep:
-      "Switch to the included runtime, or choose a working advanced override in Advanced Runtime Options before continuing.",
+      "Switch to the included engine, or choose a working advanced override in Advanced Runtime Settings before continuing.",
   };
 }
 
 function sectionTitle(section: string, setupFocused = false) {
   if (setupFocused) {
-    return "Set Up AI Switch";
+    return "Welcome to AI Switch";
   }
   switch (section) {
     case "overview":

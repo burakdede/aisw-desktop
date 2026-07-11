@@ -247,7 +247,7 @@ function getOnboardingImportDialog(tool = "Claude") {
   return within(screen.getByRole("dialog", { name: `Import ${tool} Login` }));
 }
 
-function openSetupStep(label: "Accounts" | "Runtime" | "Verify" | "Terminal") {
+function openSetupStep(label: "Welcome" | "Accounts" | "Runtime" | "Verify" | "Terminal") {
   const tabs = screen.getByLabelText("Setup steps");
   fireEvent.click(within(tabs).getByRole("tab", { name: label }));
 }
@@ -491,32 +491,32 @@ describe("App", () => {
     };
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("This runtime is not ready for AI Switch yet")).toBeInTheDocument();
+      expect(screen.getByText("Finish setup before switching")).toBeInTheDocument();
     });
     expect(
       screen.getByText(
-        "AI Switch found a runtime, but this desktop release cannot use it for switching, diagnostics, backups, or shared sets yet.",
+        "AI Switch can see a switching engine on this Mac, but this desktop build needs the included engine or a newer compatible one before profiles, diagnostics, backups, or sets can work.",
       ),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "The current runtime was found, but it does not report the desktop compatibility details required by this release.",
+        "The current runtime was found, but it does not report the desktop compatibility details this release needs.",
       ),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Switch back to the included runtime, or choose a newer compatible runtime in Advanced Runtime Options before continuing.",
+        "Switch back to the included runtime, or choose a newer compatible runtime in Advanced Runtime Settings before continuing.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Why setup is paused")).toBeInTheDocument();
+    expect(screen.getByText("Why switching is paused")).toBeInTheDocument();
     expect(screen.getByText("Runtime version details are unavailable")).toBeInTheDocument();
     expect(screen.getByText("Runtime capability details are unavailable")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Use Included Runtime" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Use Included Engine" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Advanced Runtime Options" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Advanced Runtime Settings" })).toBeInTheDocument();
     expect(screen.queryByText("Included runtime and advanced overrides")).not.toBeInTheDocument();
     expect(screen.queryByText("Runtime summary")).not.toBeInTheDocument();
-    expect(screen.queryByText("Set Up AI Switch")).not.toBeInTheDocument();
+    expect(screen.queryByText("Welcome to AI Switch")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Overview" })).not.toBeInTheDocument();
   });
 
@@ -541,10 +541,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Advanced Runtime Options" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Advanced Runtime Settings" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Advanced Runtime Options" }));
+    fireEvent.click(screen.getByRole("button", { name: "Advanced Runtime Settings" }));
 
     await waitFor(() => {
       expect(screen.getByText("Included runtime and advanced overrides")).toBeInTheDocument();
@@ -600,10 +600,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Use Included Runtime" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Use Included Engine" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Use Included Runtime" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use Included Engine" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
@@ -1058,7 +1058,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() =>
-      expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0),
+      expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0),
     );
     openSetupStep("Terminal");
     await waitFor(() => expect(screen.getByText("Open terminal setup")).toBeInTheDocument());
@@ -2471,10 +2471,10 @@ describe("App", () => {
       } as InitReport,
     });
     await waitFor(() =>
-      expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0),
+      expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Import current login" }));
+    fireEvent.click(screen.getByRole("button", { name: "Import login" }));
 
     const dialog = getOnboardingImportDialog();
     expect(dialog.getByLabelText("Profile name")).toHaveValue("");
@@ -3686,7 +3686,7 @@ describe("App", () => {
       },
     });
 
-    expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0);
     openSetupStep("Verify");
     fireEvent.change(screen.getByLabelText("First switch profile"), {
       target: { value: "work" },
@@ -3695,7 +3695,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
-      expect(screen.getByText(/App runtime/)).toBeInTheDocument();
+      expect(screen.getAllByText(/Included engine/).length).toBeGreaterThan(0);
     });
   });
 
@@ -3738,8 +3738,8 @@ describe("App", () => {
       },
     });
 
-    openSetupStep("Runtime");
-    fireEvent.click(screen.getByRole("button", { name: "Use Included Runtime" }));
+    openSetupStep("Welcome");
+    fireEvent.click(screen.getByRole("button", { name: "Use Included Engine" }));
 
     await waitFor(() => {
       expect(
@@ -5237,7 +5237,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() =>
-      expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0),
+      expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0),
     );
     openSetupStep("Accounts");
     await waitFor(() => {
@@ -5245,7 +5245,7 @@ describe("App", () => {
     });
     expect(initCalls).toBe(0);
 
-    fireEvent.click(screen.getByRole("button", { name: "Check This Mac" }));
+    fireEvent.click(screen.getByRole("button", { name: "Scan This Mac" }));
 
     await waitFor(() => {
       expect(screen.getByText("detected · oauth")).toBeInTheDocument();
@@ -5301,10 +5301,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() =>
-      expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0),
+      expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0),
     );
     await waitFor(() => {
-      expect(screen.getByText("No live credentials detected")).toBeInTheDocument();
+      expect(screen.getByText("Installed, but no saved profile yet")).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByLabelText("Add codex profile"));
@@ -5381,9 +5381,9 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() =>
-      expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0),
+      expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0),
     );
-    expect(screen.getAllByText("No live credentials detected").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Installed, but no saved profile yet").length).toBeGreaterThan(0);
     expect(screen.getByLabelText("Add codex profile")).toBeInTheDocument();
   });
 
@@ -5452,10 +5452,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() =>
-      expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0),
+      expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0),
     );
     const setupHeading = screen
-      .getAllByRole("heading", { name: "Set Up AI Switch" })
+      .getAllByRole("heading", { name: "Welcome to AI Switch" })
       .find((element) => element.closest(".section-card"));
     const setupSection = setupHeading?.closest(".section-card");
     if (!(setupSection instanceof HTMLElement)) {
@@ -5463,9 +5463,13 @@ describe("App", () => {
     }
     const setup = within(setupSection);
     expect(setup.getByText("Gemini is not installed")).toBeInTheDocument();
-    expect(setup.getByText("npm install -g @google/gemini-cli")).toBeInTheDocument();
-    expect(setup.getByText("gemini --version")).toBeInTheDocument();
-    expect(setup.getByText("which gemini")).toBeInTheDocument();
+    expect(setup.getByText("Optional for now")).toBeInTheDocument();
+    expect(
+      setup.getByText((_, element) =>
+        element?.textContent?.trim() ===
+        "AI Switch can start without Gemini. Install the gemini tool later when you want to manage that provider here.",
+      ),
+    ).toBeInTheDocument();
 
     fireEvent.click(setup.getByText("Open installation guide"));
     expect(window.open).toHaveBeenCalledWith(
@@ -5522,7 +5526,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() =>
-      expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0),
+      expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0),
     );
     openSetupStep("Terminal");
 
@@ -5590,7 +5594,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() =>
-      expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0),
+      expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0),
     );
     openSetupStep("Verify");
     fireEvent.click(screen.getByText("Open profile setup"));
@@ -7371,7 +7375,7 @@ describe("App", () => {
       },
     });
 
-    expect(screen.getAllByRole("heading", { name: "Set Up AI Switch" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0);
     expect(calls).not.toContain("run_doctor");
     expect(calls).not.toContain("get_shell_guidance");
 
@@ -7383,7 +7387,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls).toContain("run_doctor");
       expect(calls).toContain("get_shell_guidance");
-      expect(screen.getByText("Check This Mac")).toBeInTheDocument();
+      expect(screen.getByText("Scan This Mac")).toBeInTheDocument();
     });
   });
 
