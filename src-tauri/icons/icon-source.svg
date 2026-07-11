@@ -8,12 +8,16 @@
       <stop offset="0" stop-color="#FFFFFF"/>
       <stop offset="1" stop-color="#EEF4FB"/>
     </linearGradient>
-    <linearGradient id="blue" x1="626" x2="798" y1="258" y2="760" gradientUnits="userSpaceOnUse">
+    <linearGradient id="blue" x1="548" x2="780" y1="258" y2="760" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#50B5FF"/>
       <stop offset="0.45" stop-color="#0A84FF"/>
       <stop offset="1" stop-color="#005FCE"/>
     </linearGradient>
-    <linearGradient id="laneLight" x1="318" x2="446" y1="296" y2="744" gradientUnits="userSpaceOnUse">
+    <linearGradient id="panel" x1="238" x2="786" y1="246" y2="812" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F1F5FB"/>
+    </linearGradient>
+    <linearGradient id="laneLight" x1="290" x2="734" y1="332" y2="692" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#FFFFFF"/>
       <stop offset="1" stop-color="#E8EEF6"/>
     </linearGradient>
@@ -21,43 +25,38 @@
 
   <rect x="88" y="88" width="848" height="848" rx="262" fill="url(#shell)"/>
   <rect x="122" y="122" width="780" height="780" rx="234" fill="url(#core)" stroke="#C9D4E1" stroke-width="14"/>
+  <rect x="218" y="246" width="588" height="532" rx="178" fill="url(#panel)" stroke="#CBD5E2" stroke-width="14"/>
   <path
-    d="M250 244C250 218.595 270.595 198 296 198H728C753.405 198 774 218.595 774 244V354C774 379.405 753.405 400 728 400H296C270.595 400 250 379.405 250 354V244Z"
-    fill="#FFFFFF"
-    fill-opacity="0.72"
-  />
-  <path
-    d="M296 218H728"
+    d="M266 288H758"
     stroke="#FFFFFF"
     stroke-opacity="0.72"
     stroke-width="22"
     stroke-linecap="round"
   />
-
-  <rect x="314" y="282" width="146" height="462" rx="73" fill="url(#laneLight)" stroke="#C8D3E0" stroke-width="14"/>
-  <rect x="564" y="282" width="146" height="462" rx="73" fill="url(#blue)" stroke="#0D6ED8" stroke-width="14"/>
+  <rect x="290" y="332" width="444" height="108" rx="54" fill="url(#laneLight)" stroke="#C8D3E0" stroke-width="14"/>
+  <rect x="542" y="332" width="192" height="108" rx="54" fill="url(#blue)" stroke="#0D6ED8" stroke-width="14"/>
+  <rect x="290" y="584" width="444" height="108" rx="54" fill="url(#laneLight)" stroke="#C8D3E0" stroke-width="14"/>
+  <rect x="290" y="584" width="192" height="108" rx="54" fill="url(#blue)" stroke="#0D6ED8" stroke-width="14"/>
 
   <path
-    d="M387 358V413C387 470.99 434.01 518 492 518H532C589.99 518 637 565.01 637 623V670"
+    d="M386 638C420 592 468 531 508 481C551 425 585 386 638 386"
     fill="none"
-    stroke="#6B7C93"
+    stroke="#5B6E88"
     stroke-width="34"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M637 670V618C637 561.667 591.333 516 535 516H495"
+    d="M386 638C420 592 468 531 508 481C551 425 585 386 638 386"
     fill="none"
     stroke="#0A84FF"
-    stroke-width="34"
+    stroke-width="20"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
-  <path d="M446 517H578" fill="none" stroke="#B7C3D1" stroke-width="18" stroke-linecap="round"/>
-
-  <circle cx="387" cy="358" r="52" fill="#FFFFFF" stroke="#BFCBDA" stroke-width="16"/>
-  <circle cx="637" cy="670" r="62" fill="#0A84FF" stroke="#0D6ED8" stroke-width="16"/>
-
-  <path d="M356 358H418" stroke="#D4DDE8" stroke-width="16" stroke-linecap="round"/>
-  <path d="M600 670H674" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="386" cy="638" r="58" fill="#0A84FF" stroke="#0D6ED8" stroke-width="16"/>
+  <circle cx="638" cy="386" r="58" fill="#0A84FF" stroke="#0D6ED8" stroke-width="16"/>
+  <circle cx="508" cy="481" r="26" fill="#FFFFFF" stroke="#C7D2E0" stroke-width="12"/>
+  <path d="M347 638H425" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"/>
+  <path d="M599 386H677" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"/>
 </svg>

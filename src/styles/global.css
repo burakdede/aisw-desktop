@@ -261,30 +261,26 @@ button {
 }
 
 .brand-mark-plate {
-  fill: color-mix(in srgb, Canvas 96%, AccentColor 4%);
-  stroke: color-mix(in srgb, CanvasText 6%, transparent);
+  fill: color-mix(in srgb, Canvas 97%, AccentColor 3%);
+  stroke: color-mix(in srgb, CanvasText 7%, transparent);
 }
 
-.brand-mark-lane {
+.brand-mark-track {
   fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
   stroke: color-mix(in srgb, CanvasText 8%, transparent);
 }
 
-.brand-mark-lane-accent {
+.brand-mark-track-accent {
   fill: color-mix(in srgb, AccentColor 20%, Canvas 80%);
   stroke: color-mix(in srgb, AccentColor 26%, transparent);
 }
 
 .brand-mark-path {
-  stroke: color-mix(in srgb, CanvasText 34%, transparent);
+  stroke: color-mix(in srgb, CanvasText 32%, transparent);
 }
 
 .brand-mark-path-accent {
   stroke: color-mix(in srgb, AccentColor 82%, CanvasText 18%);
-}
-
-.brand-mark-bridge {
-  stroke: color-mix(in srgb, CanvasText 24%, transparent);
 }
 
 .brand-mark-highlight {
