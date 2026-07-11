@@ -393,15 +393,15 @@ export function App() {
         <div>
           <strong>{currentActiveSet ? `Current set: ${currentActiveSet}` : "No set selected"}</strong>
           <p>{runtimeStatus.compatible ? "Ready to switch" : "Needs attention"}</p>
-          <p>{runtimeStatus.resolved_path ?? "No runtime resolved"}</p>
+          <p>{runtimeStatus.resolved_path ?? "No engine resolved"}</p>
         </div>
       }
     >
       {!runtimeStatus.compatible ? (
-        <SectionCard title="Finish runtime setup" kicker="Startup required">
+        <SectionCard title="Finish engine setup" kicker="Startup required">
           <div className="stack-list">
             <p className="inline-note">
-              AI Switch includes the switching engine it needs. The current advanced runtime choice
+              AI Switch includes the switching engine it needs. The current advanced engine choice
               on this Mac does not match this desktop build.
             </p>
             <p className="inline-note">{runtimeBlocker.nextStep}</p>
@@ -507,7 +507,7 @@ export function App() {
         </>
       ) : (
         <SectionCard title="Waiting for snapshot" kicker="Bootstrap">
-          <p className="inline-note">The runtime is compatible, but no state snapshot is available yet.</p>
+          <p className="inline-note">The switching engine is compatible, but no state snapshot is available yet.</p>
         </SectionCard>
       )}
     </AppFrame>
@@ -564,25 +564,25 @@ function describeRuntimeBlocker(runtimeStatus: {
   if (hasResolvedRuntime && missingDesktopContract) {
     return {
       summary:
-        "AI Switch found a runtime binary, but it does not support the desktop integration features required by this release.",
+        "AI Switch found a switching engine binary, but it does not support the desktop integration features required by this release.",
       nextStep:
-        "Open Settings and switch back to the bundled runtime, or choose a newer compatible runtime before continuing.",
+        "Open Settings and switch back to the bundled engine, or choose a newer compatible engine before continuing.",
     };
   }
 
   if (hasResolvedRuntime) {
     return {
       summary:
-        "AI Switch found a runtime binary, but it is not compatible with this desktop build.",
+        "AI Switch found a switching engine binary, but it is not compatible with this desktop build.",
       nextStep:
-        "Open Settings and switch back to the bundled runtime, or choose a compatible runtime before continuing.",
+        "Open Settings and switch back to the bundled engine, or choose a compatible engine before continuing.",
     };
   }
 
   return {
-    summary: "AI Switch could not use the selected runtime.",
+    summary: "AI Switch could not use the selected switching engine.",
     nextStep:
-      "Open Settings and switch to a working bundled runtime or choose an advanced override before continuing.",
+      "Open Settings and switch to a working bundled engine or choose an advanced override before continuing.",
   };
 }
 

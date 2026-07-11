@@ -3,11 +3,11 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum DesktopError {
-    #[error("AI Switch could not resolve a compatible switching runtime")]
+    #[error("AI Switch could not resolve a compatible switching engine")]
     AiswNotFound,
-    #[error("AI Switch received invalid runtime data for {command}")]
+    #[error("AI Switch received invalid engine data for {command}")]
     InvalidJson { command: String },
-    #[error("AI Switch runtime command failed for {command}")]
+    #[error("AI Switch engine command failed for {command}")]
     CommandFailed {
         command: String,
         kind: GuiErrorKind,
@@ -55,14 +55,14 @@ impl From<DesktopError> for ErrorPayload {
                 kind: GuiErrorKind::AiswNotFound,
                 message: value.to_string(),
                 remediation: Some(
-                    "Select a valid bundled, system, or custom switching runtime.".to_owned(),
+                    "Select a valid bundled, system, or custom switching engine.".to_owned(),
                 ),
             },
             DesktopError::InvalidJson { command } => Self {
                 kind: GuiErrorKind::CommandContractError,
-                message: format!("The selected switching runtime returned invalid data for `{command}`."),
+                message: format!("The selected switching engine returned invalid data for `{command}`."),
                 remediation: Some(
-                    "Check runtime compatibility and command support before retrying.".to_owned(),
+                    "Check engine compatibility and command support before retrying.".to_owned(),
                 ),
             },
             DesktopError::CommandFailed {

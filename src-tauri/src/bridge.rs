@@ -814,7 +814,7 @@ fn remediation_for_kind(kind: &GuiErrorKind) -> Option<String> {
                 .to_owned(),
         ),
         GuiErrorKind::InvalidStateMode => Some(
-            "Pick a state mode supported by this tool and the selected switching runtime.".to_owned(),
+            "Pick a state mode supported by this tool and the selected switching engine.".to_owned(),
         ),
         _ => None,
     }

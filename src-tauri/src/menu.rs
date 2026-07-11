@@ -72,9 +72,9 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         MenuItem::with_id(app, VIEW_ACTIVITY_ID, "Activity", true, Some("CmdOrCtrl+6"))?;
 
     let help_docs =
-        MenuItem::with_id(app, "menu.help.docs", "AI Switch Documentation", true, None::<&str>)?;
+        MenuItem::with_id(app, "menu.help.docs", "AI Switch Help", true, None::<&str>)?;
     let help_issues =
-        MenuItem::with_id(app, "menu.help.issues", "Open GitHub Issues", true, None::<&str>)?;
+        MenuItem::with_id(app, "menu.help.issues", "Report an Issue", true, None::<&str>)?;
 
     let app_items: Vec<MenuItemKind<R>> = vec![
         PredefinedMenuItem::about(app, Some("About AI Switch"), None)?.kind(),

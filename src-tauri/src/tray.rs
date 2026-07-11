@@ -445,7 +445,7 @@ fn tray_menu_model(
 
 fn tray_status_label(runtime_compatible: bool, snapshot: Option<&AppSnapshot>) -> String {
     if !runtime_compatible {
-        return "Runtime blocked".to_owned();
+        return "Engine blocked".to_owned();
     }
 
     active_summary_or_default(snapshot)
@@ -455,7 +455,7 @@ fn tray_runtime_notice(runtime_compatible: bool) -> Option<&'static str> {
     if runtime_compatible {
         None
     } else {
-        Some("Runtime blocked. Fix the switching runtime in Settings.")
+        Some("Engine blocked. Fix the switching engine in Settings.")
     }
 }
 
@@ -886,10 +886,10 @@ mod tests {
 
     #[test]
     fn tray_status_label_reports_blocked_runtime() {
-        assert_eq!(tray_status_label(false, None), "Runtime blocked");
+        assert_eq!(tray_status_label(false, None), "Engine blocked");
         assert_eq!(
             tray_runtime_notice(false),
-            Some("Runtime blocked. Fix the switching runtime in Settings.")
+            Some("Engine blocked. Fix the switching engine in Settings.")
         );
         assert_eq!(tray_runtime_notice(true), None);
     }
@@ -1368,7 +1368,7 @@ mod tests {
         assert_eq!(model.active_label, "Active set: Work");
         assert_eq!(
             model.runtime_notice.as_deref(),
-            Some("Runtime blocked. Fix the switching runtime in Settings.")
+            Some("Engine blocked. Fix the switching engine in Settings.")
         );
         assert!(model.sections.is_empty());
         assert_eq!(model.footer_items.len(), 3);

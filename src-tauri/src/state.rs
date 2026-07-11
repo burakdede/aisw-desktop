@@ -197,23 +197,23 @@ impl AppState {
             .unwrap_or(false);
         let mut issues = Vec::new();
         if resolved_path.is_none() {
-            issues.push("AI Switch could not resolve a compatible switching runtime".to_owned());
+            issues.push("AI Switch could not resolve a compatible switching engine".to_owned());
         }
         if let Some(version) = &version {
             if version.cli_api_version != 1 || version.json_schema_version != 1 {
                 issues.push(
-                    "The selected switching runtime uses an unsupported desktop contract version.".to_owned(),
+                    "The selected switching engine uses an unsupported desktop contract version.".to_owned(),
                 );
             }
         } else {
-            issues.push("Runtime version details are unavailable".to_owned());
+            issues.push("Engine version details are unavailable".to_owned());
         }
         if let Some(capabilities) = &capabilities {
             for feature in missing_required_features(capabilities) {
-                issues.push(format!("The selected switching runtime does not include {feature} support"));
+                issues.push(format!("The selected switching engine does not include {feature} support"));
             }
         } else {
-            issues.push("Runtime capability details are unavailable".to_owned());
+            issues.push("Engine capability details are unavailable".to_owned());
         }
 
         RuntimeStatus {
@@ -263,9 +263,9 @@ fn missing_required_features(capabilities: &CapabilitiesInfo) -> Vec<&'static st
 pub fn incompatible_runtime_error() -> ErrorPayload {
     ErrorPayload {
         kind: GuiErrorKind::AiswIncompatible,
-        message: "The selected switching runtime is not compatible with AI Switch.".to_owned(),
+        message: "The selected switching engine is not compatible with AI Switch.".to_owned(),
         remediation: Some(
-            "Select a compatible runtime build or switch back to the bundled runtime.".to_owned(),
+            "Select a compatible engine build or switch back to the bundled engine.".to_owned(),
         ),
     }
 }

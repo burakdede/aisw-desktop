@@ -584,7 +584,7 @@ export function ProfilesPanel({
                 <div className="diagnostic-card">
                   <h4>Sign-in flow</h4>
                   <p className="inline-note">
-                    AI Switch will launch the tool&apos;s native login flow and stream progress from the bundled switching runtime.
+                    AI Switch will launch the tool&apos;s native login flow and stream progress from the bundled switching engine.
                   </p>
                   <p className="inline-note">
                     Keep this window open while the browser or terminal login completes.

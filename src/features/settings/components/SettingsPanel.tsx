@@ -138,27 +138,27 @@ export function SettingsPanel({
               <article className="diagnostic-card settings-pane-intro">
                 <h3>Preferred setup</h3>
                 <p className="inline-note">
-                  Keep AI Switch on the bundled runtime unless you intentionally need an advanced override.
+                  Keep AI Switch on the bundled switching engine unless you intentionally need an advanced override.
                 </p>
               </article>
               <article className={`diagnostic-card ${runtimeKind === "bundled" ? "diagnostic-pass" : "diagnostic-warn"}`}>
-                <h3>Recommended runtime</h3>
+                <h3>Recommended engine</h3>
                 <p className="inline-note">
-                  AI Switch ships with a compatible runtime and uses it by default.
+                  AI Switch ships with a compatible switching engine and uses it by default.
                 </p>
                 <p className="inline-note">
-                  Use a system or custom runtime only when you intentionally need to override the supported desktop bundle.
+                  Use a system or custom engine only when you intentionally need to override the supported desktop bundle.
                 </p>
               </article>
 
               {runtimeKind !== "bundled" ? (
                 <article className="diagnostic-card diagnostic-warn">
-                  <h3>Advanced runtime override is active</h3>
+                  <h3>Advanced engine override is active</h3>
                   <p className="inline-note">
-                    This desktop session is using a {runtimeKind === "system" ? "system" : "custom"} runtime binary instead of the bundled runtime.
+                    This desktop session is using a {runtimeKind === "system" ? "system" : "custom"} engine binary instead of the bundled engine.
                   </p>
                   <p className="inline-note">
-                    Compatibility for onboarding, switching, and diagnostics is only guaranteed with the bundled runtime shipped in this app release.
+                    Compatibility for onboarding, switching, and diagnostics is only guaranteed with the bundled engine shipped in this app release.
                   </p>
                 </article>
               ) : null}
@@ -166,25 +166,25 @@ export function SettingsPanel({
               {showAdvancedRuntime ? (
                 <>
                   <label>
-                    Runtime source
+                    Engine source
                     <select
                       value={runtimeKind}
                       onChange={(event) => setRuntimeKind(event.target.value as typeof runtimeKind)}
                     >
-                      <option value="bundled">Bundled runtime</option>
-                      <option value="system">System runtime</option>
+                      <option value="bundled">Bundled engine</option>
+                      <option value="system">System engine</option>
                       <option value="custom">Custom path</option>
                     </select>
                   </label>
                   <label>
-                    Runtime path
+                    Engine path
                     <input
                       value={runtimePath}
                       disabled={runtimeKind !== "custom"}
                       placeholder={
                         runtimeKind === "custom"
-                          ? "/path/to/runtime"
-                          : "Only used for custom runtime"
+                          ? "/path/to/engine"
+                          : "Only used for a custom engine"
                       }
                       onChange={(event) => setRuntimePath(event.target.value)}
                     />
@@ -196,7 +196,7 @@ export function SettingsPanel({
                         type="button"
                         onClick={() => setShowAdvancedRuntime(false)}
                       >
-                        Hide advanced runtime options
+                        Hide advanced engine options
                       </button>
                     </div>
                   ) : null}
@@ -208,7 +208,7 @@ export function SettingsPanel({
                     type="button"
                     onClick={() => setShowAdvancedRuntime(true)}
                   >
-                    Show advanced runtime options
+                    Show advanced engine options
                   </button>
                 </div>
               )}
@@ -233,34 +233,34 @@ export function SettingsPanel({
             ) : null}
             <div className="stack-list diagnostics-body">
               <article className="diagnostic-card">
-                <h3>Runtime details</h3>
+                <h3>Engine details</h3>
                 <p className="inline-note">
-                  Current runtime path: {runtimeStatus.resolved_path ?? "No runtime resolved"}
+                  Current engine path: {runtimeStatus.resolved_path ?? "No engine resolved"}
                 </p>
                 <p className="inline-note">
                   Managed data folder: {settings.aisw_home ?? "Default managed location"}
                 </p>
                 <p className="inline-note">
-                  Bundled runtime path: {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
+                  Bundled engine path: {runtimeStatus.inventory.bundled_path ?? "Not available in this build"}
                 </p>
                 {showAdvancedRuntime || runtimeKind !== "bundled" ? (
                   <p className="inline-note">
-                    System runtime candidate: {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
+                    System engine candidate: {runtimeStatus.inventory.system_path ?? "Not found on PATH"}
                   </p>
                 ) : null}
                 {runtimeStatus.inventory.configured_path ? (
                   <p className="inline-note">
-                    Configured custom path: {runtimeStatus.inventory.configured_path}
+                    Custom engine path: {runtimeStatus.inventory.configured_path}
                   </p>
                 ) : null}
                 <p className="inline-note">
                   Selected update channel: <strong>{titleCase(updateChannel)}</strong>
                 </p>
                 <p className="inline-note">
-                  Runtime mode: <strong>{titleCase(runtimeKind)}</strong>
+                  Engine mode: <strong>{titleCase(runtimeKind)}</strong>
                 </p>
                 <p className="inline-note">
-                  Runtime version: {runtimeStatus.version?.version ?? "unknown"}
+                  Engine version: {runtimeStatus.version?.version ?? "unknown"}
                 </p>
                 {runtimeStatus.version ? (
                   <p className="inline-note">
@@ -335,7 +335,7 @@ export function SettingsPanel({
             </div>
             {hasPendingSettingsChanges ? (
               <p className="inline-note">
-                Save settings before checking for updates so the runtime and channel selection match
+                Save settings before checking for updates so the engine and channel selection match
                 the persisted desktop configuration.
               </p>
             ) : null}
@@ -615,7 +615,7 @@ function effectiveRuntimePath(runtimeKind: DesktopSettings["runtime_kind"], runt
 function sectionLabel(section: SettingsSection) {
   switch (section) {
     case "runtime":
-      return "Runtime";
+      return "Engine";
     case "updates":
       return "Updates";
     case "shell":
@@ -628,7 +628,7 @@ function sectionLabel(section: SettingsSection) {
 function sectionKicker(section: SettingsSection) {
   switch (section) {
     case "runtime":
-      return "Runtime and local storage";
+      return "Engine and local storage";
     case "updates":
       return "Signed desktop releases";
     case "shell":
