@@ -114,7 +114,7 @@ export function ProfilesPanel({
           label: effectiveLabel(entryTool, entry.name, entry.label, settings) ?? titleCase(entry.name),
           active: snapshot.profiles[entryTool]?.active === entry.name,
           backend: status?.credential_backend ? formatBackendLabel(status.credential_backend) : "Stored",
-          state: status?.active_profile_applied === false ? "Live mismatch" : snapshot.profiles[entryTool]?.active === entry.name ? "Active" : "Stored",
+          state: status?.active_profile_applied === false ? "Drifted" : snapshot.profiles[entryTool]?.active === entry.name ? "Active" : "Stored",
           lastChecked: latestBackup
             ? formatBackupTimestamp(latestBackup.created_at ?? latestBackup.backup_id)
             : snapshot.profiles[entryTool]?.active === entry.name
@@ -393,7 +393,7 @@ export function ProfilesPanel({
       <div className="panel-grid panel-grid-2 profiles-layout desktop-pane-grid">
         <div className="stack-list profiles-inventory-pane desktop-pane-column">
           <article className="diagnostic-card desktop-pane-intro">
-            <h3>Stored profiles</h3>
+            <h3>Saved profiles</h3>
             <p className="inline-note">
               Review active state, storage backend, and recent checks before you switch or edit a profile.
             </p>
@@ -493,8 +493,8 @@ export function ProfilesPanel({
           ) : null}
         </div>
         <div className="stack-list profiles-inspector-pane desktop-pane-column">
-          <article className="diagnostic-card desktop-pane-intro">
-            <h3>New profile</h3>
+            <article className="diagnostic-card desktop-pane-intro">
+            <h3>Add profile</h3>
             <p className="inline-note">
               Capture a current login, start provider OAuth, paste an API key, or read from environment.
             </p>
@@ -582,7 +582,7 @@ export function ProfilesPanel({
               ) : null}
               {mode === "oauth" ? (
                 <div className="diagnostic-card">
-                  <h4>OAuth wizard</h4>
+                  <h4>Sign-in flow</h4>
                   <p className="inline-note">
                     AI Switch will launch the tool&apos;s native login flow and stream progress from the bundled switching runtime.
                   </p>
@@ -675,7 +675,15 @@ export function ProfilesPanel({
           ) : null}
           {selectedProfileEntry ? (
             <article className="diagnostic-card">
-              <h3>{selectedProfileDisplay}</h3>
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Inspector</p>
+                  <h3>{selectedProfileDisplay}</h3>
+                </div>
+                <p className="inline-note">
+                  Review activation status, labels, backups, and safe recovery actions for this saved profile.
+                </p>
+              </div>
               <p className="inline-note">
                 {selectedProfileEntry.name} · {selectedProfileEntry.auth}
               </p>
@@ -812,13 +820,13 @@ export function ProfilesPanel({
                   }
                 >
                   {openDiagnosticDetails === selectedProfileEntry.name
-                    ? "Hide diagnostic details"
-                    : "View diagnostic details"}
+                    ? "Hide technical details"
+                    : "View technical details"}
                 </button>
               </div>
               {openDiagnosticDetails === selectedProfileEntry.name ? (
                 <article className="diagnostic-card">
-                  <h4>Diagnostic details</h4>
+                  <h4>Technical details</h4>
                   <p className="inline-note">
                     Auth method: {selectedProfileEntry.auth}
                   </p>
@@ -1045,7 +1053,7 @@ export function ProfilesPanel({
             <article className="diagnostic-card">
               <h3>Profile details</h3>
               <p className="inline-note">
-                Select a stored profile from the inventory to inspect activation state, diagnostics, backups, and edit actions.
+                Select a saved profile from the library to inspect activation state, health details, backups, and edit actions.
               </p>
             </article>
           )}

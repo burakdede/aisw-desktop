@@ -503,7 +503,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByText("Provisioning")).toBeInTheDocument();
       expect(screen.getByDisplayValue("Codex")).toBeInTheDocument();
-      expect(screen.getByText("Diagnostic details")).toBeInTheDocument();
+      expect(screen.getByText("Technical details")).toBeInTheDocument();
       expect(screen.getByText("No additional token or runtime warnings are currently reported for this tool.")).toBeInTheDocument();
     });
   });
@@ -650,7 +650,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByDisplayValue("Codex")).toBeInTheDocument();
-      expect(screen.getByText("Diagnostic details")).toBeInTheDocument();
+      expect(screen.getByText("Technical details")).toBeInTheDocument();
       expect(screen.getByText("Auth method: api_key")).toBeInTheDocument();
     });
 
@@ -661,7 +661,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByDisplayValue("Claude")).toBeInTheDocument();
     });
-    expect(screen.queryByText("Diagnostic details")).not.toBeInTheDocument();
+    expect(screen.queryByText("Technical details")).not.toBeInTheDocument();
   });
 
   it("clears routed profile details when reopening profiles from the sidebar", async () => {
@@ -715,7 +715,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByDisplayValue("Codex")).toBeInTheDocument();
-      expect(screen.getByText("Diagnostic details")).toBeInTheDocument();
+      expect(screen.getByText("Technical details")).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Overview" }));
@@ -724,7 +724,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByDisplayValue("Claude")).toBeInTheDocument();
     });
-    expect(screen.queryByText("Diagnostic details")).not.toBeInTheDocument();
+    expect(screen.queryByText("Technical details")).not.toBeInTheDocument();
   });
 
   it("clears routed settings sections when reopening settings from the sidebar", async () => {
@@ -893,7 +893,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getAllByRole("heading", { name: "Work" }).length).toBeGreaterThan(0));
-    fireEvent.change(screen.getByDisplayValue("Switch profile set or shared profile…"), {
+    fireEvent.change(screen.getByDisplayValue("Switch a set or saved profile…"), {
       target: { value: "profile:work" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Switch all" }));
@@ -1322,10 +1322,10 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
-    fireEvent.click(screen.getByText("View diagnostic details"));
+    fireEvent.click(screen.getByText("View technical details"));
 
     await waitFor(() => {
-      expect(screen.getByText("Diagnostic details")).toBeInTheDocument();
+      expect(screen.getByText("Technical details")).toBeInTheDocument();
     });
     expect(screen.getByText("Credential backend: system_keyring")).toBeInTheDocument();
     expect(screen.getByText("Live match: yes")).toBeInTheDocument();
@@ -1418,10 +1418,10 @@ describe("App", () => {
       .closest(".list-row") as HTMLElement | null;
     expect(personalRow).not.toBeNull();
     fireEvent.click(within(personalRow!).getByText("Open details"));
-    fireEvent.click(screen.getByText("View diagnostic details"));
+    fireEvent.click(screen.getByText("View technical details"));
 
     await waitFor(() => {
-      expect(screen.getByText("Diagnostic details")).toBeInTheDocument();
+      expect(screen.getByText("Technical details")).toBeInTheDocument();
     });
     expect(screen.getByText("Auth method: oauth")).toBeInTheDocument();
     expect(screen.getByText("Desktop active: no")).toBeInTheDocument();
@@ -1467,7 +1467,7 @@ describe("App", () => {
         "Claude already has a profile named work. Choose a different name or rename the existing profile first.",
       ),
     ).toBeInTheDocument();
-    expect(getProfilesSection().getByText("Add profile")).toBeDisabled();
+    expect(getProfilesSection().getByRole("button", { name: "Add profile" })).toBeDisabled();
     expect(calls.some((entry) => entry.command === "add_profile")).toBe(false);
   });
 
@@ -1583,7 +1583,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Profile name"), {
       target: { value: "travel-next" },
     });
-    fireEvent.click(getProfilesSection().getByText("Add profile"));
+    fireEvent.click(getProfilesSection().getByRole("button", { name: "Add profile" }));
 
     await waitFor(() => {
       expect(
@@ -1644,7 +1644,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Profile name"), {
       target: { value: "ops" },
     });
-    fireEvent.click(getProfilesSection().getByText("Add profile"));
+    fireEvent.click(getProfilesSection().getByRole("button", { name: "Add profile" }));
 
     await waitFor(() => {
       expect(screen.getByText("duplicate profile")).toBeInTheDocument();
@@ -1740,7 +1740,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Profile name"), {
       target: { value: "ops" },
     });
-    fireEvent.click(getProfilesSection().getByText("Add profile"));
+    fireEvent.click(getProfilesSection().getByRole("button", { name: "Add profile" }));
 
     await waitFor(() => {
       expect(
@@ -1833,7 +1833,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Profile name"), {
       target: { value: "ops" },
     });
-    fireEvent.click(getProfilesSection().getByText("Add profile"));
+    fireEvent.click(getProfilesSection().getByRole("button", { name: "Add profile" }));
 
     await waitFor(() => {
       expect(screen.getByText(/interactive login required/)).toBeInTheDocument();
@@ -1906,7 +1906,7 @@ describe("App", () => {
     fireEvent.click(within(failureCard!).getByText("Open profile details"));
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Diagnostic details" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Technical details" })).toBeInTheDocument();
     });
   });
 
@@ -1950,7 +1950,7 @@ describe("App", () => {
     });
 
     expect(screen.getByText("OPENAI_API_KEY")).toBeInTheDocument();
-    fireEvent.click(getProfilesSection().getByText("Add profile"));
+    fireEvent.click(getProfilesSection().getByRole("button", { name: "Add profile" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "add_profile")).toBe(true);
@@ -2188,7 +2188,7 @@ describe("App", () => {
     });
     expect(apiKeyInput.value).toBe("sk-live-secret");
 
-    fireEvent.click(getProfilesSection().getByText("Add profile"));
+    fireEvent.click(getProfilesSection().getByRole("button", { name: "Add profile" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "add_profile")).toBe(true);
@@ -2257,7 +2257,7 @@ describe("App", () => {
     });
     expect(apiKeyInput.value).toBe("sk-live-secret");
 
-    fireEvent.click(getProfilesSection().getByText("Add profile"));
+    fireEvent.click(getProfilesSection().getByRole("button", { name: "Add profile" }));
 
     await waitFor(() => {
       expect(
@@ -2664,7 +2664,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByLabelText("Tool")).toHaveValue("claude");
       expect(screen.getByDisplayValue("Claude")).toBeInTheDocument();
-      expect(screen.getByText("Hide diagnostic details")).toBeInTheDocument();
+      expect(screen.getByText("Hide technical details")).toBeInTheDocument();
     });
   });
 
@@ -3101,7 +3101,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByRole("button", { name: "Switch all" })).toBeInTheDocument());
-    fireEvent.change(screen.getByDisplayValue("Switch profile set or shared profile…"), {
+    fireEvent.change(screen.getByDisplayValue("Switch a set or saved profile…"), {
       target: { value: "profile:work" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Switch all" }));
@@ -3169,7 +3169,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByRole("button", { name: "Switch all" })).toBeInTheDocument());
-    fireEvent.change(screen.getByDisplayValue("Switch profile set or shared profile…"), {
+    fireEvent.change(screen.getByDisplayValue("Switch a set or saved profile…"), {
       target: { value: "profile:work" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Switch all" }));
@@ -3608,7 +3608,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(
         screen.getByText((_, element) =>
-          element?.tagName === "P" && element.textContent?.trim() === "Expected CLI context: client-acme",
+          element?.tagName === "P" && element.textContent?.trim() === "Expected imported set: client-acme",
         ),
       ).toBeInTheDocument();
     });
@@ -4500,7 +4500,7 @@ describe("App", () => {
     await waitFor(() =>
       expect(screen.getByText("Credential backend: system_keyring")).toBeInTheDocument(),
     );
-    expect(screen.getByText("Diagnostic details")).toBeInTheDocument();
+    expect(screen.getByText("Technical details")).toBeInTheDocument();
     expect(screen.getByText("Credential backend: system_keyring")).toBeInTheDocument();
     expect(screen.getByText("Live match: no")).toBeInTheDocument();
   });
@@ -5984,11 +5984,11 @@ describe("App", () => {
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Overview"));
-    expect(screen.queryByRole("option", { name: "Profile set: Empty Set" })).not.toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "Profile set: Client Acme" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Set: Empty Set" })).not.toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Set: Client Acme" })).toBeInTheDocument();
 
     await openProjectRulesSection();
-    expect(screen.queryByRole("option", { name: "Profile set: Empty Set" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Set: Empty Set" })).not.toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Profile set: Client Acme" })).toBeInTheDocument();
 
     await openSetsSection();
@@ -6223,7 +6223,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByRole("button", { name: "Switch all" })).toBeInTheDocument());
-    fireEvent.change(screen.getByDisplayValue("Switch profile set or shared profile…"), {
+    fireEvent.change(screen.getByDisplayValue("Switch a set or saved profile…"), {
       target: { value: "set:client-acme" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Switch all" }));
@@ -6265,7 +6265,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByRole("button", { name: "Switch all" })).toBeInTheDocument());
-    expect(screen.getByRole("option", { name: "Shared profile: Office" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Saved profile: Office" })).toBeInTheDocument();
   });
 
   it("uses saved profile labels in onboarding first switch options and sidebar badge", async () => {

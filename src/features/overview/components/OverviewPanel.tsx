@@ -63,13 +63,13 @@ export function OverviewPanel({
       .sort((left, right) => left.name.localeCompare(right.name))
       .map((set) => ({
         value: `set:${set.name}`,
-        label: `Profile set: ${set.label ?? set.name}`,
+        label: `Set: ${set.label ?? set.name}`,
       }));
     return [
       ...profileSets,
       ...sharedProfiles.map((profile) => ({
         value: `profile:${profile.name}`,
-        label: `Shared profile: ${profile.label}`,
+        label: `Saved profile: ${profile.label}`,
       })),
     ];
   }, [settings, sharedProfiles, snapshot]);
@@ -90,9 +90,9 @@ export function OverviewPanel({
     : null;
   const workspaceSummaryLabel =
     expectedWorkspaceTarget?.kind === "profile_set"
-      ? "Expected profile set"
+      ? "Expected set"
       : expectedWorkspaceTarget?.kind === "context"
-        ? "Expected CLI context"
+        ? "Expected imported set"
         : "Expected set";
   const expectedWorkspaceDisplay = contextDisplayLabel(settings, workspaceStatus.expectedContext);
   const currentWorkspaceDisplay = contextDisplayLabel(settings, workspaceStatus.currentContext);
@@ -117,7 +117,7 @@ export function OverviewPanel({
             value={quickSwitch}
             onChange={(event) => setQuickSwitch(event.target.value)}
           >
-            <option value="">Switch profile set or shared profile…</option>
+            <option value="">Switch a set or saved profile…</option>
             {quickSwitchOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -264,7 +264,7 @@ export function OverviewPanel({
             <h3>Live account state</h3>
           </div>
           <p className="inline-note">
-            Active profile, live match, storage backend, and drift warnings are surfaced here first.
+            Active profile, match status, secure storage, and drift warnings are surfaced here first.
           </p>
         </div>
         <div className="tool-grid overview-tool-grid">
@@ -438,7 +438,7 @@ function ToolCard({
               ? "Unknown"
               : activeState
                 ? "Yes"
-                : "Mismatch"}
+                : "Drifted"}
           </dd>
         </div>
         <div>
@@ -681,7 +681,7 @@ function statusPillLabel(status: ToolStatus) {
     return "Not configured";
   }
   if (status.active_profile_applied === false) {
-    return "Live mismatch";
+    return "Drifted";
   }
   if (status.token_warning || status.warnings.length) {
     return "Needs review";
