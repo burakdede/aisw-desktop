@@ -7424,7 +7424,7 @@ describe("App", () => {
       expect(screen.getByText("Runtime details")).toBeInTheDocument();
       expect(
         screen.getByText(
-          (_, element) => element?.textContent?.trim() === "Desktop storage: Managed automatically",
+          (_, element) => element?.textContent?.trim() === "Data folder: Managed automatically",
         ),
       ).toBeInTheDocument();
       expect(
@@ -7433,7 +7433,7 @@ describe("App", () => {
       expect(screen.getByText("Runtime API 1 · JSON schema 1 · Progress schema 1")).toBeInTheDocument();
       expect(
         screen.getByText((_, element) =>
-          element?.textContent?.trim() === "Active runtime source: Included with this app",
+          element?.textContent?.trim() === "Selected runtime source: Included with this app",
         ),
       ).toBeInTheDocument();
       expect(

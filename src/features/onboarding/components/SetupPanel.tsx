@@ -340,7 +340,7 @@ export function SetupPanel({
                 Version: {bootstrap.runtime_status.version?.version ?? "unknown"}
               </p>
               <p className="inline-note">
-                Desktop storage: {bootstrap.settings.aisw_home ?? "Managed automatically"}
+                Data folder: {bootstrap.settings.aisw_home ?? "Managed automatically"}
               </p>
               <p className="inline-note">
                 Secure storage: {secureStorage}
@@ -844,11 +844,11 @@ function buildRuntimeRows(
         : `Available, but AI Switch is currently using ${summarizeRuntime(bootstrap.settings.runtime_kind).source.toLowerCase()}.`,
     },
     {
-      label: "Desktop storage",
+      label: "Data folder",
       status: "pass",
       detail: bootstrap.settings.aisw_home
         ? `Custom folder set to ${bootstrap.settings.aisw_home}.`
-        : "Managed automatically inside the standard AI Switch storage location.",
+        : "Managed automatically inside the standard AI Switch data location.",
     },
     {
       label: "Secure storage",

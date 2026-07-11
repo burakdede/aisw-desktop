@@ -15,7 +15,7 @@ export function normalizeRuntimeLanguage(text: string | null | undefined): strin
     .replace(/engine choice/g, "runtime choice")
     .replace(/Engine version details are unavailable/g, "Runtime version details are unavailable")
     .replace(/Engine capability details are unavailable/g, "Runtime capability details are unavailable")
-    .replace(/AISW_HOME/g, "Desktop storage")
+    .replace(/AISW_HOME/g, "Data folder")
     .replace(/outside AISW/g, "outside AI Switch")
     .replace(/Outside AISW/g, "Outside AI Switch")
     .replace(/AISW cannot/g, "AI Switch cannot")

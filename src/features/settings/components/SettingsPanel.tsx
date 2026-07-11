@@ -905,14 +905,14 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Storage</p>
-                    <h3>Desktop storage</h3>
+                    <h3>Data folder</h3>
                   </div>
                   <p className="inline-note">
-                    Leave this empty to use the managed desktop data location.
+                    Leave this empty to use the managed app data location.
                   </p>
                 </div>
                 <label>
-                  Desktop storage override
+                  Data folder override
                   <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
                 </label>
               </article>
@@ -938,11 +938,11 @@ export function SettingsPanel({
                     <h3>Runtime details</h3>
                   </div>
                   <p className="inline-note">
-                    Review desktop storage, compatibility, and runtime availability without cluttering the main preferences.
+                    Review the data folder, compatibility, and runtime availability without cluttering the main preferences.
                   </p>
                 </div>
                 <p className="inline-note">
-                  Desktop storage:{" "}
+                  Data folder:{" "}
                   {settings.aisw_home ? `Custom folder (${settings.aisw_home})` : "Managed automatically"}
                 </p>
                 <p className="inline-note">
@@ -956,7 +956,7 @@ export function SettingsPanel({
                   </p>
                 ) : null}
                 <p className="inline-note">
-                  Active runtime source:{" "}
+                  Selected runtime source:{" "}
                   <strong>
                     {runtimeKind === "bundled"
                       ? "Included with this app"
