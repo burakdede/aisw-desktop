@@ -695,7 +695,7 @@ export function ProfilesPanel({
         }
         secondary={
           <div className="stack-list desktop-pane-column">
-            <article className="diagnostic-card desktop-pane-intro profiles-tool-focus-card">
+            <article className="diagnostic-card profiles-tool-focus-card">
               <div className="profiles-tool-focus-header">
                 <div>
                   <p className="card-kicker">Inspector</p>

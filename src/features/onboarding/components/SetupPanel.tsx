@@ -418,22 +418,15 @@ export function SetupPanel({
 
             {activeStep === "accounts" ? (
               <>
-                <article className="diagnostic-card desktop-pane-intro">
-                  <h3>Save the accounts you already use</h3>
-                  <p className="inline-note">
-                    Save current logins as reusable profiles, add missing profiles where needed, and
-                    ignore tools you do not use yet.
-                  </p>
-                </article>
-
                 <div className="desktop-pane-section onboarding-detection-stack">
             <div className="desktop-pane-section-header">
               <div>
-                <p className="card-kicker">Detection</p>
+                <p className="card-kicker">Accounts</p>
                 <h3>Detected tools</h3>
               </div>
               <p className="inline-note">
-                Saved accounts become reusable profiles that you can switch again later.
+                Save current logins as reusable profiles, add missing profiles where needed, and ignore
+                tools you do not use yet.
               </p>
             </div>
             {liveAccounts.map((account) => (
