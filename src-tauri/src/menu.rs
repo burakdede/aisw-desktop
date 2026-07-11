@@ -14,9 +14,7 @@ pub const MENU_OPEN_QUICK_SWITCH_EVENT: &str = "menu-open-quick-switch";
 pub const MENU_EXPORT_DIAGNOSTICS_EVENT: &str = "menu-export-diagnostics";
 pub const MENU_OPEN_ADD_PROFILE_EVENT: &str = "menu-open-add-profile";
 pub const MENU_RUN_VERIFY_EVENT: &str = "menu-run-verify";
-pub const MENU_OPEN_DOCS_EVENT: &str = "menu-open-docs";
 pub const MENU_OPEN_TROUBLESHOOTING_EVENT: &str = "menu-open-troubleshooting";
-pub const MENU_OPEN_ISSUES_EVENT: &str = "menu-open-issues";
 
 const SETTINGS_ID: &str = "menu.settings";
 const CHECK_UPDATES_ID: &str = "menu.check-updates";
@@ -84,7 +82,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let help_docs = MenuItem::with_id(
         app,
         "menu.help.docs",
-        "AI Switch Documentation",
+        "Get Started",
         true,
         None::<&str>,
     )?;
@@ -98,7 +96,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let help_issues = MenuItem::with_id(
         app,
         "menu.help.issues",
-        "Open GitHub Issues",
+        "Share Diagnostic Report…",
         true,
         None::<&str>,
     )?;
@@ -215,13 +213,13 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
             let _ = app.emit(MENU_EXPORT_DIAGNOSTICS_EVENT, ());
         }
         "menu.help.docs" => {
-            let _ = app.emit(MENU_OPEN_DOCS_EVENT, ());
+            let _ = app.emit(MENU_OPEN_OVERVIEW_EVENT, ());
         }
         "menu.help.troubleshooting" => {
             let _ = app.emit(MENU_OPEN_TROUBLESHOOTING_EVENT, ());
         }
         "menu.help.issues" => {
-            let _ = app.emit(MENU_OPEN_ISSUES_EVENT, ());
+            let _ = app.emit(MENU_EXPORT_DIAGNOSTICS_EVENT, ());
         }
         _ => {}
     }

@@ -281,28 +281,10 @@ export function App() {
       }
     });
 
-    void listenDesktopEvent("menu-open-docs", () => {
-      if (!active) return;
-      window.open("https://github.com/bdewey/aisw", "_blank", "noopener,noreferrer");
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
     void listenDesktopEvent("menu-open-troubleshooting", () => {
       if (!active) return;
       setActiveNav("diagnostics");
       invalidateDiagnostics();
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    void listenDesktopEvent("menu-open-issues", () => {
-      if (!active) return;
-      window.open("https://github.com/bdewey/aisw/issues", "_blank", "noopener,noreferrer");
     }).then((dispose) => {
       if (typeof dispose === "function") {
         disposers.push(dispose);

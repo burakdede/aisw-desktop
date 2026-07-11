@@ -5596,7 +5596,7 @@ describe("App", () => {
     });
   });
 
-  it("opens help destinations from the app menu", async () => {
+  it("opens troubleshooting from the app menu", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
@@ -5605,20 +5605,13 @@ describe("App", () => {
     }).__AISW_DESKTOP_EVENT_HANDLERS__;
 
     await act(async () => {
-      handlers?.["menu-open-docs"]?.({});
-      handlers?.["menu-open-issues"]?.({});
+      handlers?.["menu-open-troubleshooting"]?.({});
     });
 
-    expect(window.open).toHaveBeenCalledWith(
-      "https://github.com/bdewey/aisw",
-      "_blank",
-      "noopener,noreferrer",
-    );
-    expect(window.open).toHaveBeenCalledWith(
-      "https://github.com/bdewey/aisw/issues",
-      "_blank",
-      "noopener,noreferrer",
-    );
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Diagnostics" })).toHaveClass("nav-button-active");
+      expect(screen.getByText("Verify and recovery")).toBeInTheDocument();
+    });
   });
 
   it("opens import current login from the app menu in the profiles flow", async () => {
