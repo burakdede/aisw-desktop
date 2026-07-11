@@ -433,11 +433,11 @@ fn tray_menu_model(
             },
             TrayEntry {
                 id: DIAGNOSTICS_ID.to_owned(),
-                label: "Run diagnostics".to_owned(),
+                label: "Open Diagnostics".to_owned(),
             },
             TrayEntry {
                 id: QUIT_ID.to_owned(),
-                label: "Quit".to_owned(),
+                label: "Quit AI Switch".to_owned(),
             },
         ],
     }
@@ -445,7 +445,7 @@ fn tray_menu_model(
 
 fn tray_status_label(runtime_compatible: bool, snapshot: Option<&AppSnapshot>) -> String {
     if !runtime_compatible {
-        return "Engine blocked".to_owned();
+        return "Switching blocked".to_owned();
     }
 
     active_summary_or_default(snapshot)
@@ -455,7 +455,7 @@ fn tray_runtime_notice(runtime_compatible: bool) -> Option<&'static str> {
     if runtime_compatible {
         None
     } else {
-        Some("Engine blocked. Fix the switching engine in Settings.")
+        Some("Switching is blocked. Fix the engine in Settings.")
     }
 }
 
@@ -559,7 +559,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
     let shared_profiles = shared_profile_entries(settings, snapshot);
     if !shared_profiles.is_empty() {
         sections.push(TraySection {
-            title: "Switch all".to_owned(),
+            title: "Switch all tools".to_owned(),
             items: shared_profiles
                 .into_iter()
                 .map(|(profile, label)| TrayEntry {
@@ -572,7 +572,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
 
     if !snapshot.contexts.is_empty() {
         sections.push(TraySection {
-            title: "Switch Context".to_owned(),
+            title: "Shared groups".to_owned(),
             items: snapshot
                 .contexts
                 .iter()
@@ -589,7 +589,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
         .unwrap_or_default();
     if !profile_sets.is_empty() {
         sections.push(TraySection {
-            title: "Profile sets".to_owned(),
+            title: "Saved sets".to_owned(),
             items: profile_sets,
         });
     }
@@ -886,10 +886,10 @@ mod tests {
 
     #[test]
     fn tray_status_label_reports_blocked_runtime() {
-        assert_eq!(tray_status_label(false, None), "Engine blocked");
+        assert_eq!(tray_status_label(false, None), "Switching blocked");
         assert_eq!(
             tray_runtime_notice(false),
-            Some("Engine blocked. Fix the switching engine in Settings.")
+            Some("Switching is blocked. Fix the engine in Settings.")
         );
         assert_eq!(tray_runtime_notice(true), None);
     }
@@ -1067,21 +1067,21 @@ mod tests {
             ),
             vec![
                 TraySection {
-                    title: "Switch all".to_owned(),
+                    title: "Switch all tools".to_owned(),
                     items: vec![TrayEntry {
                         id: "switch-all:work".to_owned(),
                         label: "Work".to_owned(),
                     }],
                 },
                 TraySection {
-                    title: "Switch Context".to_owned(),
+                    title: "Shared groups".to_owned(),
                     items: vec![TrayEntry {
                         id: "context:client-acme".to_owned(),
                         label: "Client Acme ✓".to_owned(),
                     }],
                 },
                 TraySection {
-                    title: "Profile sets".to_owned(),
+                    title: "Saved sets".to_owned(),
                     items: vec![TrayEntry {
                         id: "profile-set:personal-focus".to_owned(),
                         label: "personal-focus".to_owned(),
@@ -1247,7 +1247,7 @@ mod tests {
             tray_sections(Some(&settings), &snapshot),
             vec![
                 TraySection {
-                    title: "Switch all".to_owned(),
+                    title: "Switch all tools".to_owned(),
                     items: vec![TrayEntry {
                         id: "switch-all:work".to_owned(),
                         label: "Office".to_owned(),
@@ -1317,11 +1317,11 @@ mod tests {
                 },
                 TrayEntry {
                     id: "diagnostics".to_owned(),
-                    label: "Run diagnostics".to_owned(),
+                    label: "Open Diagnostics".to_owned(),
                 },
                 TrayEntry {
                     id: "quit".to_owned(),
-                    label: "Quit".to_owned(),
+                    label: "Quit AI Switch".to_owned(),
                 },
             ]
         );
@@ -1368,7 +1368,7 @@ mod tests {
         assert_eq!(model.active_label, "Active set: Work");
         assert_eq!(
             model.runtime_notice.as_deref(),
-            Some("Engine blocked. Fix the switching engine in Settings.")
+            Some("Switching is blocked. Fix the engine in Settings.")
         );
         assert!(model.sections.is_empty());
         assert_eq!(model.footer_items.len(), 3);
