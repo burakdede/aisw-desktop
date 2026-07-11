@@ -65,6 +65,7 @@ export function QuickSwitchPalette({
   toolCapabilities,
 }: QuickSwitchPaletteProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const optionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const { activateProfileSetMutation, useAllProfilesMutation, useProfileMutation, mutationLock } =
@@ -101,6 +102,22 @@ export function QuickSwitchPalette({
     }
     if (selectedIndex >= filteredItems.length) {
       setSelectedIndex(filteredItems.length - 1);
+    }
+  }, [filteredItems, open, selectedIndex]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const selectedItem = filteredItems[selectedIndex];
+    if (!selectedItem) {
+      return;
+    }
+    const selectedNode = optionRefs.current[selectedItem.id];
+    if (selectedNode && typeof selectedNode.scrollIntoView === "function") {
+      selectedNode.scrollIntoView({
+        block: "nearest",
+      });
     }
   }, [filteredItems, open, selectedIndex]);
 
@@ -229,6 +246,8 @@ export function QuickSwitchPalette({
             ref={inputRef}
             className="quick-switch-search"
             aria-label="Search Quick Switch"
+            aria-controls="quick-switch-results-listbox"
+            aria-activedescendant={selectedItem ? `quick-switch-option-${selectedItem.id}` : undefined}
             placeholder="Search sets, profiles, or tools"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -238,7 +257,12 @@ export function QuickSwitchPalette({
           </span>
         </div>
         <div className="quick-switch-body">
-          <div className="quick-switch-results">
+          <div
+            className="quick-switch-results"
+            role="listbox"
+            id="quick-switch-results-listbox"
+            aria-label="Quick Switch results"
+          >
             {filteredItems.length ? (
               Object.entries(groupedItems).map(([group, groupItems]) => (
                 <div key={group} className="quick-switch-group">
@@ -249,12 +273,18 @@ export function QuickSwitchPalette({
                       return (
                         <button
                           key={item.id}
+                          id={`quick-switch-option-${item.id}`}
+                          ref={(node) => {
+                            optionRefs.current[item.id] = node;
+                          }}
                           className={
                             itemIndex === selectedIndex
                               ? "quick-switch-option quick-switch-option-active"
                               : "quick-switch-option"
                           }
                           type="button"
+                          role="option"
+                          aria-selected={itemIndex === selectedIndex}
                           onMouseEnter={() => setSelectedIndex(itemIndex)}
                           onClick={() => activateItem(item)}
                         >

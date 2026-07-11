@@ -1232,7 +1232,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getAllByRole("heading", { name: "Work" }).length).toBeGreaterThan(0));
     const quickSwitchDialog = await openQuickSwitchDialog();
-    fireEvent.click(quickSwitchDialog.getByRole("button", { name: /Work.*Across/i }));
+    fireEvent.click(quickSwitchDialog.getByRole("option", { name: /Work.*Across/i }));
 
     await waitFor(() => {
       expect(screen.getAllByRole("heading", { name: "Personal" }).length).toBeGreaterThan(0);
@@ -3573,7 +3573,7 @@ describe("App", () => {
 
     await renderApp();
     const quickSwitchDialog = await openQuickSwitchDialog();
-    fireEvent.click(quickSwitchDialog.getByRole("button", { name: /Work.*Across/i }));
+    fireEvent.click(quickSwitchDialog.getByRole("option", { name: /Work.*Across/i }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
@@ -3605,7 +3605,7 @@ describe("App", () => {
 
     await renderApp();
     const quickSwitchDialog = await openQuickSwitchDialog();
-    const matchingProfileButton = quickSwitchDialog.getByRole("button", { name: /Work.*Across/i });
+    const matchingProfileButton = quickSwitchDialog.getByRole("option", { name: /Work.*Across/i });
     fireEvent.mouseEnter(matchingProfileButton);
     fireEvent.keyDown(window, { key: "Enter", metaKey: true });
 
@@ -3672,7 +3672,7 @@ describe("App", () => {
 
     await renderApp();
     const quickSwitchDialog = await openQuickSwitchDialog();
-    fireEvent.click(quickSwitchDialog.getByRole("button", { name: /Work.*Across/i }));
+    fireEvent.click(quickSwitchDialog.getByRole("option", { name: /Work.*Across/i }));
 
     await waitFor(() => {
       expect(
@@ -6745,7 +6745,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Overview"));
     const quickSwitchDialog = await openQuickSwitchDialog();
     expect(quickSwitchDialog.queryByText("Empty Set")).not.toBeInTheDocument();
-    expect(quickSwitchDialog.getAllByRole("button", { name: /Client Acme/ }).length).toBeGreaterThan(0);
+    expect(quickSwitchDialog.getAllByRole("option", { name: /Client Acme/ }).length).toBeGreaterThan(0);
     fireEvent.click(quickSwitchDialog.getByRole("button", { name: "Close" }));
 
     await openProjectRulesSection();
@@ -6984,7 +6984,7 @@ describe("App", () => {
 
     await renderApp();
     const quickSwitchDialog = await openQuickSwitchDialog();
-    fireEvent.click(quickSwitchDialog.getAllByRole("button", { name: /Client Acme/ })[0]);
+    fireEvent.click(quickSwitchDialog.getAllByRole("option", { name: /Client Acme/ })[0]);
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
@@ -7023,7 +7023,7 @@ describe("App", () => {
 
     await renderApp();
     const quickSwitchDialog = await openQuickSwitchDialog();
-    expect(quickSwitchDialog.getByRole("button", { name: /Office.*Across/i })).toBeInTheDocument();
+    expect(quickSwitchDialog.getByRole("option", { name: /Office.*Across/i })).toBeInTheDocument();
   });
 
   it("groups quick switch tool profiles under full tool names", async () => {
@@ -7032,6 +7032,21 @@ describe("App", () => {
 
     expect(quickSwitchDialog.getByText("Claude Code")).toBeInTheDocument();
     expect(quickSwitchDialog.getByText("Codex CLI")).toBeInTheDocument();
+  });
+
+  it("exposes quick switch as a keyboard listbox with an active descendant", async () => {
+    await renderApp();
+    const quickSwitchDialog = await openQuickSwitchDialog();
+
+    expect(quickSwitchDialog.getByRole("listbox", { name: "Quick Switch results" })).toBeInTheDocument();
+
+    const search = quickSwitchDialog.getByLabelText("Search Quick Switch");
+    expect(search).toHaveAttribute("aria-controls", "quick-switch-results-listbox");
+    expect(search.getAttribute("aria-activedescendant")).toMatch(/^quick-switch-option-/);
+
+    const currentOptionId = search.getAttribute("aria-activedescendant");
+    expect(currentOptionId).not.toBeNull();
+    expect(document.getElementById(currentOptionId!)).toHaveAttribute("aria-selected", "true");
   });
 
   it("uses saved profile labels in onboarding first switch options and sidebar badge", async () => {
