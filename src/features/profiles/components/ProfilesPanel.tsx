@@ -503,7 +503,7 @@ export function ProfilesPanel({
         secondaryClassName="profiles-inspector-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-            <article className="diagnostic-card profiles-overview-card">
+            <article className="diagnostic-card profiles-table-card">
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Library</p>
@@ -539,19 +539,6 @@ export function ProfilesPanel({
                   </p>
                 </div>
               </div>
-              <div className="desktop-status-pill-stack">
-                {[
-                  "Sheet-based add flow",
-                  "Double-click to activate",
-                  "Inspector-driven recovery",
-                ].map((pill) => (
-                  <span key={pill} className="status-pill">
-                    {pill}
-                  </span>
-                ))}
-              </div>
-            </article>
-            <article className="diagnostic-card profiles-table-card">
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Profile list</p>
@@ -708,20 +695,14 @@ export function ProfilesPanel({
         }
         secondary={
           <div className="stack-list desktop-pane-column">
-              <div className="desktop-pane-section-header">
-                <div>
-                  <p className="card-kicker">Inspector</p>
-                  <h3>Selected profile</h3>
-                </div>
-                <p className="inline-note">
-                Inspect the selected login, apply recovery actions, or open the sheet-based add flow.
-                </p>
-              </div>
             <article className="diagnostic-card desktop-pane-intro profiles-tool-focus-card">
               <div className="profiles-tool-focus-header">
                 <div>
-                  <p className="card-kicker">Current tool</p>
-                  <h3>{titleCase(tool)}</h3>
+                  <p className="card-kicker">Inspector</p>
+                  <h3>{titleCase(tool)} profiles</h3>
+                  <p className="inline-note">
+                    Inspect the selected login, apply recovery actions, or open the sheet-based add flow.
+                  </p>
                 </div>
                 <span
                   className={`pill ${
