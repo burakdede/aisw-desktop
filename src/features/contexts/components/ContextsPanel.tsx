@@ -170,15 +170,21 @@ export function ContextsPanel({
         </button>
       }
     >
-      <div className="panel-grid panel-grid-2 sets-layout">
-        <div className="stack-list set-inventory-pane">
+      <div className="panel-grid panel-grid-2 sets-layout desktop-pane-grid">
+        <div className="stack-list set-inventory-pane desktop-pane-column">
+          <article className="diagnostic-card desktop-pane-intro">
+            <h3>Set library</h3>
+            <p className="inline-note">
+              Build reusable combinations once, then switch them from Overview, Quick Switch, the menu bar, and project rules.
+            </p>
+          </article>
           <div className="sets-summary-grid">
             <article className="diagnostic-card">
               <p className="card-kicker">Current</p>
               <h3>{activeSetCount ? "One set is active" : "No saved set is active"}</h3>
               <p className="inline-note">
                 {activeSetCount
-                  ? "AI Switch is currently aligned to one of your saved switching combinations."
+                  ? "The app is currently aligned to one of your saved switching combinations."
                   : "Switch a ready set to keep Claude Code, Codex CLI, and Gemini aligned."}
               </p>
             </article>
@@ -199,7 +205,7 @@ export function ContextsPanel({
           </div>
 
           <div className="stack-list">
-            <div className="set-section-header">
+            <div className="set-section-header desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Saved sets</p>
                 <h3>Reusable switching combinations</h3>
@@ -319,7 +325,7 @@ export function ContextsPanel({
           </div>
 
           <div className="stack-list">
-            <div className="set-section-header">
+            <div className="set-section-header desktop-pane-section-header">
               <div>
                 <p className="card-kicker">CLI import</p>
                 <h3>Imported CLI contexts</h3>
@@ -387,7 +393,7 @@ export function ContextsPanel({
           {lastAction ? <p className="inline-note">{lastAction}</p> : null}
         </div>
 
-        <article className="diagnostic-card set-editor-card">
+        <article className="diagnostic-card set-editor-card desktop-pane-column">
           <div className="stack-list">
             <div>
               <p className="card-kicker">{isEditingExistingSet ? "Edit set" : "New set"}</p>

@@ -120,8 +120,15 @@ export function WorkspacesPanel({
 
   return (
     <SectionCard title="Project rules" kicker="Expected sets by folder or remote">
-      <div className="panel-grid panel-grid-2">
-        <form className="stacked-form" onSubmit={submitBind}>
+      <div className="panel-grid panel-grid-2 desktop-pane-grid">
+        <div className="stack-list desktop-pane-column">
+          <article className="diagnostic-card desktop-pane-intro">
+            <h3>Rule editor</h3>
+            <p className="inline-note">
+              Attach a saved set to the current folder, a path prefix, or a git remote pattern so switching stays predictable.
+            </p>
+          </article>
+          <form className="stacked-form diagnostic-card" onSubmit={submitBind}>
           <label>
             Binding scope
             <select value={scope} onChange={(event) => setScope(event.target.value as BindScope)}>
@@ -196,9 +203,10 @@ export function WorkspacesPanel({
               Guard strict
             </button>
           </div>
-        </form>
+          </form>
+        </div>
 
-        <div className="stack-list">
+        <div className="stack-list desktop-pane-column">
           {hasWorkspaceMismatch && !workspaceOverrideDismissed ? (
             <article className="diagnostic-card diagnostic-warn">
               <h3>Workspace mismatch</h3>
@@ -229,25 +237,44 @@ export function WorkspacesPanel({
             </article>
           ) : null}
 
-          <article className="diagnostic-card">
-            <h3>Resolved project rule</h3>
-            <p className="diagnostic-status">{statusCard.status}</p>
-            <p className="inline-note">Current set: {currentContextDisplay}</p>
-            <p className="inline-note">Expected set: {expectedContextDisplay}</p>
-            <p className="inline-note">Matched scope: {statusCard.scope}</p>
-            <p className="inline-note">Matched target: {statusCard.target}</p>
-          </article>
+          <div className="desktop-pane-section">
+            <div className="desktop-pane-section-header">
+              <div>
+                <p className="card-kicker">Resolution</p>
+                <h3>Current rule state</h3>
+              </div>
+              <p className="inline-note">
+                Review what this folder matched before changing or removing any explicit rule.
+              </p>
+            </div>
+            <article className="diagnostic-card">
+              <h3>Resolved project rule</h3>
+              <p className="diagnostic-status">{statusCard.status}</p>
+              <p className="inline-note">Current set: {currentContextDisplay}</p>
+              <p className="inline-note">Expected set: {expectedContextDisplay}</p>
+              <p className="inline-note">Matched scope: {statusCard.scope}</p>
+              <p className="inline-note">Matched target: {statusCard.target}</p>
+            </article>
 
-          <article className="diagnostic-card">
-            <h3>Workspace guard</h3>
-            <p className="inline-note">Guard mode: {bindingsSummary.guardMode}</p>
-            <p className="inline-note">
-              Default set: {contextDisplayLabel(settings, bindingsSummary.defaultContext)}
-            </p>
-          </article>
+            <article className="diagnostic-card">
+              <h3>Workspace guard</h3>
+              <p className="inline-note">Guard mode: {bindingsSummary.guardMode}</p>
+              <p className="inline-note">
+                Default set: {contextDisplayLabel(settings, bindingsSummary.defaultContext)}
+              </p>
+            </article>
+          </div>
 
           <div className="stack-list">
-            <h3>Explicit bindings</h3>
+            <div className="desktop-pane-section-header">
+              <div>
+                <p className="card-kicker">Bindings</p>
+                <h3>Explicit rules</h3>
+              </div>
+              <p className="inline-note">
+                Remove stale path and remote matches here when a project moves or gets renamed.
+              </p>
+            </div>
             {bindingsSummary.bindings.map((binding) => {
               const isMatchedBinding =
                 matchedBindingKey === `${binding.scope}:${binding.target}:${binding.context}`;
