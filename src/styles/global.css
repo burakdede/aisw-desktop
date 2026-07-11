@@ -1370,6 +1370,27 @@ button {
   gap: 12px;
 }
 
+.overview-summary-card {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.overview-summary-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.overview-summary-meta > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
 .overview-status-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1494,6 +1515,26 @@ button {
   font-size: 21px;
   line-height: 1.05;
   letter-spacing: -0.03em;
+}
+
+.profiles-overview-card {
+  display: grid;
+  gap: 12px;
+}
+
+.profiles-overview-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.profiles-overview-meta > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
 
 .overview-layout {
@@ -2805,11 +2846,19 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .overview-summary-meta {
+    grid-template-columns: 1fr;
+  }
+
   .desktop-status-strip {
     grid-template-columns: 1fr;
   }
 
   .profiles-status-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .profiles-overview-meta {
     grid-template-columns: 1fr;
   }
 

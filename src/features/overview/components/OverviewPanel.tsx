@@ -161,30 +161,54 @@ export function OverviewPanel({
         </div>
       }
     >
-      <div className="overview-status-strip" aria-label="Overview highlights">
-        <article className="overview-status-card">
-          <p className="card-kicker">Live tools</p>
-          <h3>{activeToolsCount}</h3>
-          <p className="inline-note">
-            {activeToolsCount} active profile
-            {activeToolsCount === 1 ? "" : "s"}
-          </p>
-        </article>
-        <article className="overview-status-card">
-          <p className="card-kicker">Current set</p>
-          <h3>{currentSetDisplay}</h3>
-          <p className="inline-note">
-            {currentSetLabel ? "Set ready" : "Switch per tool or save a set."}
-          </p>
-        </article>
-        <article className={`overview-status-card ${hasWorkspaceMismatch ? "overview-status-card-warning" : ""}`}>
-          <p className="card-kicker">Project</p>
-          <h3>{hasWorkspaceMismatch ? "Needs review" : "Ready"}</h3>
-          <p className="inline-note">
-            {hasWorkspaceMismatch ? "Project mismatch" : "Ready to switch"}
-          </p>
-        </article>
-      </div>
+      <article className="diagnostic-card overview-summary-card">
+        <div className="desktop-pane-section-header">
+          <div>
+            <p className="card-kicker">Readiness</p>
+            <h3>{currentSetDisplay}</h3>
+          </div>
+          <span className={`pill ${hasWorkspaceMismatch ? "pill-warn" : activeToolsCount ? "pill-ok" : "pill-soft"}`}>
+            {hasWorkspaceMismatch ? "Project needs review" : activeToolsCount ? "Ready to code" : "Needs setup"}
+          </span>
+        </div>
+        <p className="inline-note">
+          Check the active set, verify live match across tools, and resolve project drift before you start coding.
+        </p>
+        <div className="overview-summary-meta">
+          <div>
+            <span className="overview-current-set-cell-label">Live tools</span>
+            <strong>{activeToolsCount} active</strong>
+            <p className="inline-note">
+              {activeToolsCount} active profile{activeToolsCount === 1 ? "" : "s"} detected.
+            </p>
+          </div>
+          <div>
+            <span className="overview-current-set-cell-label">Current set</span>
+            <strong>{currentSetDisplay}</strong>
+            <p className="inline-note">
+              {currentSetLabel ? "Shared switching is ready." : "Switch per tool or save a set."}
+            </p>
+          </div>
+          <div>
+            <span className="overview-current-set-cell-label">Project</span>
+            <strong>{hasWorkspaceMismatch ? "Needs review" : "Ready"}</strong>
+            <p className="inline-note">
+              {hasWorkspaceMismatch ? "This project expects a different set." : "No project drift is blocking work."}
+            </p>
+          </div>
+        </div>
+        <div className="desktop-status-pill-stack">
+          {[
+            currentSetLabel ? "Shared switching ready" : "Per-tool switching",
+            hasWorkspaceMismatch ? "Project mismatch" : "Project aligned",
+            selectedToolStatus?.active_profile_applied === false ? "Live drift detected" : "Live match visible",
+          ].map((pill) => (
+            <span key={pill} className="status-pill">
+              {pill}
+            </span>
+          ))}
+        </div>
+      </article>
       <SplitView
         className="overview-layout"
         primaryClassName="overview-summary-pane"

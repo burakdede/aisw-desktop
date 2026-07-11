@@ -497,35 +497,60 @@ export function ProfilesPanel({
         </div>
       }
     >
-      <div className="profiles-status-strip" aria-label="Profiles highlights">
-        <article className="profiles-status-card">
-          <p className="card-kicker">Profiles</p>
-          <h3>{inventoryProfiles.length}</h3>
-          <p className="inline-note">
-            Saved profile{inventoryProfiles.length === 1 ? "" : "s"}
-          </p>
-        </article>
-        <article className="profiles-status-card">
-          <p className="card-kicker">Filter</p>
-          <h3>{titleCase(tool)}</h3>
-          <p className="inline-note">
-            {tool === "claude" ? "Claude Code filter" : tool === "codex" ? "Codex filter" : "Gemini filter"}
-          </p>
-        </article>
-        <article className="profiles-status-card">
-          <p className="card-kicker">Active profile</p>
-          <h3>{currentToolActiveProfile}</h3>
-          <p className="inline-note">
-            {activeProfilesCount} active profile{activeProfilesCount === 1 ? "" : "s"} across supported tools
-          </p>
-        </article>
-      </div>
       <SplitView
         className="profiles-layout"
         primaryClassName="profiles-inventory-pane"
         secondaryClassName="profiles-inspector-pane"
         primary={
           <div className="stack-list desktop-pane-column">
+            <article className="diagnostic-card profiles-overview-card">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Library</p>
+                  <h3>{inventoryProfiles.length} saved profile{inventoryProfiles.length === 1 ? "" : "s"}</h3>
+                </div>
+                <span className={`pill ${activeProfilesCount ? "pill-ok" : "pill-soft"}`}>
+                  {activeProfilesCount ? `${activeProfilesCount} active` : "No active profiles"}
+                </span>
+              </div>
+              <p className="inline-note">
+                Search, inspect, and switch saved logins without leaving the library. The inspector stays focused on one tool at a time.
+              </p>
+              <div className="profiles-overview-meta">
+                <div>
+                  <span className="overview-current-set-cell-label">Filter</span>
+                  <strong>{titleCase(tool)}</strong>
+                  <p className="inline-note">
+                    {tool === "claude" ? "Claude Code" : tool === "codex" ? "Codex CLI" : "Gemini CLI"} is active in the inspector.
+                  </p>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Current profile</span>
+                  <strong>{currentToolActiveProfile}</strong>
+                  <p className="inline-note">
+                    This is the saved login currently active for the selected tool.
+                  </p>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Coverage</span>
+                  <strong>{filteredInventoryProfiles.length} visible</strong>
+                  <p className="inline-note">
+                    {activeProfilesCount} active profile{activeProfilesCount === 1 ? "" : "s"} across supported tools.
+                  </p>
+                </div>
+              </div>
+              <div className="desktop-status-pill-stack">
+                {[
+                  "Sheet-based add flow",
+                  "Double-click to activate",
+                  "Inspector-driven recovery",
+                ].map((pill) => (
+                  <span key={pill} className="status-pill">
+                    {pill}
+                  </span>
+                ))}
+              </div>
+            </article>
             <article className="diagnostic-card profiles-table-card">
               <div className="desktop-pane-section-header">
                 <div>
