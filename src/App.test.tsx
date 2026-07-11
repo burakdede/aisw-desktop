@@ -247,7 +247,7 @@ function getOnboardingImportDialog(tool = "Claude") {
   return within(screen.getByRole("dialog", { name: `Import ${tool} Login` }));
 }
 
-function openSetupStep(label: "Welcome" | "Accounts" | "Runtime" | "Verify" | "Terminal") {
+function openSetupStep(label: "Welcome" | "Accounts" | "Runtime" | "First switch" | "Terminal") {
   const tabs = screen.getByLabelText("Setup steps");
   fireEvent.click(within(tabs).getByRole("tab", { name: label }));
 }
@@ -3726,7 +3726,7 @@ describe("App", () => {
     });
 
     expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0);
-    openSetupStep("Verify");
+    openSetupStep("First switch");
     fireEvent.change(screen.getByLabelText("First switch profile"), {
       target: { value: "work" },
     });
@@ -3734,7 +3734,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
-      expect(screen.getAllByText(/AI Switch runtime/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Included runtime/).length).toBeGreaterThan(0);
     });
   });
 
@@ -5635,7 +5635,7 @@ describe("App", () => {
     await waitFor(() =>
       expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0),
     );
-    openSetupStep("Verify");
+    openSetupStep("First switch");
     fireEvent.click(screen.getByText("Open profile setup"));
 
     await waitFor(() => {
@@ -7173,7 +7173,7 @@ describe("App", () => {
       },
     });
 
-    openSetupStep("Verify");
+    openSetupStep("First switch");
     const firstSwitchSelect = screen.getByLabelText("First switch profile");
     expect(within(firstSwitchSelect).getByRole("option", { name: "Office" })).toBeInTheDocument();
   });

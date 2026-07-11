@@ -7,6 +7,8 @@ import { getShellGuidance, runDoctor, updateSettings } from "../../../lib/client
 import { sharedProfileEntries } from "../../../lib/profile-display";
 import { AppBootstrap, AppSnapshot, InitReport } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
+import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
+import { normalizeTerminalIntegrationText } from "../../shared/terminal-integration-language";
 import {
   commandForCurrentPlatform,
   installCommandForTool,
@@ -217,7 +219,7 @@ export function SetupPanel({
   const setupSteps = [
     { value: "runtime", label: "Welcome" },
     { value: "accounts", label: "Accounts" },
-    { value: "switch", label: "Verify" },
+    { value: "switch", label: "First switch" },
     { value: "terminal", label: "Terminal" },
   ] satisfies Array<{ value: SetupStep; label: string }>;
   const needsAttentionCount =
@@ -261,7 +263,7 @@ export function SetupPanel({
               </div>
               <p className="inline-note">
                 Bring in the accounts you already use, confirm the included runtime is ready,
-                and verify one shared switch without leaving this Mac.
+                and try one shared switch without leaving this Mac.
               </p>
               <div className="onboarding-overview-meta">
                 <div>
@@ -277,7 +279,7 @@ export function SetupPanel({
                   <p className="inline-note">
                     {switchReady
                       ? "At least one reusable profile is ready for a first switch."
-                      : "Save one profile first, then verify the first shared switch."}
+                      : "Save one profile first, then try the first shared switch."}
                   </p>
                 </div>
                 <div>
@@ -354,7 +356,7 @@ export function SetupPanel({
                   <p className="inline-note">
                     {switchReady
                       ? "A matching shared profile is ready for a first switch check."
-                      : "Add at least one reusable profile before verifying a shared switch."}
+                      : "Add at least one reusable profile before trying a shared switch."}
                   </p>
                 </div>
               </div>
@@ -363,7 +365,7 @@ export function SetupPanel({
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Runtime</p>
-                  <h3>Included AI Switch runtime</h3>
+                  <h3>Included runtime</h3>
                 </div>
                 <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
                   {bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}
@@ -399,7 +401,7 @@ export function SetupPanel({
                   <div className="desktop-pane-section-header">
                     <div>
                       <p className="card-kicker">Runtime</p>
-                      <h3>Included AI Switch runtime</h3>
+                      <h3>Included runtime</h3>
                     </div>
                     <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
                       {bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}
@@ -439,7 +441,7 @@ export function SetupPanel({
                     <p className="inline-note">
                       {restoreBundledRuntimeMutation.error instanceof Error
                         ? restoreBundledRuntimeMutation.error.message
-                        : "Could not switch back to the bundled AI Switch runtime."}
+                        : "Could not switch back to the included runtime."}
                     </p>
                   ) : null}
                 </article>
@@ -460,7 +462,7 @@ export function SetupPanel({
                       </p>
                     </div>
                     <div>
-                      <p className="diagnostic-status diagnostic-status-pass">2. Verify one switch</p>
+                      <p className="diagnostic-status diagnostic-status-pass">2. Try one switch</p>
                       <p className="inline-note">
                         Re-apply a shared profile once so you know switching works before you start coding.
                       </p>
@@ -630,7 +632,7 @@ export function SetupPanel({
               <article className="diagnostic-card">
                 <div className="desktop-pane-section-header">
                   <div>
-                    <p className="card-kicker">Verify</p>
+                    <p className="card-kicker">First switch</p>
                     <h3>Try one safe switch</h3>
                   </div>
                   <p className="inline-note">
@@ -823,13 +825,13 @@ function buildHealthItems(
     : [];
   const items: HealthItem[] = [
     {
-      label: "Desktop runtime",
+      label: "Included runtime",
       status: bootstrap.runtime_status.compatible ? "pass" : "fail",
       detail: bootstrap.runtime_status.compatible
         ? bootstrap.settings.runtime_kind === "bundled"
           ? "Included runtime is compatible with this desktop build."
           : "Selected runtime override is compatible with this desktop build."
-        : bootstrap.runtime_status.issues.join(" · ") || "Compatibility checks failed.",
+        : normalizeRuntimeLanguage(bootstrap.runtime_status.issues.join(" · ")) || "Compatibility checks failed.",
     },
   ];
 
@@ -840,9 +842,9 @@ function buildHealthItems(
         ? check.status
         : "warn";
     items.push({
-      label: check.name ?? "doctor",
+      label: normalizeSetupHealthLabel(check.name),
       status,
-      detail: check.detail ?? "No detail provided.",
+      detail: normalizeSetupHealthDetail(check.detail),
     });
   });
 
@@ -887,7 +889,7 @@ function buildRuntimeRows(
 ): HealthItem[] {
   return [
     {
-      label: "AI Switch runtime",
+      label: "Included runtime",
       status: bootstrap.runtime_status.compatible ? "pass" : "warn",
       detail: bootstrap.settings.runtime_kind === "bundled"
         ? `Ready. Version ${bootstrap.runtime_status.version?.version ?? "unknown"}.`
@@ -906,6 +908,36 @@ function buildRuntimeRows(
       detail: describeSecureStorage(snapshot, toolCapabilities),
     },
   ];
+}
+
+function normalizeSetupHealthLabel(value: string | undefined) {
+  const normalized = value?.trim().toLowerCase().replace(/[_-]+/g, " ");
+  if (!normalized) {
+    return "Setup check";
+  }
+  if (normalized.includes("shell")) {
+    return "Terminal integration";
+  }
+  if (normalized.includes("keyring")) {
+    return "Secure storage";
+  }
+  if (normalized.includes("permission")) {
+    return "Local permissions";
+  }
+  if (normalized.includes("oauth")) {
+    return "Sign-in flow";
+  }
+  if (normalized.includes("backup")) {
+    return "Backups";
+  }
+  if (normalized.includes("runtime")) {
+    return "Included runtime";
+  }
+  return titleCase(normalized);
+}
+
+function normalizeSetupHealthDetail(value: string | undefined) {
+  return normalizeTerminalIntegrationText(normalizeRuntimeLanguage(value ?? "No detail provided."));
 }
 
 function supportsSecureStorage(
