@@ -1,6 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { DesktopStatusStrip } from "../../../components/DesktopStatusStrip";
 import { getProjectBindings, getWorkspaceStatus } from "../../../lib/client";
 import { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { SectionCard } from "../../../components/SectionCard";
@@ -122,36 +121,38 @@ export function WorkspacesPanel({
 
   return (
     <SectionCard title="Project rules" kicker="Expected sets by folder or remote">
-      <DesktopStatusStrip
-        ariaLabel="Project rule highlights"
-        items={[
-          {
-            label: "Project rules",
-            value: "Automatic set matching",
-            note: "Keep the expected set visible for each project so the app can warn before you start coding in the wrong profile.",
-          },
-          {
-            label: "Coverage",
-            value: bindingsSummary.bindings.length ? `${bindingsSummary.bindings.length} saved rule${bindingsSummary.bindings.length === 1 ? "" : "s"}` : "No saved rules",
-            note: hasWorkspaceMismatch
-              ? "The current project does not match the expected set yet."
-              : "Use folder or remote rules to keep switching predictable across projects.",
-          },
-          {
-            label: "Highlights",
-            value: "Project-aware",
-            pills: ["Folder-aware", "Remote-aware", "Mismatch recovery"],
-          },
-        ]}
-      />
       <SplitView
         primary={
           <div className="stack-list desktop-pane-column">
           <article className="diagnostic-card desktop-pane-intro">
-            <h3>Rule editor</h3>
+            <div className="desktop-pane-section-header">
+              <div>
+                <p className="card-kicker">Workspace</p>
+                <h3>Rule editor</h3>
+              </div>
+              <span className="pill pill-soft">
+                {bindingsSummary.bindings.length
+                  ? `${bindingsSummary.bindings.length} saved`
+                  : "No saved rules"}
+              </span>
+            </div>
             <p className="inline-note">
               Attach a saved set to the current folder, a path prefix, or a git remote pattern so switching stays predictable.
             </p>
+            <div className="workspaces-intro-meta">
+              <div>
+                <span className="overview-current-set-cell-label">Current match</span>
+                <strong>{hasWorkspaceMismatch ? "Needs review" : "Ready"}</strong>
+              </div>
+              <div>
+                <span className="overview-current-set-cell-label">Guard mode</span>
+                <strong>{bindingsSummary.guardMode}</strong>
+              </div>
+              <div>
+                <span className="overview-current-set-cell-label">Expected set</span>
+                <strong>{expectedContextDisplay}</strong>
+              </div>
+            </div>
           </article>
           <form className="stacked-form diagnostic-card workspaces-editor-card" onSubmit={submitBind}>
             <div className="desktop-pane-section-header">

@@ -1086,6 +1086,21 @@ button {
   gap: 14px;
 }
 
+.workspaces-intro-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.workspaces-intro-meta > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
 .workspace-guard-section {
   gap: 12px;
   padding-top: 6px;
