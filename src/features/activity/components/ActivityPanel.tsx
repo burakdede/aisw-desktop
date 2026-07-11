@@ -106,33 +106,17 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
     <SectionCard
       title="Activity"
       kicker="Recent activity"
+      actions={
+        <button
+          className="ghost-button"
+          type="button"
+          disabled={!entries.length}
+          onClick={clearTimeline}
+        >
+          Clear session
+        </button>
+      }
     >
-      <article className="diagnostic-card activity-overview desktop-pane-intro">
-        <div className="desktop-pane-section-header">
-          <div>
-            <p className="card-kicker">Session</p>
-            <h3>{entries.length} event{entries.length === 1 ? "" : "s"} recorded</h3>
-          </div>
-          <span className="pill pill-soft">Latest first</span>
-        </div>
-        <p className="inline-note">
-          Recent profile changes, verification runs, setup actions, and recovery outcomes stay in one local stream.
-        </p>
-        <div className="activity-overview-meta">
-          <div>
-            <span className="overview-current-set-cell-label">Ordering</span>
-            <strong>Newest first</strong>
-          </div>
-          <div>
-            <span className="overview-current-set-cell-label">Privacy</span>
-            <strong>Local only</strong>
-          </div>
-          <div>
-            <span className="overview-current-set-cell-label">Support</span>
-            <strong>Redacted exports</strong>
-          </div>
-        </div>
-      </article>
       <SplitView
         className="activity-layout"
         primaryClassName="activity-list-pane"
@@ -143,14 +127,18 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Timeline</p>
-                  <h3>Session events</h3>
+                  <h3>
+                    {entries.length
+                      ? `${entries.length} event${entries.length === 1 ? "" : "s"}`
+                      : "No events yet"}
+                  </h3>
                 </div>
-                <p className="inline-note">
-                  {entries.length
-                    ? `${entries.length} event${entries.length === 1 ? "" : "s"} recorded in this desktop session.`
-                    : "No local events recorded in this desktop session yet."}
-                </p>
+                <span className="pill pill-soft">Local only</span>
               </div>
+              <p className="inline-note">
+                Latest first. Review local switch, verification, setup, and recovery events in one
+                desktop session stream.
+              </p>
               <div className="activity-list-columns" aria-hidden="true">
                 <span>Time</span>
                 <span>Event</span>
