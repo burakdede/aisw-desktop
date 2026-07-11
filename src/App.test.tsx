@@ -3835,7 +3835,7 @@ describe("App", () => {
 
     await renderApp();
     await openSetsSection();
-    fireEvent.click(screen.getByText("Switch to imported context"));
+    fireEvent.click(screen.getByText("Switch to imported group"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
@@ -3904,7 +3904,7 @@ describe("App", () => {
     await renderApp();
     await openSetsSection();
 
-    const activeContextButton = screen.getByRole("button", { name: "Current context" });
+    const activeContextButton = screen.getByRole("button", { name: "Current imported group" });
     expect(activeContextButton).toBeDisabled();
     expect(screen.getByText("Client Acme ✓")).toBeInTheDocument();
   });
@@ -6429,7 +6429,7 @@ describe("App", () => {
     await openSetsSection();
 
     expect(screen.getAllByText("Client Acme")).toHaveLength(2);
-    expect(screen.getByText("CLI context id: client-acme")).toBeInTheDocument();
+    expect(screen.getByText("Runtime group id: client-acme")).toBeInTheDocument();
     expect(screen.getAllByText("claude: Office · codex: Code Work · gemini: none")).toHaveLength(2);
     expect(screen.getAllByRole("option", { name: "Office" }).length).toBeGreaterThanOrEqual(2);
     expect(screen.getByRole("option", { name: "Code Work" })).toBeInTheDocument();

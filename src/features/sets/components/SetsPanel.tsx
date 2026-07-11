@@ -16,6 +16,20 @@ export function SetsPanel({
 
   return (
     <div className="stack-list desktop-pane-stack">
+      <article className="desktop-pane-hero sets-hero">
+        <div className="desktop-pane-hero-copy">
+          <p className="card-kicker">Sets</p>
+          <h3>Save reusable switching combinations and map them to projects</h3>
+          <p className="inline-note">
+            The Sets area keeps saved combinations and project matching rules in one native workflow so switching stays predictable without extra scrolling.
+          </p>
+        </div>
+        <div className="desktop-pane-hero-pills" aria-label="Sets highlights">
+          <span className="status-pill">Saved sets</span>
+          <span className="status-pill">Imported runtime groups</span>
+          <span className="status-pill">Project matching rules</span>
+        </div>
+      </article>
       <article className="diagnostic-card desktop-pane-intro desktop-pane-mode-card">
         <div>
           <h3>Sets and project rules</h3>

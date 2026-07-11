@@ -197,9 +197,9 @@ export function ContextsPanel({
             </article>
             <article className="diagnostic-card">
               <p className="card-kicker">Imported</p>
-              <h3>{snapshot.contexts.length} CLI contexts</h3>
+              <h3>{snapshot.contexts.length} imported runtime groups</h3>
               <p className="inline-note">
-                Imported contexts stay visible here when the runtime exposes lower-level switching groups from the CLI.
+                Imported runtime groups stay visible here when the switching engine exposes additional shared combinations outside your desktop-local set library.
               </p>
             </article>
           </div>
@@ -327,11 +327,11 @@ export function ContextsPanel({
           <div className="stack-list">
             <div className="set-section-header desktop-pane-section-header">
               <div>
-                <p className="card-kicker">CLI import</p>
-                <h3>Imported CLI contexts</h3>
+                <p className="card-kicker">Runtime import</p>
+                <h3>Imported runtime groups</h3>
               </div>
               <p className="inline-note">
-                These come directly from the runtime and remain separate from your desktop-local set library.
+                These come directly from the switching engine and remain separate from your desktop-local saved sets.
               </p>
             </div>
             {snapshot.contexts.map((context) => (
@@ -347,7 +347,7 @@ export function ContextsPanel({
                     </span>
                   </div>
                   {contextDisplayLabel(settings, context.name) !== context.name ? (
-                    <p className="inline-note">CLI context id: {context.name}</p>
+                    <p className="inline-note">Runtime group id: {context.name}</p>
                   ) : null}
                   <p>
                     {Object.entries(context.profiles)
@@ -372,14 +372,14 @@ export function ContextsPanel({
                     })
                   }
                 >
-                  {activeContext === context.name ? "Current context" : "Switch to imported context"}
+                  {activeContext === context.name ? "Current imported group" : "Switch to imported group"}
                 </button>
               </article>
             ))}
             {!snapshot.contexts.length ? (
               <p className="inline-note">
-                No imported contexts are currently available. Local sets remain available even
-                when lower-level context support is sparse.
+                No imported runtime groups are currently available. Saved sets remain available even
+                when lower-level shared-group support is limited.
               </p>
             ) : null}
           </div>
