@@ -243,7 +243,7 @@ export function SetupPanel({
           {
             label: "AI Switch",
             value: "Safe local account switching",
-            note: "Bring in existing Claude Code, Codex CLI, and Gemini CLI accounts, confirm the included switching engine is ready, and verify one safe switch without leaving this Mac.",
+            note: "Bring in existing Claude Code, Codex CLI, and Gemini CLI accounts, confirm the bundled AI Switch runtime is ready, and verify one safe switch without leaving this Mac.",
           },
           {
             label: "Progress",
@@ -255,7 +255,7 @@ export function SetupPanel({
           {
             label: "Trust",
             value: "Local only",
-            pills: ["Credentials stay local", "Included engine", "No telemetry", "No traffic proxy"],
+            pills: ["Credentials stay local", "AI Switch runtime", "No telemetry", "No traffic proxy"],
           },
         ]}
       />
@@ -276,7 +276,7 @@ export function SetupPanel({
                 <p className="trust-list-item">Credentials stay on this Mac</p>
                 <p className="trust-list-item">No telemetry</p>
                 <p className="trust-list-item">No prompt or API traffic proxy</p>
-                <p className="trust-list-item">Included switching engine</p>
+                <p className="trust-list-item">Bundled AI Switch runtime</p>
               </div>
             </article>
             <article className="diagnostic-card onboarding-step-card">
@@ -299,12 +299,12 @@ export function SetupPanel({
               <div className="stack-list onboarding-status-stack">
                 <div>
                   <p className={`diagnostic-status diagnostic-status-${bootstrap.runtime_status.compatible ? "pass" : "warn"}`}>
-                    Included engine
+                    AI Switch runtime
                   </p>
                   <p className="inline-note">
                     {bootstrap.runtime_status.compatible
-                      ? "The included engine is ready for desktop switching."
-                      : "Engine setup needs attention before switching."}
+                      ? "The bundled AI Switch runtime is ready for desktop switching."
+                      : "Runtime setup needs attention before switching."}
                   </p>
                 </div>
                 <div>
@@ -330,8 +330,8 @@ export function SetupPanel({
             <article className="diagnostic-card">
               <div className="desktop-pane-section-header">
                 <div>
-                  <p className="card-kicker">Engine</p>
-                  <h3>Included switching engine</h3>
+                  <p className="card-kicker">Runtime</p>
+                  <h3>Bundled AI Switch runtime</h3>
                 </div>
                 <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
                   {bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}
@@ -359,15 +359,15 @@ export function SetupPanel({
                 <article className="diagnostic-card desktop-pane-intro">
                   <h3>Before you switch anything</h3>
                   <p className="inline-note">
-                    AI Switch uses the included switching engine by default. Confirm that local data
+                    AI Switch uses the bundled runtime by default. Confirm that local data
                     storage and secure storage are ready, then import your first account.
                   </p>
                 </article>
                 <article className="diagnostic-card">
                   <div className="desktop-pane-section-header">
                     <div>
-                      <p className="card-kicker">Engine</p>
-                      <h3>Included switching engine</h3>
+                      <p className="card-kicker">Runtime</p>
+                      <h3>Bundled AI Switch runtime</h3>
                     </div>
                     <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
                       {bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}
@@ -394,7 +394,9 @@ export function SetupPanel({
                         disabled={restoreBundledRuntimeMutation.isPending}
                         onClick={() => restoreBundledRuntimeMutation.mutate()}
                       >
-                        {restoreBundledRuntimeMutation.isPending ? "Switching to Included Engine…" : "Use Included Engine"}
+                        {restoreBundledRuntimeMutation.isPending
+                          ? "Switching to AI Switch Runtime…"
+                          : "Use AI Switch Runtime"}
                       </button>
                     ) : null}
                     <button className="ghost-button" type="button" onClick={() => onOpenSettings("runtime")}>
@@ -405,7 +407,7 @@ export function SetupPanel({
                     <p className="inline-note">
                       {restoreBundledRuntimeMutation.error instanceof Error
                         ? restoreBundledRuntimeMutation.error.message
-                        : "Could not switch back to the included engine."}
+                        : "Could not switch back to the bundled AI Switch runtime."}
                     </p>
                   ) : null}
                 </article>
@@ -854,7 +856,7 @@ function buildRuntimeRows(
 ): HealthItem[] {
   return [
     {
-      label: "Included runtime",
+      label: "AI Switch runtime",
       status: bootstrap.runtime_status.compatible ? "pass" : "warn",
       detail: bootstrap.settings.runtime_kind === "bundled"
         ? `Ready. Version ${bootstrap.runtime_status.version?.version ?? "unknown"}.`

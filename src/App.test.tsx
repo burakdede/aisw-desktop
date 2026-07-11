@@ -495,7 +495,7 @@ describe("App", () => {
     });
     expect(
       screen.getByText(
-        "AI Switch can see a switching engine on this Mac, but this desktop build needs the included engine or a newer compatible one before profiles, diagnostics, backups, or sets can work.",
+        "AI Switch can see a runtime on this Mac, but this desktop build needs the bundled AI Switch runtime or a newer compatible one before profiles, diagnostics, backups, or sets can work.",
       ),
     ).toBeInTheDocument();
     expect(
@@ -505,13 +505,13 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Switch back to the included runtime, or choose a newer compatible runtime in Advanced Runtime Settings before continuing.",
+        "Switch back to the bundled AI Switch runtime, or choose a newer compatible runtime in Advanced Runtime Settings before continuing.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Why switching is paused")).toBeInTheDocument();
     expect(screen.getByText("Runtime version details are unavailable")).toBeInTheDocument();
     expect(screen.getByText("Runtime capability details are unavailable")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Use Included Engine" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Use AI Switch Runtime" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Advanced Runtime Settings" })).toBeInTheDocument();
     expect(screen.queryByText("Included runtime and advanced overrides")).not.toBeInTheDocument();
@@ -552,7 +552,7 @@ describe("App", () => {
     });
   });
 
-  it("switches back to the included engine from the blocker screen", async () => {
+  it("switches back to the AI Switch runtime from the blocker screen", async () => {
     const calls: Array<{ command: string; args?: unknown }> = [];
     let currentSettings: DesktopSettings = {
       ...bootstrap.settings,
@@ -600,10 +600,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Use Included Engine" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Use AI Switch Runtime" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Use Included Engine" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use AI Switch Runtime" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
@@ -3695,11 +3695,11 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
-      expect(screen.getAllByText(/Included engine/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/AI Switch runtime/).length).toBeGreaterThan(0);
     });
   });
 
-  it("switches back to the included runtime from onboarding", async () => {
+  it("switches back to the AI Switch runtime from onboarding", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     let currentSettings: DesktopSettings = {
       ...bootstrap.settings,
@@ -3739,7 +3739,7 @@ describe("App", () => {
     });
 
     openSetupStep("Welcome");
-    fireEvent.click(screen.getByRole("button", { name: "Use Included Engine" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use AI Switch Runtime" }));
 
     await waitFor(() => {
       expect(

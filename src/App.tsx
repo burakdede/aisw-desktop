@@ -711,7 +711,7 @@ export function App() {
       subtitle="Switch Claude Code, Codex CLI, and Gemini CLI profiles from one focused desktop app."
       detail={
         runtimeRecoveryFocused
-          ? "Use a desktop-compatible switching engine before profile switching, diagnostics, and backups become available."
+          ? "Use a desktop-compatible AI Switch runtime before profile switching, diagnostics, and backups become available."
           : sectionDetail(activeSection, setupFocused)
       }
       nav={navItems}
@@ -739,8 +739,8 @@ export function App() {
         <SectionCard title="Finish setup before switching" kicker="Action required">
           <div className="stack-list">
             <p className="inline-note">
-              AI Switch can see a switching engine on this Mac, but this desktop build needs
-              the included engine or a newer compatible one before profiles, diagnostics,
+              AI Switch can see a runtime on this Mac, but this desktop build needs
+              the bundled AI Switch runtime or a newer compatible one before profiles, diagnostics,
               backups, or sets can work.
             </p>
             <p className="inline-note">{normalizeRuntimeLanguage(runtimeBlocker.summary)}</p>
@@ -754,8 +754,8 @@ export function App() {
                   onClick={() => restoreBundledRuntimeMutation.mutate()}
                 >
                   {restoreBundledRuntimeMutation.isPending
-                    ? "Switching to Included Engine…"
-                    : "Use Included Engine"}
+                    ? "Switching to AI Switch Runtime…"
+                    : "Use AI Switch Runtime"}
                 </button>
               ) : null}
               <button className="ghost-button" type="button" onClick={() => void retryRuntimeCheck()}>
@@ -955,25 +955,25 @@ function describeRuntimeBlocker(runtimeStatus: {
   if (hasResolvedRuntime && missingDesktopContract) {
     return {
       summary:
-        "The current engine was found, but it does not report the desktop compatibility details this release needs.",
+        "The current runtime was found, but it does not report the desktop compatibility details this release needs.",
       nextStep:
-        "Switch back to the included engine, or choose a newer compatible engine in Advanced Runtime Settings before continuing.",
+        "Switch back to the bundled AI Switch runtime, or choose a newer compatible runtime in Advanced Runtime Settings before continuing.",
     };
   }
 
   if (hasResolvedRuntime) {
     return {
       summary:
-        "The current engine was found, but it is not compatible with this desktop build.",
+        "The current runtime was found, but it is not compatible with this desktop build.",
       nextStep:
-        "Switch back to the included engine, or choose a compatible engine in Advanced Runtime Settings before continuing.",
+        "Switch back to the bundled AI Switch runtime, or choose a compatible runtime in Advanced Runtime Settings before continuing.",
     };
   }
 
   return {
-    summary: "AI Switch could not use the current engine choice.",
+    summary: "AI Switch could not use the current runtime choice.",
     nextStep:
-      "Switch to the included engine, or choose a working advanced override in Advanced Runtime Settings before continuing.",
+      "Switch to the bundled AI Switch runtime, or choose a working advanced override in Advanced Runtime Settings before continuing.",
   };
 }
 
