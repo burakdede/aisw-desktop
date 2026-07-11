@@ -52,7 +52,7 @@ export function SetsPanel({
         <article className="diagnostic-card desktop-source-card sets-source-card">
           <div className="desktop-pane-section-header">
             <div>
-              <p className="card-kicker">Project rules</p>
+              <p className="card-kicker">Sets</p>
               <h3>Sets</h3>
             </div>
             <span className="pill pill-soft">{mode === "sets" ? "Library" : "Rules"}</span>
@@ -81,7 +81,6 @@ export function SetsPanel({
                   <p id={`sets-section-summary-${section.value}`} className="inline-note">
                     {section.summary}
                   </p>
-                  <p className="inline-note">{section.note}</p>
                 </div>
                 <span className="desktop-source-chevron" aria-hidden="true">
                   ›

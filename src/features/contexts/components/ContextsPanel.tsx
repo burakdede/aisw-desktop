@@ -194,12 +194,15 @@ export function ContextsPanel({
         secondaryClassName="set-editor-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-          <article className="diagnostic-card desktop-pane-intro set-library-intro">
+          <article className="diagnostic-card set-library-intro">
             <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Library</p>
-                <h3>Saved sets</h3>
+                <h3>{localSets.length ? `${localSets.length} saved set${localSets.length === 1 ? "" : "s"}` : "No saved sets yet"}</h3>
               </div>
+              <span className={`pill ${activeSetCount ? "pill-ok" : "pill-soft"}`}>
+                {activeSetCount ? `${activeSetCount} active` : "Library"}
+              </span>
             </div>
             <p className="inline-note">
               Build reusable combinations once, then switch them from Overview, Quick Switch, the menu bar, and project rules.
@@ -327,7 +330,7 @@ export function ContextsPanel({
             <div className="set-section-header desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Imported sets</p>
-                <h3>Available from the selected runtime</h3>
+                <h3>{snapshot.contexts.length ? `${snapshot.contexts.length} available` : "None available"}</h3>
               </div>
               <p className="inline-note">
                 These come directly from the selected runtime and remain separate from your desktop-local saved sets.

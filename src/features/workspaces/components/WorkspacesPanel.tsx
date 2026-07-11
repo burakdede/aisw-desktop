@@ -124,11 +124,11 @@ export function WorkspacesPanel({
       <SplitView
         primary={
           <div className="stack-list desktop-pane-column">
-          <article className="diagnostic-card desktop-pane-intro">
+          <article className="diagnostic-card">
             <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Project rules</p>
-                <h3>Rule editor</h3>
+                <h3>{bindingsSummary.bindings.length ? `${bindingsSummary.bindings.length} saved rule${bindingsSummary.bindings.length === 1 ? "" : "s"}` : "No saved rules"}</h3>
               </div>
               <span className="pill pill-soft">
                 {bindingsSummary.bindings.length
