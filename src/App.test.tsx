@@ -696,7 +696,9 @@ describe("App", () => {
       expect(screen.getByRole("button", { name: "Inspect Gemini" })).toBeInTheDocument();
     });
     selectOverviewTool("Gemini");
-    const overviewCard = screen.getByText("Gemini is not available on PATH, so this Mac cannot switch or verify that tool yet.").closest(".tool-card");
+    const overviewCard = screen
+      .getByText("Gemini CLI is not available on PATH, so this Mac cannot switch or verify that tool yet.")
+      .closest(".tool-card");
     if (!(overviewCard instanceof HTMLElement)) {
       throw new Error("Missing Gemini overview card.");
     }
@@ -1417,7 +1419,9 @@ describe("App", () => {
 
     expect(screen.getByRole("button", { name: "Refresh state" })).toBeDisabled();
     selectOverviewTool("Gemini");
-    const geminiCard = screen.getByText("Gemini is not available on PATH, so this Mac cannot switch or verify that tool yet.").closest(".tool-card");
+    const geminiCard = screen
+      .getByText("Gemini CLI is not available on PATH, so this Mac cannot switch or verify that tool yet.")
+      .closest(".tool-card");
     if (!(geminiCard instanceof HTMLElement)) {
       throw new Error("Missing Gemini tool card.");
     }

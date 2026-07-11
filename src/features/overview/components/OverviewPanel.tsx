@@ -81,6 +81,7 @@ export function OverviewPanel({
   const workspaceResult = lastCommandResults.global.workspace;
   const contextResult = lastCommandResults.global.context;
   const currentSetLabel = activeSetLabel(settings, snapshot);
+  const currentSetDisplay = currentSetLabel ?? "No active set";
   const [selectedTool, setSelectedTool] = useState(snapshot.statuses[0]?.tool ?? "");
   const activeToolsCount = snapshot.statuses.filter((status) => status.active_profile).length;
   const currentSetProfiles = snapshot.statuses.map((status) => ({
@@ -106,13 +107,13 @@ export function OverviewPanel({
         ? "Needs review"
         : "Ready to code"
       : "Needs setup"
-    : "No tool selected";
+      : "No tool selected";
   const selectedToolNextStep = selectedToolStatus
     ? !selectedToolStatus.active_profile
-      ? `Add a saved ${titleCase(selectedToolStatus.tool)} profile before switching from the desktop app.`
+      ? `Add a saved ${toolDisplayName(selectedToolStatus.tool)} profile before switching from the desktop app.`
       : selectedToolStatus.active_profile_applied === false
-        ? `${titleCase(selectedToolStatus.tool)} changed outside AI Switch. Re-apply the saved profile or import the current login as a new profile before you start coding.`
-        : `${titleCase(selectedToolStatus.tool)} matches the saved desktop profile and is ready for coding work.`
+        ? `${toolDisplayName(selectedToolStatus.tool)} changed outside AI Switch. Re-apply the saved profile or import the current login as a new profile before you start coding.`
+        : `${toolDisplayName(selectedToolStatus.tool)} matches the saved desktop profile and is ready for coding work.`
     : "Select a tool to inspect its live switching state.";
 
   useEffect(() => {
@@ -129,7 +130,7 @@ export function OverviewPanel({
 
   return (
     <SectionCard
-      title="Switch readiness"
+      title="Current set and tools"
       kicker="Overview"
       actions={
         <div className="button-row">
@@ -162,7 +163,7 @@ export function OverviewPanel({
     >
       <div className="overview-status-strip" aria-label="Overview highlights">
         <article className="overview-status-card">
-          <p className="card-kicker">Active tools</p>
+          <p className="card-kicker">Live tools</p>
           <h3>{activeToolsCount}</h3>
           <p className="inline-note">
             {activeToolsCount} active profile
@@ -170,9 +171,9 @@ export function OverviewPanel({
           </p>
         </article>
         <article className="overview-status-card">
-          <p className="card-kicker">Shared set</p>
-          <h3>{currentSetLabel ?? "No active set"}</h3>
-          <p className="inline-note">{currentSetLabel ? "Shared set ready" : "Choose a shared set or switch per tool."}</p>
+          <p className="card-kicker">Shared switch</p>
+          <h3>{currentSetDisplay}</h3>
+          <p className="inline-note">{currentSetLabel ? "Shared switch ready" : "Switch per tool or save a shared set."}</p>
         </article>
         <article className={`overview-status-card ${hasWorkspaceMismatch ? "overview-status-card-warning" : ""}`}>
           <p className="card-kicker">Project</p>
@@ -194,7 +195,7 @@ export function OverviewPanel({
                   <div className="overview-current-set-header">
                     <div>
                       <p className="card-kicker">Current set</p>
-                      <h3>{currentSetLabel ?? "No active set"}</h3>
+                      <h3>{currentSetDisplay}</h3>
                     </div>
                     <span className={`pill ${activeToolsCount ? "pill-ok" : "pill-soft"}`}>
                       {activeToolsCount ? `${activeToolsCount} ready` : "Needs setup"}
@@ -214,7 +215,7 @@ export function OverviewPanel({
                   <div className="overview-current-set-grid">
                     {currentSetProfiles.map((entry) => (
                       <div key={entry.tool} className="overview-current-set-cell">
-                        <span className="overview-current-set-cell-label">{titleCase(entry.tool)}</span>
+                        <span className="overview-current-set-cell-label">{toolDisplayName(entry.tool)}</span>
                         <strong>{entry.label ?? "Not configured"}</strong>
                       </div>
                     ))}
@@ -241,8 +242,8 @@ export function OverviewPanel({
               <article className={`diagnostic-card overview-focus-card overview-focus-card-${resolveCardState(selectedToolStatus)}`}>
                 <div className="desktop-pane-section-header">
                   <div>
-                    <p className="card-kicker">Ready to start</p>
-                    <h3>{selectedToolReadyState}</h3>
+                    <p className="card-kicker">Selected tool</p>
+                    <h3>{toolDisplayName(selectedToolStatus.tool)}</h3>
                   </div>
                   <span className={`pill ${pillClassForStatus(selectedToolStatus)}`}>
                     {statusPillLabel(selectedToolStatus)}
@@ -251,11 +252,11 @@ export function OverviewPanel({
                 <p className="inline-note">{selectedToolNextStep}</p>
                 <div className="overview-focus-grid">
                   <div>
-                    <span className="overview-current-set-cell-label">Selected tool</span>
-                    <strong>{titleCase(selectedToolStatus.tool)}</strong>
+                    <span className="overview-current-set-cell-label">Readiness</span>
+                    <strong>{selectedToolReadyState}</strong>
                   </div>
                   <div>
-                    <span className="overview-current-set-cell-label">Active</span>
+                    <span className="overview-current-set-cell-label">Active profile</span>
                     <strong>{selectedToolProfileLabel ?? "Not configured"}</strong>
                   </div>
                   <div>
@@ -270,7 +271,7 @@ export function OverviewPanel({
                   </div>
                   <div>
                     <span className="overview-current-set-cell-label">Backend</span>
-                    <strong>{selectedToolStatus.credential_backend ?? "Unknown"}</strong>
+                    <strong>{credentialBackendLabel(selectedToolStatus.credential_backend)}</strong>
                   </div>
                 </div>
                 <div className="button-row">
@@ -279,11 +280,11 @@ export function OverviewPanel({
                       className="primary-button"
                       type="button"
                       disabled={mutationLock.isBusy}
-                      onClick={() => onOpenProfiles(selectedToolStatus.tool, selectedToolStatus.active_profile ?? null)}
+                      onClick={() =>
+                        onOpenProfiles(selectedToolStatus.tool, selectedToolStatus.active_profile ?? null)
+                      }
                     >
-                      {selectedToolStatus.active_profile_applied === false
-                        ? `Re-apply ${selectedToolProfileLabel}`
-                        : "Open selected tool"}
+                      Open profile
                     </button>
                   ) : (
                     <button
@@ -299,9 +300,13 @@ export function OverviewPanel({
                     className="ghost-button"
                     type="button"
                     disabled={mutationLock.isBusy}
-                    onClick={onOpenQuickSwitch}
+                    onClick={() =>
+                      selectedToolStatus.active_profile
+                        ? onOpenProfiles(selectedToolStatus.tool, selectedToolStatus.active_profile)
+                        : onOpenQuickSwitch()
+                    }
                   >
-                    Quick Switch
+                    {selectedToolStatus.active_profile ? "Details" : "Quick Switch"}
                   </button>
                 </div>
               </article>
@@ -416,14 +421,14 @@ export function OverviewPanel({
         secondary={
           <div className="overview-stack desktop-pane-column">
             <div className="overview-tools-header">
-              <div>
-                <p className="card-kicker">Tools</p>
-                <h3>Live account state</h3>
-              </div>
-              <p className="inline-note">
-                Keep the full switching inventory visible while inspecting one tool in detail.
-              </p>
-            </div>
+                  <div>
+                    <p className="card-kicker">Tools</p>
+                    <h3>Tools</h3>
+                  </div>
+                  <p className="inline-note">
+                Keep active identity, live match, and direct actions visible without leaving Overview.
+                  </p>
+                </div>
             <SplitView
               className="overview-tools-split"
               primaryClassName="overview-tool-list-pane"
@@ -455,12 +460,12 @@ export function OverviewPanel({
                         <div className="overview-tool-row-main">
                           <div className="overview-tool-row-title">
                             <span className={`health-dot health-dot-${resolveCardState(status)}`} aria-hidden="true" />
-                            <strong>{titleCase(status.tool)}</strong>
+                            <strong>{toolDisplayName(status.tool)}</strong>
                           </div>
                           <p className="inline-note">
                             {status.active_profile
                               ? toolProfileDisplayLabel(settings, snapshot, status.tool, status.active_profile)
-                              : "No saved profile"}
+                              : "Not configured"}
                           </p>
                         </div>
                         <div className="overview-tool-row-meta">
@@ -598,9 +603,9 @@ function ToolInspector({
     <article className={`tool-card overview-tool-card overview-tool-card-${resolveCardState(status)}`}>
       <header className="overview-tool-card-header">
         <div>
-          <p className="card-kicker">Selected tool</p>
-          <h3>{activeProfileLabel ?? "Not configured"}</h3>
-          <p className="inline-note">{titleCase(status.tool)}</p>
+          <p className="card-kicker">Live match</p>
+          <h3>{toolDisplayName(status.tool)}</h3>
+          <p className="inline-note">{activeProfileLabel ?? "Not configured"}</p>
         </div>
         <div className="overview-tool-status">
           <span className={`health-dot health-dot-${resolveCardState(status)}`} aria-hidden="true" />
@@ -630,7 +635,7 @@ function ToolInspector({
         </div>
         <div>
           <dt>Backend</dt>
-          <dd>{status.credential_backend ?? "Unknown"}</dd>
+          <dd>{credentialBackendLabel(status.credential_backend)}</dd>
         </div>
         <div>
           <dt>State</dt>
@@ -639,8 +644,8 @@ function ToolInspector({
       </dl>
       <p className="inline-note">
         {status.active_profile
-          ? `${titleCase(status.tool)} is using ${activeProfileLabel}. Keep live match green before you start coding.`
-          : `Add a saved profile for ${titleCase(status.tool)} before switching from the desktop app.`}
+          ? `${toolDisplayName(status.tool)} is using ${activeProfileLabel}. Keep live match green before you start coding.`
+          : `Add a saved profile for ${toolDisplayName(status.tool)} before switching from the desktop app.`}
       </p>
       {status.token_warning ? (
         <p className="inline-note">
@@ -711,8 +716,8 @@ function ToolInspector({
           ) : (
             <div className="stack-list">
               <p className="inline-note">
-                This runtime does not support one-click capture for {titleCase(status.tool)}.
-                Open profile setup to choose another sign-in method.
+                This AI Switch release cannot import the current {toolDisplayName(status.tool)} login
+                directly. Open profile setup to choose another sign-in method.
               </p>
               <button
                 className="ghost-button"
@@ -795,7 +800,7 @@ function MissingBinaryGuidance({
   return (
     <div className="stack-list">
       <p className="inline-note">
-        {titleCase(tool)} is not available on PATH, so this Mac cannot switch or verify that
+        {toolDisplayName(tool)} is not available on PATH, so this Mac cannot switch or verify that
         tool yet.
       </p>
       <p className="inline-note">
@@ -846,6 +851,33 @@ function formatDiagnosticWarning(
 ) {
   const detail = warning.message ?? warning.code ?? "Warning reported by the runtime.";
   return warning.remediation ? `${detail} Remediation: ${warning.remediation}` : detail;
+}
+
+function toolDisplayName(tool: string) {
+  switch (tool) {
+    case "claude":
+      return "Claude Code";
+    case "codex":
+      return "Codex CLI";
+    case "gemini":
+      return "Gemini CLI";
+    default:
+      return titleCase(tool);
+  }
+}
+
+function credentialBackendLabel(backend: string | null | undefined) {
+  switch (backend) {
+    case "system_keyring":
+    case "system-keyring":
+      return "macOS Keychain";
+    case "file":
+      return "File-backed";
+    case "auto":
+      return "Automatic";
+    default:
+      return backend ?? "Unknown";
+  }
 }
 
 function resolveCardState(status: ToolStatus) {
