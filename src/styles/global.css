@@ -1381,6 +1381,11 @@ button {
   gap: 8px 12px;
 }
 
+.overview-current-set-inline {
+  display: grid;
+  gap: 4px;
+}
+
 .overview-current-set-cell {
   display: grid;
   gap: 3px;
@@ -1399,6 +1404,36 @@ button {
 
 .overview-current-set-actions {
   flex: none;
+}
+
+.overview-focus-card {
+  gap: 12px;
+}
+
+.overview-focus-card-ok {
+  border-color: color-mix(in srgb, var(--ok) 24%, var(--separator));
+}
+
+.overview-focus-card-warning {
+  border-color: color-mix(in srgb, var(--warning) 28%, var(--separator));
+}
+
+.overview-focus-card-neutral {
+  border-color: color-mix(in srgb, CanvasText 12%, transparent);
+}
+
+.overview-focus-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.overview-focus-grid > div {
+  display: grid;
+  gap: 3px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
 
 .overview-project-card {
@@ -2295,6 +2330,7 @@ button {
 @media (max-width: 880px) {
   .set-profile-grid,
   .overview-tool-facts,
+  .overview-focus-grid,
   .overview-project-grid {
     grid-template-columns: 1fr;
   }
