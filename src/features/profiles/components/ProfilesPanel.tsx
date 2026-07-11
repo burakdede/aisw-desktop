@@ -1,6 +1,9 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { KeyValueGrid } from "../../../components/KeyValueGrid";
+import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SectionCard } from "../../../components/SectionCard";
+import { SplitView } from "../../../components/SplitView";
 import {
   AppBootstrap,
   AppSnapshot,
@@ -391,23 +394,15 @@ export function ProfilesPanel({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
-          <div className="segmented-control" role="tablist" aria-label="Profile filters">
-            {INVENTORY_FILTERS.map((entry) => (
-              <button
-                key={entry}
-                type="button"
-                className={
-                  inventoryFilter === entry
-                    ? "segmented-control-button segmented-control-button-active"
-                    : "segmented-control-button"
-                }
-                aria-selected={inventoryFilter === entry}
-                onClick={() => setInventoryFilter(entry)}
-              >
-                {entry === "all" ? "All" : titleCase(entry)}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            ariaLabel="Profile filters"
+            options={INVENTORY_FILTERS.map((entry) => ({
+              value: entry,
+              label: entry === "all" ? "All" : titleCase(entry),
+            }))}
+            value={inventoryFilter}
+            onChange={setInventoryFilter}
+          />
           <button
             className="primary-button"
             type="button"
@@ -434,198 +429,210 @@ export function ProfilesPanel({
           <span className="status-pill">Sheet-based setup</span>
         </div>
       </article>
-      <div className="panel-grid panel-grid-2 profiles-layout desktop-pane-grid">
-        <div className="stack-list profiles-inventory-pane desktop-pane-column">
-          <article className="diagnostic-card desktop-pane-intro">
-            <h3>Saved profiles</h3>
-            <p className="inline-note">
-              Review active state, storage backend, and recent checks before you switch or edit a profile.
-            </p>
-          </article>
-          <div className="desktop-pane-section">
-            <div className="desktop-pane-section-header">
-              <div>
-                <p className="card-kicker">Library</p>
-                <h3>Saved profiles</h3>
-              </div>
-              <p className="inline-note">
-                Double-click any row to focus it in the inspector.
-              </p>
-            </div>
-            <div className="profiles-list-header" aria-hidden="true">
-              <span>Name</span>
-              <span>Tool</span>
-              <span>Auth</span>
-              <span>Backend</span>
-              <span>State</span>
-              <span>Last checked</span>
-            </div>
-          </div>
-          {filteredInventoryProfiles.map((inventoryEntry) => (
-            <article
-              key={`${inventoryEntry.tool}:${inventoryEntry.name}`}
-              className={`list-row profile-list-row ${
-                inventoryEntry.active ? "profile-list-row-active" : ""
-              } ${
-                expandedDetails === inventoryEntry.name && tool === inventoryEntry.tool
-                  ? "profile-list-row-selected"
-                  : ""
-              }`}
-              onDoubleClick={() => {
-                setTool(inventoryEntry.tool);
-                setOpenDiagnosticDetails(null);
-                setExpandedDetails(inventoryEntry.name);
-              }}
-            >
-              <div className="profile-list-main">
-                <strong>{inventoryEntry.label}</strong>
-                <p>
-                  {inventoryEntry.name} · {inventoryEntry.auth}
-                </p>
-              </div>
-              <div className="profile-list-columns">
-                <span>{titleCase(inventoryEntry.tool)}</span>
-                <span>{inventoryEntry.auth}</span>
-                <span>{inventoryEntry.backend}</span>
-                <span>{inventoryEntry.state}</span>
-                <span>{inventoryEntry.lastChecked}</span>
-              </div>
-              <div className="button-row">
-                <button
-                  className="ghost-button"
-                  type="button"
-                  onClick={() => {
-                    setTool(inventoryEntry.tool);
-                    useProfileMutation.mutate({
-                      tool: inventoryEntry.tool,
-                      profile: inventoryEntry.name,
-                      stateMode: supportedStateModes(inventoryEntry.tool, toolCapabilities).length
-                        ? stateMode
-                        : null,
-                      label: inventoryEntry.label,
-                    });
-                  }}
-                  disabled={mutationLock.isBusy}
-                >
-                  Activate
-                </button>
-                <button
-                  className="ghost-button"
-                  type="button"
-                  onClick={() => {
-                    setTool(inventoryEntry.tool);
-                    setOpenDiagnosticDetails(null);
-                    setExpandedDetails((current) =>
-                      current === inventoryEntry.name ? null : inventoryEntry.name,
-                    );
-                  }}
-                >
-                  {expandedDetails === inventoryEntry.name && tool === inventoryEntry.tool
-                    ? "Close details"
-                    : "Open details"}
-                </button>
-              </div>
-            </article>
-          ))}
-          {!filteredInventoryProfiles.length ? (
-            <article className="diagnostic-card">
-              <h3>No matching profiles</h3>
-              <p className="inline-note">
-                Adjust the tool filter or search query, or add a new profile from the inspector.
-              </p>
-            </article>
-          ) : null}
-        </div>
-        <div className="stack-list profiles-inspector-pane desktop-pane-column">
-          <article className="diagnostic-card desktop-pane-intro">
-            <h3>Inspector</h3>
-            <p className="inline-note">
-              Review the selected profile, then open a focused sheet when you need to add a new login.
-            </p>
-            <label>
-              Current tool
-              <select
-                value={tool}
-                onChange={(event) => {
-                  setTool(event.target.value as typeof tool);
-                  setOpenDiagnosticDetails(null);
-                  setExpandedDetails(null);
-                }}
-              >
-                {TOOLS.map((entry) => (
-                  <option key={entry} value={entry}>
-                    {titleCase(entry)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {availableStateModes.length ? (
-              <StateModeField
-                name={`inspector-state-mode-${tool}`}
-                value={stateMode}
-                options={availableStateModes}
-                onChange={setStateMode}
-              />
-            ) : (
-              <label>
-                State mode
-                <select value="n/a" disabled>
-                  <option value="n/a">Not configurable</option>
-                </select>
-              </label>
-            )}
-            <div className="button-row">
-              <button className="primary-button" type="button" onClick={() => setProfileSheetOpen(true)}>
-                Add Profile
-              </button>
-            </div>
-          </article>
-          <div className="stack-list">
-          {selectedProfileEntry ? (
-            <article className="diagnostic-card">
+      <SplitView
+        className="profiles-layout"
+        primaryClassName="profiles-inventory-pane"
+        secondaryClassName="profiles-inspector-pane"
+        primary={
+          <div className="stack-list desktop-pane-column">
+            <div className="desktop-pane-section desktop-list-surface">
               <div className="desktop-pane-section-header">
                 <div>
-                  <p className="card-kicker">Inspector</p>
-                  <h3>{selectedProfileDisplay}</h3>
+                  <p className="card-kicker">Library</p>
+                  <h3>Saved profiles</h3>
                 </div>
                 <p className="inline-note">
-                  Review activation status, labels, backups, and safe recovery actions for this saved profile.
+                  Select a row to inspect it. Double-click to focus the login immediately.
                 </p>
               </div>
-              <p className="inline-note">
-                {selectedProfileEntry.name} · {selectedProfileEntry.auth}
-              </p>
-              <div className="kv-grid">
-                <div className="kv-row">
-                  <strong>Status</strong>
-                  <span>{snapshot.profiles[tool]?.active === selectedProfileEntry.name ? "Active" : "Stored"}</span>
-                </div>
-                <div className="kv-row">
-                  <strong>Live match</strong>
-                  <span>
-                    {snapshot.profiles[tool]?.active === selectedProfileEntry.name
-                      ? toolStatus?.active_profile_applied === undefined ||
-                        toolStatus?.active_profile_applied === null
-                        ? "Unknown"
-                        : toolStatus.active_profile_applied
-                          ? "Yes"
-                          : "No"
-                      : "Available after activation"}
-                  </span>
-                </div>
-                <div className="kv-row">
-                  <strong>Credential backend</strong>
-                  <span>
-                    {snapshot.profiles[tool]?.active === selectedProfileEntry.name
-                      ? toolStatus?.credential_backend ?? "unknown"
-                      : selectedInventoryEntry?.backend ?? "Stored"}
-                  </span>
-                </div>
-                <div className="kv-row">
-                  <strong>Last checked</strong>
-                  <span>{selectedInventoryEntry?.lastChecked ?? "Available locally"}</span>
-                </div>
+              <div className="profiles-list-header" aria-hidden="true">
+                <span>Name</span>
+                <span>Tool</span>
+                <span>Auth</span>
+                <span>Backend</span>
+                <span>State</span>
+                <span>Last checked</span>
               </div>
+            </div>
+            <div className="stack-list desktop-list-stack">
+              {filteredInventoryProfiles.map((inventoryEntry) => (
+                <article
+                  key={`${inventoryEntry.tool}:${inventoryEntry.name}`}
+                  className={`list-row profile-list-row ${
+                    inventoryEntry.active ? "profile-list-row-active" : ""
+                  } ${
+                    expandedDetails === inventoryEntry.name && tool === inventoryEntry.tool
+                      ? "profile-list-row-selected"
+                      : ""
+                  }`}
+                  onDoubleClick={() => {
+                    setTool(inventoryEntry.tool);
+                    setOpenDiagnosticDetails(null);
+                    setExpandedDetails(inventoryEntry.name);
+                  }}
+                >
+                  <div className="profile-list-main">
+                    <strong>{inventoryEntry.label}</strong>
+                    <p>
+                      {inventoryEntry.name} · {inventoryEntry.auth}
+                    </p>
+                  </div>
+                  <div className="profile-list-columns">
+                    <span>{titleCase(inventoryEntry.tool)}</span>
+                    <span>{inventoryEntry.auth}</span>
+                    <span>{inventoryEntry.backend}</span>
+                    <span>{inventoryEntry.state}</span>
+                    <span>{inventoryEntry.lastChecked}</span>
+                  </div>
+                  <div className="button-row">
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      onClick={() => {
+                        setTool(inventoryEntry.tool);
+                        useProfileMutation.mutate({
+                          tool: inventoryEntry.tool,
+                          profile: inventoryEntry.name,
+                          stateMode: supportedStateModes(inventoryEntry.tool, toolCapabilities).length
+                            ? stateMode
+                            : null,
+                          label: inventoryEntry.label,
+                        });
+                      }}
+                      disabled={mutationLock.isBusy}
+                    >
+                      Activate
+                    </button>
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      onClick={() => {
+                        setTool(inventoryEntry.tool);
+                        setOpenDiagnosticDetails(null);
+                        setExpandedDetails((current) =>
+                          current === inventoryEntry.name ? null : inventoryEntry.name,
+                        );
+                      }}
+                    >
+                      {expandedDetails === inventoryEntry.name && tool === inventoryEntry.tool
+                        ? "Close details"
+                        : "Open details"}
+                    </button>
+                  </div>
+                </article>
+              ))}
+              {!filteredInventoryProfiles.length ? (
+                <article className="diagnostic-card">
+                  <h3>No matching profiles</h3>
+                  <p className="inline-note">
+                    Adjust the tool filter or search query, or add a new profile from the inspector.
+                  </p>
+                </article>
+              ) : null}
+            </div>
+          </div>
+        }
+        secondary={
+          <div className="stack-list desktop-pane-column">
+            <div className="desktop-pane-section-header">
+              <div>
+                <p className="card-kicker">Inspector</p>
+                <h3>Profile details</h3>
+              </div>
+              <p className="inline-note">
+                Inspect the selected login, apply recovery actions, or open the add-profile sheet.
+              </p>
+            </div>
+            <article className="diagnostic-card desktop-pane-intro profiles-inspector-controls">
+              <label>
+                Current tool
+                <select
+                  value={tool}
+                  onChange={(event) => {
+                    setTool(event.target.value as typeof tool);
+                    setOpenDiagnosticDetails(null);
+                    setExpandedDetails(null);
+                  }}
+                >
+                  {TOOLS.map((entry) => (
+                    <option key={entry} value={entry}>
+                      {titleCase(entry)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {availableStateModes.length ? (
+                <StateModeField
+                  name={`inspector-state-mode-${tool}`}
+                  value={stateMode}
+                  options={availableStateModes}
+                  onChange={setStateMode}
+                />
+              ) : (
+                <label>
+                  State mode
+                  <select value="n/a" disabled>
+                    <option value="n/a">Not configurable</option>
+                  </select>
+                </label>
+              )}
+              <div className="button-row">
+                <button
+                  className="primary-button"
+                  type="button"
+                  onClick={() => setProfileSheetOpen(true)}
+                >
+                  Add Profile
+                </button>
+              </div>
+            </article>
+          <div className="stack-list">
+            {selectedProfileEntry ? (
+              <article className="diagnostic-card">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Inspector</p>
+                    <h3>{selectedProfileDisplay}</h3>
+                  </div>
+                  <p className="inline-note">
+                    Review activation status, labels, backups, and safe recovery actions for this saved profile.
+                  </p>
+                </div>
+                <p className="inline-note">
+                  {selectedProfileEntry.name} · {selectedProfileEntry.auth}
+                </p>
+                <KeyValueGrid
+                  rows={[
+                    {
+                      label: "Status",
+                      value:
+                        snapshot.profiles[tool]?.active === selectedProfileEntry.name ? "Active" : "Stored",
+                    },
+                    {
+                      label: "Live match",
+                      value:
+                        snapshot.profiles[tool]?.active === selectedProfileEntry.name
+                          ? toolStatus?.active_profile_applied === undefined ||
+                            toolStatus?.active_profile_applied === null
+                            ? "Unknown"
+                            : toolStatus.active_profile_applied
+                              ? "Yes"
+                              : "No"
+                          : "Available after activation",
+                    },
+                    {
+                      label: "Credential backend",
+                      value:
+                        snapshot.profiles[tool]?.active === selectedProfileEntry.name
+                          ? toolStatus?.credential_backend ?? "unknown"
+                          : selectedInventoryEntry?.backend ?? "Stored",
+                    },
+                    {
+                      label: "Last checked",
+                      value: selectedInventoryEntry?.lastChecked ?? "Available locally",
+                    },
+                  ]}
+                />
               <div className="inline-form inline-form-compact">
                 <input
                   aria-label={`rename ${selectedProfileEntry.name}`}
@@ -956,19 +963,20 @@ export function ProfilesPanel({
                   </button>
                 )}
               </div>
-            </article>
-          ) : (
-            <article className="diagnostic-card">
-              <h3>Profile details</h3>
-              <p className="inline-note">
-                Select a saved profile from the library to inspect activation state, health details, backups, and edit actions.
-              </p>
-            </article>
-          )}
-          {!profiles.length ? <p className="inline-note">No profiles stored for this tool yet.</p> : null}
+              </article>
+            ) : (
+              <article className="diagnostic-card">
+                <h3>Profile details</h3>
+                <p className="inline-note">
+                  Select a saved profile from the library to inspect activation state, health details, backups, and edit actions.
+                </p>
+              </article>
+            )}
+            {!profiles.length ? <p className="inline-note">No profiles stored for this tool yet.</p> : null}
           </div>
-        </div>
-      </div>
+          </div>
+        }
+      />
       {profileSheetOpen ? (
         <div className="quick-switch-overlay" role="presentation" onClick={() => setProfileSheetOpen(false)}>
           <section

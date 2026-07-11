@@ -1,4 +1,5 @@
 import { FormEvent, useMemo, useState } from "react";
+import { SplitView } from "../../../components/SplitView";
 import { SectionCard } from "../../../components/SectionCard";
 import {
   contextDisplayLabel,
@@ -170,8 +171,12 @@ export function ContextsPanel({
         </button>
       }
     >
-      <div className="panel-grid panel-grid-2 sets-layout desktop-pane-grid">
-        <div className="stack-list set-inventory-pane desktop-pane-column">
+      <SplitView
+        className="sets-layout"
+        primaryClassName="set-inventory-pane"
+        secondaryClassName="set-editor-pane"
+        primary={
+          <div className="stack-list desktop-pane-column">
           <article className="diagnostic-card desktop-pane-intro">
             <h3>Set library</h3>
             <p className="inline-note">
@@ -391,9 +396,10 @@ export function ContextsPanel({
             </p>
           ) : null}
           {lastAction ? <p className="inline-note">{lastAction}</p> : null}
-        </div>
-
-        <article className="diagnostic-card set-editor-card desktop-pane-column">
+          </div>
+        }
+        secondary={
+          <article className="diagnostic-card set-editor-card desktop-pane-column">
           <div className="stack-list">
             <div>
               <p className="card-kicker">{isEditingExistingSet ? "Edit set" : "New set"}</p>
@@ -484,8 +490,9 @@ export function ContextsPanel({
               </p>
             ) : null}
           </form>
-        </article>
-      </div>
+          </article>
+        }
+      />
     </SectionCard>
   );
 }

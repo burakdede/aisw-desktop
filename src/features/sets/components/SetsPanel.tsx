@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { SegmentedControl } from "../../../components/SegmentedControl";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { ContextsPanel } from "../../contexts/components/ContextsPanel";
 import { WorkspacesPanel } from "../../workspaces/components/WorkspacesPanel";
@@ -37,24 +38,15 @@ export function SetsPanel({
             Save reusable switching combinations, then map folders or remotes to the right set with minimal navigation.
           </p>
         </div>
-        <div className="segmented-control" role="tablist" aria-label="Sets sections">
-          <button
-            type="button"
-            className={mode === "sets" ? "segmented-control-button segmented-control-button-active" : "segmented-control-button"}
-            aria-selected={mode === "sets"}
-            onClick={() => setMode("sets")}
-          >
-            Sets
-          </button>
-          <button
-            type="button"
-            className={mode === "rules" ? "segmented-control-button segmented-control-button-active" : "segmented-control-button"}
-            aria-selected={mode === "rules"}
-            onClick={() => setMode("rules")}
-          >
-            Project rules
-          </button>
-        </div>
+        <SegmentedControl
+          ariaLabel="Sets sections"
+          options={[
+            { value: "sets", label: "Sets" },
+            { value: "rules", label: "Project rules" },
+          ]}
+          value={mode}
+          onChange={setMode}
+        />
       </article>
 
       {mode === "sets" ? (

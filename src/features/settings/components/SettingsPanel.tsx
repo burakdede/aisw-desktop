@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
+import { SegmentedControl } from "../../../components/SegmentedControl";
 import { getShellGuidance, runDoctor } from "../../../lib/client";
 import { DesktopCommandError } from "../../../lib/tauri";
 import { DesktopSettings, AppBootstrap } from "../../../lib/schemas";
@@ -130,21 +131,17 @@ export function SettingsPanel({
           ))}
         </div>
       </article>
-      <div className="settings-nav" role="tablist" aria-label="Settings sections">
-        {SETTINGS_SECTIONS.map((section) => (
-          <button
-            key={section}
-            className={selectedSection === section ? "primary-button" : "ghost-button"}
-            type="button"
-            role="tab"
-            aria-selected={selectedSection === section}
-            aria-pressed={selectedSection === section}
-            onClick={() => setSelectedSection(section)}
-          >
-            {sectionLabel(section)}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        ariaLabel="Settings sections"
+        className="settings-nav"
+        kind="tabs"
+        options={SETTINGS_SECTIONS.map((section) => ({
+          value: section,
+          label: sectionLabel(section),
+        }))}
+        value={selectedSection}
+        onChange={setSelectedSection}
+      />
       <div className="settings-pane">
         {selectedSection === "runtime" ? (
           <div className="panel-grid panel-grid-2 settings-layout">

@@ -798,6 +798,20 @@ button {
   gap: 12px;
 }
 
+.desktop-split-view {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(300px, 360px);
+  gap: 12px;
+  align-items: start;
+}
+
+.desktop-split-pane {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
 .tool-grid,
 .panel-grid-3 {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -808,13 +822,11 @@ button {
 }
 
 .profiles-layout {
-  grid-template-columns: minmax(0, 1.3fr) minmax(300px, 360px);
-  align-items: start;
+  grid-template-columns: minmax(0, 1.34fr) minmax(300px, 360px);
 }
 
 .sets-layout {
   grid-template-columns: minmax(0, 1.25fr) minmax(300px, 360px);
-  align-items: start;
 }
 
 .sets-summary-grid {
@@ -1299,8 +1311,25 @@ button {
 }
 
 .profiles-inventory-pane,
-.profiles-inspector-pane {
+.profiles-inspector-pane,
+.set-editor-pane {
   min-width: 0;
+}
+
+.desktop-list-surface {
+  padding: 0;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.desktop-list-stack {
+  gap: 8px;
+}
+
+.profiles-inspector-controls {
+  gap: 12px;
 }
 
 .profile-list-row {
@@ -1440,10 +1469,8 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .profiles-layout {
-    grid-template-columns: 1fr;
-  }
-
+  .desktop-split-view,
+  .profiles-layout,
   .sets-layout {
     grid-template-columns: 1fr;
   }

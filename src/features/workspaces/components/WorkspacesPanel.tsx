@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getProjectBindings, getWorkspaceStatus } from "../../../lib/client";
 import { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { SectionCard } from "../../../components/SectionCard";
+import { SplitView } from "../../../components/SplitView";
 import { contextDisplayLabel } from "../../../lib/profile-display";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import {
@@ -134,8 +135,9 @@ export function WorkspacesPanel({
           <span className="status-pill">Mismatch recovery</span>
         </div>
       </article>
-      <div className="panel-grid panel-grid-2 desktop-pane-grid">
-        <div className="stack-list desktop-pane-column">
+      <SplitView
+        primary={
+          <div className="stack-list desktop-pane-column">
           <article className="diagnostic-card desktop-pane-intro">
             <h3>Rule editor</h3>
             <p className="inline-note">
@@ -238,9 +240,10 @@ export function WorkspacesPanel({
               </div>
             </div>
           </form>
-        </div>
-
-        <div className="stack-list desktop-pane-column">
+          </div>
+        }
+        secondary={
+          <div className="stack-list desktop-pane-column">
           {hasWorkspaceMismatch && !workspaceOverrideDismissed ? (
             <article className="diagnostic-card diagnostic-warn">
               <h3>Workspace mismatch</h3>
@@ -353,8 +356,9 @@ export function WorkspacesPanel({
               {workspaceResult.remediation ? ` Remediation: ${workspaceResult.remediation}` : ""}
             </p>
           ) : null}
-        </div>
-      </div>
+          </div>
+        }
+      />
     </SectionCard>
   );
 }
