@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SplitView } from "../../../components/SplitView";
 import { SectionCard } from "../../../components/SectionCard";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
@@ -74,6 +74,7 @@ export function DiagnosticsPanel({
   });
   const [importDrafts, setImportDrafts] = useState<Record<string, string>>({});
   const [bundleCopyMessage, setBundleCopyMessage] = useState("");
+  const [selectedFindingKey, setSelectedFindingKey] = useState<string | null>(null);
   const applyRepair = useMutation({
     mutationFn: (fixes: string[]) => runRepair({ apply: true, fixes }),
     onSuccess: async () => {
@@ -99,6 +100,10 @@ export function DiagnosticsPanel({
   ];
   const repairActions = parseRepairActions(repair.data);
   const recentFailures = buildRecentFailureCards(lastCommandResults, snapshot);
+  const findings = useMemo(
+    () => buildDiagnosticFindings(issueCards, recentFailures, snapshot),
+    [issueCards, recentFailures, snapshot],
+  );
   const quickFixes = buildQuickFixes({
     snapshot,
     doctor: doctor.data,
@@ -127,6 +132,14 @@ export function DiagnosticsPanel({
     repairCount: repairActions.length,
     exportReady: Boolean(exportBundle.data),
   });
+  useEffect(() => {
+    if (selectedFindingKey && findings.some((finding) => finding.key === selectedFindingKey)) {
+      return;
+    }
+    setSelectedFindingKey(findings[0]?.key ?? null);
+  }, [findings, selectedFindingKey]);
+  const selectedFinding =
+    findings.find((finding) => finding.key === selectedFindingKey) ?? findings[0] ?? null;
 
   return (
     <SectionCard
@@ -266,57 +279,106 @@ export function DiagnosticsPanel({
         secondaryClassName="diagnostics-recovery-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-            <div className="desktop-pane-section-header">
-              <div>
-                <p className="card-kicker">Checks</p>
-                <h3>Checks and details</h3>
+            <div className="desktop-pane-section desktop-list-surface">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Findings</p>
+                  <h3>Checks and details</h3>
+                </div>
+                <p className="inline-note">
+                  Select a finding to inspect the failing details before you apply a recovery action.
+                </p>
               </div>
-              <p className="inline-note">
-                Review failing areas first, then move to the recovery actions in the right pane.
-              </p>
             </div>
-            {issueCards.map((card) => (
-              <article key={`${card.title}-${card.status}`} className={`diagnostic-card diagnostic-${card.status}`}>
-                <h4>{card.title}</h4>
-                {card.issues.map((issue) => (
-                  <p key={issue} className="inline-note">
-                    {normalizeRuntimeLanguage(issue)}
+            {findings.length ? (
+              <div className="stack-list desktop-list-stack">
+                {findings.map((finding) => (
+                  <button
+                    key={finding.key}
+                    type="button"
+                    aria-label={`Inspect ${finding.title}`}
+                    aria-pressed={selectedFinding?.key === finding.key}
+                    className={`list-row diagnostic-finding-row ${
+                      selectedFinding?.key === finding.key ? "diagnostic-finding-row-selected" : ""
+                    }`}
+                    onClick={() => setSelectedFindingKey(finding.key)}
+                  >
+                    <div className="diagnostic-finding-main">
+                      <div className="diagnostic-finding-title">
+                        <strong>{finding.title}</strong>
+                        <span className={`pill ${finding.status === "fail" ? "pill-warn" : "pill-soft"}`}>
+                          {finding.countLabel}
+                        </span>
+                      </div>
+                      <p className="inline-note">{finding.preview}</p>
+                    </div>
+                    <div className="diagnostic-finding-meta">
+                      <span>{finding.scopeLabel}</span>
+                    </div>
+                    <span className="diagnostic-finding-chevron" aria-hidden="true">
+                      ›
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <article className="diagnostic-card diagnostic-pass">
+                <h3>Everything looks good</h3>
+                <p className="inline-note">All configured tools match their active desktop profiles.</p>
+              </article>
+            )}
+          </div>
+        }
+        secondary={
+          <div className="stack-list desktop-pane-column">
+            {selectedFinding ? (
+              <article className={`diagnostic-card diagnostic-${selectedFinding.status}`}>
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Inspector</p>
+                    <h3>{selectedFinding.title}</h3>
+                  </div>
+                  <span className={`pill ${selectedFinding.status === "fail" ? "pill-warn" : "pill-soft"}`}>
+                    {selectedFinding.scopeLabel}
+                  </span>
+                </div>
+                {selectedFinding.lines.map((line) => (
+                  <p key={line} className="inline-note">
+                    {normalizeRuntimeLanguage(line)}
                   </p>
                 ))}
-                {card.remediation.length ? (
+                {selectedFinding.remediation.length ? (
                   <div className="diagnostic-remediation">
-                    {card.remediation.map((item) => (
+                    {selectedFinding.remediation.map((item) => (
                       <code key={item}>{item}</code>
                     ))}
                   </div>
                 ) : null}
-                {resolveIssueProfileTarget(card, snapshot) ? (
+                {selectedFinding.profileTarget ? (
                   <div className="button-row">
                     <button
                       className="ghost-button"
                       type="button"
-                      onClick={() => {
-                        const target = resolveIssueProfileTarget(card, snapshot);
-                        if (!target) return;
-                        onOpenProfiles(target.tool, target.profile);
-                      }}
+                      onClick={() =>
+                        onOpenProfiles(
+                          selectedFinding.profileTarget!.tool,
+                          selectedFinding.profileTarget!.profile,
+                        )
+                      }
                     >
                       Open profile details
                     </button>
                   </div>
                 ) : null}
               </article>
-            ))}
-            {!issueCards.length ? (
+            ) : (
               <article className="diagnostic-card diagnostic-pass">
                 <h3>Everything looks good</h3>
-                <p className="inline-note">All configured tools match their active desktop profiles.</p>
+                <p className="inline-note">
+                  Active profiles, local storage, and repair checks are currently passing.
+                </p>
               </article>
-            ) : null}
-          </div>
-        }
-        secondary={
-          <div className="stack-list desktop-pane-column">
+            )}
             <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Recovery</p>
@@ -498,6 +560,52 @@ type QuickFixCard = {
   };
   action: () => void;
 };
+
+type DiagnosticFinding = {
+  key: string;
+  title: string;
+  preview: string;
+  lines: string[];
+  remediation: string[];
+  status: "warn" | "fail";
+  scopeLabel: string;
+  countLabel: string;
+  profileTarget?: { tool: string; profile: string | null };
+};
+
+function buildDiagnosticFindings(
+  issueCards: IssueCardData[],
+  recentFailures: ReturnType<typeof buildRecentFailureCards>,
+  snapshot: AppSnapshot | undefined,
+): DiagnosticFinding[] {
+  const findings: DiagnosticFinding[] = issueCards.map((card) => ({
+    key: `issue-${card.title}-${card.status}`,
+    title: card.title,
+    preview: normalizeRuntimeLanguage(card.issues[0] ?? "Review diagnostic details."),
+    lines: card.issues,
+    remediation: card.remediation,
+    status: card.status === "fail" ? "fail" : "warn",
+    scopeLabel: "Check",
+    countLabel: `${card.issues.length} detail${card.issues.length === 1 ? "" : "s"}`,
+    profileTarget: snapshot ? resolveIssueProfileTarget(card, snapshot) ?? undefined : undefined,
+  }));
+
+  recentFailures.forEach((failure) => {
+    findings.push({
+      key: `failure-${failure.key}`,
+      title: failure.title,
+      preview: normalizeRuntimeLanguage(failure.message),
+      lines: [failure.message],
+      remediation: failure.remediation ? [failure.remediation] : [],
+      status: "fail",
+      scopeLabel: "Recent failure",
+      countLabel: "History",
+      profileTarget: failure.profileTarget,
+    });
+  });
+
+  return findings;
+}
 
 function buildQuickFixes(
   {

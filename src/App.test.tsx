@@ -174,6 +174,10 @@ function selectProfileInventory(tool: string, label: string) {
   fireEvent.click(screen.getByRole("button", { name: `Inspect ${tool} ${label}` }));
 }
 
+function selectDiagnosticFinding(title: string) {
+  fireEvent.click(screen.getByRole("button", { name: `Inspect ${title}` }));
+}
+
 async function renderSetupPanel({
   initReport = undefined,
   bootstrapOverride,
@@ -1994,10 +1998,10 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getAllByText("Non-interactive mode failure").length).toBeGreaterThan(0);
       expect(
-        screen.getByText(
+        screen.getAllByText(
           "Rerun this flow in an interactive session or use a supported non-interactive import method.",
-        ),
-      ).toBeInTheDocument();
+        ).length,
+      ).toBeGreaterThan(0);
     });
   });
 
@@ -4223,7 +4227,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Diagnostics"));
 
     await waitFor(() => {
-      expect(screen.getByText("Everything looks good")).toBeInTheDocument();
+      expect(screen.getAllByText("Everything looks good").length).toBeGreaterThan(0);
       expect(
         screen.getByText("No direct fix actions are available from the current diagnostics state."),
       ).toBeInTheDocument();
@@ -4281,12 +4285,18 @@ describe("App", () => {
       expect(screen.getAllByText("AI Switch cannot write the active config path.").length).toBeGreaterThan(0);
       expect(screen.getAllByText("Upstream OAuth session timed out.").length).toBeGreaterThan(0);
     });
-    expect(screen.getByText("Unlock the local credential store and retry.")).toBeInTheDocument();
-    expect(screen.getByText("Grant write access to ~/.aisw")).toBeInTheDocument();
-    expect(screen.getByText("Retry the switch")).toBeInTheDocument();
+
+    selectDiagnosticFinding("keyring");
+    expect(screen.getAllByText("Unlock the local credential store and retry.").length).toBeGreaterThan(0);
+
+    selectDiagnosticFinding("permissions");
+    expect(screen.getAllByText("Grant write access to ~/.aisw").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Retry the switch").length).toBeGreaterThan(0);
+
+    selectDiagnosticFinding("oauth");
     expect(
-      screen.getByText("Run the guided OAuth flow again and finish login before timeout."),
-    ).toBeInTheDocument();
+      screen.getAllByText("Run the guided OAuth flow again and finish login before timeout.").length,
+    ).toBeGreaterThan(0);
   });
 
   it("exports a redacted diagnostic bundle from diagnostics", async () => {
@@ -5849,12 +5859,12 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getAllByText("Claude profile missing").length).toBeGreaterThan(0);
-      expect(screen.getByText("profile work no longer exists")).toBeInTheDocument();
+      expect(screen.getAllByText("profile work no longer exists").length).toBeGreaterThan(0);
       expect(
-        screen.getByText(
+        screen.getAllByText(
           "Refresh profile state or recreate the missing profile before retrying.",
-        ),
-      ).toBeInTheDocument();
+        ).length,
+      ).toBeGreaterThan(0);
     });
   });
 

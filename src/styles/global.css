@@ -1709,6 +1709,57 @@ button {
   gap: 12px;
 }
 
+.diagnostic-finding-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) minmax(100px, 0.7fr) auto;
+  gap: 12px;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+  background: color-mix(in srgb, Canvas 98%, CanvasText 2%);
+}
+
+.diagnostic-finding-row-selected {
+  border-color: color-mix(in srgb, AccentColor 42%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, AccentColor 22%, transparent);
+  background: color-mix(in srgb, AccentColor 8%, Canvas 92%);
+}
+
+.diagnostic-finding-main,
+.diagnostic-finding-meta {
+  min-width: 0;
+}
+
+.diagnostic-finding-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.diagnostic-finding-main strong,
+.diagnostic-finding-main p,
+.diagnostic-finding-meta span {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.diagnostic-finding-meta {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.diagnostic-finding-chevron {
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text-tertiary);
+}
+
 .segmented-control {
   display: inline-flex;
   gap: 4px;
@@ -1837,11 +1888,13 @@ button {
   }
 
   .backup-list-row,
-  .activity-list-row {
+  .activity-list-row,
+  .diagnostic-finding-row {
     grid-template-columns: 1fr;
   }
 
   .activity-list-meta,
+  .diagnostic-finding-meta,
   .profile-list-columns {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
