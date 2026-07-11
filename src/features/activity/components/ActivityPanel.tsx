@@ -229,7 +229,7 @@ function formatGlobalScope(id: string) {
     case "profile-set":
       return "Set";
     case "context":
-      return "Context";
+      return "Shared group";
     case "workspace":
       return "Project rules";
     case "backup":

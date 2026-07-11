@@ -145,10 +145,10 @@ export function OverviewPanel({
           <p className="inline-note">{currentSetLabel ? "Shared set ready" : "Choose a shared set or switch per tool."}</p>
         </article>
         <article className={`overview-status-card ${hasWorkspaceMismatch ? "overview-status-card-warning" : ""}`}>
-          <p className="card-kicker">Workspace</p>
+          <p className="card-kicker">Project</p>
           <h3>{hasWorkspaceMismatch ? "Needs review" : "Ready"}</h3>
           <p className="inline-note">
-            {hasWorkspaceMismatch ? "Workspace mismatch" : "Ready to switch"}
+            {hasWorkspaceMismatch ? "Project mismatch" : "Ready to switch"}
           </p>
         </article>
       </div>
@@ -194,7 +194,7 @@ export function OverviewPanel({
             ) : null}
             {showWorkspaceSummary ? (
               <article className={`diagnostic-card ${hasWorkspaceMismatch ? "diagnostic-warn" : "diagnostic-pass"}`}>
-                <h3>{hasWorkspaceMismatch ? "Workspace wants a different set" : "Workspace match"}</h3>
+                <h3>{hasWorkspaceMismatch ? "Project wants a different set" : "Project match"}</h3>
                 <p className="inline-note">
                   {workspaceSummaryLabel}: <strong>{expectedWorkspaceDisplay}</strong>
                 </p>
@@ -264,7 +264,7 @@ export function OverviewPanel({
                 ) : null}
                 {workspaceResult ? (
                   <p className={`inline-note ${workspaceResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
-                    Last workspace result: {workspaceResult.message}
+                    Last project result: {workspaceResult.message}
                     {workspaceResult.remediation ? ` Remediation: ${workspaceResult.remediation}` : ""}
                   </p>
                 ) : null}
@@ -280,7 +280,7 @@ export function OverviewPanel({
                 !lastCommandResults.global["profile-set"] &&
                 !workspaceResult &&
                 !contextResult ? (
-                  <p className="inline-note">No recent bulk or workspace changes are recorded in this session.</p>
+                  <p className="inline-note">No recent bulk or project-rule changes are recorded in this session.</p>
                 ) : null}
               </div>
             </article>

@@ -255,13 +255,13 @@ export function WorkspacesPanel({
           <div className="stack-list desktop-pane-column">
           {hasWorkspaceMismatch && !workspaceOverrideDismissed ? (
             <article className="diagnostic-card diagnostic-warn">
-              <h3>Workspace mismatch</h3>
+              <h3>Project mismatch</h3>
               <p className="inline-note">
                 This folder matches <strong>{expectedContextDisplay}</strong>, but the current
-                active context is <strong>{currentContextDisplay}</strong>.
+                active set is <strong>{currentContextDisplay}</strong>.
               </p>
               <p className="inline-note">
-                Matched from {statusCard.scope} binding: {statusCard.target}
+                Matched from this {statusCard.scope} rule: {statusCard.target}
               </p>
               <div className="button-row">
                 <button
@@ -287,7 +287,7 @@ export function WorkspacesPanel({
             <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Resolution</p>
-                <h3>Current workspace match</h3>
+                <h3>Current project match</h3>
               </div>
               <p className="inline-note">
                 Review what this folder matched before changing or removing any explicit rule.
@@ -335,7 +335,7 @@ export function WorkspacesPanel({
                     <p>
                       {binding.scope} · {binding.target}
                     </p>
-                    {isMatchedBinding ? <p className="inline-note">Matched binding ✓</p> : null}
+                    {isMatchedBinding ? <p className="inline-note">Matched rule ✓</p> : null}
                   </div>
                   <button
                     className="ghost-button danger-button"

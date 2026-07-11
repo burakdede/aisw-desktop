@@ -3740,7 +3740,7 @@ describe("App", () => {
     await renderApp();
     await openProjectRulesSection();
     await waitFor(() => {
-      expect(screen.getByText("Workspace mismatch")).toBeInTheDocument();
+      expect(screen.getByText("Project mismatch")).toBeInTheDocument();
       expect(
         screen.getByText((_, element) =>
           element?.tagName === "P" && element.textContent?.trim() === "Expected set: Client Acme",
@@ -3772,14 +3772,14 @@ describe("App", () => {
       expect(screen.getByText(/Guard mode:\s*warn/)).toBeInTheDocument();
       expect(screen.getByText(/Default set:\s*work/)).toBeInTheDocument();
       expect(screen.getByText("path · /code/acme")).toBeInTheDocument();
-      expect(screen.getByText("Matched binding ✓")).toBeInTheDocument();
+      expect(screen.getByText("Matched rule ✓")).toBeInTheDocument();
       expect(screen.getAllByText("Client Acme").length).toBeGreaterThan(0);
-      expect(screen.getByText("Workspace mismatch")).toBeInTheDocument();
+      expect(screen.getByText("Project mismatch")).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText("Keep current set"));
     await waitFor(() => {
-      expect(screen.queryByText("Workspace mismatch")).not.toBeInTheDocument();
+      expect(screen.queryByText("Project mismatch")).not.toBeInTheDocument();
     });
 
     fireEvent.change(screen.getByLabelText("Rule scope"), {
@@ -4007,7 +4007,7 @@ describe("App", () => {
       ),
     ).toBe(true);
     expect(
-      screen.getByText("Last workspace result: Switched to client-acme for /code/acme."),
+      screen.getByText("Last project result: Switched to client-acme for /code/acme."),
     ).toBeInTheDocument();
   });
 
@@ -5984,7 +5984,7 @@ describe("App", () => {
     await renderApp();
     await openProjectRulesSection();
     await waitFor(() => {
-      expect(screen.getByText("Workspace mismatch")).toBeInTheDocument();
+      expect(screen.getByText("Project mismatch")).toBeInTheDocument();
       expect(screen.getByText("Guard mode: warn")).toBeInTheDocument();
     });
 
@@ -6004,7 +6004,7 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByText("Workspace mismatch")).not.toBeInTheDocument();
+      expect(screen.queryByText("Project mismatch")).not.toBeInTheDocument();
       expect(screen.getByText("Guard mode: strict")).toBeInTheDocument();
     });
   });
@@ -6087,7 +6087,7 @@ describe("App", () => {
         id: "context",
         label: "Use shared group",
         status: "error",
-        message: "Context switch failed.",
+        message: "Shared group switch failed.",
         remediation: "Re-open AI Switch and verify the saved shared group.",
       });
       await Promise.resolve();
@@ -6095,12 +6095,12 @@ describe("App", () => {
 
     expect(
       screen.getByText(
-        "Last shared-group result: Context switch failed. Remediation: Re-open AI Switch and verify the saved shared group.",
+        "Last shared-group result: Shared group switch failed. Remediation: Re-open AI Switch and verify the saved shared group.",
       ),
     ).toBeInTheDocument();
     expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
       title: "Use shared group",
-      body: "Context switch failed. Re-open AI Switch and verify the saved shared group.",
+      body: "Shared group switch failed. Re-open AI Switch and verify the saved shared group.",
     });
   });
 

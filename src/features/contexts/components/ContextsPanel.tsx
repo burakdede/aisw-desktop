@@ -334,10 +334,10 @@ export function ContextsPanel({
             <div className="set-section-header desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Shared groups</p>
-                <h3>Available from the runtime</h3>
+                <h3>Available from the engine</h3>
               </div>
               <p className="inline-note">
-                These come directly from the selected runtime and remain separate from your desktop-local saved sets.
+                These come directly from the selected engine and remain separate from your desktop-local saved sets.
               </p>
             </div>
             {snapshot.contexts.map((context) => (
