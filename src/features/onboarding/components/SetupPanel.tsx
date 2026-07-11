@@ -119,99 +119,133 @@ export function SetupPanel({
   return (
     <SectionCard
       title="Welcome"
-      kicker="Getting started"
+      kicker="First launch"
       actions={
         <button
           className="primary-button"
           disabled={mutationLock.isBusy}
           onClick={() => initMutation.mutate()}
         >
-          {initMutation.isPending ? "Scanning…" : "Get Started"}
+          {initMutation.isPending ? "Scanning…" : "Scan this Mac"}
         </button>
       }
-        >
-      <p className="inline-note">
-        AI Switch manages local account profiles for Claude Code, Codex CLI, and Gemini CLI.
-        It includes the compatible switching runtime it needs, so most people never need to touch
-        Terminal setup just to start switching accounts.
-      </p>
-
-      <article className="diagnostic-card diagnostics-body">
-        <h3>Local-only by default</h3>
-        <div className="trust-list">
-          <p className="trust-list-item">✓ Credentials stay on this Mac</p>
-          <p className="trust-list-item">✓ No telemetry</p>
-          <p className="trust-list-item">✓ No prompt or API traffic proxy</p>
-          <p className="trust-list-item">✓ Bundled runtime included</p>
+    >
+      <div className="desktop-pane-hero">
+        <div className="desktop-pane-hero-copy">
+          <p className="inline-note">
+            AI Switch keeps switching local. Bring in existing Claude Code, Codex CLI, and Gemini
+            CLI accounts, confirm the bundled engine is ready, and verify one safe switch without
+            leaving the app.
+          </p>
         </div>
-      </article>
-
-      <div className="panel-grid panel-grid-2 diagnostics-body">
-        <article className="diagnostic-card">
-          <h3>Included runtime</h3>
-          <p className="inline-note">
-            {bootstrap.settings.runtime_kind === "bundled"
-              ? "AI Switch is using its included runtime."
-              : `AI Switch is using an advanced ${titleCase(bootstrap.settings.runtime_kind)} runtime override.`}
-          </p>
-          <p className="inline-note">
-            Runtime mode: <strong>{titleCase(bootstrap.settings.runtime_kind)}</strong>
-          </p>
-          <p className="inline-note">
-            Included runtime path: {bootstrap.runtime_status.inventory.bundled_path ?? "Not available in this build"}
-          </p>
-          {bootstrap.settings.runtime_kind !== "bundled" ? (
-            <p className="inline-note">
-              System runtime: {bootstrap.runtime_status.inventory.system_path ?? "Not found on PATH"}
-            </p>
-          ) : null}
-          {bootstrap.runtime_status.inventory.configured_path ? (
-            <p className="inline-note">
-              Configured custom path: {bootstrap.runtime_status.inventory.configured_path}
-            </p>
-          ) : null}
-          <p className="inline-note">
-            Resolved path: {bootstrap.runtime_status.resolved_path ?? "No runtime resolved"}
-          </p>
-          <p className="inline-note">
-            Managed data folder: {bootstrap.settings.aisw_home ?? "Default managed location"}
-          </p>
-          <p className="inline-note">
-            Runtime version: {bootstrap.runtime_status.version?.version ?? "unknown"}
-          </p>
-          <p className="inline-note">
-            Update channel: {bootstrap.settings.update_channel}
-          </p>
-          <div className="button-row">
-            <button className="ghost-button" type="button" onClick={() => onOpenSettings("runtime")}>
-              Runtime settings
-            </button>
-          </div>
-        </article>
-
-        <article className="diagnostic-card">
-          <h3>Health check</h3>
-          <div className="stack-list">
-            {healthItems.map((item) => (
-              <div key={item.label}>
-                <p className={`diagnostic-status diagnostic-status-${item.status}`}>
-                  {item.status === "pass" ? "✓" : item.status === "warn" ? "!" : "✕"} {item.label}
-                </p>
-                <p className="inline-note">{item.detail}</p>
-              </div>
-            ))}
-            {!healthItems.length ? (
-              <p className="inline-note">
-                Run the setup scan to populate backend and tool health details.
-              </p>
-            ) : null}
-          </div>
-        </article>
+        <div className="desktop-pane-hero-pills" aria-label="Onboarding highlights">
+          <span className="pill pill-soft">Local only</span>
+          <span className="pill pill-soft">Bundled engine</span>
+          <span className="pill pill-soft">No telemetry</span>
+        </div>
       </div>
 
-      <div className="panel-grid panel-grid-2 diagnostics-body">
-        <div className="stack-list">
-          <h3>Import existing accounts</h3>
+      <div className="panel-grid panel-grid-2 diagnostics-body desktop-pane-grid">
+        <div className="stack-list desktop-pane-column">
+          <article className="diagnostic-card desktop-pane-intro">
+            <h3>Ready now</h3>
+            <p className="inline-note">
+              Confirm that this Mac is using the included switching engine and that the local
+              environment is ready for account changes.
+            </p>
+          </article>
+
+          <article className="diagnostic-card">
+            <h3>Local-only by default</h3>
+            <div className="trust-list">
+              <p className="trust-list-item">Credentials stay on this Mac</p>
+              <p className="trust-list-item">No telemetry</p>
+              <p className="trust-list-item">No prompt or API traffic proxy</p>
+              <p className="trust-list-item">Bundled engine included</p>
+            </div>
+          </article>
+
+          <article className="diagnostic-card">
+            <h3>Included switching engine</h3>
+            <p className="inline-note">
+              {bootstrap.settings.runtime_kind === "bundled"
+                ? "AI Switch is using its included switching engine."
+                : `AI Switch is using an advanced ${titleCase(bootstrap.settings.runtime_kind)} engine override.`}
+            </p>
+            <p className="inline-note">
+              Engine mode: <strong>{titleCase(bootstrap.settings.runtime_kind)}</strong>
+            </p>
+            <p className="inline-note">
+              Included engine path: {bootstrap.runtime_status.inventory.bundled_path ?? "Not available in this build"}
+            </p>
+            {bootstrap.settings.runtime_kind !== "bundled" ? (
+              <p className="inline-note">
+                System engine: {bootstrap.runtime_status.inventory.system_path ?? "Not found on PATH"}
+              </p>
+            ) : null}
+            {bootstrap.runtime_status.inventory.configured_path ? (
+              <p className="inline-note">
+                Custom engine path: {bootstrap.runtime_status.inventory.configured_path}
+              </p>
+            ) : null}
+            <p className="inline-note">
+              Active engine path: {bootstrap.runtime_status.resolved_path ?? "No engine resolved"}
+            </p>
+            <p className="inline-note">
+              Managed data folder: {bootstrap.settings.aisw_home ?? "Default managed location"}
+            </p>
+            <p className="inline-note">
+              Engine version: {bootstrap.runtime_status.version?.version ?? "unknown"}
+            </p>
+            <p className="inline-note">
+              Update channel: {bootstrap.settings.update_channel}
+            </p>
+            <div className="button-row">
+              <button className="ghost-button" type="button" onClick={() => onOpenSettings("runtime")}>
+                Open runtime settings
+              </button>
+            </div>
+          </article>
+
+          <article className="diagnostic-card">
+            <h3>Health check</h3>
+            <div className="stack-list">
+              {healthItems.map((item) => (
+                <div key={item.label}>
+                  <p className={`diagnostic-status diagnostic-status-${item.status}`}>
+                    {item.status === "pass" ? "✓" : item.status === "warn" ? "!" : "✕"} {item.label}
+                  </p>
+                  <p className="inline-note">{item.detail}</p>
+                </div>
+              ))}
+              {!healthItems.length ? (
+                <p className="inline-note">
+                  Run the setup scan to populate engine, storage, and tool health details.
+                </p>
+              ) : null}
+            </div>
+          </article>
+        </div>
+
+        <div className="stack-list desktop-pane-column">
+          <article className="diagnostic-card desktop-pane-intro">
+            <h3>Bring your accounts in</h3>
+            <p className="inline-note">
+              Capture current sign-ins, add missing tools, and run one shared switch to verify that
+              account changes work end to end.
+            </p>
+          </article>
+
+          <div className="desktop-pane-section">
+            <div className="desktop-pane-section-header">
+              <div>
+                <p className="card-kicker">Import</p>
+                <h3>Existing accounts</h3>
+              </div>
+              <p className="inline-note">
+                Saved accounts become reusable profiles that you can switch again later.
+              </p>
+            </div>
           {liveAccounts.map((account) => (
             <form
               key={account.tool}
@@ -318,15 +352,20 @@ export function SetupPanel({
               </p>
             )
           ) : null}
-        </div>
+          </div>
 
-        <div className="stack-list">
-          <h3>First switch</h3>
-          <p className="inline-note">
-            Re-apply a shared profile name across installed tools to confirm the local control plane
-            is working end to end.
-          </p>
-          <div className="inline-form">
+          <article className="diagnostic-card">
+            <div className="desktop-pane-section-header">
+              <div>
+                <p className="card-kicker">Verify</p>
+                <h3>First switch</h3>
+              </div>
+              <p className="inline-note">
+                Re-apply one saved profile across installed tools to confirm switching works end to
+                end.
+              </p>
+            </div>
+            <div className="inline-form">
             <select
               aria-label="First switch profile"
               value={firstSwitchProfile}
@@ -355,22 +394,33 @@ export function SetupPanel({
             >
               {useAllProfilesMutation.isPending ? "Switching…" : "Switch now"}
             </button>
-          </div>
-          {!switchableProfiles.length ? (
-            <div className="stack-list">
-              <p className="inline-note">
-                Import or create matching profile names across tools before running a switch-all check.
-              </p>
-              <div className="button-row">
-                <button className="ghost-button" type="button" onClick={() => onOpenProfiles("claude")}>
-                  Open profile setup
-                </button>
-              </div>
             </div>
-          ) : null}
+            {!switchableProfiles.length ? (
+              <div className="stack-list">
+                <p className="inline-note">
+                  Import or create matching profile names across tools before running a shared
+                  switch check.
+                </p>
+                <div className="button-row">
+                  <button className="ghost-button" type="button" onClick={() => onOpenProfiles("claude")}>
+                    Open profile setup
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </article>
 
-          <div className="diagnostic-card">
-            <h4>Shell guidance</h4>
+          <article className="diagnostic-card">
+            <div className="desktop-pane-section-header">
+              <div>
+                <p className="card-kicker">Optional</p>
+                <h3>Terminal integration</h3>
+              </div>
+              <p className="inline-note">
+                Only needed when you want current shell sessions to react immediately after a
+                switch.
+              </p>
+            </div>
             {shellGuidance.data?.detected_shell ? (
               <p className="inline-note">
                 Detected shell: <strong>{titleCase(shellGuidance.data.detected_shell)}</strong>
@@ -390,7 +440,7 @@ export function SetupPanel({
                 Open terminal setup
               </button>
             </div>
-          </div>
+          </article>
         </div>
       </div>
     </SectionCard>

@@ -72,13 +72,14 @@ export function AppFrame({
               </div>
             ))}
           </nav>
-          {statusBadge ? <div className="status-badge">{statusBadge}</div> : null}
+          {statusBadge ? <div className="status-badge sidebar-status-card">{statusBadge}</div> : null}
         </aside>
         <div className="content-shell">
           <header className="window-toolbar">
             <div className="window-toolbar-copy">
-              <p className="window-toolbar-kicker">Local control center</p>
+              <p className="window-toolbar-kicker">AI Switch</p>
               <h2>{title}</h2>
+              {subtitle ? <p className="window-toolbar-subtitle">{subtitle}</p> : null}
             </div>
             {toolbar ? <div className="window-toolbar-actions">{toolbar}</div> : null}
           </header>

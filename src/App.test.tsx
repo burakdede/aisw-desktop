@@ -305,13 +305,13 @@ describe("App", () => {
     expect(screen.getByText("Current set: Work")).toBeInTheDocument();
     expect(screen.getByText("Ready to switch")).toBeInTheDocument();
     expect(screen.getByText("Welcome")).toBeInTheDocument();
-    expect(screen.getByText("Included runtime")).toBeInTheDocument();
+    expect(screen.getByText("Included switching engine")).toBeInTheDocument();
     expect(screen.getByText("Health check")).toBeInTheDocument();
     expect(screen.getByText("Local-only by default")).toBeInTheDocument();
-    expect(screen.getByText("✓ Credentials stay on this Mac")).toBeInTheDocument();
-    expect(screen.getByText("✓ No telemetry")).toBeInTheDocument();
+    expect(screen.getByText("Credentials stay on this Mac")).toBeInTheDocument();
+    expect(screen.getAllByText("No telemetry").length).toBeGreaterThan(0);
     expect(
-      screen.getByText("AI Switch is using its included runtime."),
+      screen.getByText("AI Switch is using its included switching engine."),
     ).toBeInTheDocument();
   });
 
@@ -338,7 +338,7 @@ describe("App", () => {
     });
     expect(
       screen.getByText(
-        "AI Switch includes the switching runtime it needs, but the current runtime choice on this Mac is not compatible with this build.",
+        "AI Switch includes the switching engine it needs. The current advanced runtime choice on this Mac does not match this desktop build.",
       ),
     ).toBeInTheDocument();
     expect(
@@ -346,7 +346,7 @@ describe("App", () => {
         "Open Settings and switch back to the bundled runtime, or choose a newer compatible runtime before continuing.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Why AI Switch paused setup")).toBeInTheDocument();
+    expect(screen.getByText("Why setup is paused")).toBeInTheDocument();
     expect(screen.getByText("Runtime version details are unavailable")).toBeInTheDocument();
     expect(screen.getByText("Runtime capability details are unavailable")).toBeInTheDocument();
     expect(screen.getByText("Runtime and local storage")).toBeInTheDocument();
@@ -376,7 +376,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("AI Switch could not finish startup.")).toBeInTheDocument();
+      expect(screen.getByText("AI Switch could not open this workspace.")).toBeInTheDocument();
     });
     expect(screen.getByText("AI Switch could not resolve a compatible switching runtime")).toBeInTheDocument();
     expect(
@@ -3224,7 +3224,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
-      expect(screen.getByText("Shell guidance")).toBeInTheDocument();
+      expect(screen.getByText("Terminal integration")).toBeInTheDocument();
       expect(screen.getByText(/Desktop runtime/)).toBeInTheDocument();
     });
   });
@@ -4664,7 +4664,7 @@ describe("App", () => {
     });
   });
 
-  it("reruns setup detection when Get Started is clicked", async () => {
+  it("reruns setup detection when Scan this Mac is clicked", async () => {
     let initCalls = 0;
     const firstRunSnapshot = {
       ...bootstrap.snapshot,
@@ -4715,7 +4715,7 @@ describe("App", () => {
     });
     expect(initCalls).toBe(0);
 
-    fireEvent.click(screen.getByText("Get Started"));
+    fireEvent.click(screen.getByText("Scan this Mac"));
 
     await waitFor(() => {
       expect(screen.getByText("detected · oauth")).toBeInTheDocument();
@@ -6722,7 +6722,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls).toContain("run_doctor");
       expect(calls).toContain("get_shell_guidance");
-      expect(screen.getByText("Get Started")).toBeInTheDocument();
+      expect(screen.getByText("Scan this Mac")).toBeInTheDocument();
     });
   });
 

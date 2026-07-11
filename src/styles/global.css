@@ -66,7 +66,11 @@ button {
 
 .app-shell-window {
   display: grid;
-  background: color-mix(in srgb, Canvas 99%, #e5e9ef 1%);
+  padding: 12px;
+  background:
+    radial-gradient(circle at top left, rgba(107, 164, 255, 0.14), transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(241, 244, 248, 0.92)),
+    color-mix(in srgb, Canvas 99%, #e5e9ef 1%);
 }
 
 .hero-card {
@@ -82,6 +86,11 @@ button {
   background: color-mix(in srgb, Canvas 92%, transparent);
   backdrop-filter: blur(20px);
   box-shadow: var(--shadow-window);
+}
+
+.hero-card-compact {
+  width: min(520px, 100%);
+  padding: 26px 28px;
 }
 
 .hero-card h1 {
@@ -121,12 +130,15 @@ button {
 }
 
 .layout-shell {
-  min-height: 100vh;
+  min-height: calc(100vh - 24px);
   display: grid;
   grid-template-columns: 236px minmax(0, 1fr);
   gap: 0;
   overflow: hidden;
+  border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
+  border-radius: 22px;
   background: color-mix(in srgb, Canvas 97%, transparent);
+  box-shadow: var(--shadow-window);
 }
 
 .sidebar {
@@ -274,6 +286,15 @@ button {
   gap: 5px;
   padding-bottom: 10px;
   border-top: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
+}
+
+.sidebar-status-card {
+  margin: auto 10px 10px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, CanvasText 10%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, Canvas 95%, CanvasText 5%);
+  box-shadow: var(--shadow-card);
 }
 
 .status-badge strong {
@@ -424,6 +445,14 @@ button {
   letter-spacing: -0.03em;
 }
 
+.window-toolbar-subtitle {
+  margin: 8px 0 0;
+  max-width: 60ch;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
 .window-toolbar-actions {
   display: flex;
   gap: 8px;
@@ -472,6 +501,30 @@ button {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.desktop-pane-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--separator);
+  background: color-mix(in srgb, Canvas 97%, CanvasText 3%);
+  box-shadow: var(--shadow-card);
+}
+
+.desktop-pane-hero-copy {
+  max-width: 62ch;
+}
+
+.desktop-pane-hero-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .desktop-pane-stack {
@@ -1216,6 +1269,14 @@ button {
     align-items: flex-start;
   }
 
+  .desktop-pane-hero {
+    flex-direction: column;
+  }
+
+  .desktop-pane-hero-pills {
+    justify-content: flex-start;
+  }
+
   .overview-current-set {
     flex-direction: column;
   }
@@ -1273,8 +1334,19 @@ button {
     padding: 10px;
   }
 
+  .app-shell-window {
+    padding: 0;
+  }
+
   .hero-card {
     padding: 24px;
+  }
+
+  .layout-shell {
+    min-height: 100vh;
+    border-radius: 0;
+    border-inline: 0;
+    border-bottom: 0;
   }
 
   .content-main,

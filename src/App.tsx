@@ -310,9 +310,12 @@ export function App() {
   if (bootstrap.isLoading) {
     return (
       <main className="app-shell app-shell-onboarding">
-        <section className="hero-card">
+        <section className="hero-card hero-card-compact">
           <p className="eyebrow">AI Switch</p>
-          <h1>Loading your local account control center…</h1>
+          <h1>Preparing your desktop workspace…</h1>
+          <p className="lede">
+            Loading your local profiles, bundled switching engine, and tool status.
+          </p>
         </section>
       </main>
     );
@@ -322,10 +325,13 @@ export function App() {
     const bootstrapError = describeBootstrapError(bootstrap.error);
     return (
       <main className="app-shell app-shell-onboarding">
-        <section className="hero-card">
+        <section className="hero-card hero-card-compact">
           <p className="eyebrow">AI Switch</p>
-          <h1>AI Switch could not finish startup.</h1>
-          <p className="lede">Check the selected runtime, local permissions, and compatibility details before continuing.</p>
+          <h1>AI Switch could not open this workspace.</h1>
+          <p className="lede">
+            Check the included switching engine, local permissions, and compatibility details
+            before continuing.
+          </p>
           <p className="inline-note">{bootstrapError.message}</p>
           {bootstrapError.remediation ? (
             <p className="inline-note">{bootstrapError.remediation}</p>
@@ -395,13 +401,13 @@ export function App() {
         <SectionCard title="Finish runtime setup" kicker="Startup required">
           <div className="stack-list">
             <p className="inline-note">
-              AI Switch includes the switching runtime it needs, but the current runtime choice on
-              this Mac is not compatible with this build.
+              AI Switch includes the switching engine it needs. The current advanced runtime choice
+              on this Mac does not match this desktop build.
             </p>
             <p className="inline-note">{runtimeBlocker.nextStep}</p>
             {runtimeStatus.issues.length ? (
               <article className="diagnostic-card">
-                <h3>Why AI Switch paused setup</h3>
+                <h3>Why setup is paused</h3>
                 {runtimeStatus.issues.map((issue) => (
                   <p key={issue} className="inline-note">
                     {issue}
