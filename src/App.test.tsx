@@ -330,7 +330,7 @@ describe("App", () => {
   it("renders the overview from bootstrap data", async () => {
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("Control Center")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
     });
     expect(screen.getByText("Re-apply Work")).toBeInTheDocument();
     expect(screen.getByText("Current set")).toBeInTheDocument();
@@ -379,7 +379,7 @@ describe("App", () => {
     expect(screen.getByText("Engine and local storage")).toBeInTheDocument();
     expect(screen.getByText("Runtime details")).toBeInTheDocument();
     expect(screen.queryByText("Welcome")).not.toBeInTheDocument();
-    expect(screen.queryByText("Control Center")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Overview" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Overview" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Profiles" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Sets" })).toBeDisabled();
@@ -523,7 +523,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     fireEvent.click(screen.getAllByText("Open details")[1]);
 
@@ -672,7 +672,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     fireEvent.click(screen.getAllByText("Open details")[1]);
 
@@ -737,7 +737,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     fireEvent.click(screen.getAllByText("Open details")[1]);
 
@@ -1016,7 +1016,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
     fireEvent.click(screen.getByText("Re-apply Work"));
 
     await waitFor(() => {
@@ -1091,7 +1091,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     fireEvent.change(screen.getByLabelText("Switch codex profile"), {
       target: { value: "work" },
@@ -1159,7 +1159,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     fireEvent.click(screen.getByText("Re-apply Work"));
     await waitFor(() => {
@@ -1243,7 +1243,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
     fireEvent.change(screen.getByLabelText("Switch codex profile"), {
       target: { value: "work" },
     });
@@ -1871,7 +1871,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
     fireEvent.click(screen.getByText("Re-apply Work"));
 
     await waitFor(() => {
@@ -1972,7 +1972,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
     fireEvent.click(screen.getByText("Re-apply Work"));
 
     await waitFor(() => {
@@ -2226,7 +2226,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
     expect(
       screen.getByText(
         "This runtime does not support one-click capture for Claude. Open profile setup to choose another sign-in method.",
@@ -3374,7 +3374,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
     fireEvent.change(screen.getByLabelText("import claude current login"), {
       target: { value: "recovered" },
     });
@@ -3706,7 +3706,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
     await waitFor(() => {
       expect(
         screen.getByText((_, element) =>
@@ -3790,7 +3790,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     await waitFor(() => {
       expect(
@@ -5157,7 +5157,7 @@ describe("App", () => {
 
   it("opens diagnostics when the tray requests it", async () => {
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     const handlers = (window as typeof window & {
       __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
@@ -5207,7 +5207,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
     expect(doctorRuns).toBe(0);
 
     const handlers = (window as typeof window & {
@@ -5234,7 +5234,7 @@ describe("App", () => {
 
   it("opens the updates settings section when the app menu requests it", async () => {
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     const handlers = (window as typeof window & {
       __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
@@ -5252,7 +5252,7 @@ describe("App", () => {
 
   it("opens quick switch when the app menu requests it", async () => {
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     const handlers = (window as typeof window & {
       __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
@@ -5301,7 +5301,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     const handlers = (window as typeof window & {
       __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
@@ -5323,7 +5323,7 @@ describe("App", () => {
 
   it("opens help destinations from the app menu", async () => {
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     const handlers = (window as typeof window & {
       __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
@@ -5412,7 +5412,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
     expect(doctorRuns).toBe(0);
 
     fireEvent.click(screen.getByText("Re-apply Work"));
@@ -5449,7 +5449,7 @@ describe("App", () => {
 
   it("records tray command results and shows a desktop notification", async () => {
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     const handlers = (window as typeof window & {
       __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
@@ -5740,7 +5740,7 @@ describe("App", () => {
 
   it("records tray context failures with remediation and shows a desktop notification", async () => {
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     const handlers = (window as typeof window & {
       __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
@@ -5771,7 +5771,7 @@ describe("App", () => {
 
   it("classifies tray profile failures in diagnostics", async () => {
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Control Center")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     const handlers = (window as typeof window & {
       __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;

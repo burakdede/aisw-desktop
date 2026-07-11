@@ -89,8 +89,8 @@ export function OverviewPanel({
 
   return (
     <SectionCard
-      title="Control Center"
-      kicker="Safety and switching"
+      title="Switch readiness"
+      kicker="Overview"
       actions={
         <div className="button-row">
           <button
@@ -115,9 +115,9 @@ export function OverviewPanel({
       <article className="desktop-pane-hero overview-hero">
         <div className="desktop-pane-hero-copy">
           <p className="card-kicker">Overview</p>
-          <h3>See what is active and switch safely from one place</h3>
+          <h3>Confirm the right accounts are active before you start coding</h3>
           <p className="inline-note">
-            The overview keeps active profiles, shared sets, workspace expectations, and live drift warnings in one compact desktop control surface.
+            Review your current set, workspace expectations, and live tool status in one compact desktop overview.
           </p>
         </div>
         <div className="desktop-pane-hero-pills" aria-label="Overview highlights">
