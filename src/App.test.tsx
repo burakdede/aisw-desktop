@@ -491,16 +491,11 @@ describe("App", () => {
     };
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("This desktop app needs its included runtime")).toBeInTheDocument();
+      expect(screen.getByText("This Mac is using an unsupported runtime")).toBeInTheDocument();
     });
     expect(
       screen.getByText(
-        "This Mac already has an AI Switch runtime selected, but it does not support this desktop app release.",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "The selected runtime does not report the desktop compatibility details this app needs.",
+        "AI Switch found another runtime on this Mac, but this desktop release is designed to use the included runtime by default.",
       ),
     ).toBeInTheDocument();
     expect(
@@ -508,12 +503,16 @@ describe("App", () => {
         "Switch back to the included AI Switch runtime, or choose a newer compatible runtime in Runtime Settings before continuing.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Why this is blocked")).toBeInTheDocument();
-    expect(screen.getByText("Runtime version details are unavailable")).toBeInTheDocument();
-    expect(screen.getByText("Runtime capability details are unavailable")).toBeInTheDocument();
+    expect(screen.getByText("Current selection")).toBeInTheDocument();
+    expect(screen.getByText("System runtime override")).toBeInTheDocument();
+    expect(screen.getByText("Recommended")).toBeInTheDocument();
+    expect(screen.getByText("Included runtime managed by this desktop app")).toBeInTheDocument();
+    expect(
+      screen.getByText("Advanced details"),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Use Included Runtime" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Runtime Settings" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Advanced Runtime Options" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Runtime" })).not.toBeInTheDocument();
     expect(screen.queryByText("Runtime summary")).not.toBeInTheDocument();
     expect(screen.queryByText("Welcome to AI Switch")).not.toBeInTheDocument();
@@ -541,10 +540,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Runtime Settings" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Advanced Runtime Options" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Runtime Settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Advanced Runtime Options" }));
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Runtime" })).toHaveAttribute("aria-pressed", "true");

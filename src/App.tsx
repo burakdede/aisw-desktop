@@ -746,12 +746,12 @@ export function App() {
     <AppFrame
       mode={showSetupWindow ? "setup" : "standard"}
       title={
-        runtimeRecoveryFocused ? "Use Included Runtime" : sectionTitle(activeSection, setupFocused)
+        runtimeRecoveryFocused ? "Finish Setup" : sectionTitle(activeSection, setupFocused)
       }
       subtitle="Switch Claude Code, Codex CLI, and Gemini CLI profiles from one focused desktop app."
       detail={
         runtimeRecoveryFocused
-          ? "The selected AI Switch runtime does not support this desktop app. Switch back to the included runtime to continue."
+          ? "AI Switch can continue as soon as this Mac switches back to the included runtime."
           : sectionDetail(activeSection, setupFocused)
       }
       nav={navItems}
@@ -776,14 +776,32 @@ export function App() {
       )}
     >
       {runtimeRecoveryFocused ? (
-        <SectionCard title="This desktop app needs its included runtime" kicker="Switching paused">
+        <SectionCard title="This Mac is using an unsupported runtime" kicker="Setup paused">
           <div className="stack-list">
             <p className="inline-note">
-              This Mac already has an AI Switch runtime selected, but it does not support this
-              desktop app release.
+              AI Switch found another runtime on this Mac, but this desktop release is designed to
+              use the included runtime by default.
             </p>
-            <p className="inline-note">{normalizeRuntimeLanguage(runtimeBlocker.summary)}</p>
-            <p className="inline-note">{normalizeRuntimeLanguage(runtimeBlocker.nextStep)}</p>
+            <div className="stack-list">
+              <article className="list-row">
+                <div>
+                  <strong>Current selection</strong>
+                  <p>{runtimeSelectionLabel(settings.runtime_kind)}</p>
+                </div>
+              </article>
+              <article className="list-row">
+                <div>
+                  <strong>Recommended</strong>
+                  <p>Included runtime managed by this desktop app</p>
+                </div>
+              </article>
+              <article className="list-row">
+                <div>
+                  <strong>What happens next</strong>
+                  <p>{normalizeRuntimeLanguage(runtimeBlocker.nextStep)}</p>
+                </div>
+              </article>
+            </div>
             <div className="button-row">
               {settings.runtime_kind !== "bundled" ? (
                 <button
@@ -801,7 +819,7 @@ export function App() {
                 Try Again
               </button>
               <button className="ghost-button" type="button" onClick={() => setRuntimeRecoveryOpen(true)}>
-                Runtime Settings
+                Advanced Runtime Options
               </button>
             </div>
             {restoreBundledRuntimeMutation.error ? (
@@ -809,16 +827,21 @@ export function App() {
                 {describeBootstrapError(restoreBundledRuntimeMutation.error).message}
               </p>
             ) : null}
-            {runtimeStatus.issues.length ? (
-              <article className="diagnostic-card">
-                <h3>Why this is blocked</h3>
-                {runtimeStatus.issues.map((issue) => (
-                  <p key={issue} className="inline-note">
-                    {normalizeRuntimeLanguage(issue)}
-                  </p>
-                ))}
-              </article>
-            ) : null}
+            <details className="diagnostic-card runtime-blocker-details">
+              <summary>Advanced details</summary>
+              <div className="stack-list">
+                <p className="inline-note">{normalizeRuntimeLanguage(runtimeBlocker.summary)}</p>
+                {runtimeStatus.issues.length ? (
+                  runtimeStatus.issues.map((issue) => (
+                    <p key={issue} className="inline-note">
+                      {normalizeRuntimeLanguage(issue)}
+                    </p>
+                  ))
+                ) : (
+                  <p className="inline-note">No additional compatibility details were reported.</p>
+                )}
+              </div>
+            </details>
           </div>
         </SectionCard>
       ) : null}
@@ -1044,6 +1067,19 @@ function describeRuntimeBlocker(runtimeStatus: {
     nextStep:
       "Switch to the included AI Switch runtime, or choose a working advanced override in Runtime Settings before continuing.",
   };
+}
+
+function runtimeSelectionLabel(runtimeKind: AppBootstrap["settings"]["runtime_kind"]) {
+  switch (runtimeKind) {
+    case "bundled":
+      return "Included runtime";
+    case "system":
+      return "System runtime override";
+    case "custom":
+      return "Custom runtime override";
+    default:
+      return "Unknown runtime";
+  }
 }
 
 function sectionTitle(section: string, setupFocused = false) {

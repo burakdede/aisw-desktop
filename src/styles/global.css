@@ -494,6 +494,36 @@ button {
   margin: 6px 0 0;
 }
 
+.runtime-blocker-details {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.runtime-blocker-details summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.runtime-blocker-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.runtime-blocker-details summary::before {
+  content: "▸";
+  display: inline-block;
+  margin-right: 8px;
+  color: var(--text-secondary);
+  transform: translateY(-1px);
+}
+
+.runtime-blocker-details[open] summary::before {
+  content: "▾";
+}
+
 .quick-switch-search-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
