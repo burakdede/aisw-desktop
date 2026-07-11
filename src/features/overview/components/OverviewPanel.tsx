@@ -100,6 +100,20 @@ export function OverviewPanel({
           selectedToolStatus.active_profile,
         )
       : null;
+  const selectedToolReadyState = selectedToolStatus
+    ? selectedToolStatus.active_profile
+      ? selectedToolStatus.active_profile_applied === false
+        ? "Needs review"
+        : "Ready to code"
+      : "Needs setup"
+    : "No tool selected";
+  const selectedToolNextStep = selectedToolStatus
+    ? !selectedToolStatus.active_profile
+      ? `Add a saved ${titleCase(selectedToolStatus.tool)} profile before switching from the desktop app.`
+      : selectedToolStatus.active_profile_applied === false
+        ? `${titleCase(selectedToolStatus.tool)} changed outside AI Switch. Re-apply the saved profile or import the current login as a new profile before you start coding.`
+        : `${titleCase(selectedToolStatus.tool)} matches the saved desktop profile and is ready for coding work.`
+    : "Select a tool to inspect its live switching state.";
 
   useEffect(() => {
     if (!snapshot.statuses.length) {
@@ -227,14 +241,19 @@ export function OverviewPanel({
               <article className={`diagnostic-card overview-focus-card overview-focus-card-${resolveCardState(selectedToolStatus)}`}>
                 <div className="desktop-pane-section-header">
                   <div>
-                    <p className="card-kicker">Current identity</p>
-                    <h3>{titleCase(selectedToolStatus.tool)}</h3>
+                    <p className="card-kicker">Ready to start</p>
+                    <h3>{selectedToolReadyState}</h3>
                   </div>
                   <span className={`pill ${pillClassForStatus(selectedToolStatus)}`}>
                     {statusPillLabel(selectedToolStatus)}
                   </span>
                 </div>
+                <p className="inline-note">{selectedToolNextStep}</p>
                 <div className="overview-focus-grid">
+                  <div>
+                    <span className="overview-current-set-cell-label">Selected tool</span>
+                    <strong>{titleCase(selectedToolStatus.tool)}</strong>
+                  </div>
                   <div>
                     <span className="overview-current-set-cell-label">Active</span>
                     <strong>{selectedToolProfileLabel ?? "Not configured"}</strong>
@@ -254,27 +273,35 @@ export function OverviewPanel({
                     <strong>{selectedToolStatus.credential_backend ?? "Unknown"}</strong>
                   </div>
                 </div>
-                <p className="inline-note">
-                  {selectedToolStatus.active_profile
-                    ? `${titleCase(selectedToolStatus.tool)} is currently focused on ${selectedToolProfileLabel}. Inspect the detail pane for switching, drift recovery, and profile actions.`
-                    : `${titleCase(selectedToolStatus.tool)} has not been configured yet. Add a profile to make it available for switching.`}
-                </p>
                 <div className="button-row">
+                  {selectedToolStatus.active_profile ? (
+                    <button
+                      className="primary-button"
+                      type="button"
+                      disabled={mutationLock.isBusy}
+                      onClick={() => onOpenProfiles(selectedToolStatus.tool, selectedToolStatus.active_profile ?? null)}
+                    >
+                      {selectedToolStatus.active_profile_applied === false
+                        ? `Re-apply ${selectedToolProfileLabel}`
+                        : "Open selected tool"}
+                    </button>
+                  ) : (
+                    <button
+                      className="primary-button"
+                      type="button"
+                      disabled={mutationLock.isBusy}
+                      onClick={() => onOpenProfiles(selectedToolStatus.tool)}
+                    >
+                      Add profile
+                    </button>
+                  )}
                   <button
                     className="ghost-button"
                     type="button"
                     disabled={mutationLock.isBusy}
-                    onClick={() => setSelectedTool(selectedToolStatus.tool)}
+                    onClick={onOpenQuickSwitch}
                   >
-                    Inspect selected tool
-                  </button>
-                  <button
-                    className="ghost-button"
-                    type="button"
-                    disabled={mutationLock.isBusy}
-                    onClick={() => onOpenProfiles(selectedToolStatus.tool, selectedToolStatus.active_profile ?? null)}
-                  >
-                    Manage tool
+                    Quick Switch
                   </button>
                 </div>
               </article>
