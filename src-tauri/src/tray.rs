@@ -44,11 +44,12 @@ struct TraySection {
 struct TrayEntry {
     id: String,
     label: String,
+    enabled: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct TrayMenuModel {
-    active_label: String,
+    status_items: Vec<TrayEntry>,
     runtime_notice: Option<String>,
     sections: Vec<TraySection>,
     footer_items: Vec<TrayEntry>,
@@ -364,10 +365,18 @@ fn tray_menu<R: Runtime>(
     runtime_compatible: bool,
 ) -> tauri::Result<Menu<R>> {
     let model = tray_menu_model(settings, snapshot, runtime_compatible);
-    let mut items: Vec<MenuItemKind<R>> = vec![
-        MenuItem::with_id(app, "active-summary", model.active_label, false, None::<&str>)?.kind(),
-        PredefinedMenuItem::separator(app)?.kind(),
-    ];
+    let mut items: Vec<MenuItemKind<R>> = model
+        .status_items
+        .into_iter()
+        .map(|entry| MenuItem::with_id(app, entry.id, entry.label, entry.enabled, None::<&str>))
+        .collect::<tauri::Result<Vec<_>>>()?
+        .into_iter()
+        .map(|item| item.kind())
+        .collect();
+
+    if !items.is_empty() {
+        items.push(PredefinedMenuItem::separator(app)?.kind());
+    }
 
     for section in model.sections {
         let submenu_items = section
@@ -378,7 +387,7 @@ fn tray_menu<R: Runtime>(
                     app,
                     entry.id.clone(),
                     entry.label.clone(),
-                    true,
+                    entry.enabled,
                     None::<&str>,
                 )
                 .map(|item| item.kind())
@@ -418,37 +427,36 @@ fn tray_menu_model(
     snapshot: Option<&AppSnapshot>,
     runtime_compatible: bool,
 ) -> TrayMenuModel {
-    let active_label = active_set_label(settings, snapshot)
-        .map(|name| format!("Active set: {name}"))
-        .unwrap_or_else(|| format!("Active: {}", tray_status_label(runtime_compatible, snapshot)));
+    let status_items = tray_status_items(settings, snapshot, runtime_compatible);
     let sections = if runtime_compatible {
         snapshot
             .map(|snapshot| tray_sections(settings, snapshot))
             .unwrap_or_default()
     } else {
-        Vec::new()
+        snapshot
+            .map(|snapshot| vec![tray_diagnostics_section(snapshot)])
+            .unwrap_or_default()
     };
 
     TrayMenuModel {
-        active_label,
+        status_items,
         runtime_notice: tray_runtime_notice(runtime_compatible).map(str::to_owned),
         sections,
         footer_items: vec![
             TrayEntry {
                 id: OPEN_ID.to_owned(),
                 label: "Open AI Switch".to_owned(),
-            },
-            TrayEntry {
-                id: DIAGNOSTICS_ID.to_owned(),
-                label: "Diagnostics".to_owned(),
+                enabled: true,
             },
             TrayEntry {
                 id: SETTINGS_ID.to_owned(),
                 label: "Settings…".to_owned(),
+                enabled: true,
             },
             TrayEntry {
                 id: QUIT_ID.to_owned(),
                 label: "Quit AI Switch".to_owned(),
+                enabled: true,
             },
         ],
     }
@@ -541,6 +549,69 @@ fn active_set_label(
     }
 }
 
+fn tray_status_items(
+    settings: Option<&DesktopSettings>,
+    snapshot: Option<&AppSnapshot>,
+    runtime_compatible: bool,
+) -> Vec<TrayEntry> {
+    let mut items = vec![TrayEntry {
+        id: "status.current-set".to_owned(),
+        label: active_set_label(settings, snapshot)
+            .map(|name| format!("Current Set: {name}"))
+            .unwrap_or_else(|| format!("Current Set: {}", tray_status_label(runtime_compatible, snapshot))),
+        enabled: false,
+    }];
+
+    if let Some(snapshot) = snapshot {
+        for tool in tray_tool_order(snapshot) {
+            items.push(TrayEntry {
+                id: format!("status.tool.{tool}"),
+                label: format!(
+                    "{}: {}",
+                    tool_display_name(&tool),
+                    tray_active_profile_label(settings, snapshot, &tool)
+                ),
+                enabled: false,
+            });
+        }
+    }
+
+    items
+}
+
+fn tray_tool_order(snapshot: &AppSnapshot) -> Vec<String> {
+    let preferred = ["claude", "codex", "gemini"];
+    let mut ordered = preferred
+        .iter()
+        .filter(|tool| snapshot.profiles.contains_key(**tool) || snapshot.statuses.iter().any(|status| status.tool == **tool))
+        .map(|tool| (*tool).to_owned())
+        .collect::<Vec<_>>();
+
+    let mut extras = snapshot
+        .profiles
+        .keys()
+        .filter(|tool| !preferred.contains(&tool.as_str()))
+        .cloned()
+        .collect::<Vec<_>>();
+    extras.sort();
+    ordered.extend(extras);
+    ordered
+}
+
+fn tray_active_profile_label(
+    settings: Option<&DesktopSettings>,
+    snapshot: &AppSnapshot,
+    tool: &str,
+) -> String {
+    snapshot
+        .statuses
+        .iter()
+        .find(|status| status.tool == tool)
+        .and_then(|status| status.active_profile.as_deref())
+        .map(|profile| tray_profile_display_name(settings, snapshot, tool, profile))
+        .unwrap_or_else(|| "—".to_owned())
+}
+
 fn shared_profile_entries(
     settings: Option<&DesktopSettings>,
     snapshot: &AppSnapshot,
@@ -576,6 +647,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
                 .map(|(profile, label)| TrayEntry {
                     id: format!("{SWITCH_ALL_PREFIX}{profile}"),
                     label,
+                    enabled: true,
                 })
                 .collect(),
         });
@@ -590,6 +662,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
                 .map(|context| TrayEntry {
                     id: format!("context:{}", context.name),
                     label: tray_context_entry_label(settings, snapshot, &context.name),
+                    enabled: true,
                 })
                 .collect(),
         });
@@ -630,11 +703,14 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
                             shared_profile_display_name_from_parts(settings, tool, profile),
                             suffix
                         ),
+                        enabled: true,
                     }
                 })
                 .collect(),
         });
     }
+
+    sections.push(tray_diagnostics_section(snapshot));
 
     sections
 }
@@ -667,8 +743,82 @@ fn profile_set_entries(settings: &DesktopSettings, snapshot: &AppSnapshot) -> Ve
         .map(|set| TrayEntry {
             id: format!("{PROFILE_SET_PREFIX}{}", set.name),
             label: profile_set_label(&set, snapshot),
+            enabled: true,
         })
         .collect()
+}
+
+fn tray_diagnostics_section(snapshot: &AppSnapshot) -> TraySection {
+    let summaries = tray_warning_summaries(snapshot);
+    let mut items = vec![TrayEntry {
+        id: DIAGNOSTICS_ID.to_owned(),
+        label: "Verify Now".to_owned(),
+        enabled: true,
+    }];
+
+    if summaries.is_empty() {
+        items.push(TrayEntry {
+            id: "diagnostics.summary".to_owned(),
+            label: "Ready: no warnings".to_owned(),
+            enabled: false,
+        });
+    } else {
+        items.push(TrayEntry {
+            id: "diagnostics.summary".to_owned(),
+            label: format!(
+                "{} Warning{}: {}",
+                summaries.len(),
+                if summaries.len() == 1 { "" } else { "s" },
+                summaries[0]
+            ),
+            enabled: false,
+        });
+    }
+
+    TraySection {
+        title: "Diagnostics".to_owned(),
+        items,
+    }
+}
+
+fn tray_warning_summaries(snapshot: &AppSnapshot) -> Vec<String> {
+    let mut summaries = Vec::new();
+
+    for status in &snapshot.statuses {
+        let tool_name = tool_display_name(&status.tool);
+        if status.active_profile.is_some() && status.active_profile_applied == Some(false) {
+            summaries.push(format!("{tool_name} live mismatch"));
+        }
+        if status.permissions_ok == Some(false) {
+            summaries.push(format!("{tool_name} permissions need attention"));
+        }
+        if let Some(token_warning) = &status.token_warning {
+            if let Some(summary) = token_warning
+                .summary
+                .as_deref()
+                .or(token_warning.message.as_deref())
+            {
+                summaries.push(format!("{tool_name} {}", summary.trim()));
+            }
+        }
+        for warning in &status.warnings {
+            if let Some(message) = warning.message.as_deref() {
+                summaries.push(format!("{tool_name} {}", message.trim()));
+            }
+        }
+    }
+
+    if snapshot
+        .workspace_status
+        .as_ref()
+        .and_then(|status| status.raw.get("status"))
+        .and_then(|value| value.as_str())
+        .is_some_and(|status| status != "match")
+    {
+        summaries.push("Workspace context needs review".to_owned());
+    }
+
+    summaries
 }
 
 fn profile_set_label(set: &ProfileSet, snapshot: &AppSnapshot) -> String {
@@ -1091,6 +1241,7 @@ mod tests {
                     items: vec![TrayEntry {
                         id: "switch-all:work".to_owned(),
                         label: "Work".to_owned(),
+                        enabled: true,
                     }],
                 },
                 TraySection {
@@ -1098,6 +1249,7 @@ mod tests {
                     items: vec![TrayEntry {
                         id: "context:client-acme".to_owned(),
                         label: "Client Acme ✓".to_owned(),
+                        enabled: true,
                     }],
                 },
                 TraySection {
@@ -1105,6 +1257,7 @@ mod tests {
                     items: vec![TrayEntry {
                         id: "profile-set:personal-focus".to_owned(),
                         label: "personal-focus".to_owned(),
+                        enabled: true,
                     }],
                 },
                 TraySection {
@@ -1113,10 +1266,12 @@ mod tests {
                         TrayEntry {
                             id: "profile:claude:work".to_owned(),
                             label: "Work ✓".to_owned(),
+                            enabled: true,
                         },
                         TrayEntry {
                             id: "profile:claude:personal".to_owned(),
                             label: "Personal".to_owned(),
+                            enabled: true,
                         },
                     ],
                 },
@@ -1125,7 +1280,23 @@ mod tests {
                     items: vec![TrayEntry {
                         id: "profile:codex:work".to_owned(),
                         label: "Work ✓".to_owned(),
+                        enabled: true,
                     }],
+                },
+                TraySection {
+                    title: "Diagnostics".to_owned(),
+                    items: vec![
+                        TrayEntry {
+                            id: "diagnostics".to_owned(),
+                            label: "Verify Now".to_owned(),
+                            enabled: true,
+                        },
+                        TrayEntry {
+                            id: "diagnostics.summary".to_owned(),
+                            label: "Ready: no warnings".to_owned(),
+                            enabled: false,
+                        },
+                    ],
                 },
             ]
         );
@@ -1271,6 +1442,7 @@ mod tests {
                     items: vec![TrayEntry {
                         id: "switch-all:work".to_owned(),
                         label: "Office".to_owned(),
+                        enabled: true,
                     }],
                 },
                 TraySection {
@@ -1278,6 +1450,7 @@ mod tests {
                     items: vec![TrayEntry {
                         id: "profile:claude:work".to_owned(),
                         label: "Office ✓".to_owned(),
+                        enabled: true,
                     }],
                 },
                 TraySection {
@@ -1285,7 +1458,23 @@ mod tests {
                     items: vec![TrayEntry {
                         id: "profile:codex:work".to_owned(),
                         label: "Work ✓".to_owned(),
+                        enabled: true,
                     }],
+                },
+                TraySection {
+                    title: "Diagnostics".to_owned(),
+                    items: vec![
+                        TrayEntry {
+                            id: "diagnostics".to_owned(),
+                            label: "Verify Now".to_owned(),
+                            enabled: true,
+                        },
+                        TrayEntry {
+                            id: "diagnostics.summary".to_owned(),
+                            label: "Ready: no warnings".to_owned(),
+                            enabled: false,
+                        },
+                    ],
                 },
             ]
         );
@@ -1326,7 +1515,21 @@ mod tests {
 
         let model = tray_menu_model(None, Some(&snapshot), true);
 
-        assert_eq!(model.active_label, "Active set: Work");
+        assert_eq!(
+            model.status_items,
+            vec![
+                TrayEntry {
+                    id: "status.current-set".to_owned(),
+                    label: "Current Set: Work".to_owned(),
+                    enabled: false,
+                },
+                TrayEntry {
+                    id: "status.tool.claude".to_owned(),
+                    label: "Claude Code: Work".to_owned(),
+                    enabled: false,
+                },
+            ]
+        );
         assert_eq!(model.runtime_notice, None);
         assert_eq!(
             model.footer_items,
@@ -1334,18 +1537,17 @@ mod tests {
                 TrayEntry {
                     id: "open".to_owned(),
                     label: "Open AI Switch".to_owned(),
-                },
-                TrayEntry {
-                    id: "diagnostics".to_owned(),
-                    label: "Diagnostics".to_owned(),
+                    enabled: true,
                 },
                 TrayEntry {
                     id: "settings".to_owned(),
                     label: "Settings…".to_owned(),
+                    enabled: true,
                 },
                 TrayEntry {
                     id: "quit".to_owned(),
                     label: "Quit AI Switch".to_owned(),
+                    enabled: true,
                 },
             ]
         );
@@ -1389,13 +1591,44 @@ mod tests {
 
         let model = tray_menu_model(None, Some(&snapshot), false);
 
-        assert_eq!(model.active_label, "Active set: Work");
+        assert_eq!(
+            model.status_items,
+            vec![
+                TrayEntry {
+                    id: "status.current-set".to_owned(),
+                    label: "Current Set: Work".to_owned(),
+                    enabled: false,
+                },
+                TrayEntry {
+                    id: "status.tool.claude".to_owned(),
+                    label: "Claude Code: Work".to_owned(),
+                    enabled: false,
+                },
+            ]
+        );
         assert_eq!(
             model.runtime_notice.as_deref(),
             Some("Switching is blocked. Fix the engine in Settings.")
         );
-        assert!(model.sections.is_empty());
-        assert_eq!(model.footer_items.len(), 4);
+        assert_eq!(
+            model.sections,
+            vec![TraySection {
+                title: "Diagnostics".to_owned(),
+                items: vec![
+                    TrayEntry {
+                        id: "diagnostics".to_owned(),
+                        label: "Verify Now".to_owned(),
+                        enabled: true,
+                    },
+                    TrayEntry {
+                        id: "diagnostics.summary".to_owned(),
+                        label: "Ready: no warnings".to_owned(),
+                        enabled: false,
+                    },
+                ],
+            }]
+        );
+        assert_eq!(model.footer_items.len(), 3);
     }
 
     #[test]
