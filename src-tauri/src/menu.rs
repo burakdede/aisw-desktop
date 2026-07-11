@@ -40,7 +40,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let import_current_login = MenuItem::with_id(
         app,
         IMPORT_CURRENT_LOGIN_ID,
-        "Import Current Sign-In…",
+        "Import Current Login…",
         true,
         None::<&str>,
     )?;
@@ -57,7 +57,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let verify = MenuItem::with_id(
         app,
         VERIFY_ID,
-        "Verify Switching Setup",
+        "Verify Current State",
         true,
         Some("CmdOrCtrl+Shift+V"),
     )?;
@@ -82,7 +82,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let help_docs = MenuItem::with_id(
         app,
         "menu.help.docs",
-        "Get Started",
+        "AI Switch Documentation",
         true,
         None::<&str>,
     )?;
@@ -96,7 +96,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let help_issues = MenuItem::with_id(
         app,
         "menu.help.issues",
-        "Share Diagnostic Report…",
+        "Open GitHub Issues",
         true,
         None::<&str>,
     )?;
@@ -131,7 +131,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         .iter()
         .map(|item| item as &dyn IsMenuItem<R>)
         .collect::<Vec<_>>();
-    let profile_menu = Submenu::with_items(app, "Switch", true, &profile_refs)?;
+    let profile_menu = Submenu::with_items(app, "Profile", true, &profile_refs)?;
 
     let view_items: Vec<MenuItemKind<R>> = vec![
         overview.kind(),

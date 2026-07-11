@@ -12,6 +12,7 @@ use tauri::{AppHandle, Emitter, Manager, Runtime};
 
 const TRAY_ID: &str = "main-tray";
 const OPEN_ID: &str = "open";
+const SETTINGS_ID: &str = "settings";
 const DIAGNOSTICS_ID: &str = "diagnostics";
 const QUIT_ID: &str = "quit";
 const SWITCH_ALL_PREFIX: &str = "switch-all:";
@@ -23,6 +24,7 @@ const TRAY_COMMAND_RESULT_EVENT: &str = "tray-command-result";
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum TrayAction {
     Open,
+    OpenSettings,
     OpenDiagnostics,
     Quit,
     UseContext(String),
@@ -114,6 +116,10 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
     match parse_tray_action(&id) {
         TrayAction::Open => {
             show_main_window(app);
+        }
+        TrayAction::OpenSettings => {
+            show_main_window(app);
+            let _ = app.emit(crate::menu::MENU_OPEN_SETTINGS_EVENT, ());
         }
         TrayAction::OpenDiagnostics => {
             show_main_window(app);
@@ -321,6 +327,7 @@ fn tray_use_all_profiles_request(
 fn parse_tray_action(id: &str) -> TrayAction {
     match id {
         OPEN_ID => TrayAction::Open,
+        SETTINGS_ID => TrayAction::OpenSettings,
         DIAGNOSTICS_ID => TrayAction::OpenDiagnostics,
         QUIT_ID => TrayAction::Quit,
         _ if id.starts_with("context:") => {
@@ -433,7 +440,11 @@ fn tray_menu_model(
             },
             TrayEntry {
                 id: DIAGNOSTICS_ID.to_owned(),
-                label: "Open Diagnostics".to_owned(),
+                label: "Diagnostics".to_owned(),
+            },
+            TrayEntry {
+                id: SETTINGS_ID.to_owned(),
+                label: "Settings…".to_owned(),
             },
             TrayEntry {
                 id: QUIT_ID.to_owned(),
@@ -559,7 +570,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
     let shared_profiles = shared_profile_entries(settings, snapshot);
     if !shared_profiles.is_empty() {
         sections.push(TraySection {
-            title: "Switch all tools".to_owned(),
+            title: "Switch Shared Profile".to_owned(),
             items: shared_profiles
                 .into_iter()
                 .map(|(profile, label)| TrayEntry {
@@ -572,7 +583,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
 
     if !snapshot.contexts.is_empty() {
         sections.push(TraySection {
-            title: "Shared groups".to_owned(),
+            title: "Imported Sets".to_owned(),
             items: snapshot
                 .contexts
                 .iter()
@@ -589,7 +600,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
         .unwrap_or_default();
     if !profile_sets.is_empty() {
         sections.push(TraySection {
-            title: "Saved sets".to_owned(),
+            title: "Switch Set".to_owned(),
             items: profile_sets,
         });
     }
@@ -602,7 +613,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
             continue;
         }
         sections.push(TraySection {
-            title: format!("{} profiles", title_case(tool)),
+            title: format!("Switch {}", tool_display_name(tool)),
             items: entry
                 .profiles
                 .iter()
@@ -626,6 +637,15 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
     }
 
     sections
+}
+
+fn tool_display_name(tool: &str) -> String {
+    match tool {
+        "claude" => "Claude Code".to_owned(),
+        "codex" => "Codex CLI".to_owned(),
+        "gemini" => "Gemini CLI".to_owned(),
+        _ => title_case(tool),
+    }
 }
 
 fn title_case(value: &str) -> String {
@@ -1067,28 +1087,28 @@ mod tests {
             ),
             vec![
                 TraySection {
-                    title: "Switch all tools".to_owned(),
+                    title: "Switch Shared Profile".to_owned(),
                     items: vec![TrayEntry {
                         id: "switch-all:work".to_owned(),
                         label: "Work".to_owned(),
                     }],
                 },
                 TraySection {
-                    title: "Shared groups".to_owned(),
+                    title: "Imported Sets".to_owned(),
                     items: vec![TrayEntry {
                         id: "context:client-acme".to_owned(),
                         label: "Client Acme ✓".to_owned(),
                     }],
                 },
                 TraySection {
-                    title: "Saved sets".to_owned(),
+                    title: "Switch Set".to_owned(),
                     items: vec![TrayEntry {
                         id: "profile-set:personal-focus".to_owned(),
                         label: "personal-focus".to_owned(),
                     }],
                 },
                 TraySection {
-                    title: "Claude profiles".to_owned(),
+                    title: "Switch Claude Code".to_owned(),
                     items: vec![
                         TrayEntry {
                             id: "profile:claude:work".to_owned(),
@@ -1101,7 +1121,7 @@ mod tests {
                     ],
                 },
                 TraySection {
-                    title: "Codex profiles".to_owned(),
+                    title: "Switch Codex CLI".to_owned(),
                     items: vec![TrayEntry {
                         id: "profile:codex:work".to_owned(),
                         label: "Work ✓".to_owned(),
@@ -1247,21 +1267,21 @@ mod tests {
             tray_sections(Some(&settings), &snapshot),
             vec![
                 TraySection {
-                    title: "Switch all tools".to_owned(),
+                    title: "Switch Shared Profile".to_owned(),
                     items: vec![TrayEntry {
                         id: "switch-all:work".to_owned(),
                         label: "Office".to_owned(),
                     }],
                 },
                 TraySection {
-                    title: "Claude profiles".to_owned(),
+                    title: "Switch Claude Code".to_owned(),
                     items: vec![TrayEntry {
                         id: "profile:claude:work".to_owned(),
                         label: "Office ✓".to_owned(),
                     }],
                 },
                 TraySection {
-                    title: "Codex profiles".to_owned(),
+                    title: "Switch Codex CLI".to_owned(),
                     items: vec![TrayEntry {
                         id: "profile:codex:work".to_owned(),
                         label: "Work ✓".to_owned(),
@@ -1317,7 +1337,11 @@ mod tests {
                 },
                 TrayEntry {
                     id: "diagnostics".to_owned(),
-                    label: "Open Diagnostics".to_owned(),
+                    label: "Diagnostics".to_owned(),
+                },
+                TrayEntry {
+                    id: "settings".to_owned(),
+                    label: "Settings…".to_owned(),
                 },
                 TrayEntry {
                     id: "quit".to_owned(),
@@ -1371,7 +1395,7 @@ mod tests {
             Some("Switching is blocked. Fix the engine in Settings.")
         );
         assert!(model.sections.is_empty());
-        assert_eq!(model.footer_items.len(), 3);
+        assert_eq!(model.footer_items.len(), 4);
     }
 
     #[test]
@@ -1514,6 +1538,7 @@ mod tests {
     #[test]
     fn tray_actions_map_ids_to_matching_commands() {
         assert_eq!(parse_tray_action("open"), TrayAction::Open);
+        assert_eq!(parse_tray_action("settings"), TrayAction::OpenSettings);
         assert_eq!(parse_tray_action("diagnostics"), TrayAction::OpenDiagnostics);
         assert_eq!(parse_tray_action("quit"), TrayAction::Quit);
         assert_eq!(
