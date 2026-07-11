@@ -835,6 +835,9 @@ describe("App", () => {
       target: { value: "office" },
     });
     expect(screen.getByText("No matching profiles")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear Search Profiles" }));
+    expect(screen.getByLabelText("Search Profiles")).toHaveValue("");
   });
 
   it("clears route-opened profile details when switching tools manually", async () => {
@@ -7110,6 +7113,18 @@ describe("App", () => {
     const currentOptionId = search.getAttribute("aria-activedescendant");
     expect(currentOptionId).not.toBeNull();
     expect(document.getElementById(currentOptionId!)).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("clears the quick switch query from the native search field", async () => {
+    await renderApp();
+    const quickSwitchDialog = await openQuickSwitchDialog();
+
+    const search = quickSwitchDialog.getByLabelText("Search Quick Switch");
+    fireEvent.change(search, { target: { value: "office" } });
+    expect(search).toHaveValue("office");
+
+    fireEvent.click(quickSwitchDialog.getByRole("button", { name: "Clear Search Quick Switch" }));
+    expect(search).toHaveValue("");
   });
 
   it("uses saved profile labels in onboarding first switch options and sidebar badge", async () => {

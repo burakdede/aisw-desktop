@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
+import { SearchField } from "../../../components/SearchField";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SectionCard } from "../../../components/SectionCard";
 import { SplitView } from "../../../components/SplitView";
@@ -472,12 +473,13 @@ export function ProfilesPanel({
       kicker="Saved profiles"
       actions={
         <div className="profiles-toolbar">
-          <input
-            className="profiles-search"
-            aria-label="Search Profiles"
+          <SearchField
+            className="search-field profiles-search-field"
+            inputClassName="search-field-input profiles-search"
+            ariaLabel="Search Profiles"
             placeholder="Search profiles"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={setSearch}
           />
           <SegmentedControl
             ariaLabel="Profile filters"

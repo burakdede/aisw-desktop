@@ -499,12 +499,84 @@ button {
   align-items: center;
 }
 
-.quick-switch-search {
+.search-field {
   min-height: 40px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
   border: 1px solid var(--separator);
-  border-radius: 10px;
-  padding: 0 14px;
+  border-radius: 11px;
   background: color-mix(in srgb, Canvas 98%, CanvasText 2%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.search-field:focus-within {
+  outline: 2px solid color-mix(in srgb, AccentColor 72%, Canvas 28%);
+  outline-offset: 2px;
+}
+
+.search-field-icon,
+.search-field-clear {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+}
+
+.search-field-icon svg,
+.search-field-clear svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.search-field-input {
+  min-width: 0;
+  min-height: 38px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.search-field-input:focus {
+  outline: none;
+}
+
+.search-field-input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.search-field-clear {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.search-field-clear:hover {
+  color: var(--text-secondary);
+}
+
+.quick-switch-search-field {
+  min-height: 40px;
+}
+
+.quick-switch-search {
+  min-height: 38px;
+}
+
+.quick-switch-search::placeholder,
+.profiles-search::placeholder {
+  color: var(--text-tertiary);
 }
 
 .quick-switch-count {
@@ -1200,15 +1272,31 @@ button {
   flex-wrap: wrap;
 }
 
-.profiles-search {
-  min-height: 32px;
+.profiles-search-field {
   min-width: 220px;
-  border-radius: 8px;
-  border: 1px solid var(--separator);
-  background: color-mix(in srgb, Canvas 96%, CanvasText 4%);
-  color: var(--text-primary);
-  padding: 0 10px;
-  font: inherit;
+  min-height: 32px;
+  padding: 0 8px;
+  border-radius: 9px;
+}
+
+.profiles-search {
+  min-height: 30px;
+}
+
+.profiles-search-field .search-field-icon,
+.profiles-search-field .search-field-clear {
+  width: 16px;
+  height: 16px;
+}
+
+.profiles-search-field .search-field-icon svg,
+.profiles-search-field .search-field-clear svg {
+  width: 14px;
+  height: 14px;
+}
+
+.profiles-search-field .search-field-input {
+  min-height: 30px;
 }
 
 .tool-grid,

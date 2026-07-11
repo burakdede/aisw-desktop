@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { SearchField } from "./SearchField";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "../lib/schemas";
 import {
   profileSetDisplayLabel,
@@ -243,15 +244,16 @@ export function QuickSwitchPalette({
           </button>
         </div>
         <div className="quick-switch-search-row">
-          <input
+          <SearchField
             ref={inputRef}
-            className="quick-switch-search"
-            aria-label="Search Quick Switch"
-            aria-controls="quick-switch-results-listbox"
-            aria-activedescendant={selectedItem ? `quick-switch-option-${selectedItem.id}` : undefined}
+            className="search-field quick-switch-search-field"
+            inputClassName="search-field-input quick-switch-search"
+            ariaLabel="Search Quick Switch"
+            ariaControls="quick-switch-results-listbox"
+            ariaActiveDescendant={selectedItem ? `quick-switch-option-${selectedItem.id}` : undefined}
             placeholder="Search profiles or sets"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={setQuery}
           />
           <span className="quick-switch-count" aria-live="polite">
             {filteredItems.length} result{filteredItems.length === 1 ? "" : "s"}
