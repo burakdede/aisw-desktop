@@ -89,6 +89,7 @@ pub fn build_tray<R: Runtime>(
 
     let menu = tray_menu(app, settings, snapshot, runtime_compatible)?;
     Ok(tauri::tray::TrayIconBuilder::with_id(TRAY_ID)
+        .icon_as_template(cfg!(target_os = "macos"))
         .menu(&menu)
         .tooltip(tooltip)
         .show_menu_on_left_click(true)
