@@ -2377,6 +2377,21 @@ button {
   align-items: flex-start;
 }
 
+.profiles-detail-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.profiles-detail-meta > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
 .profiles-tool-focus-grid,
 .profiles-management-grid {
   display: grid;
@@ -2396,6 +2411,10 @@ button {
 
 .profiles-management-grid {
   margin-top: 4px;
+}
+
+.profiles-restore-actions {
+  padding-top: 2px;
 }
 
 .profiles-table-card,
@@ -2912,6 +2931,7 @@ button {
   .overview-tool-facts,
   .overview-focus-grid,
   .overview-project-grid,
+  .profiles-detail-meta,
   .profiles-tool-focus-grid,
   .profiles-management-grid {
     grid-template-columns: 1fr;

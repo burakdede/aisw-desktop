@@ -522,7 +522,7 @@ export function ProfilesPanel({
                   <span className="overview-current-set-cell-label">Filter</span>
                   <strong>{titleCase(tool)}</strong>
                   <p className="inline-note">
-                    {tool === "claude" ? "Claude Code" : tool === "codex" ? "Codex CLI" : "Gemini CLI"} is active in the inspector.
+                    {toolDisplayName(tool)} is active in the inspector.
                   </p>
                 </div>
                 <div>
@@ -796,9 +796,24 @@ export function ProfilesPanel({
                       {profileStatusSummary(snapshot, tool, selectedProfileEntry.name, toolStatus)}
                     </span>
                   </div>
-                  <p className="inline-note">
-                    {selectedProfileEntry.name} · {selectedProfileEntry.auth}
-                  </p>
+                  <div className="profiles-detail-meta">
+                    <div>
+                      <span className="overview-current-set-cell-label">Stored name</span>
+                      <strong>{selectedProfileEntry.name}</strong>
+                    </div>
+                    <div>
+                      <span className="overview-current-set-cell-label">Auth method</span>
+                      <strong>{selectedProfileEntry.auth}</strong>
+                    </div>
+                    <div>
+                      <span className="overview-current-set-cell-label">Latest backup</span>
+                      <strong>
+                        {selectedLatestBackup
+                          ? formatBackupTimestamp(selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id)
+                          : "No backup yet"}
+                      </strong>
+                    </div>
+                  </div>
                   <KeyValueGrid
                     rows={[
                       {
@@ -879,7 +894,7 @@ export function ProfilesPanel({
                     </button>
                   </div>
                   {selectedLatestBackup ? (
-                    <div className="button-row">
+                    <div className="button-row profiles-restore-actions">
                       <button
                         className="ghost-button"
                         type="button"
