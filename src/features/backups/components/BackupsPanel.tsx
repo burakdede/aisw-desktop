@@ -91,6 +91,22 @@ export function BackupsPanel({
     selectedBackup && pendingRestore?.backupId === selectedBackup.backup_id && pendingRestore.mode === "files";
   const selectedPendingRestoreAndActivate =
     selectedBackup && pendingRestore?.backupId === selectedBackup.backup_id && pendingRestore.mode === "activate";
+  const restoreSheetEntry =
+    pendingRestore
+      ? sortedBackups.find((entry) => entry.backup_id === pendingRestore.backupId) ?? null
+      : null;
+  const restoreSheetTarget = restoreSheetEntry
+    ? resolveBackupTarget(restoreSheetEntry.tool, restoreSheetEntry.profile)
+    : null;
+  const restoreSheetLabel =
+    restoreSheetEntry && restoreSheetTarget
+      ? toolProfileDisplayLabel(settings, snapshot, restoreSheetTarget.tool, restoreSheetTarget.profile)
+      : null;
+  const restoreSheetDisplay =
+    restoreSheetTarget && restoreSheetLabel
+      ? `${titleCase(restoreSheetTarget.tool)} / ${restoreSheetLabel}`
+      : null;
+  const restoreSheetMode = pendingRestore?.mode ?? null;
 
   return (
     <SectionCard title="Backups" kicker="Recovery">
@@ -263,47 +279,7 @@ export function BackupsPanel({
                       </button>
                     </>
                   ) : null}
-                  {selectedPendingFilesRestore ? (
-                    <>
-                      <button
-                        className="ghost-button danger-button"
-                        type="button"
-                        disabled={mutationLock.isBusy}
-                        onClick={() => confirmRestore(selectedBackup, "files")}
-                      >
-                        Confirm restore files
-                      </button>
-                      <button className="ghost-button" type="button" onClick={() => setPendingRestore(null)}>
-                        Cancel
-                      </button>
-                    </>
-                  ) : null}
-                  {selectedPendingRestoreAndActivate ? (
-                    <>
-                      <button
-                        className="primary-button"
-                        type="button"
-                        disabled={mutationLock.isBusy}
-                        onClick={() => confirmRestore(selectedBackup, "activate")}
-                      >
-                        Confirm restore and activate
-                      </button>
-                      <button className="ghost-button" type="button" onClick={() => setPendingRestore(null)}>
-                        Cancel
-                      </button>
-                    </>
-                  ) : null}
                 </div>
-                {selectedPendingFilesRestore ? (
-                  <p className="inline-note">
-                    Confirm before restoring {selectedTargetDisplay}. This replays the saved files only.
-                  </p>
-                ) : null}
-                {selectedPendingRestoreAndActivate ? (
-                  <p className="inline-note">
-                    Confirm before restoring and activating {selectedTargetDisplay}. This replays the backup and switches the live profile again.
-                  </p>
-                ) : null}
                 {copyMessage ? <p className="inline-note">{copyMessage}</p> : null}
               </article>
             ) : (
@@ -317,6 +293,83 @@ export function BackupsPanel({
           </div>
         }
       />
+      {restoreSheetEntry && restoreSheetTarget && restoreSheetLabel && restoreSheetDisplay ? (
+        <div className="quick-switch-overlay" role="presentation" onClick={() => setPendingRestore(null)}>
+          <section
+            className="quick-switch-palette profile-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Restore Backup"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="quick-switch-header">
+              <div>
+                <p className="card-kicker">Backup</p>
+                <h3>Restore backup?</h3>
+                <p className="inline-note">
+                  Review the restore scope before AI Switch changes any saved files.
+                </p>
+              </div>
+              <button className="ghost-button" type="button" onClick={() => setPendingRestore(null)}>
+                Close
+              </button>
+            </div>
+            <KeyValueGrid
+              rows={[
+                { label: "Target", value: restoreSheetDisplay },
+                {
+                  label: "Created",
+                  value: formatBackupTimestamp(restoreSheetEntry.created_at ?? restoreSheetEntry.backup_id),
+                },
+                { label: "Backup ID", value: restoreSheetEntry.backup_id },
+              ]}
+            />
+            {restoreSheetMode === "files" ? (
+              <div className="stack-list">
+                <p className="inline-note">
+                  This will restore profile files for {restoreSheetDisplay}.
+                </p>
+                <p className="inline-note">
+                  It will not change the active account until you activate it later.
+                </p>
+              </div>
+            ) : (
+              <div className="stack-list">
+                <p className="inline-note">
+                  This will restore profile files for {restoreSheetDisplay}.
+                </p>
+                <p className="inline-note">
+                  It will also switch the live profile again after the restore completes.
+                </p>
+              </div>
+            )}
+            <footer className="quick-switch-footer">
+              <div className="quick-switch-selection">
+                <p className="card-kicker">Action</p>
+                <strong>{restoreSheetMode === "files" ? "Restore files only" : "Restore and activate"}</strong>
+                <p>
+                  {restoreSheetMode === "files"
+                    ? "Restore saved files only."
+                    : "Restore saved files, then reactivate the profile."}
+                </p>
+              </div>
+              <div className="button-row">
+                <button className="ghost-button" type="button" onClick={() => setPendingRestore(null)}>
+                  Cancel
+                </button>
+                <button
+                  className={restoreSheetMode === "files" ? "ghost-button danger-button" : "primary-button"}
+                  type="button"
+                  disabled={mutationLock.isBusy}
+                  onClick={() => confirmRestore(restoreSheetEntry, restoreSheetMode === "files" ? "files" : "activate")}
+                >
+                  {restoreSheetMode === "files" ? "Restore" : "Restore and activate"}
+                </button>
+              </div>
+            </footer>
+          </section>
+        </div>
+      ) : null}
     </SectionCard>
   );
 }

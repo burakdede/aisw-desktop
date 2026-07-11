@@ -2821,13 +2821,14 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByText("Copied backup id 20260326T094012Z-codex-personal.")).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByText("Restore and activate"));
+    fireEvent.click(screen.getByRole("button", { name: "Restore and activate" }));
+    const restoreDialog = screen.getByRole("dialog", { name: "Restore Backup" });
     expect(
-      screen.getByText(
-        "Confirm before restoring and activating Codex / Sandbox. This replays the backup and switches the live profile again.",
+      within(restoreDialog).getByText(
+        "It will also switch the live profile again after the restore completes.",
       ),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getAllByText("Confirm restore and activate")[0]);
+    fireEvent.click(within(restoreDialog).getByRole("button", { name: "Restore and activate" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "restore_backup")).toBe(true);
@@ -2904,8 +2905,12 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Backups"));
     await waitFor(() => expect(screen.getByText("Restore and activate")).toBeInTheDocument());
 
-    fireEvent.click(screen.getByText("Restore and activate"));
-    fireEvent.click(screen.getByText("Confirm restore and activate"));
+    fireEvent.click(screen.getByRole("button", { name: "Restore and activate" }));
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Restore Backup" })).getByRole("button", {
+        name: "Restore and activate",
+      }),
+    );
 
     await waitFor(() => {
       expect(
@@ -2999,15 +3004,16 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Backups"));
     await waitFor(() => expect(screen.getByText("Restore files only")).toBeInTheDocument());
 
-    fireEvent.click(screen.getByText("Restore files only"));
+    fireEvent.click(screen.getByRole("button", { name: "Restore files only" }));
+    const restoreDialog = screen.getByRole("dialog", { name: "Restore Backup" });
     expect(
-      screen.getByText(
-        "Confirm before restoring Codex / Personal. This replays the saved files only.",
+      within(restoreDialog).getByText(
+        "It will not change the active account until you activate it later.",
       ),
     ).toBeInTheDocument();
     expect(calls.some((entry) => entry.command === "restore_backup")).toBe(false);
 
-    fireEvent.click(screen.getByText("Confirm restore files"));
+    fireEvent.click(within(restoreDialog).getByRole("button", { name: "Restore" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "restore_backup")).toBe(true);
