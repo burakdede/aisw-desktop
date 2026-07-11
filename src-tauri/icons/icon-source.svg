@@ -1,19 +1,63 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <rect width="1024" height="1024" rx="232" fill="#EDF2F8"/>
-  <rect x="158" y="158" width="708" height="708" rx="198" fill="#F8FAFD" stroke="#D7DFEA" stroke-width="20"/>
-  <rect x="286" y="232" width="120" height="560" rx="60" fill="#D7DEE8"/>
-  <rect x="618" y="232" width="120" height="560" rx="60" fill="#D7DEE8"/>
+  <defs>
+    <linearGradient id="shell" x1="186" x2="838" y1="134" y2="890" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F6F9FE"/>
+      <stop offset="1" stop-color="#D8E2EF"/>
+    </linearGradient>
+    <linearGradient id="core" x1="238" x2="786" y1="212" y2="812" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EEF4FB"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="626" x2="798" y1="258" y2="760" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#50B5FF"/>
+      <stop offset="0.45" stop-color="#0A84FF"/>
+      <stop offset="1" stop-color="#005FCE"/>
+    </linearGradient>
+    <linearGradient id="laneLight" x1="318" x2="446" y1="296" y2="744" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E8EEF6"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="88" y="88" width="848" height="848" rx="262" fill="url(#shell)"/>
+  <rect x="122" y="122" width="780" height="780" rx="234" fill="url(#core)" stroke="#C9D4E1" stroke-width="14"/>
   <path
-    d="M338 334C338 297.549 367.549 268 404 268C440.451 268 470 297.549 470 334V402C470 475.454 529.546 535 603 535H614C650.451 535 680 564.549 680 601C680 637.451 650.451 667 614 667H603C529.546 667 470 726.546 470 800V806C470 842.451 440.451 872 404 872C367.549 872 338 842.451 338 806V800C338 682.916 432.916 588 550 588C432.916 588 338 493.084 338 376V334Z"
-    fill="#0A84FF"
-    stroke="#1471DA"
-    stroke-width="16"
+    d="M250 244C250 218.595 270.595 198 296 198H728C753.405 198 774 218.595 774 244V354C774 379.405 753.405 400 728 400H296C270.595 400 250 379.405 250 354V244Z"
+    fill="#FFFFFF"
+    fill-opacity="0.72"
   />
-  <path d="M404 588H614" fill="none" stroke="#73839A" stroke-opacity="0.38" stroke-width="30" stroke-linecap="round"/>
-  <circle cx="404" cy="334" r="84" fill="#FFFFFF" stroke="#C0C9D5" stroke-width="18"/>
-  <circle cx="614" cy="588" r="100" fill="#0A84FF" stroke="#1471DA" stroke-width="18"/>
-  <circle cx="404" cy="806" r="84" fill="#FFFFFF" stroke="#C0C9D5" stroke-width="18"/>
-  <path d="M360 334H448" stroke="#D7DEE8" stroke-width="22" stroke-linecap="round"/>
-  <path d="M570 588H658" stroke="#FFFFFF" stroke-width="24" stroke-linecap="round"/>
-  <path d="M360 806H448" stroke="#D7DEE8" stroke-width="22" stroke-linecap="round"/>
+  <path
+    d="M296 218H728"
+    stroke="#FFFFFF"
+    stroke-opacity="0.72"
+    stroke-width="22"
+    stroke-linecap="round"
+  />
+
+  <rect x="314" y="282" width="146" height="462" rx="73" fill="url(#laneLight)" stroke="#C8D3E0" stroke-width="14"/>
+  <rect x="564" y="282" width="146" height="462" rx="73" fill="url(#blue)" stroke="#0D6ED8" stroke-width="14"/>
+
+  <path
+    d="M387 358V413C387 470.99 434.01 518 492 518H532C589.99 518 637 565.01 637 623V670"
+    fill="none"
+    stroke="#6B7C93"
+    stroke-width="34"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M637 670V618C637 561.667 591.333 516 535 516H495"
+    fill="none"
+    stroke="#0A84FF"
+    stroke-width="34"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path d="M446 517H578" fill="none" stroke="#B7C3D1" stroke-width="18" stroke-linecap="round"/>
+
+  <circle cx="387" cy="358" r="52" fill="#FFFFFF" stroke="#BFCBDA" stroke-width="16"/>
+  <circle cx="637" cy="670" r="62" fill="#0A84FF" stroke="#0D6ED8" stroke-width="16"/>
+
+  <path d="M356 358H418" stroke="#D4DDE8" stroke-width="16" stroke-linecap="round"/>
+  <path d="M600 670H674" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"/>
 </svg>

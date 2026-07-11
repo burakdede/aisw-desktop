@@ -244,35 +244,44 @@ button {
 }
 
 .brand-mark-shell {
-  fill: color-mix(in srgb, Canvas 92%, CanvasText 8%);
+  fill: color-mix(in srgb, Canvas 90%, CanvasText 10%);
   stroke: color-mix(in srgb, CanvasText 12%, transparent);
 }
 
 .brand-mark-core {
-  fill: color-mix(in srgb, Canvas 98%, CanvasText 2%);
-  stroke: color-mix(in srgb, CanvasText 8%, transparent);
+  fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
+  stroke: color-mix(in srgb, CanvasText 6%, transparent);
+}
+
+.brand-mark-plate {
+  fill: color-mix(in srgb, Canvas 97%, AccentColor 3%);
+  stroke: color-mix(in srgb, CanvasText 5%, transparent);
 }
 
 .brand-mark-lane {
   fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
-  stroke: color-mix(in srgb, CanvasText 10%, transparent);
+  stroke: color-mix(in srgb, CanvasText 9%, transparent);
 }
 
 .brand-mark-lane-accent {
-  fill: color-mix(in srgb, AccentColor 16%, Canvas 84%);
-  stroke: color-mix(in srgb, AccentColor 24%, transparent);
+  fill: color-mix(in srgb, AccentColor 18%, Canvas 82%);
+  stroke: color-mix(in srgb, AccentColor 30%, transparent);
 }
 
 .brand-mark-path {
-  stroke: color-mix(in srgb, CanvasText 42%, transparent);
+  stroke: color-mix(in srgb, CanvasText 38%, transparent);
 }
 
 .brand-mark-path-accent {
-  stroke: color-mix(in srgb, AccentColor 78%, CanvasText 22%);
+  stroke: color-mix(in srgb, AccentColor 80%, CanvasText 20%);
 }
 
 .brand-mark-bridge {
   stroke: color-mix(in srgb, CanvasText 26%, transparent);
+}
+
+.brand-mark-highlight {
+  stroke: rgba(255, 255, 255, 0.66);
 }
 
 .brand-mark-node {
