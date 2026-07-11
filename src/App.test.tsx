@@ -7514,6 +7514,15 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Settings"));
 
+    expect(screen.getByLabelText("Launch at login")).toBeDisabled();
+    expect(screen.getByLabelText("Show menu bar icon")).toBeDisabled();
+    expect(screen.getByLabelText("Show menu bar icon")).toBeChecked();
+    expect(
+      screen.getByText(
+        "Available from the signed desktop app once the login item is registered with macOS.",
+      ),
+    ).toBeInTheDocument();
+
     fireEvent.change(screen.getByLabelText("Appearance"), {
       target: { value: "dark" },
     });
@@ -7527,6 +7536,13 @@ describe("App", () => {
       expect(window.localStorage.getItem("ai-switch.desktop.default-section")).toBe("profiles");
       expect(document.documentElement.dataset.appearance).toBe("dark");
       expect(document.documentElement.style.colorScheme).toBe("dark");
+      expect(
+        screen.getByText(
+          (_, element) =>
+            element?.textContent?.trim() ===
+            "Next launch opens on Profiles whenever the app can resume normally.",
+        ),
+      ).toBeInTheDocument();
     });
   });
 

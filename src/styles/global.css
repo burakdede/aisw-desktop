@@ -1039,6 +1039,35 @@ button {
   gap: 12px;
 }
 
+.settings-toggle-list {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-toggle-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--separator);
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
+.settings-toggle-row input {
+  margin: 2px 0 0;
+}
+
+.settings-toggle-row-disabled {
+  opacity: 0.78;
+}
+
+.settings-toggle-copy {
+  display: grid;
+  gap: 4px;
+}
+
 .settings-guide-block {
   display: grid;
   gap: 6px;

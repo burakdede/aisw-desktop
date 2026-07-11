@@ -261,12 +261,12 @@ export function SettingsPanel({
                     <strong>{titleCase(appearance)}</strong>
                   </div>
                   <div>
-                    <span className="overview-current-set-cell-label">Start section</span>
-                    <strong>{titleCase(defaultSection)}</strong>
+                    <span className="overview-current-set-cell-label">Login item</span>
+                    <strong>Managed by macOS</strong>
                   </div>
                   <div>
-                    <span className="overview-current-set-cell-label">Behavior</span>
-                    <strong>Local control</strong>
+                    <span className="overview-current-set-cell-label">Menu bar extra</span>
+                    <strong>Included</strong>
                   </div>
                 </div>
               </article>
@@ -309,7 +309,47 @@ export function SettingsPanel({
                 <div className="desktop-pane-section-header">
                   <div>
                     <p className="card-kicker">Launch</p>
-                    <h3>Default section</h3>
+                    <h3>Launch behavior</h3>
+                  </div>
+                  <p className="inline-note">
+                    Native launch controls are shown here, but this unsigned development build keeps them managed by the operating system and signed app bundle.
+                  </p>
+                </div>
+                <div className="settings-toggle-list" aria-label="Launch behavior controls">
+                  <label className="settings-toggle-row settings-toggle-row-disabled">
+                    <span className="settings-toggle-copy">
+                      <strong>Launch at login</strong>
+                      <span className="inline-note">
+                        Available from the signed desktop app once the login item is registered with macOS.
+                      </span>
+                    </span>
+                    <input type="checkbox" aria-label="Launch at login" disabled />
+                  </label>
+                  <label className="settings-toggle-row settings-toggle-row-disabled">
+                    <span className="settings-toggle-copy">
+                      <strong>Show menu bar icon</strong>
+                      <span className="inline-note">
+                        The menu bar extra stays visible in this build so quick switching and diagnostics remain reachable.
+                      </span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      aria-label="Show menu bar icon"
+                      checked
+                      readOnly
+                      disabled
+                    />
+                  </label>
+                </div>
+                <p className="inline-note">
+                  When these controls become available, the desktop app should mirror the native macOS login-item and menu-bar behavior instead of inventing a separate model.
+                </p>
+              </article>
+              <article className="diagnostic-card settings-pane-section">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Default section</p>
+                    <h3>Start destination</h3>
                   </div>
                   <p className="inline-note">
                     Choose which section opens first when the desktop app starts normally.
@@ -332,6 +372,9 @@ export function SettingsPanel({
                 </label>
                 <p className="inline-note">
                   Runtime blockers and first-run onboarding still take priority when they need your attention.
+                </p>
+                <p className="inline-note">
+                  Next launch opens on <strong>{titleCase(defaultSection)}</strong> whenever the app can resume normally.
                 </p>
                 <div className="button-row">
                   <button className="primary-button" type="button" onClick={saveGeneralPreferences}>
@@ -368,7 +411,7 @@ export function SettingsPanel({
                 </div>
                 <p className="inline-note">Use the source list on the left to jump directly to the section you need.</p>
                 <p className="inline-note">
-                  Launch-at-login and menu bar persistence stay tied to the signed desktop build and OS-level app settings for now.
+                  Launch at login and menu bar visibility stay tied to the signed desktop build and OS-level app settings for now.
                 </p>
               </article>
             </div>
