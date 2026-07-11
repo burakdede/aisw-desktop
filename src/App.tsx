@@ -73,6 +73,15 @@ const DIAGNOSTICS_QUERY_KEYS = [
   ["bootstrap"],
 ] as const;
 
+const NAV_SHORTCUTS: Record<string, (typeof NAV)[number]["id"]> = {
+  "1": "overview",
+  "2": "profiles",
+  "3": "sets",
+  "4": "diagnostics",
+  "5": "backups",
+  "6": "activity",
+};
+
 type ProfilesRouteState = {
   tool?: string;
   expandedProfile?: string | null;
@@ -136,6 +145,47 @@ export function App() {
     applyAppearancePreference(desktopPreferences.appearance);
     saveDesktopPreferences(desktopPreferences);
   }, [desktopPreferences]);
+
+  const runtimeBlockedForShortcuts = bootstrap.data
+    ? !bootstrap.data.runtime_status.compatible
+    : true;
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.altKey) {
+        return;
+      }
+      if (isEditableTarget(event.target)) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+      if (key === "k") {
+        event.preventDefault();
+        setQuickSwitchOpen(true);
+        return;
+      }
+
+      if (key === "," || key === "<") {
+        event.preventDefault();
+        openSettings();
+        return;
+      }
+
+      if (runtimeBlockedForShortcuts) {
+        return;
+      }
+
+      const navShortcut = NAV_SHORTCUTS[key];
+      if (!navShortcut) {
+        return;
+      }
+      event.preventDefault();
+      selectNav(navShortcut);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [runtimeBlockedForShortcuts]);
 
   const restoreBundledRuntimeMutation = useMutation({
     mutationFn: async () =>
@@ -511,17 +561,6 @@ export function App() {
     };
   }, [queryClient]);
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setQuickSwitchOpen(true);
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
-
   if (bootstrap.isLoading) {
     return (
       <main className="app-shell app-shell-onboarding">
@@ -574,6 +613,7 @@ export function App() {
     label,
     group,
     disabled: runtimeBlocked && id !== "settings",
+    shortcut: navShortcutLabel(id),
   }));
   const runtimeBlocker = describeRuntimeBlocker(runtimeStatus);
   const showSetupWindow = setupFocused || runtimeRecoveryFocused;
@@ -912,6 +952,36 @@ function settingsForRecovery(settings: AppBootstrap["settings"] | undefined) {
       profile_sets: [],
     }
   );
+}
+
+function navShortcutLabel(id: (typeof NAV)[number]["id"]) {
+  switch (id) {
+    case "overview":
+      return "⌘1";
+    case "profiles":
+      return "⌘2";
+    case "sets":
+      return "⌘3";
+    case "diagnostics":
+      return "⌘4";
+    case "backups":
+      return "⌘5";
+    case "activity":
+      return "⌘6";
+    case "settings":
+      return "⌘,";
+  }
+}
+
+function isEditableTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+  if (target.isContentEditable) {
+    return true;
+  }
+  const tagName = target.tagName.toLowerCase();
+  return tagName === "input" || tagName === "textarea" || tagName === "select";
 }
 
 function describeBootstrapError(error: unknown) {

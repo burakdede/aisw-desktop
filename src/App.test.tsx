@@ -5772,6 +5772,37 @@ describe("App", () => {
     });
   });
 
+  it("opens settings from the keyboard shortcut", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
+
+    fireEvent.keyDown(window, { key: ",", metaKey: true });
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("button", { name: "Settings" })[0]).toHaveClass("nav-button-active");
+      expect(screen.getByLabelText("Settings sections")).toBeInTheDocument();
+    });
+  });
+
+  it("switches primary sections from keyboard shortcuts", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
+
+    fireEvent.keyDown(window, { key: "2", metaKey: true });
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("button", { name: "Profiles" })[0]).toHaveClass("nav-button-active");
+      expect(screen.getByLabelText("Search Profiles")).toBeInTheDocument();
+    });
+
+    fireEvent.keyDown(window, { key: "6", metaKey: true });
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("button", { name: "Activity" })[0]).toHaveClass("nav-button-active");
+      expect(screen.getByRole("button", { name: "Export Support Report" })).toBeInTheDocument();
+    });
+  });
+
   it("re-applies the active shared profile when the app menu requests it", async () => {
     const calls: Array<{ command: string; args?: unknown }> = [];
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {

@@ -50,6 +50,11 @@ textarea {
   font: inherit;
 }
 
+:where(button, input, select, textarea, [role="button"], [role="option"], [role="menuitem"]):focus-visible {
+  outline: 2px solid color-mix(in srgb, AccentColor 72%, Canvas 28%);
+  outline-offset: 2px;
+}
+
 button {
   -webkit-appearance: none;
   appearance: none;
@@ -357,6 +362,10 @@ button {
   background: var(--soft-fill);
 }
 
+.nav-button:focus-visible {
+  background: color-mix(in srgb, AccentColor 8%, Canvas 92%);
+}
+
 .nav-button-active {
   background:
     linear-gradient(180deg, color-mix(in srgb, AccentColor 14%, Canvas 86%), color-mix(in srgb, AccentColor 10%, Canvas 92%));
@@ -386,6 +395,13 @@ button {
 
 .nav-button-label {
   min-width: 0;
+}
+
+.nav-button-shortcut {
+  margin-left: auto;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--text-tertiary);
 }
 
 .nav-button:disabled {
@@ -2511,7 +2527,6 @@ button {
 .profile-row-actions-menu button:hover,
 .profile-row-actions-menu button:focus-visible {
   background: color-mix(in srgb, AccentColor 10%, Canvas 90%);
-  outline: none;
 }
 
 .profile-row-actions-menu button:disabled {
@@ -2983,5 +2998,16 @@ button {
 
   .section-card {
     padding: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -7,6 +7,7 @@ interface NavItem {
   label: string;
   group: string;
   disabled?: boolean;
+  shortcut?: string;
 }
 
 interface AppFrameProps {
@@ -75,12 +76,18 @@ export function AppFrame({
                           key={item.id}
                           className={cn("nav-button", activeNav === item.id && "nav-button-active")}
                           disabled={item.disabled}
+                          aria-keyshortcuts={item.shortcut?.replace("⌘", "Meta+").replace("⌃", "Control+")}
                           onClick={() => onSelectNav(item.id)}
                         >
                           <span className="nav-button-icon" aria-hidden="true">
                             <SidebarIcon id={item.id} />
                           </span>
                           <span className="nav-button-label">{item.label}</span>
+                          {item.shortcut ? (
+                            <span className="nav-button-shortcut" aria-hidden="true">
+                              {item.shortcut}
+                            </span>
+                          ) : null}
                         </button>
                       ))}
                     </div>
