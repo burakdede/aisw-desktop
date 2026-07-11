@@ -1,61 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <defs>
-    <linearGradient id="surface" x1="180" y1="144" x2="836" y2="880" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FCFCFE"/>
-      <stop offset="1" stop-color="#E8EDF5"/>
-    </linearGradient>
-    <linearGradient id="body" x1="188" y1="170" x2="820" y2="856" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F9FAFD"/>
-      <stop offset="1" stop-color="#DCE4F0"/>
-    </linearGradient>
-    <linearGradient id="rail" x1="350" y1="260" x2="350" y2="768" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#BFC8D5"/>
-      <stop offset="1" stop-color="#DDE4ED"/>
-    </linearGradient>
-    <linearGradient id="railRight" x1="674" y1="260" x2="674" y2="768" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#BFC8D5"/>
-      <stop offset="1" stop-color="#DDE4ED"/>
-    </linearGradient>
-    <linearGradient id="accent" x1="420" y1="372" x2="698" y2="650" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#67D4FF"/>
-      <stop offset="0.55" stop-color="#2FA6FF"/>
-      <stop offset="1" stop-color="#0A84FF"/>
-    </linearGradient>
-    <linearGradient id="accentStroke" x1="408" y1="360" x2="714" y2="660" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#0589F0"/>
-      <stop offset="1" stop-color="#1667D9"/>
-    </linearGradient>
-    <filter id="shadow" x="88" y="88" width="848" height="848" filterUnits="userSpaceOnUse">
-      <feDropShadow dx="0" dy="30" stdDeviation="34" flood-color="#0F172A" flood-opacity="0.16"/>
-    </filter>
-  </defs>
-  <rect width="1024" height="1024" rx="232" fill="#F4F7FB"/>
-  <g filter="url(#shadow)">
-    <rect x="148" y="148" width="728" height="728" rx="208" fill="url(#surface)"/>
-    <rect x="160" y="160" width="704" height="704" rx="196" fill="url(#body)" stroke="#D7DFEA" stroke-width="18"/>
-    <rect x="286" y="236" width="112" height="548" rx="56" fill="url(#rail)"/>
-    <rect x="626" y="236" width="112" height="548" rx="56" fill="url(#railRight)"/>
-    <path
-      d="M342 394H502C603.62 394 686 476.38 686 578C686 679.62 603.62 762 502 762H342"
-      fill="none"
-      stroke="url(#accent)"
-      stroke-width="86"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <path
-      d="M342 578H682"
-      fill="none"
-      stroke="#73839A"
-      stroke-opacity="0.45"
-      stroke-width="34"
-      stroke-linecap="round"
-    />
-    <circle cx="342" cy="394" r="86" fill="#FFFFFF" stroke="#BCC6D3" stroke-width="18"/>
-    <circle cx="686" cy="578" r="102" fill="url(#accent)" stroke="url(#accentStroke)" stroke-width="18"/>
-    <circle cx="342" cy="762" r="86" fill="#FFFFFF" stroke="#BCC6D3" stroke-width="18"/>
-    <path d="M322 382H438" stroke="#FFFFFF" stroke-opacity="0.86" stroke-width="20" stroke-linecap="round"/>
-    <path d="M322 750H438" stroke="#FFFFFF" stroke-opacity="0.76" stroke-width="20" stroke-linecap="round"/>
-    <path d="M644 578H726" stroke="#FFFFFF" stroke-opacity="0.88" stroke-width="24" stroke-linecap="round"/>
-  </g>
+  <rect width="1024" height="1024" rx="232" fill="#EDF2F8"/>
+  <rect x="158" y="158" width="708" height="708" rx="198" fill="#F8FAFD" stroke="#D7DFEA" stroke-width="20"/>
+  <rect x="286" y="232" width="120" height="560" rx="60" fill="#D7DEE8"/>
+  <rect x="618" y="232" width="120" height="560" rx="60" fill="#D7DEE8"/>
+  <path
+    d="M338 334C338 297.549 367.549 268 404 268C440.451 268 470 297.549 470 334V402C470 475.454 529.546 535 603 535H614C650.451 535 680 564.549 680 601C680 637.451 650.451 667 614 667H603C529.546 667 470 726.546 470 800V806C470 842.451 440.451 872 404 872C367.549 872 338 842.451 338 806V800C338 682.916 432.916 588 550 588C432.916 588 338 493.084 338 376V334Z"
+    fill="#0A84FF"
+    stroke="#1471DA"
+    stroke-width="16"
+  />
+  <path d="M404 588H614" fill="none" stroke="#73839A" stroke-opacity="0.38" stroke-width="30" stroke-linecap="round"/>
+  <circle cx="404" cy="334" r="84" fill="#FFFFFF" stroke="#C0C9D5" stroke-width="18"/>
+  <circle cx="614" cy="588" r="100" fill="#0A84FF" stroke="#1471DA" stroke-width="18"/>
+  <circle cx="404" cy="806" r="84" fill="#FFFFFF" stroke="#C0C9D5" stroke-width="18"/>
+  <path d="M360 334H448" stroke="#D7DEE8" stroke-width="22" stroke-linecap="round"/>
+  <path d="M570 588H658" stroke="#FFFFFF" stroke-width="24" stroke-linecap="round"/>
+  <path d="M360 806H448" stroke="#D7DEE8" stroke-width="22" stroke-linecap="round"/>
 </svg>

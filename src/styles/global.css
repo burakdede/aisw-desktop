@@ -248,14 +248,20 @@ button {
   stroke: color-mix(in srgb, CanvasText 14%, transparent);
 }
 
-.brand-mark-panel {
+.brand-mark-rail {
   fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
   stroke: color-mix(in srgb, CanvasText 12%, transparent);
 }
 
-.brand-mark-panel-accent {
+.brand-mark-rail-accent {
   fill: color-mix(in srgb, AccentColor 22%, Canvas 78%);
   stroke: color-mix(in srgb, AccentColor 36%, transparent);
+}
+
+.brand-mark-flow {
+  fill: color-mix(in srgb, AccentColor 72%, Canvas 28%);
+  stroke: color-mix(in srgb, AccentColor 32%, transparent);
+  stroke-width: 0.65;
 }
 
 .brand-mark-beam {
