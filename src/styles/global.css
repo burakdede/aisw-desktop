@@ -1956,6 +1956,38 @@ button {
   gap: 12px;
 }
 
+.profiles-tool-focus-card {
+  gap: 12px;
+}
+
+.profiles-tool-focus-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.profiles-tool-focus-grid,
+.profiles-management-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.profiles-tool-focus-grid > div,
+.profiles-management-block,
+.profiles-technical-block {
+  display: grid;
+  gap: 6px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
+.profiles-management-grid {
+  margin-top: 4px;
+}
+
 .profiles-table-card,
 .profiles-detail-card,
 .profiles-actions-card {
@@ -2331,7 +2363,9 @@ button {
   .set-profile-grid,
   .overview-tool-facts,
   .overview-focus-grid,
-  .overview-project-grid {
+  .overview-project-grid,
+  .profiles-tool-focus-grid,
+  .profiles-management-grid {
     grid-template-columns: 1fr;
   }
 

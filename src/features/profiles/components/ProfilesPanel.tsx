@@ -220,6 +220,14 @@ export function ProfilesPanel({
           settings,
         ) ?? titleCase(snapshot.profiles[tool]?.active ?? "")
       : "None";
+  const currentToolStatusLabel =
+    snapshot.profiles[tool]?.active
+      ? profileStatusSummary(snapshot, tool, snapshot.profiles[tool]?.active ?? "", toolStatus)
+      : "Not configured";
+  const currentToolBackend =
+    toolStatus?.credential_backend
+      ? formatBackendLabel(toolStatus.credential_backend)
+      : "Stored";
   const restoreSheetMode = pendingRestore?.mode ?? null;
   const removalSheetProfile = pendingRemoval
     ? profiles.find((entry) => entry.name === pendingRemoval) ?? null
@@ -561,47 +569,80 @@ export function ProfilesPanel({
                 Inspect the selected login, apply recovery actions, or open the sheet-based add flow.
               </p>
             </div>
-            <article className="diagnostic-card desktop-pane-intro profiles-inspector-controls">
-              <label>
-                Current tool
-                <select
-                  value={tool}
-                  onChange={(event) => {
-                    setTool(event.target.value as typeof tool);
-                    setOpenDiagnosticDetails(null);
-                    setExpandedDetails(null);
-                  }}
+            <article className="diagnostic-card desktop-pane-intro profiles-tool-focus-card">
+              <div className="profiles-tool-focus-header">
+                <div>
+                  <p className="card-kicker">Focused tool</p>
+                  <h3>{titleCase(tool)}</h3>
+                </div>
+                <span
+                  className={`pill ${
+                    currentToolStatusLabel === "Active"
+                      ? "pill-ok"
+                      : currentToolStatusLabel === "Live mismatch"
+                        ? "pill-warn"
+                        : "pill-soft"
+                  }`}
                 >
-                  {TOOLS.map((entry) => (
-                    <option key={entry} value={entry}>
-                      {titleCase(entry)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {availableStateModes.length ? (
-                <StateModeField
-                  name={`inspector-state-mode-${tool}`}
-                  value={stateMode}
-                  options={availableStateModes}
-                  onChange={setStateMode}
-                />
-              ) : (
+                  {currentToolStatusLabel}
+                </span>
+              </div>
+              <div className="profiles-tool-focus-grid">
+                <div>
+                  <span className="overview-current-set-cell-label">Current tool</span>
+                  <strong>{titleCase(tool)}</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Active profile</span>
+                  <strong>{currentToolActiveProfile}</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Backend</span>
+                  <strong>{currentToolBackend}</strong>
+                </div>
+              </div>
+              <div className="profiles-inspector-controls">
                 <label>
-                  State mode
-                  <select value="n/a" disabled>
-                    <option value="n/a">Not configurable</option>
+                  Current tool
+                  <select
+                    value={tool}
+                    onChange={(event) => {
+                      setTool(event.target.value as typeof tool);
+                      setOpenDiagnosticDetails(null);
+                      setExpandedDetails(null);
+                    }}
+                  >
+                    {TOOLS.map((entry) => (
+                      <option key={entry} value={entry}>
+                        {titleCase(entry)}
+                      </option>
+                    ))}
                   </select>
                 </label>
-              )}
-              <div className="button-row">
-                <button
-                  className="primary-button"
-                  type="button"
-                  onClick={() => setProfileSheetOpen(true)}
-                >
-                  + Add Profile
-                </button>
+                {availableStateModes.length ? (
+                  <StateModeField
+                    name={`inspector-state-mode-${tool}`}
+                    value={stateMode}
+                    options={availableStateModes}
+                    onChange={setStateMode}
+                  />
+                ) : (
+                  <label>
+                    State mode
+                    <select value="n/a" disabled>
+                      <option value="n/a">Not configurable</option>
+                    </select>
+                  </label>
+                )}
+                <div className="button-row">
+                  <button
+                    className="primary-button"
+                    type="button"
+                    onClick={() => setProfileSheetOpen(true)}
+                  >
+                    + Add Profile
+                  </button>
+                </div>
               </div>
             </article>
           <div className="stack-list">
@@ -663,15 +704,18 @@ export function ProfilesPanel({
                       },
                     ]}
                   />
+                  <p className="inline-note">
+                    Keep this profile ready for switching by checking live match, backend health, and recent backup state before you start coding.
+                  </p>
                 </article>
                 <article className="diagnostic-card profiles-actions-card">
                   <div className="desktop-pane-section-header">
                     <div>
-                      <p className="card-kicker">Actions</p>
-                      <h3>Profile actions</h3>
+                      <p className="card-kicker">Manage</p>
+                      <h3>Activation and management</h3>
                     </div>
                     <p className="inline-note">
-                      Switch, restore, rename, and remove this saved profile without leaving the inspector.
+                      Switch, restore, rename, relabel, inspect diagnostics, and remove this saved profile without leaving the inspector.
                     </p>
                   </div>
                   <div className="button-row">
@@ -734,198 +778,199 @@ export function ProfilesPanel({
                       </button>
                     </div>
                   ) : null}
-                </article>
-                <article className="diagnostic-card profiles-actions-card">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">Names</p>
-                      <h3>Rename and relabel</h3>
+                  <div className="profiles-management-grid">
+                    <div className="profiles-management-block">
+                      <p className="card-kicker">Name</p>
+                      <h4>Rename profile</h4>
+                      <p className="inline-note">
+                        Keep the stable profile name predictable for switching and recovery.
+                      </p>
+                      <div className="inline-form inline-form-compact">
+                        <input
+                          aria-label={`rename ${selectedProfileEntry.name}`}
+                          placeholder="new name"
+                          value={selectedRenameDraft}
+                          onChange={(event) =>
+                            setRenameDrafts((current) => ({
+                              ...current,
+                              [selectedProfileEntry.name]: event.target.value,
+                            }))
+                          }
+                        />
+                        <button
+                          className="ghost-button"
+                          type="button"
+                          disabled={mutationLock.isBusy || Boolean(selectedRenameDuplicate)}
+                          onClick={() => {
+                            const newName = selectedRenameDraft.trim();
+                            if (!newName) return;
+                            setPendingRemoval(null);
+                            renameProfileMutation.mutate({
+                              tool,
+                              oldName: selectedProfileEntry.name,
+                              newName,
+                            });
+                          }}
+                        >
+                          Rename
+                        </button>
+                      </div>
+                      {selectedRenameDuplicate ? (
+                        <p className="inline-note">
+                          {duplicateWarning(tool, selectedRenameDraft.trim())}
+                        </p>
+                      ) : null}
                     </div>
-                    <p className="inline-note">
-                      Keep the stable profile name and visible label easy to manage separately.
-                    </p>
+                    <div className="profiles-management-block">
+                      <p className="card-kicker">Label</p>
+                      <h4>Relabel profile</h4>
+                      <p className="inline-note">
+                        Keep the visible profile label readable without changing the stored name.
+                      </p>
+                      <div className="inline-form inline-form-compact">
+                        <input
+                          aria-label={`label ${selectedProfileEntry.name}`}
+                          placeholder="display label"
+                          value={
+                            labelDrafts[selectedProfileEntry.name] ??
+                            effectiveLabel(tool, selectedProfileEntry.name, selectedProfileEntry.label, settings) ??
+                            ""
+                          }
+                          onChange={(event) =>
+                            setLabelDrafts((current) => ({
+                              ...current,
+                              [selectedProfileEntry.name]: event.target.value,
+                            }))
+                          }
+                        />
+                        <button
+                          className="ghost-button"
+                          type="button"
+                          disabled={mutationLock.isBusy}
+                          onClick={() => {
+                            const nextLabel = labelDrafts[selectedProfileEntry.name]?.trim() ?? "";
+                            setPendingRemoval(null);
+                            updateSettingsMutation.mutate({
+                              runtime_kind: settings.runtime_kind,
+                              runtime_path: settings.runtime_path ?? null,
+                              aisw_home: settings.aisw_home ?? null,
+                              update_channel: settings.update_channel,
+                              profile_sets: settings.profile_sets,
+                              profile_labels: mergeProfileLabel(
+                                settings,
+                                tool,
+                                selectedProfileEntry.name,
+                                nextLabel || null,
+                              ),
+                            });
+                          }}
+                        >
+                          Relabel
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="inline-form inline-form-compact">
-                    <input
-                      aria-label={`rename ${selectedProfileEntry.name}`}
-                      placeholder="new name"
-                      value={selectedRenameDraft}
-                      onChange={(event) =>
-                        setRenameDrafts((current) => ({
-                          ...current,
-                          [selectedProfileEntry.name]: event.target.value,
-                        }))
-                      }
-                    />
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      disabled={mutationLock.isBusy || Boolean(selectedRenameDuplicate)}
-                      onClick={() => {
-                        const newName = selectedRenameDraft.trim();
-                        if (!newName) return;
-                        setPendingRemoval(null);
-                        renameProfileMutation.mutate({
-                          tool,
-                          oldName: selectedProfileEntry.name,
-                          newName,
-                        });
-                      }}
-                    >
-                      Rename
-                    </button>
-                  </div>
-                  {selectedRenameDuplicate ? (
-                    <p className="inline-note">
-                      {duplicateWarning(tool, selectedRenameDraft.trim())}
-                    </p>
+                  {openDiagnosticDetails === selectedProfileEntry.name ? (
+                    <div className="profiles-technical-block">
+                      <p className="card-kicker">Diagnostics</p>
+                      <h4>Technical details</h4>
+                      <p className="inline-note">
+                        Auth method: {selectedProfileEntry.auth}
+                      </p>
+                      <p className="inline-note">
+                        Desktop active: {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? "yes" : "no"}
+                      </p>
+                      {selectedLatestBackup ? (
+                        <p className="inline-note">
+                          Latest backup: {formatBackupTimestamp(selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id)}
+                        </p>
+                      ) : null}
+                      {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? (
+                        <>
+                          <p className="inline-note">
+                            Credential backend: {toolStatus?.credential_backend ?? "unknown"}
+                          </p>
+                          <p className="inline-note">
+                            Live match:{" "}
+                            {toolStatus?.active_profile_applied === undefined ||
+                            toolStatus?.active_profile_applied === null
+                              ? "unknown"
+                              : toolStatus.active_profile_applied
+                                ? "yes"
+                                : "no"}
+                          </p>
+                          <p className="inline-note">
+                            Credentials present:{" "}
+                            {toolStatus?.credentials_present === undefined ||
+                            toolStatus?.credentials_present === null
+                              ? "unknown"
+                              : toolStatus.credentials_present
+                                ? "yes"
+                                : "no"}
+                          </p>
+                          <p className="inline-note">
+                            Permissions OK:{" "}
+                            {toolStatus?.permissions_ok === undefined || toolStatus?.permissions_ok === null
+                              ? "unknown"
+                              : toolStatus.permissions_ok
+                                ? "yes"
+                                : "no"}
+                          </p>
+                          {toolStatus?.token_warning ? (
+                            <p className="inline-note">
+                              Token warning: {formatProfileTokenWarning(toolStatus)}
+                            </p>
+                          ) : null}
+                          {toolStatus?.warnings.length ? (
+                            <div className="stack-list">
+                              {toolStatus.warnings.map((warning, index) => (
+                                <p
+                                  key={`${warning.code ?? warning.message ?? "warning"}-${index}`}
+                                  className="inline-note"
+                                >
+                                  Warning: {formatProfileWarning(warning)}
+                                </p>
+                              ))}
+                            </div>
+                          ) : null}
+                          {!toolStatus?.token_warning && !toolStatus?.warnings.length ? (
+                            <p className="inline-note">
+                              No additional token or runtime warnings are currently reported for this tool.
+                            </p>
+                          ) : null}
+                        </>
+                      ) : (
+                        <p className="inline-note">
+                          Live runtime diagnostics are only available for the active profile. Activate this profile to verify backend, live-match, token, and permission state.
+                        </p>
+                      )}
+                    </div>
                   ) : null}
-                  <div className="inline-form inline-form-compact">
-                    <input
-                      aria-label={`label ${selectedProfileEntry.name}`}
-                      placeholder="display label"
-                      value={
-                        labelDrafts[selectedProfileEntry.name] ??
-                        effectiveLabel(tool, selectedProfileEntry.name, selectedProfileEntry.label, settings) ??
-                        ""
-                      }
-                      onChange={(event) =>
-                        setLabelDrafts((current) => ({
-                          ...current,
-                          [selectedProfileEntry.name]: event.target.value,
-                        }))
-                      }
-                    />
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      disabled={mutationLock.isBusy}
-                      onClick={() => {
-                        const nextLabel = labelDrafts[selectedProfileEntry.name]?.trim() ?? "";
-                        setPendingRemoval(null);
-                        updateSettingsMutation.mutate({
-                          runtime_kind: settings.runtime_kind,
-                          runtime_path: settings.runtime_path ?? null,
-                          aisw_home: settings.aisw_home ?? null,
-                          update_channel: settings.update_channel,
-                          profile_sets: settings.profile_sets,
-                          profile_labels: mergeProfileLabel(
-                            settings,
-                            tool,
-                            selectedProfileEntry.name,
-                            nextLabel || null,
-                          ),
-                        });
-                      }}
-                    >
-                      Relabel
-                    </button>
-                  </div>
-                </article>
-                {openDiagnosticDetails === selectedProfileEntry.name ? (
-                  <article className="diagnostic-card profiles-actions-card">
-                    <h4>Technical details</h4>
-                    <p className="inline-note">
-                      Auth method: {selectedProfileEntry.auth}
-                    </p>
-                    <p className="inline-note">
-                      Desktop active: {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? "yes" : "no"}
-                    </p>
-                    {selectedLatestBackup ? (
-                      <p className="inline-note">
-                        Latest backup: {formatBackupTimestamp(selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id)}
-                      </p>
-                    ) : null}
-                    {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? (
-                      <>
-                        <p className="inline-note">
-                          Credential backend: {toolStatus?.credential_backend ?? "unknown"}
-                        </p>
-                        <p className="inline-note">
-                          Live match:{" "}
-                          {toolStatus?.active_profile_applied === undefined ||
-                          toolStatus?.active_profile_applied === null
-                            ? "unknown"
-                            : toolStatus.active_profile_applied
-                              ? "yes"
-                              : "no"}
-                        </p>
-                        <p className="inline-note">
-                          Credentials present:{" "}
-                          {toolStatus?.credentials_present === undefined ||
-                          toolStatus?.credentials_present === null
-                            ? "unknown"
-                            : toolStatus.credentials_present
-                              ? "yes"
-                              : "no"}
-                        </p>
-                        <p className="inline-note">
-                          Permissions OK:{" "}
-                          {toolStatus?.permissions_ok === undefined || toolStatus?.permissions_ok === null
-                            ? "unknown"
-                            : toolStatus.permissions_ok
-                              ? "yes"
-                              : "no"}
-                        </p>
-                        {toolStatus?.token_warning ? (
-                          <p className="inline-note">
-                            Token warning: {formatProfileTokenWarning(toolStatus)}
-                          </p>
-                        ) : null}
-                        {toolStatus?.warnings.length ? (
-                          <div className="stack-list">
-                            {toolStatus.warnings.map((warning, index) => (
-                              <p
-                                key={`${warning.code ?? warning.message ?? "warning"}-${index}`}
-                                className="inline-note"
-                              >
-                                Warning: {formatProfileWarning(warning)}
-                              </p>
-                            ))}
-                          </div>
-                        ) : null}
-                        {!toolStatus?.token_warning && !toolStatus?.warnings.length ? (
-                          <p className="inline-note">
-                            No additional token or runtime warnings are currently reported for this tool.
-                          </p>
-                        ) : null}
-                      </>
-                    ) : (
-                      <p className="inline-note">
-                        Live runtime diagnostics are only available for the active profile. Activate this
-                        profile to verify backend, live-match, token, and permission state.
-                      </p>
-                    )}
-                  </article>
-                ) : null}
-                <article className="diagnostic-card profiles-actions-card">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">Removal</p>
-                      <h3>Remove profile</h3>
-                    </div>
+                  <div className="profiles-management-block">
+                    <p className="card-kicker">Removal</p>
+                    <h4>Remove profile</h4>
                     <p className="inline-note">
                       Removing an active profile requires an extra confirmation before the saved login is deleted.
                     </p>
-                  </div>
-                  <div className="button-row">
-                    {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? (
-                      <button
-                        className="ghost-button danger-button"
-                        type="button"
-                        onClick={() => setPendingRemoval(selectedProfileEntry.name)}
-                      >
-                        Remove active…
-                      </button>
-                    ) : (
-                      <button
-                        className="ghost-button danger-button"
-                        type="button"
-                        onClick={() => setPendingRemoval(selectedProfileEntry.name)}
-                      >
-                        Remove
-                      </button>
-                    )}
+                    <div className="button-row">
+                      {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? (
+                        <button
+                          className="ghost-button danger-button"
+                          type="button"
+                          onClick={() => setPendingRemoval(selectedProfileEntry.name)}
+                        >
+                          Remove active…
+                        </button>
+                      ) : (
+                        <button
+                          className="ghost-button danger-button"
+                          type="button"
+                          onClick={() => setPendingRemoval(selectedProfileEntry.name)}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </article>
               </>
