@@ -310,54 +310,57 @@ export function DiagnosticsPanel({
                 ))}
               </div>
             </article>
-            <div className="desktop-pane-section desktop-list-surface">
+            <article className="diagnostic-card diagnostics-findings-card">
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Findings</p>
                   <h3>Checks and details</h3>
                 </div>
-                <p className="inline-note">
-                  Select a finding to inspect the failing details before you apply a recovery action.
-                </p>
+                <span className={`pill ${findings.length ? "pill-warn" : "pill-ok"}`}>
+                  {findings.length ? `${findings.length} item${findings.length === 1 ? "" : "s"}` : "Clear"}
+                </span>
               </div>
-            </div>
-            {findings.length ? (
-              <div className="stack-list desktop-list-stack">
-                {findings.map((finding) => (
-                  <button
-                    key={finding.key}
-                    type="button"
-                    aria-label={`Inspect ${finding.title}`}
-                    aria-pressed={selectedFinding?.key === finding.key}
-                    className={`list-row diagnostic-finding-row ${
-                      selectedFinding?.key === finding.key ? "diagnostic-finding-row-selected" : ""
-                    }`}
-                    onClick={() => setSelectedFindingKey(finding.key)}
-                  >
-                    <div className="diagnostic-finding-main">
-                      <div className="diagnostic-finding-title">
-                        <strong>{finding.title}</strong>
-                        <span className={`pill ${finding.status === "fail" ? "pill-warn" : "pill-soft"}`}>
-                          {finding.countLabel}
-                        </span>
+              <p className="inline-note">
+                Select a finding to inspect the failing details before you apply a recovery action.
+              </p>
+              {findings.length ? (
+                <div className="stack-list desktop-list-stack">
+                  {findings.map((finding) => (
+                    <button
+                      key={finding.key}
+                      type="button"
+                      aria-label={`Inspect ${finding.title}`}
+                      aria-pressed={selectedFinding?.key === finding.key}
+                      className={`list-row diagnostic-finding-row ${
+                        selectedFinding?.key === finding.key ? "diagnostic-finding-row-selected" : ""
+                      }`}
+                      onClick={() => setSelectedFindingKey(finding.key)}
+                    >
+                      <div className="diagnostic-finding-main">
+                        <div className="diagnostic-finding-title">
+                          <strong>{finding.title}</strong>
+                          <span className={`pill ${finding.status === "fail" ? "pill-warn" : "pill-soft"}`}>
+                            {finding.countLabel}
+                          </span>
+                        </div>
+                        <p className="inline-note">{finding.preview}</p>
                       </div>
-                      <p className="inline-note">{finding.preview}</p>
-                    </div>
-                    <div className="diagnostic-finding-meta">
-                      <span>{finding.scopeLabel}</span>
-                    </div>
-                    <span className="diagnostic-finding-chevron" aria-hidden="true">
-                      ›
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <article className="diagnostic-card diagnostic-pass">
-                <h3>Everything looks good</h3>
-                <p className="inline-note">All configured tools match their active desktop profiles.</p>
-              </article>
-            )}
+                      <div className="diagnostic-finding-meta">
+                        <span>{finding.scopeLabel}</span>
+                      </div>
+                      <span className="diagnostic-finding-chevron" aria-hidden="true">
+                        ›
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="diagnostic-card diagnostic-pass diagnostics-empty-card">
+                  <h3>Everything looks good</h3>
+                  <p className="inline-note">All configured tools match their active desktop profiles.</p>
+                </div>
+              )}
+            </article>
           </div>
         }
         secondary={
@@ -416,7 +419,7 @@ export function DiagnosticsPanel({
                 </p>
               </article>
             )}
-            <article className="diagnostic-card diagnostics-recovery-intro">
+            <article className="diagnostic-card diagnostics-recovery-panel">
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Recovery</p>
@@ -426,111 +429,113 @@ export function DiagnosticsPanel({
               <p className="inline-note">
                 Apply the safest repair path first, then refresh checks from this pane.
               </p>
-            </article>
-            {quickFixes.map((fix) => (
-              <article key={quickFixKey(fix)} className={`diagnostic-card diagnostic-${fix.status}`}>
-                <h4>{fix.title}</h4>
-                <p className="inline-note">{fix.detail}</p>
-                <div className="button-row">
-                    <button
-                      className={fix.primary ? "primary-button" : "ghost-button"}
-                      type="button"
-                      disabled={mutationLock.isBusy}
-                      onClick={fix.action}
-                  >
-                    {fix.label}
-                  </button>
-                  {fix.secondaryAction ? (
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      disabled={mutationLock.isBusy}
-                      onClick={() => void fix.secondaryAction?.action()}
-                    >
-                      {fix.secondaryAction?.label}
-                    </button>
-                  ) : null}
-                  {fix.profileTarget ? (
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      onClick={() => onOpenProfiles(fix.profileTarget!.tool, fix.profileTarget!.profile)}
-                    >
-                      Open profile
-                    </button>
-                  ) : null}
-                </div>
-                {fix.importTarget ? (
-                  supportsProfileImportMode(fix.importTarget.tool, toolCapabilities, "from_live") ? (
-                    <div className="inline-form">
-                      <input
-                        aria-label={`import ${fix.importTarget.tool} current login from diagnostics`}
-                        placeholder="new profile name"
-                        value={importDrafts[quickFixKey(fix)] ?? ""}
-                        onChange={(event) =>
-                          setImportDrafts((current) => ({
-                            ...current,
-                            [quickFixKey(fix)]: event.target.value,
-                          }))
-                        }
-                      />
-                      <button
-                        className="ghost-button"
-                        type="button"
-                        disabled={mutationLock.isBusy || !importDrafts[quickFixKey(fix)]?.trim()}
-                        onClick={() => {
-                          const profile = importDrafts[quickFixKey(fix)]?.trim();
-                          if (!profile) return;
-                          addProfileMutation.mutate(
-                            {
-                              tool: fix.importTarget!.tool,
-                              profile,
-                              label: titleCase(profile),
-                              stateMode: fix.importTarget!.stateMode,
-                              importMode: { kind: "from_live" },
-                            },
-                            {
-                              onSuccess: () =>
-                                setImportDrafts((current) => ({
-                                  ...current,
-                                  [quickFixKey(fix)]: "",
-                                })),
-                            },
-                          );
-                        }}
+              <div className="stack-list">
+                {quickFixes.map((fix) => (
+                  <article key={quickFixKey(fix)} className={`diagnostic-card diagnostic-${fix.status}`}>
+                    <h4>{fix.title}</h4>
+                    <p className="inline-note">{fix.detail}</p>
+                    <div className="button-row">
+                        <button
+                          className={fix.primary ? "primary-button" : "ghost-button"}
+                          type="button"
+                          disabled={mutationLock.isBusy}
+                          onClick={fix.action}
                       >
-                        Import current as new
+                        {fix.label}
                       </button>
+                      {fix.secondaryAction ? (
+                        <button
+                          className="ghost-button"
+                          type="button"
+                          disabled={mutationLock.isBusy}
+                          onClick={() => void fix.secondaryAction?.action()}
+                        >
+                          {fix.secondaryAction?.label}
+                        </button>
+                      ) : null}
+                      {fix.profileTarget ? (
+                        <button
+                          className="ghost-button"
+                          type="button"
+                          onClick={() => onOpenProfiles(fix.profileTarget!.tool, fix.profileTarget!.profile)}
+                        >
+                          Open profile
+                        </button>
+                      ) : null}
                     </div>
-                  ) : (
-                    <div className="stack-list">
-                      <p className="inline-note">
-                        This AI Switch release cannot import the current {toolDisplayName(fix.importTarget.tool)} login
-                        directly. Open profile setup to choose another sign-in method.
-                      </p>
-                      <button
-                        className="ghost-button"
-                        type="button"
-                        disabled={mutationLock.isBusy}
-                        onClick={() =>
-                          onOpenProfileSetup({
-                            tool: fix.importTarget?.tool,
-                            mode:
-                              fix.importFallbackMode ??
-                              preferredProfileImportMode(fix.importTarget!.tool, toolCapabilities, "from_live"),
-                          })
-                        }
-                      >
-                        Open profile setup
-                      </button>
-                    </div>
-                  )
+                    {fix.importTarget ? (
+                      supportsProfileImportMode(fix.importTarget.tool, toolCapabilities, "from_live") ? (
+                        <div className="inline-form">
+                          <input
+                            aria-label={`import ${fix.importTarget.tool} current login from diagnostics`}
+                            placeholder="new profile name"
+                            value={importDrafts[quickFixKey(fix)] ?? ""}
+                            onChange={(event) =>
+                              setImportDrafts((current) => ({
+                                ...current,
+                                [quickFixKey(fix)]: event.target.value,
+                              }))
+                            }
+                          />
+                          <button
+                            className="ghost-button"
+                            type="button"
+                            disabled={mutationLock.isBusy || !importDrafts[quickFixKey(fix)]?.trim()}
+                            onClick={() => {
+                              const profile = importDrafts[quickFixKey(fix)]?.trim();
+                              if (!profile) return;
+                              addProfileMutation.mutate(
+                                {
+                                  tool: fix.importTarget!.tool,
+                                  profile,
+                                  label: titleCase(profile),
+                                  stateMode: fix.importTarget!.stateMode,
+                                  importMode: { kind: "from_live" },
+                                },
+                                {
+                                  onSuccess: () =>
+                                    setImportDrafts((current) => ({
+                                      ...current,
+                                      [quickFixKey(fix)]: "",
+                                    })),
+                                },
+                              );
+                            }}
+                          >
+                            Import current as new
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="stack-list">
+                          <p className="inline-note">
+                            This AI Switch release cannot import the current {toolDisplayName(fix.importTarget.tool)} login
+                            directly. Open profile setup to choose another sign-in method.
+                          </p>
+                          <button
+                            className="ghost-button"
+                            type="button"
+                            disabled={mutationLock.isBusy}
+                            onClick={() =>
+                              onOpenProfileSetup({
+                                tool: fix.importTarget?.tool,
+                                mode:
+                                  fix.importFallbackMode ??
+                                  preferredProfileImportMode(fix.importTarget!.tool, toolCapabilities, "from_live"),
+                              })
+                            }
+                          >
+                            Open profile setup
+                          </button>
+                        </div>
+                      )
+                    ) : null}
+                  </article>
+                ))}
+                {!quickFixes.length ? (
+                  <p className="inline-note">No direct recovery actions are available from the current diagnostics state.</p>
                 ) : null}
-              </article>
-            ))}
-            {!quickFixes.length ? (
-              <p className="inline-note">No direct recovery actions are available from the current diagnostics state.</p>
-            ) : null}
+              </div>
+            </article>
             <article className="diagnostic-card diagnostics-repair-plan-card">
               <div className="desktop-pane-section-header diagnostics-subsection-header">
                 <div>

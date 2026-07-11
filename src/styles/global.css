@@ -2182,6 +2182,8 @@ button {
   margin-top: 2px;
 }
 
+.diagnostics-findings-card,
+.diagnostics-recovery-panel,
 .diagnostics-check-card,
 .diagnostics-inspector-section {
   display: grid;
@@ -2291,6 +2293,10 @@ button {
 .activity-layout,
 .diagnostics-layout {
   grid-template-columns: minmax(0, 1.08fr) minmax(320px, 380px);
+}
+
+.diagnostics-empty-card {
+  padding: 12px;
 }
 
 .activity-list-pane,
