@@ -222,7 +222,7 @@ export function DiagnosticsPanel({
       </article>
       {exportBundle.data ? (
         <article className="diagnostic-card diagnostic-pass diagnostics-body">
-          <h3>Diagnostic bundle exported</h3>
+          <h3>Support report ready</h3>
           <p className="inline-note">{exportBundle.data.filename}</p>
           <p className="inline-note">{exportBundle.data.path}</p>
           <div className="button-row">
@@ -231,7 +231,7 @@ export function DiagnosticsPanel({
               type="button"
               onClick={() => void copyBundlePath(exportBundle.data.path, setBundleCopyMessage)}
             >
-              Copy bundle path
+              Copy report path
             </button>
           </div>
           {bundleCopyMessage ? <p className="inline-note">{bundleCopyMessage}</p> : null}
@@ -239,11 +239,11 @@ export function DiagnosticsPanel({
       ) : null}
       {exportBundle.error ? (
         <article className="diagnostic-card diagnostic-fail diagnostics-body">
-          <h3>Diagnostic bundle export failed</h3>
+          <h3>Support report could not be exported</h3>
           <p className="inline-note">
             {exportBundle.error instanceof Error
               ? exportBundle.error.message
-              : "Diagnostic bundle export failed."}
+              : "Support report export failed."}
           </p>
         </article>
       ) : null}
@@ -413,7 +413,7 @@ export function DiagnosticsPanel({
                         )
                       }
                     >
-                      Open Profile Details
+                      Open profile
                     </button>
                   </div>
                 ) : null}
@@ -466,7 +466,7 @@ export function DiagnosticsPanel({
                       type="button"
                       onClick={() => onOpenProfiles(fix.profileTarget!.tool, fix.profileTarget!.profile)}
                     >
-                      Open Profile Details
+                      Open profile
                     </button>
                   ) : null}
                 </div>
@@ -580,7 +580,7 @@ export function DiagnosticsPanel({
                       type="button"
                       onClick={() => onOpenProfiles(failure.profileTarget!.tool, failure.profileTarget!.profile)}
                     >
-                      Open Profile Details
+                      Open profile
                     </button>
                   </div>
                 ) : null}

@@ -2250,7 +2250,7 @@ describe("App", () => {
       ).toBeInTheDocument();
     });
 
-    fireEvent.click(within(failureCard!).getByText("Open Profile Details"));
+    fireEvent.click(within(failureCard!).getByText("Open profile"));
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Technical details" })).toBeInTheDocument();
@@ -4700,7 +4700,7 @@ describe("App", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("exports a redacted diagnostic bundle from diagnostics", async () => {
+  it("exports a redacted support report from diagnostics", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
@@ -4751,11 +4751,11 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Export Report"));
 
     await waitFor(() => {
-      expect(screen.getByText("Diagnostic bundle exported")).toBeInTheDocument();
+      expect(screen.getByText("Support report ready")).toBeInTheDocument();
       expect(screen.getByText("/tmp/ai-switch/ai-switch-diagnostics-456.json")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("Copy bundle path"));
+    fireEvent.click(screen.getByText("Copy report path"));
 
     await waitFor(() => {
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
@@ -5061,7 +5061,7 @@ describe("App", () => {
     const mismatchMatches = screen.getAllByText("claude live mismatch");
     const mismatchCard = mismatchMatches[mismatchMatches.length - 1].closest("article");
     expect(mismatchCard).not.toBeNull();
-    fireEvent.click(within(mismatchCard!).getByText("Open Profile Details"));
+    fireEvent.click(within(mismatchCard!).getByText("Open profile"));
 
     await waitFor(() =>
       expect(screen.getByText("Credential backend: system_keyring")).toBeInTheDocument(),
