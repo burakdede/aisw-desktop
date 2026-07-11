@@ -6213,7 +6213,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Overview"));
     const quickSwitchDialog = await openQuickSwitchDialog();
     expect(quickSwitchDialog.queryByText("Empty Set")).not.toBeInTheDocument();
-    expect(quickSwitchDialog.getByText("Client Acme")).toBeInTheDocument();
+    expect(quickSwitchDialog.getAllByRole("button", { name: /Client Acme/ }).length).toBeGreaterThan(0);
     fireEvent.click(quickSwitchDialog.getByRole("button", { name: "Close" }));
 
     await openProjectRulesSection();
@@ -6452,7 +6452,7 @@ describe("App", () => {
 
     await renderApp();
     const quickSwitchDialog = await openQuickSwitchDialog();
-    fireEvent.click(quickSwitchDialog.getByText("Client Acme").closest("button") as HTMLButtonElement);
+    fireEvent.click(quickSwitchDialog.getAllByRole("button", { name: /Client Acme/ })[0]);
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);

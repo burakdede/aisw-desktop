@@ -178,6 +178,7 @@ export function QuickSwitchPalette({
     acc[item.group].push(item);
     return acc;
   }, {});
+  const selectedItem = filteredItems[selectedIndex] ?? null;
 
   return (
     <div className="quick-switch-overlay" role="presentation" onClick={onClose}>
@@ -201,7 +202,7 @@ export function QuickSwitchPalette({
           ref={inputRef}
           className="quick-switch-search"
           aria-label="Search Quick Switch"
-          placeholder="Search sets or profiles"
+          placeholder="Search sets, profiles, or tools"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
@@ -247,6 +248,38 @@ export function QuickSwitchPalette({
             </article>
           )}
         </div>
+        <footer className="quick-switch-footer">
+          <div className="quick-switch-selection" aria-live="polite">
+            {selectedItem ? (
+              <>
+                <p className="card-kicker">Selected</p>
+                <strong>{selectedItem.title}</strong>
+                <p>{selectedItem.subtitle}</p>
+              </>
+            ) : (
+              <>
+                <p className="card-kicker">Selected</p>
+                <strong>No matches</strong>
+                <p>Search by set name, tool, profile name, or saved label.</p>
+              </>
+            )}
+          </div>
+          <div className="quick-switch-shortcuts" aria-label="Quick Switch shortcuts">
+            <span>
+              <kbd>↑</kbd>
+              <kbd>↓</kbd>
+              Move
+            </span>
+            <span>
+              <kbd>Enter</kbd>
+              Switch
+            </span>
+            <span>
+              <kbd>Esc</kbd>
+              Close
+            </span>
+          </div>
+        </footer>
       </section>
     </div>
   );
