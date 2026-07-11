@@ -87,28 +87,13 @@ export function OverviewPanel({
   }));
   const selectedToolStatus =
     snapshot.statuses.find((status) => status.tool === selectedTool) ?? snapshot.statuses[0] ?? null;
-  const selectedToolProfileLabel =
-    selectedToolStatus?.active_profile
-      ? toolProfileDisplayLabel(
-          settings,
-          snapshot,
-          selectedToolStatus.tool,
-          selectedToolStatus.active_profile,
-        )
-      : null;
-  const selectedToolReadyState = selectedToolStatus
+  const selectedToolLabel = selectedToolStatus ? toolDisplayName(selectedToolStatus.tool) : "No tool selected";
+  const selectedToolSummary = selectedToolStatus
     ? selectedToolStatus.active_profile
       ? selectedToolStatus.active_profile_applied === false
-        ? "Needs review"
-        : "Ready to code"
-      : "Needs setup"
-      : "No tool selected";
-  const selectedToolNextStep = selectedToolStatus
-    ? !selectedToolStatus.active_profile
-      ? `Add a saved ${toolDisplayName(selectedToolStatus.tool)} profile before switching from the desktop app.`
-      : selectedToolStatus.active_profile_applied === false
-        ? `${toolDisplayName(selectedToolStatus.tool)} changed outside AI Switch. Re-apply the saved profile or import the current login as a new profile before you start coding.`
-        : `${toolDisplayName(selectedToolStatus.tool)} matches the saved desktop profile and is ready for coding work.`
+        ? `${toolDisplayName(selectedToolStatus.tool)} needs review before you start coding.`
+        : `${toolDisplayName(selectedToolStatus.tool)} is ready with the saved desktop profile.`
+      : `${toolDisplayName(selectedToolStatus.tool)} still needs a saved profile.`
     : "Select a tool to inspect its live switching state.";
 
   useEffect(() => {
@@ -125,7 +110,7 @@ export function OverviewPanel({
 
   return (
     <SectionCard
-      title="Current set and tools"
+      title="Control center"
       kicker="Overview"
       actions={
         <div className="button-row">
@@ -156,54 +141,6 @@ export function OverviewPanel({
         </div>
       }
     >
-      <article className="diagnostic-card overview-summary-card">
-        <div className="desktop-pane-section-header">
-          <div>
-            <p className="card-kicker">Readiness</p>
-            <h3>{currentSetDisplay}</h3>
-          </div>
-          <span className={`pill ${hasWorkspaceMismatch ? "pill-warn" : activeToolsCount ? "pill-ok" : "pill-soft"}`}>
-            {hasWorkspaceMismatch ? "Project needs review" : activeToolsCount ? "Ready to code" : "Needs setup"}
-          </span>
-        </div>
-        <p className="inline-note">
-          Check the active set, verify live match across tools, and resolve project drift before you start coding.
-        </p>
-        <div className="overview-summary-meta">
-          <div>
-            <span className="overview-current-set-cell-label">Live tools</span>
-            <strong>{activeToolsCount} active</strong>
-            <p className="inline-note">
-              {activeToolsCount} active profile{activeToolsCount === 1 ? "" : "s"} detected.
-            </p>
-          </div>
-          <div>
-            <span className="overview-current-set-cell-label">Current set</span>
-            <strong>{currentSetDisplay}</strong>
-            <p className="inline-note">
-              {currentSetLabel ? "Shared switching is ready." : "Switch per tool or save a set."}
-            </p>
-          </div>
-          <div>
-            <span className="overview-current-set-cell-label">Project</span>
-            <strong>{hasWorkspaceMismatch ? "Needs review" : "Ready"}</strong>
-            <p className="inline-note">
-              {hasWorkspaceMismatch ? "This project expects a different set." : "No project drift is blocking work."}
-            </p>
-          </div>
-        </div>
-        <div className="desktop-status-pill-stack">
-          {[
-            currentSetLabel ? "Shared switching ready" : "Per-tool switching",
-            hasWorkspaceMismatch ? "Project mismatch" : "Project aligned",
-            selectedToolStatus?.active_profile_applied === false ? "Live drift detected" : "Live match visible",
-          ].map((pill) => (
-            <span key={pill} className="status-pill">
-              {pill}
-            </span>
-          ))}
-        </div>
-      </article>
       <SplitView
         className="overview-layout"
         primaryClassName="overview-summary-pane"
@@ -215,16 +152,38 @@ export function OverviewPanel({
                 <div className="overview-current-set-copy">
                   <div className="overview-current-set-header">
                     <div>
-                      <p className="card-kicker">Current set</p>
+                      <p className="card-kicker">Ready to code</p>
+                      <p className="overview-current-set-cell-label">Current set</p>
                       <h3>{currentSetDisplay}</h3>
                     </div>
                     <span className={`pill ${activeToolsCount ? "pill-ok" : "pill-soft"}`}>
-                      {activeToolsCount ? `${activeToolsCount} ready` : "Needs setup"}
+                      {hasWorkspaceMismatch ? "Project needs review" : activeToolsCount ? "Ready to code" : "Needs setup"}
                     </span>
                   </div>
                   <p className="inline-note">
-                    {activeToolsCount} of {snapshot.statuses.length} tools are ready to switch.
+                    Check the active set, verify live match across tools, and resolve project drift before you start coding.
                   </p>
+                  <div className="overview-current-set-grid">
+                    <div className="overview-current-set-cell">
+                      <span className="overview-current-set-cell-label">Live tools</span>
+                      <strong>{activeToolsCount} active</strong>
+                      <p className="inline-note">
+                        {activeToolsCount} of {snapshot.statuses.length} tools are ready to switch.
+                      </p>
+                    </div>
+                    <div className="overview-current-set-cell">
+                      <span className="overview-current-set-cell-label">Selected tool</span>
+                      <strong>{selectedToolLabel}</strong>
+                      <p className="inline-note">{selectedToolSummary}</p>
+                    </div>
+                    <div className="overview-current-set-cell">
+                      <span className="overview-current-set-cell-label">Project</span>
+                      <strong>{hasWorkspaceMismatch ? "Needs review" : "Ready"}</strong>
+                      <p className="inline-note">
+                        {hasWorkspaceMismatch ? "This project expects a different set." : "No project drift is blocking work."}
+                      </p>
+                    </div>
+                  </div>
                   <div className="overview-current-set-inline">
                     <p className="inline-note">
                       Current set: <strong>{currentSetLabel ?? "No active set"}</strong>
@@ -239,6 +198,17 @@ export function OverviewPanel({
                         <span className="overview-current-set-cell-label">{toolDisplayName(entry.tool)}</span>
                         <strong>{entry.label ?? "Not configured"}</strong>
                       </div>
+                    ))}
+                  </div>
+                  <div className="desktop-status-pill-stack">
+                    {[
+                      currentSetLabel ? "Shared switching ready" : "Per-tool switching",
+                      hasWorkspaceMismatch ? "Project mismatch" : "Project aligned",
+                      selectedToolStatus?.active_profile_applied === false ? "Live drift detected" : "Live match visible",
+                    ].map((pill) => (
+                      <span key={pill} className="status-pill">
+                        {pill}
+                      </span>
                     ))}
                   </div>
                 </div>
@@ -256,79 +226,6 @@ export function OverviewPanel({
                       Open Set Library
                     </button>
                   </div>
-                </div>
-              </article>
-            ) : null}
-            {selectedToolStatus ? (
-              <article className={`diagnostic-card overview-focus-card overview-focus-card-${resolveCardState(selectedToolStatus)}`}>
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Selected tool</p>
-                    <h3>{toolDisplayName(selectedToolStatus.tool)}</h3>
-                  </div>
-                  <span className={`pill ${pillClassForStatus(selectedToolStatus)}`}>
-                    {statusPillLabel(selectedToolStatus)}
-                  </span>
-                </div>
-                <p className="inline-note">{selectedToolNextStep}</p>
-                <div className="overview-focus-grid">
-                  <div>
-                    <span className="overview-current-set-cell-label">Readiness</span>
-                    <strong>{selectedToolReadyState}</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Active profile</span>
-                    <strong>{selectedToolProfileLabel ?? "Not configured"}</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Live match</span>
-                    <strong>
-                      {selectedToolStatus.active_profile_applied === false
-                        ? "Drifted"
-                        : selectedToolStatus.active_profile_applied
-                          ? "Ready"
-                          : "Unknown"}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Backend</span>
-                    <strong>{credentialBackendLabel(selectedToolStatus.credential_backend)}</strong>
-                  </div>
-                </div>
-                <div className="button-row">
-                  {selectedToolStatus.active_profile ? (
-                    <button
-                      className="primary-button"
-                      type="button"
-                      disabled={mutationLock.isBusy}
-                      onClick={() =>
-                        onOpenProfiles(selectedToolStatus.tool, selectedToolStatus.active_profile ?? null)
-                      }
-                    >
-                      Open profile
-                    </button>
-                  ) : (
-                    <button
-                      className="primary-button"
-                      type="button"
-                      disabled={mutationLock.isBusy}
-                      onClick={() => onOpenProfiles(selectedToolStatus.tool)}
-                    >
-                      Add profile
-                    </button>
-                  )}
-                  <button
-                    className="ghost-button"
-                    type="button"
-                    disabled={mutationLock.isBusy}
-                    onClick={() =>
-                      selectedToolStatus.active_profile
-                        ? onOpenProfiles(selectedToolStatus.tool, selectedToolStatus.active_profile)
-                        : onOpenQuickSwitch()
-                    }
-                  >
-                    {selectedToolStatus.active_profile ? "Details" : "Quick Switch"}
-                  </button>
                 </div>
               </article>
             ) : null}
@@ -540,7 +437,7 @@ export function OverviewPanel({
                   <article className="diagnostic-card">
                     <h3>No tools detected</h3>
                     <p className="inline-note">
-                      Add or detect a supported CLI before switching can begin.
+                      Add or detect a supported tool before switching can begin.
                     </p>
                   </article>
                 )
