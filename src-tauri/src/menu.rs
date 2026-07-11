@@ -58,11 +58,11 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let quick_switch =
         MenuItem::with_id(app, QUICK_SWITCH_ID, "Quick Switch…", true, Some("CmdOrCtrl+K"))?;
     let switch_set =
-        MenuItem::with_id(app, SWITCH_SET_ID, "Switch Set…", true, None::<&str>)?;
+        MenuItem::with_id(app, SWITCH_SET_ID, "Open Set Library…", true, None::<&str>)?;
     let verify = MenuItem::with_id(
         app,
         VERIFY_ID,
-        "Verify Current State",
+        "Run Verification",
         true,
         Some("CmdOrCtrl+Shift+V"),
     )?;
@@ -94,7 +94,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let help_docs = MenuItem::with_id(
         app,
         "menu.help.docs",
-        "AI Switch Documentation",
+        "Quick Start",
         true,
         None::<&str>,
     )?;
@@ -108,7 +108,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let help_issues = MenuItem::with_id(
         app,
         "menu.help.issues",
-        "Open GitHub Issues",
+        "Export Diagnostic Report…",
         true,
         None::<&str>,
     )?;

@@ -474,7 +474,7 @@ fn tray_runtime_notice(runtime_compatible: bool) -> Option<&'static str> {
     if runtime_compatible {
         None
     } else {
-        Some("Switching is blocked. Fix the engine in Settings.")
+        Some("Switching is unavailable. Choose a working runtime in Settings.")
     }
 }
 
@@ -641,7 +641,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
     let shared_profiles = shared_profile_entries(settings, snapshot);
     if !shared_profiles.is_empty() {
         sections.push(TraySection {
-            title: "Switch Shared Profile".to_owned(),
+            title: "Shared Profiles".to_owned(),
             items: shared_profiles
                 .into_iter()
                 .map(|(profile, label)| TrayEntry {
@@ -673,7 +673,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
         .unwrap_or_default();
     if !profile_sets.is_empty() {
         sections.push(TraySection {
-            title: "Switch Set".to_owned(),
+            title: "Saved Sets".to_owned(),
             items: profile_sets,
         });
     }
@@ -686,7 +686,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
             continue;
         }
         sections.push(TraySection {
-            title: format!("Switch {}", tool_display_name(tool)),
+            title: tool_display_name(tool),
             items: entry
                 .profiles
                 .iter()
@@ -752,7 +752,7 @@ fn tray_diagnostics_section(snapshot: &AppSnapshot) -> TraySection {
     let summaries = tray_warning_summaries(snapshot);
     let mut items = vec![TrayEntry {
         id: DIAGNOSTICS_ID.to_owned(),
-        label: "Verify Now".to_owned(),
+        label: "Run Verification".to_owned(),
         enabled: true,
     }];
 
@@ -1059,7 +1059,7 @@ mod tests {
         assert_eq!(tray_status_label(false, None), "Switching blocked");
         assert_eq!(
             tray_runtime_notice(false),
-            Some("Switching is blocked. Fix the engine in Settings.")
+            Some("Switching is unavailable. Choose a working runtime in Settings.")
         );
         assert_eq!(tray_runtime_notice(true), None);
     }
@@ -1237,7 +1237,7 @@ mod tests {
             ),
             vec![
                 TraySection {
-                    title: "Switch Shared Profile".to_owned(),
+                    title: "Shared Profiles".to_owned(),
                     items: vec![TrayEntry {
                         id: "switch-all:work".to_owned(),
                         label: "Work".to_owned(),
@@ -1253,7 +1253,7 @@ mod tests {
                     }],
                 },
                 TraySection {
-                    title: "Switch Set".to_owned(),
+                    title: "Saved Sets".to_owned(),
                     items: vec![TrayEntry {
                         id: "profile-set:personal-focus".to_owned(),
                         label: "personal-focus".to_owned(),
@@ -1261,7 +1261,7 @@ mod tests {
                     }],
                 },
                 TraySection {
-                    title: "Switch Claude Code".to_owned(),
+                    title: "Claude Code".to_owned(),
                     items: vec![
                         TrayEntry {
                             id: "profile:claude:work".to_owned(),
@@ -1276,7 +1276,7 @@ mod tests {
                     ],
                 },
                 TraySection {
-                    title: "Switch Codex CLI".to_owned(),
+                    title: "Codex CLI".to_owned(),
                     items: vec![TrayEntry {
                         id: "profile:codex:work".to_owned(),
                         label: "Work ✓".to_owned(),
@@ -1288,7 +1288,7 @@ mod tests {
                     items: vec![
                         TrayEntry {
                             id: "diagnostics".to_owned(),
-                            label: "Verify Now".to_owned(),
+                            label: "Run Verification".to_owned(),
                             enabled: true,
                         },
                         TrayEntry {
@@ -1438,7 +1438,7 @@ mod tests {
             tray_sections(Some(&settings), &snapshot),
             vec![
                 TraySection {
-                    title: "Switch Shared Profile".to_owned(),
+                    title: "Shared Profiles".to_owned(),
                     items: vec![TrayEntry {
                         id: "switch-all:work".to_owned(),
                         label: "Office".to_owned(),
@@ -1446,7 +1446,7 @@ mod tests {
                     }],
                 },
                 TraySection {
-                    title: "Switch Claude Code".to_owned(),
+                    title: "Claude Code".to_owned(),
                     items: vec![TrayEntry {
                         id: "profile:claude:work".to_owned(),
                         label: "Office ✓".to_owned(),
@@ -1454,7 +1454,7 @@ mod tests {
                     }],
                 },
                 TraySection {
-                    title: "Switch Codex CLI".to_owned(),
+                    title: "Codex CLI".to_owned(),
                     items: vec![TrayEntry {
                         id: "profile:codex:work".to_owned(),
                         label: "Work ✓".to_owned(),
@@ -1466,7 +1466,7 @@ mod tests {
                     items: vec![
                         TrayEntry {
                             id: "diagnostics".to_owned(),
-                            label: "Verify Now".to_owned(),
+                            label: "Run Verification".to_owned(),
                             enabled: true,
                         },
                         TrayEntry {
@@ -1608,7 +1608,7 @@ mod tests {
         );
         assert_eq!(
             model.runtime_notice.as_deref(),
-            Some("Switching is blocked. Fix the engine in Settings.")
+            Some("Switching is unavailable. Choose a working runtime in Settings.")
         );
         assert_eq!(
             model.sections,
@@ -1617,7 +1617,7 @@ mod tests {
                 items: vec![
                     TrayEntry {
                         id: "diagnostics".to_owned(),
-                        label: "Verify Now".to_owned(),
+                        label: "Run Verification".to_owned(),
                         enabled: true,
                     },
                     TrayEntry {
