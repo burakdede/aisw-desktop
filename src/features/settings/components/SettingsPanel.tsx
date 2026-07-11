@@ -209,7 +209,7 @@ export function SettingsPanel({
             <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Categories</p>
-                <h3>Preferences</h3>
+                <h3>Settings</h3>
               </div>
             </div>
             <div className="desktop-source-list" aria-label="Settings sections">
@@ -378,7 +378,7 @@ export function SettingsPanel({
                 </p>
                 <div className="button-row">
                   <button className="primary-button" type="button" onClick={saveGeneralPreferences}>
-                    Save general preferences
+                    Save General Settings
                   </button>
                 </div>
                 {generalMessage ? <p className="inline-note">{generalMessage}</p> : null}
@@ -545,7 +545,7 @@ export function SettingsPanel({
                 type="submit"
                 disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
               >
-                {updateSettingsMutation.isPending ? "Saving…" : "Save settings"}
+                {updateSettingsMutation.isPending ? "Saving…" : "Save Runtime Settings"}
               </button>
             </form>
             <div className="stack-list diagnostics-body">
@@ -649,7 +649,7 @@ export function SettingsPanel({
                   type="submit"
                   disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
                 >
-                  {updateSettingsMutation.isPending ? "Saving…" : "Save settings"}
+                  {updateSettingsMutation.isPending ? "Saving…" : "Save Update Settings"}
                 </button>
               </form>
               {updateSettingsMutation.error ? (
@@ -681,7 +681,7 @@ export function SettingsPanel({
                     }
                     onClick={() => checkForUpdatesMutation.mutate()}
                   >
-                    {checkForUpdatesMutation.isPending ? "Checking…" : "Check for updates"}
+                    {checkForUpdatesMutation.isPending ? "Checking…" : "Check for Updates"}
                   </button>
                   <button
                     type="button"
@@ -693,7 +693,7 @@ export function SettingsPanel({
                     }
                     onClick={() => installUpdateMutation.mutate()}
                   >
-                    {installUpdateMutation.isPending ? "Installing…" : "Install update"}
+                    {installUpdateMutation.isPending ? "Installing…" : "Install Update"}
                   </button>
                 </div>
                 {hasPendingSettingsChanges ? (
@@ -1028,7 +1028,7 @@ export function SettingsPanel({
                 </div>
                 <div className="button-row">
                   <button className="ghost-button" type="button" onClick={() => void exportReport()}>
-                    Export redacted diagnostic report
+                    Export Redacted Diagnostic Report
                   </button>
                 </div>
                 {securityMessage ? <p className="inline-note">{securityMessage}</p> : null}
@@ -1112,7 +1112,7 @@ export function SettingsPanel({
                 type="submit"
                 disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
               >
-                {updateSettingsMutation.isPending ? "Saving…" : "Save settings"}
+                {updateSettingsMutation.isPending ? "Saving…" : "Save Advanced Settings"}
               </button>
             </form>
             <div className="stack-list">
@@ -1301,60 +1301,60 @@ function sectionLabel(section: SettingsSection) {
 function sectionKicker(section: SettingsSection) {
   switch (section) {
     case "general":
-      return "Appearance, launch, and desktop behavior";
+      return "Appearance, launch, and startup";
     case "runtime":
-      return "Included runtime and advanced overrides";
+      return "Included runtime and overrides";
     case "updates":
-      return "Signed desktop releases";
+      return "App updates";
     case "shell":
-      return "Shell setup and current-session switching";
+      return "Terminal setup and current-session switching";
     case "keyring":
-      return "Local credential storage and recovery";
+      return "Local credential storage";
     case "advanced":
-      return "Low-level paths, storage, and release details";
+      return "Advanced paths and storage";
   }
 }
 
 function sectionHeading(section: SettingsSection) {
   switch (section) {
     case "general":
-      return "Keep the desktop app consistent with the operating system";
+      return "Keep AI Switch aligned with macOS";
     case "runtime":
-      return "Keep one runtime model across the desktop app";
+      return "Choose which AI Switch runtime this app should use";
     case "updates":
-      return "Manage signed desktop releases from one place";
+      return "Manage signed desktop releases in one place";
     case "shell":
-      return "Use the same terminal integration flow everywhere";
+      return "Set up terminal integration only when you need it";
     case "keyring":
       return "Keep credentials local with native OS storage";
     case "advanced":
-      return "Move low-level runtime details out of the main preference flow";
+      return "Keep low-level overrides out of the main settings flow";
   }
 }
 
 function sectionDescription(section: SettingsSection) {
   switch (section) {
     case "general":
-      return "General preferences should feel like a Mac utility: clear defaults, system-driven appearance, and startup behavior that does not require reading implementation details.";
+      return "General settings should stay short, obvious, and system-driven so the app feels like a native Mac utility.";
     case "runtime":
-      return "The desktop app is designed around the bundled runtime. Advanced overrides stay available, but the default path is the supported cross-platform experience.";
+      return "The included runtime is the supported default. System and custom overrides stay available for advanced cases.";
     case "updates":
-      return "Choose the release track for this machine, save it once, then check and install signed desktop updates without leaving the app.";
+      return "Choose the release track for this Mac, then check and install signed desktop updates without leaving the app.";
     case "shell":
-      return "Terminal integration follows the same copy-and-verify pattern across supported shells so the experience stays predictable for non-terminal users.";
+      return "Terminal integration follows one guided copy-and-verify flow across supported shells so it stays approachable for non-terminal users.";
     case "keyring":
-      return "Security guidance, storage behavior, and recovery steps should feel consistent regardless of the operating system underneath.";
+      return "Security guidance, storage behavior, and recovery steps should stay clear without exposing unnecessary implementation detail.";
     case "advanced":
-      return "Advanced details stay available for debugging and override workflows, but they should not dominate the default desktop settings experience.";
+      return "Advanced details stay available for debugging and overrides, but they should not dominate the default desktop settings experience.";
   }
 }
 
 function sectionPills(section: SettingsSection) {
   switch (section) {
     case "general":
-      return ["System-driven", "Desktop-first", "Local control"];
+      return ["System-driven", "Native defaults", "Local control"];
     case "runtime":
-      return ["Bundled default", "Cross-platform", "Advanced override"];
+      return ["Included default", "Cross-platform", "Advanced override"];
     case "updates":
       return ["Signed releases", "Stable or beta", "In-app install"];
     case "shell":
@@ -1369,7 +1369,7 @@ function sectionPills(section: SettingsSection) {
 function sourceListSummary(section: SettingsSection) {
   switch (section) {
     case "general":
-      return "Appearance and startup behavior";
+      return "Appearance and startup";
     case "runtime":
       return "Included runtime and overrides";
     case "updates":
@@ -1379,6 +1379,6 @@ function sourceListSummary(section: SettingsSection) {
     case "keyring":
       return "Credential storage and recovery";
     case "advanced":
-      return "Raw paths and app data folder";
+      return "Paths and app data folder";
   }
 }

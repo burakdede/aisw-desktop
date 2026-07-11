@@ -514,7 +514,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Use Included Runtime" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Runtime Settings" })).toBeInTheDocument();
-    expect(screen.queryByText("Included runtime and advanced overrides")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Runtime" })).not.toBeInTheDocument();
     expect(screen.queryByText("Runtime summary")).not.toBeInTheDocument();
     expect(screen.queryByText("Welcome to AI Switch")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Overview" })).not.toBeInTheDocument();
@@ -547,7 +547,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Runtime Settings" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Included runtime and advanced overrides")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Runtime" })).toHaveAttribute("aria-pressed", "true");
       expect(screen.getByText("Runtime summary")).toBeInTheDocument();
     });
   });
@@ -1082,7 +1082,7 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Included runtime and advanced overrides")).toBeInTheDocument();
+      expect(screen.getByText("Runtime summary")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Runtime" })).toHaveAttribute("aria-pressed", "true");
     });
     expect(screen.getByRole("button", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "false");
@@ -5732,7 +5732,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Updates" })).toHaveAttribute("aria-pressed", "true");
-      expect(screen.getByRole("button", { name: "Check for updates" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Check for Updates" })).toBeInTheDocument();
     });
   });
 
@@ -7242,16 +7242,16 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Settings"));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     fireEvent.click(screen.getByRole("button", { name: "Updates" }));
-    fireEvent.click(screen.getByText("Check for updates"));
+    fireEvent.click(screen.getByText("Check for Updates"));
 
     await waitFor(() => {
       expect(screen.getByText("Update available: 0.2.0")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("Install update"));
+    fireEvent.click(screen.getByText("Install Update"));
 
     await waitFor(() => {
       expect(screen.getByText("Update installed. Restart has been requested.")).toBeInTheDocument();
@@ -7285,10 +7285,10 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Settings"));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     fireEvent.click(screen.getByRole("button", { name: "Updates" }));
-    fireEvent.click(screen.getByText("Check for updates"));
+    fireEvent.click(screen.getByText("Check for Updates"));
 
     await waitFor(() => {
       expect(screen.getByText("Update check failed")).toBeInTheDocument();
@@ -7341,16 +7341,16 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Settings"));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     fireEvent.click(screen.getByRole("button", { name: "Updates" }));
-    fireEvent.click(screen.getByText("Check for updates"));
+    fireEvent.click(screen.getByText("Check for Updates"));
 
     await waitFor(() => {
       expect(screen.getByText("Update available: 0.2.0")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("Install update"));
+    fireEvent.click(screen.getByText("Install Update"));
 
     await waitFor(() => {
       expect(screen.getByText("Update install failed")).toBeInTheDocument();
@@ -7365,8 +7365,8 @@ describe("App", () => {
 
   it("shows desktop-first terminal guidance in settings", async () => {
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Settings"));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     fireEvent.click(screen.getByRole("button", { name: "Terminal Integration" }));
 
     await waitFor(() => {
@@ -7557,7 +7557,7 @@ describe("App", () => {
     };
 
     await renderSettingsPanel(bootstrap.settings, "keyring");
-    fireEvent.click(screen.getByRole("button", { name: "Export redacted diagnostic report" }));
+    fireEvent.click(screen.getByRole("button", { name: "Export Redacted Diagnostic Report" }));
 
     await waitFor(() => {
       expect(calls).toContain("export_diagnostic_bundle");
@@ -7571,8 +7571,8 @@ describe("App", () => {
 
   it("saves general desktop preferences from settings", async () => {
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Settings"));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
 
     expect(screen.getByLabelText("Launch at login")).toBeDisabled();
     expect(screen.getByLabelText("Show menu bar icon")).toBeDisabled();
@@ -7589,7 +7589,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Default section"), {
       target: { value: "profiles" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save general preferences" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save General Settings" }));
 
     await waitFor(() => {
       expect(window.localStorage.getItem("ai-switch.desktop.appearance")).toBe("dark");
@@ -7608,8 +7608,8 @@ describe("App", () => {
 
   it("shows runtime detection details in settings", async () => {
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Settings"));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     fireEvent.click(screen.getByRole("button", { name: "Runtime" }));
 
     await waitFor(() => {
@@ -7686,7 +7686,7 @@ describe("App", () => {
 
     const rendered = await renderSettingsPanel(firstSettings);
     await waitFor(() => {
-      expect(screen.getByText("Settings")).toBeInTheDocument();
+      expect(screen.getByLabelText("Settings sections")).toBeInTheDocument();
     });
 
     expect(screen.getByText("Show advanced runtime options")).toBeInTheDocument();
@@ -7770,7 +7770,7 @@ describe("App", () => {
     };
 
     const rendered = await renderSettingsPanel(currentSettings);
-    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByLabelText("Settings sections")).toBeInTheDocument());
 
     expect(screen.getByDisplayValue("/opt/aisw/bin/aisw")).toBeEnabled();
 
@@ -7781,7 +7781,7 @@ describe("App", () => {
     const runtimePathInput = screen.getByDisplayValue("/opt/aisw/bin/aisw");
     expect(runtimePathInput).toBeDisabled();
 
-    fireEvent.click(screen.getByText("Save settings"));
+    fireEvent.click(screen.getByText("Save Runtime Settings"));
 
     await waitFor(() => {
       expect(updateRequests).toEqual([
@@ -7855,7 +7855,7 @@ describe("App", () => {
     };
 
     const rendered = await renderSettingsPanel(currentSettings);
-    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByLabelText("Settings sections")).toBeInTheDocument());
 
     expect(screen.getByDisplayValue("/opt/aisw/bin/aisw")).toBeEnabled();
 
@@ -7866,7 +7866,7 @@ describe("App", () => {
     const runtimePathInput = screen.getByDisplayValue("/opt/aisw/bin/aisw");
     expect(runtimePathInput).toBeDisabled();
 
-    fireEvent.click(screen.getByText("Save settings"));
+    fireEvent.click(screen.getByText("Save Runtime Settings"));
 
     await waitFor(() => {
       expect(updateRequests).toEqual([
@@ -7938,8 +7938,8 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Settings"));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     fireEvent.click(screen.getByRole("button", { name: "Updates" }));
     fireEvent.change(screen.getByDisplayValue("Stable"), {
       target: { value: "beta" },
@@ -7953,9 +7953,9 @@ describe("App", () => {
         "Save settings before checking for updates so the runtime and channel selection match the persisted desktop configuration.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Check for updates")).toBeDisabled();
+    expect(screen.getByText("Check for Updates")).toBeDisabled();
 
-    fireEvent.click(screen.getByText("Save settings"));
+    fireEvent.click(screen.getByText("Save Update Settings"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
@@ -7966,10 +7966,10 @@ describe("App", () => {
           "Save settings before checking for updates so the runtime and channel selection match the persisted desktop configuration.",
         ),
       ).not.toBeInTheDocument();
-      expect(screen.getByText("Check for updates")).not.toBeDisabled();
+      expect(screen.getByText("Check for Updates")).not.toBeDisabled();
     });
 
-    fireEvent.click(screen.getByText("Check for updates"));
+    fireEvent.click(screen.getByText("Check for Updates"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "check_for_updates")).toBe(true);
@@ -8024,8 +8024,8 @@ describe("App", () => {
     };
 
     const rendered = await renderSettingsPanel(currentSettings, "updates");
-    await waitFor(() => expect(screen.getByText("Settings")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Check for updates"));
+    await waitFor(() => expect(screen.getByLabelText("Settings sections")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Check for Updates"));
 
     await waitFor(() => {
       expect(screen.getByText("Update available: 0.2.0")).toBeInTheDocument();
@@ -8058,7 +8058,7 @@ describe("App", () => {
       await Promise.resolve();
     });
 
-    fireEvent.click(screen.getByText("Check for updates"));
+    fireEvent.click(screen.getByText("Check for Updates"));
 
     await waitFor(() => {
       expect(screen.getByText("Update available: 0.3.0-beta.1")).toBeInTheDocument();
