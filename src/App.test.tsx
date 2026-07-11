@@ -5282,7 +5282,7 @@ describe("App", () => {
     });
     expect(initCalls).toBe(0);
 
-    fireEvent.click(screen.getByRole("button", { name: "Scan This Mac" }));
+    fireEvent.click(screen.getByRole("button", { name: "Get Started" }));
 
     await waitFor(() => {
       expect(screen.getByText("detected · oauth")).toBeInTheDocument();
@@ -7521,7 +7521,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls).toContain("run_doctor");
       expect(calls).toContain("get_shell_guidance");
-      expect(screen.getByText("Scan This Mac")).toBeInTheDocument();
+      expect(screen.getByText("Refresh Setup")).toBeInTheDocument();
     });
   });
 

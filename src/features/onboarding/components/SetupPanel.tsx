@@ -142,6 +142,11 @@ export function SetupPanel({
   });
   const pendingProfileName = pendingLiveImport ? profileNames[pendingLiveImport.tool] ?? "" : "";
   const pendingProfileLabel = pendingLiveImport ? profileLabels[pendingLiveImport.tool] ?? "" : "";
+  const setupPrimaryActionLabel = initMutation.isPending
+    ? "Checking This Mac…"
+    : initReport
+      ? "Refresh Setup"
+      : "Get Started";
 
   useEffect(() => {
     if (!pendingLiveImport) {
@@ -233,7 +238,7 @@ export function SetupPanel({
           disabled={mutationLock.isBusy}
           onClick={() => initMutation.mutate()}
         >
-          {initMutation.isPending ? "Scanning this Mac…" : "Scan This Mac"}
+          {setupPrimaryActionLabel}
         </button>
       }
     >
@@ -241,21 +246,21 @@ export function SetupPanel({
         ariaLabel="Onboarding highlights"
         items={[
           {
-            label: "AI Switch",
+            label: "Welcome",
             value: "Safe local account switching",
-            note: "Bring in existing Claude Code, Codex CLI, and Gemini CLI accounts, confirm the bundled AI Switch runtime is ready, and verify one safe switch without leaving this Mac.",
+            note: "Bring in the accounts you already use, confirm the included runtime is ready, and verify one shared switch without leaving this Mac.",
           },
           {
             label: "Progress",
             value: needsAttentionCount ? `${needsAttentionCount} setup action${needsAttentionCount === 1 ? "" : "s"}` : "Ready to switch",
             note: switchReady
               ? "At least one reusable profile is ready for a first switch."
-              : "Import one account first, then verify the first shared switch.",
+              : "Save one profile first, then verify the first shared switch.",
           },
           {
             label: "Trust",
             value: "Local only",
-            pills: ["Credentials stay local", "AI Switch runtime", "No telemetry", "No traffic proxy"],
+            pills: ["Credentials stay local", "Included runtime", "No telemetry", "No traffic proxy"],
           },
         ]}
       />
@@ -267,23 +272,23 @@ export function SetupPanel({
         primary={
           <div className="stack-list desktop-pane-column">
             <article className="diagnostic-card onboarding-trust-card">
-              <h3>Private on this Mac</h3>
+              <h3>Private and local</h3>
               <p className="inline-note">
-                AI Switch stays focused on one job: make active coding-agent accounts obvious,
-                switching fast, and recovery safe.
+                AI Switch is a local control center for coding-agent accounts. It keeps the
+                active account clear, switching fast, and recovery safe.
               </p>
               <div className="trust-list">
                 <p className="trust-list-item">Credentials stay on this Mac</p>
                 <p className="trust-list-item">No telemetry</p>
                 <p className="trust-list-item">No prompt or API traffic proxy</p>
-                <p className="trust-list-item">Bundled AI Switch runtime</p>
+                <p className="trust-list-item">Included runtime</p>
               </div>
             </article>
             <article className="diagnostic-card onboarding-step-card">
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Setup</p>
-                  <h3>Checklist</h3>
+                  <h3>First launch</h3>
                 </div>
                 <span className={`pill ${needsAttentionCount ? "pill-soft" : "pill-ok"}`}>
                   {needsAttentionCount ? `${needsAttentionCount} action${needsAttentionCount === 1 ? "" : "s"}` : "Ready"}
@@ -299,16 +304,16 @@ export function SetupPanel({
               <div className="stack-list onboarding-status-stack">
                 <div>
                   <p className={`diagnostic-status diagnostic-status-${bootstrap.runtime_status.compatible ? "pass" : "warn"}`}>
-                    AI Switch runtime
+                    Runtime
                   </p>
                   <p className="inline-note">
                     {bootstrap.runtime_status.compatible
-                      ? "The bundled AI Switch runtime is ready for desktop switching."
+                      ? "The included runtime is ready for desktop switching."
                       : "Runtime setup needs attention before switching."}
                   </p>
                 </div>
                 <div>
-                  <p className="diagnostic-status diagnostic-status-warn">Accounts</p>
+                  <p className="diagnostic-status diagnostic-status-warn">Profiles</p>
                   <p className="inline-note">
                     {needsAttentionCount
                       ? `${needsAttentionCount} import, install, or setup action${needsAttentionCount === 1 ? "" : "s"} remain.`
@@ -357,10 +362,10 @@ export function SetupPanel({
             {activeStep === "runtime" ? (
               <>
                 <article className="diagnostic-card desktop-pane-intro">
-                  <h3>Before you switch anything</h3>
+                  <h3>Confirm this Mac is ready</h3>
                   <p className="inline-note">
-                    AI Switch uses the bundled runtime by default. Confirm that local data
-                    storage and secure storage are ready, then import your first account.
+                    AI Switch uses the included runtime by default. Confirm that local storage
+                    and secure storage are ready, then save your first profile.
                   </p>
                 </article>
                 <article className="diagnostic-card">
@@ -416,12 +421,12 @@ export function SetupPanel({
                   <div className="desktop-pane-section-header">
                     <div>
                       <p className="card-kicker">Next</p>
-                      <h3>What happens after setup</h3>
+                      <h3>After setup</h3>
                     </div>
                   </div>
                   <div className="stack-list">
                     <div>
-                      <p className="diagnostic-status diagnostic-status-pass">1. Save your first account</p>
+                      <p className="diagnostic-status diagnostic-status-pass">1. Save your first profile</p>
                       <p className="inline-note">
                         Import the login already open in a supported tool, or add a new profile from
                         the Profiles section.
@@ -461,7 +466,7 @@ export function SetupPanel({
             {activeStep === "accounts" ? (
               <>
                 <article className="diagnostic-card desktop-pane-intro">
-                  <h3>Bring in the accounts you already use</h3>
+                  <h3>Save the accounts you already use</h3>
                   <p className="inline-note">
                     Save current logins as reusable profiles, add missing profiles where needed, and
                     ignore tools you do not use yet.
@@ -469,10 +474,10 @@ export function SetupPanel({
                 </article>
 
                 <div className="desktop-pane-section onboarding-detection-stack">
-                <div className="desktop-pane-section-header">
+            <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Detection</p>
-                <h3>Detected tools and accounts</h3>
+                <h3>Detected tools</h3>
               </div>
               <p className="inline-note">
                 Saved accounts become reusable profiles that you can switch again later.
@@ -502,8 +507,8 @@ export function SetupPanel({
                 <div className="stack-list">
                   {supportsProfileImportMode(account.tool, toolCapabilities, "from_live") ? (
                     <p className="inline-note">
-                      Save the current {titleCase(account.tool)} login as a reusable AI Switch
-                      profile in a focused setup sheet.
+                      Save the current {titleCase(account.tool)} login as a reusable profile in a
+                      focused setup sheet.
                     </p>
                   ) : null}
                 </div>
@@ -707,8 +712,7 @@ export function SetupPanel({
             </div>
             <p className="inline-note">
               Save the account that {titleCase(pendingLiveImport.tool)} is already using as a
-              reusable AI Switch profile. This imported profile becomes the active saved login for
-              this tool.
+              reusable profile. This imported profile becomes the active saved login for this tool.
             </p>
             <form className="stacked-form" onSubmit={(event) => submitImport(event, pendingLiveImport.tool)}>
               <label>
