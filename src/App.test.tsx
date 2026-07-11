@@ -5699,6 +5699,24 @@ describe("App", () => {
     });
   });
 
+  it("opens sets when the app menu requests switch set", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["menu-open-sets"]?.({});
+    });
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("button", { name: "Sets" })[0]).toHaveClass("nav-button-active");
+      expect(screen.getByLabelText("Sets sections")).toBeInTheDocument();
+    });
+  });
+
   it("opens quick switch when the app menu requests it", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
@@ -5714,6 +5732,62 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByRole("dialog", { name: "Quick Switch" })).toBeInTheDocument();
       expect(screen.getByLabelText("Search Quick Switch")).toBeInTheDocument();
+    });
+  });
+
+  it("re-applies the active shared profile when the app menu requests it", async () => {
+    const calls: Array<{ command: string; args?: unknown }> = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "use_all_profiles") {
+        return { command, snapshot: bootstrap.snapshot };
+      }
+      return (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_doctor: { summary: { status: "pass" } },
+          run_init: { result: { live_accounts: [] } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          export_diagnostic_bundle: {
+            path: "/tmp/ai-switch/diagnostics-123.json",
+            filename: "diagnostics-123.json",
+            generated_at: "unix:123",
+          },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+          get_shell_guidance: {
+            detected_shell: "zsh",
+            capabilities: [],
+            note: "Shell hook guidance remains informational.",
+            manual_apply_examples: [],
+            variants: [],
+          },
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["menu-reapply-active-profile"]?.({});
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
+      expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
+        title: "Re-apply active profile",
+        body: "Re-applied shared profile Work.",
+      });
     });
   });
 

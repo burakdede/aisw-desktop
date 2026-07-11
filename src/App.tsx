@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppFrame } from "./components/AppFrame";
 import { QuickSwitchPalette } from "./components/QuickSwitchPalette";
@@ -6,6 +6,7 @@ import { SectionCard } from "./components/SectionCard";
 import {
   clearLastCommandResults,
   recordCommandResult,
+  type CommandResultScope,
   useLastCommandResults,
 } from "./features/shared/lastCommandResult";
 import { normalizeRuntimeLanguage } from "./features/shared/runtime-language";
@@ -27,9 +28,22 @@ import {
 import { useDesktop } from "./features/shared/useDesktop";
 import { notifyDesktop } from "./lib/notifications";
 import { activeSetLabel } from "./lib/profile-display";
+import {
+  profileDisplayLabel,
+  profileSetDisplayLabel,
+  profileSetIsActive,
+  sharedProfileEntries,
+  toolProfileDisplayLabel,
+} from "./lib/profile-display";
 import { DesktopCommandError } from "./lib/tauri";
 import { listenDesktopEvent, type TrayCommandResultEvent } from "./lib/tauri";
-import { exportDiagnosticBundle, updateSettings } from "./lib/client";
+import {
+  activateProfileSet,
+  exportDiagnosticBundle,
+  updateSettings,
+  useAllProfiles,
+  useProfile,
+} from "./lib/client";
 import type { ProfileImportMode } from "./features/shared/profile-capabilities";
 import {
   applyAppearancePreference,
@@ -37,7 +51,9 @@ import {
   saveDesktopPreferences,
   type DesktopPreferences,
 } from "./lib/desktop-preferences";
-import type { AppBootstrap } from "./lib/schemas";
+import type { AppBootstrap, AppSnapshot, DesktopSettings } from "./lib/schemas";
+import { resolveGlobalStateMode, resolveStateModeRequest } from "./features/shared/state-modes";
+import { titleCase } from "./lib/utils";
 
 const NAV = [
   { id: "overview", label: "Overview", group: "Main" },
@@ -83,6 +99,17 @@ export function App() {
   const [runtimeRecoveryOpen, setRuntimeRecoveryOpen] = useState(false);
   const [activityClearSignal, setActivityClearSignal] = useState(0);
   const { bootstrap, snapshot, init } = useDesktop();
+  const reapplyContextRef = useRef<{
+    snapshot: AppSnapshot | null;
+    settings: DesktopSettings | null;
+    toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
+    runtimeBlocked: boolean;
+  }>({
+    snapshot: null,
+    settings: null,
+    toolCapabilities: {},
+    runtimeBlocked: true,
+  });
 
   function openSettings(section?: SettingsSection) {
     setSettingsRouteState({ section });
@@ -138,6 +165,115 @@ export function App() {
       await notifyDesktop({
         title: "Support report export failed",
         body: error instanceof Error ? error.message : "Desktop command failed.",
+      });
+    },
+  });
+
+  const reapplyActiveProfileMutation = useMutation({
+    mutationFn: async (): Promise<{
+      scope: CommandResultScope;
+      message: string;
+      resultLabel: string;
+    }> => {
+      const context = reapplyContextRef.current;
+      if (!context.snapshot || !context.settings || context.runtimeBlocked) {
+        throw new Error("No active desktop snapshot is available yet.");
+      }
+      const resolvedSnapshot = context.snapshot;
+      const settings = context.settings;
+      const toolCapabilities = context.toolCapabilities;
+
+      const activeSet = [...(settings.profile_sets ?? [])]
+        .sort((left, right) => left.name.localeCompare(right.name))
+        .find((set) => profileSetIsActive(resolvedSnapshot, set));
+      if (activeSet) {
+        await activateProfileSet({ name: activeSet.name, label: profileSetDisplayLabel(activeSet) });
+        return {
+          scope: { type: "global", id: "profile-set" },
+          resultLabel: "Re-apply active profile",
+          message: `Re-applied current set ${profileSetDisplayLabel(activeSet)}.`,
+        };
+      }
+
+      const activeProfiles = resolvedSnapshot.statuses
+        .map((status) => status.active_profile?.trim())
+        .filter((profile): profile is string => Boolean(profile));
+      const uniqueProfiles = [...new Set(activeProfiles)].sort((left, right) =>
+        left.localeCompare(right),
+      );
+      if (
+        uniqueProfiles.length === 1 &&
+        sharedProfileEntries(settings, resolvedSnapshot).some(
+          (entry) => entry.name === uniqueProfiles[0],
+        )
+      ) {
+        const profile = uniqueProfiles[0];
+        const profileLabel = profileDisplayLabel(settings, resolvedSnapshot, profile);
+        await useAllProfiles({
+          profile,
+          stateMode: resolveGlobalStateMode(resolvedSnapshot),
+          label: profileLabel,
+        });
+        return {
+          scope: { type: "global", id: "switch-all" },
+          resultLabel: "Re-apply active profile",
+          message: `Re-applied shared profile ${profileLabel}.`,
+        };
+      }
+
+      const activeStatuses = resolvedSnapshot.statuses.filter(
+        (status): status is (typeof resolvedSnapshot.statuses)[number] & { active_profile: string } =>
+          Boolean(status.active_profile?.trim()),
+      );
+      if (activeStatuses.length === 1) {
+        const status = activeStatuses[0];
+        const profile = status.active_profile.trim();
+        const profileLabel = toolProfileDisplayLabel(settings, resolvedSnapshot, status.tool, profile);
+        await useProfile({
+          tool: status.tool,
+          profile,
+          stateMode: resolveStateModeRequest(status.tool, toolCapabilities, status.state_mode),
+          label: profileLabel,
+        });
+        return {
+          scope: { type: "tool", tool: status.tool },
+          resultLabel: "Re-apply active profile",
+          message: `Re-applied ${titleCase(status.tool)} profile ${profileLabel}.`,
+        };
+      }
+
+      throw new Error("AI Switch could not determine a single active profile to re-apply.");
+    },
+    onSuccess: async ({ scope, resultLabel, message }) => {
+      recordCommandResult(scope, {
+        label: resultLabel,
+        status: "success",
+        message,
+      });
+      await notifyDesktop({
+        title: "Re-apply active profile",
+        body: message,
+      });
+      await invalidatePostMutationQueries(queryClient);
+    },
+    onError: async (error) => {
+      const message = error instanceof Error ? error.message : "Desktop command failed.";
+      recordCommandResult(
+        { type: "global", id: "profile-set" },
+        {
+          label: "Re-apply active profile",
+          status: "error",
+          message,
+          kind: error instanceof DesktopCommandError ? error.kind : undefined,
+          remediation: error instanceof DesktopCommandError ? error.remediation : undefined,
+        },
+      );
+      await notifyDesktop({
+        title: "Re-apply active profile",
+        body:
+          error instanceof DesktopCommandError && error.remediation
+            ? `${error.message} ${error.remediation}`
+            : message,
       });
     },
   });
@@ -313,6 +449,15 @@ export function App() {
       }
     });
 
+    void listenDesktopEvent("menu-reapply-active-profile", () => {
+      if (!active) return;
+      reapplyActiveProfileMutation.mutate();
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
     void listenDesktopEvent<TrayCommandResultEvent>("tray-command-result", (payload) => {
       if (!active) return;
       const normalizedMessage = normalizeRuntimeLanguage(payload.message);
@@ -435,6 +580,12 @@ export function App() {
   const hasActivityEntries =
     Object.values(lastCommandResults.global).some(Boolean) ||
     Object.values(lastCommandResults.tool).some(Boolean);
+  reapplyContextRef.current = {
+    snapshot: resolvedSnapshot ?? null,
+    settings,
+    toolCapabilities,
+    runtimeBlocked,
+  };
 
   async function retryRuntimeCheck() {
     await queryClient.invalidateQueries({ queryKey: ["bootstrap"] });
