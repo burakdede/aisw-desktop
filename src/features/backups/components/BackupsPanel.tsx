@@ -109,7 +109,20 @@ export function BackupsPanel({
   const restoreSheetMode = pendingRestore?.mode ?? null;
 
   return (
-    <SectionCard title="Backups" kicker="Recovery">
+    <SectionCard
+      title="Backups"
+      kicker="Recovery"
+      actions={
+        <button
+          className="ghost-button"
+          type="button"
+          disabled={backups.isFetching}
+          onClick={() => void backups.refetch()}
+        >
+          {backups.isFetching ? "Refreshing…" : "Refresh"}
+        </button>
+      }
+    >
       <DesktopStatusStrip
         ariaLabel="Backup highlights"
         items={[
@@ -130,34 +143,30 @@ export function BackupsPanel({
           },
         ]}
       />
-      <article className="diagnostic-card desktop-pane-intro">
-        <h3>Restore points</h3>
-        <p className="inline-note">
-          Restore replays the saved files only. It does not activate that profile again until you run
-          a matching <code>use</code> action or choose restore and activate here.
-        </p>
-        <p className="inline-note">
-          {sortedBackups.length ? `${sortedBackups.length} saved backup${sortedBackups.length === 1 ? "" : "s"} available locally.` : "No saved backups are available yet."}
-        </p>
-      </article>
       <SplitView
         className="backups-layout"
         primaryClassName="backups-list-pane"
         secondaryClassName="backups-detail-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-            <div className="desktop-pane-section desktop-list-surface">
+            <article className="diagnostic-card backups-list-card">
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Timeline</p>
                   <h3>Local backups</h3>
                 </div>
                 <p className="inline-note">
-                  Select a restore point to inspect its scope and recovery options.
+                  {sortedBackups.length
+                    ? `${sortedBackups.length} restore point${sortedBackups.length === 1 ? "" : "s"} available locally.`
+                    : "No saved restore points are available yet."}
                 </p>
               </div>
-            </div>
-            <div className="stack-list desktop-list-stack">
+              <div className="backups-list-columns" aria-hidden="true">
+                <span>Created</span>
+                <span>Tool</span>
+                <span>Profile</span>
+              </div>
+              <div className="stack-list backups-table-rows">
               {sortedBackups.map((entry) => {
                 const target = resolveBackupTarget(entry.tool, entry.profile);
                 const profileLabel = toolProfileDisplayLabel(
@@ -169,27 +178,34 @@ export function BackupsPanel({
                 const targetDisplay = `${titleCase(target.tool)} / ${profileLabel}`;
 
                 return (
-                  <article
+                  <button
                     key={entry.backup_id}
+                    type="button"
                     className={`list-row backup-list-row ${
                       selectedBackupId === entry.backup_id ? "backup-list-row-selected" : ""
                     }`}
+                    aria-label={`Inspect backup for ${targetDisplay}`}
+                    aria-pressed={selectedBackupId === entry.backup_id}
                     onClick={() => {
                       setSelectedBackupId(entry.backup_id);
                       setPendingRestore(null);
                     }}
                   >
-                    <div className="backup-list-main">
-                      <strong>{profileLabel}</strong>
+                    <div className="backup-list-created">
+                      <strong>{formatBackupListTimestamp(entry.created_at ?? entry.backup_id)}</strong>
                       <p className="inline-note">
                         {formatBackupTimestamp(entry.created_at ?? entry.backup_id)}
                       </p>
                     </div>
+                    <div className="backup-list-main">
+                      <strong>{titleCase(target.tool)}</strong>
+                      <p className="inline-note">Saved profile snapshot</p>
+                    </div>
                     <div className="backup-list-meta">
-                      <span>{titleCase(target.tool)}</span>
+                      <strong>{profileLabel}</strong>
                       <span>{targetDisplay}</span>
                     </div>
-                  </article>
+                  </button>
                 );
               })}
               {!backups.data?.length ? (
@@ -202,8 +218,9 @@ export function BackupsPanel({
                   </p>
                 </article>
               ) : null}
+              </div>
+            </article>
             </div>
-          </div>
         }
         secondary={
           <div className="stack-list desktop-pane-column">
@@ -218,21 +235,41 @@ export function BackupsPanel({
                     Restore files only by default, then reactivate explicitly only when you want to switch the live profile again.
                   </p>
                 </div>
+                <div className="backups-detail-summary">
+                  <div>
+                    <span className="overview-current-set-cell-label">Created</span>
+                    <strong>{formatBackupTimestamp(selectedBackup.created_at ?? selectedBackup.backup_id)}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Target</span>
+                    <strong>{selectedTargetDisplay}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Recovery</span>
+                    <strong>Files first</strong>
+                  </div>
+                </div>
                 <KeyValueGrid
                   rows={[
                     { label: "Tool", value: titleCase(selectedTarget.tool) },
                     { label: "Profile", value: selectedProfileLabel },
-                    {
-                      label: "Created",
-                      value: formatBackupTimestamp(selectedBackup.created_at ?? selectedBackup.backup_id),
-                    },
                     { label: "Backup ID", value: selectedBackup.backup_id },
                   ]}
                 />
-                <p className="inline-note">
-                  Affects {selectedTargetDisplay}. Restore files only unless you explicitly
-                  re-activate this profile.
-                </p>
+                <div className="backups-detail-block">
+                  <div>
+                    <p className="card-kicker">Contains</p>
+                    <p className="inline-note">
+                      {titleCase(selectedTarget.tool)} profile <strong>{selectedProfileLabel}</strong> and its saved config snapshot.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="card-kicker">Restore behavior</p>
+                    <p className="inline-note">
+                      Affects {selectedTargetDisplay}. Restore files only unless you explicitly re-activate this profile.
+                    </p>
+                  </div>
+                </div>
                 <div className="button-row">
                   <button
                     className="ghost-button"
@@ -414,5 +451,35 @@ function formatBackupTimestamp(value: string) {
     hour: "2-digit",
     minute: "2-digit",
     timeZoneName: "short",
+  }).format(date);
+}
+
+function formatBackupListTimestamp(value: string) {
+  const isoDate = Date.parse(value);
+  if (!Number.isNaN(isoDate)) {
+    return new Intl.DateTimeFormat(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(new Date(isoDate));
+  }
+
+  const match = value.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/);
+  if (!match) {
+    return "Unknown";
+  }
+
+  const [, year, month, day, hour, minute, second] = match;
+  const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   }).format(date);
 }

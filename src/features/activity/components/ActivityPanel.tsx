@@ -140,36 +140,30 @@ export function ActivityPanel() {
           },
         ]}
       />
-      <article className="diagnostic-card desktop-pane-intro">
-        <h3>Recent activity</h3>
-        <p className="inline-note">
-          Review the latest switch, recovery, verification, and setup actions in a compact session timeline with a dedicated inspector.
-        </p>
-        <p className="inline-note">
-          {entries.length
-            ? `${entries.length} recent event${entries.length === 1 ? "" : "s"} in this desktop session.`
-            : "No local events recorded in this desktop session yet."}
-        </p>
-        {clearMessage ? <p className="inline-note">{clearMessage}</p> : null}
-      </article>
       <SplitView
         className="activity-layout"
         primaryClassName="activity-list-pane"
         secondaryClassName="activity-detail-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-            <div className="desktop-pane-section desktop-list-surface">
+            <article className="diagnostic-card activity-list-card">
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Timeline</p>
                   <h3>Session events</h3>
                 </div>
                 <p className="inline-note">
-                  Select an event to inspect its result, recorded command, and recovery guidance.
+                  {entries.length
+                    ? `${entries.length} event${entries.length === 1 ? "" : "s"} recorded in this desktop session.`
+                    : "No local events recorded in this desktop session yet."}
                 </p>
               </div>
-            </div>
-            <div className="stack-list desktop-list-stack">
+              <div className="activity-list-columns" aria-hidden="true">
+                <span>Time</span>
+                <span>Event</span>
+                <span>Scope</span>
+              </div>
+              <div className="stack-list activity-table-rows">
               {entries.length ? (
                 entries.map((entry) => (
                   <button
@@ -182,6 +176,9 @@ export function ActivityPanel() {
                     aria-pressed={selectedEntry?.key === entry.key}
                     aria-label={`Inspect ${entry.label}`}
                   >
+                    <div className="activity-list-time">
+                      <strong>{formatTimestamp(entry.at)}</strong>
+                    </div>
                     <div className="activity-list-main">
                       <div className="activity-list-title">
                         <strong>{entry.label}</strong>
@@ -194,8 +191,8 @@ export function ActivityPanel() {
                       <p className="inline-note">{entry.message}</p>
                     </div>
                     <div className="activity-list-meta">
-                      <span>{formatTimestamp(entry.at)}</span>
                       <span>{entry.scopeLabel}</span>
+                      <span>{entry.status === "success" ? "Success" : "Needs attention"}</span>
                     </div>
                     <span className="activity-row-chevron" aria-hidden="true">
                       ›
@@ -210,8 +207,9 @@ export function ActivityPanel() {
                   </p>
                 </article>
               )}
+              </div>
+            </article>
             </div>
-          </div>
         }
         secondary={
           <div className="stack-list desktop-pane-column">
@@ -232,14 +230,22 @@ export function ActivityPanel() {
                     {selectedEntry.status === "success" ? "Success" : "Needs attention"}
                   </span>
                 </div>
+                <div className="activity-detail-summary">
+                  <div>
+                    <span className="overview-current-set-cell-label">Time</span>
+                    <strong>{formatFullTimestamp(selectedEntry.at)}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Scope</span>
+                    <strong>{selectedEntry.scopeLabel}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Result</span>
+                    <strong>{selectedEntry.status === "success" ? "Success" : "Needs attention"}</strong>
+                  </div>
+                </div>
                 <KeyValueGrid
                   rows={[
-                    { label: "Time", value: formatFullTimestamp(selectedEntry.at) },
-                    { label: "Scope", value: selectedEntry.scopeLabel },
-                    {
-                      label: "Result",
-                      value: selectedEntry.status === "success" ? "Success" : "Needs attention",
-                    },
                     {
                       label: "Command",
                       value: selectedEntry.command ?? "Desktop command details were not recorded for this event.",
@@ -247,6 +253,12 @@ export function ActivityPanel() {
                   ]}
                 />
                 <div className="activity-detail-copy stack-list">
+                  {selectedEntry.command ? (
+                    <div>
+                      <p className="card-kicker">Command</p>
+                      <pre>{selectedEntry.command}</pre>
+                    </div>
+                  ) : null}
                   <div>
                     <p className="card-kicker">Output</p>
                     <p className="inline-note">{selectedEntry.message}</p>
@@ -292,6 +304,12 @@ export function ActivityPanel() {
                 </p>
               </article>
             )}
+            {clearMessage ? (
+              <article className="diagnostic-card">
+                <h3>Timeline cleared</h3>
+                <p className="inline-note">{clearMessage}</p>
+              </article>
+            ) : null}
             {exportBundleMutation.data ? (
               <article className="diagnostic-card diagnostic-pass">
                 <h3>Support report ready</h3>

@@ -2834,7 +2834,7 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("Backups")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Backups"));
     await waitFor(() => expect(screen.getByText("Restore and activate")).toBeInTheDocument());
-    expect(screen.getByText(/Restore replays the saved files only/)).toBeInTheDocument();
+    expect(screen.getAllByText("Files first").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Sandbox").length).toBeGreaterThan(0);
     expect(
       screen.getByText(
