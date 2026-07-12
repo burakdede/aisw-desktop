@@ -155,10 +155,10 @@ async function openSetsSection() {
     throw new Error("Sidebar not found.");
   }
   fireEvent.click(within(sidebar).getByRole("button", { name: "Sets" }));
-  if (!screen.queryByLabelText("Set name")) {
-    const setsSections = screen.getByLabelText("Sets sections");
-    fireEvent.click(within(setsSections).getByRole("button", { name: "Set Library" }));
-  }
+  await waitFor(() => expect(screen.getByLabelText("Sets sections")).toBeInTheDocument());
+  const setsSections = screen.getByLabelText("Sets sections");
+  fireEvent.click(within(setsSections).getByRole("button", { name: "Set Library" }));
+  await waitFor(() => expect(screen.getByRole("heading", { name: "Set Library" })).toBeInTheDocument());
 }
 
 async function openProjectRulesSection() {
@@ -4405,7 +4405,7 @@ describe("App", () => {
     fireEvent.click(openSetsButtons[openSetsButtons.length - 1]);
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Set name")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Set Library" })).toBeInTheDocument();
     });
     expect(calls.some((entry) => entry.command === "use_context")).toBe(false);
     expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(false);
@@ -5135,7 +5135,7 @@ describe("App", () => {
 
     fireEvent.click(screen.getByText("Open Sets"));
     await waitFor(() => {
-      expect(screen.getByLabelText("Set name")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Set Library" })).toBeInTheDocument();
     });
     expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(false);
   });
@@ -6824,6 +6824,8 @@ describe("App", () => {
 
     await renderApp();
     await openSetsSection();
+    fireEvent.click(screen.getByRole("button", { name: "New Set" }));
+    expect(screen.getByRole("dialog", { name: "New Set" })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Set name"), {
       target: { value: "client-acme" },
     });
@@ -6836,7 +6838,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Codex"), {
       target: { value: "work" },
     });
-    fireEvent.click(screen.getByText("Save set"));
+    fireEvent.click(screen.getByRole("button", { name: "Create Set" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
@@ -6955,7 +6957,8 @@ describe("App", () => {
 
     expect(screen.getByDisplayValue("client-acme")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Client Acme")).toBeInTheDocument();
-    expect(screen.getByText("Update set")).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Edit Set" })).toBeInTheDocument();
+    expect(screen.getByText("Update Set")).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Set name"), {
       target: { value: "client-acme-prime" },
@@ -6963,7 +6966,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Label"), {
       target: { value: "Client Acme Prime" },
     });
-    fireEvent.click(screen.getByText("Update set"));
+    fireEvent.click(screen.getByText("Update Set"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
@@ -7047,7 +7050,7 @@ describe("App", () => {
         "A set named focus-mode already exists. Rename the existing set or choose a different name.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Update set")).toBeDisabled();
+    expect(screen.getByText("Update Set")).toBeDisabled();
     expect(calls.some((entry) => entry.command === "update_settings")).toBe(false);
   });
 
@@ -7116,10 +7119,11 @@ describe("App", () => {
     expect(screen.getByRole("option", { name: "Saved set: Client Acme" })).toBeInTheDocument();
 
     await openSetsSection();
+    fireEvent.click(screen.getByRole("button", { name: "New Set" }));
     fireEvent.change(screen.getByLabelText("Set name"), {
       target: { value: "empty-next" },
     });
-    expect(screen.getByText("Save set")).toBeDisabled();
+    expect(screen.getByText("Create Set")).toBeDisabled();
     expect(
       screen.getByText("Select at least one tool profile before saving this set."),
     ).toBeInTheDocument();
@@ -7592,6 +7596,7 @@ describe("App", () => {
     expect(screen.getAllByText("Client Acme").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("Set ID: client-acme")).toBeInTheDocument();
     expect(screen.getAllByText("claude: Office · codex: Code Work · gemini: none")).toHaveLength(1);
+    fireEvent.click(screen.getAllByRole("button", { name: "New Set" })[0]);
     expect(screen.getAllByRole("option", { name: "Office" }).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("option", { name: "Code Work" })).toBeInTheDocument();
   });

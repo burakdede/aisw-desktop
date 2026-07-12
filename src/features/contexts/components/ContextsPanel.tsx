@@ -1,4 +1,5 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { DialogSurface } from "../../../components/DialogSurface";
 import { SplitView } from "../../../components/SplitView";
 import { SectionCard } from "../../../components/SectionCard";
 import {
@@ -46,6 +47,7 @@ export function ContextsPanel({
     label: "",
     profiles: Object.fromEntries(TOOLS.map((tool) => [tool, ""])),
   });
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [lastAction, setLastAction] = useState("");
   const [selectedSetName, setSelectedSetName] = useState<string | null>(
     (settings.profile_sets ?? [])[0]?.name ?? null,
@@ -66,9 +68,7 @@ export function ContextsPanel({
   const contextResult = lastCommandResults.global.context;
   const selectedSet =
     localSets.find((set) => set.name === selectedSetName) ?? localSets[0] ?? null;
-  const detailSet = isEditingExistingSet
-    ? localSets.find((set) => set.name === draft.sourceName) ?? null
-    : selectedSet;
+  const detailSet = selectedSet;
   const profileOptions = useMemo(
     () =>
       Object.fromEntries(
@@ -92,6 +92,11 @@ export function ContextsPanel({
     });
   }
 
+  function openNewSetEditor() {
+    resetDraft();
+    setIsEditorOpen(true);
+  }
+
   function startEditingSet(set: DesktopSettings["profile_sets"][number]) {
     setSelectedSetName(set.name);
     setDraft({
@@ -100,6 +105,12 @@ export function ContextsPanel({
       label: set.label ?? "",
       profiles: Object.fromEntries(TOOLS.map((tool) => [tool, set.profiles[tool] ?? ""])),
     });
+    setIsEditorOpen(true);
+  }
+
+  function closeEditor() {
+    setIsEditorOpen(false);
+    resetDraft();
   }
 
   function saveProfileSet(event: FormEvent<HTMLFormElement>) {
@@ -133,7 +144,7 @@ export function ContextsPanel({
           setLastAction(
             `${isEditingExistingSet ? "Updated" : "Saved"} set ${draft.label.trim() || name}.`,
           );
-          resetDraft();
+          closeEditor();
         },
       },
     );
@@ -174,6 +185,15 @@ export function ContextsPanel({
     );
   }
 
+  useEffect(() => {
+    if (!isEditorOpen) {
+      return;
+    }
+    if (draft.sourceName && !localSets.some((set) => set.name === draft.sourceName)) {
+      closeEditor();
+    }
+  }, [draft.sourceName, isEditorOpen, localSets]);
+
   return (
     <SectionCard
       title="Set Library"
@@ -182,7 +202,7 @@ export function ContextsPanel({
         <button
           className="primary-button"
           type="button"
-          onClick={resetDraft}
+          onClick={openNewSetEditor}
         >
           New Set
         </button>
@@ -473,6 +493,9 @@ export function ContextsPanel({
                 >
                   Edit This Set
                 </button>
+                <button className="ghost-button" type="button" onClick={openNewSetEditor}>
+                  Create Another Set
+                </button>
               </div>
             </div>
           ) : (
@@ -491,92 +514,131 @@ export function ContextsPanel({
           <div className="stack-list">
             <div className="desktop-pane-section-header">
               <div>
-                <p className="card-kicker">{isEditingExistingSet ? "Edit set" : "New set"}</p>
-                <h3>{isEditingExistingSet ? draft.label.trim() || draft.name : "Create a saved set"}</h3>
+                <p className="card-kicker">Set editor</p>
+                <h3>Create or update sets in a focused sheet</h3>
               </div>
-              <span className="pill pill-soft">{isEditingExistingSet ? "Editing" : "Draft"}</span>
+              <span className="pill pill-soft">Focused</span>
             </div>
             <p className="inline-note">
               Save the profiles you want to switch together so Overview, project rules, and quick switching
-              can work from one clear identity.
+              stay tied to one clear working identity without stretching this pane into a long form.
             </p>
-          </div>
-
-          <form className="stacked-form diagnostics-body" onSubmit={saveProfileSet}>
-            <label>
-              Set name
-              <input
-                value={draft.name}
-                onChange={(event) =>
-                  setDraft((current) => ({ ...current, name: event.target.value }))
-                }
-              />
-            </label>
-            <label>
-              Label
-              <input
-                value={draft.label}
-                onChange={(event) => setDraft((current) => ({ ...current, label: event.target.value }))}
-              />
-            </label>
-            {TOOLS.map((tool) => (
-              <label key={tool}>
-                {titleCase(tool)}
-                <select
-                  value={draft.profiles[tool] ?? ""}
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      profiles: {
-                        ...current.profiles,
-                        [tool]: event.target.value,
-                      },
-                    }))
-                  }
-                >
-                  <option value="">None</option>
-                  {profileOptions[tool].map((profile) => (
-                    <option key={profile.value} value={profile.value}>
-                      {profile.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ))}
             <div className="button-row">
-              <button
-                className="primary-button"
-                type="submit"
-                disabled={
-                  mutationLock.isBusy || !trimmedDraftName || !draftHasSelections || hasDuplicateSetName
-                }
-              >
-                {isEditingExistingSet ? "Update set" : "Save set"}
+              <button className="primary-button" type="button" onClick={openNewSetEditor}>
+                Open Set Editor
               </button>
-              {isEditingExistingSet ? (
-                <button
-                  className="ghost-button"
-                  type="button"
-                  onClick={resetDraft}
-                >
-                  Cancel edit
+              {detailSet ? (
+                <button className="ghost-button" type="button" onClick={() => startEditingSet(detailSet)}>
+                  Edit Selected Set
                 </button>
               ) : null}
             </div>
-            {hasDuplicateSetName ? (
-              <p className="inline-note">
-                A set named {trimmedDraftName} already exists. Rename the existing set or choose a different name.
-              </p>
-            ) : null}
-            {!draftHasSelections ? (
-              <p className="inline-note">
-                Select at least one tool profile before saving this set.
-              </p>
-            ) : null}
-          </form>
+          </div>
           </article>
         }
       />
+      {isEditorOpen ? (
+        <DialogSurface
+          ariaLabel={isEditingExistingSet ? "Edit Set" : "New Set"}
+          className="quick-switch-palette profile-sheet set-sheet"
+          initialFocusSelector='input:not([disabled]), select:not([disabled]), button:not([disabled])'
+          onClose={closeEditor}
+        >
+          <form className="stack-list" onSubmit={saveProfileSet}>
+            <div className="quick-switch-header">
+              <div>
+                <p className="card-kicker">{isEditingExistingSet ? "Edit set" : "New set"}</p>
+                <h3>{isEditingExistingSet ? "Update this saved set" : "Create a saved set"}</h3>
+                <p className="inline-note">
+                  Pick the saved profiles that should move together when you switch work, personal, or project-specific identities.
+                </p>
+              </div>
+              <button className="ghost-button" type="button" onClick={closeEditor}>
+                Close
+              </button>
+            </div>
+            <div className="stacked-form diagnostics-body">
+              <label>
+                Set name
+                <input
+                  value={draft.name}
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, name: event.target.value }))
+                  }
+                />
+              </label>
+              <label>
+                Label
+                <input
+                  value={draft.label}
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, label: event.target.value }))
+                  }
+                />
+              </label>
+              {TOOLS.map((tool) => (
+                <label key={tool}>
+                  {titleCase(tool)}
+                  <select
+                    value={draft.profiles[tool] ?? ""}
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        profiles: {
+                          ...current.profiles,
+                          [tool]: event.target.value,
+                        },
+                      }))
+                    }
+                  >
+                    <option value="">None</option>
+                    {profileOptions[tool].map((profile) => (
+                      <option key={profile.value} value={profile.value}>
+                        {profile.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+              {hasDuplicateSetName ? (
+                <p className="inline-note">
+                  A set named {trimmedDraftName} already exists. Rename the existing set or choose a different name.
+                </p>
+              ) : null}
+              {!draftHasSelections ? (
+                <p className="inline-note">
+                  Select at least one tool profile before saving this set.
+                </p>
+              ) : null}
+            </div>
+            <footer className="quick-switch-footer">
+              <div className="quick-switch-selection">
+                <p className="card-kicker">Selection</p>
+                <strong>{draft.label.trim() || trimmedDraftName || "Untitled set"}</strong>
+                <p>
+                  {draftHasSelections
+                    ? `${Object.values(draft.profiles).filter((profile) => profile.trim().length > 0).length} tool profile selection${Object.values(draft.profiles).filter((profile) => profile.trim().length > 0).length === 1 ? "" : "s"} ready`
+                    : "Choose at least one saved profile before creating this set."}
+                </p>
+              </div>
+              <div className="button-row">
+                <button className="ghost-button" type="button" onClick={closeEditor}>
+                  Cancel
+                </button>
+                <button
+                  className="primary-button"
+                  type="submit"
+                  disabled={
+                    mutationLock.isBusy || !trimmedDraftName || !draftHasSelections || hasDuplicateSetName
+                  }
+                >
+                  {isEditingExistingSet ? "Update Set" : "Create Set"}
+                </button>
+              </div>
+            </footer>
+          </form>
+        </DialogSurface>
+      ) : null}
     </SectionCard>
   );
 }
