@@ -270,7 +270,7 @@ button {
   height: calc(100dvh - 16px);
   min-height: 0;
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: 236px minmax(0, 1fr);
   gap: 0;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
@@ -303,10 +303,12 @@ button {
 
 .sidebar-scroll {
   min-height: 0;
-  overflow: auto;
-  display: grid;
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  padding: 12px 10px 10px;
+  padding: 12px 10px 0;
 }
 
 .sidebar-brand,
@@ -319,9 +321,11 @@ button {
   gap: 12px;
   align-items: center;
   flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .sidebar-brand {
+  overflow: hidden;
   padding: 14px 14px 15px;
   border-radius: 12px;
   border: 1px solid color-mix(in srgb, CanvasText 5%, transparent);
@@ -387,15 +391,18 @@ button {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 730;
-  font-size: 30px;
+  font-size: 24px;
   line-height: 1;
   letter-spacing: -0.034em;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .nav-list {
   display: grid;
   gap: 10px;
+  padding-bottom: 10px;
 }
 
 .nav-group {
@@ -472,7 +479,8 @@ button {
   margin-top: auto;
   display: grid;
   gap: 5px;
-  padding: 2px 10px 10px;
+  flex: none;
+  padding: 12px 10px 10px;
 }
 
 .sidebar-status-card {
