@@ -141,6 +141,13 @@ export function DiagnosticsPanel({
     () => buildDiagnosticCheckRows(summaryCards, snapshot),
     [snapshot, summaryCards],
   );
+  const checkSummaryLabel = `${checkRows.length} monitored`;
+  const recoverySummaryLabel = repairActions.length
+    ? `${repairActions.length} safe repair${repairActions.length === 1 ? "" : "s"}`
+    : "No repairs queued";
+  const findingsSummaryLabel = findings.length
+    ? `${findings.length} item${findings.length === 1 ? "" : "s"}`
+    : "Clear";
   useEffect(() => {
     if (selectedFindingKey && findings.some((finding) => finding.key === selectedFindingKey)) {
       return;
@@ -243,30 +250,37 @@ export function DiagnosticsPanel({
           <div>
             <p className="card-kicker">Health</p>
             <h3>{totalIssues ? `${totalIssues} issue${totalIssues === 1 ? "" : "s"} found` : "Everything looks good"}</h3>
-            <p className="inline-note">
-              Diagnostics explains profile drift, installation gaps, and safe recovery in one calm workspace.
-            </p>
+            <p className="inline-note">Diagnostics explains profile drift, installation gaps, and safe recovery in one calm workspace.</p>
           </div>
           <span className={`pill ${totalIssues ? "pill-warn" : "pill-ok"}`}>
             {repairActions.length ? `${repairActions.length} repairs queued` : "Recovery ready"}
           </span>
         </div>
-        <div className="diagnostics-intro-grid">
-          <div>
+        <div className="desktop-status-strip diagnostics-status-strip">
+          <article className="desktop-status-card">
             <span className="overview-current-set-cell-label">Checks</span>
-            <strong>{checkRows.length} monitored</strong>
-          </div>
-          <div>
+            <p className="desktop-status-value">{checkSummaryLabel}</p>
+            <p className="inline-note">Installed tools, profile drift, and local setup health.</p>
+          </article>
+          <article className="desktop-status-card">
             <span className="overview-current-set-cell-label">Recovery</span>
-            <strong>{repairActions.length ? `${repairActions.length} safe repair${repairActions.length === 1 ? "" : "s"}` : "No repairs queued"}</strong>
-          </div>
-          <div>
-            <span className="overview-current-set-cell-label">Highlights</span>
-            <strong>{diagnosticPills.join(" · ") || "Quick actions"}</strong>
-          </div>
+            <p className="desktop-status-value">{recoverySummaryLabel}</p>
+            <p className="inline-note">Review Repair Plan and direct quick fixes stay here.</p>
+          </article>
+          <article className="desktop-status-card">
+            <span className="overview-current-set-cell-label">Findings</span>
+            <p className="desktop-status-value">{findingsSummaryLabel}</p>
+            <div className="desktop-status-pill-stack">
+              {(diagnosticPills.length ? diagnosticPills : ["Quick actions"]).map((pill) => (
+                <span key={pill} className="pill pill-soft">
+                  {pill}
+                </span>
+              ))}
+            </div>
+          </article>
         </div>
         {summaryHighlights.length ? (
-          <div className="stack-list diagnostics-overview-list">
+          <div className="stack-list diagnostics-highlight-list">
             {summaryHighlights.map((line) => (
               <p key={line} className="inline-note">{line}</p>
             ))}
@@ -299,12 +313,15 @@ export function DiagnosticsPanel({
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Checks</p>
-                  <h3>Checks and details</h3>
+                  <h3>Checks and findings</h3>
                 </div>
-                <p className="inline-note">
-                  Review the current check output and then inspect the findings that need a response.
-                </p>
+                <span className={`pill ${findings.length ? "pill-warn" : "pill-ok"}`}>
+                  {findingsSummaryLabel}
+                </span>
               </div>
+              <p className="inline-note">
+                Review the current check output and then inspect the findings that need a response.
+              </p>
               <div className="diagnostics-details-section">
                 <div>
                   <p className="card-kicker">Checks</p>
@@ -452,6 +469,9 @@ export function DiagnosticsPanel({
                   <p className="card-kicker">Recovery</p>
                   <h3>Recommended fixes</h3>
                 </div>
+                <span className="pill pill-soft">
+                  {quickFixes.length ? `${quickFixes.length} actions` : "No actions"}
+                </span>
               </div>
               <p className="inline-note">
                 Apply the safest repair path first, then refresh checks from this pane.
