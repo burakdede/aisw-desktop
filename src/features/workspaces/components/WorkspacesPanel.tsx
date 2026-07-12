@@ -160,47 +160,237 @@ export function WorkspacesPanel({
 
   return (
     <SectionCard title="Project rules" kicker="Expected sets by folder or remote">
-      <article className="diagnostic-card workspaces-intro-card">
-        <div className="workspaces-intro-copy">
-          <div>
-            <p className="card-kicker">Project rules</p>
-            <h3>
-              {savedRuleCount
-                ? `${savedRuleCount} saved rule${savedRuleCount === 1 ? "" : "s"}`
-                : "No saved rules"}
-            </h3>
-            <p className="inline-note">
-              Attach a saved set to the current folder, a path prefix, or a git remote pattern so project switching stays predictable.
-            </p>
-          </div>
-          <span className={`pill ${statusToneClass}`}>{currentMatchLabel}</span>
-        </div>
-        <div className="workspaces-intro-grid">
-          <div>
-            <span className="overview-current-set-cell-label">Current match</span>
-            <strong>{currentMatchLabel}</strong>
-          </div>
-          <div>
-            <span className="overview-current-set-cell-label">Guard mode</span>
-            <strong>{bindingsSummary.guardMode}</strong>
-          </div>
-          <div>
-            <span className="overview-current-set-cell-label">Expected set</span>
-            <strong>{expectedContextDisplay}</strong>
-          </div>
-        </div>
-      </article>
       <SplitView
         className="workspaces-layout"
-        primaryClassName="workspaces-editor-pane"
-        secondaryClassName="workspaces-status-pane"
+        primaryClassName="workspaces-status-pane"
+        secondaryClassName="workspaces-editor-pane"
         primary={
           <div className="stack-list desktop-pane-column">
+            <article className="diagnostic-card workspaces-status-card">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Resolution</p>
+                  <h3>Current project match</h3>
+                </div>
+                <span className={`pill ${statusToneClass}`}>{currentMatchLabel}</span>
+              </div>
+              <div className="workspaces-summary-grid">
+                <div>
+                  <span className="overview-current-set-cell-label">Current set</span>
+                  <strong>{currentContextDisplay}</strong>
+                  <p className="inline-note">Current set: {currentContextDisplay}</p>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Expected set</span>
+                  <strong>{expectedContextDisplay}</strong>
+                  <p className="inline-note">Expected set: {expectedContextDisplay}</p>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Guard mode</span>
+                  <strong>{bindingsSummary.guardMode}</strong>
+                  <p className="inline-note">Guard mode: {bindingsSummary.guardMode}</p>
+                </div>
+              </div>
+              <div className="workspaces-status-main">
+                <div className="workspaces-status-grid">
+                  <div>
+                    <span className="overview-current-set-cell-label">Rule type</span>
+                    <strong>{statusCard.scope}</strong>
+                    <p className="inline-note">Rule type: {statusCard.scope}</p>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Matched target</span>
+                    <strong>{statusCard.target}</strong>
+                    <p className="inline-note">Matched target: {statusCard.target}</p>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Default set</span>
+                    <strong>{contextDisplayLabel(settings, bindingsSummary.defaultContext)}</strong>
+                    <p className="inline-note">
+                      Default set: {contextDisplayLabel(settings, bindingsSummary.defaultContext)}
+                    </p>
+                  </div>
+                </div>
+                <aside className="workspaces-status-rail">
+                  <span className="overview-current-set-cell-label">Rules</span>
+                  <p className="inline-note">
+                    Review what this project matched before changing or removing any explicit rule.
+                  </p>
+                  <div className="workspaces-rule-count">
+                    <strong>{savedRuleCount}</strong>
+                    <span>saved</span>
+                  </div>
+                </aside>
+              </div>
+            </article>
+
+            <article className="diagnostic-card workspaces-rules-card">
+              <div className="desktop-pane-section-header workspaces-rules-header">
+                <div>
+                  <p className="card-kicker">Rules</p>
+                  <h3>{savedRuleCount ? "Saved matching rules" : "No saved rules"}</h3>
+                </div>
+                <span className="pill pill-soft">
+                  {savedRuleCount ? `${savedRuleCount} saved` : "Rules"}
+                </span>
+              </div>
+              <p className="inline-note">
+                Review one rule at a time, then remove stale path and remote rules when a project moves or gets renamed.
+              </p>
+              <div className="stack-list workspaces-rules-list">
+                {ruleEntries.map((binding) => {
+                  const isMatchedBinding = matchedBindingKey === binding.key;
+                  const isSelectedBinding = selectedRule?.key === binding.key;
+
+                  return (
+                    <button
+                      key={binding.key}
+                      type="button"
+                      className={`list-row workspaces-rule-row ${
+                        isSelectedBinding ? "workspaces-rule-row-selected" : ""
+                      } ${isMatchedBinding ? "workspaces-rule-row-active" : ""}`}
+                      aria-label={`Inspect rule for ${contextDisplayLabel(settings, binding.context)}`}
+                      aria-pressed={isSelectedBinding}
+                      onClick={() => setSelectedBindingKey(binding.key)}
+                    >
+                      <div className="workspaces-rule-row-main">
+                        <div className="workspaces-rule-row-header">
+                          <strong>{contextDisplayLabel(settings, binding.context)}</strong>
+                          <span className={`pill ${isMatchedBinding ? "pill-ok" : "pill-soft"}`}>
+                            {isMatchedBinding ? "Matched" : binding.scope}
+                          </span>
+                        </div>
+                        <p>{binding.scope === "default" ? "default rule" : binding.target}</p>
+                      </div>
+                      <span className="desktop-source-chevron" aria-hidden="true">
+                        ›
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {!ruleEntries.length ? (
+                <p className="inline-note">
+                  No explicit project rules are configured yet. Save one from the editor to attach a
+                  set to a default scope, path prefix, or git remote pattern.
+                </p>
+              ) : null}
+            </article>
+            {workspaceResult ? (
+              <p className={`inline-note ${workspaceResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
+                Last project-rule result: {workspaceResult.message}
+                {workspaceResult.remediation ? ` Remediation: ${workspaceResult.remediation}` : ""}
+              </p>
+            ) : null}
+          </div>
+        }
+        secondary={
+          <div className="stack-list desktop-pane-column">
+            {hasWorkspaceMismatch && !workspaceOverrideDismissed ? (
+              <article className="diagnostic-card diagnostic-warn workspaces-mismatch-card">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Attention</p>
+                    <h3>Project mismatch</h3>
+                          </div>
+                  <span className="pill pill-warn">Needs review</span>
+                </div>
+                <p className="inline-note">
+                  This project matches <strong>{expectedContextDisplay}</strong>, but the current
+                  active set is <strong>{currentContextDisplay}</strong>.
+                </p>
+                <p className="inline-note">
+                  Matched by this {statusCard.scope} rule: {statusCard.target}
+                </p>
+                <div className="button-row">
+                  <button
+                    className="primary-button"
+                    type="button"
+                    disabled={mutationLock.isBusy}
+                    onClick={activateExpectedWorkspaceTarget}
+                  >
+                    {expectedWorkspaceTarget ? "Use expected set now" : "Open Sets"}
+                  </button>
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    onClick={() => setWorkspaceOverrideDismissed(true)}
+                  >
+                    Keep current set
+                  </button>
+                </div>
+              </article>
+            ) : (
+              <article className="diagnostic-card workspaces-mismatch-card">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Inspector</p>
+                    <h3>{selectedRule ? "Rule inspector" : "No rule selected"}</h3>
+                  </div>
+                  <span className="pill pill-soft">{selectedRule ? "Ready" : "Inspector"}</span>
+                </div>
+                <p className="inline-note">
+                  Select a saved rule from the list to inspect it here or open the editor to create a new one.
+                </p>
+              </article>
+            )}
+
+            {selectedRule ? (
+              <article className="diagnostic-card workspaces-rule-detail-card">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Selected rule</p>
+                    <h3>{selectedRuleContextLabel}</h3>
+                  </div>
+                  <span className={`pill ${selectedRuleMatched ? "pill-ok" : "pill-soft"}`}>
+                    {selectedRuleMatched ? "Matched" : selectedRule.scope}
+                  </span>
+                </div>
+                <div className="workspaces-rule-detail-grid">
+                  <div>
+                    <span className="overview-current-set-cell-label">Rule type</span>
+                    <strong>{selectedRule.scope}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Set</span>
+                    <strong>{selectedRuleContextLabel}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Target</span>
+                    <strong>{selectedRule.scope === "default" ? "Default set" : selectedRule.target}</strong>
+                  </div>
+                </div>
+                <p className="inline-note">
+                  {selectedRule.scope === "default"
+                    ? "This fallback rule applies when no path or remote rule matches."
+                    : `${selectedRule.scope === "path" ? "Path prefix" : "Git remote pattern"}: ${selectedRule.target}`}
+                </p>
+                {selectedRule.scope !== "default" ? (
+                  <p className="inline-note">{`${selectedRule.scope} · ${selectedRule.target}`}</p>
+                ) : null}
+                {selectedRuleMatched ? <p className="inline-note">Matched rule ✓</p> : null}
+                <div className="button-row">
+                  <button
+                    className="ghost-button danger-button"
+                    type="button"
+                    disabled={mutationLock.isBusy}
+                    onClick={() =>
+                      workspaceUnbindMutation.mutate(
+                        unbindTargetForBinding(selectedRule.scope, selectedRule.target),
+                      )
+                    }
+                  >
+                    Remove this rule
+                  </button>
+                </div>
+              </article>
+            ) : null}
+
             <article className="diagnostic-card workspaces-editor-card">
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Rule editor</p>
-                  <h3>Create or update rules in a focused sheet</h3>
+                  <h3>Open a focused sheet to create or update rules</h3>
                 </div>
                 <span className="pill pill-soft">
                   {bindingOptions.length
@@ -208,13 +398,16 @@ export function WorkspacesPanel({
                     : "No sets available"}
                 </span>
               </div>
-              <p className="inline-note">
-                Keep the current project match and saved rules visible here, then open the editor only when you need to add or change a rule.
-              </p>
               <div className="workspaces-summary-grid">
                 <div>
-                  <span className="overview-current-set-cell-label">Default target</span>
-                  <strong>{scope === "default" ? "Default set" : scope === "path" ? "Path prefix" : "Git remote pattern"}</strong>
+                  <span className="overview-current-set-cell-label">Target type</span>
+                  <strong>
+                    {scope === "default"
+                      ? "Default set"
+                      : scope === "path"
+                        ? "Path prefix"
+                        : "Git remote pattern"}
+                  </strong>
                 </div>
                 <div>
                   <span className="overview-current-set-cell-label">Selected set</span>
@@ -225,6 +418,9 @@ export function WorkspacesPanel({
                   <strong>{bindingsSummary.guardMode}</strong>
                 </div>
               </div>
+              <p className="inline-note">
+                Keep rule creation in a sheet so the list and inspector remain easy to scan.
+              </p>
               <div className="button-row">
                 <button
                   className="primary-button"
@@ -236,6 +432,7 @@ export function WorkspacesPanel({
                 </button>
               </div>
             </article>
+
             <article className="diagnostic-card workspace-guard-section">
               <div className="desktop-pane-section-header">
                 <div>
@@ -266,223 +463,6 @@ export function WorkspacesPanel({
                 </button>
               </div>
             </article>
-          </div>
-        }
-        secondary={
-          <div className="stack-list desktop-pane-column">
-          {hasWorkspaceMismatch && !workspaceOverrideDismissed ? (
-            <article className="diagnostic-card diagnostic-warn workspaces-mismatch-card">
-              <div className="desktop-pane-section-header">
-                <div>
-                  <p className="card-kicker">Attention</p>
-                  <h3>Project mismatch</h3>
-                </div>
-                <span className="pill pill-warn">Needs review</span>
-              </div>
-              <p className="inline-note">
-                This project matches <strong>{expectedContextDisplay}</strong>, but the current
-                active set is <strong>{currentContextDisplay}</strong>.
-              </p>
-              <p className="inline-note">
-                Matched by this {statusCard.scope} rule: {statusCard.target}
-              </p>
-              <div className="button-row">
-                <button
-                  className="primary-button"
-                  type="button"
-                  disabled={mutationLock.isBusy}
-                  onClick={activateExpectedWorkspaceTarget}
-                >
-                  {expectedWorkspaceTarget ? "Use expected set now" : "Open Sets"}
-                </button>
-                <button
-                  className="ghost-button"
-                  type="button"
-                  onClick={() => setWorkspaceOverrideDismissed(true)}
-                >
-                  Keep current set
-                </button>
-              </div>
-            </article>
-          ) : null}
-
-          <article className="diagnostic-card workspaces-status-card">
-            <div className="desktop-pane-section-header">
-              <div>
-                <p className="card-kicker">Resolution</p>
-                <h3>Current project match</h3>
-              </div>
-              <span className={`pill ${statusToneClass}`}>{statusCard.status}</span>
-            </div>
-            <div className="workspaces-status-main">
-              <div className="stack-list">
-                <div className="workspaces-status-grid">
-                  <div>
-                    <span className="overview-current-set-cell-label">Current set</span>
-                    <strong>{currentContextDisplay}</strong>
-                    <p className="inline-note">Current set: {currentContextDisplay}</p>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Expected set</span>
-                    <strong>{expectedContextDisplay}</strong>
-                    <p className="inline-note">Expected set: {expectedContextDisplay}</p>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Rule type</span>
-                    <strong>{statusCard.scope}</strong>
-                    <p className="inline-note">Rule type: {statusCard.scope}</p>
-                  </div>
-                </div>
-                <div className="workspaces-status-grid">
-                  <div>
-                    <span className="overview-current-set-cell-label">Matched target</span>
-                    <strong>{statusCard.target}</strong>
-                    <p className="inline-note">Matched target: {statusCard.target}</p>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Guard mode</span>
-                    <strong>{bindingsSummary.guardMode}</strong>
-                    <p className="inline-note">Guard mode: {bindingsSummary.guardMode}</p>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Default set</span>
-                    <strong>{contextDisplayLabel(settings, bindingsSummary.defaultContext)}</strong>
-                    <p className="inline-note">
-                      Default set: {contextDisplayLabel(settings, bindingsSummary.defaultContext)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <aside className="workspaces-status-rail">
-                <span className="overview-current-set-cell-label">Rules</span>
-                <p className="inline-note">
-                  Review what this folder matched before changing or removing any explicit rule.
-                </p>
-                <div className="workspaces-rule-count">
-                  <strong>{savedRuleCount}</strong>
-                  <span>saved</span>
-                </div>
-              </aside>
-            </div>
-          </article>
-
-          <article className="diagnostic-card workspaces-rules-card">
-            <div className="desktop-pane-section-header workspaces-rules-header">
-              <div>
-                <p className="card-kicker">Rules</p>
-                <h3>Saved matching rules</h3>
-                <p className="inline-note">
-                  Review one rule at a time, then remove stale path and remote rules when a project moves or gets renamed.
-                </p>
-              </div>
-              <span className="pill pill-soft">
-                {savedRuleCount ? `${savedRuleCount} saved` : "No saved rules"}
-              </span>
-            </div>
-            {ruleEntries.length ? (
-              <SplitView
-                className="workspaces-rules-layout"
-                primaryClassName="workspaces-rules-list-pane"
-                secondaryClassName="workspaces-rules-detail-pane"
-                primary={
-                  <div className="stack-list workspaces-rules-list">
-                    {ruleEntries.map((binding) => {
-                      const isMatchedBinding = matchedBindingKey === binding.key;
-                      const isSelectedBinding = selectedRule?.key === binding.key;
-
-                      return (
-                        <button
-                          key={binding.key}
-                          type="button"
-                          className={`list-row workspaces-rule-row ${
-                            isSelectedBinding ? "workspaces-rule-row-selected" : ""
-                          } ${isMatchedBinding ? "workspaces-rule-row-active" : ""}`}
-                          aria-label={`Inspect rule for ${contextDisplayLabel(settings, binding.context)}`}
-                          aria-pressed={isSelectedBinding}
-                          onClick={() => setSelectedBindingKey(binding.key)}
-                        >
-                          <div className="workspaces-rule-row-main">
-                            <div className="workspaces-rule-row-header">
-                              <strong>{contextDisplayLabel(settings, binding.context)}</strong>
-                              <span className={`pill ${isMatchedBinding ? "pill-ok" : "pill-soft"}`}>
-                                {isMatchedBinding ? "Matched" : binding.scope}
-                              </span>
-                            </div>
-                            <p>{binding.scope === "default" ? "default rule" : binding.target}</p>
-                          </div>
-                          <span className="desktop-source-chevron" aria-hidden="true">
-                            ›
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                }
-                secondary={
-                  selectedRule ? (
-                    <article className="workspaces-rule-detail-card">
-                      <div className="desktop-pane-section-header">
-                        <div>
-                          <p className="card-kicker">Selected rule</p>
-                          <h3>{selectedRuleContextLabel}</h3>
-                        </div>
-                        <span className={`pill ${selectedRuleMatched ? "pill-ok" : "pill-soft"}`}>
-                          {selectedRuleMatched ? "Matched" : selectedRule.scope}
-                        </span>
-                      </div>
-                      <div className="workspaces-rule-detail-grid">
-                        <div>
-                          <span className="overview-current-set-cell-label">Rule type</span>
-                          <strong>{selectedRule.scope}</strong>
-                          <p className="inline-note">Rule type: {selectedRule.scope}</p>
-                        </div>
-                        <div>
-                          <span className="overview-current-set-cell-label">Set</span>
-                          <strong>{selectedRuleContextLabel}</strong>
-                          <p className="inline-note">Rule set: {selectedRuleContextLabel}</p>
-                        </div>
-                        <div>
-                          <span className="overview-current-set-cell-label">Target</span>
-                          <strong>{selectedRule.scope === "default" ? "Default set" : selectedRule.target}</strong>
-                          <p className="inline-note">
-                            {selectedRule.scope === "default"
-                              ? "default · applies when no path or remote rule matches"
-                              : `${selectedRule.scope} · ${selectedRule.target}`}
-                          </p>
-                        </div>
-                      </div>
-                      {selectedRuleMatched ? <p className="inline-note">Matched rule ✓</p> : null}
-                      <div className="button-row">
-                        <button
-                          className="ghost-button danger-button"
-                          type="button"
-                          disabled={mutationLock.isBusy}
-                          onClick={() =>
-                            workspaceUnbindMutation.mutate(
-                              unbindTargetForBinding(selectedRule.scope, selectedRule.target),
-                            )
-                          }
-                        >
-                          Remove this rule
-                        </button>
-                      </div>
-                    </article>
-                  ) : null
-                }
-              />
-            ) : (
-              <p className="inline-note">
-                No explicit project rules are configured yet. Save one from the form to attach a
-                set to a default scope, path prefix, or git remote pattern.
-              </p>
-            )}
-          </article>
-          {workspaceResult ? (
-            <p className={`inline-note ${workspaceResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
-              Last project-rule result: {workspaceResult.message}
-              {workspaceResult.remediation ? ` Remediation: ${workspaceResult.remediation}` : ""}
-            </p>
-          ) : null}
           </div>
         }
       />
