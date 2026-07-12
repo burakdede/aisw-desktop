@@ -156,8 +156,8 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
                     TrayCommandScope::Global {
                         id: "context".to_owned(),
                     },
-                    "Switch context",
-                    format!("Activated context {context_label}."),
+                    "Use set",
+                    format!("Activated set {context_label}."),
                 );
                 let _ = refresh_tray(&app_handle, state).await;
             });
@@ -465,7 +465,7 @@ fn tray_menu_model(
 
 fn tray_status_label(runtime_compatible: bool, snapshot: Option<&AppSnapshot>) -> String {
     if !runtime_compatible {
-        return "Switching blocked".to_owned();
+        return "Desktop engine unavailable".to_owned();
     }
 
     active_summary_or_default(snapshot)
@@ -475,7 +475,7 @@ fn tray_runtime_notice(runtime_compatible: bool) -> Option<&'static str> {
     if runtime_compatible {
         None
     } else {
-        Some("Switching is unavailable. Choose a working runtime in Settings.")
+        Some("Switching is unavailable. Switch back to the included desktop engine in Settings.")
     }
 }
 
@@ -1064,10 +1064,10 @@ mod tests {
 
     #[test]
     fn tray_status_label_reports_blocked_runtime() {
-        assert_eq!(tray_status_label(false, None), "Switching blocked");
+        assert_eq!(tray_status_label(false, None), "Desktop engine unavailable");
         assert_eq!(
             tray_runtime_notice(false),
-            Some("Switching is unavailable. Choose a working runtime in Settings.")
+            Some("Switching is unavailable. Switch back to the included desktop engine in Settings.")
         );
         assert_eq!(tray_runtime_notice(true), None);
     }
@@ -1614,7 +1614,7 @@ mod tests {
         );
         assert_eq!(
             model.runtime_notice.as_deref(),
-            Some("Switching is unavailable. Choose a working runtime in Settings.")
+            Some("Switching is unavailable. Switch back to the included desktop engine in Settings.")
         );
         assert_eq!(
             model.sections,
