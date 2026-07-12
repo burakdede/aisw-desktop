@@ -40,6 +40,7 @@ fn main() {
             commands::get_snapshot,
             commands::get_settings,
             commands::open_app_data_folder,
+            commands::open_reference_document,
             commands::set_tray_visibility,
             commands::get_shell_guidance,
             commands::check_for_updates,

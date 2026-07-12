@@ -257,6 +257,12 @@ export async function openAppDataFolder(): Promise<string> {
   return openedPathSchema.parse(await invokeDesktop("open_app_data_folder"));
 }
 
+export async function openReferenceDocument(
+  kind: "documentation" | "troubleshooting",
+): Promise<string> {
+  return openedPathSchema.parse(await invokeDesktop("open_reference_document", { kind }));
+}
+
 export async function getSettings(): Promise<DesktopSettings> {
   return desktopSettingsSchema.parse(await invokeDesktop("get_settings"));
 }

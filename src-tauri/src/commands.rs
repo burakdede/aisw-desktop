@@ -49,6 +49,33 @@ pub async fn open_app_data_folder(
 }
 
 #[tauri::command]
+pub async fn open_reference_document(kind: String) -> DesktopResult<String> {
+    let current_dir = std::env::current_dir().map_err(DesktopError::from).map_err(ErrorPayload::from)?;
+    let path = match kind.as_str() {
+        "documentation" => current_dir.join("README.md"),
+        "troubleshooting" => current_dir.join("docs").join("release-runbook.md"),
+        _ => {
+            return Err(ErrorPayload {
+                kind: GuiErrorKind::Unknown,
+                message: "AI Switch could not resolve that reference document.".to_owned(),
+                remediation: Some("Choose a supported help action and try again.".to_owned()),
+            });
+        }
+    };
+
+    if !path.exists() {
+        return Err(ErrorPayload {
+            kind: GuiErrorKind::Unknown,
+            message: "AI Switch could not find the requested reference document.".to_owned(),
+            remediation: Some(path.display().to_string()),
+        });
+    }
+
+    open_path_with_default_app(&path)?;
+    Ok(path.display().to_string())
+}
+
+#[tauri::command]
 pub async fn set_tray_visibility(app: tauri::AppHandle, visible: bool) -> DesktopResult<()> {
     if let Some(tray) = app.tray_by_id("main-tray") {
         tray.set_visible(visible).map_err(|error| ErrorPayload {

@@ -6097,6 +6097,36 @@ describe("App", () => {
     });
   });
 
+  it("opens local documentation from the app menu when the reference file is available", async () => {
+    const calls: string[] = [];
+    const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      calls.push(command);
+      return (
+        {
+          open_reference_document: "/Users/burakdede/Projects/aisw-desktop/README.md",
+        } as Record<string, unknown>
+      )[command] ?? defaultMock[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["menu-open-help"]?.({});
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(calls).toContain("open_reference_document");
+      expect(screen.queryByRole("dialog", { name: "Using AI Switch" })).not.toBeInTheDocument();
+    });
+  });
+
   it("opens AI Switch help from the app menu", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());

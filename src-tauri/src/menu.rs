@@ -95,7 +95,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let help_docs = MenuItem::with_id(
         app,
         "menu.help.docs",
-        "Using AI Switch",
+        "AI Switch Documentation",
         true,
         None::<&str>,
     )?;

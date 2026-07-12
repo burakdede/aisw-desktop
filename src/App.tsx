@@ -42,6 +42,7 @@ import { syncWindowState } from "./lib/window-state";
 import {
   activateProfileSet,
   exportDiagnosticBundle,
+  openReferenceDocument,
   updateSettings,
   useAllProfiles,
   useProfile,
@@ -488,7 +489,10 @@ export function App() {
 
     void listenDesktopEvent("menu-open-help", () => {
       if (!active) return;
-      setHelpOpen(true);
+      void openReferenceDocument("documentation").catch(() => {
+        if (!active) return;
+        setHelpOpen(true);
+      });
     }).then((dispose) => {
       if (typeof dispose === "function") {
         disposers.push(dispose);
@@ -518,8 +522,11 @@ export function App() {
 
     void listenDesktopEvent("menu-open-troubleshooting", () => {
       if (!active) return;
-      setActiveNav("diagnostics");
-      invalidateDiagnostics();
+      void openReferenceDocument("troubleshooting").catch(() => {
+        if (!active) return;
+        setActiveNav("diagnostics");
+        invalidateDiagnostics();
+      });
     }).then((dispose) => {
       if (typeof dispose === "function") {
         disposers.push(dispose);
