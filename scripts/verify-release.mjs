@@ -34,6 +34,7 @@ export function verifyReleaseContract(rootDir = repoRoot) {
     "get_bootstrap",
     "get_snapshot",
     "get_settings",
+    "set_tray_visibility",
     "get_shell_guidance",
     "check_for_updates",
     "install_update",
