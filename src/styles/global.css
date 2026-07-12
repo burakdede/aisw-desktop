@@ -1972,6 +1972,10 @@ button {
   grid-template-columns: minmax(320px, 0.98fr) minmax(360px, 1.02fr);
 }
 
+.sets-shell {
+  gap: 16px;
+}
+
 .sets-mode-split {
   grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
 }
@@ -2020,6 +2024,19 @@ button {
 
 .sets-nav-card {
   gap: 12px;
+}
+
+.sets-mode-card {
+  gap: 14px;
+}
+
+.sets-mode-toolbar {
+  display: grid;
+  gap: 10px;
+}
+
+.sets-mode-segmented {
+  width: fit-content;
 }
 
 .sets-source-row {

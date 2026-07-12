@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { SplitView } from "../../../components/SplitView";
+import { SectionCard } from "../../../components/SectionCard";
+import { SegmentedControl } from "../../../components/SegmentedControl";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { ContextsPanel } from "../../contexts/components/ContextsPanel";
 import { WorkspacesPanel } from "../../workspaces/components/WorkspacesPanel";
@@ -28,6 +29,7 @@ export function SetsPanel({
     {
       value: "sets" as const,
       label: "Set Library",
+      heading: "Library view",
       summary: `${localSetCount} saved set${localSetCount === 1 ? "" : "s"}`,
       note: importedSetCount
         ? `${importedSetCount} detected set${importedSetCount === 1 ? "" : "s"} remain available alongside your local library.`
@@ -36,86 +38,74 @@ export function SetsPanel({
     },
     {
       value: "rules" as const,
-      label: "Project rules",
+      label: "Project Rules",
+      heading: "Project-rule view",
       summary: "Folder and remote matching",
       note: "Attach a saved set to a folder or remote pattern so AI Switch can warn before you code in the wrong profile.",
       badge: "Rules",
     },
   ];
 
+  const activeSection = sections.find((section) => section.value === mode) ?? sections[0];
+
   return (
-    <SplitView
-        className="sets-layout sets-mode-split"
-        primaryClassName="sets-mode-pane"
-        secondaryClassName="sets-detail-pane"
-        primary={
-          <article className="diagnostic-card sets-nav-card">
-            <div className="desktop-pane-section-header">
-              <div>
-                <p className="card-kicker">Sets</p>
-                <h3>Sets</h3>
-              </div>
-              <span className="pill pill-soft">{mode === "sets" ? "Library" : "Rules"}</span>
+    <SectionCard title="Sets" kicker="Switching sets and project rules">
+      <div className="stack-list sets-shell">
+        <article className="diagnostic-card sets-mode-card">
+          <div className="desktop-pane-section-header">
+            <div>
+              <p className="card-kicker">View</p>
+              <h3>{activeSection.heading}</h3>
             </div>
-            <p className="inline-note">
-              Keep reusable work, personal, and client switching sets beside project-aware rules.
-            </p>
-            <div className="sets-summary-grid">
-              <div>
-                <span className="overview-current-set-cell-label">Saved</span>
-                <strong>{localSetCount}</strong>
-              </div>
-              <div>
-                <span className="overview-current-set-cell-label">Detected</span>
-                <strong>{importedSetCount}</strong>
-              </div>
-              <div>
-                <span className="overview-current-set-cell-label">Active</span>
-                <strong>{activeSetCount}</strong>
-              </div>
-            </div>
-            <div aria-label="Sets sections" className="stack-list desktop-list-stack">
-            {sections.map((section) => (
-              <button
-                key={section.value}
-                type="button"
-                aria-label={section.label}
-                aria-describedby={`sets-section-summary-${section.value}`}
-                aria-pressed={mode === section.value}
-                className={`desktop-source-row sets-source-row ${
-                  mode === section.value ? "desktop-source-row-selected" : ""
-                }`}
-                onClick={() => setMode(section.value)}
-              >
-                <div className="sets-source-row-main">
-                  <div className="sets-source-row-header">
-                    <strong>{section.label}</strong>
-                    <span className="pill pill-soft">{section.badge}</span>
-                  </div>
-                  <p id={`sets-section-summary-${section.value}`} className="inline-note">
-                    {section.summary}
-                  </p>
-                  <p className="inline-note">{section.note}</p>
-                </div>
-                <span className="desktop-source-chevron" aria-hidden="true">
-                  ›
-                </span>
-              </button>
-            ))}
-            </div>
-          </article>
-        }
-        secondary={
-          mode === "sets" ? (
-            <ContextsPanel snapshot={snapshot} settings={settings} />
-          ) : (
-            <WorkspacesPanel
-              snapshot={snapshot}
-              settings={settings}
-              onOpenContexts={onOpenContexts}
+            <span className="pill pill-soft">{activeSection.badge}</span>
+          </div>
+          <div className="sets-mode-toolbar">
+            <SegmentedControl
+              ariaLabel="Sets mode"
+              className="sets-mode-segmented"
+              options={sections.map((section) => ({
+                value: section.value,
+                label: section.label,
+              }))}
+              value={mode}
+              onChange={setMode}
             />
-          )
-        }
-      />
+            <p className="inline-note">{activeSection.note}</p>
+          </div>
+          <div className="sets-summary-grid">
+            <div>
+              <span className="overview-current-set-cell-label">Saved</span>
+              <strong>{localSetCount}</strong>
+              <p className="inline-note">{sections[0].summary}</p>
+            </div>
+            <div>
+              <span className="overview-current-set-cell-label">Detected</span>
+              <strong>{importedSetCount}</strong>
+              <p className="inline-note">
+                {importedSetCount
+                  ? `${importedSetCount} imported set${importedSetCount === 1 ? "" : "s"} available`
+                  : "No imported sets available"}
+              </p>
+            </div>
+            <div>
+              <span className="overview-current-set-cell-label">Current</span>
+              <strong>{activeSetCount}</strong>
+              <p className="inline-note">
+                {activeSetCount ? `${activeSetCount} saved set${activeSetCount === 1 ? "" : "s"} active` : activeSection.summary}
+              </p>
+            </div>
+          </div>
+        </article>
+        {mode === "sets" ? (
+          <ContextsPanel snapshot={snapshot} settings={settings} />
+        ) : (
+          <WorkspacesPanel
+            snapshot={snapshot}
+            settings={settings}
+            onOpenContexts={onOpenContexts}
+          />
+        )}
+      </div>
+    </SectionCard>
   );
 }

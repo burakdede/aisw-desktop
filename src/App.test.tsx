@@ -155,16 +155,16 @@ async function openSetsSection() {
     throw new Error("Sidebar not found.");
   }
   fireEvent.click(within(sidebar).getByRole("button", { name: "Sets" }));
-  await waitFor(() => expect(screen.getByLabelText("Sets sections")).toBeInTheDocument());
-  const setsSections = screen.getByLabelText("Sets sections");
-  fireEvent.click(within(setsSections).getByRole("button", { name: "Set Library" }));
+  await waitFor(() => expect(screen.getByLabelText("Sets mode")).toBeInTheDocument());
+  const setsMode = screen.getByLabelText("Sets mode");
+  fireEvent.click(within(setsMode).getByRole("button", { name: "Set Library" }));
   await waitFor(() => expect(screen.getByRole("heading", { name: "Set Library" })).toBeInTheDocument());
 }
 
 async function openProjectRulesSection() {
   await openSetsSection();
-  const setsSections = screen.getByLabelText("Sets sections");
-  fireEvent.click(within(setsSections).getByRole("button", { name: "Project rules" }));
+  const setsMode = screen.getByLabelText("Sets mode");
+  fireEvent.click(within(setsMode).getByRole("button", { name: "Project Rules" }));
 }
 
 function selectOverviewTool(tool: string) {
