@@ -2872,6 +2872,43 @@ button {
   grid-template-columns: minmax(360px, 1.02fr) minmax(340px, 0.98fr);
 }
 
+.backups-intro-card {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+  margin-bottom: 14px;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, Canvas 95%, AccentColor 3%), color-mix(in srgb, Canvas 98%, CanvasText 2%));
+}
+
+.backups-intro-copy {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.backups-intro-copy p {
+  margin: 4px 0 0;
+  max-width: 54ch;
+}
+
+.backups-intro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.backups-intro-grid > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
 .activity-layout,
 .diagnostics-layout {
   grid-template-columns: minmax(360px, 1.02fr) minmax(340px, 0.98fr);
@@ -2934,6 +2971,10 @@ button {
 
 .backups-list-columns {
   grid-template-columns: minmax(160px, 1fr) minmax(120px, 0.7fr) minmax(0, 1fr);
+}
+
+.backups-list-header {
+  align-items: flex-start;
 }
 
 .activity-list-columns {
@@ -3540,6 +3581,7 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .backups-intro-grid,
   .backups-overview-meta {
     grid-template-columns: 1fr;
   }
@@ -3562,6 +3604,7 @@ button {
   }
 
   .settings-overview-copy,
+  .backups-intro-copy,
   .settings-kv-row,
   .diagnostics-intro-copy,
   .settings-intro-copy {

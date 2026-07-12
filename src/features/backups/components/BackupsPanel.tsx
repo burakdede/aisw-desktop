@@ -114,55 +114,52 @@ export function BackupsPanel({
 
   return (
     <SectionCard title="Backups" kicker="Restore points">
+      <article className="diagnostic-card backups-intro-card">
+        <div className="backups-intro-copy">
+          <div>
+            <p className="card-kicker">Rollback</p>
+            <h3>
+              {sortedBackups.length
+                ? `${sortedBackups.length} restore point${sortedBackups.length === 1 ? "" : "s"}`
+                : "No restore points yet"}
+            </h3>
+            <p className="inline-note">
+              Inspect one restore point at a time. Restoring saved files does not reactivate a profile unless you choose that explicitly.
+            </p>
+          </div>
+          <span className="pill pill-soft">Files first</span>
+        </div>
+        <div className="backups-intro-grid">
+          <div>
+            <span className="overview-current-set-cell-label">Library</span>
+            <strong>{restorePointCount ? `${restorePointCount} restore point${restorePointCount === 1 ? "" : "s"}` : "Empty"}</strong>
+          </div>
+          <div>
+            <span className="overview-current-set-cell-label">Latest restore point</span>
+            <strong>{selectedTargetDisplay ?? "No selection"}</strong>
+          </div>
+          <div>
+            <span className="overview-current-set-cell-label">Restore mode</span>
+            <strong>Files first</strong>
+          </div>
+        </div>
+      </article>
       <SplitView
         className="backups-layout"
         primaryClassName="backups-list-pane"
         secondaryClassName="backups-detail-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-            <article className="diagnostic-card backups-overview-card">
-              <div className="desktop-pane-section-header">
-                <div>
-                  <p className="card-kicker">Timeline</p>
-                  <h3>
-                    {sortedBackups.length
-                      ? `${sortedBackups.length} restore point${sortedBackups.length === 1 ? "" : "s"}`
-                      : "No restore points yet"}
-                  </h3>
-                </div>
-                <span className="pill pill-soft">Files first</span>
-              </div>
-              <p className="inline-note">
-                Inspect one restore point at a time. Restoring saved files does not reactivate a profile
-                unless you choose that explicitly.
-              </p>
-              <div className="backups-overview-meta">
-                <div>
-                  <span className="overview-current-set-cell-label">Library</span>
-                  <strong>{restorePointCount ? `${restorePointCount} restore point${restorePointCount === 1 ? "" : "s"}` : "Empty"}</strong>
-                  <p className="inline-note">Backups are created before profile changes that could need rollback.</p>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Latest restore point</span>
-                  <strong>{selectedTargetDisplay ?? "No selection"}</strong>
-                  <p className="inline-note">{latestBackupTimestamp}</p>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Restore mode</span>
-                  <strong>Files first</strong>
-                  <p className="inline-note">Activation stays explicit unless you choose restore and activate.</p>
-                </div>
-              </div>
-            </article>
             <article className="diagnostic-card backups-list-card">
-              <div className="desktop-pane-section-header">
+              <div className="desktop-pane-section-header backups-list-header">
                 <div>
                   <p className="card-kicker">Restore points</p>
                   <h3>Local backup history</h3>
+                  <p className="inline-note">
+                    Review one restore point at a time before restoring saved files or re-activating a profile.
+                  </p>
                 </div>
-                <p className="inline-note">
-                  Review one restore point at a time before restoring saved files or re-activating a profile.
-                </p>
+                <span className="pill pill-soft">{latestBackupTimestamp}</span>
               </div>
               <div className="backups-list-columns" aria-hidden="true">
                 <span>Created</span>
@@ -233,8 +230,8 @@ export function BackupsPanel({
                   <div className="stack-list">
                     <div className="desktop-pane-section-header">
                       <div>
-                        <p className="card-kicker">Inspector</p>
-                        <h3>{selectedProfileLabel}</h3>
+                        <p className="card-kicker">Backup</p>
+                        <h3>{selectedTargetDisplay}</h3>
                       </div>
                       <p className="inline-note">
                         Restore saved files first, then reactivate explicitly only when you want that profile live again.
@@ -242,28 +239,16 @@ export function BackupsPanel({
                     </div>
                     <div className="backups-detail-summary">
                       <div>
-                        <span className="overview-current-set-cell-label">Created</span>
-                        <strong>{formatBackupTimestamp(selectedBackup.created_at ?? selectedBackup.backup_id)}</strong>
-                      </div>
-                      <div>
                         <span className="overview-current-set-cell-label">Target</span>
                         <strong>{selectedTargetDisplay}</strong>
                       </div>
                       <div>
-                        <span className="overview-current-set-cell-label">Recovery</span>
-                        <strong>Files only by default</strong>
-                      </div>
-                    </div>
-                    <div className="backups-detail-meta">
-                      <div>
-                        <span className="overview-current-set-cell-label">Backup target</span>
-                        <strong>{selectedTargetDisplay}</strong>
-                        <p className="inline-note">{titleCase(selectedTarget.tool)} restore point selected from the local history.</p>
+                        <span className="overview-current-set-cell-label">Created</span>
+                        <strong>{formatBackupTimestamp(selectedBackup.created_at ?? selectedBackup.backup_id)}</strong>
                       </div>
                       <div>
-                        <span className="overview-current-set-cell-label">Restore outcome</span>
-                        <strong>Activation stays explicit</strong>
-                        <p className="inline-note">Restore files only unless you explicitly re-activate this profile.</p>
+                        <span className="overview-current-set-cell-label">Contains</span>
+                        <strong>{titleCase(selectedTarget.tool)} profile: {selectedProfileLabel}</strong>
                       </div>
                     </div>
                     <KeyValueGrid
@@ -275,7 +260,7 @@ export function BackupsPanel({
                     />
                     <div className="backups-detail-block">
                       <div>
-                        <p className="card-kicker">Saved state</p>
+                        <p className="card-kicker">Contains</p>
                         <p className="inline-note">
                           {titleCase(selectedTarget.tool)} profile <strong>{selectedProfileLabel}</strong> and its saved config snapshot.
                         </p>
