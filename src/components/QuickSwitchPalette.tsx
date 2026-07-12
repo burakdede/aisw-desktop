@@ -9,7 +9,6 @@ import {
   toolProfileDisplayLabel,
 } from "../lib/profile-display";
 import { toolDisplayName } from "../lib/tool-display";
-import { titleCase } from "../lib/utils";
 import { resolveGlobalStateMode, supportedStateModes } from "../features/shared/state-modes";
 import { useDesktopActions } from "../features/shared/useDesktopActions";
 
@@ -26,7 +25,6 @@ type QuickSwitchItem =
       id: string;
       kind: "profile_set";
       group: "Sets";
-      badge: "Set";
       title: string;
       subtitle: string;
       searchText: string;
@@ -37,8 +35,7 @@ type QuickSwitchItem =
   | {
       id: string;
       kind: "shared_profile";
-      group: "All tools";
-      badge: "Match";
+      group: "Matching profiles";
       title: string;
       subtitle: string;
       searchText: string;
@@ -50,7 +47,6 @@ type QuickSwitchItem =
       id: string;
       kind: "tool_profile";
       group: string;
-      badge: string;
       title: string;
       subtitle: string;
       searchText: string;
@@ -222,6 +218,7 @@ export function QuickSwitchPalette({
     return acc;
   }, {});
   const selectedItem = filteredItems[selectedIndex] ?? null;
+  const shortcutSummary = selectedItem?.kind === "profile_set" ? "Enter switches set" : "⌘Enter matches tools";
 
   return (
     <DialogSurface
@@ -230,13 +227,10 @@ export function QuickSwitchPalette({
       initialFocusSelector="input, button:not([disabled])"
       onClose={onClose}
     >
-        <div className="quick-switch-header">
+        <div className="quick-switch-header quick-switch-header-compact">
           <div>
             <p className="card-kicker">Quick Switch</p>
-            <h3>Switch profiles without leaving the current view</h3>
-            <p className="inline-note">
-              Search sets, matching profiles, or individual tool profiles.
-            </p>
+            <h3>Search sets or profiles</h3>
           </div>
           <button className="ghost-button" type="button" onClick={onClose}>
             Close
@@ -258,7 +252,7 @@ export function QuickSwitchPalette({
             {filteredItems.length} result{filteredItems.length === 1 ? "" : "s"}
           </span>
         </div>
-        <div className="quick-switch-hint-bar" aria-live="polite">
+        <div className="quick-switch-status-strip" aria-live="polite">
           {selectedItem ? (
             <>
               <span className="quick-switch-hint-label">{selectedItem.group}</span>
@@ -266,6 +260,7 @@ export function QuickSwitchPalette({
               <span className="quick-switch-hint-copy">
                 {selectedItem.active ? "Current selection" : selectedItem.subtitle}
               </span>
+              <span className="quick-switch-status-shortcut">{shortcutSummary}</span>
             </>
           ) : (
             <>
@@ -306,15 +301,21 @@ export function QuickSwitchPalette({
                         onMouseEnter={() => setSelectedIndex(itemIndex)}
                         onClick={() => activateItem(item)}
                       >
+                        <span
+                          className={`quick-switch-option-state ${item.active ? "quick-switch-option-state-active" : ""}`}
+                          aria-hidden="true"
+                        />
                         <div className="quick-switch-option-copy">
                           <div className="quick-switch-option-line">
                             <strong>{item.title}</strong>
-                            <span className="quick-switch-option-badge">{item.badge}</span>
+                            {item.active ? (
+                              <span className="quick-switch-option-badge">Current</span>
+                            ) : null}
                           </div>
                           <p>{item.subtitle}</p>
                         </div>
                         <span className="quick-switch-option-meta">
-                          {item.active ? "Current" : "Switch"}
+                          {item.active ? "Selected" : "Return"}
                         </span>
                       </button>
                     );
@@ -331,48 +332,25 @@ export function QuickSwitchPalette({
             </article>
           )}
         </div>
-        <footer className="quick-switch-footer">
-          <div className="quick-switch-selection" aria-live="polite">
-            {selectedItem ? (
-              <>
-                <p className="card-kicker">Selected</p>
-                <strong>{selectedItem.title}</strong>
-                <p>
-                  {selectedItem.kind === "profile_set"
-                    ? "Enter switches this set."
-                    : selectedItem.kind === "shared_profile"
-                      ? "Enter switches every matching tool."
-                      : `Enter switches ${titleCase(selectedItem.tool)}.`}
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="card-kicker">Selected</p>
-                <strong>No matches</strong>
-                <p>Search by set name, tool, profile name, or saved label.</p>
-              </>
-            )}
-          </div>
-          <div className="quick-switch-shortcuts" aria-label="Quick Switch shortcuts">
-            <span>
-              <kbd>↑</kbd>
-              <kbd>↓</kbd>
-              Move
-            </span>
-            <span>
-              <kbd>Enter</kbd>
-              Switch
-            </span>
-            <span>
-              <kbd>⌘</kbd>
-              <kbd>Enter</kbd>
-              Match all
-            </span>
-            <span>
-              <kbd>Esc</kbd>
-              Close
-            </span>
-          </div>
+        <footer className="quick-switch-footer quick-switch-footer-compact" aria-label="Quick Switch shortcuts">
+          <span>
+            <kbd>↑</kbd>
+            <kbd>↓</kbd>
+            Move
+          </span>
+          <span>
+            <kbd>Enter</kbd>
+            Switch
+          </span>
+          <span>
+            <kbd>⌘</kbd>
+            <kbd>Enter</kbd>
+            Match all
+          </span>
+          <span>
+            <kbd>Esc</kbd>
+            Close
+          </span>
         </footer>
     </DialogSurface>
   );
@@ -392,7 +370,6 @@ function buildQuickSwitchItems(settings: DesktopSettings, snapshot: AppSnapshot)
       id: `set:${set.name}`,
       kind: "profile_set",
       group: "Sets",
-      badge: "Set",
       title: profileSetDisplayLabel(set),
       subtitle: buildSetSubtitle(set),
       searchText: `${set.name} ${set.label ?? ""} ${buildSetSubtitle(set)}`.toLowerCase(),
@@ -410,8 +387,7 @@ function buildQuickSwitchItems(settings: DesktopSettings, snapshot: AppSnapshot)
     items.push({
       id: `shared:${profile.name}`,
       kind: "shared_profile",
-      group: "All tools",
-      badge: "Match",
+      group: "Matching profiles",
       title: profile.label,
       subtitle: `Across ${matchingTools.join(", ")}`,
       searchText: `${profile.name} ${profile.label} ${matchingTools.join(" ")}`.toLowerCase(),
@@ -429,7 +405,6 @@ function buildQuickSwitchItems(settings: DesktopSettings, snapshot: AppSnapshot)
         id: `tool:${tool}:${profile.name}`,
         kind: "tool_profile",
         group: quickSwitchToolLabel(tool),
-        badge: "Tool",
         title: label,
         subtitle: `${quickSwitchToolLabel(tool)} · ${profile.name} · ${profile.auth}`,
         searchText: `${tool} ${profile.name} ${profile.auth} ${label}`.toLowerCase(),
