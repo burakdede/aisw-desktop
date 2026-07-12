@@ -654,28 +654,11 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
         });
     }
 
-    if !snapshot.contexts.is_empty() {
-        sections.push(TraySection {
-            title: "Switch Detected Set".to_owned(),
-            items: snapshot
-                .contexts
-                .iter()
-                .map(|context| TrayEntry {
-                    id: format!("context:{}", context.name),
-                    label: tray_context_entry_label(settings, snapshot, &context.name),
-                    enabled: true,
-                })
-                .collect(),
-        });
-    }
-
-    let profile_sets = settings
-        .map(|settings| profile_set_entries(settings, snapshot))
-        .unwrap_or_default();
-    if !profile_sets.is_empty() {
+    let set_entries = combined_set_entries(settings, snapshot);
+    if !set_entries.is_empty() {
         sections.push(TraySection {
             title: "Switch Set".to_owned(),
-            items: profile_sets,
+            items: set_entries,
         });
     }
 
@@ -747,6 +730,28 @@ fn profile_set_entries(settings: &DesktopSettings, snapshot: &AppSnapshot) -> Ve
             enabled: true,
         })
         .collect()
+}
+
+fn combined_set_entries(
+    settings: Option<&DesktopSettings>,
+    snapshot: &AppSnapshot,
+) -> Vec<TrayEntry> {
+    let mut entries = snapshot
+        .contexts
+        .iter()
+        .map(|context| TrayEntry {
+            id: format!("context:{}", context.name),
+            label: tray_context_entry_label(settings, snapshot, &context.name),
+            enabled: true,
+        })
+        .collect::<Vec<_>>();
+
+    if let Some(settings) = settings {
+        entries.extend(profile_set_entries(settings, snapshot));
+    }
+
+    entries.sort_by(|left, right| left.label.to_lowercase().cmp(&right.label.to_lowercase()));
+    entries
 }
 
 fn tray_diagnostics_section(snapshot: &AppSnapshot) -> TraySection {
@@ -1246,20 +1251,19 @@ mod tests {
                     }],
                 },
                 TraySection {
-                    title: "Switch Detected Set".to_owned(),
-                    items: vec![TrayEntry {
-                        id: "context:client-acme".to_owned(),
-                        label: "Client Acme ✓".to_owned(),
-                        enabled: true,
-                    }],
-                },
-                TraySection {
                     title: "Switch Set".to_owned(),
-                    items: vec![TrayEntry {
-                        id: "profile-set:personal-focus".to_owned(),
-                        label: "personal-focus".to_owned(),
-                        enabled: true,
-                    }],
+                    items: vec![
+                        TrayEntry {
+                            id: "context:client-acme".to_owned(),
+                            label: "Client Acme ✓".to_owned(),
+                            enabled: true,
+                        },
+                        TrayEntry {
+                            id: "profile-set:personal-focus".to_owned(),
+                            label: "personal-focus".to_owned(),
+                            enabled: true,
+                        },
+                    ],
                 },
                 TraySection {
                     title: "Switch Claude Code".to_owned(),
