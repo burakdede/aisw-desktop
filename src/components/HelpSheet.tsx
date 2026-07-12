@@ -31,7 +31,7 @@ export function HelpSheet({
             <p className="card-kicker">Help</p>
             <h3>Using AI Switch</h3>
             <p className="inline-note">
-              AI Switch keeps account switching local to this computer and stays focused on safe profile
+              AI Switch keeps account switching local to this computer and stays focused on safe account
               changes, verification, and recovery.
             </p>
           </div>
