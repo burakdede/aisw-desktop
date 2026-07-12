@@ -2746,6 +2746,20 @@ button {
   padding-top: 2px;
 }
 
+.workspaces-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.workspaces-summary-grid > div {
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
 .tool-card header,
 .list-row {
   display: flex;

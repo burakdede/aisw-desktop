@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getProjectBindings, getWorkspaceStatus } from "../../../lib/client";
 import { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { SectionCard } from "../../../components/SectionCard";
+import { DialogSurface } from "../../../components/DialogSurface";
 import { SplitView } from "../../../components/SplitView";
 import { contextDisplayLabel } from "../../../lib/profile-display";
 import { useDesktopActions } from "../../shared/useDesktopActions";
@@ -54,6 +55,7 @@ export function WorkspacesPanel({
   );
   const [context, setContext] = useState(bindingOptions[0]?.value ?? "");
   const [targetValue, setTargetValue] = useState("");
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [workspaceOverrideDismissed, setWorkspaceOverrideDismissed] = useState(false);
   const [selectedBindingKey, setSelectedBindingKey] = useState<string | null>(null);
   const trimmedTargetValue = targetValue.trim();
@@ -152,6 +154,10 @@ export function WorkspacesPanel({
     workspaceBindMutation.mutate({ target, context, label });
   }
 
+  function closeEditor() {
+    setIsEditorOpen(false);
+  }
+
   return (
     <SectionCard title="Project rules" kicker="Expected sets by folder or remote">
       <article className="diagnostic-card workspaces-intro-card">
@@ -190,78 +196,47 @@ export function WorkspacesPanel({
         secondaryClassName="workspaces-status-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-          <form className="stacked-form diagnostic-card workspaces-editor-card" onSubmit={submitBind}>
-            <div className="desktop-pane-section-header">
-              <div>
-                <p className="card-kicker">Editor</p>
-                <h3>Save or remove a project rule</h3>
+            <article className="diagnostic-card workspaces-editor-card">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Rule editor</p>
+                  <h3>Create or update rules in a focused sheet</h3>
+                </div>
+                <span className="pill pill-soft">
+                  {bindingOptions.length
+                    ? `${bindingOptions.length} set option${bindingOptions.length === 1 ? "" : "s"}`
+                    : "No sets available"}
+                </span>
               </div>
-              <span className="pill pill-soft">
-                {bindingOptions.length ? `${bindingOptions.length} set option${bindingOptions.length === 1 ? "" : "s"}` : "No sets available"}
-              </span>
-            </div>
-            <p className="inline-note">
-              Pick where the rule applies, then choose the set the app should expect in that project.
-            </p>
-            <div className="workspaces-editor-grid">
-            <label>
-              Rule scope
-              <select value={scope} onChange={(event) => setScope(event.target.value as BindScope)}>
-                <option value="default">Default set</option>
-                <option value="path">Path prefix</option>
-                <option value="git_remote">Git remote pattern</option>
-              </select>
-            </label>
-            {scope !== "default" ? (
-              <label>
-                {scope === "path" ? "Path" : "Git remote pattern"}
-                <input value={targetValue} onChange={(event) => setTargetValue(event.target.value)} />
-              </label>
-            ) : null}
-            <label>
-              Set
-              <select value={context} onChange={(event) => setContext(event.target.value)}>
-                <option value="">Select set</option>
-                {bindingOptions.map((entry) => (
-                  <option key={entry.value} value={entry.value}>
-                    {entry.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            </div>
-            <div className="button-row">
-              <button className="primary-button" type="submit" disabled={mutationLock.isBusy || !canSaveBinding}>
-                Save rule
-              </button>
-              <button
-                className="ghost-button"
-                type="button"
-                disabled={mutationLock.isBusy || !canRemoveBinding}
-                onClick={() =>
-                  workspaceUnbindMutation.mutate(
-                    scope === "default"
-                      ? { scope: "default" }
-                      : scope === "path"
-                        ? { scope: "path", path: trimmedTargetValue }
-                        : { scope: "git_remote", pattern: trimmedTargetValue },
-                  )
-                }
-              >
-                Remove rule
-              </button>
-            </div>
-            {!bindingOptions.length ? (
               <p className="inline-note">
-                No sets are available yet. Create one before saving a project rule.
+                Keep the current project match and saved rules visible here, then open the editor only when you need to add or change a rule.
               </p>
-            ) : null}
-            {requiresExplicitTarget && trimmedTargetValue.length === 0 ? (
-              <p className="inline-note">
-                Enter a {scope === "path" ? "path prefix" : "git remote pattern"} before saving or removing this rule.
-              </p>
-            ) : null}
-            <div className="desktop-pane-section workspace-guard-section">
+              <div className="workspaces-summary-grid">
+                <div>
+                  <span className="overview-current-set-cell-label">Default target</span>
+                  <strong>{scope === "default" ? "Default set" : scope === "path" ? "Path prefix" : "Git remote pattern"}</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Selected set</span>
+                  <strong>{context ? contextDisplayLabel(settings, context) : "Choose a set"}</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Guard mode</span>
+                  <strong>{bindingsSummary.guardMode}</strong>
+                </div>
+              </div>
+              <div className="button-row">
+                <button
+                  className="primary-button"
+                  type="button"
+                  disabled={mutationLock.isBusy}
+                  onClick={() => setIsEditorOpen(true)}
+                >
+                  Open Rule Editor
+                </button>
+              </div>
+            </article>
+            <article className="diagnostic-card workspace-guard-section">
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Guard mode</p>
@@ -290,8 +265,7 @@ export function WorkspacesPanel({
                   Block on mismatch
                 </button>
               </div>
-            </div>
-          </form>
+            </article>
           </div>
         }
         secondary={
@@ -512,6 +486,94 @@ export function WorkspacesPanel({
           </div>
         }
       />
+      {isEditorOpen ? (
+        <DialogSurface
+          ariaLabel="Rule Editor"
+          className="quick-switch-palette profile-sheet set-sheet"
+          initialFocusSelector='select:not([disabled]), input:not([disabled]), button:not([disabled])'
+          onClose={closeEditor}
+        >
+          <form className="stack-list" onSubmit={submitBind}>
+            <div className="quick-switch-header">
+              <div>
+                <p className="card-kicker">Project rule</p>
+                <h3>Save or remove a rule</h3>
+                <p className="inline-note">
+                  Pick where the rule applies, then choose the set the app should expect in that project.
+                </p>
+              </div>
+              <button className="ghost-button" type="button" onClick={closeEditor}>
+                Close
+              </button>
+            </div>
+            <div className="stacked-form diagnostics-body">
+              <div className="workspaces-editor-grid">
+                <label>
+                  Rule scope
+                  <select value={scope} onChange={(event) => setScope(event.target.value as BindScope)}>
+                    <option value="default">Default set</option>
+                    <option value="path">Path prefix</option>
+                    <option value="git_remote">Git remote pattern</option>
+                  </select>
+                </label>
+                {scope !== "default" ? (
+                  <label>
+                    {scope === "path" ? "Path" : "Git remote pattern"}
+                    <input value={targetValue} onChange={(event) => setTargetValue(event.target.value)} />
+                  </label>
+                ) : null}
+                <label>
+                  Set
+                  <select value={context} onChange={(event) => setContext(event.target.value)}>
+                    <option value="">Select set</option>
+                    {bindingOptions.map((entry) => (
+                      <option key={entry.value} value={entry.value}>
+                        {entry.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              {!bindingOptions.length ? (
+                <p className="inline-note">
+                  No sets are available yet. Create one before saving a project rule.
+                </p>
+              ) : null}
+              {requiresExplicitTarget && trimmedTargetValue.length === 0 ? (
+                <p className="inline-note">
+                  Enter a {scope === "path" ? "path prefix" : "git remote pattern"} before saving or removing this rule.
+                </p>
+              ) : null}
+            </div>
+            <footer className="quick-switch-footer">
+              <div className="button-row">
+                <button className="ghost-button" type="button" onClick={closeEditor}>
+                  Cancel
+                </button>
+                <button className="primary-button" type="submit" disabled={mutationLock.isBusy || !canSaveBinding}>
+                  Save rule
+                </button>
+                <button
+                  className="ghost-button"
+                  type="button"
+                  disabled={mutationLock.isBusy || !canRemoveBinding}
+                  onClick={() =>
+                    workspaceUnbindMutation.mutate(
+                      scope === "default"
+                        ? { scope: "default" }
+                        : scope === "path"
+                          ? { scope: "path", path: trimmedTargetValue }
+                          : { scope: "git_remote", pattern: trimmedTargetValue },
+                    )
+                  }
+                >
+                  Remove rule
+                </button>
+              </div>
+            </footer>
+          </form>
+        </DialogSurface>
+      ) : null}
     </SectionCard>
   );
 }

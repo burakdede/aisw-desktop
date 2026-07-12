@@ -4110,6 +4110,7 @@ describe("App", () => {
       expect(screen.queryByText("Project mismatch")).not.toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole("button", { name: "Open Rule Editor" }));
     fireEvent.change(screen.getByLabelText("Rule scope"), {
       target: { value: "path" },
     });
@@ -4125,6 +4126,7 @@ describe("App", () => {
       expect(calls.some((entry) => entry.command === "workspace_bind")).toBe(true);
     });
     expect(screen.getByText("Last project-rule result: Saved project rule for Client Acme.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open Rule Editor" }));
     expect(screen.getByRole("option", { name: "Saved set: Client Acme" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Remove this rule"));
@@ -4625,6 +4627,7 @@ describe("App", () => {
     await renderApp();
     await openProjectRulesSection();
 
+    fireEvent.click(screen.getByRole("button", { name: "Open Rule Editor" }));
     expect(screen.getByRole("option", { name: "Saved set: Client Acme" })).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: "Detected set: client-acme" })).not.toBeInTheDocument();
   });
@@ -4662,6 +4665,7 @@ describe("App", () => {
     await renderApp();
     await openProjectRulesSection();
 
+    fireEvent.click(screen.getByRole("button", { name: "Open Rule Editor" }));
     expect(
       screen.getByText(
         "No sets are available yet. Create one before saving a project rule.",
@@ -7119,6 +7123,7 @@ describe("App", () => {
 
     await openProjectRulesSection();
     expect(screen.queryByRole("option", { name: "Set: Empty Set" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open Rule Editor" }));
     expect(screen.getByRole("option", { name: "Saved set: Client Acme" })).toBeInTheDocument();
 
     await openSetsSection();
