@@ -48,16 +48,25 @@ export function AppFrame({
           <aside className="sidebar">
             <div className="sidebar-scroll">
               <div className="sidebar-brand">
+                <div className="sidebar-brand-topline">
+                  <p className="eyebrow">Mac utility</p>
+                  <span className="sidebar-window-badge">Native shell</span>
+                </div>
                 <div className="brand-lockup">
-                  <BrandMark />
+                  <BrandMark size={30} />
                   <div className="sidebar-brand-copy">
-                    <p className="eyebrow">Desktop utility</p>
                     <h1 className="sidebar-title">AI Switch</h1>
+                    <p className="sidebar-meta-copy">Fast local profile switching for coding tools</p>
                   </div>
                 </div>
                 <div className="sidebar-meta" aria-label="App scope">
                   <span className="sidebar-meta-badge">Local profile switching</span>
                   <span className="sidebar-meta-copy">Claude Code, Codex CLI, Gemini CLI</span>
+                </div>
+                <div className="sidebar-brand-signals" aria-hidden="true">
+                  <span className="status-pill">Accounts</span>
+                  <span className="status-pill">Shared switching</span>
+                  <span className="status-pill">Recovery</span>
                 </div>
                 {subtitle ? <p className="sidebar-copy">{subtitle}</p> : null}
               </div>
@@ -95,11 +104,13 @@ export function AppFrame({
         )}
         <div className={cn("content-shell", mode === "setup" && "content-shell-setup")}>
           <header className="window-toolbar">
-            <div className="window-toolbar-meta">
-              <p className="window-toolbar-kicker">{mode === "setup" ? "Welcome" : "AI Switch"}</p>
-              <div className="window-toolbar-copy">
-                <h2>{title}</h2>
-                {detail ? <p className="window-toolbar-subtitle">{detail}</p> : null}
+            <div className="window-toolbar-leading" data-tauri-drag-region>
+              <div className="window-toolbar-meta">
+                <p className="window-toolbar-kicker">{mode === "setup" ? "Welcome" : "AI Switch"}</p>
+                <div className="window-toolbar-copy">
+                  <h2>{title}</h2>
+                  {detail ? <p className="window-toolbar-subtitle">{detail}</p> : null}
+                </div>
               </div>
             </div>
             {toolbar ? <div className="window-toolbar-actions toolbar-cluster">{toolbar}</div> : null}
