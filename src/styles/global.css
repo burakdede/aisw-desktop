@@ -2679,6 +2679,41 @@ button {
   margin-top: 14px;
 }
 
+.diagnostics-intro-card {
+  display: grid;
+  gap: 14px;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, Canvas 95%, AccentColor 3%), color-mix(in srgb, Canvas 98%, CanvasText 2%));
+}
+
+.diagnostics-intro-copy {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.diagnostics-intro-copy p {
+  margin: 4px 0 0;
+  max-width: 54ch;
+}
+
+.diagnostics-intro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.diagnostics-intro-grid > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
 .diagnostics-overview {
   display: grid;
   gap: 8px;
@@ -2707,9 +2742,16 @@ button {
 .diagnostics-findings-card,
 .diagnostics-recovery-panel,
 .diagnostics-check-card,
+.diagnostics-details-card,
 .diagnostics-overview-card,
 .diagnostics-inspector-card,
 .diagnostics-inspector-section {
+  display: grid;
+  gap: 10px;
+}
+
+.diagnostics-details-section,
+.diagnostics-sidebar-section {
   display: grid;
   gap: 10px;
 }
@@ -3488,6 +3530,7 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .diagnostics-intro-grid,
   .diagnostics-overview-meta,
   .diagnostics-check-summary {
     grid-template-columns: 1fr;
@@ -3520,6 +3563,7 @@ button {
 
   .settings-overview-copy,
   .settings-kv-row,
+  .diagnostics-intro-copy,
   .settings-intro-copy {
     display: grid;
     grid-template-columns: 1fr;
@@ -3559,6 +3603,10 @@ button {
 
   .profiles-library-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .diagnostics-intro-grid {
+    grid-template-columns: 1fr;
   }
 
   .profiles-tool-focus-main {

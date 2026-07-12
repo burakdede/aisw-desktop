@@ -238,140 +238,146 @@ export function DiagnosticsPanel({
         </article>
       ) : null}
 
+      <article className={`diagnostic-card diagnostics-intro-card ${totalIssues ? "diagnostic-warn" : "diagnostic-pass"}`}>
+        <div className="diagnostics-intro-copy">
+          <div>
+            <p className="card-kicker">Health</p>
+            <h3>{totalIssues ? `${totalIssues} issue${totalIssues === 1 ? "" : "s"} found` : "Everything looks good"}</h3>
+            <p className="inline-note">
+              Diagnostics explains profile drift, installation gaps, and safe recovery in one calm workspace.
+            </p>
+          </div>
+          <span className={`pill ${totalIssues ? "pill-warn" : "pill-ok"}`}>
+            {repairActions.length ? `${repairActions.length} repairs queued` : "Recovery ready"}
+          </span>
+        </div>
+        <div className="diagnostics-intro-grid">
+          <div>
+            <span className="overview-current-set-cell-label">Checks</span>
+            <strong>{checkRows.length} monitored</strong>
+          </div>
+          <div>
+            <span className="overview-current-set-cell-label">Recovery</span>
+            <strong>{repairActions.length ? `${repairActions.length} safe repair${repairActions.length === 1 ? "" : "s"}` : "No repairs queued"}</strong>
+          </div>
+          <div>
+            <span className="overview-current-set-cell-label">Highlights</span>
+            <strong>{diagnosticPills.join(" · ") || "Quick actions"}</strong>
+          </div>
+        </div>
+        {summaryHighlights.length ? (
+          <div className="stack-list diagnostics-overview-list">
+            {summaryHighlights.map((line) => (
+              <p key={line} className="inline-note">{line}</p>
+            ))}
+          </div>
+        ) : (
+          <p className="inline-note">
+            Active profiles, local storage, and repair checks are currently passing.
+          </p>
+        )}
+        <div className="diagnostics-check-summary">
+          {summaryCards.map((card) => (
+            <div key={card.title} className={`diagnostics-check-summary-cell diagnostic-${card.status}`}>
+              <strong>{card.title}</strong>
+              <span className={`pill ${card.status === "pass" ? "pill-ok" : "pill-warn"}`}>
+                {card.status}
+              </span>
+              <p className="inline-note">{card.lines[0]}</p>
+            </div>
+          ))}
+        </div>
+      </article>
+
       <SplitView
         className="diagnostics-layout diagnostics-body"
         primaryClassName="diagnostics-checks-pane"
         secondaryClassName="diagnostics-recovery-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-            <article className={`diagnostic-card diagnostics-overview-card ${totalIssues ? "diagnostic-warn" : "diagnostic-pass"}`}>
-              <div className="desktop-pane-section-header">
-                <div>
-                  <p className="card-kicker">Health</p>
-                  <h3>{totalIssues ? `${totalIssues} issue${totalIssues === 1 ? "" : "s"} found` : "System looks healthy"}</h3>
-                </div>
-                <span className={`pill ${totalIssues ? "pill-warn" : "pill-ok"}`}>
-                  {repairActions.length ? `${repairActions.length} repairs queued` : "Recovery ready"}
-                </span>
-              </div>
-              <p className="inline-note">
-                Health checks, live matching, and repair stay in one recovery surface so switching issues
-                use one consistent flow.
-              </p>
-              <div className="diagnostics-overview-meta">
-                <div>
-                  <span className="overview-current-set-cell-label">Checks</span>
-                  <strong>{checkRows.length} monitored</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Recovery</span>
-                  <strong>{repairActions.length ? `${repairActions.length} safe repair${repairActions.length === 1 ? "" : "s"}` : "No repairs queued"}</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Highlights</span>
-                  <strong>{diagnosticPills.join(" · ") || "Quick actions"}</strong>
-                </div>
-              </div>
-              {summaryHighlights.length ? (
-                <div className="stack-list diagnostics-overview-list">
-                  {summaryHighlights.map((line) => (
-                    <p key={line} className="inline-note">{line}</p>
-                  ))}
-                </div>
-              ) : (
-                <p className="inline-note">
-                  Active profiles, local storage, and repair checks are currently passing.
-                </p>
-              )}
-              <div className="diagnostics-check-summary">
-                {summaryCards.map((card) => (
-                  <div key={card.title} className={`diagnostics-check-summary-cell diagnostic-${card.status}`}>
-                    <strong>{card.title}</strong>
-                    <span className={`pill ${card.status === "pass" ? "pill-ok" : "pill-warn"}`}>
-                      {card.status}
-                    </span>
-                    <p className="inline-note">{card.lines[0]}</p>
-                  </div>
-                ))}
-              </div>
-            </article>
-            <article className={`diagnostic-card diagnostics-check-card ${totalIssues ? "diagnostic-warn" : "diagnostic-pass"}`}>
+            <article className={`diagnostic-card diagnostics-details-card ${totalIssues ? "diagnostic-warn" : "diagnostic-pass"}`}>
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Checks</p>
-                  <h3>Monitored checks</h3>
-                </div>
-                <p className="inline-note">
-                  Review the current check output before moving to individual findings or recovery actions.
-                </p>
-              </div>
-              <div className="diagnostics-check-list" aria-label="Diagnostics checks">
-                {checkRows.map((row) => (
-                  <div key={row.label} className="diagnostics-check-row">
-                    <span
-                      className={`diagnostics-check-indicator diagnostics-check-indicator-${row.status}`}
-                      aria-hidden="true"
-                    >
-                      {row.status === "pass" ? "✓" : row.status === "warn" ? "▲" : "●"}
-                    </span>
-                    <div className="diagnostics-check-copy">
-                      <strong>{row.label}</strong>
-                      <p className="inline-note">{row.detail}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </article>
-            <article className="diagnostic-card diagnostics-findings-card">
-              <div className="desktop-pane-section-header">
-                <div>
-                  <p className="card-kicker">Findings</p>
                   <h3>Checks and details</h3>
                 </div>
-                <span className={`pill ${findings.length ? "pill-warn" : "pill-ok"}`}>
-                  {findings.length ? `${findings.length} item${findings.length === 1 ? "" : "s"}` : "Clear"}
-                </span>
+                <p className="inline-note">
+                  Review the current check output and then inspect the findings that need a response.
+                </p>
               </div>
-              <p className="inline-note">
-                Select a finding to inspect the failing details before you apply a recovery action.
-              </p>
-              {findings.length ? (
-                <div className="stack-list desktop-list-stack">
-                  {findings.map((finding) => (
-                    <button
-                      key={finding.key}
-                      type="button"
-                      aria-label={`Inspect ${finding.title}`}
-                      aria-pressed={selectedFinding?.key === finding.key}
-                      className={`list-row diagnostic-finding-row ${
-                        selectedFinding?.key === finding.key ? "diagnostic-finding-row-selected" : ""
-                      }`}
-                      onClick={() => setSelectedFindingKey(finding.key)}
-                    >
-                      <div className="diagnostic-finding-main">
-                        <div className="diagnostic-finding-title">
-                          <strong>{finding.title}</strong>
-                          <span className={`pill ${finding.status === "fail" ? "pill-warn" : "pill-soft"}`}>
-                            {finding.countLabel}
-                          </span>
-                        </div>
-                        <p className="inline-note">{finding.preview}</p>
-                      </div>
-                      <div className="diagnostic-finding-meta">
-                        <span>{finding.scopeLabel}</span>
-                      </div>
-                      <span className="diagnostic-finding-chevron" aria-hidden="true">
-                        ›
+              <div className="diagnostics-details-section">
+                <div>
+                  <p className="card-kicker">Checks</p>
+                  <h4>Monitored checks</h4>
+                </div>
+                <div className="diagnostics-check-list" aria-label="Diagnostics checks">
+                  {checkRows.map((row) => (
+                    <div key={row.label} className="diagnostics-check-row">
+                      <span
+                        className={`diagnostics-check-indicator diagnostics-check-indicator-${row.status}`}
+                        aria-hidden="true"
+                      >
+                        {row.status === "pass" ? "✓" : row.status === "warn" ? "▲" : "●"}
                       </span>
-                    </button>
+                      <div className="diagnostics-check-copy">
+                        <strong>{row.label}</strong>
+                        <p className="inline-note">{row.detail}</p>
+                      </div>
+                    </div>
                   ))}
                 </div>
-              ) : (
-                <div className="diagnostic-card diagnostic-pass diagnostics-empty-card">
-                  <h3>Everything looks good</h3>
-                  <p className="inline-note">All configured tools match their active desktop profiles.</p>
+              </div>
+              <div className="diagnostics-details-section">
+                <div className="desktop-pane-section-header diagnostics-subsection-header">
+                  <div>
+                    <p className="card-kicker">Findings</p>
+                    <h4>Items that need review</h4>
+                  </div>
+                  <span className={`pill ${findings.length ? "pill-warn" : "pill-ok"}`}>
+                    {findings.length ? `${findings.length} item${findings.length === 1 ? "" : "s"}` : "Clear"}
+                  </span>
                 </div>
-              )}
+                <p className="inline-note">
+                  Select a finding to inspect the failing details before you apply a recovery action.
+                </p>
+                {findings.length ? (
+                  <div className="stack-list desktop-list-stack">
+                    {findings.map((finding) => (
+                      <button
+                        key={finding.key}
+                        type="button"
+                        aria-label={`Inspect ${finding.title}`}
+                        aria-pressed={selectedFinding?.key === finding.key}
+                        className={`list-row diagnostic-finding-row ${
+                          selectedFinding?.key === finding.key ? "diagnostic-finding-row-selected" : ""
+                        }`}
+                        onClick={() => setSelectedFindingKey(finding.key)}
+                      >
+                        <div className="diagnostic-finding-main">
+                          <div className="diagnostic-finding-title">
+                            <strong>{finding.title}</strong>
+                            <span className={`pill ${finding.status === "fail" ? "pill-warn" : "pill-soft"}`}>
+                              {finding.countLabel}
+                            </span>
+                          </div>
+                          <p className="inline-note">{finding.preview}</p>
+                        </div>
+                        <div className="diagnostic-finding-meta">
+                          <span>{finding.scopeLabel}</span>
+                        </div>
+                        <span className="diagnostic-finding-chevron" aria-hidden="true">
+                          ›
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="diagnostic-card diagnostic-pass diagnostics-empty-card">
+                    <h3>Everything looks good</h3>
+                    <p className="inline-note">All configured tools match their active desktop profiles.</p>
+                  </div>
+                )}
+              </div>
             </article>
           </div>
         }
@@ -556,60 +562,59 @@ export function DiagnosticsPanel({
                   <p className="inline-note">No direct recovery actions are available from the current diagnostics state.</p>
                 ) : null}
               </div>
-            </article>
-            <article className="diagnostic-card diagnostics-repair-plan-card">
-              <div className="desktop-pane-section-header diagnostics-subsection-header">
-                <div>
-                  <p className="card-kicker">Repair plan</p>
-                  <h3>Safe automatic repairs</h3>
+              <div className="diagnostics-sidebar-section">
+                <div className="desktop-pane-section-header diagnostics-subsection-header">
+                  <div>
+                    <p className="card-kicker">Repair plan</p>
+                    <h4>Safe automatic repairs</h4>
+                  </div>
+                  <p className="inline-note">
+                    Review the planned safe repairs before applying them.
+                  </p>
                 </div>
-                <p className="inline-note">
-                  Review the planned safe repairs before applying them.
-                </p>
-              </div>
-              <div className="stack-list">
-                {repairActions.map((action) => (
-                  <article key={`${action.title}-${action.detail}`} className="diagnostic-card">
-                    <h4>{action.title}</h4>
-                    <p className="inline-note">{action.detail}</p>
-                    <p className="diagnostic-status">{action.status}</p>
-                  </article>
-                ))}
-                {!repairActions.length ? (
-                  <p className="inline-note">No safe automatic repairs are currently planned.</p>
-                ) : null}
-              </div>
-            </article>
-
-            <article className="diagnostic-card diagnostics-history-card">
-              <div className="desktop-pane-section-header diagnostics-subsection-header">
-                <div>
-                  <p className="card-kicker">History</p>
-                  <h3>Recent problems</h3>
+                <div className="stack-list">
+                  {repairActions.map((action) => (
+                    <article key={`${action.title}-${action.detail}`} className="diagnostic-card">
+                      <h4>{action.title}</h4>
+                      <p className="inline-note">{action.detail}</p>
+                      <p className="diagnostic-status">{action.status}</p>
+                    </article>
+                  ))}
+                  {!repairActions.length ? (
+                    <p className="inline-note">No safe automatic repairs are currently planned.</p>
+                  ) : null}
                 </div>
               </div>
-              <div className="stack-list">
-                {recentFailures.map((failure) => (
-                  <article key={failure.key} className="diagnostic-card diagnostic-fail">
-                    <h4>{failure.title}</h4>
-                    <p className="inline-note">{failure.message}</p>
-                    {failure.remediation ? <p className="inline-note">{failure.remediation}</p> : null}
-                    {failure.profileTarget ? (
-                      <div className="button-row">
-                        <button
-                          className="ghost-button"
-                          type="button"
-                          onClick={() => onOpenProfiles(failure.profileTarget!.tool, failure.profileTarget!.profile)}
-                        >
-                          Open profile
-                        </button>
-                      </div>
-                    ) : null}
-                  </article>
-                ))}
-                {!recentFailures.length ? (
-                  <p className="inline-note">No recent command failures are recorded in this session.</p>
-                ) : null}
+              <div className="diagnostics-sidebar-section">
+                <div className="desktop-pane-section-header diagnostics-subsection-header">
+                  <div>
+                    <p className="card-kicker">History</p>
+                    <h4>Recent problems</h4>
+                  </div>
+                </div>
+                <div className="stack-list">
+                  {recentFailures.map((failure) => (
+                    <article key={failure.key} className="diagnostic-card diagnostic-fail">
+                      <h4>{failure.title}</h4>
+                      <p className="inline-note">{failure.message}</p>
+                      {failure.remediation ? <p className="inline-note">{failure.remediation}</p> : null}
+                      {failure.profileTarget ? (
+                        <div className="button-row">
+                          <button
+                            className="ghost-button"
+                            type="button"
+                            onClick={() => onOpenProfiles(failure.profileTarget!.tool, failure.profileTarget!.profile)}
+                          >
+                            Open profile
+                          </button>
+                        </div>
+                      ) : null}
+                    </article>
+                  ))}
+                  {!recentFailures.length ? (
+                    <p className="inline-note">No recent command failures are recorded in this session.</p>
+                  ) : null}
+                </div>
               </div>
             </article>
           </div>
