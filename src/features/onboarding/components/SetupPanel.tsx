@@ -7,6 +7,7 @@ import { SplitView } from "../../../components/SplitView";
 import { getShellGuidance, runDoctor, updateSettings } from "../../../lib/client";
 import { sharedProfileEntries } from "../../../lib/profile-display";
 import { AppBootstrap, AppSnapshot, InitReport } from "../../../lib/schemas";
+import { toolDisplayName } from "../../../lib/tool-display";
 import { titleCase } from "../../../lib/utils";
 import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import { normalizeTerminalIntegrationText } from "../../shared/terminal-integration-language";
@@ -27,7 +28,6 @@ import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { invalidatePostMutationQueries } from "../../shared/postMutationRefresh";
 import type { SettingsSection } from "../../settings/components/SettingsPanel";
 import type { ProfileImportMode } from "../../shared/profile-capabilities";
-import { toolDisplayName } from "../../../lib/tool-display";
 
 type LiveAccount = {
   tool: string;
@@ -538,8 +538,7 @@ export function SetupPanel({
                             {accountItems.map((item) => {
                               const tool =
                                 item.kind === "live" ? item.account.tool : item.status.tool;
-                              const title =
-                                titleCase(tool);
+                              const title = toolDisplayName(tool);
                               const summary =
                                 item.kind === "live"
                                   ? `${item.account.outcome ?? "unknown"} · ${item.account.auth_method ?? "unknown"}${item.account.matched_profile ? ` · matches ${item.account.matched_profile}` : ""}`
@@ -598,7 +597,7 @@ export function SetupPanel({
                                 <div className="desktop-pane-section-header">
                                   <div>
                                     <p className="card-kicker">Detected login</p>
-                                    <h3>{titleCase(selectedAccountItem.account.tool)}</h3>
+                                    <h3>{toolDisplayName(selectedAccountItem.account.tool)}</h3>
                                   </div>
                                   <span className="pill pill-ok">Ready to import</span>
                                 </div>
@@ -618,12 +617,12 @@ export function SetupPanel({
                                 </div>
                                 {!supportsProfileImportMode(selectedAccountItem.account.tool, toolCapabilities, "from_live") ? (
                                   <p className="inline-note">
-                                    This release cannot save the current {titleCase(selectedAccountItem.account.tool)} login directly.
+                                    This release cannot save the current {toolDisplayName(selectedAccountItem.account.tool)} login directly.
                                     Choose another sign-in method instead.
                                   </p>
                                 ) : (
                                   <p className="inline-note">
-                                    Save the current {titleCase(selectedAccountItem.account.tool)} login as a reusable profile in a
+                                    Save the current {toolDisplayName(selectedAccountItem.account.tool)} login as a reusable profile in a
                                     focused setup sheet.
                                   </p>
                                 )}
@@ -660,7 +659,7 @@ export function SetupPanel({
                                 <div className="desktop-pane-section-header">
                                   <div>
                                     <p className="card-kicker">Saved profile needed</p>
-                                    <h3>{titleCase(selectedAccountItem.status.tool)}</h3>
+                                    <h3>{toolDisplayName(selectedAccountItem.status.tool)}</h3>
                                   </div>
                                   <span className="pill pill-soft">Needs profile</span>
                                 </div>
@@ -675,7 +674,7 @@ export function SetupPanel({
                                   </div>
                                 </div>
                                 <p className="inline-note">
-                                  Add one reusable {titleCase(selectedAccountItem.status.tool)} profile so this computer can switch that tool safely later.
+                                  Add one reusable {toolDisplayName(selectedAccountItem.status.tool)} profile so this computer can switch that tool safely later.
                                 </p>
                                 <div className="button-row">
                                   <button
@@ -696,7 +695,7 @@ export function SetupPanel({
                                 <div className="desktop-pane-section-header">
                                   <div>
                                     <p className="card-kicker">Optional tool</p>
-                                    <h3>{titleCase(selectedAccountItem.status.tool)} is not installed</h3>
+                                    <h3>{toolDisplayName(selectedAccountItem.status.tool)} is not installed</h3>
                                   </div>
                                   <span className="pill pill-soft">Not installed</span>
                                 </div>
@@ -711,7 +710,7 @@ export function SetupPanel({
                                   </div>
                                 </div>
                                 <p className="inline-note">
-                                  You can finish setup without {titleCase(selectedAccountItem.status.tool)}. Install the{" "}
+                                  You can finish setup without {toolDisplayName(selectedAccountItem.status.tool)}. Install the{" "}
                                   <code>{toolBinaryName(selectedAccountItem.status.tool)}</code> tool later when you want to manage that provider here.
                                 </p>
                                 <div className="button-row">
@@ -833,7 +832,7 @@ export function SetupPanel({
       />
       {pendingLiveImport ? (
         <DialogSurface
-          ariaLabel={`Import ${titleCase(pendingLiveImport.tool)} Profile`}
+          ariaLabel={`Import ${toolDisplayName(pendingLiveImport.tool)} Profile`}
           className="quick-switch-palette profile-sheet"
           initialFocusSelector="input:not([disabled]), button:not([disabled])"
           onClose={closeLiveImport}
@@ -841,14 +840,14 @@ export function SetupPanel({
             <div className="quick-switch-header">
               <div>
                 <p className="card-kicker">Import current account</p>
-                <h3>Import {titleCase(pendingLiveImport.tool)} profile</h3>
+                <h3>Import {toolDisplayName(pendingLiveImport.tool)} profile</h3>
               </div>
               <button className="ghost-button" type="button" onClick={closeLiveImport}>
                 Close
               </button>
             </div>
             <p className="inline-note">
-              Save the account that {titleCase(pendingLiveImport.tool)} is already using as a
+              Save the account that {toolDisplayName(pendingLiveImport.tool)} is already using as a
               reusable profile. This imported profile becomes the active saved account for this tool.
             </p>
             <form className="stacked-form" onSubmit={(event) => submitImport(event, pendingLiveImport.tool)}>
@@ -970,11 +969,11 @@ function buildHealthItems(
 
   snapshot.statuses.forEach((status) => {
     items.push({
-      label: `${titleCase(status.tool)} availability`,
+      label: `${toolDisplayName(status.tool)} availability`,
       status: status.binary_found ? "pass" : "fail",
       detail: status.binary_found
-        ? `${titleCase(status.tool)} detected${status.active_profile ? ` · active ${status.active_profile}` : ""}.`
-        : `${titleCase(status.tool)} binary was not detected on PATH or in live state.`,
+        ? `${toolDisplayName(status.tool)} detected${status.active_profile ? ` · active ${status.active_profile}` : ""}.`
+        : `${toolDisplayName(status.tool)} binary was not detected on PATH or in live state.`,
     });
   });
 

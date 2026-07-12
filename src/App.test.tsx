@@ -243,7 +243,7 @@ function getAddProfileDialog() {
   return within(screen.getByRole("dialog", { name: "Add Profile" }));
 }
 
-function getOnboardingImportDialog(tool = "Claude") {
+function getOnboardingImportDialog(tool = "Claude Code") {
   return within(screen.getByRole("dialog", { name: `Import ${tool} Profile` }));
 }
 
@@ -2579,7 +2579,7 @@ describe("App", () => {
 
     expect(
       screen.getByText(
-        "This release cannot save the current Claude login directly. Choose another sign-in method instead.",
+        "This release cannot save the current Claude Code login directly. Choose another sign-in method instead.",
       ),
     ).toBeInTheDocument();
 
@@ -5655,12 +5655,12 @@ describe("App", () => {
       throw new Error("Missing onboarding section.");
     }
     const setup = within(setupSection);
-    expect(setup.getByText("Gemini is not installed")).toBeInTheDocument();
+    expect(setup.getByText("Gemini CLI is not installed")).toBeInTheDocument();
     expect(setup.getByText("Optional for now")).toBeInTheDocument();
     expect(
       setup.getByText((_, element) =>
         element?.textContent?.trim() ===
-        "You can finish setup without Gemini. Install the gemini tool later when you want to manage that provider here.",
+        "You can finish setup without Gemini CLI. Install the gemini tool later when you want to manage that provider here.",
       ),
     ).toBeInTheDocument();
 
