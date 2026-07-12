@@ -116,7 +116,7 @@ export function AppFrame({
                   <BrandMark size={28} />
                   <div className="sidebar-brand-copy">
                     <h1 className="sidebar-title">AI Switch</h1>
-                    <p className="sidebar-title-caption">Local profile switching utility</p>
+                    <p className="sidebar-title-caption">Local coding-agent control center</p>
                   </div>
                 </div>
                 <div className="sidebar-meta" aria-label="App status">

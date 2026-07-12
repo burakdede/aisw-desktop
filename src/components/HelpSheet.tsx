@@ -45,11 +45,11 @@ export function HelpSheet({
             <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">What it does</p>
-                <h4>Local profile switching</h4>
+                <h4>Local account switching</h4>
               </div>
             </div>
             <p className="inline-note">
-              Switch Claude Code, Codex CLI, and Gemini CLI profiles from one app.
+              Switch Claude Code, Codex CLI, and Gemini CLI identities from one app.
             </p>
             <p className="inline-note">Credentials stay on this computer.</p>
             <p className="inline-note">No telemetry, prompt logging, or traffic proxy is used.</p>

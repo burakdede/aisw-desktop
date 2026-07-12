@@ -822,7 +822,7 @@ export function App() {
       title={
         runtimeRecoveryFocused ? "Finish Setup" : sectionTitle(activeSection, setupFocused)
       }
-      subtitle="Switch Claude Code, Codex CLI, and Gemini CLI profiles from one focused app."
+      subtitle="Manage Claude Code, Codex CLI, and Gemini CLI identities locally."
       detail={
         runtimeRecoveryFocused
           ? "AI Switch can continue as soon as it switches back to the included desktop engine."
