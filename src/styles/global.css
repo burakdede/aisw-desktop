@@ -1186,6 +1186,25 @@ button {
   gap: 12px;
 }
 
+.onboarding-step-footer-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 14px;
+}
+
+.onboarding-step-footer-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.onboarding-step-footer-actions {
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
 .desktop-pane-stack {
   gap: 12px;
 }
@@ -3940,6 +3959,19 @@ button {
 
   .onboarding-overview-meta {
     grid-template-columns: 1fr;
+  }
+
+  .onboarding-step-footer-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .onboarding-step-footer-actions {
+    justify-content: stretch;
+  }
+
+  .onboarding-step-footer-actions > * {
+    flex: 1 1 0;
   }
 
   .set-library-meta {

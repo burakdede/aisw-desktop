@@ -7931,11 +7931,35 @@ describe("App", () => {
       await mutation;
     });
 
-    await waitFor(() => {
+  await waitFor(() => {
       expect(calls).toContain("run_doctor");
       expect(calls).toContain("get_shell_guidance");
       expect(screen.getByText("Refresh Setup")).toBeInTheDocument();
     });
+  });
+
+  it("guides onboarding with step footer navigation", async () => {
+    await renderSetupPanel({
+      initReport: {
+        result: {
+          live_accounts: [{ tool: "claude", outcome: "detected", auth_method: "oauth" }],
+        },
+      },
+    });
+
+    expect(screen.getByText("Step 2 of 4")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue to First switch" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Continue to First switch" }));
+
+    expect(screen.getByText("Step 3 of 4")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Try one safe switch" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+
+    expect(screen.getByText("Step 2 of 4")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Detected tools" })).toBeInTheDocument();
   });
 
   it("shows cross-platform keyring setup guidance in settings", async () => {

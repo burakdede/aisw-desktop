@@ -242,6 +242,12 @@ export function SetupPanel({
     { value: "switch", label: "First switch" },
     { value: "terminal", label: "Terminal" },
   ] satisfies Array<{ value: SetupStep; label: string }>;
+  const activeStepIndex = setupSteps.findIndex((step) => step.value === activeStep);
+  const previousStep = activeStepIndex > 0 ? setupSteps[activeStepIndex - 1] : null;
+  const nextStep =
+    activeStepIndex >= 0 && activeStepIndex < setupSteps.length - 1
+      ? setupSteps[activeStepIndex + 1]
+      : null;
   const needsAttentionCount =
     liveAccounts.length + installedToolsNeedingProfile.length + missingTools.length;
   const switchReady = switchableProfiles.length > 0;
@@ -827,6 +833,44 @@ export function SetupPanel({
                 </div>
               </article>
             ) : null}
+
+            <article className="diagnostic-card onboarding-step-footer-card">
+              <div className="onboarding-step-footer-copy">
+                <p className="card-kicker">
+                  Step {activeStepIndex + 1} of {setupSteps.length}
+                </p>
+                <h3>{setupStepFooterTitle(activeStep)}</h3>
+                <p className="inline-note">{setupStepFooterNote(activeStep, switchReady)}</p>
+              </div>
+              <div className="button-row onboarding-step-footer-actions">
+                {previousStep ? (
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    onClick={() => setActiveStep(previousStep.value)}
+                  >
+                    Back
+                  </button>
+                ) : null}
+                {nextStep ? (
+                  <button
+                    className="primary-button"
+                    type="button"
+                    onClick={() => setActiveStep(nextStep.value)}
+                  >
+                    Continue to {nextStep.label}
+                  </button>
+                ) : forcedOpen ? (
+                  <button
+                    className="primary-button"
+                    type="button"
+                    onClick={onCloseSetup}
+                  >
+                    Close setup
+                  </button>
+                ) : null}
+              </div>
+            </article>
           </div>
         }
       />
@@ -925,6 +969,34 @@ function setupStepSummary(step: SetupStep) {
       return "Run one safe shared switch before you start coding.";
     case "terminal":
       return "Optional setup for already-open terminal sessions.";
+  }
+}
+
+function setupStepFooterTitle(step: SetupStep) {
+  switch (step) {
+    case "runtime":
+      return "Confirm the included runtime";
+    case "accounts":
+      return "Save at least one reusable account";
+    case "switch":
+      return "Run a safe first switch";
+    case "terminal":
+      return "Leave terminal integration for later unless you need it";
+  }
+}
+
+function setupStepFooterNote(step: SetupStep, switchReady: boolean) {
+  switch (step) {
+    case "runtime":
+      return "Use the included runtime unless you intentionally want to point AI Switch at another managed installation.";
+    case "accounts":
+      return "Imported current logins and saved profiles are what make safe switching possible later.";
+    case "switch":
+      return switchReady
+        ? "Re-apply one shared profile once so you know switching works before you start coding."
+        : "You can continue, but you will need a shared profile name before the first switch can succeed.";
+    case "terminal":
+      return "The app already updates local credential files directly. Shell integration is only for already-open terminal sessions.";
   }
 }
 
