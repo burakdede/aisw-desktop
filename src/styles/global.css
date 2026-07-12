@@ -2571,6 +2571,26 @@ button {
   gap: 8px;
 }
 
+.overview-tool-status-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.overview-tool-status-cell {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
+.overview-tool-status-cell strong {
+  font-size: 13px;
+  line-height: 1.3;
+}
+
 .overview-tool-card-ok {
   border-color: color-mix(in srgb, var(--ok) 24%, var(--separator));
 }
@@ -2712,13 +2732,16 @@ button {
 .overview-tool-facts {
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px 8px;
 }
 
 .overview-tool-facts div {
   display: grid;
   gap: 2px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, CanvasText 2.5%, Canvas 97.5%);
 }
 
 .overview-tool-facts dt {
@@ -2760,6 +2783,10 @@ button {
 
 .overview-tool-actions {
   padding-top: 2px;
+}
+
+.overview-tool-actions-primary {
+  padding-top: 0;
 }
 
 .workspaces-summary-grid {

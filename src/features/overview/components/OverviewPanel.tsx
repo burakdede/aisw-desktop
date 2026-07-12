@@ -514,6 +514,14 @@ function ToolInspector({
   const supportsLiveImport = supportsProfileImportMode(status.tool, toolCapabilities, "from_live");
   const liveMatchLabel =
     activeState === null || activeState === undefined ? "Unknown" : activeState ? "Yes" : "Drifted";
+  const liveMatchSummary =
+    activeState === false
+      ? "Live credentials changed outside AI Switch."
+      : activeState
+        ? "Live credentials match the active profile."
+        : status.active_profile
+          ? "Live credentials have not been verified yet."
+          : "Save a profile before switching this tool.";
   const toolSummaryCopy = status.active_profile
     ? `${toolDisplayName(status.tool)} is using ${activeProfileLabel}. Keep live match green before you start coding.`
     : `Add a saved profile for ${toolDisplayName(status.tool)} before switching from AI Switch.`;
@@ -569,29 +577,66 @@ function ToolInspector({
         </div>
       </header>
       <div className="overview-tool-lead">
+        <div className="overview-tool-status-strip" aria-label={`${toolDisplayName(status.tool)} facts`}>
+          <div className="overview-tool-status-cell">
+            <span className="overview-current-set-cell-label">Active</span>
+            <strong>{activeProfileLabel ?? "Not configured"}</strong>
+          </div>
+          <div className="overview-tool-status-cell">
+            <span className="overview-current-set-cell-label">Live match</span>
+            <strong>{liveMatchLabel}</strong>
+          </div>
+          <div className="overview-tool-status-cell">
+            <span className="overview-current-set-cell-label">Backend</span>
+            <strong>{credentialBackendLabel(status.credential_backend)}</strong>
+          </div>
+        </div>
         <dl className="overview-tool-facts">
-          <div>
-            <dt>Active</dt>
-            <dd>{activeProfileLabel ?? "Not configured"}</dd>
-          </div>
-          <div>
-            <dt>Live match</dt>
-            <dd>{liveMatchLabel}</dd>
-          </div>
           <div>
             <dt>Auth</dt>
             <dd>{status.auth_method ?? "Unknown"}</dd>
           </div>
           <div>
-            <dt>Backend</dt>
-            <dd>{credentialBackendLabel(status.credential_backend)}</dd>
-          </div>
-          <div>
             <dt>State</dt>
             <dd>{status.state_mode ?? "n/a"}</dd>
           </div>
+          <div>
+            <dt>Status</dt>
+            <dd>{statusPillLabel(status)}</dd>
+          </div>
         </dl>
-        <p className="inline-note">{toolSummaryCopy}</p>
+        <p className="inline-note">
+          {toolSummaryCopy} {liveMatchSummary}
+        </p>
+      </div>
+      <div className="button-row overview-tool-actions overview-tool-actions-primary">
+        <button
+          className={profiles.length ? "primary-button" : "ghost-button"}
+          type="button"
+          disabled={mutationLocked}
+          onClick={() =>
+            profiles.length && selectedProfile
+              ? onUse(status.tool, selectedProfile, stateModes.length ? stateMode : null)
+              : onAddProfile(status.tool)
+          }
+        >
+          {profiles.length
+            ? selectedProfile && selectedProfile === status.active_profile
+              ? `Re-apply ${selectedProfileLabel}`
+              : selectedProfileLabel
+                ? `Switch to ${selectedProfileLabel}`
+                : "Switch profile"
+            : "Add profile"}
+        </button>
+        {selected && status.active_profile ? (
+          <button
+            className="ghost-button"
+            type="button"
+            onClick={() => onOpenDetails(status.tool, status.active_profile)}
+          >
+            Open details
+          </button>
+        ) : null}
       </div>
       <div className="overview-tool-control-grid">
         {profiles.length ? (
@@ -703,35 +748,6 @@ function ToolInspector({
           )}
         </div>
       ) : null}
-      <div className="button-row overview-tool-actions">
-        <button
-          className={profiles.length ? "primary-button" : "ghost-button"}
-          type="button"
-          disabled={mutationLocked}
-          onClick={() =>
-            profiles.length && selectedProfile
-              ? onUse(status.tool, selectedProfile, stateModes.length ? stateMode : null)
-              : onAddProfile(status.tool)
-          }
-        >
-          {profiles.length
-            ? selectedProfile && selectedProfile === status.active_profile
-              ? `Re-apply ${selectedProfileLabel}`
-              : selectedProfileLabel
-                ? `Switch to ${selectedProfileLabel}`
-                : "Switch profile"
-            : "Add profile"}
-        </button>
-        {selected && status.active_profile ? (
-          <button
-            className="ghost-button"
-            type="button"
-            onClick={() => onOpenDetails(status.tool, status.active_profile)}
-          >
-            Open details
-          </button>
-        ) : null}
-      </div>
     </article>
   );
 }
