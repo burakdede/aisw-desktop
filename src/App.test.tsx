@@ -461,6 +461,34 @@ describe("App", () => {
     );
   });
 
+  it("supports arrow-key sidebar navigation", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
+
+    const overviewButton = screen.getAllByRole("button", { name: "Overview" })[0];
+    overviewButton.focus();
+    expect(overviewButton).toHaveFocus();
+
+    fireEvent.keyDown(overviewButton, { key: "ArrowDown" });
+
+    await waitFor(() => {
+      const profilesButton = screen.getAllByRole("button", { name: "Profiles" })[0];
+      expect(profilesButton).toHaveFocus();
+      expect(profilesButton).toHaveClass("nav-button-active");
+      expect(profilesButton).toHaveAttribute("aria-current", "page");
+    });
+
+    const profilesButton = screen.getAllByRole("button", { name: "Profiles" })[0];
+    fireEvent.keyDown(profilesButton, { key: "End" });
+
+    await waitFor(() => {
+      const settingsButton = screen.getAllByRole("button", { name: "Settings" })[0];
+      expect(settingsButton).toHaveFocus();
+      expect(settingsButton).toHaveClass("nav-button-active");
+      expect(settingsButton).toHaveAttribute("aria-current", "page");
+    });
+  });
+
   it("shows activity in a timeline and inspector layout", async () => {
     const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
     const calls: Array<{ command: string; args: unknown }> = [];
