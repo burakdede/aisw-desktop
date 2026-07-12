@@ -10,13 +10,19 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --app-bg: color-mix(in srgb, Canvas 99%, #dfe5ec 1%);
-  --sidebar-bg: color-mix(in srgb, Canvas 88%, transparent);
-  --content-bg: color-mix(in srgb, Canvas 99%, #f2f5f8 1%);
+  --window-bg: #f5f5f7;
+  --pane-bg: #ffffff;
+  --pane-bg-subtle: #f8f8fa;
+  --sidebar-pane-bg: rgba(249, 249, 251, 0.9);
+  --toolbar-pane-bg: rgba(250, 250, 252, 0.88);
+  --chrome-border: rgba(60, 60, 67, 0.12);
+  --app-bg: #f5f5f7;
+  --sidebar-bg: rgba(249, 249, 251, 0.9);
+  --content-bg: #ffffff;
   --card-bg: color-mix(in srgb, Canvas 97%, CanvasText 3%);
   --soft-fill: color-mix(in srgb, CanvasText 6%, transparent);
   --soft-fill-strong: color-mix(in srgb, CanvasText 10%, transparent);
-  --separator: color-mix(in srgb, CanvasText 12%, transparent);
+  --separator: rgba(60, 60, 67, 0.18);
   --text-primary: CanvasText;
   --text-secondary: color-mix(in srgb, CanvasText 66%, transparent);
   --text-tertiary: color-mix(in srgb, CanvasText 48%, transparent);
@@ -35,14 +41,63 @@
     radial-gradient(circle at top left, rgba(103, 132, 171, 0.08), transparent 26%),
     radial-gradient(circle at bottom right, rgba(165, 181, 203, 0.08), transparent 22%),
     linear-gradient(180deg, rgba(250, 251, 252, 0.96), rgba(242, 245, 247, 0.99));
-  --window-shell-backdrop: linear-gradient(180deg, rgba(250, 251, 252, 0.94), rgba(243, 246, 248, 0.985));
+  --window-shell-backdrop:
+    radial-gradient(circle at top left, rgba(111, 142, 181, 0.06), transparent 24%),
+    linear-gradient(180deg, rgba(249, 250, 252, 0.98), rgba(243, 246, 248, 0.994));
   --setup-shell-backdrop:
     radial-gradient(circle at top left, rgba(116, 146, 189, 0.08), transparent 28%),
     linear-gradient(180deg, rgba(250, 251, 252, 0.94), rgba(241, 244, 247, 0.98));
 }
 
+html[data-appearance="dark"] {
+  --window-bg: #1c1c1e;
+  --pane-bg: #242426;
+  --pane-bg-subtle: #2c2c2e;
+  --sidebar-pane-bg: rgba(36, 36, 38, 0.94);
+  --toolbar-pane-bg: rgba(28, 28, 30, 0.9);
+  --chrome-border: rgba(84, 84, 88, 0.55);
+  --app-bg: #1c1c1e;
+  --sidebar-bg: rgba(36, 36, 38, 0.94);
+  --content-bg: #242426;
+  --separator: rgba(84, 84, 88, 0.55);
+  --text-primary: #f5f5f7;
+  --text-secondary: rgba(235, 235, 245, 0.68);
+  --text-tertiary: rgba(235, 235, 245, 0.44);
+  --shadow-window: 0 22px 44px rgba(0, 0, 0, 0.34);
+  --shadow-card: 0 10px 24px rgba(0, 0, 0, 0.2);
+  --shadow-panel: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  --body-backdrop:
+    radial-gradient(circle at top left, rgba(61, 90, 132, 0.24), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(37, 55, 84, 0.2), transparent 22%),
+    linear-gradient(180deg, rgba(17, 20, 28, 0.98), rgba(13, 15, 22, 1));
+  --launch-shell-backdrop:
+    radial-gradient(circle at top left, rgba(62, 94, 138, 0.22), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(31, 49, 76, 0.2), transparent 22%),
+    linear-gradient(180deg, rgba(19, 23, 31, 0.98), rgba(13, 16, 23, 1));
+  --window-shell-backdrop:
+    radial-gradient(circle at top left, rgba(61, 90, 132, 0.22), transparent 24%),
+    linear-gradient(180deg, rgba(18, 22, 30, 0.99), rgba(13, 16, 23, 1));
+  --setup-shell-backdrop:
+    radial-gradient(circle at top left, rgba(69, 100, 144, 0.22), transparent 28%),
+    linear-gradient(180deg, rgba(18, 22, 30, 0.98), rgba(13, 16, 23, 1));
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-appearance]),
+  html[data-appearance="system"] {
+    --window-bg: #1c1c1e;
+    --pane-bg: #242426;
+    --pane-bg-subtle: #2c2c2e;
+    --sidebar-pane-bg: rgba(36, 36, 38, 0.94);
+    --toolbar-pane-bg: rgba(28, 28, 30, 0.9);
+    --chrome-border: rgba(84, 84, 88, 0.55);
+    --app-bg: #1c1c1e;
+    --sidebar-bg: rgba(36, 36, 38, 0.94);
+    --content-bg: #242426;
+    --separator: rgba(84, 84, 88, 0.55);
+    --text-primary: #f5f5f7;
+    --text-secondary: rgba(235, 235, 245, 0.68);
+    --text-tertiary: rgba(235, 235, 245, 0.44);
     --shadow-window: 0 22px 44px rgba(0, 0, 0, 0.34);
     --shadow-card: 0 10px 24px rgba(0, 0, 0, 0.2);
     --shadow-panel: inset 0 1px 0 rgba(255, 255, 255, 0.03);
@@ -54,7 +109,9 @@
       radial-gradient(circle at top left, rgba(62, 94, 138, 0.22), transparent 28%),
       radial-gradient(circle at bottom right, rgba(31, 49, 76, 0.2), transparent 22%),
       linear-gradient(180deg, rgba(19, 23, 31, 0.98), rgba(13, 16, 23, 1));
-    --window-shell-backdrop: linear-gradient(180deg, rgba(19, 23, 31, 0.98), rgba(13, 16, 23, 1));
+    --window-shell-backdrop:
+      radial-gradient(circle at top left, rgba(61, 90, 132, 0.22), transparent 24%),
+      linear-gradient(180deg, rgba(18, 22, 30, 0.99), rgba(13, 16, 23, 1));
     --setup-shell-backdrop:
       radial-gradient(circle at top left, rgba(69, 100, 144, 0.22), transparent 28%),
       linear-gradient(180deg, rgba(18, 22, 30, 0.98), rgba(13, 16, 23, 1));
@@ -69,13 +126,14 @@ html,
 body,
 #root {
   height: 100dvh;
+  background-color: var(--window-bg);
 }
 
 body {
   margin: 0;
   overflow: hidden;
   font-family: var(--font-ui);
-  background: var(--body-backdrop), var(--app-bg);
+  background: var(--body-backdrop), var(--window-bg);
   color: var(--text-primary);
 }
 
@@ -138,7 +196,7 @@ button {
   height: 100dvh;
   padding: 8px;
   overflow: hidden;
-  background: var(--window-shell-backdrop);
+  background: var(--window-shell-backdrop), var(--window-bg);
 }
 
 .app-shell-setup-window {
@@ -296,11 +354,9 @@ button {
   grid-template-columns: 236px minmax(0, 1fr);
   gap: 0;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
+  border: 1px solid var(--chrome-border);
   border-radius: 18px;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
-    color-mix(in srgb, Canvas 97%, transparent);
+  background: var(--pane-bg);
   box-shadow: var(--shadow-window);
 }
 
@@ -318,8 +374,8 @@ button {
   flex-direction: column;
   background:
     radial-gradient(circle at top left, color-mix(in srgb, AccentColor 8%, transparent), transparent 29%),
-    linear-gradient(180deg, color-mix(in srgb, Canvas 92%, transparent), color-mix(in srgb, Canvas 88%, transparent)),
-    color-mix(in srgb, Canvas 90%, transparent);
+    linear-gradient(180deg, color-mix(in srgb, var(--sidebar-pane-bg) 96%, white 4%), var(--sidebar-pane-bg)),
+    var(--sidebar-pane-bg);
   border-right: 1px solid var(--separator);
   backdrop-filter: blur(34px);
 }
@@ -352,7 +408,7 @@ button {
   padding: 14px 14px 15px;
   border-radius: 12px;
   border: 1px solid color-mix(in srgb, CanvasText 5%, transparent);
-  background: color-mix(in srgb, Canvas 96%, CanvasText 4%);
+  background: color-mix(in srgb, var(--pane-bg) 92%, CanvasText 8%);
 }
 
 .sidebar-brand-copy {
@@ -951,7 +1007,7 @@ button {
   grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
   background:
-    linear-gradient(180deg, color-mix(in srgb, Canvas 95%, transparent), color-mix(in srgb, Canvas 98%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, var(--pane-bg-subtle) 88%, transparent), var(--content-bg)),
     var(--content-bg);
 }
 
@@ -959,7 +1015,7 @@ button {
   border-radius: 16px;
   background:
     radial-gradient(circle at top left, color-mix(in srgb, AccentColor 7%, transparent), transparent 26%),
-    linear-gradient(180deg, color-mix(in srgb, Canvas 97%, transparent), color-mix(in srgb, Canvas 99%, transparent));
+    linear-gradient(180deg, color-mix(in srgb, var(--pane-bg-subtle) 96%, transparent), var(--pane-bg));
 }
 
 .window-toolbar {
@@ -974,8 +1030,8 @@ button {
   gap: 12px;
   border-bottom: 1px solid var(--separator);
   background:
-    linear-gradient(180deg, color-mix(in srgb, Canvas 92%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
-    color-mix(in srgb, Canvas 95%, transparent);
+    linear-gradient(180deg, color-mix(in srgb, var(--toolbar-pane-bg) 92%, white 8%), var(--toolbar-pane-bg)),
+    var(--toolbar-pane-bg);
   backdrop-filter: blur(32px);
 }
 
