@@ -421,7 +421,7 @@ function formatGlobalScope(id: string) {
     case "profile-set":
       return "Set";
     case "context":
-      return "Imported sets";
+      return "Detected sets";
     case "workspace":
       return "Project rules";
     case "backup":

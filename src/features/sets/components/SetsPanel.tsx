@@ -30,7 +30,7 @@ export function SetsPanel({
       label: "Set Library",
       summary: `${localSetCount} saved set${localSetCount === 1 ? "" : "s"}`,
       note: importedSetCount
-        ? `${importedSetCount} imported set${importedSetCount === 1 ? "" : "s"} remain available alongside your local library.`
+        ? `${importedSetCount} detected set${importedSetCount === 1 ? "" : "s"} remain available alongside your local library.`
         : "Save reusable work, personal, and client combinations for one-click switching.",
       badge: activeSetCount ? `${activeSetCount} active` : "Library",
     },
@@ -62,7 +62,7 @@ export function SetsPanel({
             <strong>{localSetCount}</strong>
           </div>
           <div>
-            <span className="overview-current-set-cell-label">Imported sets</span>
+            <span className="overview-current-set-cell-label">Detected sets</span>
             <strong>{importedSetCount}</strong>
           </div>
           <div>

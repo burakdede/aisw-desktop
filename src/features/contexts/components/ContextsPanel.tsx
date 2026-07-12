@@ -338,7 +338,7 @@ export function ContextsPanel({
             <article className="diagnostic-card set-library-card">
               <div className="set-section-header desktop-pane-section-header">
                 <div>
-                  <p className="card-kicker">Imported sets</p>
+                  <p className="card-kicker">Detected sets</p>
                   <h3>{snapshot.contexts.length ? `${snapshot.contexts.length} available` : "None available"}</h3>
                 </div>
                 <p className="inline-note">
@@ -391,7 +391,7 @@ export function ContextsPanel({
               </div>
               {!snapshot.contexts.length ? (
                 <p className="inline-note">
-                  No imported sets are currently available. Saved sets remain available even when
+                  No detected sets are currently available. Saved sets remain available even when
                   runtime-level shared switching support is limited.
                 </p>
               ) : null}
