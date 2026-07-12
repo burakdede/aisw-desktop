@@ -114,17 +114,10 @@ export function AppFrame({
             <div className="sidebar-scroll">
               <div className="sidebar-brand">
                 <div className="brand-lockup">
-                  <BrandMark size={28} />
+                  <BrandMark size={32} />
                   <div className="sidebar-brand-copy">
-                    <h1 className="sidebar-title">AI Switch</h1>
-                    <p className="sidebar-title-caption">Local coding-agent control center</p>
+                    <h1 className="sidebar-title">AI Switcher</h1>
                   </div>
-                </div>
-                <div className="sidebar-meta" aria-label="App status">
-                  <span className="sidebar-meta-badge">Local only</span>
-                  <span className="sidebar-meta-copy">
-                    {subtitle ?? "Claude Code, Codex CLI, and Gemini CLI"}
-                  </span>
                 </div>
               </div>
               <nav className="nav-list" aria-label="Primary">
