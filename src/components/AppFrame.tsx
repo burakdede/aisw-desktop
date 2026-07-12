@@ -113,7 +113,7 @@ export function AppFrame({
             <div className="sidebar-scroll">
               <div className="sidebar-brand">
                 <div className="sidebar-brand-topline">
-                  <p className="eyebrow">AI agent profiles</p>
+                  <p className="eyebrow">Local account switching</p>
                   <span className="sidebar-window-badge">Menu bar ready</span>
                 </div>
                 <div className="brand-lockup">
