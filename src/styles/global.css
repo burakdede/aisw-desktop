@@ -1447,7 +1447,7 @@ button {
 }
 
 .sets-layout {
-  grid-template-columns: minmax(0, 1.25fr) minmax(300px, 360px);
+  grid-template-columns: minmax(320px, 0.98fr) minmax(360px, 1.02fr);
 }
 
 .sets-mode-split {
@@ -1489,6 +1489,19 @@ button {
   gap: 12px;
 }
 
+.set-library-card {
+  gap: 12px;
+}
+
+.set-library-list,
+.set-imported-list {
+  gap: 0;
+}
+
+.set-empty-card {
+  margin-top: 10px;
+}
+
 .set-library-meta {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1524,6 +1537,7 @@ button {
 
 .set-row {
   align-items: center;
+  padding: 12px 13px;
 }
 
 .set-row-selected {
@@ -1575,6 +1589,7 @@ button {
   align-items: stretch;
   justify-content: flex-end;
   flex-wrap: nowrap;
+  padding-left: 10px;
 }
 
 .set-row-header {
@@ -1786,17 +1801,17 @@ button {
 }
 
 .overview-layout {
-  grid-template-columns: minmax(280px, 0.92fr) minmax(0, 1.18fr);
+  grid-template-columns: minmax(320px, 0.94fr) minmax(0, 1.06fr);
 }
 
 .overview-tools-split {
-  grid-template-columns: minmax(250px, 0.66fr) minmax(320px, 1fr);
+  grid-template-columns: minmax(260px, 0.7fr) minmax(340px, 1fr);
   align-items: start;
 }
 
 .overview-summary-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.9fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   align-items: start;
 }
@@ -1821,14 +1836,20 @@ button {
 }
 
 .overview-current-set {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
   gap: 14px;
-  align-items: flex-start;
   padding: 15px;
 }
 
-.overview-current-set-copy {
+.overview-current-set-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
+  gap: 14px;
+  align-items: start;
+}
+
+.overview-current-set-copy,
+.overview-action-rail {
   display: grid;
   gap: 10px;
 }
@@ -1902,8 +1923,14 @@ button {
 }
 
 .overview-current-set-actions {
-  flex: none;
-  min-width: 164px;
+  min-width: 0;
+}
+
+.overview-action-rail {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
+  background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
 }
 
 .overview-focus-card {
@@ -2019,6 +2046,7 @@ button {
 
 .overview-tools-list-card {
   gap: 10px;
+  min-height: 100%;
 }
 
 .overview-tool-list-columns {
@@ -2039,6 +2067,8 @@ button {
   border-radius: 10px;
   overflow: hidden;
   background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
+  max-height: 620px;
+  overflow-y: auto;
 }
 
 .overview-tool-row {
@@ -3094,6 +3124,7 @@ button {
 
   .set-row-actions {
     flex-wrap: wrap;
+    padding-left: 0;
   }
 
   .settings-summary-grid {
@@ -3129,11 +3160,11 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .overview-current-set {
-    flex-direction: column;
+  .overview-summary-grid {
+    grid-template-columns: 1fr;
   }
 
-  .overview-summary-grid {
+  .overview-current-set-main {
     grid-template-columns: 1fr;
   }
 

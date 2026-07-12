@@ -194,207 +194,218 @@ export function ContextsPanel({
         secondaryClassName="set-editor-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-          <article className="diagnostic-card set-library-intro">
-            <div className="desktop-pane-section-header">
-              <div>
-                <p className="card-kicker">Library</p>
-                <h3>{localSets.length ? `${localSets.length} saved set${localSets.length === 1 ? "" : "s"}` : "No saved sets yet"}</h3>
+            <article className="diagnostic-card set-library-intro">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Library</p>
+                  <h3>{localSets.length ? `${localSets.length} saved set${localSets.length === 1 ? "" : "s"}` : "No saved sets yet"}</h3>
+                </div>
+                <span className={`pill ${activeSetCount ? "pill-ok" : "pill-soft"}`}>
+                  {activeSetCount ? `${activeSetCount} active` : "Library"}
+                </span>
               </div>
-              <span className={`pill ${activeSetCount ? "pill-ok" : "pill-soft"}`}>
-                {activeSetCount ? `${activeSetCount} active` : "Library"}
-              </span>
-            </div>
-            <p className="inline-note">
-              Build reusable combinations once, then switch them from Overview, Quick Switch, the menu bar, and project rules.
-            </p>
-            <div className="set-library-meta">
-              <div>
-                <span className="overview-current-set-cell-label">Current</span>
-                <strong>{activeSetCount ? "One active" : "None active"}</strong>
+              <p className="inline-note">
+                Build reusable combinations once, then switch them from Overview, Quick Switch, the menu bar, and project rules.
+              </p>
+              <div className="set-library-meta">
+                <div>
+                  <span className="overview-current-set-cell-label">Current</span>
+                  <strong>{activeSetCount ? "One active" : "None active"}</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Ready</span>
+                  <strong>{readySetCount} ready</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Imported</span>
+                  <strong>{snapshot.contexts.length} available</strong>
+                </div>
               </div>
-              <div>
-                <span className="overview-current-set-cell-label">Ready</span>
-                <strong>{readySetCount} ready</strong>
-              </div>
-              <div>
-                <span className="overview-current-set-cell-label">Imported</span>
-                <strong>{snapshot.contexts.length} available</strong>
-              </div>
-            </div>
-          </article>
+            </article>
 
-          <div className="stack-list">
-            <div className="stack-list desktop-list-stack">
-              {localSets.map((set) => (
-                <article
-                  key={set.name}
-                  className={`list-row set-row ${
-                    profileSetIsActive(snapshot, set) ? "set-row-active" : ""
-                  } ${selectedSetName === set.name ? "set-row-selected" : ""}`}
-                >
-                  <button
-                    className="set-row-select"
-                    type="button"
-                    onClick={() => setSelectedSetName(set.name)}
+            <article className="diagnostic-card set-library-card">
+              <div className="set-section-header desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Saved sets</p>
+                  <h3>{localSets.length ? "Reusable switching sets" : "No saved sets yet"}</h3>
+                </div>
+                <p className="inline-note">
+                  Select a set to review it in the detail pane or switch it immediately.
+                </p>
+              </div>
+              <div className="stack-list desktop-list-stack set-library-list">
+                {localSets.map((set) => (
+                  <article
+                    key={set.name}
+                    className={`list-row set-row ${
+                      profileSetIsActive(snapshot, set) ? "set-row-active" : ""
+                    } ${selectedSetName === set.name ? "set-row-selected" : ""}`}
                   >
+                    <button
+                      className="set-row-select"
+                      type="button"
+                      onClick={() => setSelectedSetName(set.name)}
+                    >
+                      <div className="set-row-main">
+                        <div className="set-row-header">
+                          <strong>{profileSetDisplayLabel(set)}</strong>
+                          <span
+                            className={`pill ${
+                              profileSetIsActive(snapshot, set)
+                                ? "pill-ok"
+                                : profileSetHasUsableSelections(snapshot, set)
+                                  ? "pill-soft"
+                                  : "pill-warn"
+                            }`}
+                          >
+                            {profileSetIsActive(snapshot, set)
+                              ? "Current"
+                              : profileSetHasUsableSelections(snapshot, set)
+                                ? "Ready"
+                                : "Needs attention"}
+                          </span>
+                        </div>
+                        <div className="set-profile-grid">
+                          {TOOLS.map((tool) => {
+                            const profile = set.profiles[tool];
+                            const label = profile
+                              ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
+                              : "Not configured";
+                            return (
+                              <p key={tool} className="inline-note">
+                                <strong>{titleCase(tool)}:</strong> {label}
+                              </p>
+                            );
+                          })}
+                        </div>
+                        {!profileSetHasSelections(set) ? (
+                          <p className="inline-note">
+                            Add at least one mapped profile before using this set in Overview, the menu bar, or project rules.
+                          </p>
+                        ) : !profileSetHasUsableSelections(snapshot, set) ? (
+                          <p className="inline-note">
+                            Refresh or repair the missing mapped profiles before using this set. Missing:{" "}
+                            {missingProfileSetSelections(snapshot, set)
+                              .map(([tool, profile]) => `${tool}: ${profile}`)
+                              .join(" · ")}
+                          </p>
+                        ) : null}
+                      </div>
+                    </button>
+                    <div className="button-row set-row-actions">
+                      <button
+                        className="primary-button"
+                        type="button"
+                        disabled={
+                          mutationLock.isBusy ||
+                          profileSetIsActive(snapshot, set) ||
+                          !profileSetHasUsableSelections(snapshot, set)
+                        }
+                        onClick={() => void activateProfileSet(set)}
+                      >
+                        {profileSetIsActive(snapshot, set) ? "Current set" : "Switch to set"}
+                      </button>
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        onClick={() => startEditingSet(set)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="ghost-button danger-button"
+                        type="button"
+                        disabled={mutationLock.isBusy}
+                        onClick={() => deleteProfileSet(set.name)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              {!localSets.length ? (
+                <article className="diagnostic-card set-empty-card">
+                  <h3>No saved sets yet</h3>
+                  <p className="inline-note">
+                    No local sets are stored yet. Save a work, personal, or client bundle here when you
+                    need a reusable switching combination.
+                  </p>
+                </article>
+              ) : null}
+            </article>
+
+            <article className="diagnostic-card set-library-card">
+              <div className="set-section-header desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Imported sets</p>
+                  <h3>{snapshot.contexts.length ? `${snapshot.contexts.length} available` : "None available"}</h3>
+                </div>
+                <p className="inline-note">
+                  These come directly from the selected runtime and remain separate from your desktop-local saved sets.
+                </p>
+              </div>
+              <div className="stack-list set-imported-list">
+                {snapshot.contexts.map((context) => (
+                  <article key={context.name} className="list-row set-row set-row-imported">
                     <div className="set-row-main">
                       <div className="set-row-header">
-                        <strong>{profileSetDisplayLabel(set)}</strong>
-                        <span
-                          className={`pill ${
-                            profileSetIsActive(snapshot, set)
-                              ? "pill-ok"
-                              : profileSetHasUsableSelections(snapshot, set)
-                                ? "pill-soft"
-                                : "pill-warn"
-                          }`}
-                        >
-                          {profileSetIsActive(snapshot, set)
-                            ? "Current"
-                            : profileSetHasUsableSelections(snapshot, set)
-                              ? "Ready"
-                              : "Needs attention"}
+                        <strong>
+                          {contextDisplayLabel(settings, context.name)}
+                          {activeContext === context.name ? " ✓" : ""}
+                        </strong>
+                        <span className={`pill ${activeContext === context.name ? "pill-ok" : "pill-soft"}`}>
+                          {activeContext === context.name ? "Current" : "Imported"}
                         </span>
                       </div>
-                      <div className="set-profile-grid">
-                        {TOOLS.map((tool) => {
-                          const profile = set.profiles[tool];
-                          const label = profile
-                            ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
-                            : "Not configured";
-                          return (
-                            <p key={tool} className="inline-note">
-                              <strong>{titleCase(tool)}:</strong> {label}
-                            </p>
-                          );
-                        })}
-                      </div>
-                      {!profileSetHasSelections(set) ? (
-                        <p className="inline-note">
-                          Add at least one mapped profile before using this set in Overview, the menu bar, or project rules.
-                        </p>
-                      ) : !profileSetHasUsableSelections(snapshot, set) ? (
-                        <p className="inline-note">
-                          Refresh or repair the missing mapped profiles before using this set. Missing:{" "}
-                          {missingProfileSetSelections(snapshot, set)
-                            .map(([tool, profile]) => `${tool}: ${profile}`)
-                            .join(" · ")}
-                        </p>
+                      {contextDisplayLabel(settings, context.name) !== context.name ? (
+                        <p className="inline-note">Imported set id: {context.name}</p>
                       ) : null}
+                      <p>
+                        {Object.entries(context.profiles)
+                          .map(([tool, profile]) => {
+                            const label = profile
+                              ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
+                              : "none";
+                            return `${tool}: ${label}`;
+                          })
+                          .join(" · ")}
+                      </p>
                     </div>
-                  </button>
-                  <div className="button-row set-row-actions">
-                    <button
-                      className="primary-button"
-                      type="button"
-                      disabled={
-                        mutationLock.isBusy ||
-                        profileSetIsActive(snapshot, set) ||
-                        !profileSetHasUsableSelections(snapshot, set)
-                      }
-                      onClick={() => void activateProfileSet(set)}
-                    >
-                      {profileSetIsActive(snapshot, set) ? "Current set" : "Switch to set"}
-                    </button>
                     <button
                       className="ghost-button"
                       type="button"
-                      onClick={() => startEditingSet(set)}
+                      disabled={mutationLock.isBusy || activeContext === context.name}
+                      onClick={() =>
+                        useContextMutation.mutate({
+                          context: context.name,
+                          stateMode: resolveGlobalStateMode(snapshot),
+                          label: contextDisplayLabel(settings, context.name),
+                        })
+                      }
                     >
-                      Edit
+                      {activeContext === context.name ? "Current imported set" : "Use imported set"}
                     </button>
-                    <button
-                      className="ghost-button danger-button"
-                      type="button"
-                      disabled={mutationLock.isBusy}
-                      onClick={() => deleteProfileSet(set.name)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-            {!localSets.length ? (
-              <article className="diagnostic-card">
-                <h3>No saved sets yet</h3>
-                <p className="inline-note">
-                  No local sets are stored yet. Save a work, personal, or client bundle here when you
-                  need a reusable switching combination.
-                </p>
-              </article>
-            ) : null}
-          </div>
-
-          <div className="stack-list">
-            <div className="set-section-header desktop-pane-section-header">
-              <div>
-                <p className="card-kicker">Imported sets</p>
-                <h3>{snapshot.contexts.length ? `${snapshot.contexts.length} available` : "None available"}</h3>
+                  </article>
+                ))}
               </div>
-              <p className="inline-note">
-                These come directly from the selected runtime and remain separate from your desktop-local saved sets.
-              </p>
-            </div>
-            {snapshot.contexts.map((context) => (
-              <article key={context.name} className="list-row set-row set-row-imported">
-                <div className="set-row-main">
-                  <div className="set-row-header">
-                    <strong>
-                      {contextDisplayLabel(settings, context.name)}
-                      {activeContext === context.name ? " ✓" : ""}
-                    </strong>
-                    <span className={`pill ${activeContext === context.name ? "pill-ok" : "pill-soft"}`}>
-                      {activeContext === context.name ? "Current" : "Imported"}
-                    </span>
-                  </div>
-                  {contextDisplayLabel(settings, context.name) !== context.name ? (
-                    <p className="inline-note">Imported set id: {context.name}</p>
-                  ) : null}
-                  <p>
-                    {Object.entries(context.profiles)
-                      .map(([tool, profile]) => {
-                        const label = profile
-                          ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
-                          : "none";
-                        return `${tool}: ${label}`;
-                      })
-                      .join(" · ")}
-                  </p>
-                </div>
-                <button
-                  className="ghost-button"
-                  type="button"
-                  disabled={mutationLock.isBusy || activeContext === context.name}
-                  onClick={() =>
-                    useContextMutation.mutate({
-                      context: context.name,
-                      stateMode: resolveGlobalStateMode(snapshot),
-                      label: contextDisplayLabel(settings, context.name),
-                    })
-                  }
-                >
-                  {activeContext === context.name ? "Current imported set" : "Use imported set"}
-                </button>
-              </article>
-            ))}
-            {!snapshot.contexts.length ? (
-              <p className="inline-note">
-                No imported sets are currently available. Saved sets remain available even when
-                runtime-level shared switching support is limited.
+              {!snapshot.contexts.length ? (
+                <p className="inline-note">
+                  No imported sets are currently available. Saved sets remain available even when
+                  runtime-level shared switching support is limited.
+                </p>
+              ) : null}
+            </article>
+
+            {contextResult ? (
+              <p className={`inline-note ${contextResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
+                Last imported-set result: {normalizeRuntimeLanguage(contextResult.message)}
+                {contextResult.remediation
+                  ? ` Remediation: ${normalizeRuntimeLanguage(contextResult.remediation)}`
+                  : ""}
               </p>
             ) : null}
-          </div>
-
-          {contextResult ? (
-            <p className={`inline-note ${contextResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
-              Last imported-set result: {normalizeRuntimeLanguage(contextResult.message)}
-              {contextResult.remediation
-                ? ` Remediation: ${normalizeRuntimeLanguage(contextResult.remediation)}`
-                : ""}
-            </p>
-          ) : null}
-          {lastAction ? <p className="inline-note">{lastAction}</p> : null}
+            {lastAction ? <p className="inline-note">{lastAction}</p> : null}
           </div>
         }
         secondary={
