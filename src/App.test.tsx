@@ -8,6 +8,7 @@ import {
   resetLastCommandResultsForTests,
 } from "./features/shared/lastCommandResult";
 import { normalizeRuntimeLanguage } from "./features/shared/runtime-language";
+import { normalizeTerminalIntegrationText } from "./features/shared/terminal-integration-language";
 import { useDesktopActions } from "./features/shared/useDesktopActions";
 import { enqueueMutation, resetMutationQueueForTests } from "./features/shared/mutationQueue";
 import { SettingsPanel } from "./features/settings/components/SettingsPanel";
@@ -8685,6 +8686,16 @@ describe("App", () => {
       ),
     ).toBe(
       "AI Switch cannot switch because credentials changed outside AI Switch. Re-open AI Switch and verify the saved set.",
+    );
+  });
+
+  it("normalizes shell hook wording", () => {
+    expect(
+      normalizeTerminalIntegrationText(
+        "Install the shell hook and reload the shell. Shell hook guidance remains informational.",
+      ),
+    ).toBe(
+      "Install terminal integration and reload the shell. Terminal integration guidance remains informational.",
     );
   });
 });

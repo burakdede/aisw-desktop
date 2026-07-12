@@ -14,5 +14,7 @@ export function normalizeTerminalIntegrationText(value: string) {
     .replace(
       "Install the shell hook and reload the shell.",
       "Install terminal integration and reload the shell.",
-    );
+    )
+    .replace("shell hook", "terminal integration")
+    .replace("Shell hook", "Terminal integration");
 }
