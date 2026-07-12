@@ -2909,6 +2909,39 @@ button {
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
 
+.activity-intro-card {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+  margin-bottom: 14px;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, Canvas 95%, AccentColor 3%), color-mix(in srgb, Canvas 98%, CanvasText 2%));
+}
+
+.activity-intro-copy {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.activity-intro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.activity-intro-grid > div,
+.activity-detail-block > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
 .activity-layout,
 .diagnostics-layout {
   grid-template-columns: minmax(360px, 1.02fr) minmax(340px, 0.98fr);
@@ -2979,6 +3012,10 @@ button {
 
 .activity-list-columns {
   grid-template-columns: minmax(84px, 0.5fr) minmax(220px, 1.5fr) minmax(110px, 0.7fr);
+}
+
+.activity-list-header {
+  align-items: flex-start;
 }
 
 .backups-detail-summary,
@@ -3424,11 +3461,6 @@ button {
   gap: 12px;
 }
 
-.activity-overview-card {
-  display: grid;
-  gap: 12px;
-}
-
 .activity-detail-main {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
@@ -3451,6 +3483,11 @@ button {
 
 .activity-session-card-nested {
   gap: 8px;
+}
+
+.activity-detail-block {
+  display: grid;
+  gap: 10px;
 }
 
 .diagnostic-finding-row {
@@ -3577,6 +3614,7 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .activity-intro-grid,
   .activity-overview-meta {
     grid-template-columns: 1fr;
   }
@@ -3604,6 +3642,7 @@ button {
   }
 
   .settings-overview-copy,
+  .activity-intro-copy,
   .backups-intro-copy,
   .settings-kv-row,
   .diagnostics-intro-copy,

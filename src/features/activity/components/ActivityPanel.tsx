@@ -26,6 +26,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
   const lastCommandResults = useLastCommandResults();
   const [selectedEntryKey, setSelectedEntryKey] = useState<string | null>(null);
   const [clearMessage, setClearMessage] = useState("");
+  const [logMessage, setLogMessage] = useState("");
 
   const exportBundleMutation = useMutation({
     mutationFn: exportDiagnosticBundle,
@@ -72,6 +73,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
     }
     setSelectedEntryKey(null);
     setClearMessage("Cleared locally stored desktop activity.");
+    setLogMessage("");
   }, [externalClearSignal]);
 
   const selectedEntry = entries.find((entry) => entry.key === selectedEntryKey) ?? entries[0] ?? null;
@@ -80,6 +82,25 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
     clearLastCommandResults();
     setSelectedEntryKey(null);
     setClearMessage("Cleared locally stored desktop activity.");
+    setLogMessage("");
+  }
+
+  function openActivityLog() {
+    if (!entries.length) {
+      return;
+    }
+
+    const payload = entries.map((entry) => ({
+      ...entry,
+      recordedAt: new Date(entry.at).toISOString(),
+    }));
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank", "noopener,noreferrer");
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    setLogMessage("Opened a local activity log snapshot.");
   }
 
   return (
@@ -91,63 +112,58 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
           className="ghost-button"
           type="button"
           disabled={!entries.length}
-          onClick={clearTimeline}
+          onClick={openActivityLog}
         >
-          Clear history
+          Open Log File
         </button>
       }
     >
+      <article className="diagnostic-card activity-intro-card">
+        <div className="activity-intro-copy">
+          <div>
+            <p className="card-kicker">Timeline</p>
+            <h3>
+              {entries.length
+                ? `${entries.length} event${entries.length === 1 ? "" : "s"}`
+                : "No events yet"}
+            </h3>
+            <p className="inline-note">
+              Local desktop activity stays on this Mac unless you explicitly export a support report.
+            </p>
+          </div>
+          <span className="pill pill-soft">Redacted</span>
+        </div>
+        <div className="activity-intro-grid">
+          <div>
+            <span className="overview-current-set-cell-label">History</span>
+            <strong>{entries.length ? `${entries.length} event${entries.length === 1 ? "" : "s"}` : "Idle"}</strong>
+          </div>
+          <div>
+            <span className="overview-current-set-cell-label">Latest</span>
+            <strong>{latestEntry?.label ?? "No activity yet"}</strong>
+          </div>
+          <div>
+            <span className="overview-current-set-cell-label">Attention</span>
+            <strong>{errorCount ? `${errorCount} item${errorCount === 1 ? "" : "s"}` : "None"}</strong>
+          </div>
+        </div>
+      </article>
       <SplitView
         className="activity-layout"
         primaryClassName="activity-list-pane"
         secondaryClassName="activity-detail-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-            <article className="diagnostic-card activity-overview-card">
-              <div className="desktop-pane-section-header">
-                <div>
-                  <p className="card-kicker">Timeline</p>
-                  <h3>
-                    {entries.length
-                      ? `${entries.length} event${entries.length === 1 ? "" : "s"}`
-                      : "No events yet"}
-                  </h3>
-                </div>
-                <span className="pill pill-soft">On this Mac</span>
-              </div>
-              <p className="inline-note">
-                Latest first. Review local switch, verification, setup, and recovery events in one
-                persistent desktop timeline.
-              </p>
-              <div className="activity-overview-meta">
-                <div>
-                  <span className="overview-current-set-cell-label">History</span>
-                  <strong>{entries.length ? `${entries.length} event${entries.length === 1 ? "" : "s"}` : "Idle"}</strong>
-                  <p className="inline-note">Recent events stay on this Mac and persist across relaunches.</p>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Latest scope</span>
-                  <strong>{latestEntry?.scopeLabel ?? "No activity yet"}</strong>
-                  <p className="inline-note">{latestEntry ? latestEntry.label : "Run a switch, verification, or settings change to populate the timeline."}</p>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Needs attention</span>
-                  <strong>{errorCount ? `${errorCount} item${errorCount === 1 ? "" : "s"}` : "None"}</strong>
-                  <p className="inline-note">
-                    {errorCount ? "Open the failing event and export a report if you need support." : "Recent recorded events completed without extra recovery steps."}
-                  </p>
-                </div>
-              </div>
-            </article>
             <article className="diagnostic-card activity-list-card">
-              <div className="desktop-pane-section-header">
+              <div className="desktop-pane-section-header activity-list-header">
                 <div>
                   <p className="card-kicker">Events</p>
                   <h3>Recent desktop activity</h3>
+                  <p className="inline-note">
+                    Latest first. Inspect one event at a time without leaving the current workspace.
+                  </p>
                 </div>
-                <p className="inline-note">
-                  Inspect one event at a time and keep the detail pane focused on what happened next.
-                </p>
+                <span className="pill pill-soft">{latestEntry ? formatFullTimestamp(latestEntry.at) : "Idle"}</span>
               </div>
               <div className="activity-list-columns" aria-hidden="true">
                 <span>Time</span>
@@ -169,6 +185,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                   >
                     <div className="activity-list-time">
                       <strong>{formatTimestamp(entry.at)}</strong>
+                      <p className="inline-note">{formatDayTimestamp(entry.at)}</p>
                     </div>
                     <div className="activity-list-main">
                       <div className="activity-list-title">
@@ -214,7 +231,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                   <div className="activity-detail-copy stack-list">
                     <div className="desktop-pane-section-header">
                       <div>
-                        <p className="card-kicker">Inspector</p>
+                        <p className="card-kicker">Entry</p>
                         <h3>{selectedEntry.label}</h3>
                       </div>
                       <span
@@ -237,30 +254,19 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                         <strong>{selectedEntry.status === "success" ? "Success" : "Needs attention"}</strong>
                       </div>
                     </div>
-                    <div className="activity-detail-meta">
+                    <div className="activity-detail-block">
                       <div>
-                        <span className="overview-current-set-cell-label">Timeline</span>
-                        <strong>{formatTimestamp(selectedEntry.at)}</strong>
-                        <p className="inline-note">Recent desktop events stay local to this Mac unless you export a support report.</p>
+                        <p className="card-kicker">What happened</p>
+                        <p className="inline-note">{selectedEntry.message}</p>
                       </div>
                       <div>
-                        <span className="overview-current-set-cell-label">Recorded scope</span>
-                        <strong>{selectedEntry.scopeLabel}</strong>
-                        <p className="inline-note">{selectedEntry.label}</p>
+                        <p className="card-kicker">Result</p>
+                        <p className="inline-note">
+                          {selectedEntry.status === "success"
+                            ? "Completed successfully."
+                            : "Needs attention before you retry or continue."}
+                        </p>
                       </div>
-                    </div>
-                    <div>
-                      <p className="card-kicker">What happened</p>
-                      <p className="inline-note">{selectedEntry.message}</p>
-                    </div>
-                    <div>
-                      <p className="card-kicker">Desktop record</p>
-                      <p className="inline-note">
-                        {selectedEntry.resultSummary ??
-                          (selectedEntry.status === "success"
-                          ? "Snapshot updated successfully."
-                          : "AI Switch recorded a recoverable failure for this event.")}
-                      </p>
                     </div>
                     <div>
                       <p className="card-kicker">Recovery</p>
@@ -272,12 +278,30 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                         </p>
                       )}
                     </div>
+                    <div>
+                      <p className="card-kicker">Command</p>
+                      <p className="inline-note">
+                        {selectedEntry.command ?? "Command details were not recorded for this event."}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="card-kicker">Output</p>
+                      <p className="inline-note">
+                        {selectedEntry.resultSummary ??
+                          (selectedEntry.status === "success"
+                          ? "Snapshot updated successfully."
+                          : "AI Switch recorded a recoverable failure for this event.")}
+                      </p>
+                    </div>
                     <KeyValueGrid
                       rows={[
                         {
-                          label: "Command",
-                          value:
-                            selectedEntry.command ?? "Command details were not recorded for this event.",
+                          label: "Recorded",
+                          value: formatFullTimestamp(selectedEntry.at),
+                        },
+                        {
+                          label: "Scope",
+                          value: selectedEntry.scopeLabel,
                         },
                       ]}
                     />
@@ -321,20 +345,25 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
             <article className="diagnostic-card activity-session-card">
               <div className="desktop-pane-section-header">
                 <div>
-                  <p className="card-kicker">Session</p>
-                  <h3>Local timeline state</h3>
+                  <p className="card-kicker">Local log</p>
+                  <h3>Activity storage</h3>
                 </div>
                 <span className="pill pill-soft">On this Mac</span>
               </div>
-              {clearMessage ? (
+              {clearMessage || logMessage ? (
                 <div className="stack-list">
-                  <h4>Timeline cleared</h4>
-                  <p className="inline-note">{clearMessage}</p>
+                  <h4>{clearMessage ? "Timeline cleared" : "Log snapshot opened"}</h4>
+                  <p className="inline-note">{clearMessage || logMessage}</p>
                 </div>
               ) : (
-                <p className="inline-note">
-                  Keep a short local history while you are debugging switches, setup flows, or recovery actions.
-                </p>
+                <div className="stack-list">
+                  <p className="inline-note">
+                    Keep a short local history while you are debugging switches, setup flows, or recovery actions.
+                  </p>
+                  <p className="inline-note">
+                    Recent events stay on this Mac and persist across relaunches.
+                  </p>
+                </div>
               )}
               {exportBundleMutation.data ? (
                 <article className="diagnostic-card diagnostic-pass activity-session-card-nested">
@@ -404,5 +433,12 @@ function formatFullTimestamp(timestamp: number) {
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+  }).format(timestamp);
+}
+
+function formatDayTimestamp(timestamp: number) {
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
   }).format(timestamp);
 }
