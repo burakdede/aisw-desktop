@@ -611,34 +611,27 @@ export function App() {
 
   if (bootstrap.isLoading) {
     return (
-      <main className="app-shell app-shell-onboarding">
-        <section className="hero-card hero-card-compact">
-          <p className="eyebrow">AI Switch</p>
-          <h1>Preparing your local switchboard…</h1>
-          <p className="lede">
-            Loading saved profiles and the current tool state on this computer.
-          </p>
-        </section>
-      </main>
+      <BootstrapSurface
+        kicker="AI Switch"
+        title="Preparing your local switchboard…"
+        detail="Loading saved profiles and the current tool state on this computer."
+        status="Opening local state"
+        summary="This stays on-device and usually finishes in a moment."
+      />
     );
   }
 
   if (bootstrap.isError || !bootstrap.data) {
     const bootstrapError = describeBootstrapError(bootstrap.error);
     return (
-      <main className="app-shell app-shell-onboarding">
-        <section className="hero-card hero-card-compact">
-          <p className="eyebrow">AI Switch</p>
-          <h1>AI Switch could not open this window.</h1>
-          <p className="lede">
-            Check app setup, local permissions, and compatibility details before continuing.
-          </p>
-          <p className="inline-note">{bootstrapError.message}</p>
-          {bootstrapError.remediation ? (
-            <p className="inline-note">{bootstrapError.remediation}</p>
-          ) : null}
-        </section>
-      </main>
+      <BootstrapSurface
+        kicker="AI Switch"
+        title="AI Switch could not open this window."
+        detail="Check app setup, local permissions, and compatibility details before continuing."
+        status="Needs attention"
+        summary={bootstrapError.message}
+        remediation={bootstrapError.remediation}
+      />
     );
   }
 
@@ -1063,6 +1056,55 @@ export function App() {
       }}
     />
     </>
+  );
+}
+
+function BootstrapSurface({
+  kicker,
+  title,
+  detail,
+  status,
+  summary,
+  remediation,
+}: {
+  kicker: string;
+  title: string;
+  detail: string;
+  status: string;
+  summary: string;
+  remediation?: string;
+}) {
+  return (
+    <main className="app-shell app-shell-launch">
+      <section className="launch-card">
+        <div className="launch-titlebar" aria-hidden="true">
+          <span className="launch-traffic launch-traffic-close" />
+          <span className="launch-traffic launch-traffic-minimize" />
+          <span className="launch-traffic launch-traffic-zoom" />
+        </div>
+        <div className="launch-card-body">
+          <div className="launch-card-copy">
+            <p className="eyebrow">{kicker}</p>
+            <h1>{title}</h1>
+            <p className="lede">{detail}</p>
+          </div>
+          <div className="launch-card-status">
+            <div className="launch-status-panel">
+              <span className="overview-current-set-cell-label">Status</span>
+              <strong>{status}</strong>
+              <p className="inline-note">{summary}</p>
+            </div>
+            {remediation ? (
+              <div className="launch-status-panel">
+                <span className="overview-current-set-cell-label">Next step</span>
+                <strong>Review setup</strong>
+                <p className="inline-note">{remediation}</p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
 
