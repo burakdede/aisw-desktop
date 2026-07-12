@@ -7802,9 +7802,13 @@ describe("App", () => {
       expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
       expect(screen.getAllByText(/Detected shell:/).length).toBeGreaterThan(0);
       expect(screen.getByText("Config file: ~/.zshrc")).toBeInTheDocument();
-      expect(screen.getByText("1. Add the AI Switch line to your shell config.")).toBeInTheDocument();
-      expect(screen.getByText("2. Reload the shell config.")).toBeInTheDocument();
-      expect(screen.getByText("3. Verify that terminal integration is active.")).toBeInTheDocument();
+      expect(screen.getByText("1. Copy the AI Switch setup step.")).toBeInTheDocument();
+      expect(
+        screen.getByText("Paste it into ~/.zshrc or the matching shell config file."),
+      ).toBeInTheDocument();
+      expect(screen.getByText("2. Reload Terminal.")).toBeInTheDocument();
+      expect(screen.getByText("Run the reload step or open a new terminal window.")).toBeInTheDocument();
+      expect(screen.getByText("3. Confirm that terminal integration is active.")).toBeInTheDocument();
       expect(screen.getByText("Show advanced terminal commands")).toBeInTheDocument();
     });
   });
@@ -7853,7 +7857,7 @@ describe("App", () => {
     await renderSettingsPanel(bootstrap.settings, "shell");
 
     await waitFor(() => {
-      expect(screen.getByText("Shell guidance is unavailable.")).toBeInTheDocument();
+      expect(screen.getByText("Terminal setup guidance is unavailable.")).toBeInTheDocument();
     });
     expect(calls).toEqual([]);
 

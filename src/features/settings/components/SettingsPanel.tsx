@@ -1060,7 +1060,7 @@ export function SettingsPanel({
                     <p className="inline-note">
                       {shellGuidance.isLoading
                         ? "Loading shell guidance…"
-                        : "Shell guidance is unavailable."}
+                        : "Terminal setup guidance is unavailable."}
                     </p>
                   )}
                 </article>
@@ -1071,7 +1071,7 @@ export function SettingsPanel({
                     <div className="desktop-pane-section-header">
                       <div>
                         <p className="card-kicker">Guided setup</p>
-                        <h3>Install for {selectedVariant.title}</h3>
+                        <h3>Set up {selectedVariant.title}</h3>
                       </div>
                     </div>
                     <div className="settings-note-block">
@@ -1087,7 +1087,10 @@ export function SettingsPanel({
                     </div>
                     <div className="settings-steps-list">
                       <div className="settings-step-card">
-                        <p className="inline-note">1. Add the AI Switch line to your shell config.</p>
+                        <p className="inline-note">1. Copy the AI Switch setup step.</p>
+                        <p className="inline-note">
+                          Paste it into {selectedVariant.config_path} or the matching shell config file.
+                        </p>
                         <div className="button-row">
                           <button
                             type="button"
@@ -1099,8 +1102,8 @@ export function SettingsPanel({
                         </div>
                       </div>
                       <div className="settings-step-card">
-                        <p className="inline-note">2. Reload the shell config.</p>
-                        <p className="inline-note">You can also open a new terminal if that is easier.</p>
+                        <p className="inline-note">2. Reload Terminal.</p>
+                        <p className="inline-note">Run the reload step or open a new terminal window.</p>
                         <div className="button-row">
                           <button
                             type="button"
@@ -1112,7 +1115,7 @@ export function SettingsPanel({
                         </div>
                       </div>
                       <div className="settings-step-card">
-                        <p className="inline-note">3. Verify that terminal integration is active.</p>
+                        <p className="inline-note">3. Confirm that terminal integration is active.</p>
                         <p className="inline-note">Expected output: {selectedVariant.verify_expected}</p>
                         <div className="button-row">
                           <button
@@ -1152,8 +1155,10 @@ export function SettingsPanel({
                 ) : null}
                 {shellGuidance.data ? (
                   <article className="diagnostic-card settings-pane-section">
-                    <h3>Manual switching still works</h3>
-                    <p className="inline-note">{shellGuidance.data.note}</p>
+                    <h3>Terminal commands still work manually</h3>
+                    <p className="inline-note">
+                      {normalizeTerminalIntegrationText(shellGuidance.data.note)}
+                    </p>
                     <p className="inline-note">
                       If you intentionally switch from Terminal instead of the desktop app, use the advanced examples below.
                     </p>
