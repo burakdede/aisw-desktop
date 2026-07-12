@@ -595,7 +595,7 @@ export function App() {
           <p className="eyebrow">AI Switch</p>
           <h1>Preparing your local switchboard…</h1>
           <p className="lede">
-            Loading saved profiles, the included runtime, and the current tool state on this Mac.
+            Loading saved profiles and the current tool state on this Mac.
           </p>
         </section>
       </main>
@@ -610,8 +610,7 @@ export function App() {
           <p className="eyebrow">AI Switch</p>
           <h1>AI Switch could not open this window.</h1>
           <p className="lede">
-            Check the included runtime, local permissions, and compatibility details
-            before continuing.
+            Check app setup, local permissions, and compatibility details before continuing.
           </p>
           <p className="inline-note">{bootstrapError.message}</p>
           {bootstrapError.remediation ? (
@@ -1168,7 +1167,7 @@ function sectionDetail(section: string, setupFocused = false) {
     case "activity":
       return "Track recent desktop actions, command outcomes, and changes applied by the runtime.";
     case "settings":
-      return "Control the included runtime, updates, terminal integration, and local storage behavior.";
+      return "Control app setup, updates, terminal integration, and local storage behavior.";
     default:
       return "";
   }

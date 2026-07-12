@@ -54,7 +54,7 @@ export function HelpSheet({
             <p className="inline-note">Credentials stay on this Mac.</p>
             <p className="inline-note">No telemetry, prompt logging, or traffic proxy is used.</p>
             <p className="inline-note">
-              The included runtime is the recommended setup for a consistent AI Switch experience.
+              The app-managed runtime is the recommended setup for a consistent AI Switch experience.
             </p>
           </article>
 
@@ -90,7 +90,7 @@ export function HelpSheet({
             </div>
             <p className="inline-note">
               Go to Profiles to save or import accounts, Diagnostics to verify switching health, or
-              Settings to review runtime and terminal integration.
+              Settings to review app setup and terminal integration.
             </p>
             <div className="button-row">
               <button
