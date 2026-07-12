@@ -854,7 +854,7 @@ export function App() {
           <div className="stack-list">
             <p className="inline-note">
               AI Switch Desktop uses the included switching engine. A separate command-line install
-              on this Mac cannot power the desktop app yet.
+              on this Mac cannot power this app yet.
             </p>
             <p className="inline-note">
               Your saved profiles stay local. Switch back to the included desktop engine to continue,
@@ -1200,7 +1200,7 @@ function describeRuntimeBlocker(runtimeStatus: {
   if (hasResolvedRuntime) {
     return {
       summary:
-        "The current engine was found, but it is not compatible with the desktop app.",
+        "The current engine was found, but it is not compatible with this app.",
       nextStep:
         "Use the included desktop engine, or choose a compatible engine in Engine Settings.",
     };

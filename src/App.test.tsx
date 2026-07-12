@@ -639,7 +639,7 @@ describe("App", () => {
     });
     expect(
       screen.getByText(
-        "AI Switch Desktop uses the included switching engine. A separate command-line install on this Mac cannot power the desktop app yet.",
+        "AI Switch Desktop uses the included switching engine. A separate command-line install on this Mac cannot power this app yet.",
       ),
     ).toBeInTheDocument();
     expect(

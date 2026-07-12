@@ -1077,8 +1077,8 @@ function buildHealthItems(
       status: bootstrap.runtime_status.compatible ? "pass" : "fail",
       detail: bootstrap.runtime_status.compatible
         ? bootstrap.settings.runtime_kind === "bundled"
-          ? "Included desktop engine is compatible with this desktop app."
-          : "Selected engine override is compatible with this desktop app."
+          ? "Included desktop engine is compatible with this app."
+          : "Selected engine override is compatible with this app."
         : normalizeRuntimeLanguage(bootstrap.runtime_status.issues.join(" · ")) || "Compatibility checks failed.",
     },
   ];

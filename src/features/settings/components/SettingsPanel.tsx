@@ -1084,7 +1084,7 @@ export function SettingsPanel({
                         </p>
                       ) : null}
                       <p className="inline-note">
-                        The desktop app keeps terminal setup optional. Use the guided copy actions below when you want already-open shells to refresh immediately after a switch.
+                        AI Switch keeps terminal setup optional. Use the guided copy actions below when you want already-open shells to refresh immediately after a switch.
                       </p>
                     </div>
                     <div className="settings-steps-list">
@@ -1162,7 +1162,7 @@ export function SettingsPanel({
                       {normalizeTerminalIntegrationText(shellGuidance.data.note)}
                     </p>
                     <p className="inline-note">
-                      If you intentionally switch from Terminal instead of the desktop app, use the advanced examples below.
+                      If you intentionally switch from Terminal instead of AI Switch, use the advanced examples below.
                     </p>
                     {shellGuidance.data.manual_apply_examples.length ? (
                       <details className="settings-guide-block">
