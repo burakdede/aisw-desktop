@@ -4,7 +4,6 @@ import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { SearchField } from "../../../components/SearchField";
 import { SegmentedControl } from "../../../components/SegmentedControl";
-import { SectionCard } from "../../../components/SectionCard";
 import { SplitView } from "../../../components/SplitView";
 import {
   AppBootstrap,
@@ -99,6 +98,10 @@ export function ProfilesPanel({
     profile: string;
     mode: "files" | "activate";
   } | null>(null);
+  const [pendingEdit, setPendingEdit] = useState<{
+    name: string;
+    focus: "name" | "label";
+  } | null>(null);
   const [expandedDetails, setExpandedDetails] = useState<string | null>(null);
   const [openDiagnosticDetails, setOpenDiagnosticDetails] = useState<string | null>(null);
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
@@ -106,9 +109,9 @@ export function ProfilesPanel({
     tool: (typeof TOOLS)[number];
     name: string;
   } | null>(null);
-  const [focusRenameOnSelection, setFocusRenameOnSelection] = useState(false);
   const apiKeyInputRef = useRef<HTMLInputElement | null>(null);
   const renameInputRef = useRef<HTMLInputElement | null>(null);
+  const editLabelInputRef = useRef<HTMLInputElement | null>(null);
 
   const profiles = useMemo(() => snapshot.profiles[tool]?.profiles ?? [], [snapshot, tool]);
   const readEnabled = useMutationAwareQueryEnabled();
@@ -202,11 +205,22 @@ export function ProfilesPanel({
         : undefined,
     [backups.data, selectedProfileEntry, tool],
   );
-  const selectedRenameDraft = selectedProfileEntry ? renameDrafts[selectedProfileEntry.name] ?? "" : "";
-  const selectedRenameDuplicate =
-    selectedProfileEntry &&
-    selectedRenameDraft.trim().length > 0 &&
-    isDuplicateProfileName(profiles, selectedProfileEntry.name, selectedRenameDraft);
+  const editSheetProfile = pendingEdit
+    ? profiles.find((entry) => entry.name === pendingEdit.name) ?? null
+    : null;
+  const editSheetDisplay = editSheetProfile
+    ? effectiveLabel(tool, editSheetProfile.name, editSheetProfile.label, settings) ?? titleCase(editSheetProfile.name)
+    : null;
+  const editSheetRenameDraft = editSheetProfile ? renameDrafts[editSheetProfile.name] ?? editSheetProfile.name : "";
+  const editSheetLabelDraft = editSheetProfile
+    ? labelDrafts[editSheetProfile.name] ??
+      effectiveLabel(tool, editSheetProfile.name, editSheetProfile.label, settings) ??
+      ""
+    : "";
+  const editSheetRenameDuplicate =
+    editSheetProfile &&
+    editSheetRenameDraft.trim().length > 0 &&
+    isDuplicateProfileName(profiles, editSheetProfile.name, editSheetRenameDraft);
   const selectedRestoreTargetDisplay =
     selectedProfileEntry && selectedProfileDisplay
       ? `${titleCase(tool)} / ${selectedProfileDisplay}`
@@ -219,43 +233,6 @@ export function ProfilesPanel({
     selectedProfileEntry &&
     pendingRestore?.profile === selectedProfileEntry.name &&
     pendingRestore.mode === "activate";
-  const activeProfilesCount = inventoryProfiles.filter((entry) => entry.active).length;
-  const filteredActiveProfilesCount = filteredInventoryProfiles.filter((entry) => entry.active).length;
-  const currentToolActiveProfile =
-    snapshot.profiles[tool]?.active
-      ? effectiveLabel(
-          tool,
-          snapshot.profiles[tool]?.active ?? "",
-          snapshot.profiles[tool]?.profiles.find((entry) => entry.name === snapshot.profiles[tool]?.active)?.label,
-          settings,
-        ) ?? titleCase(snapshot.profiles[tool]?.active ?? "")
-      : "None";
-  const currentToolStatusLabel =
-    snapshot.profiles[tool]?.active
-      ? profileStatusSummary(snapshot, tool, snapshot.profiles[tool]?.active ?? "", toolStatus)
-      : "Not configured";
-  const currentToolBackend =
-    toolStatus?.credential_backend
-      ? formatBackendLabel(toolStatus.credential_backend)
-      : "Stored";
-  const inventorySummaryItems = [
-    {
-      label: "Visible",
-      value: `${filteredInventoryProfiles.length} row${filteredInventoryProfiles.length === 1 ? "" : "s"}`,
-    },
-    {
-      label: "Current tool",
-      value: toolDisplayName(tool),
-    },
-    {
-      label: "Active in view",
-      value: String(filteredActiveProfilesCount),
-    },
-    {
-      label: "Current profile",
-      value: currentToolActiveProfile,
-    },
-  ];
   const restoreSheetMode = pendingRestore?.mode ?? null;
   const removalSheetProfile = pendingRemoval
     ? profiles.find((entry) => entry.name === pendingRemoval) ?? null
@@ -384,13 +361,13 @@ export function ProfilesPanel({
   }, [openRowActions]);
 
   useEffect(() => {
-    if (!focusRenameOnSelection || !selectedProfileEntry) {
+    if (!pendingEdit) {
       return;
     }
-    renameInputRef.current?.focus();
-    renameInputRef.current?.select();
-    setFocusRenameOnSelection(false);
-  }, [focusRenameOnSelection, selectedProfileEntry]);
+    const target = pendingEdit.focus === "label" ? editLabelInputRef.current : renameInputRef.current;
+    target?.focus();
+    target?.select();
+  }, [pendingEdit]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -488,365 +465,225 @@ export function ProfilesPanel({
   }
 
   return (
-    <SectionCard
-      title="Profiles"
-      kicker="Saved profiles"
-      actions={
-        <div className="profiles-toolbar">
-          <SearchField
-            className="search-field profiles-search-field"
-            inputClassName="search-field-input profiles-search"
-            ariaLabel="Search Profiles"
-            placeholder="Search profiles"
-            value={search}
-            onChange={setSearch}
-          />
-          <SegmentedControl
-            ariaLabel="Profile filters"
-            options={INVENTORY_FILTERS.map((entry) => ({
-              value: entry,
-              label: entry === "all" ? "All" : titleCase(entry),
-            }))}
-            value={inventoryFilter}
-            onChange={setInventoryFilter}
-          />
-          <button
-            className="primary-button"
-            type="button"
-            onClick={() => setProfileSheetOpen(true)}
-          >
-            Add Profile
-          </button>
-        </div>
-      }
-    >
+    <div className="profiles-screen screen-content">
+      <div className="profiles-filter-row">
+        <SearchField
+          className="search-field profiles-search-field"
+          inputClassName="search-field-input profiles-search"
+          ariaLabel="Search Profiles"
+          placeholder="Search profiles"
+          value={search}
+          onChange={setSearch}
+        />
+        <SegmentedControl
+          ariaLabel="Profile filters"
+          options={INVENTORY_FILTERS.map((entry) => ({
+            value: entry,
+            label: entry === "all" ? "All" : titleCase(entry),
+          }))}
+          value={inventoryFilter}
+          onChange={setInventoryFilter}
+        />
+      </div>
       <SplitView
-        className="profiles-layout"
+        className="profiles-layout profiles-split-view"
         primaryClassName="profiles-inventory-pane"
         secondaryClassName="profiles-inspector-pane"
         primary={
-          <div className="stack-list desktop-pane-column">
-            <article className="diagnostic-card profiles-table-card">
-              <div className="desktop-pane-section-header profiles-table-header">
-                <div>
-                  <p className="card-kicker">Inventory</p>
-                  <h3>Saved profiles</h3>
-                  <p className="inline-note">
-                    Use the table like a native profile library: select a row to inspect it, or double-click to switch immediately.
-                  </p>
-                </div>
-                <span className={`pill ${activeProfilesCount ? "pill-ok" : "pill-soft"}`}>
-                  {activeProfilesCount ? `${activeProfilesCount} active` : "No active profiles"}
-                </span>
-              </div>
-              <div className="profiles-library-strip" aria-label="Profile library summary">
-                {inventorySummaryItems.map((item) => (
-                  <div key={item.label}>
-                    <span className="overview-current-set-cell-label">{item.label}</span>
-                    <strong>{item.value}</strong>
-                  </div>
-                ))}
-              </div>
-              <div className="profiles-list-header" aria-hidden="true">
-                <span>Name</span>
-                <span>Tool</span>
-                <span>Auth</span>
-                <span>Backend</span>
-                <span>State</span>
-                <span>Last checked</span>
-                <span>Actions</span>
-              </div>
-              <div className="stack-list desktop-list-stack profiles-table-rows">
-              {filteredInventoryProfiles.map((inventoryEntry) => (
-                <div
-                  key={`${inventoryEntry.tool}:${inventoryEntry.name}`}
-                  className={`list-row profile-list-row ${
-                    inventoryEntry.active ? "profile-list-row-active" : ""
-                  } ${
-                    expandedDetails === inventoryEntry.name && tool === inventoryEntry.tool
-                      ? "profile-list-row-selected"
-                      : ""
-                  }`}
-                  onContextMenu={(event) => {
-                    event.preventDefault();
-                    selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
-                    setOpenRowActions({ tool: inventoryEntry.tool, name: inventoryEntry.name });
-                  }}
-                >
-                  <button
-                    type="button"
-                    aria-label={`Inspect ${titleCase(inventoryEntry.tool)} ${inventoryEntry.label}`}
-                    className="profile-list-row-button"
-                    onClick={() => selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name)}
-                    onDoubleClick={() => activateInventoryEntry(inventoryEntry)}
+          <section className="profiles-pane profiles-table-pane" aria-label="Profile table">
+            <div className="profiles-table-header" aria-hidden="true">
+              <span>Name</span>
+              <span>Tool</span>
+              <span>Status</span>
+              <span className="profiles-table-column-auth">Authentication</span>
+              <span className="profiles-table-column-low">Backend</span>
+              <span className="profiles-table-column-low">Last checked</span>
+              <span />
+            </div>
+            <div className="profiles-table-body" role="list" aria-label="Profiles">
+              {filteredInventoryProfiles.map((inventoryEntry) => {
+                const rowSelected = expandedDetails === inventoryEntry.name && tool === inventoryEntry.tool;
+                return (
+                  <div
+                    key={`${inventoryEntry.tool}:${inventoryEntry.name}`}
+                    className={`profiles-table-row ${rowSelected ? "profiles-table-row-selected" : ""}`}
+                    onContextMenu={(event) => {
+                      event.preventDefault();
+                      selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
+                      setOpenRowActions({ tool: inventoryEntry.tool, name: inventoryEntry.name });
+                    }}
                   >
-                    <div className="profile-list-main">
-                      <div className="profile-list-row-title">
-                        <span
-                          className={`health-dot health-dot-${
-                            inventoryEntry.state === "Drifted"
-                              ? "warning"
-                              : inventoryEntry.active
-                                ? "ok"
-                                : "neutral"
-                          }`}
-                          aria-hidden="true"
-                        />
-                        <strong>{inventoryEntry.label}</strong>
-                        {inventoryEntry.active ? <span className="pill pill-ok">Active</span> : null}
-                      </div>
-                      <p>{inventoryEntry.name}</p>
-                    </div>
-                    <div className="profile-list-columns">
-                      <span>{titleCase(inventoryEntry.tool)}</span>
-                      <span>{inventoryEntry.auth}</span>
-                      <span>{inventoryEntry.backend}</span>
-                      <span>{inventoryEntry.state}</span>
-                      <span>{inventoryEntry.lastChecked}</span>
-                    </div>
-                    <span className="profile-list-row-chevron" aria-hidden="true">
-                      ›
-                    </span>
-                  </button>
-                  <div className="profile-row-actions" data-profile-row-actions>
                     <button
-                      className="ghost-button profile-row-actions-trigger"
                       type="button"
-                      aria-label={`Open actions for ${titleCase(inventoryEntry.tool)} ${inventoryEntry.label}`}
-                      aria-expanded={
-                        openRowActions?.tool === inventoryEntry.tool &&
-                        openRowActions?.name === inventoryEntry.name
-                      }
-                      onClick={() => {
-                        selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
-                        setOpenRowActions((current) =>
-                          current?.tool === inventoryEntry.tool && current?.name === inventoryEntry.name
-                            ? null
-                            : { tool: inventoryEntry.tool, name: inventoryEntry.name },
-                        );
-                      }}
+                      className="profiles-table-row-button"
+                      aria-label={`Inspect ${titleCase(inventoryEntry.tool)} ${inventoryEntry.label}`}
+                      onClick={() => selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name)}
+                      onDoubleClick={() => selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name)}
                     >
-                      •••
+                      <div className="profiles-table-name-cell">
+                        <strong>{inventoryEntry.label}</strong>
+                        <span>{inventoryEntry.name}</span>
+                      </div>
+                      <span className="profiles-table-column">{titleCase(inventoryEntry.tool)}</span>
+                      <span
+                        className={`profiles-table-status profiles-table-status-${profileStatusTone(
+                          inventoryEntry.active,
+                          inventoryEntry.state,
+                        )}`}
+                      >
+                        {profileStatusLabel(inventoryEntry.active, inventoryEntry.state)}
+                      </span>
+                      <span className="profiles-table-column profiles-table-column-auth">{inventoryEntry.auth}</span>
+                      <span className="profiles-table-column profiles-table-column-low">{inventoryEntry.backend}</span>
+                      <span className="profiles-table-column profiles-table-column-low">{inventoryEntry.lastChecked}</span>
                     </button>
-                    {openRowActions?.tool === inventoryEntry.tool &&
-                    openRowActions?.name === inventoryEntry.name ? (
-                      <div className="profile-row-actions-menu" role="menu" aria-label="Profile row actions">
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={() => {
-                            selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
-                            setOpenRowActions(null);
-                          }}
-                        >
-                          Details
-                        </button>
-                        <button
-                          type="button"
-                          role="menuitem"
-                          disabled={mutationLock.isBusy}
-                          onClick={() => {
-                            setOpenRowActions(null);
-                            activateInventoryEntry(inventoryEntry);
-                          }}
-                        >
-                          Switch to this profile
-                        </button>
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={() => {
-                            selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
-                            setOpenRowActions(null);
-                            setFocusRenameOnSelection(true);
-                          }}
-                        >
-                          Rename…
-                        </button>
-                        <button
-                          type="button"
-                          role="menuitem"
-                          className="profile-row-actions-danger"
-                          onClick={() => {
-                            selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
-                            setOpenRowActions(null);
-                            setPendingRemoval(inventoryEntry.name);
-                          }}
-                        >
-                          Remove…
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              ))}
-              {!filteredInventoryProfiles.length ? (
-                <article className="diagnostic-card">
-                  <h3>No matching profiles</h3>
-                  <p className="inline-note">
-                    Adjust the tool filter or search query, or add a new profile from the inspector.
-                  </p>
-                </article>
-              ) : null}
-              </div>
-            </article>
-          </div>
-        }
-        secondary={
-          <div className="stack-list desktop-pane-column">
-          <div className="stack-list">
-            {selectedProfileEntry ? (
-              <>
-                <article className="diagnostic-card profiles-inspector-card">
-                  <div className="profiles-tool-focus-main">
-                    <div className="stack-list">
-                      <div className="profiles-tool-focus-header">
-                        <div>
-                          <p className="card-kicker">Inspector</p>
-                          <h3>{titleCase(tool)} / {selectedProfileDisplay}</h3>
-                          <p className="inline-note">
-                            Review the current saved login, confirm live match, and switch or recover from one view.
-                          </p>
-                        </div>
-                        <span
-                          className={`pill ${
-                            snapshot.profiles[tool]?.active === selectedProfileEntry.name
-                              ? toolStatus?.active_profile_applied === false
-                                ? "pill-warn"
-                                : "pill-ok"
-                              : "pill-soft"
-                          }`}
-                        >
-                          {profileStatusSummary(snapshot, tool, selectedProfileEntry.name, toolStatus)}
-                        </span>
-                      </div>
-                      <div className="profiles-tool-focus-strip">
-                        <div>
-                          <span className="overview-current-set-cell-label">Current tool</span>
-                          <strong>{titleCase(tool)}</strong>
-                        </div>
-                        <div>
-                          <span className="overview-current-set-cell-label">Active profile</span>
-                          <strong>{currentToolActiveProfile}</strong>
-                        </div>
-                        <div>
-                          <span className="overview-current-set-cell-label">Backend</span>
-                          <strong>{currentToolBackend}</strong>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="profiles-inspector-rail">
-                      <div className="profiles-inspector-controls">
-                        <label>
-                          Current tool
-                          <select
-                            value={tool}
-                            onChange={(event) => {
-                              setTool(event.target.value as typeof tool);
-                              setOpenDiagnosticDetails(null);
-                              setExpandedDetails(null);
+                    <div className="profile-row-actions" data-profile-row-actions>
+                      <button
+                        className="ghost-button profile-row-actions-trigger"
+                        type="button"
+                        aria-label={`Open actions for ${titleCase(inventoryEntry.tool)} ${inventoryEntry.label}`}
+                        aria-expanded={
+                          openRowActions?.tool === inventoryEntry.tool &&
+                          openRowActions?.name === inventoryEntry.name
+                        }
+                        onClick={() => {
+                          selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
+                          setOpenRowActions((current) =>
+                            current?.tool === inventoryEntry.tool && current?.name === inventoryEntry.name
+                              ? null
+                              : { tool: inventoryEntry.tool, name: inventoryEntry.name },
+                          );
+                        }}
+                      >
+                        •••
+                      </button>
+                      {openRowActions?.tool === inventoryEntry.tool &&
+                      openRowActions?.name === inventoryEntry.name ? (
+                        <div className="profile-row-actions-menu" role="menu" aria-label="Profile row actions">
+                          <button
+                            type="button"
+                            role="menuitem"
+                            disabled={mutationLock.isBusy}
+                            onClick={() => {
+                              setOpenRowActions(null);
+                              activateInventoryEntry(inventoryEntry);
                             }}
                           >
-                            {TOOLS.map((entry) => (
-                              <option key={entry} value={entry}>
-                                {titleCase(entry)}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        {availableStateModes.length ? (
-                          <StateModeField
-                            name={`inspector-state-mode-${tool}`}
-                            value={stateMode}
-                            options={availableStateModes}
-                            onChange={setStateMode}
-                          />
-                        ) : (
-                          <label>
-                            State mode
-                            <select value="n/a" disabled>
-                              <option value="n/a">Not configurable</option>
-                            </select>
-                          </label>
-                        )}
-                        <button
-                          className="primary-button"
-                          type="button"
-                          onClick={() => setProfileSheetOpen(true)}
-                        >
-                          + Add Profile
-                        </button>
-                      </div>
+                            {inventoryEntry.active ? "Reapply Active Profile" : "Activate"}
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
+                              setPendingEdit({ name: inventoryEntry.name, focus: "name" });
+                              setOpenRowActions(null);
+                            }}
+                          >
+                            Rename…
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
+                              setPendingEdit({ name: inventoryEntry.name, focus: "label" });
+                              setOpenRowActions(null);
+                            }}
+                          >
+                            Change Label…
+                          </button>
+                          {latestBackupForProfile(inventoryEntry.tool, inventoryEntry.name, backups.data) ? (
+                            <>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                disabled={mutationLock.isBusy}
+                                onClick={() => {
+                                  selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
+                                  setPendingRestore({ profile: inventoryEntry.name, mode: "files" });
+                                  setOpenRowActions(null);
+                                }}
+                              >
+                                Restore Latest…
+                              </button>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                disabled={mutationLock.isBusy}
+                                onClick={() => {
+                                  selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
+                                  setPendingRestore({ profile: inventoryEntry.name, mode: "activate" });
+                                  setOpenRowActions(null);
+                                }}
+                              >
+                                Restore Latest + Activate…
+                              </button>
+                            </>
+                          ) : null}
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="profile-row-actions-danger"
+                            onClick={() => {
+                              selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
+                              setOpenRowActions(null);
+                              setPendingRemoval(inventoryEntry.name);
+                            }}
+                          >
+                            Remove…
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
-                  <div className="profiles-detail-strip">
-                    <div>
-                      <span className="overview-current-set-cell-label">Stored name</span>
-                      <strong>{selectedProfileEntry.name}</strong>
-                    </div>
-                    <div>
-                      <span className="overview-current-set-cell-label">Auth method</span>
-                      <strong>{selectedProfileEntry.auth}</strong>
-                    </div>
-                    <div>
-                      <span className="overview-current-set-cell-label">Latest backup</span>
-                      <strong>
-                        {selectedLatestBackup
-                          ? formatBackupTimestamp(selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id)
-                          : "No backup yet"}
-                      </strong>
+                );
+              })}
+              {!filteredInventoryProfiles.length ? (
+                <div className="profiles-empty-state">
+                  <h3>No matching profiles</h3>
+                  <p className="inline-note">Adjust the tool filter or search query.</p>
+                </div>
+              ) : null}
+            </div>
+          </section>
+        }
+        secondary={
+          <aside className="profiles-pane profiles-inspector">
+            {selectedProfileEntry ? (
+              <>
+                <header className="profiles-inspector-header">
+                  <div className="profiles-inspector-title-block">
+                    <h3>{selectedProfileDisplay}</h3>
+                    <p className="inline-note">{toolDisplayName(tool)}</p>
+                    <div className={`profiles-inspector-status profiles-inspector-status-${profileStatusTone(
+                      snapshot.profiles[tool]?.active === selectedProfileEntry.name,
+                      profileStatusSummary(snapshot, tool, selectedProfileEntry.name, toolStatus),
+                    )}`}>
+                      <span aria-hidden="true">{profileStatusSymbol(
+                        snapshot.profiles[tool]?.active === selectedProfileEntry.name,
+                        profileStatusSummary(snapshot, tool, selectedProfileEntry.name, toolStatus),
+                      )}</span>
+                      <span>{profileStatusLabel(
+                        snapshot.profiles[tool]?.active === selectedProfileEntry.name,
+                        profileStatusSummary(snapshot, tool, selectedProfileEntry.name, toolStatus),
+                      )}</span>
                     </div>
                   </div>
-                  <KeyValueGrid
-                    rows={[
-                      {
-                        label: "Active profile",
-                        value:
-                          snapshot.profiles[tool]?.active === selectedProfileEntry.name ? "Yes" : "No",
-                      },
-                      {
-                        label: "Live match",
-                        value: profileLiveMatchValue(snapshot, tool, selectedProfileEntry.name, toolStatus),
-                      },
-                      {
-                        label: "Auth method",
-                        value: selectedProfileEntry.auth,
-                      },
-                      {
-                        label: "Credential backend",
-                        value:
-                          snapshot.profiles[tool]?.active === selectedProfileEntry.name
-                            ? toolStatus?.credential_backend ?? "unknown"
-                            : selectedInventoryEntry?.backend ?? "Stored",
-                      },
-                      {
-                        label: "State mode",
-                        value:
-                          snapshot.profiles[tool]?.active === selectedProfileEntry.name
-                            ? toolStatus?.state_mode ?? "n/a"
-                            : selectedInventoryEntry?.state ?? "Stored",
-                      },
-                      {
-                        label: "Last checked",
-                        value: selectedInventoryEntry?.lastChecked ?? "Available locally",
-                      },
-                    ]}
-                  />
-                  <p className="inline-note">
-                    Keep this profile ready for switching by checking live match, backend health, and recent backup state before you start coding.
-                  </p>
-                  <div className="desktop-pane-section-header profiles-inspector-section-header">
-                    <div>
-                      <p className="card-kicker">Quick actions</p>
-                      <h4>Switch and recover</h4>
-                    </div>
-                    <p className="inline-note">Core actions stay available without leaving the inspector.</p>
-                  </div>
-                  <div className="button-row">
+                  <div className="button-row profiles-inspector-action-row">
                     <button
-                      className="primary-button"
+                      className={
+                        snapshot.profiles[tool]?.active === selectedProfileEntry.name &&
+                        toolStatus?.active_profile_applied !== false
+                          ? "ghost-button"
+                          : "primary-button"
+                      }
                       type="button"
-                      disabled={mutationLock.isBusy}
+                      disabled={
+                        mutationLock.isBusy ||
+                        (snapshot.profiles[tool]?.active === selectedProfileEntry.name &&
+                          toolStatus?.active_profile_applied !== false)
+                      }
                       onClick={() =>
                         useProfileMutation.mutate({
                           tool,
@@ -856,321 +693,308 @@ export function ProfilesPanel({
                         })
                       }
                     >
-                      Switch to this profile
+                      {snapshot.profiles[tool]?.active === selectedProfileEntry.name
+                        ? toolStatus?.active_profile_applied === false
+                          ? `Reapply ${selectedProfileDisplay}`
+                          : "Active"
+                        : "Activate Profile"}
                     </button>
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      onClick={() =>
-                        setOpenDiagnosticDetails((current) =>
-                          current === selectedProfileEntry.name ? null : selectedProfileEntry.name,
-                        )
-                      }
-                    >
-                      {openDiagnosticDetails === selectedProfileEntry.name
-                        ? "Hide health details"
-                        : "Show health details"}
-                    </button>
-                  </div>
-                  {selectedLatestBackup ? (
-                    <div className="button-row profiles-restore-actions">
+                    <div className="profile-row-actions" data-profile-row-actions>
                       <button
-                        className="ghost-button"
+                        className="ghost-button profile-row-actions-trigger"
                         type="button"
-                        disabled={mutationLock.isBusy}
+                        aria-label="Open profile actions"
+                        aria-expanded={
+                          openRowActions?.tool === tool &&
+                          openRowActions?.name === selectedProfileEntry.name
+                        }
                         onClick={() =>
-                          setPendingRestore({
-                            profile: selectedProfileEntry.name,
-                            mode: "files",
-                          })
+                          setOpenRowActions((current) =>
+                            current?.tool === tool && current?.name === selectedProfileEntry.name
+                              ? null
+                              : { tool, name: selectedProfileEntry.name },
+                          )
                         }
                       >
-                        Restore latest
+                        •••
                       </button>
-                      <button
-                        className="ghost-button"
-                        type="button"
-                        disabled={mutationLock.isBusy}
-                        onClick={() =>
-                          setPendingRestore({
-                            profile: selectedProfileEntry.name,
-                            mode: "activate",
-                          })
-                        }
-                      >
-                        Restore latest + activate
-                      </button>
-                    </div>
-                  ) : null}
-                  <div className="profiles-management-grid profiles-inspector-sections">
-                    <div className="profiles-management-block">
-                      <p className="card-kicker">Name</p>
-                      <h4>Rename profile</h4>
-                      <div className="inline-form inline-form-compact">
-                        <input
-                          ref={renameInputRef}
-                          aria-label={`rename ${selectedProfileEntry.name}`}
-                          placeholder="new name"
-                          value={selectedRenameDraft}
-                          onChange={(event) =>
-                            setRenameDrafts((current) => ({
-                              ...current,
-                              [selectedProfileEntry.name]: event.target.value,
-                            }))
-                          }
-                        />
-                        <button
-                          className="ghost-button"
-                          type="button"
-                          disabled={mutationLock.isBusy || Boolean(selectedRenameDuplicate)}
-                          onClick={() => {
-                            const newName = selectedRenameDraft.trim();
-                            if (!newName) return;
-                            setPendingRemoval(null);
-                            renameProfileMutation.mutate({
-                              tool,
-                              oldName: selectedProfileEntry.name,
-                              newName,
-                            });
-                          }}
-                        >
-                          Rename
-                        </button>
-                      </div>
-                      {selectedRenameDuplicate ? (
-                        <p className="inline-note">
-                          {duplicateWarning(tool, selectedRenameDraft.trim())}
-                        </p>
-                      ) : (
-                        <p className="inline-note">Stable names make switching and recovery easier.</p>
-                      )}
-                    </div>
-                    <div className="profiles-management-block">
-                      <p className="card-kicker">Label</p>
-                      <h4>Relabel profile</h4>
-                      <div className="inline-form inline-form-compact">
-                        <input
-                          aria-label={`label ${selectedProfileEntry.name}`}
-                          placeholder="display label"
-                          value={
-                            labelDrafts[selectedProfileEntry.name] ??
-                            effectiveLabel(tool, selectedProfileEntry.name, selectedProfileEntry.label, settings) ??
-                            ""
-                          }
-                          onChange={(event) =>
-                            setLabelDrafts((current) => ({
-                              ...current,
-                              [selectedProfileEntry.name]: event.target.value,
-                            }))
-                          }
-                        />
-                        <button
-                          className="ghost-button"
-                          type="button"
-                          disabled={mutationLock.isBusy}
-                          onClick={() => {
-                            const nextLabel = labelDrafts[selectedProfileEntry.name]?.trim() ?? "";
-                            setPendingRemoval(null);
-                            updateSettingsMutation.mutate({
-                              runtime_kind: settings.runtime_kind,
-                              runtime_path: settings.runtime_path ?? null,
-                              aisw_home: settings.aisw_home ?? null,
-                              update_channel: settings.update_channel,
-                              profile_sets: settings.profile_sets,
-                              profile_labels: mergeProfileLabel(
-                                settings,
-                                tool,
-                                selectedProfileEntry.name,
-                                nextLabel || null,
-                              ),
-                            });
-                          }}
-                        >
-                          Relabel
-                        </button>
-                      </div>
-                      <p className="inline-note">
-                        Visible labels can stay readable without changing the stored name.
-                      </p>
-                    </div>
-                  </div>
-                  {openDiagnosticDetails === selectedProfileEntry.name ? (
-                    <div className="profiles-technical-block profiles-inspector-section">
-                      <p className="card-kicker">Status</p>
-                      <h4>Health details</h4>
-                      <p className="inline-note">
-                        Auth method: {selectedProfileEntry.auth}
-                      </p>
-                      <p className="inline-note">
-                        Selected in AI Switch: {booleanLabel(snapshot.profiles[tool]?.active === selectedProfileEntry.name).toLowerCase()}
-                      </p>
-                      {selectedLatestBackup ? (
-                        <p className="inline-note">
-                          Latest restore point: {formatBackupTimestamp(selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id)}
-                        </p>
+                      {openRowActions?.tool === tool &&
+                      openRowActions?.name === selectedProfileEntry.name ? (
+                        <div className="profile-row-actions-menu" role="menu" aria-label="Profile actions">
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setPendingEdit({ name: selectedProfileEntry.name, focus: "name" });
+                              setOpenRowActions(null);
+                            }}
+                          >
+                            Rename…
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setPendingEdit({ name: selectedProfileEntry.name, focus: "label" });
+                              setOpenRowActions(null);
+                            }}
+                          >
+                            Change Label…
+                          </button>
+                          {selectedLatestBackup ? (
+                            <>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                disabled={mutationLock.isBusy}
+                                onClick={() => {
+                                  setPendingRestore({ profile: selectedProfileEntry.name, mode: "files" });
+                                  setOpenRowActions(null);
+                                }}
+                              >
+                                Restore Latest…
+                              </button>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                disabled={mutationLock.isBusy}
+                                onClick={() => {
+                                  setPendingRestore({ profile: selectedProfileEntry.name, mode: "activate" });
+                                  setOpenRowActions(null);
+                                }}
+                              >
+                                Restore Latest + Activate…
+                              </button>
+                            </>
+                          ) : null}
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="profile-row-actions-danger"
+                            onClick={() => {
+                              setPendingRemoval(selectedProfileEntry.name);
+                              setOpenRowActions(null);
+                            }}
+                          >
+                            Remove…
+                          </button>
+                        </div>
                       ) : null}
-                      {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? (
-                        <>
-                          <p className="inline-note">
-                            Credential backend: {toolStatus?.credential_backend ?? "unknown"}
-                          </p>
-                          <p className="inline-note">
-                            Live match: {booleanLabel(toolStatus?.active_profile_applied).toLowerCase()}
-                          </p>
-                          <p className="inline-note">
-                            Credentials present: {booleanLabel(toolStatus?.credentials_present).toLowerCase()}
-                          </p>
-                          <p className="inline-note">
-                            Local permissions: {booleanLabel(toolStatus?.permissions_ok).toLowerCase()}
-                          </p>
-                          {toolStatus?.token_warning ? (
-                            <p className="inline-note">
-                              Token warning: {formatProfileTokenWarning(toolStatus)}
-                            </p>
-                          ) : null}
-                          {toolStatus?.warnings.length ? (
-                            <div className="stack-list">
-                              {toolStatus.warnings.map((warning, index) => (
-                                <p
-                                  key={`${warning.code ?? warning.message ?? "warning"}-${index}`}
-                                  className="inline-note"
-                                >
-                                  Warning: {formatProfileWarning(warning)}
-                                </p>
-                              ))}
-                            </div>
-                          ) : null}
-                          {!toolStatus?.token_warning && !toolStatus?.warnings.length ? (
-                            <p className="inline-note">
-                              No additional token or desktop engine warnings are currently reported for this tool.
-                            </p>
-                          ) : null}
-                        </>
-                      ) : (
-                        <p className="inline-note">
-                          Live health details are only available for the active profile. Switch to this profile to inspect backend, live-match, token, and permission state.
-                        </p>
-                      )}
-                    </div>
-                  ) : null}
-                  <div className="profiles-management-block profiles-inspector-section">
-                    <p className="card-kicker">Removal</p>
-                    <h4>Remove profile</h4>
-                    <p className="inline-note">
-                      Active profiles need explicit confirmation before deletion.
-                    </p>
-                    <div className="button-row">
-                      {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? (
-                        <button
-                          className="ghost-button danger-button"
-                          type="button"
-                          onClick={() => setPendingRemoval(selectedProfileEntry.name)}
-                        >
-                          Remove active…
-                        </button>
-                      ) : (
-                        <button
-                          className="ghost-button danger-button"
-                          type="button"
-                          onClick={() => setPendingRemoval(selectedProfileEntry.name)}
-                        >
-                          Remove
-                        </button>
-                      )}
                     </div>
                   </div>
-                </article>
+                </header>
+                <KeyValueGrid
+                  rows={[
+                    { label: "Profile", value: selectedProfileEntry.name },
+                    { label: "Label", value: selectedProfileDisplay ?? selectedProfileEntry.name },
+                    { label: "Live match", value: profileLiveMatchValue(snapshot, tool, selectedProfileEntry.name, toolStatus) },
+                    { label: "Authentication", value: selectedProfileEntry.auth },
+                    {
+                      label: "Credential storage",
+                      value:
+                        snapshot.profiles[tool]?.active === selectedProfileEntry.name
+                          ? credentialBackendDisplay(toolStatus?.credential_backend)
+                          : selectedInventoryEntry?.backend ?? "Stored",
+                    },
+                    {
+                      label: "State mode",
+                      value:
+                        snapshot.profiles[tool]?.active === selectedProfileEntry.name
+                          ? stateModeDisplay(toolStatus?.state_mode)
+                          : "Stored",
+                    },
+                    {
+                      label: "Last checked",
+                      value: selectedInventoryEntry?.lastChecked ?? "Available locally",
+                    },
+                    {
+                      label: "Latest backup",
+                      value: selectedLatestBackup
+                        ? formatBackupTimestamp(selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id)
+                        : "No backup yet",
+                    },
+                  ]}
+                />
+                {availableStateModes.length ? (
+                  <StateModeField
+                    name={`inspector-state-mode-${tool}`}
+                    value={stateMode}
+                    options={availableStateModes}
+                    onChange={setStateMode}
+                  />
+                ) : null}
+                <div className="profiles-inspector-disclosure">
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    onClick={() =>
+                      setOpenDiagnosticDetails((current) =>
+                        current === selectedProfileEntry.name ? null : selectedProfileEntry.name,
+                      )
+                    }
+                  >
+                    {openDiagnosticDetails === selectedProfileEntry.name ? "Hide Storage Details" : "Show Storage Details"}
+                  </button>
+                </div>
+                {openDiagnosticDetails === selectedProfileEntry.name ? (
+                  <div className="profiles-inspector-details">
+                    {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? (
+                      <>
+                        <p className="inline-note">Selected in AI Switch: {booleanLabel(true).toLowerCase()}</p>
+                        <p className="inline-note">
+                          Credentials present: {booleanLabel(toolStatus?.credentials_present).toLowerCase()}
+                        </p>
+                        <p className="inline-note">
+                          Local permissions: {booleanLabel(toolStatus?.permissions_ok).toLowerCase()}
+                        </p>
+                        {toolStatus?.token_warning ? (
+                          <p className="inline-note">Token warning: {formatProfileTokenWarning(toolStatus)}</p>
+                        ) : null}
+                        {toolStatus?.warnings.length ? (
+                          <div className="stack-list">
+                            {toolStatus.warnings.map((warning, index) => (
+                              <p
+                                key={`${warning.code ?? warning.message ?? "warning"}-${index}`}
+                                className="inline-note"
+                              >
+                                Warning: {formatProfileWarning(warning)}
+                              </p>
+                            ))}
+                          </div>
+                        ) : null}
+                        {!toolStatus?.token_warning && !toolStatus?.warnings.length ? (
+                          <p className="inline-note">
+                            No additional token or desktop engine warnings are currently reported for this tool.
+                          </p>
+                        ) : null}
+                      </>
+                    ) : (
+                      <p className="inline-note">
+                        Live health details are only available for the active profile.
+                      </p>
+                    )}
+                  </div>
+                ) : null}
               </>
             ) : (
-              <article className="diagnostic-card profiles-inspector-card">
-                  <div className="profiles-tool-focus-main">
-                    <div className="stack-list">
-                    <div className="profiles-tool-focus-header">
-                      <div>
-                        <p className="card-kicker">Inspector</p>
-                        <h3>{titleCase(tool)} profiles</h3>
-                        <p className="inline-note">
-                          Select a saved profile from the library to inspect activation state, health details, backups, and edit actions.
-                        </p>
-                      </div>
-                      <span
-                        className={`pill ${
-                          currentToolStatusLabel === "Active"
-                            ? "pill-ok"
-                            : currentToolStatusLabel === "Live mismatch"
-                              ? "pill-warn"
-                              : "pill-soft"
-                        }`}
-                      >
-                        {currentToolStatusLabel}
-                      </span>
-                    </div>
-                    <div className="profiles-tool-focus-strip">
-                      <div>
-                        <span className="overview-current-set-cell-label">Current tool</span>
-                        <strong>{titleCase(tool)}</strong>
-                      </div>
-                      <div>
-                        <span className="overview-current-set-cell-label">Active profile</span>
-                        <strong>{currentToolActiveProfile}</strong>
-                      </div>
-                      <div>
-                        <span className="overview-current-set-cell-label">Backend</span>
-                        <strong>{currentToolBackend}</strong>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="profiles-inspector-rail">
-                    <div className="profiles-inspector-controls">
-                      <label>
-                        Current tool
-                        <select
-                          value={tool}
-                          onChange={(event) => {
-                            setTool(event.target.value as typeof tool);
-                            setOpenDiagnosticDetails(null);
-                            setExpandedDetails(null);
-                          }}
-                        >
-                          {TOOLS.map((entry) => (
-                            <option key={entry} value={entry}>
-                              {titleCase(entry)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      {availableStateModes.length ? (
-                        <StateModeField
-                          name={`inspector-state-mode-${tool}`}
-                          value={stateMode}
-                          options={availableStateModes}
-                          onChange={setStateMode}
-                        />
-                      ) : (
-                        <label>
-                          State mode
-                          <select value="n/a" disabled>
-                            <option value="n/a">Not configurable</option>
-                          </select>
-                        </label>
-                      )}
-                      <button
-                        className="primary-button"
-                        type="button"
-                        onClick={() => setProfileSheetOpen(true)}
-                      >
-                        + Add Profile
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </article>
+              <div className="profiles-empty-state profiles-empty-state-inspector">
+                <h3>No profile selected</h3>
+                <p className="inline-note">
+                  Select a saved profile from the table to inspect activation state and storage details.
+                </p>
+              </div>
             )}
-            {!profiles.length ? <p className="inline-note">No profiles stored for this tool yet.</p> : null}
-          </div>
-          </div>
+          </aside>
         }
       />
+      {editSheetProfile && editSheetDisplay ? (
+        <DialogSurface
+          ariaLabel="Edit Profile"
+          className="quick-switch-palette profile-sheet"
+          initialFocusSelector="input:not([disabled]), button:not([disabled])"
+          onClose={() => setPendingEdit(null)}
+        >
+          <div className="quick-switch-header">
+            <div>
+              <p className="card-kicker">Profile</p>
+              <h3>Rename Profile</h3>
+              <p className="inline-note">
+                Update the stored name or display label for {editSheetDisplay}.
+              </p>
+            </div>
+            <button className="ghost-button" type="button" onClick={() => setPendingEdit(null)}>
+              Close
+            </button>
+          </div>
+          <form
+            className="stacked-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const nextName = editSheetRenameDraft.trim();
+              const nextLabel = editSheetLabelDraft.trim();
+              if (editSheetRenameDuplicate) {
+                return;
+              }
+
+              if (nextName && nextName !== editSheetProfile.name) {
+                renameProfileMutation.mutate({
+                  tool,
+                  oldName: editSheetProfile.name,
+                  newName: nextName,
+                });
+              }
+
+              const currentLabel =
+                effectiveLabel(tool, editSheetProfile.name, editSheetProfile.label, settings) ?? "";
+              if (nextLabel !== currentLabel) {
+                updateSettingsMutation.mutate({
+                  runtime_kind: settings.runtime_kind,
+                  runtime_path: settings.runtime_path ?? null,
+                  aisw_home: settings.aisw_home ?? null,
+                  update_channel: settings.update_channel,
+                  profile_sets: settings.profile_sets,
+                  profile_labels: mergeProfileLabel(
+                    settings,
+                    tool,
+                    editSheetProfile.name,
+                    nextLabel || null,
+                  ),
+                });
+              }
+
+              setPendingEdit(null);
+            }}
+          >
+            <label>
+              Current name
+              <input value={editSheetProfile.name} disabled />
+            </label>
+            <label>
+              New name
+              <input
+                ref={renameInputRef}
+                aria-label={`rename ${editSheetProfile.name}`}
+                value={editSheetRenameDraft}
+                onChange={(event) =>
+                  setRenameDrafts((current) => ({
+                    ...current,
+                    [editSheetProfile.name]: event.target.value,
+                  }))
+                }
+              />
+            </label>
+            {editSheetRenameDuplicate ? (
+              <p className="inline-note">{duplicateWarning(tool, editSheetRenameDraft.trim())}</p>
+            ) : null}
+            <label>
+              Display label
+              <input
+                ref={editLabelInputRef}
+                aria-label={`label ${editSheetProfile.name}`}
+                value={editSheetLabelDraft}
+                onChange={(event) =>
+                  setLabelDrafts((current) => ({
+                    ...current,
+                    [editSheetProfile.name]: event.target.value,
+                  }))
+                }
+              />
+            </label>
+            <div className="button-row">
+              <button className="ghost-button" type="button" onClick={() => setPendingEdit(null)}>
+                Cancel
+              </button>
+              <button
+                className="primary-button"
+                type="submit"
+                disabled={mutationLock.isBusy || Boolean(editSheetRenameDuplicate)}
+              >
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </DialogSurface>
+      ) : null}
       {selectedProfileEntry && selectedLatestBackup && selectedRestoreTargetDisplay && restoreSheetMode ? (
         <DialogSurface
           ariaLabel="Restore Latest Backup"
@@ -1549,7 +1373,7 @@ export function ProfilesPanel({
             </form>
         </DialogSurface>
       ) : null}
-    </SectionCard>
+    </div>
   );
 }
 
@@ -1857,6 +1681,50 @@ function formatProfileWarning(
   return warning.remediation ? `${detail} Remediation: ${warning.remediation}` : detail;
 }
 
+function credentialBackendDisplay(backend: string | null | undefined) {
+  if (!backend) {
+    return "Backend Unavailable";
+  }
+  return formatBackendLabel(backend);
+}
+
+function stateModeDisplay(mode: string | null | undefined) {
+  if (!mode) {
+    return "Not Configurable";
+  }
+  return titleCase(mode);
+}
+
+function profileStatusTone(active: boolean, state: string) {
+  if (!active && state !== "Drifted") {
+    return "stored";
+  }
+  if (state === "Drifted" || state === "Live mismatch") {
+    return "warn";
+  }
+  return "ok";
+}
+
+function profileStatusLabel(active: boolean, state: string) {
+  if (!active && state !== "Drifted") {
+    return "Stored";
+  }
+  if (state === "Drifted" || state === "Live mismatch") {
+    return "Needs Attention";
+  }
+  return "Active";
+}
+
+function profileStatusSymbol(active: boolean, state: string) {
+  if (!active && state !== "Drifted") {
+    return "○";
+  }
+  if (state === "Drifted" || state === "Live mismatch") {
+    return "▲";
+  }
+  return "●";
+}
+
 function profileLiveMatchValue(
   snapshot: AppSnapshot,
   tool: string,
@@ -1867,9 +1735,9 @@ function profileLiveMatchValue(
     return "Available after activation";
   }
   if (toolStatus?.active_profile_applied === undefined || toolStatus?.active_profile_applied === null) {
-    return "Unknown";
+    return "Not Verified";
   }
-  return toolStatus.active_profile_applied ? "Yes" : "No";
+  return toolStatus.active_profile_applied ? "Ready" : "Needs Attention";
 }
 
 function booleanLabel(value: boolean | null | undefined) {
