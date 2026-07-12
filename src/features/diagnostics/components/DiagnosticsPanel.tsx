@@ -767,7 +767,7 @@ function buildDiagnosticCheckRows(
     if (!status.binary_found) {
       rows.push({
         label: `${toolDisplayName(status.tool)} availability`,
-        detail: `${toolDisplayName(status.tool)} is not installed on this Mac yet.`,
+        detail: `${toolDisplayName(status.tool)} is not installed on this computer yet.`,
         status: "warn",
       });
       return;

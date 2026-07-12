@@ -152,7 +152,7 @@ export function SetupPanel({
   const pendingProfileName = pendingLiveImport ? profileNames[pendingLiveImport.tool] ?? "" : "";
   const pendingProfileLabel = pendingLiveImport ? profileLabels[pendingLiveImport.tool] ?? "" : "";
   const setupPrimaryActionLabel = initMutation.isPending
-    ? "Checking This Mac…"
+    ? "Checking This Computer…"
     : initReport
       ? "Refresh Setup"
       : "Get Started";
@@ -237,7 +237,7 @@ export function SetupPanel({
   const runtimeSummary = summarizeRuntime(settings.runtime_kind);
   const runtimeRows = buildRuntimeRows(bootstrap, snapshot, toolCapabilities);
   const trustRows = [
-    "Credentials stay on this Mac",
+    "Credentials stay on this computer",
     "No telemetry",
     "No prompt or API traffic proxy",
     "Built-in switching engine ready",

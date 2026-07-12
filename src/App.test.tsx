@@ -599,7 +599,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Inspect Saved settings" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Inspect Checked for updates" })).toBeInTheDocument();
-      expect(screen.getByText("Recent events stay on this Mac and persist across relaunches.")).toBeInTheDocument();
+      expect(screen.getByText("Recent events stay on this computer and persist across relaunches.")).toBeInTheDocument();
     });
 
     expect(window.localStorage.getItem("ai-switch.desktop.activity-log")).toContain(
@@ -637,7 +637,7 @@ describe("App", () => {
     });
     expect(
       screen.getByText(
-        "This Mac is pointed at an external switching engine that this desktop app cannot use safely.",
+        "This computer is pointed at an external switching engine that this desktop app cannot use safely.",
       ),
     ).toBeInTheDocument();
     expect(
@@ -838,7 +838,7 @@ describe("App", () => {
     });
     selectOverviewTool("Gemini");
     const overviewCard = screen
-      .getByText("Gemini CLI is not available on PATH, so this Mac cannot switch or verify that tool yet.")
+      .getByText("Gemini CLI is not available on PATH, so this computer cannot switch or verify that tool yet.")
       .closest(".tool-card");
     if (!(overviewCard instanceof HTMLElement)) {
       throw new Error("Missing Gemini overview card.");
@@ -1567,7 +1567,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Refresh state" })).toBeDisabled();
     selectOverviewTool("Gemini");
     const geminiCard = screen
-      .getByText("Gemini CLI is not available on PATH, so this Mac cannot switch or verify that tool yet.")
+      .getByText("Gemini CLI is not available on PATH, so this computer cannot switch or verify that tool yet.")
       .closest(".tool-card");
     if (!(geminiCard instanceof HTMLElement)) {
       throw new Error("Missing Gemini tool card.");
@@ -8034,7 +8034,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(
         screen.getByText(
-          "Open AI Switch automatically after you sign in to this Mac.",
+          "Open AI Switch automatically after you sign in to this computer.",
         ),
       ).toBeInTheDocument();
     });
@@ -8150,7 +8150,7 @@ describe("App", () => {
         ),
       ).toBeInTheDocument();
       expect(
-        screen.getByText((_, element) => element?.textContent?.trim() === "System runtime: Found on this Mac"),
+        screen.getByText((_, element) => element?.textContent?.trim() === "System runtime: Found on this computer"),
       ).toBeInTheDocument();
     });
   });

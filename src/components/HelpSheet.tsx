@@ -31,7 +31,7 @@ export function HelpSheet({
             <p className="card-kicker">Help</p>
             <h3>Using AI Switch</h3>
             <p className="inline-note">
-              AI Switch keeps account switching local to this Mac and stays focused on safe profile
+              AI Switch keeps account switching local to this computer and stays focused on safe profile
               changes, verification, and recovery.
             </p>
           </div>
@@ -51,7 +51,7 @@ export function HelpSheet({
             <p className="inline-note">
               Switch Claude Code, Codex CLI, and Gemini CLI profiles from one app.
             </p>
-            <p className="inline-note">Credentials stay on this Mac.</p>
+            <p className="inline-note">Credentials stay on this computer.</p>
             <p className="inline-note">No telemetry, prompt logging, or traffic proxy is used.</p>
             <p className="inline-note">
               The included switching engine is the recommended setup for a consistent AI Switch experience.

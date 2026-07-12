@@ -113,7 +113,7 @@ export function AppFrame({
             <div className="sidebar-scroll">
               <div className="sidebar-brand">
                 <div className="sidebar-brand-topline">
-                  <p className="eyebrow">Mac utility</p>
+                  <p className="eyebrow">Desktop utility</p>
                   <span className="sidebar-window-badge">Native shell</span>
                 </div>
                 <div className="brand-lockup">

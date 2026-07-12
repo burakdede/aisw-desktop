@@ -615,7 +615,7 @@ export function App() {
           <p className="eyebrow">AI Switch</p>
           <h1>Preparing your local switchboard…</h1>
           <p className="lede">
-            Loading saved profiles and the current tool state on this Mac.
+            Loading saved profiles and the current tool state on this computer.
           </p>
         </section>
       </main>
@@ -835,7 +835,7 @@ export function App() {
       subtitle="Switch Claude Code, Codex CLI, and Gemini CLI profiles from one focused app."
       detail={
         runtimeRecoveryFocused
-          ? "AI Switch can continue as soon as this Mac switches back to the included engine."
+          ? "AI Switch can continue as soon as this computer switches back to the included engine."
           : sectionDetail(activeSection, setupFocused)
       }
       nav={navItems}
@@ -863,7 +863,7 @@ export function App() {
         <SectionCard title="Switching is paused" kicker="Setup paused">
           <div className="stack-list">
             <p className="inline-note">
-              This Mac is pointed at an external switching engine that this desktop app cannot use
+              This computer is pointed at an external switching engine that this desktop app cannot use
               safely.
             </p>
             <p className="inline-note">
@@ -1210,7 +1210,7 @@ function sectionTitle(section: string, setupFocused = false) {
 
 function sectionDetail(section: string, setupFocused = false) {
   if (setupFocused) {
-    return "Set up AI Switch on this Mac before you switch coding-agent profiles.";
+    return "Set up AI Switch on this computer before you switch coding-agent profiles.";
   }
   switch (section) {
     case "overview":

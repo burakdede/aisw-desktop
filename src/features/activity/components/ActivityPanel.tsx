@@ -143,7 +143,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                 : "No events yet"}
             </h3>
             <p className="inline-note">
-              Local desktop activity stays on this Mac unless you explicitly export a support report.
+              Local desktop activity stays on this computer unless you explicitly export a support report.
             </p>
           </div>
           <span className="pill pill-soft">Redacted</span>
@@ -363,7 +363,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                   <p className="card-kicker">Local log</p>
                   <h3>Activity storage</h3>
                 </div>
-                <span className="pill pill-soft">On this Mac</span>
+                <span className="pill pill-soft">On this computer</span>
               </div>
               {clearMessage || logMessage ? (
                 <div className="stack-list">
@@ -376,7 +376,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                     Keep a short local history while you are debugging switches, setup flows, or recovery actions.
                   </p>
                   <p className="inline-note">
-                    Recent events stay on this Mac and persist across relaunches.
+                    Recent events stay on this computer and persist across relaunches.
                   </p>
                 </div>
               )}

@@ -258,7 +258,7 @@ export function SettingsPanel({
           <div className="stack-list">
             <SourceListPanel
               className="settings-nav-card"
-              kicker="Mac Preferences"
+              kicker="Desktop Preferences"
               title="Settings"
               listLabel="Settings sections"
               badge={<span className="pill pill-soft">{sectionLabel(selectedSection)}</span>}
@@ -343,7 +343,7 @@ export function SettingsPanel({
                   <p className="card-kicker">General</p>
                   <h3>Desktop defaults</h3>
                   <p className="inline-note">
-                    Keep the app aligned with macOS, choose the launch destination, and decide whether the menu bar utility stays available for quick switching.
+                    Keep the app aligned with the operating system, choose the launch destination, and decide whether the menu bar utility stays available for quick switching.
                   </p>
                 </div>
                 <span className="pill pill-soft">Recommended</span>
@@ -355,7 +355,7 @@ export function SettingsPanel({
                 </div>
                 <div>
                   <span className="overview-current-set-cell-label">Login item</span>
-                  <strong>Managed by macOS</strong>
+                  <strong>Managed by the operating system</strong>
                 </div>
                 <div>
                   <span className="overview-current-set-cell-label">Menu bar extra</span>
@@ -413,11 +413,11 @@ export function SettingsPanel({
                         <strong>Launch at login</strong>
                         <span className="inline-note">
                           {launchAtLogin.isLoading
-                            ? "Checking the macOS login item state for this app."
+                            ? "Checking the operating system login item state for this app."
                             : launchAtLoginSupported
-                              ? "Open AI Switch automatically after you sign in to this Mac."
+                              ? "Open AI Switch automatically after you sign in to this computer."
                               : launchAtLoginDetail ??
-                                "Launch at login is currently available on macOS builds."}
+                                "Launch at login is currently available on supported desktop builds."}
                         </span>
                       </span>
                       <input
@@ -729,7 +729,7 @@ export function SettingsPanel({
                   <p className="card-kicker">Current setup</p>
                   <h3>Release track</h3>
                   <p className="inline-note">
-                    Choose the release track for this Mac. Stable is recommended for day-to-day switching. Beta is for earlier builds.
+                    Choose the release track for this computer. Stable is recommended for day-to-day switching. Beta is for earlier builds.
                   </p>
                 </div>
                 <span className="pill pill-soft">{titleCase(updateChannel)}</span>
@@ -1120,7 +1120,7 @@ export function SettingsPanel({
                     Credentials stay on this machine, storage stays local-first, and support exports are redacted before sharing.
                   </p>
                 </div>
-                <span className="pill pill-ok">On this Mac</span>
+                <span className="pill pill-ok">On this computer</span>
               </div>
               <div className="settings-summary-grid">
                 <div>
@@ -1148,7 +1148,7 @@ export function SettingsPanel({
                   </div>
                   <div className="settings-info-list">
                     <div className="settings-info-row">
-                      <strong>Credentials stay local to this Mac or workstation.</strong>
+                      <strong>Credentials stay local to this computer or workstation.</strong>
                       <span className="inline-note">
                         No telemetry or remote credential proxy is used for switching.
                       </span>
@@ -1322,7 +1322,7 @@ export function SettingsPanel({
                     </div>
                     <div className="settings-kv-row">
                       <strong>System runtime</strong>
-                      <strong>{runtimeStatus.inventory.system_path ? "Found on this Mac" : "Not found"}</strong>
+                      <strong>{runtimeStatus.inventory.system_path ? "Found on this computer" : "Not found"}</strong>
                     </div>
                   </div>
                   <p className="inline-note">
@@ -1359,7 +1359,7 @@ export function SettingsPanel({
                   </p>
                   <p className="inline-note">
                     System runtime:{" "}
-                    <strong>{runtimeStatus.inventory.system_path ? "Found on this Mac" : "Not found"}</strong>
+                    <strong>{runtimeStatus.inventory.system_path ? "Found on this computer" : "Not found"}</strong>
                   </p>
                   {runtimeStatus.inventory.configured_path ? (
                     <p className="inline-note">A custom runtime path is configured.</p>
@@ -1503,7 +1503,7 @@ function sectionKicker(section: SettingsSection) {
 function sectionHeading(section: SettingsSection) {
   switch (section) {
     case "general":
-      return "Keep AI Switch aligned with macOS";
+      return "Keep AI Switch aligned with your desktop";
     case "runtime":
       return "Choose which AI Switch runtime this app should use";
     case "updates":
@@ -1520,11 +1520,11 @@ function sectionHeading(section: SettingsSection) {
 function sectionDescription(section: SettingsSection) {
   switch (section) {
     case "general":
-      return "General settings should stay short, obvious, and system-driven so the app feels like a native Mac utility.";
+      return "General settings should stay short, obvious, and system-driven so the app feels like a native desktop utility.";
     case "runtime":
       return "The included runtime is the supported default. System and custom overrides stay available for advanced cases.";
     case "updates":
-      return "Choose the release track for this Mac, then check and install signed desktop updates without leaving the app.";
+      return "Choose the release track for this computer, then check and install signed desktop updates without leaving the app.";
     case "shell":
       return "Terminal integration follows one guided copy-and-verify flow across supported shells so it stays approachable for non-terminal users.";
     case "keyring":

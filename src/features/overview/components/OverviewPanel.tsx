@@ -696,7 +696,7 @@ function MissingBinaryGuidance({
   return (
     <div className="stack-list">
       <p className="inline-note">
-        {toolDisplayName(tool)} is not available on PATH, so this Mac cannot switch or verify that
+        {toolDisplayName(tool)} is not available on PATH, so this computer cannot switch or verify that
         tool yet.
       </p>
       <p className="inline-note">
