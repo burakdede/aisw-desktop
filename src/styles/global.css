@@ -31,11 +31,12 @@
 html,
 body,
 #root {
-  min-height: 100vh;
+  height: 100dvh;
 }
 
 body {
   margin: 0;
+  overflow: hidden;
   background:
     radial-gradient(circle at top left, rgba(111, 142, 181, 0.06), transparent 22%),
     radial-gradient(circle at bottom right, rgba(156, 172, 191, 0.05), transparent 18%),
@@ -74,7 +75,7 @@ button {
 }
 
 .app-shell {
-  min-height: 100vh;
+  height: 100dvh;
 }
 
 .app-shell-onboarding {
@@ -95,7 +96,9 @@ button {
 
 .app-shell-window {
   display: grid;
+  height: 100dvh;
   padding: 8px;
+  overflow: hidden;
   background: linear-gradient(180deg, rgba(250, 251, 252, 0.94), rgba(243, 246, 248, 0.985));
 }
 
@@ -246,7 +249,8 @@ button {
 }
 
 .layout-shell {
-  min-height: calc(100vh - 16px);
+  height: calc(100dvh - 16px);
+  min-height: 0;
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
   gap: 0;
@@ -267,6 +271,8 @@ button {
 }
 
 .sidebar {
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   background:
@@ -894,8 +900,10 @@ button {
 
 .content-shell {
   min-width: 0;
+  min-height: 0;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
   background:
     linear-gradient(180deg, color-mix(in srgb, Canvas 95%, transparent), color-mix(in srgb, Canvas 98%, transparent)),
     var(--content-bg);
