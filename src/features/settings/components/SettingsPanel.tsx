@@ -623,13 +623,13 @@ export function SettingsPanel({
               <div className="settings-overview-copy">
                 <div>
                   <p className="card-kicker">Current setup</p>
-                  <h3>Runtime selection</h3>
+                  <h3>Desktop engine selection</h3>
                   <p className="inline-note">
-                    This app ships with a compatible runtime and uses it by default. Use a system or custom runtime only when you intentionally need to replace the included desktop runtime.
+                    This app ships with a compatible desktop engine and uses it by default. Use a system or custom engine only when you intentionally need to replace the included desktop engine.
                   </p>
                 </div>
                 <span className={`pill ${runtimeKind === "bundled" ? "pill-ok" : "pill-warn"}`}>
-                  {runtimeKind === "bundled" ? "Included runtime" : titleCase(runtimeKind)}
+                  {runtimeKind === "bundled" ? "Included engine" : titleCase(runtimeKind)}
                 </span>
               </div>
               <div className="settings-summary-grid">
@@ -643,11 +643,11 @@ export function SettingsPanel({
                 </div>
                 <div>
                   <span className="overview-current-set-cell-label">Recommended</span>
-                  <strong>Bundled</strong>
+                  <strong>Included engine</strong>
                 </div>
               </div>
               <div className="settings-guide-block">
-                <h4>Runtime summary</h4>
+                <h4>Engine summary</h4>
                 <div className="settings-kv-list">
                   <div className="settings-kv-row">
                     <strong>Source</strong>
@@ -655,21 +655,21 @@ export function SettingsPanel({
                       {runtimeKind === "bundled"
                         ? "Included with this app"
                         : runtimeKind === "system"
-                          ? "System runtime"
-                          : "Custom runtime"}
+                          ? "System engine"
+                          : "Custom engine"}
                     </strong>
                   </div>
                   <div className="settings-kv-row">
-                    <strong>Runtime mode</strong>
+                    <strong>Engine mode</strong>
                     <strong>{titleCase(runtimeKind)}</strong>
                   </div>
                   <div className="settings-kv-row">
-                    <strong>Runtime version</strong>
+                    <strong>Engine version</strong>
                     <strong>{runtimeStatus.version?.version ?? "unknown"}</strong>
                   </div>
                 </div>
                 <p className="inline-note">
-                  Runtime version: {runtimeStatus.version?.version ?? "unknown"}
+                  Engine version: {runtimeStatus.version?.version ?? "unknown"}
                 </p>
               </div>
             </article>
@@ -679,40 +679,40 @@ export function SettingsPanel({
                   <div className="desktop-pane-section-header">
                     <div>
                       <p className="card-kicker">Runtime</p>
-                      <h3>Runtime source</h3>
+                      <h3>Engine source</h3>
                     </div>
                   </div>
                   {showAdvancedRuntime ? (
                     <>
                       <label>
-                        Runtime source
+                        Engine source
                         <select
                           value={runtimeKind}
                           onChange={(event) =>
                             setRuntimeKind(event.target.value as typeof runtimeKind)
                           }
                         >
-                          <option value="bundled">Included runtime</option>
-                          <option value="system">System runtime</option>
+                          <option value="bundled">Included engine</option>
+                          <option value="system">System engine</option>
                           <option value="custom">Custom path</option>
                         </select>
                       </label>
                       <label>
-                        Runtime path
+                        Engine path
                         <input
                           value={runtimePath}
                           disabled={runtimeKind !== "custom"}
                           placeholder={
                             runtimeKind === "custom"
-                              ? "/path/to/runtime"
-                              : "Only used for a custom runtime"
+                              ? "/path/to/engine"
+                              : "Only used for a custom engine"
                           }
                           onChange={(event) => setRuntimePath(event.target.value)}
                         />
                       </label>
                       <div className="settings-note-block">
                         <p className="inline-note">
-                          Keep the included runtime selected unless you intentionally need a different runtime source.
+                          Keep the included desktop engine selected unless you intentionally need a different engine source.
                         </p>
                         {runtimeKind === "bundled" ? (
                           <div className="button-row">
@@ -730,7 +730,7 @@ export function SettingsPanel({
                   ) : (
                     <div className="settings-note-block">
                       <p className="inline-note">
-                        Keep the included runtime selected unless you intentionally need a different runtime source.
+                        Keep the included desktop engine selected unless you intentionally need a different engine source.
                       </p>
                       <div className="button-row">
                         <button
@@ -762,12 +762,12 @@ export function SettingsPanel({
                 ) : null}
                 {runtimeKind !== "bundled" ? (
                   <article className="diagnostic-card diagnostic-warn settings-pane-section">
-                    <h3>Manual runtime source is active</h3>
+                    <h3>Manual engine source is active</h3>
                     <p className="inline-note">
-                      This app session is using a {runtimeKind === "system" ? "system" : "custom"} runtime instead of the included runtime.
+                      This app session is using a {runtimeKind === "system" ? "system" : "custom"} engine instead of the included desktop engine.
                     </p>
                     <p className="inline-note">
-                      Compatibility for onboarding, switching, and diagnostics is only guaranteed with the included runtime shipped in this app release.
+                      Compatibility for onboarding, switching, and diagnostics is only guaranteed with the included desktop engine shipped in this app release.
                     </p>
                   </article>
                 ) : null}
@@ -1377,7 +1377,7 @@ export function SettingsPanel({
                       </strong>
                     </div>
                     <div className="settings-kv-row">
-                      <strong>Included runtime</strong>
+                      <strong>Included engine</strong>
                       <strong>
                         {runtimeStatus.inventory.bundled_path
                           ? "Available in this build"
@@ -1385,7 +1385,7 @@ export function SettingsPanel({
                       </strong>
                     </div>
                     <div className="settings-kv-row">
-                      <strong>System runtime</strong>
+                      <strong>System engine</strong>
                       <strong>{runtimeStatus.inventory.system_path ? "Found on this computer" : "Not found"}</strong>
                     </div>
                   </div>
@@ -1414,7 +1414,7 @@ export function SettingsPanel({
                     </strong>
                   </p>
                   <p className="inline-note">
-                    Included runtime:{" "}
+                    Included engine:{" "}
                     <strong>
                       {runtimeStatus.inventory.bundled_path
                         ? "Available in this build"
@@ -1422,11 +1422,11 @@ export function SettingsPanel({
                     </strong>
                   </p>
                   <p className="inline-note">
-                    System runtime:{" "}
+                    System engine:{" "}
                     <strong>{runtimeStatus.inventory.system_path ? "Found on this computer" : "Not found"}</strong>
                   </p>
                   {runtimeStatus.inventory.configured_path ? (
-                    <p className="inline-note">A custom runtime path is configured.</p>
+                    <p className="inline-note">A custom engine path is configured.</p>
                   ) : null}
                 </article>
               </div>
@@ -1552,7 +1552,7 @@ function sectionKicker(section: SettingsSection) {
     case "general":
       return "Appearance, launch, and startup";
     case "runtime":
-      return "Included runtime and overrides";
+      return "Included engine and overrides";
     case "updates":
       return "App updates";
     case "shell":
@@ -1569,7 +1569,7 @@ function sectionHeading(section: SettingsSection) {
     case "general":
       return "Keep AI Switch aligned with your desktop";
     case "runtime":
-      return "Choose which AI Switch runtime this app should use";
+      return "Choose which AI Switch desktop engine this app should use";
     case "updates":
       return "Manage signed desktop releases in one place";
     case "shell":
@@ -1586,7 +1586,7 @@ function sectionDescription(section: SettingsSection) {
     case "general":
       return "General settings should stay short, obvious, and system-driven so the app feels like a native desktop utility.";
     case "runtime":
-      return "The included runtime is the supported default. System and custom overrides stay available for advanced cases.";
+      return "The included desktop engine is the supported default. System and custom overrides stay available for advanced cases.";
     case "updates":
       return "Choose the release track for this computer, then check and install signed desktop updates without leaving the app.";
     case "shell":
@@ -1620,7 +1620,7 @@ function sourceListSummary(section: SettingsSection) {
     case "general":
       return "Appearance and startup";
     case "runtime":
-      return "Included runtime and overrides";
+      return "Included engine and overrides";
     case "updates":
       return "Release channel and signed installs";
     case "shell":
@@ -1659,7 +1659,7 @@ function sectionFacts(section: SettingsSection) {
       ];
     case "runtime":
       return [
-        { label: "Default", value: "Included runtime" },
+        { label: "Default", value: "Included engine" },
         { label: "Overrides", value: "System or custom" },
         { label: "Risk", value: "Compatibility drift" },
       ];

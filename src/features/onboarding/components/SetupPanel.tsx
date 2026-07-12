@@ -1073,7 +1073,7 @@ function buildHealthItems(
     : [];
   const items: HealthItem[] = [
     {
-      label: "Included runtime",
+      label: "Desktop engine",
       status: bootstrap.runtime_status.compatible ? "pass" : "fail",
       detail: bootstrap.runtime_status.compatible
         ? bootstrap.settings.runtime_kind === "bundled"
@@ -1146,7 +1146,7 @@ function buildRuntimeRows(
 ): HealthItem[] {
   return [
     {
-      label: "Included runtime",
+      label: "Desktop engine",
       status: bootstrap.runtime_status.compatible ? "pass" : "warn",
       detail: bootstrap.settings.runtime_kind === "bundled"
         ? `Ready. Version ${bootstrap.runtime_status.version?.version ?? "unknown"}.`
@@ -1187,8 +1187,8 @@ function normalizeSetupHealthLabel(value: string | undefined) {
   if (normalized.includes("backup")) {
     return "Backups";
   }
-  if (normalized.includes("runtime")) {
-    return "Included runtime";
+  if (normalized.includes("runtime") || normalized.includes("engine")) {
+    return "Desktop engine";
   }
   return titleCase(normalized);
 }

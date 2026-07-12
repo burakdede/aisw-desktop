@@ -690,7 +690,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Runtime" })).toHaveAttribute("aria-pressed", "true");
-      expect(screen.getByText("Runtime summary")).toBeInTheDocument();
+      expect(screen.getByText("Engine summary")).toBeInTheDocument();
     });
   });
 
@@ -1230,7 +1230,7 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Runtime summary")).toBeInTheDocument();
+      expect(screen.getByText("Engine summary")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Runtime" })).toHaveAttribute("aria-pressed", "true");
     });
     expect(screen.getByRole("button", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "false");
@@ -8177,7 +8177,7 @@ describe("App", () => {
       const runtimeButton = screen.getByRole("button", { name: "Runtime" });
       expect(runtimeButton).toHaveFocus();
       expect(runtimeButton).toHaveAttribute("aria-pressed", "true");
-      expect(screen.getByRole("heading", { name: "Runtime selection" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Desktop engine selection" })).toBeInTheDocument();
     });
 
     const runtimeButton = screen.getByRole("button", { name: "Runtime" });
@@ -8198,8 +8198,8 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Runtime" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Runtime summary")).toBeInTheDocument();
-      expect(screen.getAllByText(/Runtime version:/).length).toBeGreaterThan(0);
+      expect(screen.getByText("Engine summary")).toBeInTheDocument();
+      expect(screen.getAllByText(/Engine version:/).length).toBeGreaterThan(0);
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Advanced" }));
@@ -8222,11 +8222,11 @@ describe("App", () => {
       ).toBeInTheDocument();
       expect(
         screen.getByText((_, element) =>
-          element?.textContent?.trim() === "Included runtime: Available in this build",
+          element?.textContent?.trim() === "Included engine: Available in this build",
         ),
       ).toBeInTheDocument();
       expect(
-        screen.getByText((_, element) => element?.textContent?.trim() === "System runtime: Found on this computer"),
+        screen.getByText((_, element) => element?.textContent?.trim() === "System engine: Found on this computer"),
       ).toBeInTheDocument();
     });
   });
@@ -8476,8 +8476,8 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByDisplayValue("System runtime")).toBeInTheDocument();
-      expect(screen.getByLabelText("Runtime path")).toHaveValue("");
+      expect(screen.getByDisplayValue("System engine")).toBeInTheDocument();
+      expect(screen.getByLabelText("Engine path")).toHaveValue("");
     });
   });
 
