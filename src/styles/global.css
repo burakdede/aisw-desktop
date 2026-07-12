@@ -1443,7 +1443,7 @@ button {
 }
 
 .profiles-layout {
-  grid-template-columns: minmax(0, 1.34fr) minmax(300px, 360px);
+  grid-template-columns: minmax(360px, 1.02fr) minmax(340px, 0.98fr);
 }
 
 .sets-layout {
@@ -2624,6 +2624,14 @@ button {
 }
 
 .profiles-inspector-controls {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.profiles-tool-focus-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
   gap: 12px;
 }
 
@@ -2672,6 +2680,16 @@ button {
 
 .profiles-management-grid {
   margin-top: 4px;
+}
+
+.profiles-inspector-rail {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
+  background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
 }
 
 .profiles-restore-actions {
@@ -2728,6 +2746,10 @@ button {
   cursor: pointer;
 }
 
+.profile-list-row:hover {
+  background: color-mix(in srgb, AccentColor 4%, Canvas 96%);
+}
+
 .profile-list-row-active {
   border-color: color-mix(in srgb, AccentColor 32%, transparent);
   background: color-mix(in srgb, AccentColor 8%, Canvas 92%);
@@ -2742,6 +2764,11 @@ button {
   display: flex;
   align-items: center;
   gap: 7px;
+}
+
+.profile-list-row-title strong {
+  font-size: 13px;
+  line-height: 1.25;
 }
 
 .profile-list-main p,
@@ -3153,6 +3180,10 @@ button {
   }
 
   .profiles-overview-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .profiles-tool-focus-main {
     grid-template-columns: 1fr;
   }
 

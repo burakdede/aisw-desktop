@@ -1552,13 +1552,16 @@ test("warns before adding a duplicate profile name", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Profiles" }).click();
 
-  await page.getByLabel("Profile name").fill("work");
+  const profilesSection = page.locator(".section-card").filter({ hasText: "Profiles" });
+  await profilesSection.getByRole("button", { name: "Add Profile", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Add Profile" });
+  await dialog.getByLabel("Profile name").fill("work");
   await expect(
     page.getByText(
       "Claude already has a profile named work. Choose a different name or rename the existing profile first.",
     ),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Add profile" })).toBeDisabled();
+  await expect(dialog.getByRole("button", { name: "Import" })).toBeDisabled();
 });
 
 test("runs guided OAuth capture from the profiles screen", async ({ page }) => {
@@ -1694,8 +1697,7 @@ test("warns before renaming a profile to a duplicate name", async ({ page }) => 
   await page.goto("/");
   await page.getByRole("button", { name: "Profiles" }).click();
 
-  const personalRow = page.locator(".list-row").filter({ hasText: "personal · oauth" });
-  await personalRow.getByRole("button", { name: "Open details" }).click();
+  await page.getByRole("button", { name: "Inspect Claude Personal" }).click();
   await page.getByLabel("rename personal").fill("work");
   await expect(
     page.getByText(
@@ -1727,16 +1729,16 @@ test("renames, relabels, and removes profiles from the profiles screen", async (
 
   await page.getByLabel("rename work").fill("client-acme");
   await page.getByRole("button", { name: "Rename" }).click();
-  await expect(page.locator(".list-row p").filter({ hasText: "client-acme · oauth" })).toBeVisible();
+  await expect(page.locator(".list-row p").filter({ hasText: "client-acme" })).toBeVisible();
 
-  const renamedRow = page.locator(".list-row").filter({ hasText: "client-acme · oauth" });
+  const renamedRow = page.locator(".list-row").filter({ hasText: "client-acme" });
   await page.getByLabel("label client-acme").fill("Client Acme");
   await page.getByRole("button", { name: "Relabel" }).click();
   await expect(renamedRow.getByText("Client Acme")).toBeVisible();
 
   await page.getByRole("button", { name: "Remove active…" }).click();
-  await page.getByRole("button", { name: "Confirm remove active" }).click();
-  await expect(page.locator(".list-row p").filter({ hasText: "client-acme · oauth" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Remove active profile" }).click();
+  await expect(page.getByText("client-acme")).toHaveCount(0);
 });
 
 test("warns before backup restore and re-activates the restored profile", async ({ page }) => {

@@ -507,7 +507,7 @@ export function ProfilesPanel({
         secondaryClassName="profiles-inspector-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-            <article className="diagnostic-card profiles-table-card">
+            <article className="diagnostic-card profiles-overview-card">
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Library</p>
@@ -543,9 +543,11 @@ export function ProfilesPanel({
                   </p>
                 </div>
               </div>
+            </article>
+            <article className="diagnostic-card profiles-table-card">
               <div className="desktop-pane-section-header">
                 <div>
-                  <p className="card-kicker">Profile list</p>
+                  <p className="card-kicker">Inventory</p>
                   <h3>Saved profiles</h3>
                 </div>
                 <p className="inline-note">
@@ -700,81 +702,89 @@ export function ProfilesPanel({
         secondary={
           <div className="stack-list desktop-pane-column">
             <article className="diagnostic-card profiles-tool-focus-card">
-              <div className="profiles-tool-focus-header">
-                <div>
-                  <p className="card-kicker">Inspector</p>
-                  <h3>{titleCase(tool)} profiles</h3>
-                  <p className="inline-note">
-                    Inspect the selected login, apply recovery actions, or open the sheet-based add flow.
-                  </p>
-                </div>
-                <span
-                  className={`pill ${
-                    currentToolStatusLabel === "Active"
-                      ? "pill-ok"
-                      : currentToolStatusLabel === "Live mismatch"
-                        ? "pill-warn"
-                        : "pill-soft"
-                  }`}
-                >
-                  {currentToolStatusLabel}
-                </span>
-              </div>
-              <div className="profiles-tool-focus-grid">
-                <div>
-                  <span className="overview-current-set-cell-label">Current tool</span>
-                  <strong>{titleCase(tool)}</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Active profile</span>
-                  <strong>{currentToolActiveProfile}</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Backend</span>
-                  <strong>{currentToolBackend}</strong>
-                </div>
-              </div>
-              <div className="profiles-inspector-controls">
-                <label>
-                  Current tool
-                  <select
-                    value={tool}
-                    onChange={(event) => {
-                      setTool(event.target.value as typeof tool);
-                      setOpenDiagnosticDetails(null);
-                      setExpandedDetails(null);
-                    }}
+              <div className="profiles-tool-focus-main">
+                <div className="profiles-tool-focus-header">
+                  <div>
+                    <p className="card-kicker">Inspector</p>
+                    <h3>{titleCase(tool)} profiles</h3>
+                    <p className="inline-note">
+                      Inspect the selected login, apply recovery actions, or open the sheet-based add flow.
+                    </p>
+                  </div>
+                  <span
+                    className={`pill ${
+                      currentToolStatusLabel === "Active"
+                        ? "pill-ok"
+                        : currentToolStatusLabel === "Live mismatch"
+                          ? "pill-warn"
+                          : "pill-soft"
+                    }`}
                   >
-                    {TOOLS.map((entry) => (
-                      <option key={entry} value={entry}>
-                        {titleCase(entry)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {availableStateModes.length ? (
-                  <StateModeField
-                    name={`inspector-state-mode-${tool}`}
-                    value={stateMode}
-                    options={availableStateModes}
-                    onChange={setStateMode}
-                  />
-                ) : (
+                    {currentToolStatusLabel}
+                  </span>
+                </div>
+                <div className="profiles-tool-focus-grid">
+                  <div>
+                    <span className="overview-current-set-cell-label">Current tool</span>
+                    <strong>{titleCase(tool)}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Active profile</span>
+                    <strong>{currentToolActiveProfile}</strong>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Backend</span>
+                    <strong>{currentToolBackend}</strong>
+                  </div>
+                </div>
+                <div className="profiles-inspector-controls">
                   <label>
-                    State mode
-                    <select value="n/a" disabled>
-                      <option value="n/a">Not configurable</option>
+                    Current tool
+                    <select
+                      value={tool}
+                      onChange={(event) => {
+                        setTool(event.target.value as typeof tool);
+                        setOpenDiagnosticDetails(null);
+                        setExpandedDetails(null);
+                      }}
+                    >
+                      {TOOLS.map((entry) => (
+                        <option key={entry} value={entry}>
+                          {titleCase(entry)}
+                        </option>
+                      ))}
                     </select>
                   </label>
-                )}
-                <div className="button-row">
-                  <button
-                    className="primary-button"
-                    type="button"
-                    onClick={() => setProfileSheetOpen(true)}
-                  >
-                    + Add Profile
-                  </button>
+                  {availableStateModes.length ? (
+                    <StateModeField
+                      name={`inspector-state-mode-${tool}`}
+                      value={stateMode}
+                      options={availableStateModes}
+                      onChange={setStateMode}
+                    />
+                  ) : (
+                    <label>
+                      State mode
+                      <select value="n/a" disabled>
+                        <option value="n/a">Not configurable</option>
+                      </select>
+                    </label>
+                  )}
+                </div>
+                <div className="profiles-inspector-rail">
+                  <span className="overview-current-set-cell-label">Actions</span>
+                  <div className="button-row button-row-column">
+                    <button
+                      className="primary-button"
+                      type="button"
+                      onClick={() => setProfileSheetOpen(true)}
+                    >
+                      + Add Profile
+                    </button>
+                  </div>
+                  <p className="inline-note">
+                    Add a saved login for the selected tool without leaving the inspector.
+                  </p>
                 </div>
               </div>
             </article>
@@ -879,7 +889,7 @@ export function ProfilesPanel({
                           label: selectedProfileDisplay ?? selectedProfileEntry.name,
                         })
                       }
-                      >
+                    >
                       Switch to this profile
                     </button>
                     <button
