@@ -4093,7 +4093,7 @@ describe("App", () => {
     expect(screen.getByText("Last project-rule result: Saved project rule for Client Acme.")).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Saved set: Client Acme" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("Remove this binding"));
+    fireEvent.click(screen.getByText("Remove this rule"));
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "workspace_unbind")).toBe(true);
     });
@@ -4637,7 +4637,7 @@ describe("App", () => {
     });
 
     expect(
-      screen.getByText("Enter a path prefix before saving or removing this binding."),
+      screen.getByText("Enter a path prefix before saving or removing this rule."),
     ).toBeInTheDocument();
     expect(screen.getByText("Save rule")).toBeDisabled();
     expect(screen.getByText("Remove rule")).toBeDisabled();
@@ -6736,7 +6736,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
       expect(screen.getAllByText(/Client Acme/).length).toBeGreaterThan(0);
-      expect(screen.getByText("Saved profile set Client Acme.")).toBeInTheDocument();
+      expect(screen.getByText("Saved set Client Acme.")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Current set" })).toBeDisabled();
     });
   });
@@ -6793,7 +6793,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
-      expect(screen.getByText("Deleted profile set Client Acme.")).toBeInTheDocument();
+      expect(screen.getByText("Deleted set Client Acme.")).toBeInTheDocument();
     });
     expect(screen.queryByText("Client Acme")).not.toBeInTheDocument();
   });
@@ -6863,7 +6863,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
       expect(screen.getAllByText("Client Acme Prime").length).toBeGreaterThan(0);
-      expect(screen.getByText("Updated profile set Client Acme Prime.")).toBeInTheDocument();
+      expect(screen.getByText("Updated set Client Acme Prime.")).toBeInTheDocument();
     });
     expect(screen.queryAllByText("Client Acme")).toHaveLength(0);
     expect(

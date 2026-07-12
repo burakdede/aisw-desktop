@@ -131,7 +131,7 @@ export function ContextsPanel({
         onSuccess: () => {
           setSelectedSetName(name);
           setLastAction(
-            `${isEditingExistingSet ? "Updated" : "Saved"} profile set ${draft.label.trim() || name}.`,
+            `${isEditingExistingSet ? "Updated" : "Saved"} set ${draft.label.trim() || name}.`,
           );
           resetDraft();
         },
@@ -145,7 +145,7 @@ export function ContextsPanel({
       name: set.name,
       label: profileSetDisplayLabel(set),
     });
-    setLastAction(`Activated profile set ${profileSetDisplayLabel(set)}.`);
+    setLastAction(`Activated saved set ${profileSetDisplayLabel(set)}.`);
   }
 
   function deleteProfileSet(name: string) {
@@ -169,7 +169,7 @@ export function ContextsPanel({
         profile_sets: localSets.filter((entry) => entry.name !== name),
       },
       {
-        onSuccess: () => setLastAction(`Deleted profile set ${label}.`),
+        onSuccess: () => setLastAction(`Deleted set ${label}.`),
       },
     );
   }

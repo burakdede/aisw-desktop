@@ -230,10 +230,10 @@ export function useDesktopActions() {
     }),
     activateProfileSetMutation: useMutation({
       mutationFn: queueMutation(
-        "Activate profile set",
+        "Activate saved set",
         activateProfileSet,
         () => ({ type: "global", id: "profile-set" }),
-        (variables) => `Activated profile set ${variables.label ?? variables.name}.`,
+        (variables) => `Activated saved set ${variables.label ?? variables.name}.`,
       ),
       onSettled: invalidate,
     }),

@@ -232,7 +232,7 @@ export function WorkspacesPanel({
             ) : null}
             {requiresExplicitTarget && trimmedTargetValue.length === 0 ? (
               <p className="inline-note">
-                Enter a {scope === "path" ? "path prefix" : "git remote pattern"} before saving or removing this binding.
+                Enter a {scope === "path" ? "path prefix" : "git remote pattern"} before saving or removing this rule.
               </p>
             ) : null}
             <div className="desktop-pane-section workspace-guard-section">
@@ -369,7 +369,7 @@ export function WorkspacesPanel({
           <article className="diagnostic-card workspaces-rules-card">
             <div className="desktop-pane-section-header workspaces-rules-header">
               <div>
-                <p className="card-kicker">Bindings</p>
+                <p className="card-kicker">Rules</p>
                 <h3>Saved matching rules</h3>
                 <p className="inline-note">
                   Remove stale path and remote rules here when a project moves or gets renamed.
@@ -411,7 +411,7 @@ export function WorkspacesPanel({
                       )
                     }
                   >
-                    Remove this binding
+                    Remove this rule
                   </button>
                 </article>
               );
