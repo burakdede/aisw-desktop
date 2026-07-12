@@ -634,7 +634,7 @@ export function SetupPanel({
                                 ) : (
                                   <p className="inline-note">
                                     Save the current {toolDisplayName(selectedAccountItem.account.tool)} login as a reusable profile in a
-                                    focused setup sheet.
+                                    setup sheet.
                                   </p>
                                 )}
                                 <div className="button-row">

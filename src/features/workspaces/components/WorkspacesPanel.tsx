@@ -392,7 +392,7 @@ export function WorkspacesPanel({
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Rule editor</p>
-                  <h3>Open a focused sheet to create or update rules</h3>
+                  <h3>Open a sheet to create or update rules</h3>
                 </div>
                 <span className="pill pill-soft">
                   {bindingOptions.length

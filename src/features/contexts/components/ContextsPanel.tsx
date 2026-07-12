@@ -526,7 +526,7 @@ export function ContextsPanel({
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Quick actions</p>
-                  <h3>Open the focused set editor only when you need it</h3>
+                  <h3>Open the set editor only when you need it</h3>
                 </div>
                 <span className="pill pill-soft">Focused</span>
               </div>

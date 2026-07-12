@@ -705,7 +705,7 @@ export function ProfilesPanel({
                           <p className="card-kicker">Inspector</p>
                           <h3>{titleCase(tool)} / {selectedProfileDisplay}</h3>
                           <p className="inline-note">
-                            Review the current saved login, confirm live match, and switch or recover from one focused pane.
+                            Review the current saved login, confirm live match, and switch or recover from one view.
                           </p>
                         </div>
                         <span
@@ -1344,7 +1344,7 @@ export function ProfilesPanel({
               </button>
             </div>
             <p className="inline-note">
-              Capture a current login, start provider OAuth, paste an API key, or read from the environment in one focused flow.
+              Capture a current login, start provider OAuth, paste an API key, or read from the environment in one step.
             </p>
             <form className="stacked-form" onSubmit={submit}>
               <label>
