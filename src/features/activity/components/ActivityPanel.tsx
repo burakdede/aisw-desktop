@@ -289,21 +289,6 @@ export function ActivityPanel({
                         </p>
                       )}
                     </div>
-                    <div>
-                      <p className="card-kicker">Command</p>
-                      <p className="inline-note">
-                        {selectedEntry.command ?? "Command details were not recorded for this event."}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="card-kicker">Output</p>
-                      <p className="inline-note">
-                        {selectedEntry.resultSummary ??
-                          (selectedEntry.status === "success"
-                          ? "Snapshot updated successfully."
-                          : "AI Switch recorded a recoverable failure for this event.")}
-                      </p>
-                    </div>
                     <KeyValueGrid
                       rows={[
                         {
@@ -314,14 +299,36 @@ export function ActivityPanel({
                           label: "Scope",
                           value: selectedEntry.scopeLabel,
                         },
+                        {
+                          label: "Duration",
+                          value: "Not recorded",
+                        },
                       ]}
                     />
-                    {selectedEntry.command ? (
+                    <div className="activity-detail-block">
                       <div>
                         <p className="card-kicker">Recorded command</p>
-                        <pre>{selectedEntry.command}</pre>
+                        {selectedEntry.command ? (
+                          <pre>{selectedEntry.command}</pre>
+                        ) : (
+                          <p className="inline-note">
+                            Command details were not recorded for this event.
+                          </p>
+                        )}
                       </div>
-                    ) : null}
+                      <div>
+                        <p className="card-kicker">Redacted result</p>
+                        {selectedEntry.resultSummary ? (
+                          <pre>{selectedEntry.resultSummary}</pre>
+                        ) : (
+                          <p className="inline-note">
+                            {selectedEntry.status === "success"
+                              ? "Snapshot updated successfully."
+                              : "AI Switch recorded a recoverable failure for this event."}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   <aside className="activity-detail-rail">
                     <span className="overview-current-set-cell-label">Actions</span>
