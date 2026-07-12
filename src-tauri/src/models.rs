@@ -213,6 +213,13 @@ pub struct ShellHookGuidance {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LaunchAtLoginStatus {
+    pub supported: bool,
+    pub enabled: bool,
+    pub detail: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BackupEntry {
     pub backup_id: String,
     pub tool: String,

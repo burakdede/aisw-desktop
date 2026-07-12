@@ -7,6 +7,7 @@ import {
   doctorReportSchema,
   initReportSchema,
   installUpdateReportSchema,
+  launchAtLoginStatusSchema,
   mutationResponseSchema,
   oauthProgressEventSchema,
   openedPathSchema,
@@ -19,6 +20,7 @@ import {
   type DesktopSettings,
   type InstallUpdateReport,
   type InitReport,
+  type LaunchAtLoginStatus,
   type MutationResponse,
   type OAuthProgressEvent,
   type ShellHookGuidance,
@@ -273,6 +275,16 @@ export async function setTrayVisibility(visible: boolean): Promise<void> {
 
 export async function getShellGuidance(): Promise<ShellHookGuidance> {
   return shellHookGuidanceSchema.parse(await invokeDesktop("get_shell_guidance"));
+}
+
+export async function getLaunchAtLoginStatus(): Promise<LaunchAtLoginStatus> {
+  return launchAtLoginStatusSchema.parse(await invokeDesktop("get_launch_at_login_status"));
+}
+
+export async function setLaunchAtLogin(enabled: boolean): Promise<LaunchAtLoginStatus> {
+  return launchAtLoginStatusSchema.parse(
+    await invokeDesktop("set_launch_at_login", { enabled }),
+  );
 }
 
 export function parseOAuthProgressEvent(payload: unknown): OAuthProgressEvent {

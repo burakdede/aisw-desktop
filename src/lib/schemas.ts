@@ -170,6 +170,11 @@ export const shellHookGuidanceSchema = z.object({
   manual_apply_examples: z.array(z.string()),
   variants: z.array(shellHookVariantSchema),
 });
+export const launchAtLoginStatusSchema = z.object({
+  supported: z.boolean(),
+  enabled: z.boolean(),
+  detail: z.string().nullable().optional(),
+});
 export const diagnosticBundleExportSchema = z.object({
   path: z.string(),
   filename: z.string(),
@@ -207,5 +212,6 @@ export type InitReport = z.infer<typeof initReportSchema>;
 export type UpdateCheckReport = z.infer<typeof updateCheckReportSchema>;
 export type InstallUpdateReport = z.infer<typeof installUpdateReportSchema>;
 export type ShellHookGuidance = z.infer<typeof shellHookGuidanceSchema>;
+export type LaunchAtLoginStatus = z.infer<typeof launchAtLoginStatusSchema>;
 export type OAuthProgressEvent = z.infer<typeof oauthProgressEventSchema>;
 export type DiagnosticBundleExport = z.infer<typeof diagnosticBundleExportSchema>;

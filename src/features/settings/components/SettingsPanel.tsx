@@ -1,9 +1,16 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
 import { SourceListPanel } from "../../../components/SourceListPanel";
 import { SplitView } from "../../../components/SplitView";
-import { exportDiagnosticBundle, getShellGuidance, openAppDataFolder, runDoctor } from "../../../lib/client";
+import {
+  exportDiagnosticBundle,
+  getLaunchAtLoginStatus,
+  getShellGuidance,
+  openAppDataFolder,
+  runDoctor,
+  setLaunchAtLogin,
+} from "../../../lib/client";
 import {
   DEFAULT_SECTIONS,
   DESKTOP_APPEARANCES,
@@ -43,6 +50,7 @@ export function SettingsPanel({
   onUpdateDesktopPreferences?: (preferences: DesktopPreferences) => void;
   onReopenSetupAssistant?: () => void;
 }) {
+  const queryClient = useQueryClient();
   const { updateSettingsMutation, checkForUpdatesMutation, installUpdateMutation, mutationLock } =
     useDesktopActions();
   const [runtimeKind, setRuntimeKind] = useState(settings.runtime_kind);
@@ -59,10 +67,16 @@ export function SettingsPanel({
     enabled: readEnabled,
   });
   const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor, enabled: readEnabled });
+  const launchAtLogin = useQuery({
+    queryKey: ["launch-at-login"],
+    queryFn: getLaunchAtLoginStatus,
+    enabled: readEnabled,
+  });
   const [selectedShell, setSelectedShell] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
   const [securityMessage, setSecurityMessage] = useState("");
   const [advancedMessage, setAdvancedMessage] = useState("");
+  const [launchMessage, setLaunchMessage] = useState("");
   const [appearance, setAppearance] = useState<DesktopPreferences["appearance"]>(
     desktopPreferences?.appearance ?? "system",
   );
@@ -78,6 +92,16 @@ export function SettingsPanel({
   );
 
   const shellCheck = useMemo(() => findShellHookCheck(doctor.data), [doctor.data]);
+  const launchAtLoginMutation = useMutation({
+    mutationFn: setLaunchAtLogin,
+    onSuccess: (status) => {
+      queryClient.setQueryData(["launch-at-login"], status);
+      setLaunchMessage(status.enabled ? "Launch at login enabled." : "Launch at login disabled.");
+    },
+    onError: (error) => {
+      setLaunchMessage(error instanceof Error ? error.message : "AI Switch could not update launch at login.");
+    },
+  });
   const selectedVariant = useMemo(() => {
     const variants = shellGuidance.data?.variants ?? [];
     if (!variants.length) return undefined;
@@ -133,6 +157,7 @@ export function SettingsPanel({
     setDefaultSection(desktopPreferences?.defaultSection ?? "overview");
     setShowMenuBarIcon(desktopPreferences?.showMenuBarIcon ?? true);
     setGeneralMessage("");
+    setLaunchMessage("");
   }, [desktopPreferences]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -202,6 +227,10 @@ export function SettingsPanel({
     });
     setGeneralMessage("General preferences saved.");
   }
+
+  const launchAtLoginSupported = launchAtLogin.data?.supported ?? false;
+  const launchAtLoginEnabled = launchAtLogin.data?.enabled ?? false;
+  const launchAtLoginDetail = launchAtLogin.data?.detail;
 
   return (
     <SectionCard title="Settings" kicker={sectionKicker(selectedSection)}>
@@ -359,14 +388,36 @@ export function SettingsPanel({
                     </div>
                   </div>
                   <div className="settings-toggle-list" aria-label="Launch behavior controls">
-                    <label className="settings-toggle-row settings-toggle-row-disabled">
+                    <label
+                      className={`settings-toggle-row ${
+                        launchAtLoginSupported ? "" : "settings-toggle-row-disabled"
+                      }`}
+                    >
                       <span className="settings-toggle-copy">
                         <strong>Launch at login</strong>
                         <span className="inline-note">
-                          Managed by macOS for now so AI Switch stays aligned with the system login-item model instead of inventing a separate in-app setting.
+                          {launchAtLogin.isLoading
+                            ? "Checking the macOS login item state for this app."
+                            : launchAtLoginSupported
+                              ? "Open AI Switch automatically after you sign in to this Mac."
+                              : launchAtLoginDetail ??
+                                "Launch at login is currently available on macOS builds."}
                         </span>
                       </span>
-                      <input type="checkbox" aria-label="Launch at login" disabled />
+                      <input
+                        type="checkbox"
+                        aria-label="Launch at login"
+                        checked={launchAtLoginEnabled}
+                        disabled={
+                          launchAtLogin.isLoading ||
+                          launchAtLoginMutation.isPending ||
+                          !launchAtLoginSupported
+                        }
+                        onChange={(event) => {
+                          setLaunchMessage("");
+                          launchAtLoginMutation.mutate(event.target.checked);
+                        }}
+                      />
                     </label>
                     <label className="settings-toggle-row">
                       <span className="settings-toggle-copy">
@@ -383,6 +434,7 @@ export function SettingsPanel({
                       />
                     </label>
                   </div>
+                  {launchMessage ? <p className="inline-note">{launchMessage}</p> : null}
                 </article>
               </div>
               <div className="settings-side-stack">

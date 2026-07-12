@@ -344,6 +344,11 @@ describe("App", () => {
       get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
       list_backups: [],
       get_settings: bootstrap.settings,
+      get_launch_at_login_status: {
+        supported: true,
+        enabled: false,
+        detail: "macOS login item target: /Applications/AI Switch.app",
+      },
       get_shell_guidance: {
         detected_shell: "zsh",
         capabilities: [
@@ -7899,9 +7904,25 @@ describe("App", () => {
 
   it("saves general desktop preferences from settings", async () => {
     const commands: string[] = [];
+    let launchAtLoginEnabled = false;
     const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
-    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       commands.push(command);
+      if (command === "get_launch_at_login_status") {
+        return {
+          supported: true,
+          enabled: launchAtLoginEnabled,
+          detail: "macOS login item target: /Applications/AI Switch.app",
+        };
+      }
+      if (command === "set_launch_at_login") {
+        launchAtLoginEnabled = Boolean((args as { enabled?: boolean } | undefined)?.enabled);
+        return {
+          supported: true,
+          enabled: launchAtLoginEnabled,
+          detail: "macOS login item target: /Applications/AI Switch.app",
+        };
+      }
       return defaultMock[command];
     };
 
@@ -7909,14 +7930,18 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
 
-    expect(screen.getByLabelText("Launch at login")).toBeDisabled();
+    expect(screen.getByLabelText("Launch at login")).not.toBeChecked();
     expect(screen.getByLabelText("Show menu bar icon")).toBeChecked();
-    expect(
-      screen.getByText(
-        "Managed by macOS for now so AI Switch stays aligned with the system login-item model instead of inventing a separate in-app setting.",
-      ),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "Open AI Switch automatically after you sign in to this Mac.",
+        ),
+      ).toBeInTheDocument();
+    });
     expect(screen.getByRole("button", { name: "Reopen Setup Assistant" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("Launch at login"));
 
     fireEvent.change(screen.getByLabelText("Appearance"), {
       target: { value: "dark" },
@@ -7928,13 +7953,16 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save General Settings" }));
 
     await waitFor(() => {
+      expect(screen.getByLabelText("Launch at login")).toBeChecked();
       expect(window.localStorage.getItem("ai-switch.desktop.appearance")).toBe("dark");
       expect(window.localStorage.getItem("ai-switch.desktop.default-section")).toBe("profiles");
       expect(window.localStorage.getItem("ai-switch.desktop.show-menu-bar-icon")).toBe("false");
       expect(window.localStorage.getItem("ai-switch.desktop.reopen-setup-assistant")).toBe("false");
       expect(document.documentElement.dataset.appearance).toBe("dark");
       expect(document.documentElement.style.colorScheme).toBe("dark");
+      expect(commands).toContain("set_launch_at_login");
       expect(commands).toContain("set_tray_visibility");
+      expect(screen.getByText("Launch at login enabled.")).toBeInTheDocument();
       expect(
         screen.getByText(
           (_, element) =>

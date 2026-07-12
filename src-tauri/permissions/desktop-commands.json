@@ -11,6 +11,8 @@
           "get_snapshot",
           "get_settings",
           "set_tray_visibility",
+          "get_launch_at_login_status",
+          "set_launch_at_login",
           "get_shell_guidance",
           "check_for_updates",
           "install_update",

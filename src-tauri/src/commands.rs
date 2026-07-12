@@ -3,7 +3,8 @@ use crate::diagnostic_bundle::{default_output_dir, write_redacted_bundle, Diagno
 use crate::errors::{DesktopError, DesktopResult, ErrorPayload, GuiErrorKind};
 use crate::models::{
     AddOAuthProfileRequest, AddProfileRequest, AppBootstrap, AppSnapshot, BackupEntry,
-    DesktopSettings, DoctorReport, InitReport, InstallUpdateReport, MutationResponse,
+    DesktopSettings, DoctorReport, InitReport, InstallUpdateReport, LaunchAtLoginStatus,
+    MutationResponse,
     ProjectBindingsReport, RepairReport, RepairRequest, ShellHookGuidance, UpdateCheckReport,
     UpdateSettingsRequest, UseAllProfilesRequest, UseContextRequest, UseProfileRequest,
     VerifyReport, WorkspaceBindRequest, WorkspaceStatusReport, WorkspaceUnbindTarget,
@@ -85,6 +86,22 @@ pub async fn set_tray_visibility(app: tauri::AppHandle, visible: bool) -> Deskto
         })?;
     }
     Ok(())
+}
+
+#[tauri::command]
+pub async fn get_launch_at_login_status(
+    app: tauri::AppHandle,
+) -> DesktopResult<LaunchAtLoginStatus> {
+    launch_at_login_status(&app)
+}
+
+#[tauri::command]
+pub async fn set_launch_at_login(
+    app: tauri::AppHandle,
+    enabled: bool,
+) -> DesktopResult<LaunchAtLoginStatus> {
+    set_launch_at_login_status(&app, enabled)?;
+    launch_at_login_status(&app)
 }
 
 #[tauri::command]
@@ -516,4 +533,112 @@ fn open_path_with_default_app(path: &std::path::Path) -> DesktopResult<()> {
     })?;
 
     Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn launch_at_login_status(app: &tauri::AppHandle) -> DesktopResult<LaunchAtLoginStatus> {
+    let item_name = "AI Switch";
+    let target_path = launch_at_login_target_path(app)?;
+    let script = format!(
+        "tell application \"System Events\" to return exists login item \"{}\"",
+        escape_applescript_string(item_name)
+    );
+    let enabled = run_osascript(&script)?.trim().eq_ignore_ascii_case("true");
+    Ok(LaunchAtLoginStatus {
+        supported: true,
+        enabled,
+        detail: Some(format!(
+            "macOS login item target: {}",
+            target_path.display()
+        )),
+    })
+}
+
+#[cfg(not(target_os = "macos"))]
+fn launch_at_login_status(_app: &tauri::AppHandle) -> DesktopResult<LaunchAtLoginStatus> {
+    Ok(LaunchAtLoginStatus {
+        supported: false,
+        enabled: false,
+        detail: Some("Launch at login is currently available on macOS builds.".to_owned()),
+    })
+}
+
+#[cfg(target_os = "macos")]
+fn set_launch_at_login_status(app: &tauri::AppHandle, enabled: bool) -> DesktopResult<()> {
+    let item_name = "AI Switch";
+    let path = escape_applescript_string(&launch_at_login_target_path(app)?.display().to_string());
+    let item_name = escape_applescript_string(item_name);
+    let script = if enabled {
+        format!(
+            "tell application \"System Events\"\n\
+             if exists login item \"{item_name}\" then\n\
+             set properties of login item \"{item_name}\" to {{path:\"{path}\", hidden:false}}\n\
+             else\n\
+             make login item at end with properties {{name:\"{item_name}\", path:\"{path}\", hidden:false}}\n\
+             end if\n\
+             end tell"
+        )
+    } else {
+        format!(
+            "tell application \"System Events\"\n\
+             if exists login item \"{item_name}\" then\n\
+             delete login item \"{item_name}\"\n\
+             end if\n\
+             end tell"
+        )
+    };
+
+    run_osascript(&script).map(|_| ())
+}
+
+#[cfg(not(target_os = "macos"))]
+fn set_launch_at_login_status(_app: &tauri::AppHandle, _enabled: bool) -> DesktopResult<()> {
+    Err(ErrorPayload {
+        kind: GuiErrorKind::Unknown,
+        message: "Launch at login is not available on this platform yet.".to_owned(),
+        remediation: Some("Use a macOS build of AI Switch for this setting.".to_owned()),
+    })
+}
+
+#[cfg(target_os = "macos")]
+fn launch_at_login_target_path(_app: &tauri::AppHandle) -> DesktopResult<PathBuf> {
+    let executable = std::env::current_exe()
+        .map_err(DesktopError::from)
+        .map_err(ErrorPayload::from)?;
+    for ancestor in executable.ancestors() {
+        if ancestor.extension().and_then(|value| value.to_str()) == Some("app") {
+            return Ok(ancestor.to_path_buf());
+        }
+    }
+    Ok(executable)
+}
+
+#[cfg(target_os = "macos")]
+fn run_osascript(script: &str) -> DesktopResult<String> {
+    let output = Command::new("osascript")
+        .arg("-e")
+        .arg(script)
+        .output()
+        .map_err(|error| ErrorPayload {
+            kind: GuiErrorKind::Unknown,
+            message: "AI Switch could not update the macOS login item.".to_owned(),
+            remediation: Some(error.to_string()),
+        })?;
+
+    if !output.status.success() {
+        return Err(ErrorPayload {
+            kind: GuiErrorKind::Unknown,
+            message: "AI Switch could not update the macOS login item.".to_owned(),
+            remediation: Some(
+                String::from_utf8_lossy(&output.stderr).trim().to_owned(),
+            ),
+        });
+    }
+
+    Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
+}
+
+#[cfg(target_os = "macos")]
+fn escape_applescript_string(value: &str) -> String {
+    value.replace('\\', "\\\\").replace('"', "\\\"")
 }
