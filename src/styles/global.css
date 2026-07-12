@@ -27,6 +27,38 @@
   --shadow-window: 0 18px 34px rgba(16, 24, 40, 0.08);
   --shadow-card: 0 8px 16px rgba(19, 30, 47, 0.035);
   --shadow-panel: inset 0 1px 0 rgba(255, 255, 255, 0.52);
+  --body-backdrop:
+    radial-gradient(circle at top left, rgba(111, 142, 181, 0.06), transparent 22%),
+    radial-gradient(circle at bottom right, rgba(156, 172, 191, 0.05), transparent 18%),
+    linear-gradient(180deg, rgba(249, 250, 252, 0.985), rgba(243, 246, 248, 0.994));
+  --launch-shell-backdrop:
+    radial-gradient(circle at top left, rgba(103, 132, 171, 0.08), transparent 26%),
+    radial-gradient(circle at bottom right, rgba(165, 181, 203, 0.08), transparent 22%),
+    linear-gradient(180deg, rgba(250, 251, 252, 0.96), rgba(242, 245, 247, 0.99));
+  --window-shell-backdrop: linear-gradient(180deg, rgba(250, 251, 252, 0.94), rgba(243, 246, 248, 0.985));
+  --setup-shell-backdrop:
+    radial-gradient(circle at top left, rgba(116, 146, 189, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(250, 251, 252, 0.94), rgba(241, 244, 247, 0.98));
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --shadow-window: 0 22px 44px rgba(0, 0, 0, 0.34);
+    --shadow-card: 0 10px 24px rgba(0, 0, 0, 0.2);
+    --shadow-panel: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    --body-backdrop:
+      radial-gradient(circle at top left, rgba(61, 90, 132, 0.24), transparent 24%),
+      radial-gradient(circle at bottom right, rgba(37, 55, 84, 0.2), transparent 22%),
+      linear-gradient(180deg, rgba(17, 20, 28, 0.98), rgba(13, 15, 22, 1));
+    --launch-shell-backdrop:
+      radial-gradient(circle at top left, rgba(62, 94, 138, 0.22), transparent 28%),
+      radial-gradient(circle at bottom right, rgba(31, 49, 76, 0.2), transparent 22%),
+      linear-gradient(180deg, rgba(19, 23, 31, 0.98), rgba(13, 16, 23, 1));
+    --window-shell-backdrop: linear-gradient(180deg, rgba(19, 23, 31, 0.98), rgba(13, 16, 23, 1));
+    --setup-shell-backdrop:
+      radial-gradient(circle at top left, rgba(69, 100, 144, 0.22), transparent 28%),
+      linear-gradient(180deg, rgba(18, 22, 30, 0.98), rgba(13, 16, 23, 1));
+  }
 }
 
 * {
@@ -43,11 +75,7 @@ body {
   margin: 0;
   overflow: hidden;
   font-family: var(--font-ui);
-  background:
-    radial-gradient(circle at top left, rgba(111, 142, 181, 0.06), transparent 22%),
-    radial-gradient(circle at bottom right, rgba(156, 172, 191, 0.05), transparent 18%),
-    linear-gradient(180deg, rgba(249, 250, 252, 0.985), rgba(243, 246, 248, 0.994)),
-    var(--app-bg);
+  background: var(--body-backdrop), var(--app-bg);
   color: var(--text-primary);
 }
 
@@ -102,10 +130,7 @@ button {
   padding: 18px;
   display: grid;
   place-items: center;
-  background:
-    radial-gradient(circle at top left, rgba(103, 132, 171, 0.08), transparent 26%),
-    radial-gradient(circle at bottom right, rgba(165, 181, 203, 0.08), transparent 22%),
-    linear-gradient(180deg, rgba(250, 251, 252, 0.96), rgba(242, 245, 247, 0.99));
+  background: var(--launch-shell-backdrop);
 }
 
 .app-shell-window {
@@ -113,15 +138,13 @@ button {
   height: 100dvh;
   padding: 8px;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(250, 251, 252, 0.94), rgba(243, 246, 248, 0.985));
+  background: var(--window-shell-backdrop);
 }
 
 .app-shell-setup-window {
   display: grid;
   padding: 18px;
-  background:
-    radial-gradient(circle at top left, rgba(116, 146, 189, 0.08), transparent 28%),
-    linear-gradient(180deg, rgba(250, 251, 252, 0.94), rgba(241, 244, 247, 0.98));
+  background: var(--setup-shell-backdrop);
 }
 
 .hero-card {
