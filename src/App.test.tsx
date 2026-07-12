@@ -4353,10 +4353,11 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByText("Expected set")).toBeInTheDocument();
       expect(screen.getAllByText("Client Acme").length).toBeGreaterThan(0);
-      expect(screen.getByText("Set library")).toBeInTheDocument();
+      expect(screen.getAllByText("Open Sets").length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(screen.getAllByText("Set library")[0]);
+    const openSetsButtons = screen.getAllByText("Open Sets");
+    fireEvent.click(openSetsButtons[openSetsButtons.length - 1]);
 
     await waitFor(() => {
       expect(screen.getByLabelText("Set name")).toBeInTheDocument();
@@ -5048,7 +5049,7 @@ describe("App", () => {
     if (!(workspaceMismatchCard instanceof HTMLElement)) {
       throw new Error("Missing workspace mismatch diagnostic card.");
     }
-    expect(within(workspaceMismatchCard).getByText("Set library")).toBeInTheDocument();
+    expect(within(workspaceMismatchCard).getByText("Open Sets")).toBeInTheDocument();
     expect(within(workspaceMismatchCard).queryByText("Use expected set now")).not.toBeInTheDocument();
 
     const missingToolMatches = screen.getAllByText("codex is missing");
@@ -5087,7 +5088,7 @@ describe("App", () => {
       expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
     });
 
-    fireEvent.click(screen.getByText("Set library"));
+    fireEvent.click(screen.getByText("Open Sets"));
     await waitFor(() => {
       expect(screen.getByLabelText("Set name")).toBeInTheDocument();
     });

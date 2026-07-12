@@ -957,7 +957,7 @@ function buildQuickFixes(
       detail: target
         ? `This folder wants ${expectedContextLabel}, but ${currentContextLabel} is currently active.`
         : `This folder wants ${expectedContextLabel}, but no matching imported set or ready saved set is currently available.`,
-      label: target ? "Use expected set now" : "Set library",
+      label: target ? "Use expected set now" : "Open Sets",
       status: "warn",
       primary: true,
       action: () =>

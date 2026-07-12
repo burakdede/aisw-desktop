@@ -137,7 +137,7 @@ export function OverviewPanel({
             disabled={mutationLock.isBusy}
             onClick={() => onOpenProfiles(selectedToolStatus?.tool ?? "claude")}
           >
-            + Profile
+            + Add Profile
           </button>
         </div>
       }
@@ -236,7 +236,7 @@ export function OverviewPanel({
                           Quick Switch…
                         </button>
                         <button className="ghost-button" type="button" onClick={onOpenContexts}>
-                          Open Set Library
+                          Open Sets
                         </button>
                       </div>
                       <p className="inline-note">
@@ -294,7 +294,7 @@ export function OverviewPanel({
                         });
                       }}
                     >
-                      {expectedWorkspaceTarget ? "Use expected set now" : "Set library"}
+                      {expectedWorkspaceTarget ? "Use expected set now" : "Open Sets"}
                     </button>
                   ) : null}
                 </article>

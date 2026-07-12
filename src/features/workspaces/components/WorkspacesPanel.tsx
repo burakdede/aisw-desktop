@@ -271,7 +271,7 @@ export function WorkspacesPanel({
                   disabled={mutationLock.isBusy}
                   onClick={activateExpectedWorkspaceTarget}
                 >
-                  {expectedWorkspaceTarget ? "Use expected set now" : "Set library"}
+                  {expectedWorkspaceTarget ? "Use expected set now" : "Open Sets"}
                 </button>
                 <button
                   className="ghost-button"
