@@ -7947,19 +7947,27 @@ describe("App", () => {
       },
     });
 
-    expect(screen.getByText("Step 2 of 4")).toBeInTheDocument();
+    expect(screen.getByText("Step 2 of 5")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Continue to First switch" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Continue to First switch" }));
 
-    expect(screen.getByText("Step 3 of 4")).toBeInTheDocument();
+    expect(screen.getByText("Step 3 of 5")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Try one safe switch" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
 
-    expect(screen.getByText("Step 2 of 4")).toBeInTheDocument();
+    expect(screen.getByText("Step 2 of 5")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Detected tools" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Continue to First switch" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue to Terminal" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue to Done" }));
+
+    expect(screen.getByText("Step 5 of 5")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "You're ready" })).toBeInTheDocument();
+    expect(within(screen.getByLabelText("Setup completion status")).getByText("Claude Code")).toBeInTheDocument();
   });
 
   it("shows cross-platform keyring setup guidance in settings", async () => {

@@ -1159,6 +1159,27 @@ button {
   flex-shrink: 0;
 }
 
+.onboarding-complete-card {
+  display: grid;
+  gap: 12px;
+}
+
+.onboarding-complete-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.onboarding-complete-cell {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 11px 12px;
+  border-radius: 11px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+  border: 1px solid color-mix(in srgb, CanvasText 5%, transparent);
+}
+
 .desktop-pane-stack {
   gap: 12px;
 }
@@ -3918,6 +3939,10 @@ button {
   .onboarding-step-footer-card {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .onboarding-complete-grid {
+    grid-template-columns: 1fr;
   }
 
   .onboarding-step-footer-actions {

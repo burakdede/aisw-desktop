@@ -42,7 +42,7 @@ type HealthItem = {
   detail: string;
 };
 
-type SetupStep = "accounts" | "runtime" | "switch" | "terminal";
+type SetupStep = "accounts" | "runtime" | "switch" | "terminal" | "done";
 type OnboardingAccountItem =
   | { key: string; kind: "live"; account: LiveAccount }
   | {
@@ -241,6 +241,7 @@ export function SetupPanel({
     { value: "accounts", label: "Accounts" },
     { value: "switch", label: "First switch" },
     { value: "terminal", label: "Terminal" },
+    { value: "done", label: "Done" },
   ] satisfies Array<{ value: SetupStep; label: string }>;
   const activeStepIndex = setupSteps.findIndex((step) => step.value === activeStep);
   const previousStep = activeStepIndex > 0 ? setupSteps[activeStepIndex - 1] : null;
@@ -834,6 +835,52 @@ export function SetupPanel({
               </article>
             ) : null}
 
+            {activeStep === "done" ? (
+              <article className="diagnostic-card onboarding-complete-card">
+                <div className="desktop-pane-section-header">
+                  <div>
+                    <p className="card-kicker">Done</p>
+                    <h3>You&apos;re ready</h3>
+                  </div>
+                  <span className={`pill ${switchReady ? "pill-ok" : "pill-soft"}`}>
+                    {switchReady ? "Ready to switch" : "Setup can continue later"}
+                  </span>
+                </div>
+                <p className="inline-note">
+                  AI Switch is ready to manage saved local accounts on this computer. Missing tools stay optional,
+                  and you can add more profiles whenever you need them.
+                </p>
+                <div className="onboarding-complete-grid" aria-label="Setup completion status">
+                  {snapshot.statuses.map((status) => {
+                    const profileCount = snapshot.profiles[status.tool]?.profiles.length ?? 0;
+                    const state =
+                      !status.binary_found
+                        ? "Not installed"
+                        : status.active_profile
+                          ? status.active_profile
+                          : profileCount > 0
+                            ? `${profileCount} saved profile${profileCount === 1 ? "" : "s"}`
+                            : "Not configured";
+                    return (
+                      <div key={status.tool} className="onboarding-complete-cell">
+                        <span className="overview-current-set-cell-label">{toolDisplayName(status.tool)}</span>
+                        <strong>{state}</strong>
+                        <p className="inline-note">
+                          {!status.binary_found
+                            ? "Optional for now."
+                            : status.active_profile
+                              ? "Active on this computer."
+                              : profileCount > 0
+                                ? "Saved locally and ready when needed."
+                                : "Add a profile later from Profiles."}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </article>
+            ) : null}
+
             <article className="diagnostic-card onboarding-step-footer-card">
               <div className="onboarding-step-footer-copy">
                 <p className="card-kicker">
@@ -969,6 +1016,8 @@ function setupStepSummary(step: SetupStep) {
       return "Run one safe shared switch before you start coding.";
     case "terminal":
       return "Optional setup for already-open terminal sessions.";
+    case "done":
+      return "Review what is ready now and what can wait until later.";
   }
 }
 
@@ -982,6 +1031,8 @@ function setupStepFooterTitle(step: SetupStep) {
       return "Run a safe first switch";
     case "terminal":
       return "Leave terminal integration for later unless you need it";
+    case "done":
+      return "Review the local setup summary";
   }
 }
 
@@ -997,6 +1048,8 @@ function setupStepFooterNote(step: SetupStep, switchReady: boolean) {
         : "You can continue, but you will need a shared profile name before the first switch can succeed.";
     case "terminal":
       return "The app already updates local credential files directly. Shell integration is only for already-open terminal sessions.";
+    case "done":
+      return "You can reopen setup later from Settings if you want to finish optional tools or terminal integration.";
   }
 }
 
