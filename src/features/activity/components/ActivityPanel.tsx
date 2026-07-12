@@ -84,6 +84,12 @@ export function ActivityPanel({
   );
   const errorCount = entries.filter((entry) => entry.status === "error").length;
   const latestEntry = entries[0] ?? null;
+  const historySummary = entries.length
+    ? `${entries.length} event${entries.length === 1 ? "" : "s"}`
+    : "Idle";
+  const attentionSummary = errorCount
+    ? `${errorCount} item${errorCount === 1 ? "" : "s"}`
+    : "None";
 
   useEffect(() => {
     if (selectedEntryKey && entries.some((entry) => entry.key === selectedEntryKey)) {
@@ -133,36 +139,26 @@ export function ActivityPanel({
 
   return (
     <SectionCard title="Activity" kicker="Recent activity">
-      <article className="diagnostic-card activity-intro-card">
-        <div className="activity-intro-copy">
-          <div>
-            <p className="card-kicker">Timeline</p>
-            <h3>
-              {entries.length
-                ? `${entries.length} event${entries.length === 1 ? "" : "s"}`
-                : "No events yet"}
-            </h3>
-            <p className="inline-note">
-              Local desktop activity stays on this computer unless you explicitly export a support report.
-            </p>
+      <div className="desktop-status-strip activity-status-strip">
+        <article className="desktop-status-card">
+          <span className="overview-current-set-cell-label">History</span>
+          <p className="desktop-status-value">{historySummary}</p>
+          <p className="inline-note">Local switch, verification, and setup events stay on this computer.</p>
+        </article>
+        <article className="desktop-status-card">
+          <span className="overview-current-set-cell-label">Latest</span>
+          <p className="desktop-status-value">{latestEntry?.label ?? "No activity yet"}</p>
+          <p className="inline-note">Open the latest entry to inspect the recorded command and result.</p>
+        </article>
+        <article className="desktop-status-card">
+          <span className="overview-current-set-cell-label">Attention</span>
+          <p className="desktop-status-value">{attentionSummary}</p>
+          <div className="desktop-status-pill-stack">
+            <span className="pill pill-soft">Redacted</span>
+            <span className="pill pill-soft">Local only</span>
           </div>
-          <span className="pill pill-soft">Redacted</span>
-        </div>
-        <div className="activity-intro-grid">
-          <div>
-            <span className="overview-current-set-cell-label">History</span>
-            <strong>{entries.length ? `${entries.length} event${entries.length === 1 ? "" : "s"}` : "Idle"}</strong>
-          </div>
-          <div>
-            <span className="overview-current-set-cell-label">Latest</span>
-            <strong>{latestEntry?.label ?? "No activity yet"}</strong>
-          </div>
-          <div>
-            <span className="overview-current-set-cell-label">Attention</span>
-            <strong>{errorCount ? `${errorCount} item${errorCount === 1 ? "" : "s"}` : "None"}</strong>
-          </div>
-        </div>
-      </article>
+        </article>
+      </div>
       <SplitView
         className="activity-layout"
         primaryClassName="activity-list-pane"
@@ -174,12 +170,12 @@ export function ActivityPanel({
                 <div>
                   <p className="card-kicker">Events</p>
                   <h3>Recent desktop activity</h3>
-                  <p className="inline-note">
-                    Latest first. Inspect one event at a time without leaving the current workspace.
-                  </p>
                 </div>
                 <span className="pill pill-soft">{latestEntry ? formatFullTimestamp(latestEntry.at) : "Idle"}</span>
               </div>
+              <p className="inline-note">
+                Latest first. Inspect one event at a time without leaving the current workspace.
+              </p>
               <div className="activity-list-columns" aria-hidden="true">
                 <span>Time</span>
                 <span>Event</span>
