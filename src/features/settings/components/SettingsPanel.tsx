@@ -393,24 +393,22 @@ export function SettingsPanel({
         }
         secondary={
       <div className="settings-pane">
-        <article className="diagnostic-card settings-intro-card">
-          <div className="settings-intro-copy">
-            <div>
-              <p className="card-kicker">Preferences</p>
-              <h3>{sectionHeading(selectedSection)}</h3>
-              <p className="inline-note">{sectionDescription(selectedSection)}</p>
-            </div>
-            <span className="pill pill-soft">{sectionLabel(selectedSection)}</span>
-          </div>
-          <div className="settings-intro-grid">
-            {sectionFacts(selectedSection).map((fact) => (
-              <div key={fact.label}>
-                <span className="overview-current-set-cell-label">{fact.label}</span>
-                <strong>{fact.value}</strong>
+        <div className="settings-status-strip">
+          <article className="settings-status-card">
+            <span className="overview-current-set-cell-label">Section</span>
+            <p className="settings-status-value">{sectionHeading(selectedSection)}</p>
+            <p className="inline-note">{sectionDescription(selectedSection)}</p>
+          </article>
+          {sectionFacts(selectedSection).map((fact) => (
+            <article key={fact.label} className="settings-status-card">
+              <span className="overview-current-set-cell-label">{fact.label}</span>
+              <p className="settings-status-value">{fact.value}</p>
+              <div className="settings-status-pill-stack">
+                <span className="pill pill-soft">{sectionLabel(selectedSection)}</span>
               </div>
-            ))}
-          </div>
-        </article>
+            </article>
+          ))}
+        </div>
         {selectedSection === "general" ? (
           <div className="settings-workspace">
             <article className="diagnostic-card settings-overview-card">
