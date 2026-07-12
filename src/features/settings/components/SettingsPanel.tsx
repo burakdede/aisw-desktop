@@ -769,10 +769,10 @@ export function SettingsPanel({
             <article className="diagnostic-card settings-overview-card">
               <div className="settings-overview-copy">
                 <div>
-                  <p className="card-kicker">Current setup</p>
+                  <p className="card-kicker">Terminal</p>
                   <h3>Terminal integration</h3>
                   <p className="inline-note">
-                    AI Switch can switch accounts without terminal integration. Turn it on only when you want already-open terminal windows to react immediately after a switch.
+                    Leave terminal integration off unless you want already-open terminal windows to react immediately after a switch.
                   </p>
                 </div>
                 <span
@@ -806,7 +806,7 @@ export function SettingsPanel({
                 </div>
                 <div>
                   <span className="overview-current-set-cell-label">Recommended</span>
-                  <strong>Install later</strong>
+                  <strong>Only when needed</strong>
                 </div>
               </div>
             </article>
@@ -841,7 +841,7 @@ export function SettingsPanel({
                     </div>
                     <div className="settings-kv-row">
                       <strong>Recommended mode</strong>
-                      <strong>Install later</strong>
+                      <strong>Only when needed</strong>
                     </div>
                   </div>
                   <div className="settings-note-block">
@@ -853,11 +853,12 @@ export function SettingsPanel({
                           : "Unknown"}
                       </strong>
                     </p>
+                    <strong>What changes when this is off</strong>
                     <p className="inline-note">
-                      Without terminal integration, AI Switch still updates saved profiles and live credential files.
+                      Saved profiles and live credential files still update normally.
                     </p>
                     <p className="inline-note">
-                      Terminal integration is only needed for already-open terminals that should receive environment updates right away.
+                      Turn this on only when already-open terminal windows should refresh immediately.
                     </p>
                   </div>
                   {shellGuidance.data ? (
@@ -898,7 +899,7 @@ export function SettingsPanel({
                     <div className="desktop-pane-section-header">
                       <div>
                         <p className="card-kicker">Guided setup</p>
-                        <h3>{selectedVariant.title} terminal setup</h3>
+                        <h3>Install for {selectedVariant.title}</h3>
                       </div>
                     </div>
                     <div className="settings-note-block">
@@ -924,6 +925,7 @@ export function SettingsPanel({
                       </div>
                       <div className="settings-step-card">
                         <p className="inline-note">2. Reload the shell config.</p>
+                        <p className="inline-note">You can also open a new terminal if that is easier.</p>
                         <div className="button-row">
                           <button
                             type="button"
@@ -972,7 +974,7 @@ export function SettingsPanel({
                 ) : null}
                 {shellGuidance.data ? (
                   <article className="diagnostic-card settings-pane-section">
-                    <h3>Without terminal integration</h3>
+                    <h3>Manual switching still works</h3>
                     <p className="inline-note">{shellGuidance.data.note}</p>
                     {shellGuidance.data.manual_apply_examples.length ? (
                       <details className="settings-guide-block">
@@ -1000,10 +1002,10 @@ export function SettingsPanel({
             <article className="diagnostic-card settings-overview-card diagnostic-pass">
               <div className="settings-overview-copy">
                 <div>
-                  <p className="card-kicker">Current setup</p>
+                  <p className="card-kicker">Security</p>
                   <h3>Local credential model</h3>
                   <p className="inline-note">
-                    AI Switch keeps credentials local, leans on the operating system for secure storage, and avoids remote switching proxies.
+                    Credentials stay on this machine, storage stays local-first, and support exports are redacted before sharing.
                   </p>
                 </div>
                 <span className="pill pill-ok">On this Mac</span>
@@ -1051,7 +1053,7 @@ export function SettingsPanel({
                   <div className="desktop-pane-section-header">
                     <div>
                       <p className="card-kicker">Diagnostics</p>
-                      <h3>Redacted support report</h3>
+                      <h3>Redacted diagnostic export</h3>
                     </div>
                   </div>
                   <p className="inline-note">
@@ -1070,7 +1072,7 @@ export function SettingsPanel({
                   <div className="desktop-pane-section-header">
                     <div>
                       <p className="card-kicker">Recovery</p>
-                      <h3>Keyring recovery guides</h3>
+                      <h3>OS recovery guides</h3>
                     </div>
                   </div>
                   <p className="inline-note">
@@ -1099,10 +1101,10 @@ export function SettingsPanel({
             <article className="diagnostic-card settings-overview-card">
               <div className="settings-overview-copy">
                 <div>
-                  <p className="card-kicker">Current setup</p>
+                  <p className="card-kicker">Advanced</p>
                   <h3>Storage and paths</h3>
                   <p className="inline-note">
-                    Keep custom data locations and runtime details in one place so the main settings stay approachable.
+                    Keep custom data locations and runtime details in one place so the default settings stay simple.
                   </p>
                 </div>
                 <span className="pill pill-soft">{aiswHome ? "Custom" : "Managed"}</span>
@@ -1128,7 +1130,7 @@ export function SettingsPanel({
                   <div className="desktop-pane-section-header">
                     <div>
                       <p className="card-kicker">Storage &amp; paths</p>
-                      <h3>Data folder</h3>
+                      <h3>App data folder</h3>
                     </div>
                   </div>
                   <p className="inline-note">
