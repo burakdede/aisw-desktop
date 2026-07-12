@@ -37,7 +37,7 @@ type QuickSwitchItem =
   | {
       id: string;
       kind: "shared_profile";
-      group: "Matching Profiles";
+      group: "All tools";
       badge: "Match";
       title: string;
       subtitle: string;
@@ -410,7 +410,7 @@ function buildQuickSwitchItems(settings: DesktopSettings, snapshot: AppSnapshot)
     items.push({
       id: `shared:${profile.name}`,
       kind: "shared_profile",
-      group: "Matching Profiles",
+      group: "All tools",
       badge: "Match",
       title: profile.label,
       subtitle: `Across ${matchingTools.join(", ")}`,

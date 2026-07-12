@@ -65,7 +65,7 @@ export function AppFrame({
                 </div>
                 <div className="sidebar-brand-signals" aria-hidden="true">
                   <span className="status-pill">Accounts</span>
-                  <span className="status-pill">Shared switching</span>
+                  <span className="status-pill">All tools</span>
                   <span className="status-pill">Recovery</span>
                 </div>
                 {subtitle ? <p className="sidebar-copy">{subtitle}</p> : null}

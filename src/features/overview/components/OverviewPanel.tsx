@@ -194,7 +194,7 @@ export function OverviewPanel({
                     Current set: <strong>{currentSetLabel ?? "No active set"}</strong>
                   </p>
                   <p className="inline-note">
-                    Shared switching stays available when profile names line up across installed tools.
+                    All-tools switching stays available when profile names line up across installed tools.
                   </p>
                 </div>
               </div>
@@ -216,7 +216,7 @@ export function OverviewPanel({
                   </div>
                   <div className="desktop-status-pill-stack">
                     {[
-                      currentSetLabel ? "Shared switching ready" : "Per-tool switching",
+                      currentSetLabel ? "All tools ready" : "Per-tool switching",
                       hasWorkspaceMismatch ? "Project mismatch" : "Project aligned",
                       warningToolsCount ? "Warnings visible" : "Live match visible",
                     ].map((pill) => (

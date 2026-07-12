@@ -212,7 +212,7 @@ export function useDesktopActions() {
     }),
     useAllProfilesMutation: useMutation({
       mutationFn: queueMutation(
-        "Switch all profiles",
+        "Switch all tools",
         useAllProfiles,
         () => ({ type: "global", id: "switch-all" }),
         (variables) => `Switched all tools to ${variables.label ?? variables.profile}.`,

@@ -190,7 +190,7 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
                     TrayCommandScope::Global {
                         id: "switch-all".to_owned(),
                     },
-                    "Switch all profiles",
+                    "Switch all tools",
                     format!("Switched all tools to {profile_label}."),
                 );
                 let _ = refresh_tray(&app_handle, state).await;
@@ -642,7 +642,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
     let shared_profiles = shared_profile_entries(settings, snapshot);
     if !shared_profiles.is_empty() {
         sections.push(TraySection {
-            title: "Switch Matching Profiles".to_owned(),
+            title: "Switch All Tools".to_owned(),
             items: shared_profiles
                 .into_iter()
                 .map(|(profile, label)| TrayEntry {
@@ -1238,7 +1238,7 @@ mod tests {
             ),
             vec![
                 TraySection {
-                    title: "Switch Matching Profiles".to_owned(),
+                    title: "Switch All Tools".to_owned(),
                     items: vec![TrayEntry {
                         id: "switch-all:work".to_owned(),
                         label: "Work".to_owned(),
@@ -1439,7 +1439,7 @@ mod tests {
             tray_sections(Some(&settings), &snapshot),
             vec![
                 TraySection {
-                    title: "Switch Matching Profiles".to_owned(),
+                    title: "Switch All Tools".to_owned(),
                     items: vec![TrayEntry {
                         id: "switch-all:work".to_owned(),
                         label: "Office".to_owned(),
@@ -1838,7 +1838,7 @@ mod tests {
             TrayCommandScope::Global {
                 id: "switch-all".to_owned(),
             },
-            "Switch all profiles",
+            "Switch all tools",
             "Switched all tools to work.".to_owned(),
         );
 
