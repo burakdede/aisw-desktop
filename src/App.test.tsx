@@ -7265,6 +7265,31 @@ describe("App", () => {
     expect(document.getElementById(currentOptionId!)).toHaveAttribute("aria-selected", "true");
   });
 
+  it("returns focus to the quick switch trigger when the dialog closes", async () => {
+    await renderApp();
+    await waitFor(() => {
+      expect(screen.getAllByRole("button", { name: "Quick Switch" }).length).toBeGreaterThan(0);
+    });
+
+    const trigger = screen.getAllByRole("button", { name: "Quick Switch" })[0];
+    trigger.focus();
+    fireEvent.click(trigger);
+
+    const quickSwitchDialog = await openQuickSwitchDialog();
+    const search = quickSwitchDialog.getByLabelText("Search Quick Switch");
+
+    await waitFor(() => {
+      expect(search).toHaveFocus();
+    });
+
+    fireEvent.keyDown(search, { key: "Escape" });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "Quick Switch" })).not.toBeInTheDocument();
+      expect(trigger).toHaveFocus();
+    });
+  });
+
   it("clears the quick switch query from the native search field", async () => {
     await renderApp();
     const quickSwitchDialog = await openQuickSwitchDialog();

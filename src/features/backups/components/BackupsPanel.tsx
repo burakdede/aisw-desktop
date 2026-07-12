@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { SectionCard } from "../../../components/SectionCard";
 import { SplitView } from "../../../components/SplitView";
@@ -334,14 +335,12 @@ export function BackupsPanel({
         }
       />
       {restoreSheetEntry && restoreSheetTarget && restoreSheetLabel && restoreSheetDisplay ? (
-        <div className="quick-switch-overlay" role="presentation" onClick={() => setPendingRestore(null)}>
-          <section
-            className="quick-switch-palette profile-sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Restore Backup"
-            onClick={(event) => event.stopPropagation()}
-          >
+        <DialogSurface
+          ariaLabel="Restore Backup"
+          className="quick-switch-palette profile-sheet"
+          initialFocusSelector="button:not([disabled])"
+          onClose={() => setPendingRestore(null)}
+        >
             <div className="quick-switch-header">
               <div>
                 <p className="card-kicker">Restore point</p>
@@ -407,8 +406,7 @@ export function BackupsPanel({
                 </button>
               </div>
             </footer>
-          </section>
-        </div>
+        </DialogSurface>
       ) : null}
     </SectionCard>
   );

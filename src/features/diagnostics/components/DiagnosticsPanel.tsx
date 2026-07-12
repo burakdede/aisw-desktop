@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { DialogSurface } from "../../../components/DialogSurface";
 import { SplitView } from "../../../components/SplitView";
 import { SectionCard } from "../../../components/SectionCard";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
@@ -595,14 +596,12 @@ export function DiagnosticsPanel({
         }
       />
       {repairPlanOpen ? (
-        <div className="quick-switch-overlay" role="presentation" onClick={() => setRepairPlanOpen(false)}>
-          <section
-            className="quick-switch-palette profile-sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Apply Safe Repairs"
-            onClick={(event) => event.stopPropagation()}
-          >
+        <DialogSurface
+          ariaLabel="Apply Safe Repairs"
+          className="quick-switch-palette profile-sheet"
+          initialFocusSelector="button:not([disabled])"
+          onClose={() => setRepairPlanOpen(false)}
+        >
             <div className="quick-switch-header">
               <div>
                 <p className="card-kicker">Repair plan</p>
@@ -653,8 +652,7 @@ export function DiagnosticsPanel({
                 </button>
               </div>
             </footer>
-          </section>
-        </div>
+        </DialogSurface>
       ) : null}
     </SectionCard>
   );

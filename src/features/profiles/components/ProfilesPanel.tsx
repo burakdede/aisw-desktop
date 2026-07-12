@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { SearchField } from "../../../components/SearchField";
 import { SegmentedControl } from "../../../components/SegmentedControl";
@@ -1136,14 +1137,12 @@ export function ProfilesPanel({
         }
       />
       {selectedProfileEntry && selectedLatestBackup && selectedRestoreTargetDisplay && restoreSheetMode ? (
-        <div className="quick-switch-overlay" role="presentation" onClick={() => setPendingRestore(null)}>
-          <section
-            className="quick-switch-palette profile-sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Restore Latest Backup"
-            onClick={(event) => event.stopPropagation()}
-          >
+        <DialogSurface
+          ariaLabel="Restore Latest Backup"
+          className="quick-switch-palette profile-sheet"
+          initialFocusSelector="button:not([disabled])"
+          onClose={() => setPendingRestore(null)}
+        >
             <div className="quick-switch-header">
               <div>
                 <p className="card-kicker">Backup</p>
@@ -1223,18 +1222,15 @@ export function ProfilesPanel({
                 </button>
               </div>
             </footer>
-          </section>
-        </div>
+        </DialogSurface>
       ) : null}
       {removalSheetProfile && removalSheetDisplay ? (
-        <div className="quick-switch-overlay" role="presentation" onClick={() => setPendingRemoval(null)}>
-          <section
-            className="quick-switch-palette profile-sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Remove Profile"
-            onClick={(event) => event.stopPropagation()}
-          >
+        <DialogSurface
+          ariaLabel="Remove Profile"
+          className="quick-switch-palette profile-sheet"
+          initialFocusSelector="button:not([disabled])"
+          onClose={() => setPendingRemoval(null)}
+        >
             <div className="quick-switch-header">
               <div>
                 <p className="card-kicker">Removal</p>
@@ -1294,18 +1290,15 @@ export function ProfilesPanel({
                 </button>
               </div>
             </footer>
-          </section>
-        </div>
+        </DialogSurface>
       ) : null}
       {profileSheetOpen ? (
-        <div className="quick-switch-overlay" role="presentation" onClick={() => setProfileSheetOpen(false)}>
-          <section
-            className="quick-switch-palette profile-sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Add Profile"
-            onClick={(event) => event.stopPropagation()}
-          >
+        <DialogSurface
+          ariaLabel="Add Profile"
+          className="quick-switch-palette profile-sheet"
+          initialFocusSelector="select:not([disabled]), input:not([disabled]), button:not([disabled])"
+          onClose={() => setProfileSheetOpen(false)}
+        >
             <div className="quick-switch-header">
               <div>
                 <p className="card-kicker">Add Profile</p>
@@ -1519,8 +1512,7 @@ export function ProfilesPanel({
                 </p>
               ) : null}
             </form>
-          </section>
-        </div>
+        </DialogSurface>
       ) : null}
     </SectionCard>
   );

@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { DialogSurface } from "../../../components/DialogSurface";
 import { SectionCard } from "../../../components/SectionCard";
 import { SourceListPanel } from "../../../components/SourceListPanel";
 import { SplitView } from "../../../components/SplitView";
@@ -661,14 +662,12 @@ export function SetupPanel({
         }
       />
       {pendingLiveImport ? (
-        <div className="quick-switch-overlay" role="presentation" onClick={closeLiveImport}>
-          <section
-            className="quick-switch-palette profile-sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Import ${titleCase(pendingLiveImport.tool)} Login`}
-            onClick={(event) => event.stopPropagation()}
-          >
+        <DialogSurface
+          ariaLabel={`Import ${titleCase(pendingLiveImport.tool)} Login`}
+          className="quick-switch-palette profile-sheet"
+          initialFocusSelector="input:not([disabled]), button:not([disabled])"
+          onClose={closeLiveImport}
+        >
             <div className="quick-switch-header">
               <div>
                 <p className="card-kicker">Import Current Login</p>
@@ -723,8 +722,7 @@ export function SetupPanel({
                 <p className="inline-note">{addProfileMutation.error.message}</p>
               ) : null}
             </form>
-          </section>
-        </div>
+        </DialogSurface>
       ) : null}
     </SectionCard>
   );

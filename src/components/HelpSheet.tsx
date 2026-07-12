@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { DialogSurface } from "./DialogSurface";
 
 type HelpSheetProps = {
   open: boolean;
@@ -15,33 +15,17 @@ export function HelpSheet({
   onOpenDiagnostics,
   onOpenSettings,
 }: HelpSheetProps) {
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose, open]);
-
   if (!open) {
     return null;
   }
 
   return (
-    <div className="quick-switch-overlay" role="presentation" onClick={onClose}>
-      <section
-        className="quick-switch-palette profile-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-label="AI Switch Help"
-        onClick={(event) => event.stopPropagation()}
-      >
+    <DialogSurface
+      ariaLabel="AI Switch Help"
+      className="quick-switch-palette profile-sheet"
+      initialFocusSelector="button:not([disabled])"
+      onClose={onClose}
+    >
         <div className="quick-switch-header">
           <div>
             <p className="card-kicker">Help</p>
@@ -142,7 +126,6 @@ export function HelpSheet({
             </div>
           </article>
         </div>
-      </section>
-    </div>
+    </DialogSurface>
   );
 }

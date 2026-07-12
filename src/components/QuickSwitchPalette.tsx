@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { DialogSurface } from "./DialogSurface";
 import { SearchField } from "./SearchField";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "../lib/schemas";
 import {
@@ -223,14 +224,12 @@ export function QuickSwitchPalette({
   const selectedItem = filteredItems[selectedIndex] ?? null;
 
   return (
-    <div className="quick-switch-overlay" role="presentation" onClick={onClose}>
-      <section
-        className="quick-switch-palette"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Quick Switch"
-        onClick={(event) => event.stopPropagation()}
-      >
+    <DialogSurface
+      ariaLabel="Quick Switch"
+      className="quick-switch-palette"
+      initialFocusSelector="input, button:not([disabled])"
+      onClose={onClose}
+    >
         <div className="quick-switch-header">
           <div>
             <p className="card-kicker">Quick Switch</p>
@@ -375,8 +374,7 @@ export function QuickSwitchPalette({
             </span>
           </div>
         </footer>
-      </section>
-    </div>
+    </DialogSurface>
   );
 }
 
