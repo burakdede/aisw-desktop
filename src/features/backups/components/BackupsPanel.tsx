@@ -113,7 +113,20 @@ export function BackupsPanel({
     : "No restore points yet";
 
   return (
-    <SectionCard title="Backups" kicker="Restore points">
+    <SectionCard
+      title="Backups"
+      kicker="Restore points"
+      actions={
+        <button
+          className="ghost-button"
+          type="button"
+          disabled={backups.isLoading}
+          onClick={() => void backups.refetch()}
+        >
+          {backups.isLoading ? "Refreshing…" : "Refresh"}
+        </button>
+      }
+    >
       <article className="diagnostic-card backups-intro-card">
         <div className="backups-intro-copy">
           <div>

@@ -6000,7 +6000,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getAllByRole("button", { name: "Activity" })[0]).toHaveClass("nav-button-active");
-      expect(screen.getByRole("button", { name: "Export Support Report" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Open Log File" })).toBeInTheDocument();
     });
   });
 

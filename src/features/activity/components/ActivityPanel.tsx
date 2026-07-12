@@ -22,7 +22,13 @@ type ActivityEntry = {
   at: number;
 };
 
-export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal?: number }) {
+export function ActivityPanel({
+  externalClearSignal = 0,
+  externalOpenLogSignal = 0,
+}: {
+  externalClearSignal?: number;
+  externalOpenLogSignal?: number;
+}) {
   const lastCommandResults = useLastCommandResults();
   const [selectedEntryKey, setSelectedEntryKey] = useState<string | null>(null);
   const [clearMessage, setClearMessage] = useState("");
@@ -95,6 +101,13 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
     setLogMessage("");
   }, [externalClearSignal]);
 
+  useEffect(() => {
+    if (externalOpenLogSignal < 1 || !entries.length) {
+      return;
+    }
+    openActivityLog();
+  }, [entries.length, externalOpenLogSignal]);
+
   const selectedEntry = entries.find((entry) => entry.key === selectedEntryKey) ?? entries[0] ?? null;
 
   function clearTimeline() {
@@ -119,20 +132,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
   }
 
   return (
-    <SectionCard
-      title="Activity"
-      kicker="Recent activity"
-      actions={
-        <button
-          className="ghost-button"
-          type="button"
-          disabled={!entries.length || exportActivityLogMutation.isPending}
-          onClick={openActivityLog}
-        >
-          {exportActivityLogMutation.isPending ? "Opening…" : "Open Log File"}
-        </button>
-      }
-    >
+    <SectionCard title="Activity" kicker="Recent activity">
       <article className="diagnostic-card activity-intro-card">
         <div className="activity-intro-copy">
           <div>

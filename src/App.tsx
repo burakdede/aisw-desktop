@@ -113,6 +113,7 @@ export function App() {
   const [settingsRouteState, setSettingsRouteState] = useState<SettingsRouteState>({});
   const [runtimeRecoveryOpen, setRuntimeRecoveryOpen] = useState(false);
   const [activityClearSignal, setActivityClearSignal] = useState(0);
+  const [activityOpenLogSignal, setActivityOpenLogSignal] = useState(0);
   const { bootstrap, snapshot, init } = useDesktop();
   const reapplyContextRef = useRef<{
     snapshot: AppSnapshot | null;
@@ -758,14 +759,10 @@ export function App() {
           <button
             className="ghost-button"
             type="button"
-            disabled={exportDiagnosticBundleMutation.isPending}
-            onClick={() => exportDiagnosticBundleMutation.mutate()}
+            disabled={!hasActivityEntries}
+            onClick={() => setActivityOpenLogSignal((value) => value + 1)}
           >
-            <span>
-              {exportDiagnosticBundleMutation.isPending
-                ? "Exporting…"
-                : "Export Support Report"}
-            </span>
+            <span>Open Log File</span>
           </button>
         </div>
       );
@@ -1018,7 +1015,10 @@ export function App() {
             />
           ) : null}
           {activeSection === "activity" ? (
-            <ActivityPanel externalClearSignal={activityClearSignal} />
+            <ActivityPanel
+              externalClearSignal={activityClearSignal}
+              externalOpenLogSignal={activityOpenLogSignal}
+            />
           ) : null}
           {activeSection === "settings" ? (
             <SettingsPanel
