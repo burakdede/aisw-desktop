@@ -212,9 +212,26 @@ button {
   filter: drop-shadow(0 3px 8px rgba(17, 24, 39, 0.08));
 }
 
+.brand-mark-track {
+  fill: color-mix(in srgb, Canvas 98%, CanvasText 2%);
+  stroke: color-mix(in srgb, CanvasText 7%, transparent);
+}
+
+.brand-mark-path {
+  stroke: color-mix(in srgb, CanvasText 34%, transparent);
+}
+
+.brand-mark-path-accent {
+  stroke: color-mix(in srgb, AccentColor 78%, CanvasText 22%);
+}
+
+.brand-mark-highlight {
+  stroke: rgba(255, 255, 255, 0.62);
+}
+
 .brand-mark-shell {
-  fill: color-mix(in srgb, Canvas 90%, CanvasText 10%);
-  stroke: color-mix(in srgb, CanvasText 10%, transparent);
+  fill: color-mix(in srgb, Canvas 89%, CanvasText 11%);
+  stroke: color-mix(in srgb, CanvasText 8%, transparent);
 }
 
 .brand-mark-core {
@@ -222,41 +239,27 @@ button {
   stroke: color-mix(in srgb, CanvasText 4%, transparent);
 }
 
-.brand-mark-plate {
-  fill: color-mix(in srgb, Canvas 97%, AccentColor 3%);
-  stroke: color-mix(in srgb, CanvasText 7%, transparent);
-}
-
-.brand-mark-track {
-  fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
-  stroke: color-mix(in srgb, CanvasText 8%, transparent);
-}
-
-.brand-mark-track-accent {
-  fill: color-mix(in srgb, AccentColor 20%, Canvas 80%);
-  stroke: color-mix(in srgb, AccentColor 26%, transparent);
-}
-
-.brand-mark-path {
-  stroke: color-mix(in srgb, CanvasText 32%, transparent);
-}
-
-.brand-mark-path-accent {
-  stroke: color-mix(in srgb, AccentColor 82%, CanvasText 18%);
-}
-
-.brand-mark-highlight {
-  stroke: rgba(255, 255, 255, 0.62);
-}
-
 .brand-mark-node {
   fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
-  stroke: color-mix(in srgb, CanvasText 10%, transparent);
+  stroke: color-mix(in srgb, CanvasText 11%, transparent);
 }
 
 .brand-mark-node-accent {
-  fill: color-mix(in srgb, AccentColor 90%, Canvas 10%);
-  stroke: color-mix(in srgb, AccentColor 24%, transparent);
+  fill: color-mix(in srgb, AccentColor 88%, Canvas 12%);
+  stroke: color-mix(in srgb, AccentColor 18%, transparent);
+}
+
+.brand-mark-node-soft {
+  fill: color-mix(in srgb, Canvas 93%, CanvasText 7%);
+  stroke: color-mix(in srgb, CanvasText 10%, transparent);
+}
+
+.brand-mark-node-center {
+  fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
+}
+
+.brand-mark-node-center-accent {
+  fill: color-mix(in srgb, AccentColor 16%, Canvas 84%);
 }
 
 .sidebar-title {
@@ -921,7 +924,68 @@ button {
 
 .onboarding-overview {
   display: grid;
+  gap: 14px;
+}
+
+.onboarding-welcome-stack {
+  display: grid;
   gap: 12px;
+}
+
+.onboarding-trust-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 7px;
+}
+
+.onboarding-trust-list li {
+  position: relative;
+  min-height: 20px;
+  padding-left: 28px;
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.onboarding-trust-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ok) 12%, Canvas 88%);
+  color: var(--ok);
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.link-button {
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: color-mix(in srgb, AccentColor 78%, CanvasText 22%);
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.link-button:hover {
+  color: color-mix(in srgb, AccentColor 88%, CanvasText 12%);
+  text-decoration: underline;
+}
+
+.onboarding-link-button {
+  margin-top: -2px;
 }
 
 .onboarding-overview-meta {
@@ -936,11 +1000,13 @@ button {
   min-width: 0;
   padding: 10px 11px;
   border-radius: 10px;
-  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+  background: color-mix(in srgb, CanvasText 3%, Canvas 97%);
+  border: 1px solid color-mix(in srgb, CanvasText 6%, transparent);
 }
 
 .onboarding-step-row {
   align-items: flex-start;
+  border-radius: 12px;
 }
 
 .onboarding-step-row-main {
@@ -954,7 +1020,7 @@ button {
 }
 
 .onboarding-layout-compact {
-  grid-template-columns: minmax(270px, 320px) minmax(0, 1fr);
+  grid-template-columns: minmax(290px, 360px) minmax(0, 1fr);
   align-items: start;
 }
 

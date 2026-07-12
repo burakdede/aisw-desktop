@@ -27,6 +27,7 @@ import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { invalidatePostMutationQueries } from "../../shared/postMutationRefresh";
 import type { SettingsSection } from "../../settings/components/SettingsPanel";
 import type { ProfileImportMode } from "../../shared/profile-capabilities";
+import { toolDisplayName } from "../../../lib/tool-display";
 
 type LiveAccount = {
   tool: string;
@@ -229,6 +230,13 @@ export function SetupPanel({
   const secureStorage = describeSecureStorage(snapshot, toolCapabilities);
   const runtimeSummary = summarizeRuntime(settings.runtime_kind);
   const runtimeRows = buildRuntimeRows(bootstrap, snapshot, toolCapabilities);
+  const trustRows = [
+    "Credentials stay on this Mac",
+    "No telemetry",
+    "No prompt or API traffic proxy",
+    "Powered by the included AI Switch runtime",
+  ];
+  const installedNow = snapshot.statuses.filter((status) => status.binary_found).map((status) => toolDisplayName(status.tool));
 
   return (
     <SectionCard
@@ -253,7 +261,7 @@ export function SetupPanel({
             <article className="diagnostic-card onboarding-overview">
               <SourceListPanel
                 kicker="Welcome"
-                title="Safe local account switching"
+                title="Switch AI coding-agent accounts safely"
                 listLabel="Setup steps"
                 listRole="tablist"
                 badge={
@@ -263,43 +271,46 @@ export function SetupPanel({
                       : "Ready"}
                   </span>
                 }
-                note="Bring in the accounts you already use, confirm the included runtime is ready, and try one shared switch without leaving this Mac."
+                note="Manage Claude Code, Codex CLI, and Gemini CLI profiles from one focused local desktop app."
                 meta={
-                  <div className="onboarding-overview-meta">
-                    <div>
-                      <span className="overview-current-set-cell-label">Privacy</span>
-                      <strong>On this Mac</strong>
-                      <p className="inline-note">Credentials stay on this Mac with no telemetry or traffic proxy.</p>
-                    </div>
-                    <div>
-                      <span className="overview-current-set-cell-label">Progress</span>
-                      <strong>
-                        {switchReady ? "Ready to switch" : "Needs one saved profile"}
-                      </strong>
-                      <p className="inline-note">
-                        {switchReady
-                          ? "At least one reusable profile is ready for a first switch."
-                          : "Save one profile first, then try the first shared switch."}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="overview-current-set-cell-label">Runtime</span>
-                      <strong>{bootstrap.runtime_status.compatible ? "Included runtime ready" : "Needs attention"}</strong>
-                      <p className="inline-note">
-                        {bootstrap.runtime_status.compatible
-                          ? "This build can switch accounts with the included runtime."
-                          : "Resolve runtime setup before switching across tools."}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="overview-current-set-cell-label">Runtime source</span>
-                      <strong>{runtimeSummary.source}</strong>
-                      <p className="inline-note">Version {bootstrap.runtime_status.version?.version ?? "unknown"}</p>
-                    </div>
-                    <div>
-                      <span className="overview-current-set-cell-label">Data folder</span>
-                      <strong>{bootstrap.settings.aisw_home ?? "Managed automatically"}</strong>
-                      <p className="inline-note">Secure storage: {secureStorage}</p>
+                  <div className="onboarding-welcome-stack">
+                    <ul className="onboarding-trust-list" aria-label="Why AI Switch is safe to use">
+                      {trustRows.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                    <button
+                      className="link-button onboarding-link-button"
+                      type="button"
+                      onClick={() => onOpenSettings("keyring")}
+                    >
+                      How AI Switch stores credentials
+                    </button>
+                    <div className="onboarding-overview-meta">
+                      <div>
+                        <span className="overview-current-set-cell-label">Installed now</span>
+                        <strong>{installedNow.length ? installedNow.join(", ") : "No supported tools detected yet"}</strong>
+                        <p className="inline-note">Missing tools are informational. You can finish setup and add them later.</p>
+                      </div>
+                      <div>
+                        <span className="overview-current-set-cell-label">Ready to switch</span>
+                        <strong>{switchReady ? "Yes" : "Not yet"}</strong>
+                        <p className="inline-note">
+                          {switchReady
+                            ? "At least one reusable profile is ready for a first switch."
+                            : "Save one profile first, then try the first shared switch."}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="overview-current-set-cell-label">Included runtime</span>
+                        <strong>{bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}</strong>
+                        <p className="inline-note">Version {bootstrap.runtime_status.version?.version ?? "unknown"}</p>
+                      </div>
+                      <div>
+                        <span className="overview-current-set-cell-label">Secure storage</span>
+                        <strong>{secureStorage.startsWith("Secure storage has not") ? "Not confirmed" : "Available"}</strong>
+                        <p className="inline-note">{secureStorage}</p>
+                      </div>
                     </div>
                   </div>
                 }
@@ -332,9 +343,6 @@ export function SetupPanel({
                   </button>
                 ))}
               </SourceListPanel>
-              <p className="inline-note">
-                Terminal integration is optional. Most people can finish setup without touching shell configuration.
-              </p>
             </article>
           </div>
         }
