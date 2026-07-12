@@ -61,6 +61,18 @@ button {
   appearance: none;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .app-shell {
   min-height: 100vh;
 }
@@ -1798,6 +1810,11 @@ button {
   gap: 12px;
 }
 
+.overview-native-stack {
+  display: grid;
+  gap: 12px;
+}
+
 .overview-summary-card {
   display: grid;
   gap: 12px;
@@ -1986,6 +2003,7 @@ button {
   justify-content: space-between;
   gap: 12px;
   align-items: flex-end;
+  padding: 2px 2px 0;
 }
 
 .overview-tools-header h3 {
@@ -1998,6 +2016,18 @@ button {
 .overview-tools-header .inline-note {
   max-width: 48ch;
   text-align: right;
+}
+
+.overview-tools-section {
+  display: grid;
+  gap: 12px;
+}
+
+.overview-tool-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+  align-items: start;
 }
 
 .overview-current-set {
@@ -2179,6 +2209,7 @@ button {
 .overview-tool-card {
   gap: 12px;
   min-height: 100%;
+  align-content: start;
 }
 
 .overview-tool-card-ok {
@@ -2191,6 +2222,12 @@ button {
 
 .overview-tool-card-neutral {
   border-color: color-mix(in srgb, CanvasText 12%, transparent);
+}
+
+.overview-tool-card-selected {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, AccentColor 22%, transparent),
+    var(--shadow-card);
 }
 
 .overview-tool-card-header {
@@ -3457,6 +3494,10 @@ button {
   }
 
   .overview-current-set-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-tool-card-grid {
     grid-template-columns: 1fr;
   }
 
