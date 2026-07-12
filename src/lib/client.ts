@@ -9,6 +9,7 @@ import {
   installUpdateReportSchema,
   mutationResponseSchema,
   oauthProgressEventSchema,
+  openedPathSchema,
   projectBindingsReportSchema,
   repairReportSchema,
   type AppBootstrap,
@@ -250,6 +251,10 @@ export async function exportActivityLog(contents: string): Promise<DiagnosticBun
   return diagnosticBundleExportSchema.parse(
     await invokeDesktop("export_activity_log", { contents }),
   );
+}
+
+export async function openAppDataFolder(): Promise<string> {
+  return openedPathSchema.parse(await invokeDesktop("open_app_data_folder"));
 }
 
 export async function getSettings(): Promise<DesktopSettings> {

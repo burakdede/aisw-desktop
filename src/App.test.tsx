@@ -7834,6 +7834,39 @@ describe("App", () => {
     });
   });
 
+  it("opens the app data folder from advanced settings", async () => {
+    const calls: string[] = [];
+    const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      calls.push(command);
+      return (
+        {
+          open_app_data_folder: "/tmp/ai-switch-desktop",
+          run_doctor: { summary: { status: "pass" }, checks: [] },
+          get_shell_guidance: {
+            detected_shell: "zsh",
+            capabilities: [],
+            note: "Shell hook guidance",
+            manual_apply_examples: [],
+            variants: [],
+          },
+        } as Record<string, unknown>
+      )[command] ?? defaultMock[command];
+    };
+
+    await renderSettingsPanel(bootstrap.settings, "advanced");
+    fireEvent.click(screen.getByRole("button", { name: "Open App Data Folder" }));
+
+    await waitFor(() => {
+      expect(calls).toContain("open_app_data_folder");
+      expect(screen.getByText("Opened /tmp/ai-switch-desktop.")).toBeInTheDocument();
+      expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
+        title: "App data folder opened",
+        body: "/tmp/ai-switch-desktop",
+      });
+    });
+  });
+
   it("saves general desktop preferences from settings", async () => {
     const commands: string[] = [];
     const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;

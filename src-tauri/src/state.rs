@@ -41,6 +41,10 @@ impl AppState {
         self.settings.load().await
     }
 
+    pub fn app_data_dir(&self) -> PathBuf {
+        self.settings.base_dir()
+    }
+
     pub async fn update_settings(
         &self,
         request: UpdateSettingsRequest,

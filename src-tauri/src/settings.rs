@@ -16,6 +16,13 @@ impl SettingsStore {
         }
     }
 
+    pub fn base_dir(&self) -> PathBuf {
+        self.path
+            .parent()
+            .map(PathBuf::from)
+            .unwrap_or_else(|| PathBuf::from("."))
+    }
+
     pub async fn load(&self) -> Result<DesktopSettings, DesktopError> {
         if !self.path.exists() {
             return Ok(DesktopSettings::default());

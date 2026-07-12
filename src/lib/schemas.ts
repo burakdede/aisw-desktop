@@ -175,6 +175,7 @@ export const diagnosticBundleExportSchema = z.object({
   filename: z.string(),
   generated_at: z.string(),
 });
+export const openedPathSchema = z.string();
 export const oauthProgressEventSchema = z.object({
   type: z.string().nullable().optional(),
   seq: z.number().nullable().optional(),

@@ -3,7 +3,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
 import { SourceListPanel } from "../../../components/SourceListPanel";
 import { SplitView } from "../../../components/SplitView";
-import { exportDiagnosticBundle, getShellGuidance, runDoctor } from "../../../lib/client";
+import { exportDiagnosticBundle, getShellGuidance, openAppDataFolder, runDoctor } from "../../../lib/client";
 import {
   DEFAULT_SECTIONS,
   DESKTOP_APPEARANCES,
@@ -60,6 +60,7 @@ export function SettingsPanel({
   const [selectedShell, setSelectedShell] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
   const [securityMessage, setSecurityMessage] = useState("");
+  const [advancedMessage, setAdvancedMessage] = useState("");
   const [appearance, setAppearance] = useState<DesktopPreferences["appearance"]>(
     desktopPreferences?.appearance ?? "system",
   );
@@ -171,6 +172,22 @@ export function SettingsPanel({
         title: "Diagnostic export failed",
         body: message,
       });
+    }
+  }
+
+  async function revealAppDataFolder() {
+    setAdvancedMessage("");
+    try {
+      const path = await openAppDataFolder();
+      setAdvancedMessage(`Opened ${path}.`);
+      void notifyDesktop({
+        title: "App data folder opened",
+        body: path,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "AI Switch could not open the app data folder.";
+      setAdvancedMessage(message);
     }
   }
 
@@ -1147,6 +1164,12 @@ export function SettingsPanel({
                   >
                     {updateSettingsMutation.isPending ? "Saving…" : "Save Storage Settings"}
                   </button>
+                  <div className="button-row">
+                    <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
+                      Open App Data Folder
+                    </button>
+                  </div>
+                  {advancedMessage ? <p className="inline-note">{advancedMessage}</p> : null}
                 </article>
               </form>
               <div className="settings-side-stack">

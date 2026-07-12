@@ -32,6 +32,23 @@ pub async fn get_settings(state: tauri::State<'_, AppState>) -> DesktopResult<De
 }
 
 #[tauri::command]
+pub async fn open_app_data_folder(
+    state: tauri::State<'_, AppState>,
+) -> DesktopResult<String> {
+    let settings = state.load_settings().await.map_err(ErrorPayload::from)?;
+    let path = settings
+        .aisw_home
+        .as_ref()
+        .map(PathBuf::from)
+        .unwrap_or_else(|| state.app_data_dir());
+    std::fs::create_dir_all(&path)
+        .map_err(DesktopError::from)
+        .map_err(ErrorPayload::from)?;
+    open_path_with_default_app(&path)?;
+    Ok(path.display().to_string())
+}
+
+#[tauri::command]
 pub async fn set_tray_visibility(app: tauri::AppHandle, visible: bool) -> DesktopResult<()> {
     if let Some(tray) = app.tray_by_id("main-tray") {
         tray.set_visible(visible).map_err(|error| ErrorPayload {
