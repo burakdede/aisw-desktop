@@ -527,6 +527,11 @@ function ToolInspector({
     ? toolProfileDisplayLabel(settings, snapshot, status.tool, selectedProfile)
     : null;
   const supportsLiveImport = supportsProfileImportMode(status.tool, toolCapabilities, "from_live");
+  const liveMatchLabel =
+    activeState === null || activeState === undefined ? "Unknown" : activeState ? "Yes" : "Drifted";
+  const toolSummaryCopy = status.active_profile
+    ? `${toolDisplayName(status.tool)} is using ${activeProfileLabel}. Keep live match green before you start coding.`
+    : `Add a saved profile for ${toolDisplayName(status.tool)} before switching from AI Switch.`;
 
   useEffect(() => {
     if (!stateModes.length) {
@@ -578,46 +583,68 @@ function ToolInspector({
           </span>
         </div>
       </header>
-      <dl className="overview-tool-facts">
-        <div>
-          <dt>Active</dt>
-          <dd>{activeProfileLabel ?? "Not configured"}</dd>
-        </div>
-        <div>
-          <dt>Live match</dt>
-          <dd>
-            {activeState === null || activeState === undefined
-              ? "Unknown"
-              : activeState
-                ? "Yes"
-                : "Drifted"}
-          </dd>
-        </div>
-        <div>
-          <dt>Auth</dt>
-          <dd>{status.auth_method ?? "Unknown"}</dd>
-        </div>
-        <div>
-          <dt>Backend</dt>
-          <dd>{credentialBackendLabel(status.credential_backend)}</dd>
-        </div>
-        <div>
-          <dt>State</dt>
-          <dd>{status.state_mode ?? "n/a"}</dd>
-        </div>
-      </dl>
-      <p className="inline-note">
-        {status.active_profile
-          ? `${toolDisplayName(status.tool)} is using ${activeProfileLabel}. Keep live match green before you start coding.`
-          : `Add a saved profile for ${toolDisplayName(status.tool)} before switching from AI Switch.`}
-      </p>
+      <div className="overview-tool-lead">
+        <dl className="overview-tool-facts">
+          <div>
+            <dt>Active</dt>
+            <dd>{activeProfileLabel ?? "Not configured"}</dd>
+          </div>
+          <div>
+            <dt>Live match</dt>
+            <dd>{liveMatchLabel}</dd>
+          </div>
+          <div>
+            <dt>Auth</dt>
+            <dd>{status.auth_method ?? "Unknown"}</dd>
+          </div>
+          <div>
+            <dt>Backend</dt>
+            <dd>{credentialBackendLabel(status.credential_backend)}</dd>
+          </div>
+          <div>
+            <dt>State</dt>
+            <dd>{status.state_mode ?? "n/a"}</dd>
+          </div>
+        </dl>
+        <p className="inline-note">{toolSummaryCopy}</p>
+      </div>
+      <div className="overview-tool-control-grid">
+        {profiles.length ? (
+          <label className="stacked-form overview-tool-control-panel">
+            <span>Switch profile</span>
+            <select
+              aria-label={`Switch ${status.tool} profile`}
+              value={selectedProfile}
+              onChange={(event) => setSelectedProfile(event.target.value)}
+            >
+              {profiles.map((profile) => (
+                <option key={profile.name} value={profile.name}>
+                  {toolProfileDisplayLabel(settings, snapshot, status.tool, profile.name)}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {stateModes.length ? (
+          <div className="overview-tool-control-panel">
+            <StateModeField
+              name={`overview-state-mode-${status.tool}`}
+              value={stateMode}
+              options={stateModes}
+              onChange={setStateMode}
+            />
+          </div>
+        ) : null}
+      </div>
       {status.token_warning ? (
-        <p className="inline-note">
-          Token warning: {formatTokenWarning(status)}
-        </p>
+        <div className="overview-tool-note-card">
+          <p className="inline-note">
+            Token warning: {formatTokenWarning(status)}
+          </p>
+        </div>
       ) : null}
       {status.warnings.length ? (
-        <div className="stack-list">
+        <div className="stack-list overview-tool-note-card">
           {status.warnings.map((warning, index) => (
             <p
               key={`${warning.code ?? warning.message ?? "warning"}-${index}`}
@@ -629,28 +656,24 @@ function ToolInspector({
         </div>
       ) : null}
       {lastResult ? (
-        <p className={`inline-note ${lastResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
-          Last result: {lastResult.message}
-          {lastResult.remediation ? ` Remediation: ${lastResult.remediation}` : ""}
-        </p>
-      ) : null}
-      {stateModes.length ? (
-        <StateModeField
-          name={`overview-state-mode-${status.tool}`}
-          value={stateMode}
-          options={stateModes}
-          onChange={setStateMode}
-        />
+        <div className="overview-tool-note-card">
+          <p className={`inline-note ${lastResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
+            Last result: {lastResult.message}
+            {lastResult.remediation ? ` Remediation: ${lastResult.remediation}` : ""}
+          </p>
+        </div>
       ) : null}
       {!status.binary_found ? (
-        <MissingBinaryGuidance
-          tool={status.tool}
-          onRefresh={onRefresh}
-          refreshLocked={refreshLocked}
-        />
+        <div className="overview-tool-note-card">
+          <MissingBinaryGuidance
+            tool={status.tool}
+            onRefresh={onRefresh}
+            refreshLocked={refreshLocked}
+          />
+        </div>
       ) : null}
       {activeState === false ? (
-        <div className="stack-list">
+        <div className="stack-list overview-tool-note-card">
           <p className="inline-note">
             Live credentials changed outside the app. Re-apply the active profile or import the current
             login as a new profile.
@@ -695,25 +718,7 @@ function ToolInspector({
           )}
         </div>
       ) : null}
-      {profiles.length ? (
-        <div className="stack-list">
-          <label className="stacked-form">
-            <span>Switch profile</span>
-            <select
-              aria-label={`Switch ${status.tool} profile`}
-              value={selectedProfile}
-              onChange={(event) => setSelectedProfile(event.target.value)}
-            >
-              {profiles.map((profile) => (
-                <option key={profile.name} value={profile.name}>
-                  {toolProfileDisplayLabel(settings, snapshot, status.tool, profile.name)}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      ) : null}
-      <div className="button-row">
+      <div className="button-row overview-tool-actions">
         <button
           className={profiles.length ? "primary-button" : "ghost-button"}
           type="button"
