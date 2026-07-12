@@ -25,6 +25,7 @@ import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import { normalizeTerminalIntegrationText } from "../../shared/terminal-integration-language";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
+import packageJson from "../../../../package.json";
 
 export const SETTINGS_SECTIONS = [
   "general",
@@ -101,6 +102,7 @@ export function SettingsPanel({
   const [selectedSection, setSelectedSection] = useState<SettingsSection>(
     initialSection ?? "general",
   );
+  const appVersion = packageJson.version;
 
   const shellCheck = useMemo(() => findShellHookCheck(doctor.data), [doctor.data]);
   const launchAtLoginMutation = useMutation({
@@ -791,18 +793,21 @@ export function SettingsPanel({
               </div>
               <div className="settings-summary-grid">
                 <div>
+                  <span className="overview-current-set-cell-label">App version</span>
+                  <strong>{appVersion}</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Included engine</span>
+                  <strong>{runtimeStatus.version?.version ?? "unknown"}</strong>
+                </div>
+                <div>
                   <span className="overview-current-set-cell-label">Channel</span>
                   <strong>{titleCase(updateChannel)}</strong>
                 </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Engine</span>
-                  <strong>{runtimeKind === "bundled" ? "Included" : titleCase(runtimeKind)}</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Updates</span>
-                  <strong>Signed desktop releases</strong>
-                </div>
               </div>
+              <p className="inline-note">
+                AI Switch {appVersion} includes desktop engine {runtimeStatus.version?.version ?? "unknown"}.
+              </p>
             </article>
             <div className="settings-detail-grid">
               <div className="settings-main-stack">

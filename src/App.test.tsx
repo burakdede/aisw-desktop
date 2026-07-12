@@ -7673,6 +7673,22 @@ describe("App", () => {
     });
   });
 
+  it("shows installed app and engine versions in updates settings", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Updates" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("App version")).toBeInTheDocument();
+      expect(screen.getByText("0.1.0")).toBeInTheDocument();
+      expect(screen.getByText("Included engine")).toBeInTheDocument();
+      expect(screen.getByText("0.3.7")).toBeInTheDocument();
+      expect(screen.getByText("AI Switch 0.1.0 includes desktop engine 0.3.7.")).toBeInTheDocument();
+    });
+  });
+
   it("shows updater remediation when update checks fail", async () => {
     window.__AISW_DESKTOP_MOCK__ = async (command) => {
       if (command === "check_for_updates") {
