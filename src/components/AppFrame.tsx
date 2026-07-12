@@ -112,27 +112,19 @@ export function AppFrame({
           <aside className="sidebar">
             <div className="sidebar-scroll">
               <div className="sidebar-brand">
-                <div className="sidebar-brand-topline">
-                  <p className="eyebrow">Local account switching</p>
-                  <span className="sidebar-window-badge">Menu bar ready</span>
-                </div>
                 <div className="brand-lockup">
-                  <BrandMark size={30} />
+                  <BrandMark size={28} />
                   <div className="sidebar-brand-copy">
                     <h1 className="sidebar-title">AI Switch</h1>
-                    <p className="sidebar-meta-copy">Local switching for Claude Code, Codex CLI, and Gemini CLI</p>
+                    <p className="sidebar-title-caption">Local profile switching utility</p>
                   </div>
                 </div>
                 <div className="sidebar-meta" aria-label="App status">
                   <span className="sidebar-meta-badge">Local only</span>
-                  <span className="sidebar-meta-copy">Bundled runtime, profile switching, diagnostics, and recovery</span>
+                  <span className="sidebar-meta-copy">
+                    {subtitle ?? "Claude Code, Codex CLI, and Gemini CLI"}
+                  </span>
                 </div>
-                <div className="sidebar-brand-signals" aria-hidden="true">
-                  <span className="status-pill">Saved logins</span>
-                  <span className="status-pill">All tools</span>
-                  <span className="status-pill">Recovery</span>
-                </div>
-                {subtitle ? <p className="sidebar-copy">{subtitle}</p> : null}
               </div>
               <nav className="nav-list" aria-label="Primary">
                 {Object.entries(groups).map(([group, items]) => (
