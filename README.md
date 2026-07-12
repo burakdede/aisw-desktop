@@ -18,11 +18,24 @@ AI Switch Desktop is a Tauri 2 + Rust + React/TypeScript desktop control plane f
 ```sh
 npm install
 npm run prepare:sidecar -- /absolute/path/to/aisw
+npm run tauri:dev
 npm test
 npm run build
 cargo test --manifest-path src-tauri/Cargo.toml
 npm run tauri:build
 ```
+
+## Real-app testing
+
+For local macOS testing, use the bundled desktop window instead of the browser-only Vite server:
+
+```sh
+npm install
+npm run prepare:sidecar -- /absolute/path/to/aisw
+npm run tauri:dev
+```
+
+That starts the Vite frontend and the Tauri desktop shell together. For the current codebase, this is the primary way to exercise onboarding, set switching, project rules, tray behavior, diagnostics, and settings in the real app.
 
 ## Notes
 
