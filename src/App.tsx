@@ -835,7 +835,7 @@ export function App() {
       subtitle="Switch Claude Code, Codex CLI, and Gemini CLI profiles from one focused app."
       detail={
         runtimeRecoveryFocused
-          ? "AI Switch can continue as soon as this computer switches back to the included engine."
+          ? "AI Switch can continue as soon as this computer switches back to the included runtime."
           : sectionDetail(activeSection, setupFocused)
       }
       nav={navItems}
@@ -860,19 +860,18 @@ export function App() {
       )}
     >
       {runtimeRecoveryFocused ? (
-        <SectionCard title="Switching is paused" kicker="Setup paused">
+        <SectionCard title="Finish runtime setup" kicker="Setup paused">
           <div className="stack-list">
             <p className="inline-note">
-              This computer is pointed at an external switching engine that this desktop app cannot use
-              safely.
+              AI Switch found a different runtime on this computer, but it cannot power the desktop app.
             </p>
             <p className="inline-note">
-              Switch back to the included engine to continue, or open Runtime Settings if you need
-              to review the current source.
+              Use the included runtime to continue. Open Runtime Settings only if you intentionally
+              want to choose another runtime.
             </p>
             <div className="settings-summary-grid">
               <div>
-                <span className="overview-current-set-cell-label">Current selection</span>
+                <span className="overview-current-set-cell-label">Current runtime</span>
                 <strong>{runtimeSelectionLabel(settings.runtime_kind)}</strong>
               </div>
               <div>
@@ -880,7 +879,7 @@ export function App() {
                 <strong>Included runtime</strong>
               </div>
               <div>
-                <span className="overview-current-set-cell-label">Next step</span>
+                <span className="overview-current-set-cell-label">Do this</span>
                 <strong>{normalizeRuntimeLanguage(runtimeBlocker.nextStep)}</strong>
               </div>
             </div>
@@ -893,8 +892,8 @@ export function App() {
                   onClick={() => restoreBundledRuntimeMutation.mutate()}
                 >
                   {restoreBundledRuntimeMutation.isPending
-                    ? "Switching to Included Engine…"
-                    : "Use Included Engine"}
+                    ? "Switching to Included Runtime…"
+                    : "Use Included Runtime"}
                 </button>
               ) : null}
               <button className="ghost-button" type="button" onClick={() => void retryRuntimeCheck()}>
@@ -1149,25 +1148,25 @@ function describeRuntimeBlocker(runtimeStatus: {
   if (hasResolvedRuntime && missingDesktopContract) {
     return {
       summary:
-        "The selected runtime does not report the desktop compatibility details this app needs.",
+        "The current runtime works outside the app, but it does not expose the desktop features AI Switch requires.",
       nextStep:
-        "Switch back to the included engine, or choose a newer compatible runtime in Runtime Settings before continuing.",
+        "Use the included runtime, or choose a newer desktop-compatible runtime in Runtime Settings.",
     };
   }
 
   if (hasResolvedRuntime) {
     return {
       summary:
-        "The selected runtime was found, but it is not compatible with AI Switch.",
+        "The current runtime was found, but it is not compatible with the desktop app.",
       nextStep:
-        "Switch back to the included engine, or choose a compatible runtime in Runtime Settings before continuing.",
+        "Use the included runtime, or choose a compatible runtime in Runtime Settings.",
     };
   }
 
   return {
-    summary: "AI Switch could not use the selected runtime.",
+    summary: "AI Switch could not use the current runtime source.",
     nextStep:
-      "Switch to the included engine, or choose a working runtime source in Runtime Settings before continuing.",
+      "Use the included runtime, or choose a working runtime source in Runtime Settings.",
   };
 }
 
@@ -1176,9 +1175,9 @@ function runtimeSelectionLabel(runtimeKind: AppBootstrap["settings"]["runtime_ki
     case "bundled":
       return "Included runtime";
     case "system":
-      return "System runtime override";
+      return "System runtime";
     case "custom":
-      return "Custom runtime override";
+      return "Custom runtime";
     default:
       return "Unknown runtime";
   }

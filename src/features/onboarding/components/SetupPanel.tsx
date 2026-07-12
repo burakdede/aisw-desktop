@@ -374,7 +374,7 @@ export function SetupPanel({
                     </span>
                   </div>
                   <p className="inline-note">
-                    AI Switch includes the switching engine it needs. Confirm local storage and
+                    AI Switch includes the runtime it needs. Confirm local storage and
                     secure storage are ready, then save your first profile.
                   </p>
                   <p className="inline-note">{runtimeSummary.description}</p>
@@ -397,8 +397,8 @@ export function SetupPanel({
                         onClick={() => restoreBundledRuntimeMutation.mutate()}
                       >
                         {restoreBundledRuntimeMutation.isPending
-                          ? "Switching to Included Engine…"
-                          : "Use Included Engine"}
+                          ? "Switching to Included Runtime…"
+                          : "Use Included Runtime"}
                       </button>
                     ) : null}
                     <button className="ghost-button" type="button" onClick={() => onOpenSettings("runtime")}>
@@ -409,7 +409,7 @@ export function SetupPanel({
                     <p className="inline-note">
                       {restoreBundledRuntimeMutation.error instanceof Error
                         ? restoreBundledRuntimeMutation.error.message
-                        : "Could not switch back to the included engine."}
+                        : "Could not switch back to the included runtime."}
                     </p>
                   ) : null}
                 </article>

@@ -633,26 +633,27 @@ describe("App", () => {
     };
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("Switching is paused")).toBeInTheDocument();
+      expect(screen.getByText("Finish runtime setup")).toBeInTheDocument();
     });
     expect(
       screen.getByText(
-        "This computer is pointed at an external switching engine that this desktop app cannot use safely.",
+        "AI Switch found a different runtime on this computer, but it cannot power the desktop app.",
       ),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Switch back to the included engine to continue, or open Runtime Settings if you need to review the current source.",
+        "Use the included runtime to continue. Open Runtime Settings only if you intentionally want to choose another runtime.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Current selection")).toBeInTheDocument();
-    expect(screen.getByText("System runtime override")).toBeInTheDocument();
+    expect(screen.getByText("Current runtime")).toBeInTheDocument();
+    expect(screen.getByText("System runtime")).toBeInTheDocument();
     expect(screen.getByText("Recommended")).toBeInTheDocument();
     expect(screen.getByText("Included runtime")).toBeInTheDocument();
+    expect(screen.getByText("Do this")).toBeInTheDocument();
     expect(
       screen.getByText("Compatibility details"),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Use Included Engine" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Use Included Runtime" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Runtime Settings" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Runtime" })).not.toBeInTheDocument();
@@ -693,7 +694,7 @@ describe("App", () => {
     });
   });
 
-  it("switches back to the included engine from the blocker screen", async () => {
+  it("switches back to the included runtime from the blocker screen", async () => {
     const calls: Array<{ command: string; args?: unknown }> = [];
     let currentSettings: DesktopSettings = {
       ...bootstrap.settings,
@@ -741,10 +742,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Use Included Engine" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Use Included Runtime" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Use Included Engine" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use Included Runtime" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
@@ -3923,7 +3924,7 @@ describe("App", () => {
     });
 
     openSetupStep("Welcome");
-    fireEvent.click(screen.getByRole("button", { name: "Use Included Engine" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use Included Runtime" }));
 
     await waitFor(() => {
       expect(
