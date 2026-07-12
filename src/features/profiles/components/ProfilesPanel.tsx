@@ -827,12 +827,10 @@ export function ProfilesPanel({
                   <p className="inline-note">
                     Keep this profile ready for switching by checking live match, backend health, and recent backup state before you start coding.
                   </p>
-                </article>
-                <article className="diagnostic-card profiles-actions-card">
-                  <div className="desktop-pane-section-header">
+                  <div className="desktop-pane-section-header profiles-inspector-section-header">
                     <div>
                       <p className="card-kicker">Manage</p>
-                      <h3>Actions</h3>
+                      <h4>Actions</h4>
                     </div>
                     <p className="inline-note">
                       Switch, restore, rename, relabel, inspect diagnostics, and remove this saved profile without leaving the inspector.
@@ -898,7 +896,7 @@ export function ProfilesPanel({
                       </button>
                     </div>
                   ) : null}
-                  <div className="profiles-management-grid">
+                  <div className="profiles-management-grid profiles-inspector-sections">
                     <div className="profiles-management-block">
                       <p className="card-kicker">Name</p>
                       <h4>Rename profile</h4>
@@ -992,7 +990,7 @@ export function ProfilesPanel({
                     </div>
                   </div>
                   {openDiagnosticDetails === selectedProfileEntry.name ? (
-                    <div className="profiles-technical-block">
+                    <div className="profiles-technical-block profiles-inspector-section">
                       <p className="card-kicker">Diagnostics</p>
                       <h4>Technical details</h4>
                       <p className="inline-note">
@@ -1067,7 +1065,7 @@ export function ProfilesPanel({
                       )}
                     </div>
                   ) : null}
-                  <div className="profiles-management-block">
+                  <div className="profiles-management-block profiles-inspector-section">
                     <p className="card-kicker">Removal</p>
                     <h4>Remove profile</h4>
                     <p className="inline-note">

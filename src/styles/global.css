@@ -1727,7 +1727,7 @@ button {
 
 .profiles-toolbar {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -1735,7 +1735,7 @@ button {
 .profiles-search-field {
   min-width: 220px;
   min-height: 32px;
-  padding: 0 8px;
+  padding: 0 7px;
   border-radius: 9px;
 }
 
@@ -1789,7 +1789,7 @@ button {
 }
 
 .profiles-layout {
-  grid-template-columns: minmax(360px, 1.02fr) minmax(340px, 0.98fr);
+  grid-template-columns: minmax(340px, 0.98fr) minmax(360px, 1.02fr);
 }
 
 .sets-layout {
@@ -2180,14 +2180,14 @@ button {
 .profiles-library-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .profiles-library-summary > div {
   display: grid;
   gap: 4px;
   min-width: 0;
-  padding: 10px 11px;
+  padding: 9px 10px;
   border-radius: 10px;
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
@@ -3242,7 +3242,12 @@ button {
 }
 
 .profiles-inspector-card {
-  gap: 14px;
+  gap: 12px;
+}
+
+.profiles-inspector-section-header {
+  padding-top: 2px;
+  border-top: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
 }
 
 .profiles-tool-focus-header {
@@ -3255,14 +3260,14 @@ button {
 .profiles-detail-meta {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .profiles-detail-meta > div {
   display: grid;
   gap: 4px;
   min-width: 0;
-  padding: 10px 11px;
+  padding: 9px 10px;
   border-radius: 10px;
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
@@ -3271,7 +3276,7 @@ button {
 .profiles-management-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .profiles-tool-focus-grid > div,
@@ -3279,7 +3284,7 @@ button {
 .profiles-technical-block {
   display: grid;
   gap: 6px;
-  padding: 10px 11px;
+  padding: 9px 10px;
   border-radius: 10px;
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
@@ -3288,11 +3293,19 @@ button {
   margin-top: 4px;
 }
 
+.profiles-inspector-sections {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profiles-inspector-section {
+  margin-top: 2px;
+}
+
 .profiles-inspector-rail {
   display: grid;
   gap: 10px;
   align-content: start;
-  padding: 12px;
+  padding: 11px;
   border-radius: 12px;
   border: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
   background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
@@ -3345,7 +3358,7 @@ button {
   align-items: center;
   width: 100%;
   min-width: 0;
-  padding: 10px 10px;
+  padding: 9px 10px;
   border: 0;
   background: transparent;
   text-align: left;
