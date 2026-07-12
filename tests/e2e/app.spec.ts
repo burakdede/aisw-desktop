@@ -1749,22 +1749,33 @@ test("warns before backup restore and re-activates the restored profile", async 
   await page.getByRole("button", { name: "Backups" }).click();
   await expect(
     page.getByText(
-      "Restore replays the saved files only. It does not activate that profile again until you run a matching use action or choose restore and activate here.",
+      "Restore saved files first, then reactivate explicitly only when you want that profile live again.",
     ),
   ).toBeVisible();
-  await expect(page.getByText("Codex backup · 20260325T114502Z-codex-work")).toBeVisible();
+  await expect(page.getByText("20260325T114502Z-codex-work")).toBeVisible();
   await expect(page.getByText("Affects Codex / Work. Restore files only unless you explicitly re-activate this profile.")).toBeVisible();
 
   await page.getByRole("button", { name: "Restore and activate" }).click();
   await expect(
     page.getByText(
-      "Confirm before restoring and activating Codex / Work. This replays the backup and switches the live profile again.",
+      "This will restore profile files for Codex / Work.",
     ),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Confirm restore and activate" }).click();
+  await page.getByRole("button", { name: "Restore and activate" }).last().click();
 
-  await page.getByRole("button", { name: "Overview" }).click();
-  await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "Work" })).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const log = window.__AISW_COMMAND_LOG__ ?? [];
+        return [...log].some(
+          (entry) =>
+            entry.command === "use_profile" &&
+            entry.args?.request?.tool === "codex" &&
+            entry.args?.request?.profile === "work",
+        );
+      }),
+    )
+    .toBe(true);
 });
 
 test("restores backup files only without re-activating the profile", async ({ page }) => {

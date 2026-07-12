@@ -2417,9 +2417,27 @@ button {
 .diagnostics-findings-card,
 .diagnostics-recovery-panel,
 .diagnostics-check-card,
+.diagnostics-overview-card,
+.diagnostics-inspector-card,
 .diagnostics-inspector-section {
   display: grid;
   gap: 10px;
+}
+
+.diagnostics-inspector-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
+  gap: 12px;
+}
+
+.diagnostics-inspector-rail {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
+  background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
 }
 
 .diagnostics-check-summary {
@@ -2519,12 +2537,12 @@ button {
 }
 
 .backups-layout {
-  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 380px);
+  grid-template-columns: minmax(360px, 1.02fr) minmax(340px, 0.98fr);
 }
 
 .activity-layout,
 .diagnostics-layout {
-  grid-template-columns: minmax(0, 1.08fr) minmax(320px, 380px);
+  grid-template-columns: minmax(360px, 1.02fr) minmax(340px, 0.98fr);
 }
 
 .diagnostics-empty-card {
@@ -2552,8 +2570,11 @@ button {
   gap: 8px;
 }
 
+.backups-overview-card,
 .backups-list-card,
-.activity-list-card {
+.activity-overview-card,
+.activity-list-card,
+.diagnostics-overview-card {
   gap: 12px;
   padding: 12px;
 }
@@ -2621,6 +2642,26 @@ button {
 .backups-detail-block {
   display: grid;
   gap: 10px;
+}
+
+.backups-detail-card {
+  gap: 12px;
+}
+
+.backups-detail-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
+  gap: 12px;
+}
+
+.backups-detail-rail {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
+  background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
 }
 
 .profiles-inspector-controls {
@@ -3006,7 +3047,32 @@ button {
   gap: 12px;
 }
 
+.activity-overview-card {
+  display: grid;
+  gap: 12px;
+}
+
+.activity-detail-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
+  gap: 12px;
+}
+
+.activity-detail-rail {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
+  background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
+}
+
 .activity-session-card {
+  gap: 8px;
+}
+
+.activity-session-card-nested {
   gap: 8px;
 }
 
@@ -3184,6 +3250,12 @@ button {
   }
 
   .profiles-tool-focus-main {
+    grid-template-columns: 1fr;
+  }
+
+  .backups-detail-main,
+  .activity-detail-main,
+  .diagnostics-inspector-main {
     grid-template-columns: 1fr;
   }
 

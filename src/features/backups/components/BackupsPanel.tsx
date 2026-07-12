@@ -120,7 +120,7 @@ export function BackupsPanel({
         secondaryClassName="backups-detail-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-            <article className="diagnostic-card backups-list-card">
+            <article className="diagnostic-card backups-overview-card">
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Timeline</p>
@@ -152,6 +152,17 @@ export function BackupsPanel({
                   <strong>Files first</strong>
                   <p className="inline-note">Activation stays explicit unless you choose restore and activate.</p>
                 </div>
+              </div>
+            </article>
+            <article className="diagnostic-card backups-list-card">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Restore points</p>
+                  <h3>Local backup history</h3>
+                </div>
+                <p className="inline-note">
+                  Review one restore point at a time before restoring saved files or re-activating a profile.
+                </p>
               </div>
               <div className="backups-list-columns" aria-hidden="true">
                 <span>Created</span>
@@ -217,111 +228,116 @@ export function BackupsPanel({
         secondary={
           <div className="stack-list desktop-pane-column">
             {selectedBackup && selectedTarget && selectedProfileLabel ? (
-              <article className="diagnostic-card">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Inspector</p>
-                    <h3>{selectedProfileLabel}</h3>
+              <article className="diagnostic-card backups-detail-card">
+                <div className="backups-detail-main">
+                  <div className="stack-list">
+                    <div className="desktop-pane-section-header">
+                      <div>
+                        <p className="card-kicker">Inspector</p>
+                        <h3>{selectedProfileLabel}</h3>
+                      </div>
+                      <p className="inline-note">
+                        Restore saved files first, then reactivate explicitly only when you want that profile live again.
+                      </p>
+                    </div>
+                    <div className="backups-detail-summary">
+                      <div>
+                        <span className="overview-current-set-cell-label">Created</span>
+                        <strong>{formatBackupTimestamp(selectedBackup.created_at ?? selectedBackup.backup_id)}</strong>
+                      </div>
+                      <div>
+                        <span className="overview-current-set-cell-label">Target</span>
+                        <strong>{selectedTargetDisplay}</strong>
+                      </div>
+                      <div>
+                        <span className="overview-current-set-cell-label">Recovery</span>
+                        <strong>Files only by default</strong>
+                      </div>
+                    </div>
+                    <div className="backups-detail-meta">
+                      <div>
+                        <span className="overview-current-set-cell-label">Backup target</span>
+                        <strong>{selectedTargetDisplay}</strong>
+                        <p className="inline-note">{titleCase(selectedTarget.tool)} restore point selected from the local history.</p>
+                      </div>
+                      <div>
+                        <span className="overview-current-set-cell-label">Restore outcome</span>
+                        <strong>Activation stays explicit</strong>
+                        <p className="inline-note">Restore files only unless you explicitly re-activate this profile.</p>
+                      </div>
+                    </div>
+                    <KeyValueGrid
+                      rows={[
+                        { label: "Tool", value: titleCase(selectedTarget.tool) },
+                        { label: "Profile", value: selectedProfileLabel },
+                        { label: "Backup ID", value: selectedBackup.backup_id },
+                      ]}
+                    />
+                    <div className="backups-detail-block">
+                      <div>
+                        <p className="card-kicker">Saved state</p>
+                        <p className="inline-note">
+                          {titleCase(selectedTarget.tool)} profile <strong>{selectedProfileLabel}</strong> and its saved config snapshot.
+                        </p>
+                      </div>
+                      <div>
+                        <p className="card-kicker">Restore behavior</p>
+                        <p className="inline-note">
+                          Affects {selectedTargetDisplay}. Restore files only unless you explicitly re-activate this profile.
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <p className="inline-note">
-                    Restore saved files first, then reactivate explicitly only when you want that profile live again.
-                  </p>
-                </div>
-                <div className="backups-detail-summary">
-                  <div>
-                    <span className="overview-current-set-cell-label">Created</span>
-                    <strong>{formatBackupTimestamp(selectedBackup.created_at ?? selectedBackup.backup_id)}</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Target</span>
-                    <strong>{selectedTargetDisplay}</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Recovery</span>
-                    <strong>Files only by default</strong>
-                  </div>
-                </div>
-                <div className="backups-detail-meta">
-                  <div>
-                    <span className="overview-current-set-cell-label">Backup target</span>
-                    <strong>{selectedTargetDisplay}</strong>
-                    <p className="inline-note">{titleCase(selectedTarget.tool)} restore point selected from the local history.</p>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Restore outcome</span>
-                    <strong>Activation stays explicit</strong>
-                    <p className="inline-note">Restore files only unless you explicitly re-activate this profile.</p>
-                  </div>
-                </div>
-                <KeyValueGrid
-                  rows={[
-                    { label: "Tool", value: titleCase(selectedTarget.tool) },
-                    { label: "Profile", value: selectedProfileLabel },
-                    { label: "Backup ID", value: selectedBackup.backup_id },
-                  ]}
-                />
-                <div className="backups-detail-block">
-                  <div>
-                    <p className="card-kicker">Saved state</p>
-                    <p className="inline-note">
-                      {titleCase(selectedTarget.tool)} profile <strong>{selectedProfileLabel}</strong> and its saved config snapshot.
-                    </p>
-                  </div>
-                  <div>
-                    <p className="card-kicker">Restore behavior</p>
-                    <p className="inline-note">
-                      Affects {selectedTargetDisplay}. Restore files only unless you explicitly re-activate this profile.
-                    </p>
-                  </div>
-                </div>
-                <div className="button-row">
-                  <button
-                    className="ghost-button"
-                    type="button"
-                    disabled={mutationLock.isBusy}
-                    onClick={() => onOpenProfiles(selectedTarget.tool, selectedTarget.profile)}
-                  >
-                    Open profile details
-                  </button>
-                  <button
-                    className="ghost-button"
-                    type="button"
-                    onClick={() => void copyBackupId(selectedBackup.backup_id)}
-                  >
-                    Copy backup ID
-                  </button>
-                </div>
-                <div className="button-row">
-                  {!selectedPendingFilesRestore && !selectedPendingRestoreAndActivate ? (
-                    <>
+                  <aside className="backups-detail-rail">
+                    <span className="overview-current-set-cell-label">Actions</span>
+                    <div className="button-row button-row-column">
                       <button
                         className="ghost-button"
+                        type="button"
                         disabled={mutationLock.isBusy}
-                        onClick={() =>
-                          setPendingRestore({
-                            backupId: selectedBackup.backup_id,
-                            mode: "files",
-                          })
-                        }
+                        onClick={() => onOpenProfiles(selectedTarget.tool, selectedTarget.profile)}
                       >
-                        Restore files only
+                        Open profile details
                       </button>
                       <button
-                        className="primary-button"
-                        disabled={mutationLock.isBusy}
-                        onClick={() =>
-                          setPendingRestore({
-                            backupId: selectedBackup.backup_id,
-                            mode: "activate",
-                          })
-                        }
+                        className="ghost-button"
+                        type="button"
+                        onClick={() => void copyBackupId(selectedBackup.backup_id)}
                       >
-                        Restore and activate
+                        Copy backup ID
                       </button>
-                    </>
-                  ) : null}
+                    </div>
+                    {!selectedPendingFilesRestore && !selectedPendingRestoreAndActivate ? (
+                      <div className="button-row button-row-column">
+                        <button
+                          className="ghost-button"
+                          disabled={mutationLock.isBusy}
+                          onClick={() =>
+                            setPendingRestore({
+                              backupId: selectedBackup.backup_id,
+                              mode: "files",
+                            })
+                          }
+                        >
+                          Restore files only
+                        </button>
+                        <button
+                          className="primary-button"
+                          disabled={mutationLock.isBusy}
+                          onClick={() =>
+                            setPendingRestore({
+                              backupId: selectedBackup.backup_id,
+                              mode: "activate",
+                            })
+                          }
+                        >
+                          Restore and activate
+                        </button>
+                      </div>
+                    ) : null}
+                    {copyMessage ? <p className="inline-note">{copyMessage}</p> : null}
+                  </aside>
                 </div>
-                {copyMessage ? <p className="inline-note">{copyMessage}</p> : null}
               </article>
             ) : (
               <article className="diagnostic-card">

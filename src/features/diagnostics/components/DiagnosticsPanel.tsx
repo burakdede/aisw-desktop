@@ -244,7 +244,7 @@ export function DiagnosticsPanel({
         secondaryClassName="diagnostics-recovery-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-            <article className={`diagnostic-card diagnostics-check-card ${totalIssues ? "diagnostic-warn" : "diagnostic-pass"}`}>
+            <article className={`diagnostic-card diagnostics-overview-card ${totalIssues ? "diagnostic-warn" : "diagnostic-pass"}`}>
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Health</p>
@@ -293,6 +293,17 @@ export function DiagnosticsPanel({
                     <p className="inline-note">{card.lines[0]}</p>
                   </div>
                 ))}
+              </div>
+            </article>
+            <article className={`diagnostic-card diagnostics-check-card ${totalIssues ? "diagnostic-warn" : "diagnostic-pass"}`}>
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Checks</p>
+                  <h3>Monitored checks</h3>
+                </div>
+                <p className="inline-note">
+                  Review the current check output before moving to individual findings or recovery actions.
+                </p>
               </div>
               <div className="diagnostics-check-list" aria-label="Diagnostics checks">
                 {checkRows.map((row) => (
@@ -367,50 +378,59 @@ export function DiagnosticsPanel({
         secondary={
           <div className="stack-list desktop-pane-column">
             {selectedFinding ? (
-              <article className={`diagnostic-card diagnostic-${selectedFinding.status}`}>
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Inspector</p>
-                    <h3>{selectedFinding.title}</h3>
-                  </div>
-                  <span className={`pill ${selectedFinding.status === "fail" ? "pill-warn" : "pill-soft"}`}>
-                    {selectedFinding.scopeLabel}
-                  </span>
-                </div>
-                <div className="diagnostics-inspector-section">
-                  <p className="card-kicker">What this means</p>
-                {selectedFinding.lines.map((line) => (
-                  <p key={line} className="inline-note">
-                    {normalizeRuntimeLanguage(line)}
-                  </p>
-                ))}
-                </div>
-                {selectedFinding.remediation.length ? (
-                  <div className="diagnostics-inspector-section">
-                    <p className="card-kicker">Recommended fix</p>
-                    <div className="diagnostic-remediation">
-                    {selectedFinding.remediation.map((item) => (
-                      <code key={item}>{item}</code>
-                    ))}
+              <article className={`diagnostic-card diagnostic-${selectedFinding.status} diagnostics-inspector-card`}>
+                <div className="diagnostics-inspector-main">
+                  <div className="stack-list">
+                    <div className="desktop-pane-section-header">
+                      <div>
+                        <p className="card-kicker">Inspector</p>
+                        <h3>{selectedFinding.title}</h3>
+                      </div>
+                      <span className={`pill ${selectedFinding.status === "fail" ? "pill-warn" : "pill-soft"}`}>
+                        {selectedFinding.scopeLabel}
+                      </span>
                     </div>
+                    <div className="diagnostics-inspector-section">
+                      <p className="card-kicker">What this means</p>
+                      {selectedFinding.lines.map((line) => (
+                        <p key={line} className="inline-note">
+                          {normalizeRuntimeLanguage(line)}
+                        </p>
+                      ))}
+                    </div>
+                    {selectedFinding.remediation.length ? (
+                      <div className="diagnostics-inspector-section">
+                        <p className="card-kicker">Recommended fix</p>
+                        <div className="diagnostic-remediation">
+                        {selectedFinding.remediation.map((item) => (
+                          <code key={item}>{item}</code>
+                        ))}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
-                {selectedFinding.profileTarget ? (
-                  <div className="button-row">
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      onClick={() =>
-                        onOpenProfiles(
-                          selectedFinding.profileTarget!.tool,
-                          selectedFinding.profileTarget!.profile,
-                        )
-                      }
-                    >
-                      Open profile
-                    </button>
-                  </div>
-                ) : null}
+                  <aside className="diagnostics-inspector-rail">
+                    <span className="overview-current-set-cell-label">Actions</span>
+                    {selectedFinding.profileTarget ? (
+                      <div className="button-row button-row-column">
+                        <button
+                          className="ghost-button"
+                          type="button"
+                          onClick={() =>
+                            onOpenProfiles(
+                              selectedFinding.profileTarget!.tool,
+                              selectedFinding.profileTarget!.profile,
+                            )
+                          }
+                        >
+                          Open profile
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="inline-note">No direct profile action is attached to this finding.</p>
+                    )}
+                  </aside>
+                </div>
               </article>
             ) : (
               <article className="diagnostic-card diagnostic-pass">

@@ -103,7 +103,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
         secondaryClassName="activity-detail-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-            <article className="diagnostic-card activity-list-card">
+            <article className="diagnostic-card activity-overview-card">
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Timeline</p>
@@ -137,6 +137,17 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                     {errorCount ? "Open the failing event and export a report if you need support." : "Recent recorded events completed without extra recovery steps."}
                   </p>
                 </div>
+              </div>
+            </article>
+            <article className="diagnostic-card activity-list-card">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Events</p>
+                  <h3>Recent desktop activity</h3>
+                </div>
+                <p className="inline-note">
+                  Inspect one event at a time and keep the detail pane focused on what happened next.
+                </p>
               </div>
               <div className="activity-list-columns" aria-hidden="true">
                 <span>Time</span>
@@ -199,95 +210,105 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                   selectedEntry.status === "success" ? "diagnostic-pass" : "diagnostic-warn"
                 }`}
               >
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Inspector</p>
-                    <h3>{selectedEntry.label}</h3>
-                  </div>
-                  <span
-                    className={`pill ${selectedEntry.status === "success" ? "pill-ok" : "pill-warn"}`}
-                  >
-                    {selectedEntry.status === "success" ? "Success" : "Needs attention"}
-                  </span>
-                </div>
-                <div className="activity-detail-summary">
-                  <div>
-                    <span className="overview-current-set-cell-label">Time</span>
-                    <strong>{formatFullTimestamp(selectedEntry.at)}</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Scope</span>
-                    <strong>{selectedEntry.scopeLabel}</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Result</span>
-                    <strong>{selectedEntry.status === "success" ? "Success" : "Needs attention"}</strong>
-                  </div>
-                </div>
-                <div className="activity-detail-meta">
-                  <div>
-                    <span className="overview-current-set-cell-label">Timeline</span>
-                    <strong>{formatTimestamp(selectedEntry.at)}</strong>
-                    <p className="inline-note">Recent desktop events stay local to this Mac unless you export a support report.</p>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Recorded scope</span>
-                    <strong>{selectedEntry.scopeLabel}</strong>
-                    <p className="inline-note">{selectedEntry.label}</p>
-                  </div>
-                </div>
-                <div className="activity-detail-copy stack-list">
-                  <div>
-                    <p className="card-kicker">What happened</p>
-                    <p className="inline-note">{selectedEntry.message}</p>
-                  </div>
-                  <div>
-                    <p className="card-kicker">Desktop record</p>
-                    <p className="inline-note">
-                      {selectedEntry.resultSummary ??
-                        (selectedEntry.status === "success"
-                        ? "Snapshot updated successfully."
-                        : "AI Switch recorded a recoverable failure for this event.")}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="card-kicker">Recovery</p>
-                    {selectedEntry.remediation ? (
-                      <p className="inline-note">{selectedEntry.remediation}</p>
-                    ) : (
-                      <p className="inline-note">
-                        No extra recovery steps were recorded for this event.
-                      </p>
-                    )}
-                  </div>
-                  <KeyValueGrid
-                    rows={[
-                      {
-                        label: "Command",
-                        value:
-                          selectedEntry.command ?? "Command details were not recorded for this event.",
-                      },
-                    ]}
-                  />
-                  {selectedEntry.command ? (
-                    <div>
-                      <p className="card-kicker">Recorded command</p>
-                      <pre>{selectedEntry.command}</pre>
+                <div className="activity-detail-main">
+                  <div className="activity-detail-copy stack-list">
+                    <div className="desktop-pane-section-header">
+                      <div>
+                        <p className="card-kicker">Inspector</p>
+                        <h3>{selectedEntry.label}</h3>
+                      </div>
+                      <span
+                        className={`pill ${selectedEntry.status === "success" ? "pill-ok" : "pill-warn"}`}
+                      >
+                        {selectedEntry.status === "success" ? "Success" : "Needs attention"}
+                      </span>
                     </div>
-                  ) : null}
-                </div>
-                {selectedEntry.status === "error" ? (
-                  <div className="button-row">
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      disabled={exportBundleMutation.isPending}
-                      onClick={() => exportBundleMutation.mutate()}
-                    >
-                      {exportBundleMutation.isPending ? "Exporting…" : "Export support report"}
-                    </button>
+                    <div className="activity-detail-summary">
+                      <div>
+                        <span className="overview-current-set-cell-label">Time</span>
+                        <strong>{formatFullTimestamp(selectedEntry.at)}</strong>
+                      </div>
+                      <div>
+                        <span className="overview-current-set-cell-label">Scope</span>
+                        <strong>{selectedEntry.scopeLabel}</strong>
+                      </div>
+                      <div>
+                        <span className="overview-current-set-cell-label">Result</span>
+                        <strong>{selectedEntry.status === "success" ? "Success" : "Needs attention"}</strong>
+                      </div>
+                    </div>
+                    <div className="activity-detail-meta">
+                      <div>
+                        <span className="overview-current-set-cell-label">Timeline</span>
+                        <strong>{formatTimestamp(selectedEntry.at)}</strong>
+                        <p className="inline-note">Recent desktop events stay local to this Mac unless you export a support report.</p>
+                      </div>
+                      <div>
+                        <span className="overview-current-set-cell-label">Recorded scope</span>
+                        <strong>{selectedEntry.scopeLabel}</strong>
+                        <p className="inline-note">{selectedEntry.label}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="card-kicker">What happened</p>
+                      <p className="inline-note">{selectedEntry.message}</p>
+                    </div>
+                    <div>
+                      <p className="card-kicker">Desktop record</p>
+                      <p className="inline-note">
+                        {selectedEntry.resultSummary ??
+                          (selectedEntry.status === "success"
+                          ? "Snapshot updated successfully."
+                          : "AI Switch recorded a recoverable failure for this event.")}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="card-kicker">Recovery</p>
+                      {selectedEntry.remediation ? (
+                        <p className="inline-note">{selectedEntry.remediation}</p>
+                      ) : (
+                        <p className="inline-note">
+                          No extra recovery steps were recorded for this event.
+                        </p>
+                      )}
+                    </div>
+                    <KeyValueGrid
+                      rows={[
+                        {
+                          label: "Command",
+                          value:
+                            selectedEntry.command ?? "Command details were not recorded for this event.",
+                        },
+                      ]}
+                    />
+                    {selectedEntry.command ? (
+                      <div>
+                        <p className="card-kicker">Recorded command</p>
+                        <pre>{selectedEntry.command}</pre>
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
+                  <aside className="activity-detail-rail">
+                    <span className="overview-current-set-cell-label">Actions</span>
+                    <p className="inline-note">
+                      Export a support report only when this event needs deeper debugging or sharing.
+                    </p>
+                    {selectedEntry.status === "error" ? (
+                      <div className="button-row button-row-column">
+                        <button
+                          className="ghost-button"
+                          type="button"
+                          disabled={exportBundleMutation.isPending}
+                          onClick={() => exportBundleMutation.mutate()}
+                        >
+                          {exportBundleMutation.isPending ? "Exporting…" : "Export support report"}
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="inline-note">No extra action is needed for this completed event.</p>
+                    )}
+                  </aside>
+                </div>
               </article>
             ) : (
               <article className="diagnostic-card">
@@ -297,28 +318,41 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                 </p>
               </article>
             )}
-            {clearMessage ? (
-              <article className="diagnostic-card activity-session-card">
-                <h3>Timeline cleared</h3>
-                <p className="inline-note">{clearMessage}</p>
-              </article>
-            ) : null}
-            {exportBundleMutation.data ? (
-              <article className="diagnostic-card diagnostic-pass activity-session-card">
-                <h3>Support report ready</h3>
-                <p className="inline-note">Saved {exportBundleMutation.data.filename}.</p>
-              </article>
-            ) : null}
-            {exportBundleMutation.error ? (
-              <article className="diagnostic-card diagnostic-warn activity-session-card">
-                <h3>Support report could not be exported</h3>
+            <article className="diagnostic-card activity-session-card">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Session</p>
+                  <h3>Local timeline state</h3>
+                </div>
+                <span className="pill pill-soft">On this Mac</span>
+              </div>
+              {clearMessage ? (
+                <div className="stack-list">
+                  <h4>Timeline cleared</h4>
+                  <p className="inline-note">{clearMessage}</p>
+                </div>
+              ) : (
                 <p className="inline-note">
-                  {exportBundleMutation.error instanceof Error
-                    ? exportBundleMutation.error.message
-                    : "AI Switch could not complete that action."}
+                  Keep a short local history while you are debugging switches, setup flows, or recovery actions.
                 </p>
-              </article>
-            ) : null}
+              )}
+              {exportBundleMutation.data ? (
+                <article className="diagnostic-card diagnostic-pass activity-session-card-nested">
+                  <h4>Support report ready</h4>
+                  <p className="inline-note">Saved {exportBundleMutation.data.filename}.</p>
+                </article>
+              ) : null}
+              {exportBundleMutation.error ? (
+                <article className="diagnostic-card diagnostic-warn activity-session-card-nested">
+                  <h4>Support report could not be exported</h4>
+                  <p className="inline-note">
+                    {exportBundleMutation.error instanceof Error
+                      ? exportBundleMutation.error.message
+                      : "AI Switch could not complete that action."}
+                  </p>
+                </article>
+              ) : null}
+            </article>
           </div>
         }
       />
