@@ -868,8 +868,8 @@ export function ProfilesPanel({
                       }
                     >
                       {openDiagnosticDetails === selectedProfileEntry.name
-                        ? "Hide technical details"
-                        : "Show technical details"}
+                        ? "Hide health details"
+                        : "Show health details"}
                     </button>
                   </div>
                   {selectedLatestBackup ? (
@@ -996,13 +996,13 @@ export function ProfilesPanel({
                   </div>
                   {openDiagnosticDetails === selectedProfileEntry.name ? (
                     <div className="profiles-technical-block profiles-inspector-section">
-                      <p className="card-kicker">Diagnostics</p>
-                      <h4>Technical details</h4>
+                      <p className="card-kicker">Status</p>
+                      <h4>Health details</h4>
                       <p className="inline-note">
                         Auth method: {selectedProfileEntry.auth}
                       </p>
                       <p className="inline-note">
-                        Desktop active: {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? "yes" : "no"}
+                        Selected in AI Switch: {booleanLabel(snapshot.profiles[tool]?.active === selectedProfileEntry.name).toLowerCase()}
                       </p>
                       {selectedLatestBackup ? (
                         <p className="inline-note">
@@ -1015,30 +1015,13 @@ export function ProfilesPanel({
                             Credential backend: {toolStatus?.credential_backend ?? "unknown"}
                           </p>
                           <p className="inline-note">
-                            Live match:{" "}
-                            {toolStatus?.active_profile_applied === undefined ||
-                            toolStatus?.active_profile_applied === null
-                              ? "unknown"
-                              : toolStatus.active_profile_applied
-                                ? "yes"
-                                : "no"}
+                            Live match: {booleanLabel(toolStatus?.active_profile_applied).toLowerCase()}
                           </p>
                           <p className="inline-note">
-                            Credentials present:{" "}
-                            {toolStatus?.credentials_present === undefined ||
-                            toolStatus?.credentials_present === null
-                              ? "unknown"
-                              : toolStatus.credentials_present
-                                ? "yes"
-                                : "no"}
+                            Credentials present: {booleanLabel(toolStatus?.credentials_present).toLowerCase()}
                           </p>
                           <p className="inline-note">
-                            Permissions OK:{" "}
-                            {toolStatus?.permissions_ok === undefined || toolStatus?.permissions_ok === null
-                              ? "unknown"
-                              : toolStatus.permissions_ok
-                                ? "yes"
-                                : "no"}
+                            Local permissions: {booleanLabel(toolStatus?.permissions_ok).toLowerCase()}
                           </p>
                           {toolStatus?.token_warning ? (
                             <p className="inline-note">
@@ -1065,7 +1048,7 @@ export function ProfilesPanel({
                         </>
                       ) : (
                         <p className="inline-note">
-                          Live runtime diagnostics are only available for the active profile. Switch to this profile to inspect backend, live-match, token, and permission state.
+                          Live health details are only available for the active profile. Switch to this profile to inspect backend, live-match, token, and permission state.
                         </p>
                       )}
                     </div>
@@ -1887,6 +1870,13 @@ function profileLiveMatchValue(
     return "Unknown";
   }
   return toolStatus.active_profile_applied ? "Yes" : "No";
+}
+
+function booleanLabel(value: boolean | null | undefined) {
+  if (value === undefined || value === null) {
+    return "Unknown";
+  }
+  return value ? "Yes" : "No";
 }
 
 function profileStatusSummary(

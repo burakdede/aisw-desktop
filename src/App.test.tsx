@@ -913,7 +913,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByText("Saved profiles", { selector: ".section-kicker" })).toBeInTheDocument();
       expect(screen.getByDisplayValue("Codex")).toBeInTheDocument();
-      expect(screen.getByText("Technical details")).toBeInTheDocument();
+      expect(screen.getByText("Health details")).toBeInTheDocument();
       expect(screen.getByText("No additional token or runtime warnings are currently reported for this tool.")).toBeInTheDocument();
       expect(screen.getByLabelText("Current tool")).toHaveValue("codex");
     });
@@ -1065,7 +1065,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByDisplayValue("Codex")).toBeInTheDocument();
-      expect(screen.getByText("Technical details")).toBeInTheDocument();
+      expect(screen.getByText("Health details")).toBeInTheDocument();
       expect(screen.getByText("Auth method: api_key")).toBeInTheDocument();
     });
 
@@ -1076,7 +1076,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByDisplayValue("Claude")).toBeInTheDocument();
     });
-    expect(screen.queryByText("Technical details")).not.toBeInTheDocument();
+    expect(screen.queryByText("Health details")).not.toBeInTheDocument();
   });
 
   it("clears routed profile details when reopening profiles from the sidebar", async () => {
@@ -1131,7 +1131,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByDisplayValue("Codex")).toBeInTheDocument();
-      expect(screen.getByText("Technical details")).toBeInTheDocument();
+      expect(screen.getByText("Health details")).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Overview" }));
@@ -1140,7 +1140,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByDisplayValue("Claude")).toBeInTheDocument();
     });
-    expect(screen.queryByText("Technical details")).not.toBeInTheDocument();
+    expect(screen.queryByText("Health details")).not.toBeInTheDocument();
   });
 
   it("clears routed settings sections when reopening settings from a fresh entry point", async () => {
@@ -1817,15 +1817,15 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
-    fireEvent.click(screen.getByText("Show technical details"));
+    fireEvent.click(screen.getByText("Show health details"));
 
     await waitFor(() => {
-      expect(screen.getByText("Technical details")).toBeInTheDocument();
+      expect(screen.getByText("Health details")).toBeInTheDocument();
     });
     expect(screen.getByText("Credential backend: system_keyring")).toBeInTheDocument();
     expect(screen.getByText("Live match: yes")).toBeInTheDocument();
     expect(screen.getByText("Credentials present: no")).toBeInTheDocument();
-    expect(screen.getByText("Permissions OK: no")).toBeInTheDocument();
+    expect(screen.getByText("Local permissions: no")).toBeInTheDocument();
     expect(
       screen.getByText("Token warning: Claude session expires soon Expires in 1 days."),
     ).toBeInTheDocument();
@@ -1909,16 +1909,16 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Profiles"));
 
     selectProfileInventory("Claude", "Personal");
-    fireEvent.click(screen.getByText("Show technical details"));
+    fireEvent.click(screen.getByText("Show health details"));
 
     await waitFor(() => {
-      expect(screen.getByText("Technical details")).toBeInTheDocument();
+      expect(screen.getByText("Health details")).toBeInTheDocument();
     });
     expect(screen.getByText("Auth method: oauth")).toBeInTheDocument();
-    expect(screen.getByText("Desktop active: no")).toBeInTheDocument();
+    expect(screen.getByText("Selected in AI Switch: no")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Live runtime diagnostics are only available for the active profile. Switch to this profile to inspect backend, live-match, token, and permission state.",
+        "Live health details are only available for the active profile. Switch to this profile to inspect backend, live-match, token, and permission state.",
       ),
     ).toBeInTheDocument();
     expect(screen.queryByText(/Credential backend:/)).not.toBeInTheDocument();
@@ -2399,7 +2399,7 @@ describe("App", () => {
     fireEvent.click(within(failureCard!).getByText("Open profile"));
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Technical details" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Health details" })).toBeInTheDocument();
     });
   });
 
@@ -3230,7 +3230,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByLabelText("Current tool")).toHaveValue("claude");
       expect(screen.getByDisplayValue("Claude")).toBeInTheDocument();
-      expect(screen.getByText("Hide technical details")).toBeInTheDocument();
+      expect(screen.getByText("Hide health details")).toBeInTheDocument();
     });
   });
 
@@ -5220,7 +5220,7 @@ describe("App", () => {
     await waitFor(() =>
       expect(screen.getByText("Credential backend: system_keyring")).toBeInTheDocument(),
     );
-    expect(screen.getByText("Technical details")).toBeInTheDocument();
+    expect(screen.getByText("Health details")).toBeInTheDocument();
     expect(screen.getByText("Credential backend: system_keyring")).toBeInTheDocument();
     expect(screen.getByText("Live match: no")).toBeInTheDocument();
   });
