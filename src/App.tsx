@@ -44,6 +44,7 @@ import {
   updateSettings,
   useAllProfiles,
   useProfile,
+  setTrayVisibility,
 } from "./lib/client";
 import type { ProfileImportMode } from "./features/shared/profile-capabilities";
 import {
@@ -146,6 +147,7 @@ export function App() {
   useEffect(() => {
     applyAppearancePreference(desktopPreferences.appearance);
     saveDesktopPreferences(desktopPreferences);
+    void setTrayVisibility(desktopPreferences.showMenuBarIcon);
   }, [desktopPreferences]);
 
   const runtimeBlockedForShortcuts = bootstrap.data

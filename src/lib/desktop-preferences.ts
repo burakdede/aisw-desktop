@@ -14,15 +14,18 @@ export type DefaultSection = (typeof DEFAULT_SECTIONS)[number];
 export type DesktopPreferences = {
   appearance: DesktopAppearance;
   defaultSection: DefaultSection;
+  showMenuBarIcon: boolean;
 };
 
 const APPEARANCE_KEY = "ai-switch.desktop.appearance";
 const DEFAULT_SECTION_KEY = "ai-switch.desktop.default-section";
+const SHOW_MENU_BAR_ICON_KEY = "ai-switch.desktop.show-menu-bar-icon";
 const memoryStorage = createMemoryStorage();
 
 export const DEFAULT_DESKTOP_PREFERENCES: DesktopPreferences = {
   appearance: "system",
   defaultSection: "overview",
+  showMenuBarIcon: true,
 };
 
 export function loadDesktopPreferences(): DesktopPreferences {
@@ -33,6 +36,7 @@ export function loadDesktopPreferences(): DesktopPreferences {
 
   const storedAppearance = storage.getItem(APPEARANCE_KEY);
   const storedSection = storage.getItem(DEFAULT_SECTION_KEY);
+  const storedShowMenuBarIcon = storage.getItem(SHOW_MENU_BAR_ICON_KEY);
 
   return {
     appearance: isDesktopAppearance(storedAppearance)
@@ -41,6 +45,10 @@ export function loadDesktopPreferences(): DesktopPreferences {
     defaultSection: isDefaultSection(storedSection)
       ? storedSection
       : DEFAULT_DESKTOP_PREFERENCES.defaultSection,
+    showMenuBarIcon:
+      storedShowMenuBarIcon === null
+        ? DEFAULT_DESKTOP_PREFERENCES.showMenuBarIcon
+        : storedShowMenuBarIcon === "true",
   };
 }
 
@@ -52,6 +60,7 @@ export function saveDesktopPreferences(preferences: DesktopPreferences) {
 
   storage.setItem(APPEARANCE_KEY, preferences.appearance);
   storage.setItem(DEFAULT_SECTION_KEY, preferences.defaultSection);
+  storage.setItem(SHOW_MENU_BAR_ICON_KEY, String(preferences.showMenuBarIcon));
 }
 
 export function applyAppearancePreference(appearance: DesktopAppearance) {

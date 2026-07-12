@@ -39,6 +39,7 @@ fn main() {
             commands::get_bootstrap,
             commands::get_snapshot,
             commands::get_settings,
+            commands::set_tray_visibility,
             commands::get_shell_guidance,
             commands::check_for_updates,
             commands::install_update,

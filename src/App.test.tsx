@@ -7700,12 +7700,18 @@ describe("App", () => {
   });
 
   it("saves general desktop preferences from settings", async () => {
+    const commands: string[] = [];
+    const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      commands.push(command);
+      return defaultMock[command];
+    };
+
     await renderApp();
     await waitFor(() => expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
 
     expect(screen.getByLabelText("Launch at login")).toBeDisabled();
-    expect(screen.getByLabelText("Show menu bar icon")).toBeDisabled();
     expect(screen.getByLabelText("Show menu bar icon")).toBeChecked();
     expect(
       screen.getByText(
@@ -7716,6 +7722,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Appearance"), {
       target: { value: "dark" },
     });
+    fireEvent.click(screen.getByLabelText("Show menu bar icon"));
     fireEvent.change(screen.getByLabelText("Default section"), {
       target: { value: "profiles" },
     });
@@ -7724,8 +7731,10 @@ describe("App", () => {
     await waitFor(() => {
       expect(window.localStorage.getItem("ai-switch.desktop.appearance")).toBe("dark");
       expect(window.localStorage.getItem("ai-switch.desktop.default-section")).toBe("profiles");
+      expect(window.localStorage.getItem("ai-switch.desktop.show-menu-bar-icon")).toBe("false");
       expect(document.documentElement.dataset.appearance).toBe("dark");
       expect(document.documentElement.style.colorScheme).toBe("dark");
+      expect(commands).toContain("set_tray_visibility");
       expect(
         screen.getByText(
           (_, element) =>

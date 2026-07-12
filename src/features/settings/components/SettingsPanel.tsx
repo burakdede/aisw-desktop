@@ -66,6 +66,9 @@ export function SettingsPanel({
   const [defaultSection, setDefaultSection] = useState<DesktopPreferences["defaultSection"]>(
     desktopPreferences?.defaultSection ?? "overview",
   );
+  const [showMenuBarIcon, setShowMenuBarIcon] = useState(
+    desktopPreferences?.showMenuBarIcon ?? true,
+  );
   const [generalMessage, setGeneralMessage] = useState("");
   const [selectedSection, setSelectedSection] = useState<SettingsSection>(
     initialSection ?? "general",
@@ -125,6 +128,7 @@ export function SettingsPanel({
   useEffect(() => {
     setAppearance(desktopPreferences?.appearance ?? "system");
     setDefaultSection(desktopPreferences?.defaultSection ?? "overview");
+    setShowMenuBarIcon(desktopPreferences?.showMenuBarIcon ?? true);
     setGeneralMessage("");
   }, [desktopPreferences]);
 
@@ -174,6 +178,7 @@ export function SettingsPanel({
     onUpdateDesktopPreferences?.({
       appearance,
       defaultSection,
+      showMenuBarIcon,
     });
     setGeneralMessage("General preferences saved.");
   }
@@ -266,7 +271,7 @@ export function SettingsPanel({
                   </div>
                   <div>
                     <span className="overview-current-set-cell-label">Menu bar extra</span>
-                    <strong>Included</strong>
+                    <strong>{showMenuBarIcon ? "Visible" : "Hidden"}</strong>
                   </div>
                 </div>
               </article>
@@ -306,7 +311,7 @@ export function SettingsPanel({
                     <h3>Launch behavior</h3>
                   </div>
                   <p className="inline-note">
-                    Native launch controls live here, but this development build keeps them read-only so the app still behaves like a predictable Mac utility.
+                    Login at startup stays OS-managed in this development build. The menu bar extra can be shown or hidden directly so the desktop app still behaves like a predictable Mac utility.
                   </p>
                 </div>
                 <div className="settings-toggle-list" aria-label="Launch behavior controls">
@@ -319,19 +324,18 @@ export function SettingsPanel({
                     </span>
                     <input type="checkbox" aria-label="Launch at login" disabled />
                   </label>
-                  <label className="settings-toggle-row settings-toggle-row-disabled">
+                  <label className="settings-toggle-row">
                     <span className="settings-toggle-copy">
                       <strong>Show menu bar icon</strong>
                       <span className="inline-note">
-                        Kept on in this build so quick switching, verification, and diagnostics stay one click away.
+                        Keep the AI Switch menu bar extra available for quick switching, verification, and diagnostics without opening the full app.
                       </span>
                     </span>
                     <input
                       type="checkbox"
                       aria-label="Show menu bar icon"
-                      checked
-                      readOnly
-                      disabled
+                      checked={showMenuBarIcon}
+                      onChange={(event) => setShowMenuBarIcon(event.target.checked)}
                     />
                   </label>
                 </div>
@@ -405,7 +409,7 @@ export function SettingsPanel({
                 </div>
                 <p className="inline-note">Use the source list on the left to jump directly to the section you need.</p>
                 <p className="inline-note">
-                  Login-item and menu-bar visibility remain OS-managed in this build.
+                  Login at startup remains OS-managed in this build, while the menu bar icon can be shown or hidden directly from the app.
                 </p>
               </article>
             </div>

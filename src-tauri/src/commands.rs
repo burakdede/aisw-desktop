@@ -1,6 +1,6 @@
 use crate::bridge::{AiswBridge, CliAiswBridge};
 use crate::diagnostic_bundle::{default_output_dir, write_redacted_bundle, DiagnosticBundleExport};
-use crate::errors::{DesktopResult, ErrorPayload};
+use crate::errors::{DesktopResult, ErrorPayload, GuiErrorKind};
 use crate::models::{
     AddOAuthProfileRequest, AddProfileRequest, AppBootstrap, AppSnapshot, BackupEntry,
     DesktopSettings, DoctorReport, InitReport, InstallUpdateReport, MutationResponse,
@@ -28,6 +28,18 @@ pub async fn get_snapshot(state: tauri::State<'_, AppState>) -> DesktopResult<Ap
 #[tauri::command]
 pub async fn get_settings(state: tauri::State<'_, AppState>) -> DesktopResult<DesktopSettings> {
     state.load_settings().await.map_err(ErrorPayload::from)
+}
+
+#[tauri::command]
+pub async fn set_tray_visibility(app: tauri::AppHandle, visible: bool) -> DesktopResult<()> {
+    if let Some(tray) = app.tray_by_id("main-tray") {
+        tray.set_visible(visible).map_err(|error| ErrorPayload {
+            kind: GuiErrorKind::Unknown,
+            message: "The menu bar icon visibility could not be updated.".to_owned(),
+            remediation: Some(error.to_string()),
+        })?;
+    }
+    Ok(())
 }
 
 #[tauri::command]

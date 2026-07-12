@@ -250,6 +250,10 @@ export async function getSettings(): Promise<DesktopSettings> {
   return desktopSettingsSchema.parse(await invokeDesktop("get_settings"));
 }
 
+export async function setTrayVisibility(visible: boolean): Promise<void> {
+  await invokeDesktop("set_tray_visibility", { visible });
+}
+
 export async function getShellGuidance(): Promise<ShellHookGuidance> {
   return shellHookGuidanceSchema.parse(await invokeDesktop("get_shell_guidance"));
 }
