@@ -8091,6 +8091,30 @@ describe("App", () => {
     });
   });
 
+  it("can reset onboarding from advanced settings", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    fireEvent.change(screen.getByLabelText("Default section"), {
+      target: { value: "profiles" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save General Settings" }));
+
+    await waitFor(() => {
+      expect(window.localStorage.getItem("ai-switch.desktop.default-section")).toBe("profiles");
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Storage & Paths" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset Onboarding" }));
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("heading", { name: "Get started" }).length).toBeGreaterThan(0);
+      expect(window.localStorage.getItem("ai-switch.desktop.default-section")).toBe("overview");
+      expect(window.localStorage.getItem("ai-switch.desktop.reopen-setup-assistant")).toBe("true");
+    });
+  });
+
   it("shows runtime detection details in settings", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument());

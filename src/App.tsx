@@ -700,6 +700,21 @@ export function App() {
     setActiveNav("overview");
   }
 
+  function resetOnboarding() {
+    clearLastCommandResults();
+    setProfilesRouteState({});
+    setSettingsRouteState({});
+    setQuickSwitchOpen(false);
+    setHelpOpen(false);
+    setRuntimeRecoveryOpen(false);
+    setDesktopPreferences((current) => ({
+      ...current,
+      defaultSection: "overview",
+      reopenSetupAssistant: true,
+    }));
+    setActiveNav("overview");
+  }
+
   function closeSetupAssistant() {
     setDesktopPreferences((current) => ({
       ...current,
@@ -921,6 +936,7 @@ export function App() {
           desktopPreferences={desktopPreferences}
           onUpdateDesktopPreferences={setDesktopPreferences}
           onReopenSetupAssistant={reopenSetupAssistant}
+          onResetOnboarding={resetOnboarding}
         />
       ) : resolvedSnapshot ? (
         <>
@@ -1013,6 +1029,7 @@ export function App() {
               desktopPreferences={desktopPreferences}
               onUpdateDesktopPreferences={setDesktopPreferences}
               onReopenSetupAssistant={reopenSetupAssistant}
+              onResetOnboarding={resetOnboarding}
             />
           ) : null}
         </>

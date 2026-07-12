@@ -12,6 +12,7 @@ import {
   setLaunchAtLogin,
 } from "../../../lib/client";
 import {
+  DEFAULT_DESKTOP_PREFERENCES,
   DEFAULT_SECTIONS,
   DESKTOP_APPEARANCES,
   type DesktopPreferences,
@@ -42,6 +43,7 @@ export function SettingsPanel({
   desktopPreferences,
   onUpdateDesktopPreferences,
   onReopenSetupAssistant,
+  onResetOnboarding,
 }: {
   settings: DesktopSettings;
   runtimeStatus: AppBootstrap["runtime_status"];
@@ -49,6 +51,7 @@ export function SettingsPanel({
   desktopPreferences?: DesktopPreferences;
   onUpdateDesktopPreferences?: (preferences: DesktopPreferences) => void;
   onReopenSetupAssistant?: () => void;
+  onResetOnboarding?: () => void;
 }) {
   const queryClient = useQueryClient();
   const { updateSettingsMutation, checkForUpdatesMutation, installUpdateMutation, mutationLock } =
@@ -216,6 +219,19 @@ export function SettingsPanel({
         error instanceof Error ? error.message : "AI Switch could not open the app data folder.";
       setAdvancedMessage(message);
     }
+  }
+
+  function resetOnboarding() {
+    const nextPreferences: DesktopPreferences = {
+      appearance,
+      defaultSection: DEFAULT_DESKTOP_PREFERENCES.defaultSection,
+      showMenuBarIcon,
+      reopenSetupAssistant: true,
+    };
+    onUpdateDesktopPreferences?.(nextPreferences);
+    onResetOnboarding?.();
+    setSelectedSection("general");
+    setGeneralMessage("Onboarding reset. AI Switch will reopen the setup assistant.");
   }
 
   function saveGeneralPreferences() {
@@ -1247,8 +1263,16 @@ export function SettingsPanel({
                     <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
                       Open App Data Folder
                     </button>
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      onClick={resetOnboarding}
+                    >
+                      Reset Onboarding
+                    </button>
                   </div>
                   {advancedMessage ? <p className="inline-note">{advancedMessage}</p> : null}
+                  {generalMessage ? <p className="inline-note">{generalMessage}</p> : null}
                 </article>
               </form>
               <div className="settings-side-stack">
