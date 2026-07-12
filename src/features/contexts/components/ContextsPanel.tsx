@@ -240,7 +240,7 @@ export function ContextsPanel({
                   <strong>{readySetCount}</strong>
                 </div>
                 <div>
-                  <span className="overview-current-set-cell-label">Runtime</span>
+                  <span className="overview-current-set-cell-label">Detected</span>
                   <strong>{snapshot.contexts.length}</strong>
                 </div>
               </div>
@@ -349,15 +349,15 @@ export function ContextsPanel({
             <article className="diagnostic-card set-library-card">
               <div className="set-section-header desktop-pane-section-header">
                 <div>
-                  <p className="card-kicker">Runtime sets</p>
-                  <h3>{snapshot.contexts.length ? "Detected by the selected runtime" : "No runtime sets detected"}</h3>
+                  <p className="card-kicker">Detected sets</p>
+                  <h3>{snapshot.contexts.length ? "Detected on this Mac" : "No detected sets available"}</h3>
                 </div>
                 <span className="pill pill-soft">
-                  {snapshot.contexts.length ? `${snapshot.contexts.length} available` : "Runtime"}
+                  {snapshot.contexts.length ? `${snapshot.contexts.length} available` : "Detected"}
                 </span>
               </div>
               <p className="inline-note">
-                These sets come from the selected runtime and remain separate from your desktop-local saved sets.
+                These detected sets come from existing tool state on this Mac and stay separate from your saved local sets.
               </p>
               <div className="stack-list set-imported-list">
                 {snapshot.contexts.map((context) => (
