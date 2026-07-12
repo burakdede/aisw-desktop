@@ -589,16 +589,16 @@ describe("App", () => {
     };
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("This Mac is using an unsupported runtime")).toBeInTheDocument();
+      expect(screen.getByText("Switching is paused")).toBeInTheDocument();
     });
     expect(
       screen.getByText(
-        "AI Switch found another runtime on this Mac, but this release is designed to use the included runtime by default.",
+        "This Mac is pointed at a command-line runtime that this desktop app cannot use for switching.",
       ),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Switch back to the included runtime, or choose a newer compatible runtime in Runtime Settings before continuing.",
+        "Switch back to the app runtime, or choose a newer compatible runtime in Runtime Settings before continuing.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Current selection")).toBeInTheDocument();
@@ -608,7 +608,7 @@ describe("App", () => {
     expect(
       screen.getByText("Compatibility details"),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Use Included Runtime" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Use App Runtime" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Runtime Settings" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Runtime" })).not.toBeInTheDocument();
@@ -697,10 +697,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Use Included Runtime" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Use App Runtime" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Use Included Runtime" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use App Runtime" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
@@ -3879,7 +3879,7 @@ describe("App", () => {
     });
 
     openSetupStep("Welcome");
-    fireEvent.click(screen.getByRole("button", { name: "Use Included Runtime" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use App Runtime" }));
 
     await waitFor(() => {
       expect(

@@ -783,7 +783,7 @@ export function App() {
       subtitle="Switch Claude Code, Codex CLI, and Gemini CLI profiles from one focused app."
       detail={
         runtimeRecoveryFocused
-          ? "AI Switch can continue as soon as this Mac switches back to the included runtime."
+          ? "AI Switch can continue as soon as this Mac switches back to the app runtime."
           : sectionDetail(activeSection, setupFocused)
       }
       nav={navItems}
@@ -808,14 +808,15 @@ export function App() {
       )}
     >
       {runtimeRecoveryFocused ? (
-        <SectionCard title="This Mac is using an unsupported runtime" kicker="Setup paused">
+        <SectionCard title="Switching is paused" kicker="Setup paused">
           <div className="stack-list">
             <p className="inline-note">
-              AI Switch found another runtime on this Mac, but this release is designed to
-              use the included runtime by default.
+              This Mac is pointed at a command-line runtime that this desktop app cannot use for
+              switching.
             </p>
             <p className="inline-note">
-              Switching stays paused until this Mac is back on a compatible runtime.
+              Switch back to the app runtime to continue, or open Runtime Settings if you need to
+              review the current source.
             </p>
             <div className="settings-summary-grid">
               <div>
@@ -840,8 +841,8 @@ export function App() {
                   onClick={() => restoreBundledRuntimeMutation.mutate()}
                 >
                   {restoreBundledRuntimeMutation.isPending
-                    ? "Switching to Included Runtime…"
-                    : "Use Included Runtime"}
+                    ? "Switching to App Runtime…"
+                    : "Use App Runtime"}
                 </button>
               ) : null}
               <button className="ghost-button" type="button" onClick={() => void retryRuntimeCheck()}>
@@ -1092,7 +1093,7 @@ function describeRuntimeBlocker(runtimeStatus: {
       summary:
         "The selected runtime does not report the desktop compatibility details this app needs.",
       nextStep:
-        "Switch back to the included runtime, or choose a newer compatible runtime in Runtime Settings before continuing.",
+        "Switch back to the app runtime, or choose a newer compatible runtime in Runtime Settings before continuing.",
     };
   }
 
@@ -1101,14 +1102,14 @@ function describeRuntimeBlocker(runtimeStatus: {
       summary:
         "The selected runtime was found, but it is not compatible with AI Switch.",
       nextStep:
-        "Switch back to the included runtime, or choose a compatible runtime in Runtime Settings before continuing.",
+        "Switch back to the app runtime, or choose a compatible runtime in Runtime Settings before continuing.",
     };
   }
 
   return {
     summary: "AI Switch could not use the selected runtime.",
     nextStep:
-      "Switch to the included runtime, or choose a working runtime source in Runtime Settings before continuing.",
+      "Switch to the app runtime, or choose a working runtime source in Runtime Settings before continuing.",
   };
 }
 

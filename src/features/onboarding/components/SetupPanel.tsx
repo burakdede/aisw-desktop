@@ -384,8 +384,8 @@ export function SetupPanel({
                         onClick={() => restoreBundledRuntimeMutation.mutate()}
                       >
                         {restoreBundledRuntimeMutation.isPending
-                          ? "Switching to Included Runtime…"
-                          : "Use Included Runtime"}
+                          ? "Switching to App Runtime…"
+                          : "Use App Runtime"}
                       </button>
                     ) : null}
                     <button className="ghost-button" type="button" onClick={() => onOpenSettings("runtime")}>
@@ -396,7 +396,7 @@ export function SetupPanel({
                     <p className="inline-note">
                       {restoreBundledRuntimeMutation.error instanceof Error
                         ? restoreBundledRuntimeMutation.error.message
-                        : "Could not switch back to the included runtime."}
+                        : "Could not switch back to the app runtime."}
                     </p>
                   ) : null}
                 </article>
