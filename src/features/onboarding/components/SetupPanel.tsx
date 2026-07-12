@@ -367,7 +367,7 @@ export function SetupPanel({
                         </p>
                       </div>
                       <div>
-                        <span className="overview-current-set-cell-label">Included runtime</span>
+                        <span className="overview-current-set-cell-label">Desktop engine</span>
                         <strong>{bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}</strong>
                         <p className="inline-note">Version {bootstrap.runtime_status.version?.version ?? "unknown"}</p>
                       </div>
@@ -419,17 +419,21 @@ export function SetupPanel({
                   <div className="desktop-pane-section-header">
                     <div>
                       <p className="card-kicker">Welcome</p>
-                      <h3>Included runtime</h3>
+                      <h3>Desktop engine</h3>
                     </div>
                     <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
                       {bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}
                     </span>
                   </div>
                   <p className="inline-note">
-                    AI Switch includes the runtime it needs. Confirm local storage and
-                    secure storage are ready, then save your first profile.
+                    AI Switch already includes the desktop engine it needs. You do not need
+                    a separate command-line install to finish setup.
                   </p>
                   <p className="inline-note">{runtimeSummary.description}</p>
+                  <p className="inline-note">
+                    If you already use a command-line switching tool, you can keep it installed.
+                    AI Switch Desktop stays on its included engine unless you deliberately override it.
+                  </p>
                   <div className="stack-list">
                     {runtimeRows.map((item) => (
                       <div key={item.label}>
@@ -449,8 +453,8 @@ export function SetupPanel({
                         onClick={() => restoreBundledRuntimeMutation.mutate()}
                       >
                         {restoreBundledRuntimeMutation.isPending
-                          ? "Switching to Included Runtime…"
-                          : "Use Included Runtime"}
+                          ? "Switching to Included Engine…"
+                          : "Use Included Engine"}
                       </button>
                     ) : null}
                     <button className="ghost-button" type="button" onClick={() => onOpenSettings("runtime")}>
@@ -461,7 +465,7 @@ export function SetupPanel({
                     <p className="inline-note">
                       {restoreBundledRuntimeMutation.error instanceof Error
                         ? restoreBundledRuntimeMutation.error.message
-                        : "Could not switch back to the included runtime."}
+                        : "Could not switch back to the included desktop engine."}
                     </p>
                   ) : null}
                 </article>
@@ -1009,7 +1013,7 @@ function defaultSetupStep(snapshot: AppSnapshot, initReport: InitReport | undefi
 function setupStepSummary(step: SetupStep) {
   switch (step) {
     case "runtime":
-      return "Confirm the included runtime, data folder, and secure storage.";
+      return "Confirm the included desktop engine, data folder, and secure storage.";
     case "accounts":
       return "Import current logins or add the first saved profiles you need.";
     case "switch":
@@ -1024,7 +1028,7 @@ function setupStepSummary(step: SetupStep) {
 function setupStepFooterTitle(step: SetupStep) {
   switch (step) {
     case "runtime":
-      return "Confirm the included runtime";
+      return "Confirm the included desktop engine";
     case "accounts":
       return "Save at least one reusable account";
     case "switch":
@@ -1039,7 +1043,7 @@ function setupStepFooterTitle(step: SetupStep) {
 function setupStepFooterNote(step: SetupStep, switchReady: boolean) {
   switch (step) {
     case "runtime":
-      return "Use the included runtime unless you intentionally want to point AI Switch at another managed installation.";
+      return "Use the included desktop engine unless you intentionally want AI Switch to point at another managed engine.";
     case "accounts":
       return "Imported current logins and saved profiles are what make safe switching possible later.";
     case "switch":
@@ -1073,8 +1077,8 @@ function buildHealthItems(
       status: bootstrap.runtime_status.compatible ? "pass" : "fail",
       detail: bootstrap.runtime_status.compatible
         ? bootstrap.settings.runtime_kind === "bundled"
-          ? "Included runtime is compatible with this desktop app."
-          : "Selected runtime override is compatible with this desktop app."
+          ? "Included desktop engine is compatible with this desktop app."
+          : "Selected engine override is compatible with this desktop app."
         : normalizeRuntimeLanguage(bootstrap.runtime_status.issues.join(" · ")) || "Compatibility checks failed.",
     },
   ];
@@ -1109,20 +1113,20 @@ function summarizeRuntime(runtimeKind: AppBootstrap["settings"]["runtime_kind"])
   if (runtimeKind === "bundled") {
     return {
       source: "Included with this app",
-      description: "AI Switch is already set to use the runtime bundled with this app.",
+      description: "AI Switch is already set to use the desktop engine bundled with this app.",
     };
   }
   if (runtimeKind === "system") {
     return {
       source: "System override",
       description:
-        "AI Switch is currently pointing at a system-installed runtime instead of the included one.",
+        "AI Switch is currently pointing at a system-installed engine instead of the included one.",
     };
   }
   return {
     source: "Custom override",
     description:
-      "AI Switch is currently pointing at a custom runtime path instead of the included one.",
+      "AI Switch is currently pointing at a custom engine path instead of the included one.",
   };
 }
 

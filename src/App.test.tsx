@@ -633,27 +633,27 @@ describe("App", () => {
     };
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("Finish runtime setup")).toBeInTheDocument();
+      expect(screen.getByText("Finish setup")).toBeInTheDocument();
     });
     expect(
       screen.getByText(
-        "AI Switch found a different runtime on this computer, but it cannot power the desktop app.",
+        "AI Switch Desktop uses the included switching engine. A separate command-line install on this Mac cannot power the desktop app yet.",
       ),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Use the included runtime to continue. Open Runtime Settings only if you intentionally want to choose another runtime.",
+        "Your saved profiles stay local. Switch back to the included desktop engine to continue, or open Runtime Settings only if you intentionally manage another compatible engine.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Current runtime")).toBeInTheDocument();
-    expect(screen.getByText("System runtime")).toBeInTheDocument();
-    expect(screen.getByText("Recommended")).toBeInTheDocument();
-    expect(screen.getByText("Included runtime")).toBeInTheDocument();
-    expect(screen.getByText("Do this")).toBeInTheDocument();
+    expect(screen.getByText("Using now")).toBeInTheDocument();
+    expect(screen.getByText("System engine")).toBeInTheDocument();
+    expect(screen.getByText("Desktop app needs")).toBeInTheDocument();
+    expect(screen.getByText("Included desktop engine")).toBeInTheDocument();
+    expect(screen.getByText("Next step")).toBeInTheDocument();
     expect(
-      screen.getByText("Compatibility details"),
+      screen.getByText("Why setup paused"),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Use Included Runtime" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Use Included Engine" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Runtime Settings" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Runtime" })).not.toBeInTheDocument();
@@ -742,10 +742,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Use Included Runtime" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Use Included Engine" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Use Included Runtime" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use Included Engine" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
@@ -3880,7 +3880,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
-      expect(screen.getAllByText(/Included runtime/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/desktop engine/i).length).toBeGreaterThan(0);
     });
   });
 
@@ -3924,7 +3924,7 @@ describe("App", () => {
     });
 
     openSetupStep("Welcome");
-    fireEvent.click(screen.getByRole("button", { name: "Use Included Runtime" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use Included Engine" }));
 
     await waitFor(() => {
       expect(

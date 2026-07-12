@@ -832,7 +832,7 @@ export function App() {
       subtitle="Switch Claude Code, Codex CLI, and Gemini CLI profiles from one focused app."
       detail={
         runtimeRecoveryFocused
-          ? "AI Switch can continue as soon as this computer switches back to the included runtime."
+          ? "AI Switch can continue as soon as it switches back to the included desktop engine."
           : sectionDetail(activeSection, setupFocused)
       }
       nav={navItems}
@@ -857,26 +857,27 @@ export function App() {
       )}
     >
       {runtimeRecoveryFocused ? (
-        <SectionCard title="Finish runtime setup" kicker="Setup paused">
+        <SectionCard title="Finish setup" kicker="Desktop engine required">
           <div className="stack-list">
             <p className="inline-note">
-              AI Switch found a different runtime on this computer, but it cannot power the desktop app.
+              AI Switch Desktop uses the included switching engine. A separate command-line install
+              on this Mac cannot power the desktop app yet.
             </p>
             <p className="inline-note">
-              Use the included runtime to continue. Open Runtime Settings only if you intentionally
-              want to choose another runtime.
+              Your saved profiles stay local. Switch back to the included desktop engine to continue,
+              or open Runtime Settings only if you intentionally manage another compatible engine.
             </p>
             <div className="settings-summary-grid">
               <div>
-                <span className="overview-current-set-cell-label">Current runtime</span>
+                <span className="overview-current-set-cell-label">Using now</span>
                 <strong>{runtimeSelectionLabel(settings.runtime_kind)}</strong>
               </div>
               <div>
-                <span className="overview-current-set-cell-label">Recommended</span>
-                <strong>Included runtime</strong>
+                <span className="overview-current-set-cell-label">Desktop app needs</span>
+                <strong>Included desktop engine</strong>
               </div>
               <div>
-                <span className="overview-current-set-cell-label">Do this</span>
+                <span className="overview-current-set-cell-label">Next step</span>
                 <strong>{normalizeRuntimeLanguage(runtimeBlocker.nextStep)}</strong>
               </div>
             </div>
@@ -889,8 +890,8 @@ export function App() {
                   onClick={() => restoreBundledRuntimeMutation.mutate()}
                 >
                   {restoreBundledRuntimeMutation.isPending
-                    ? "Switching to Included Runtime…"
-                    : "Use Included Runtime"}
+                    ? "Switching to Included Engine…"
+                    : "Use Included Engine"}
                 </button>
               ) : null}
               <button className="ghost-button" type="button" onClick={() => void retryRuntimeCheck()}>
@@ -906,7 +907,7 @@ export function App() {
               </p>
             ) : null}
             <details className="diagnostic-card runtime-blocker-details">
-              <summary>Compatibility details</summary>
+              <summary>Why setup paused</summary>
               <div className="stack-list">
                 <p className="inline-note">{normalizeRuntimeLanguage(runtimeBlocker.summary)}</p>
                 {runtimeStatus.issues.length ? (
@@ -1148,38 +1149,38 @@ function describeRuntimeBlocker(runtimeStatus: {
   if (hasResolvedRuntime && missingDesktopContract) {
     return {
       summary:
-        "The current runtime works outside the app, but it does not expose the desktop features AI Switch requires.",
+        "The current engine works outside the app, but it does not expose the desktop features AI Switch requires.",
       nextStep:
-        "Use the included runtime, or choose a newer desktop-compatible runtime in Runtime Settings.",
+        "Use the included desktop engine, or choose a newer desktop-compatible engine in Runtime Settings.",
     };
   }
 
   if (hasResolvedRuntime) {
     return {
       summary:
-        "The current runtime was found, but it is not compatible with the desktop app.",
+        "The current engine was found, but it is not compatible with the desktop app.",
       nextStep:
-        "Use the included runtime, or choose a compatible runtime in Runtime Settings.",
+        "Use the included desktop engine, or choose a compatible engine in Runtime Settings.",
     };
   }
 
   return {
-    summary: "AI Switch could not use the current runtime source.",
+    summary: "AI Switch could not use the current desktop engine source.",
     nextStep:
-      "Use the included runtime, or choose a working runtime source in Runtime Settings.",
+      "Use the included desktop engine, or choose a working engine source in Runtime Settings.",
   };
 }
 
 function runtimeSelectionLabel(runtimeKind: AppBootstrap["settings"]["runtime_kind"]) {
   switch (runtimeKind) {
     case "bundled":
-      return "Included runtime";
+      return "Included desktop engine";
     case "system":
-      return "System runtime";
+      return "System engine";
     case "custom":
-      return "Custom runtime";
+      return "Custom engine";
     default:
-      return "Unknown runtime";
+      return "Unknown engine";
   }
 }
 
