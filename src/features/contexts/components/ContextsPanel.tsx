@@ -642,7 +642,7 @@ export function ContextsPanel({
                     mutationLock.isBusy || !trimmedDraftName || !draftHasSelections || hasDuplicateSetName
                   }
                 >
-                  {isEditingExistingSet ? "Update Set" : "Create Set"}
+                  {isEditingExistingSet ? "Update Set" : "Save Set"}
                 </button>
               </div>
             </footer>
