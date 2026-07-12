@@ -1,4 +1,5 @@
 import { forwardRef } from "react";
+import { SymbolIcon } from "./SymbolIcon";
 
 type SearchFieldProps = {
   ariaLabel: string;
@@ -27,10 +28,7 @@ export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(functi
   return (
     <div className={className ?? "search-field"}>
       <span className="search-field-icon" aria-hidden="true">
-        <svg viewBox="0 0 16 16" fill="none">
-          <circle cx="7" cy="7" r="4.25" />
-          <path d="M10.25 10.25L13.25 13.25" />
-        </svg>
+        <SymbolIcon name="search" size="sm" />
       </span>
       <input
         ref={ref}
@@ -50,10 +48,7 @@ export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(functi
           aria-label={`Clear ${ariaLabel}`}
           onClick={() => onChange("")}
         >
-          <svg viewBox="0 0 16 16" fill="none">
-            <path d="M5 5L11 11" />
-            <path d="M11 5L5 11" />
-          </svg>
+          <SymbolIcon name="clear" size="sm" />
         </button>
       ) : null}
     </div>
