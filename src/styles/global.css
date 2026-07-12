@@ -1388,7 +1388,7 @@ button {
 
 .settings-workspace {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .settings-overview-card {
@@ -1411,14 +1411,14 @@ button {
 .settings-detail-grid {
   display: grid;
   grid-template-columns: minmax(380px, 1.04fr) minmax(300px, 0.96fr);
-  gap: 14px;
+  gap: 12px;
   align-items: start;
 }
 
 .settings-main-stack,
 .settings-side-stack {
   display: grid;
-  gap: 14px;
+  gap: 12px;
   align-content: start;
 }
 
@@ -1429,14 +1429,14 @@ button {
 .settings-summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .settings-summary-grid > div {
   display: grid;
   gap: 4px;
   min-width: 0;
-  padding: 10px 11px;
+  padding: 9px 10px;
   border-radius: 10px;
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
@@ -1456,7 +1456,7 @@ button {
 
 .settings-detail-card {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .settings-inline-grid {
@@ -1513,7 +1513,7 @@ button {
 .settings-info-row {
   display: grid;
   gap: 3px;
-  padding: 10px 11px;
+  padding: 9px 10px;
   border-radius: 10px;
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
@@ -1543,7 +1543,7 @@ button {
 
 .settings-toggle-list {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .settings-toggle-row {
@@ -1551,7 +1551,7 @@ button {
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
-  padding: 11px 12px;
+  padding: 10px 11px;
   border-radius: 10px;
   border: 1px solid var(--separator);
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);

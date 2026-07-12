@@ -567,11 +567,11 @@ export function SettingsPanel({
                   </div>
                   {generalMessage ? <p className="inline-note">{generalMessage}</p> : null}
                 </article>
-                <article className="diagnostic-card diagnostic-pass settings-pane-section">
+                <article className="diagnostic-card diagnostic-pass settings-detail-card">
                   <div className="desktop-pane-section-header">
                     <div>
-                      <p className="card-kicker">Experience</p>
-                      <h3>Interaction model</h3>
+                      <p className="card-kicker">Desktop behavior</p>
+                      <h3>Focused desktop flow</h3>
                     </div>
                   </div>
                   <div className="settings-info-list">
@@ -592,21 +592,14 @@ export function SettingsPanel({
                       </span>
                     </div>
                   </div>
-                </article>
-                <article className="diagnostic-card settings-detail-card">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">Setup assistant</p>
-                      <h3>Start over from guided setup</h3>
-                    </div>
-                  </div>
-                  <div className="settings-note-block">
+                  <div className="settings-guide-block">
+                    <h4>Setup assistant</h4>
                     <p className="inline-note">
                       Reopen the guided setup assistant to review detection, your first shared switch,
                       and optional terminal integration from the beginning.
                     </p>
                   </div>
-                  <div className="button-row">
+                  <div className="settings-note-block">
                     <button
                       className="ghost-button"
                       type="button"
@@ -654,6 +647,32 @@ export function SettingsPanel({
                   <span className="overview-current-set-cell-label">Recommended</span>
                   <strong>Bundled</strong>
                 </div>
+              </div>
+              <div className="settings-guide-block">
+                <h4>Runtime summary</h4>
+                <div className="settings-kv-list">
+                  <div className="settings-kv-row">
+                    <strong>Source</strong>
+                    <strong>
+                      {runtimeKind === "bundled"
+                        ? "Included with this app"
+                        : runtimeKind === "system"
+                          ? "System runtime"
+                          : "Custom runtime"}
+                    </strong>
+                  </div>
+                  <div className="settings-kv-row">
+                    <strong>Runtime mode</strong>
+                    <strong>{titleCase(runtimeKind)}</strong>
+                  </div>
+                  <div className="settings-kv-row">
+                    <strong>Runtime version</strong>
+                    <strong>{runtimeStatus.version?.version ?? "unknown"}</strong>
+                  </div>
+                </div>
+                <p className="inline-note">
+                  Runtime version: {runtimeStatus.version?.version ?? "unknown"}
+                </p>
               </div>
             </article>
             <div className="settings-detail-grid">
@@ -728,18 +747,6 @@ export function SettingsPanel({
                   )}
                 </article>
 
-                {runtimeKind !== "bundled" ? (
-                  <article className="diagnostic-card diagnostic-warn settings-pane-section">
-                    <h3>Manual runtime source is active</h3>
-                    <p className="inline-note">
-                      This app session is using a {runtimeKind === "system" ? "system" : "custom"} runtime instead of the included runtime.
-                    </p>
-                    <p className="inline-note">
-                      Compatibility for onboarding, switching, and diagnostics is only guaranteed with the included runtime shipped in this app release.
-                    </p>
-                  </article>
-                ) : null}
-
                 <button
                   className="primary-button"
                   type="submit"
@@ -755,43 +762,17 @@ export function SettingsPanel({
                     error={updateSettingsMutation.error}
                   />
                 ) : null}
-                <article className="diagnostic-card settings-detail-card">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">Status</p>
-                      <h3>Runtime summary</h3>
-                    </div>
-                  </div>
-                  <div className="settings-kv-list">
-                    <div className="settings-kv-row">
-                      <strong>Source</strong>
-                      <strong>
-                        {runtimeKind === "bundled"
-                          ? "Included with this app"
-                          : runtimeKind === "system"
-                            ? "System override"
-                            : "Custom override"}
-                      </strong>
-                    </div>
-                    <div className="settings-kv-row">
-                      <strong>Compatibility</strong>
-                      <strong>
-                        {runtimeStatus.compatible ? "Ready for desktop switching" : "Needs attention"}
-                      </strong>
-                    </div>
-                    <div className="settings-kv-row">
-                      <strong>Runtime mode</strong>
-                      <strong>{titleCase(runtimeKind)}</strong>
-                    </div>
-                    <div className="settings-kv-row">
-                      <strong>Runtime version</strong>
-                      <strong>{runtimeStatus.version?.version ?? "unknown"}</strong>
-                    </div>
-                  </div>
-                  <p className="inline-note">
-                    Runtime version: {runtimeStatus.version?.version ?? "unknown"}
-                  </p>
-                </article>
+                {runtimeKind !== "bundled" ? (
+                  <article className="diagnostic-card diagnostic-warn settings-pane-section">
+                    <h3>Manual runtime source is active</h3>
+                    <p className="inline-note">
+                      This app session is using a {runtimeKind === "system" ? "system" : "custom"} runtime instead of the included runtime.
+                    </p>
+                    <p className="inline-note">
+                      Compatibility for onboarding, switching, and diagnostics is only guaranteed with the included runtime shipped in this app release.
+                    </p>
+                  </article>
+                ) : null}
               </div>
             </div>
           </div>
