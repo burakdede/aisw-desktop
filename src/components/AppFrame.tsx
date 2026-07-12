@@ -113,22 +113,22 @@ export function AppFrame({
             <div className="sidebar-scroll">
               <div className="sidebar-brand">
                 <div className="sidebar-brand-topline">
-                  <p className="eyebrow">Desktop utility</p>
-                  <span className="sidebar-window-badge">Native shell</span>
+                  <p className="eyebrow">AI agent profiles</p>
+                  <span className="sidebar-window-badge">Menu bar ready</span>
                 </div>
                 <div className="brand-lockup">
                   <BrandMark size={30} />
                   <div className="sidebar-brand-copy">
                     <h1 className="sidebar-title">AI Switch</h1>
-                    <p className="sidebar-meta-copy">Fast local profile switching for coding tools</p>
+                    <p className="sidebar-meta-copy">Local switching for Claude Code, Codex CLI, and Gemini CLI</p>
                   </div>
                 </div>
-                <div className="sidebar-meta" aria-label="App scope">
-                  <span className="sidebar-meta-badge">Local profile switching</span>
-                  <span className="sidebar-meta-copy">Claude Code, Codex CLI, Gemini CLI</span>
+                <div className="sidebar-meta" aria-label="App status">
+                  <span className="sidebar-meta-badge">Local only</span>
+                  <span className="sidebar-meta-copy">Bundled runtime, profile switching, diagnostics, and recovery</span>
                 </div>
                 <div className="sidebar-brand-signals" aria-hidden="true">
-                  <span className="status-pill">Accounts</span>
+                  <span className="status-pill">Saved logins</span>
                   <span className="status-pill">All tools</span>
                   <span className="status-pill">Recovery</span>
                 </div>

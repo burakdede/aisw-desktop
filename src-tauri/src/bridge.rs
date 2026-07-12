@@ -1098,8 +1098,8 @@ printf '{}'
     #[test]
     fn bundled_runtime_only_accepts_real_sidecar_candidates() {
         let dir = tempdir().unwrap();
-        let exe_dir = dir.path().join("AISW Desktop.app/Contents/MacOS");
-        let resources_dir = dir.path().join("AISW Desktop.app/Contents/Resources");
+        let exe_dir = dir.path().join("AI Switch.app/Contents/MacOS");
+        let resources_dir = dir.path().join("AI Switch.app/Contents/Resources");
         fs::create_dir_all(&exe_dir).unwrap();
         fs::create_dir_all(&resources_dir).unwrap();
 

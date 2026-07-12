@@ -115,7 +115,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: v__VERSION__
-          releaseName: AISW Desktop v__VERSION__
+          releaseName: AI Switch v__VERSION__
           releaseBody: See the attached bundles for this release.
           releaseDraft: true
           prerelease: false

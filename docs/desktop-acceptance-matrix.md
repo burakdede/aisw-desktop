@@ -289,7 +289,7 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
 - Evidence:
   - `scripts/build-local-bundle.mjs` stages a temporary Tauri config override with updater artifact generation disabled and then runs `tauri build`, preserving the normal signed-release `tauri:build` path while giving developers a reliable unsigned local bundle flow.
   - `package.json`, `scripts/build-local-bundle.test.mjs`, and `scripts/verify-release.mjs` expose and verify the `tauri:bundle-local` contract, including cleanup of temporary config overrides and release-runbook coverage.
-  - A real local `npm run tauri:bundle-local` build produced `/Users/burakdede/Projects/aisw-desktop/src-tauri/target/release/bundle/macos/AISW Desktop.app` and `/Users/burakdede/Projects/aisw-desktop/src-tauri/target/release/bundle/dmg/AISW Desktop_0.1.0_aarch64.dmg` without requiring `TAURI_SIGNING_PRIVATE_KEY`.
+  - A real local `npm run tauri:bundle-local` build produced `/Users/burakdede/Projects/aisw-desktop/src-tauri/target/release/bundle/macos/AI Switch.app` and `/Users/burakdede/Projects/aisw-desktop/src-tauri/target/release/bundle/dmg/AI Switch_0.1.0_aarch64.dmg` without requiring `TAURI_SIGNING_PRIVATE_KEY`.
 
 ### 38. Workspace mismatch recovery skips empty same-named profile sets
 

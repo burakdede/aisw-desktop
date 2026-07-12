@@ -5,9 +5,9 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --app-bg: color-mix(in srgb, Canvas 99%, #dce3eb 1%);
-  --sidebar-bg: color-mix(in srgb, Canvas 84%, transparent);
-  --content-bg: color-mix(in srgb, Canvas 99%, #eef2f6 1%);
+  --app-bg: color-mix(in srgb, Canvas 99%, #dfe5ec 1%);
+  --sidebar-bg: color-mix(in srgb, Canvas 88%, transparent);
+  --content-bg: color-mix(in srgb, Canvas 99%, #f2f5f8 1%);
   --card-bg: color-mix(in srgb, Canvas 97%, CanvasText 3%);
   --soft-fill: color-mix(in srgb, CanvasText 6%, transparent);
   --soft-fill-strong: color-mix(in srgb, CanvasText 10%, transparent);
@@ -19,8 +19,8 @@
   --ok: #248a3d;
   --warning: #b26a00;
   --danger: #c42b1c;
-  --shadow-window: 0 20px 44px rgba(16, 24, 40, 0.1);
-  --shadow-card: 0 8px 18px rgba(19, 30, 47, 0.04);
+  --shadow-window: 0 18px 34px rgba(16, 24, 40, 0.08);
+  --shadow-card: 0 8px 16px rgba(19, 30, 47, 0.035);
   --shadow-panel: inset 0 1px 0 rgba(255, 255, 255, 0.52);
 }
 
@@ -37,9 +37,9 @@ body,
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top left, rgba(116, 146, 189, 0.08), transparent 24%),
-    radial-gradient(circle at bottom right, rgba(166, 177, 199, 0.06), transparent 20%),
-    linear-gradient(180deg, rgba(250, 251, 252, 0.985), rgba(241, 244, 247, 0.992)),
+    radial-gradient(circle at top left, rgba(111, 142, 181, 0.06), transparent 22%),
+    radial-gradient(circle at bottom right, rgba(156, 172, 191, 0.05), transparent 18%),
+    linear-gradient(180deg, rgba(249, 250, 252, 0.985), rgba(243, 246, 248, 0.994)),
     var(--app-bg);
   color: var(--text-primary);
 }
@@ -85,8 +85,8 @@ button {
 
 .app-shell-window {
   display: grid;
-  padding: 10px;
-  background: linear-gradient(180deg, rgba(250, 251, 252, 0.94), rgba(241, 244, 247, 0.98));
+  padding: 8px;
+  background: linear-gradient(180deg, rgba(250, 251, 252, 0.94), rgba(243, 246, 248, 0.985));
 }
 
 .app-shell-setup-window {
@@ -154,15 +154,15 @@ button {
 }
 
 .layout-shell {
-  min-height: calc(100vh - 20px);
+  min-height: calc(100vh - 16px);
   display: grid;
-  grid-template-columns: 252px minmax(0, 1fr);
+  grid-template-columns: 236px minmax(0, 1fr);
   gap: 0;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
-  border-radius: 20px;
+  border-radius: 18px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 95%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
     color-mix(in srgb, Canvas 97%, transparent);
   box-shadow: var(--shadow-window);
 }
@@ -178,9 +178,9 @@ button {
   display: flex;
   flex-direction: column;
   background:
-    radial-gradient(circle at top left, color-mix(in srgb, AccentColor 9%, transparent), transparent 30%),
-    linear-gradient(180deg, color-mix(in srgb, Canvas 91%, transparent), color-mix(in srgb, Canvas 86%, transparent)),
-    color-mix(in srgb, Canvas 89%, transparent);
+    radial-gradient(circle at top left, color-mix(in srgb, AccentColor 8%, transparent), transparent 29%),
+    linear-gradient(180deg, color-mix(in srgb, Canvas 92%, transparent), color-mix(in srgb, Canvas 88%, transparent)),
+    color-mix(in srgb, Canvas 90%, transparent);
   border-right: 1px solid var(--separator);
   backdrop-filter: blur(34px);
 }
@@ -189,8 +189,8 @@ button {
   min-height: 0;
   overflow: auto;
   display: grid;
-  gap: 16px;
-  padding: 14px 12px 14px;
+  gap: 14px;
+  padding: 14px 12px 12px;
 }
 
 .sidebar-brand,
@@ -206,13 +206,13 @@ button {
 
 .sidebar-brand {
   display: grid;
-  gap: 10px;
-  padding: 11px 11px 12px;
+  gap: 9px;
+  padding: 12px;
   border-radius: 14px;
   border: 1px solid color-mix(in srgb, CanvasText 6%, transparent);
   background:
-    radial-gradient(circle at top right, color-mix(in srgb, AccentColor 10%, transparent), transparent 36%),
-    linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 94%, transparent)),
+    radial-gradient(circle at top right, color-mix(in srgb, AccentColor 9%, transparent), transparent 34%),
+    linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 95%, transparent)),
     color-mix(in srgb, Canvas 95%, CanvasText 5%);
   box-shadow: var(--shadow-panel);
 }
@@ -230,8 +230,8 @@ button {
   min-height: 20px;
   padding: 0 8px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
-  background: color-mix(in srgb, Canvas 97%, CanvasText 3%);
+  border: 1px solid color-mix(in srgb, AccentColor 12%, transparent);
+  background: color-mix(in srgb, AccentColor 8%, Canvas 92%);
   color: var(--text-secondary);
   font-size: 10px;
   line-height: 1;
@@ -245,7 +245,7 @@ button {
 
 .brand-mark {
   flex: none;
-  filter: drop-shadow(0 8px 16px rgba(17, 24, 39, 0.1));
+  filter: drop-shadow(0 8px 14px rgba(17, 24, 39, 0.08));
 }
 
 .brand-mark-highlight {
@@ -267,9 +267,8 @@ button {
   stroke: color-mix(in srgb, CanvasText 8%, transparent);
 }
 
-.brand-mark-lane-strong {
-  fill: color-mix(in srgb, AccentColor 14%, Canvas 86%);
-  stroke: color-mix(in srgb, AccentColor 18%, transparent);
+.brand-mark-ribbon {
+  stroke: color-mix(in srgb, AccentColor 18%, Canvas 82%);
 }
 
 .brand-mark-flow {
@@ -300,7 +299,7 @@ button {
 
 .sidebar-title {
   margin: 1px 0 0;
-  font-size: 18px;
+  font-size: 19px;
   line-height: 1.12;
   letter-spacing: -0.025em;
 }
@@ -345,7 +344,7 @@ button {
 
 .nav-list {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .nav-group {
@@ -362,7 +361,7 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 31px;
+  min-height: 32px;
   border: 0;
   border-radius: 8px;
   padding: 0 10px;
@@ -434,7 +433,7 @@ button {
 
 .sidebar-status-card {
   margin: 0;
-  padding: 11px 11px 10px;
+  padding: 11px 12px 10px;
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   border-radius: 12px;
   background:
@@ -837,15 +836,15 @@ button {
   position: sticky;
   top: 0;
   z-index: 2;
-  min-height: 68px;
-  padding: calc(12px + env(safe-area-inset-top, 0px)) 18px 10px;
+  min-height: 64px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 18px 9px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 16px;
   border-bottom: 1px solid var(--separator);
   background:
-    linear-gradient(180deg, color-mix(in srgb, Canvas 90%, transparent), color-mix(in srgb, Canvas 97%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, Canvas 90%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
     color-mix(in srgb, Canvas 94%, transparent);
   backdrop-filter: blur(32px);
 }
@@ -863,7 +862,7 @@ button {
 
 .window-toolbar-copy h2 {
   margin: 0;
-  font-size: 21px;
+  font-size: 22px;
   line-height: 1.06;
   letter-spacing: -0.03em;
 }
@@ -884,9 +883,9 @@ button {
 }
 
 .toolbar-cluster {
-  padding: 4px;
+  padding: 3px;
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
-  border-radius: 12px;
+  border-radius: 11px;
   background:
     linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 95%, transparent)),
     color-mix(in srgb, Canvas 95%, CanvasText 5%);
