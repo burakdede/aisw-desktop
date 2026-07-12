@@ -639,21 +639,6 @@ fn shared_profile_entries(
 fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> Vec<TraySection> {
     let mut sections = Vec::new();
 
-    let shared_profiles = shared_profile_entries(settings, snapshot);
-    if !shared_profiles.is_empty() {
-        sections.push(TraySection {
-            title: "Switch All Tools".to_owned(),
-            items: shared_profiles
-                .into_iter()
-                .map(|(profile, label)| TrayEntry {
-                    id: format!("{SWITCH_ALL_PREFIX}{profile}"),
-                    label,
-                    enabled: true,
-                })
-                .collect(),
-        });
-    }
-
     let set_entries = combined_set_entries(settings, snapshot);
     if !set_entries.is_empty() {
         sections.push(TraySection {
@@ -736,7 +721,16 @@ fn combined_set_entries(
     settings: Option<&DesktopSettings>,
     snapshot: &AppSnapshot,
 ) -> Vec<TrayEntry> {
-    let mut entries = snapshot
+    let mut shared_entries = shared_profile_entries(settings, snapshot)
+        .into_iter()
+        .map(|(profile, label)| TrayEntry {
+            id: format!("{SWITCH_ALL_PREFIX}{profile}"),
+            label,
+            enabled: true,
+        })
+        .collect::<Vec<_>>();
+
+    let mut context_entries = snapshot
         .contexts
         .iter()
         .map(|context| TrayEntry {
@@ -745,12 +739,20 @@ fn combined_set_entries(
             enabled: true,
         })
         .collect::<Vec<_>>();
+    context_entries.sort_by(|left, right| left.label.to_lowercase().cmp(&right.label.to_lowercase()));
+
+    let mut entries = Vec::with_capacity(
+        shared_entries.len()
+            + context_entries.len()
+            + settings.map_or(0, |current| current.profile_sets.len()),
+    );
+    entries.append(&mut shared_entries);
+    entries.extend(context_entries);
 
     if let Some(settings) = settings {
         entries.extend(profile_set_entries(settings, snapshot));
     }
 
-    entries.sort_by(|left, right| left.label.to_lowercase().cmp(&right.label.to_lowercase()));
     entries
 }
 
@@ -1243,16 +1245,13 @@ mod tests {
             ),
             vec![
                 TraySection {
-                    title: "Switch All Tools".to_owned(),
-                    items: vec![TrayEntry {
-                        id: "switch-all:work".to_owned(),
-                        label: "Work".to_owned(),
-                        enabled: true,
-                    }],
-                },
-                TraySection {
                     title: "Switch Set".to_owned(),
                     items: vec![
+                        TrayEntry {
+                            id: "switch-all:work".to_owned(),
+                            label: "Work".to_owned(),
+                            enabled: true,
+                        },
                         TrayEntry {
                             id: "context:client-acme".to_owned(),
                             label: "Client Acme ✓".to_owned(),
@@ -1443,7 +1442,7 @@ mod tests {
             tray_sections(Some(&settings), &snapshot),
             vec![
                 TraySection {
-                    title: "Switch All Tools".to_owned(),
+                    title: "Switch Set".to_owned(),
                     items: vec![TrayEntry {
                         id: "switch-all:work".to_owned(),
                         label: "Office".to_owned(),
@@ -1452,11 +1451,13 @@ mod tests {
                 },
                 TraySection {
                     title: "Switch Claude Code".to_owned(),
-                    items: vec![TrayEntry {
-                        id: "profile:claude:work".to_owned(),
-                        label: "Office ✓".to_owned(),
-                        enabled: true,
-                    }],
+                    items: vec![
+                        TrayEntry {
+                            id: "profile:claude:work".to_owned(),
+                            label: "Office ✓".to_owned(),
+                            enabled: true,
+                        },
+                    ],
                 },
                 TraySection {
                     title: "Switch Codex CLI".to_owned(),
