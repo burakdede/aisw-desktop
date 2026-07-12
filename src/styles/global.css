@@ -2208,17 +2208,28 @@ button {
 }
 
 .overview-layout {
-  grid-template-columns: minmax(320px, 0.94fr) minmax(0, 1.06fr);
+  grid-template-columns: minmax(340px, 0.9fr) minmax(0, 1.1fr);
+  gap: 12px;
+  align-items: start;
 }
 
 .overview-tools-split {
-  grid-template-columns: minmax(260px, 0.7fr) minmax(340px, 1fr);
+  display: grid;
+  grid-template-columns: minmax(260px, 0.7fr) minmax(360px, 1fr);
+  gap: 12px;
   align-items: start;
+}
+
+.overview-summary-pane,
+.overview-tools-pane {
+  display: grid;
+  gap: 12px;
+  align-content: start;
 }
 
 .overview-summary-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
   gap: 12px;
   align-items: start;
 }
@@ -2257,21 +2268,21 @@ button {
 
 .overview-current-set {
   display: grid;
-  gap: 14px;
-  padding: 15px;
+  gap: 12px;
+  padding: 14px;
 }
 
 .overview-current-set-main {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
-  gap: 14px;
+  gap: 12px;
   align-items: start;
 }
 
 .overview-current-set-copy,
 .overview-action-rail {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .overview-current-set-header {
@@ -2291,7 +2302,7 @@ button {
 .overview-current-set-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px 12px;
+  gap: 8px;
 }
 
 .overview-current-set-inline {
@@ -2301,7 +2312,7 @@ button {
 
 .overview-current-set-list {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .overview-current-set-row {
@@ -2309,7 +2320,7 @@ button {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 10px 11px;
+  padding: 9px 10px;
   border-radius: 10px;
   border: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
   background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
@@ -2329,7 +2340,7 @@ button {
 .overview-current-set-cell {
   display: grid;
   gap: 3px;
-  padding: 10px 11px;
+  padding: 9px 10px;
   border-radius: 10px;
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
@@ -2347,7 +2358,7 @@ button {
 }
 
 .overview-action-rail {
-  padding: 12px;
+  padding: 11px;
   border-radius: 12px;
   border: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
   background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
@@ -2390,27 +2401,27 @@ button {
 .overview-project-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .overview-project-grid > div {
   display: grid;
   gap: 3px;
-  padding: 10px 11px;
+  padding: 9px 10px;
   border-radius: 10px;
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
 
 .overview-recent-card {
-  gap: 10px;
-}
-
-.overview-recent-list {
   gap: 8px;
 }
 
+.overview-recent-list {
+  gap: 6px;
+}
+
 .overview-recent-item {
-  padding: 9px 10px;
+  padding: 8px 10px;
   border-radius: 10px;
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
@@ -2474,6 +2485,7 @@ button {
 .overview-tools-list-card {
   gap: 10px;
   min-height: 100%;
+  padding: 12px;
 }
 
 .overview-tool-list-columns {
@@ -2494,12 +2506,14 @@ button {
   border-radius: 10px;
   overflow: hidden;
   background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
-  max-height: 620px;
+  max-height: 560px;
   overflow-y: auto;
 }
 
 .overview-tool-row {
   width: 100%;
+  display: grid;
+  grid-template-columns: minmax(160px, 1.3fr) minmax(0, 1fr);
   border: 0;
   border-radius: 0;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
@@ -2507,7 +2521,7 @@ button {
   text-align: left;
   cursor: pointer;
   align-items: center;
-  padding: 12px 13px;
+  padding: 11px 12px;
 }
 
 .overview-tool-list-stack > .overview-tool-row:last-child {
@@ -2532,14 +2546,14 @@ button {
 }
 
 .overview-tool-row-title strong {
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.25;
 }
 
 .overview-tool-row-meta {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
   font-size: 11px;
   line-height: 1.25;
   letter-spacing: 0.04em;
@@ -2576,7 +2590,7 @@ button {
   margin: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 12px;
+  gap: 8px 10px;
 }
 
 .overview-tool-facts div {
