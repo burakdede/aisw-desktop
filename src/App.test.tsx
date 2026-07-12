@@ -657,7 +657,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Engine Settings" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Engine" })).not.toBeInTheDocument();
-    expect(screen.queryByText("Runtime summary")).not.toBeInTheDocument();
+    expect(screen.queryByText("Engine summary")).not.toBeInTheDocument();
     expect(screen.queryByText("Get started")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Overview" })).not.toBeInTheDocument();
   });

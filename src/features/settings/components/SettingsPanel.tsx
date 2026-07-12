@@ -552,7 +552,7 @@ export function SettingsPanel({
                   </label>
                   <div className="settings-note-block">
                     <p className="inline-note">
-                      Runtime blockers and first-run onboarding still take priority when they need your attention.
+                      Engine blockers and first-run onboarding still take priority when they need your attention.
                     </p>
                     <p className="inline-note">
                       Next launch opens on <strong>{titleCase(defaultSection)}</strong> whenever the app can resume normally.
@@ -795,8 +795,8 @@ export function SettingsPanel({
                   <strong>{titleCase(updateChannel)}</strong>
                 </div>
                 <div>
-                  <span className="overview-current-set-cell-label">Runtime</span>
-                  <strong>{runtimeKind === "bundled" ? "Bundled" : titleCase(runtimeKind)}</strong>
+                  <span className="overview-current-set-cell-label">Engine</span>
+                  <strong>{runtimeKind === "bundled" ? "Included" : titleCase(runtimeKind)}</strong>
                 </div>
                 <div>
                   <span className="overview-current-set-cell-label">Updates</span>
