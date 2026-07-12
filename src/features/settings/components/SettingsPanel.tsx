@@ -1479,7 +1479,7 @@ function sectionLabel(section: SettingsSection) {
     case "keyring":
       return "Security";
     case "advanced":
-      return "Storage & Paths";
+      return "Advanced";
   }
 }
 
@@ -1496,7 +1496,7 @@ function sectionKicker(section: SettingsSection) {
     case "keyring":
       return "Local credential storage";
     case "advanced":
-      return "Storage, paths, and app data";
+      return "Advanced paths and app data";
   }
 }
 
@@ -1513,7 +1513,7 @@ function sectionHeading(section: SettingsSection) {
     case "keyring":
       return "Keep credentials local with native OS storage";
     case "advanced":
-      return "Keep custom paths out of the main settings flow";
+      return "Keep advanced paths and reset tools out of the main settings flow";
   }
 }
 
@@ -1530,7 +1530,7 @@ function sectionDescription(section: SettingsSection) {
     case "keyring":
       return "Security guidance, storage behavior, and recovery steps should stay clear without exposing unnecessary implementation detail.";
     case "advanced":
-      return "Storage and path details stay available for recovery and debugging, but they should not dominate the default AI Switch settings experience.";
+      return "Advanced storage, reset, and path details stay available for recovery and debugging without dominating the default AI Switch settings experience.";
   }
 }
 
@@ -1564,7 +1564,7 @@ function sourceListSummary(section: SettingsSection) {
     case "keyring":
       return "Credential storage and recovery";
     case "advanced":
-      return "Paths and app data folder";
+      return "App data, reset, and paths";
   }
 }
 

@@ -8105,7 +8105,7 @@ describe("App", () => {
       expect(window.localStorage.getItem("ai-switch.desktop.default-section")).toBe("profiles");
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Storage & Paths" }));
+    fireEvent.click(screen.getByRole("button", { name: "Advanced" }));
     fireEvent.click(screen.getByRole("button", { name: "Reset Onboarding" }));
 
     await waitFor(() => {
@@ -8126,7 +8126,7 @@ describe("App", () => {
       expect(screen.getAllByText(/Runtime version:/).length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Storage & Paths" }));
+    fireEvent.click(screen.getByRole("button", { name: "Advanced" }));
 
     await waitFor(() => {
       expect(screen.getByText("Runtime details")).toBeInTheDocument();
@@ -8218,7 +8218,7 @@ describe("App", () => {
       expect(screen.getByDisplayValue("/opt/aisw/bin/aisw")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Storage & Paths" }));
+    fireEvent.click(screen.getByRole("button", { name: "Advanced" }));
 
     await waitFor(() => {
       expect(screen.getByDisplayValue("/tmp/aisw-home")).toBeInTheDocument();
