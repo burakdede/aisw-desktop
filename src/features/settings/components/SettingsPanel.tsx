@@ -193,29 +193,29 @@ export function SettingsPanel({
           <div className="stack-list">
             <SourceListPanel
               className="settings-nav-card"
-              kicker="Preferences"
+              kicker="Mac Preferences"
               title="Settings"
               listLabel="Settings sections"
-              badge={<span className="pill pill-soft">{sourceListSummary(selectedSection)}</span>}
-              note={sectionDescription(selectedSection)}
+              badge={<span className="pill pill-soft">{sectionLabel(selectedSection)}</span>}
+              note="Choose a section once, make the change, and return to coding without hunting through a dashboard."
               meta={
-                <>
+                <div className="settings-nav-meta">
                   <div>
-                    <span className="overview-current-set-cell-label">Section</span>
-                    <strong>{sectionLabel(selectedSection)}</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Focus</span>
+                    <span className="overview-current-set-cell-label">Current section</span>
                     <strong>{sectionHeading(selectedSection)}</strong>
                   </div>
-                  <div className="desktop-status-pill-stack">
+                  <div>
+                    <span className="overview-current-set-cell-label">Why it exists</span>
+                    <strong>{sourceListSummary(selectedSection)}</strong>
+                  </div>
+                  <div className="settings-nav-pill-row">
                     {sectionPills(selectedSection).map((pill) => (
                       <span key={pill} className="status-pill">
                         {pill}
                       </span>
                     ))}
                   </div>
-                </>
+                </div>
               }
             >
               {SETTINGS_SECTIONS.map((section) => (
@@ -230,7 +230,7 @@ export function SettingsPanel({
                   }`}
                   onClick={() => setSelectedSection(section)}
                 >
-                  <div>
+                  <div className="settings-nav-row-copy">
                     <strong>{sectionLabel(section)}</strong>
                     <p
                       id={`settings-section-summary-${section}`}
@@ -239,9 +239,12 @@ export function SettingsPanel({
                       {sourceListSummary(section)}
                     </p>
                   </div>
-                  <span className="desktop-source-chevron" aria-hidden="true">
-                    ›
-                  </span>
+                  <div className="settings-nav-row-meta">
+                    <span className="status-pill status-pill-subtle">{sectionShortTag(section)}</span>
+                    <span className="desktop-source-chevron" aria-hidden="true">
+                      ›
+                    </span>
+                  </div>
                 </button>
               ))}
             </SourceListPanel>
@@ -249,15 +252,33 @@ export function SettingsPanel({
         }
         secondary={
       <div className="settings-pane">
+        <article className="diagnostic-card settings-intro-card">
+          <div className="settings-intro-copy">
+            <div>
+              <p className="card-kicker">Preferences</p>
+              <h3>{sectionHeading(selectedSection)}</h3>
+              <p className="inline-note">{sectionDescription(selectedSection)}</p>
+            </div>
+            <span className="pill pill-soft">{sectionLabel(selectedSection)}</span>
+          </div>
+          <div className="settings-intro-grid">
+            {sectionFacts(selectedSection).map((fact) => (
+              <div key={fact.label}>
+                <span className="overview-current-set-cell-label">{fact.label}</span>
+                <strong>{fact.value}</strong>
+              </div>
+            ))}
+          </div>
+        </article>
         {selectedSection === "general" ? (
           <div className="settings-workspace">
             <article className="diagnostic-card settings-overview-card">
               <div className="settings-overview-copy">
                 <div>
-                  <p className="card-kicker">Current setup</p>
+                  <p className="card-kicker">General</p>
                   <h3>Desktop defaults</h3>
                   <p className="inline-note">
-                    Keep the app aligned with the operating system and choose whether AI Switch follows the system or pins the window to a light or dark appearance.
+                    Keep the app aligned with macOS, choose the launch destination, and decide whether the menu bar utility stays available for quick switching.
                   </p>
                 </div>
                 <span className="pill pill-soft">Recommended</span>
@@ -385,25 +406,25 @@ export function SettingsPanel({
                 <article className="diagnostic-card diagnostic-pass settings-pane-section">
                   <div className="desktop-pane-section-header">
                     <div>
-                      <p className="card-kicker">Model</p>
-                      <h3>Desktop behavior</h3>
+                      <p className="card-kicker">Experience</p>
+                      <h3>Interaction model</h3>
                     </div>
                   </div>
                   <div className="settings-info-list">
                     <div className="settings-info-row">
-                      <strong>Credentials stay local.</strong>
-                      <span className="inline-note">No telemetry or prompt proxy is used.</span>
+                      <strong>One settings language</strong>
+                      <span className="inline-note">Every section follows the same desktop interaction pattern.</span>
                     </div>
                     <div className="settings-info-row">
-                      <strong>One interaction model</strong>
+                      <strong>Credentials stay local.</strong>
                       <span className="inline-note">
-                        Every switch, verify, and repair flow uses the same desktop interaction model.
+                        No telemetry or prompt proxy is used.
                       </span>
                     </div>
                     <div className="settings-info-row">
                       <strong>Focused navigation</strong>
                       <span className="inline-note">
-                        Use the source list on the left to jump directly to runtime, terminal, security, updates, and storage details.
+                        Use the source list on the left to move directly to runtime, terminal, security, updates, and storage details.
                       </span>
                     </div>
                   </div>
@@ -1416,5 +1437,63 @@ function sourceListSummary(section: SettingsSection) {
       return "Credential storage and recovery";
     case "advanced":
       return "Paths and app data folder";
+  }
+}
+
+function sectionShortTag(section: SettingsSection) {
+  switch (section) {
+    case "general":
+      return "UI";
+    case "runtime":
+      return "Core";
+    case "updates":
+      return "Update";
+    case "shell":
+      return "Shell";
+    case "keyring":
+      return "Local";
+    case "advanced":
+      return "Paths";
+  }
+}
+
+function sectionFacts(section: SettingsSection) {
+  switch (section) {
+    case "general":
+      return [
+        { label: "Scope", value: "Appearance and launch" },
+        { label: "Default", value: "System-first" },
+        { label: "Best for", value: "Daily use" },
+      ];
+    case "runtime":
+      return [
+        { label: "Default", value: "Included runtime" },
+        { label: "Overrides", value: "System or custom" },
+        { label: "Risk", value: "Compatibility drift" },
+      ];
+    case "updates":
+      return [
+        { label: "Source", value: "Signed desktop releases" },
+        { label: "Tracks", value: "Stable or beta" },
+        { label: "Install", value: "In app" },
+      ];
+    case "shell":
+      return [
+        { label: "Need", value: "Optional" },
+        { label: "Best for", value: "Open terminals" },
+        { label: "Flow", value: "Copy and verify" },
+      ];
+    case "keyring":
+      return [
+        { label: "Storage", value: "Native first" },
+        { label: "Network", value: "No proxy" },
+        { label: "Support", value: "Redacted export" },
+      ];
+    case "advanced":
+      return [
+        { label: "Focus", value: "Paths and app data" },
+        { label: "Default", value: "Managed automatically" },
+        { label: "Use when", value: "Recovery or debugging" },
+      ];
   }
 }
