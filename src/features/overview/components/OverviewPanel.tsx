@@ -573,7 +573,7 @@ function ToolInspector({
       <p className="inline-note">
         {status.active_profile
           ? `${toolDisplayName(status.tool)} is using ${activeProfileLabel}. Keep live match green before you start coding.`
-          : `Add a saved profile for ${toolDisplayName(status.tool)} before switching from the desktop app.`}
+          : `Add a saved profile for ${toolDisplayName(status.tool)} before switching from AI Switch.`}
       </p>
       {status.token_warning ? (
         <p className="inline-note">

@@ -437,7 +437,7 @@ describe("App", () => {
         screen.getAllByText("The selected profile needs attention before it can be applied.").length,
       ).toBeGreaterThan(0);
       expect(
-        screen.getByText("Desktop command details were not recorded for this event."),
+        screen.getByText("Command details were not recorded for this event."),
       ).toBeInTheDocument();
       expect(screen.getAllByText("Open the profile and refresh credentials.").length).toBeGreaterThan(0);
     });
@@ -534,7 +534,7 @@ describe("App", () => {
     });
     expect(
       screen.getByText(
-        "AI Switch found another runtime on this Mac, but this desktop release is designed to use the included runtime by default.",
+        "AI Switch found another runtime on this Mac, but this release is designed to use the included runtime by default.",
       ),
     ).toBeInTheDocument();
     expect(
@@ -545,7 +545,7 @@ describe("App", () => {
     expect(screen.getByText("Current selection")).toBeInTheDocument();
     expect(screen.getByText("System runtime override")).toBeInTheDocument();
     expect(screen.getByText("Recommended")).toBeInTheDocument();
-    expect(screen.getByText("Included runtime managed by this desktop app")).toBeInTheDocument();
+    expect(screen.getByText("Included runtime managed by AI Switch")).toBeInTheDocument();
     expect(
       screen.getByText("Compatibility details"),
     ).toBeInTheDocument();

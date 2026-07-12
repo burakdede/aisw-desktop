@@ -65,12 +65,12 @@ export function HelpSheet({
               </div>
             </div>
             <p className="inline-note">
-              Switch Claude Code, Codex CLI, and Gemini CLI profiles from one desktop app.
+              Switch Claude Code, Codex CLI, and Gemini CLI profiles from one app.
             </p>
             <p className="inline-note">Credentials stay on this Mac.</p>
             <p className="inline-note">No telemetry, prompt logging, or traffic proxy is used.</p>
             <p className="inline-note">
-              The included runtime is the recommended setup for a consistent desktop experience.
+              The included runtime is the recommended setup for a consistent AI Switch experience.
             </p>
           </article>
 

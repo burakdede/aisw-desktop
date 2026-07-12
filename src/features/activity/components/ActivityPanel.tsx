@@ -247,7 +247,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                       {selectedEntry.resultSummary ??
                         (selectedEntry.status === "success"
                         ? "Snapshot updated successfully."
-                        : "The desktop app recorded a recoverable failure for this event.")}
+                        : "AI Switch recorded a recoverable failure for this event.")}
                     </p>
                   </div>
                   <div>
@@ -265,7 +265,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                       {
                         label: "Command",
                         value:
-                          selectedEntry.command ?? "Desktop command details were not recorded for this event.",
+                          selectedEntry.command ?? "Command details were not recorded for this event.",
                       },
                     ]}
                   />
@@ -315,7 +315,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                 <p className="inline-note">
                   {exportBundleMutation.error instanceof Error
                     ? exportBundleMutation.error.message
-                    : "Desktop command failed."}
+                    : "AI Switch could not complete that action."}
                 </p>
               </article>
             ) : null}

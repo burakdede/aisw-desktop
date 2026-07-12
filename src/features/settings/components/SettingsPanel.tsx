@@ -165,7 +165,7 @@ export function SettingsPanel({
       });
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Desktop command failed.";
+        error instanceof Error ? error.message : "AI Switch could not complete that action.";
       setSecurityMessage(message);
       void notifyDesktop({
         title: "Diagnostic export failed",
@@ -350,7 +350,7 @@ export function SettingsPanel({
                     <h3>Start destination</h3>
                   </div>
                   <p className="inline-note">
-                    Choose which section opens first when the desktop app starts normally.
+                    Choose which section opens first when AI Switch starts normally.
                   </p>
                 </div>
                 <label>
@@ -468,7 +468,7 @@ export function SettingsPanel({
                 <article className="diagnostic-card diagnostic-warn">
                   <h3>Manual runtime source is active</h3>
                   <p className="inline-note">
-                    This desktop session is using a{" "}
+                    This app session is using a{" "}
                     {runtimeKind === "system" ? "system" : "custom"} runtime instead of the included runtime.
                   </p>
                   <p className="inline-note">
@@ -1013,7 +1013,7 @@ export function SettingsPanel({
                     <h3>Security</h3>
                   </div>
                   <p className="inline-note">
-                    The desktop app keeps credentials local, leans on the operating system for secure storage, and avoids remote switching proxies.
+                    AI Switch keeps credentials local, leans on the operating system for secure storage, and avoids remote switching proxies.
                   </p>
                 </div>
                 <p className="inline-note">Privacy and storage</p>
@@ -1217,7 +1217,7 @@ const KEYRING_GUIDES = [
     backend: "Login keychain",
     steps: [
       "Open Keychain Access and confirm the login keychain is unlocked.",
-      "Approve any keychain access prompts for the desktop app, Claude, Codex, or Gemini.",
+      "Approve any keychain access prompts for AI Switch, Claude, Codex, or Gemini.",
       "If access keeps failing, lock and unlock the login keychain, then rerun diagnostics.",
     ],
     verify: "Rerun diagnostics and confirm the keyring warning disappears.",
@@ -1227,7 +1227,7 @@ const KEYRING_GUIDES = [
     title: "Windows Credential Manager",
     backend: "Credential Manager / DPAPI",
     steps: [
-      "Stay signed in to a normal desktop session before launching the desktop app.",
+      "Stay signed in to a normal desktop session before launching AI Switch.",
       "Confirm security software is not blocking local credential storage prompts.",
       "If the machine policy reset credentials, sign in again and retry the profile action.",
     ],
@@ -1239,7 +1239,7 @@ const KEYRING_GUIDES = [
     backend: "Secret Service daemon",
     steps: [
       "Start a Secret Service provider such as gnome-keyring or KeePassXC with Secret Service enabled.",
-      "Make sure the desktop session has an active D-Bus user session before launching the desktop app.",
+      "Make sure the desktop session has an active D-Bus user session before launching AI Switch.",
       "If diagnostics still fail, unlock the keyring collection or restart the secret service daemon.",
     ],
     verify: "Run diagnostics again after the secret service is available.",
@@ -1272,7 +1272,7 @@ function formatMutationError(error: unknown) {
     };
   }
   return {
-    message: "Desktop command failed.",
+    message: "AI Switch could not complete that action.",
     remediation: undefined,
   };
 }
@@ -1364,7 +1364,7 @@ function sectionDescription(section: SettingsSection) {
     case "keyring":
       return "Security guidance, storage behavior, and recovery steps should stay clear without exposing unnecessary implementation detail.";
     case "advanced":
-      return "Storage and path details stay available for recovery and debugging, but they should not dominate the default desktop settings experience.";
+      return "Storage and path details stay available for recovery and debugging, but they should not dominate the default AI Switch settings experience.";
   }
 }
 

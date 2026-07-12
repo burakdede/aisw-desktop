@@ -1419,7 +1419,7 @@ export function ProfilesPanel({
                 <div className="diagnostic-card">
                   <h4>Sign-in flow</h4>
                   <p className="inline-note">
-                    The desktop app will launch the tool&apos;s native login flow and stream progress from the bundled AI Switch runtime.
+                    AI Switch will launch the tool&apos;s native login flow and stream progress from the bundled runtime.
                   </p>
                   <p className="inline-note">
                     Keep this window open while the browser or terminal login completes.
@@ -1684,7 +1684,7 @@ function buildOauthWizardSteps(
     {
       id: "browser" as const,
       label: "2. Browser opens",
-      fallback: "The desktop app launches the provider login flow.",
+      fallback: "AI Switch launches the provider login flow.",
     },
     {
       id: "login" as const,
@@ -1694,12 +1694,12 @@ function buildOauthWizardSteps(
     {
       id: "capture" as const,
       label: "4. Waiting for credential capture",
-      fallback: "The desktop app waits for the upstream tool to persist the captured credentials.",
+      fallback: "AI Switch waits for the upstream tool to persist the captured credentials.",
     },
     {
       id: "saved" as const,
       label: "5. Profile saved",
-      fallback: "The desktop app stores the captured profile and refreshes desktop state.",
+      fallback: "AI Switch stores the captured profile and refreshes app state.",
     },
   ];
 
@@ -1804,7 +1804,7 @@ function formatDesktopError(error: unknown) {
       ? `${normalizeRuntimeLanguage(error.message)} Remediation: ${normalizeRuntimeLanguage(remediation)}`
       : normalizeRuntimeLanguage(error.message);
   }
-  return "Desktop command failed.";
+  return "AI Switch could not complete that action.";
 }
 
 function formatProfileTokenWarning(
@@ -1826,7 +1826,7 @@ function formatProfileTokenWarning(
 function formatProfileWarning(
   warning: NonNullable<AppSnapshot["statuses"][number]["warnings"]>[number],
 ) {
-  const detail = warning.message ?? warning.code ?? "Warning reported by the desktop app.";
+  const detail = warning.message ?? warning.code ?? "Warning reported by AI Switch.";
   return warning.remediation ? `${detail} Remediation: ${warning.remediation}` : detail;
 }
 

@@ -269,7 +269,7 @@ export function useDesktopActions() {
         "Update settings",
         updateSettings,
         () => ({ type: "global", id: "settings" }),
-        () => "Saved desktop settings.",
+        () => "Saved AI Switch settings.",
       ),
       onSuccess: invalidate,
     }),

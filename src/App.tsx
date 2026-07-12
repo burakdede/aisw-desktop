@@ -218,7 +218,7 @@ export function App() {
     onError: async (error) => {
       await notifyDesktop({
         title: "Support report export failed",
-        body: error instanceof Error ? error.message : "Desktop command failed.",
+        body: error instanceof Error ? error.message : "AI Switch could not complete that action.",
       });
     },
   });
@@ -311,7 +311,7 @@ export function App() {
       await invalidatePostMutationQueries(queryClient);
     },
     onError: async (error) => {
-      const message = error instanceof Error ? error.message : "Desktop command failed.";
+      const message = error instanceof Error ? error.message : "AI Switch could not complete that action.";
       recordCommandResult(
         { type: "global", id: "profile-set" },
         {
@@ -494,7 +494,7 @@ export function App() {
         .catch((error) =>
           notifyDesktop({
             title: "Diagnostic export failed",
-            body: error instanceof Error ? error.message : "Desktop command failed.",
+            body: error instanceof Error ? error.message : "AI Switch could not complete that action.",
           }),
         );
     }).then((dispose) => {
@@ -767,7 +767,7 @@ export function App() {
       title={
         runtimeRecoveryFocused ? "Finish Setup" : sectionTitle(activeSection, setupFocused)
       }
-      subtitle="Switch Claude Code, Codex CLI, and Gemini CLI profiles from one focused desktop app."
+      subtitle="Switch Claude Code, Codex CLI, and Gemini CLI profiles from one focused app."
       detail={
         runtimeRecoveryFocused
           ? "AI Switch can continue as soon as this Mac switches back to the included runtime."
@@ -798,7 +798,7 @@ export function App() {
         <SectionCard title="This Mac is using an unsupported runtime" kicker="Setup paused">
           <div className="stack-list">
             <p className="inline-note">
-              AI Switch found another runtime on this Mac, but this desktop release is designed to
+              AI Switch found another runtime on this Mac, but this release is designed to
               use the included runtime by default.
             </p>
             <p className="inline-note">
@@ -811,7 +811,7 @@ export function App() {
               </div>
               <div>
                 <span className="overview-current-set-cell-label">Recommended</span>
-                <strong>Included runtime managed by this desktop app</strong>
+                <strong>Included runtime managed by AI Switch</strong>
               </div>
               <div>
                 <span className="overview-current-set-cell-label">Next step</span>
@@ -1086,7 +1086,7 @@ function describeRuntimeBlocker(runtimeStatus: {
   if (hasResolvedRuntime) {
     return {
       summary:
-        "The selected runtime was found, but it is not compatible with this desktop app.",
+        "The selected runtime was found, but it is not compatible with AI Switch.",
       nextStep:
         "Switch back to the included runtime, or choose a compatible runtime in Runtime Settings before continuing.",
     };

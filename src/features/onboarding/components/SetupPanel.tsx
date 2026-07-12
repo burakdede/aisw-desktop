@@ -644,7 +644,7 @@ export function SetupPanel({
                   </p>
                 ) : null}
                 <p className="inline-note">
-                  The desktop app writes live credential files directly. Most people can skip this and
+                  AI Switch writes live credential files directly. Most people can skip this and
                   still switch accounts normally.
                 </p>
                 <p className="inline-note">
