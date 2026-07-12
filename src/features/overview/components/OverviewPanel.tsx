@@ -810,7 +810,7 @@ function MissingBinaryGuidance({
         Check terminal path: <code>{pathCommand}</code>
       </p>
       <p className="inline-note">
-        Refresh state after the CLI is installed or after you update your shell PATH.
+        Refresh state after the tool is installed or after you update your shell PATH.
       </p>
       <div className="button-row">
         <button
