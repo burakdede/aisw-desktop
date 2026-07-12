@@ -244,7 +244,7 @@ function getAddProfileDialog() {
 }
 
 function getOnboardingImportDialog(tool = "Claude") {
-  return within(screen.getByRole("dialog", { name: `Import ${tool} Login` }));
+  return within(screen.getByRole("dialog", { name: `Import ${tool} Profile` }));
 }
 
 function openSetupStep(label: "Welcome" | "Accounts" | "Runtime" | "First switch" | "Terminal") {
@@ -2534,11 +2534,11 @@ describe("App", () => {
 
     expect(
       screen.getByText(
-        "This AI Switch release cannot import the current Claude login directly. Open profile setup to choose another sign-in method.",
+        "This release cannot save the current Claude login directly. Choose another sign-in method instead.",
       ),
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Open profile setup" }));
+    fireEvent.click(screen.getByRole("button", { name: "Choose sign-in method" }));
 
     expect(onOpenProfiles).toHaveBeenCalledWith("claude", { mode: "from_env" });
   });
@@ -2581,7 +2581,7 @@ describe("App", () => {
       expect(screen.getAllByRole("heading", { name: "Get started" }).length).toBeGreaterThan(0),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Import login" }));
+    fireEvent.click(screen.getByRole("button", { name: "Import as profile" }));
 
     const dialog = getOnboardingImportDialog();
     expect(dialog.getByLabelText("Profile name")).toHaveValue("");
@@ -5607,7 +5607,7 @@ describe("App", () => {
     expect(
       setup.getByText((_, element) =>
         element?.textContent?.trim() ===
-        "AI Switch can start without Gemini. Install the gemini tool later when you want to manage that provider here.",
+        "You can finish setup without Gemini. Install the gemini tool later when you want to manage that provider here.",
       ),
     ).toBeInTheDocument();
 
@@ -5737,7 +5737,7 @@ describe("App", () => {
       expect(screen.getAllByRole("heading", { name: "Get started" }).length).toBeGreaterThan(0),
     );
     openSetupStep("First switch");
-    fireEvent.click(screen.getByText("Open profile setup"));
+    fireEvent.click(screen.getByText("Open Profiles"));
 
     await waitFor(() => {
       expect(getAddProfileDialog().getByLabelText("Tool")).toHaveValue("claude");

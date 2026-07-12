@@ -234,7 +234,7 @@ export function SetupPanel({
     "Credentials stay on this Mac",
     "No telemetry",
     "No prompt or API traffic proxy",
-    "Powered by the included AI Switch runtime",
+    "Included runtime managed for you",
   ];
   const installedNow = snapshot.statuses.filter((status) => status.binary_found).map((status) => toolDisplayName(status.tool));
 
@@ -284,7 +284,7 @@ export function SetupPanel({
                       type="button"
                       onClick={() => onOpenSettings("keyring")}
                     >
-                      How AI Switch stores credentials
+                      How credentials stay local
                     </button>
                     <div className="onboarding-overview-meta">
                       <div>
@@ -361,7 +361,7 @@ export function SetupPanel({
                     </span>
                   </div>
                   <p className="inline-note">
-                    AI Switch uses the included runtime by default. Confirm that local storage and
+                    This app uses the included runtime by default. Confirm that local storage and
                     secure storage are ready, then save your first profile.
                   </p>
                   <p className="inline-note">{runtimeSummary.description}</p>
@@ -473,12 +473,12 @@ export function SetupPanel({
                       {account.matched_profile ? ` · matches ${account.matched_profile}` : ""}
                     </p>
                   </div>
-                  <span className="pill pill-ok">Current login</span>
+                  <span className="pill pill-ok">Ready to import</span>
                 </div>
                 {!supportsProfileImportMode(account.tool, toolCapabilities, "from_live") ? (
                   <p className="inline-note">
-                    This AI Switch release cannot import the current {titleCase(account.tool)} login
-                    directly. Open profile setup to choose another sign-in method.
+                    This release cannot save the current {titleCase(account.tool)} login directly.
+                    Choose another sign-in method instead.
                   </p>
                 ) : null}
                 <div className="stack-list">
@@ -497,7 +497,7 @@ export function SetupPanel({
                       disabled={mutationLock.isBusy}
                       onClick={() => openLiveImport(account)}
                     >
-                      Import login
+                      Import as profile
                     </button>
                   ) : (
                     <button
@@ -510,7 +510,7 @@ export function SetupPanel({
                         })
                       }
                     >
-                      Open profile setup
+                      Choose sign-in method
                     </button>
                   )}
                 </div>
@@ -550,7 +550,7 @@ export function SetupPanel({
                     <span className="pill pill-soft">Not installed</span>
                   </div>
                   <p className="inline-note">
-                    AI Switch can start without {titleCase(status.tool)}. Install the{" "}
+                    You can finish setup without {titleCase(status.tool)}. Install the{" "}
                     <code>{binary}</code> tool later when you want to manage that provider here.
                   </p>
                   <div className="button-row">
@@ -626,7 +626,7 @@ export function SetupPanel({
                     </p>
                     <div className="button-row">
                       <button className="ghost-button" type="button" onClick={() => onOpenProfiles("claude")}>
-                        Open profile setup
+                        Open Profiles
                       </button>
                     </div>
                   </div>
@@ -653,7 +653,7 @@ export function SetupPanel({
                   </p>
                 ) : null}
                 <p className="inline-note">
-                  AI Switch writes live credential files directly. Most people can skip this and
+                  This app writes live credential files directly. Most people can skip this and
                   still switch accounts normally.
                 </p>
                 <p className="inline-note">
@@ -671,15 +671,15 @@ export function SetupPanel({
       />
       {pendingLiveImport ? (
         <DialogSurface
-          ariaLabel={`Import ${titleCase(pendingLiveImport.tool)} Login`}
+          ariaLabel={`Import ${titleCase(pendingLiveImport.tool)} Profile`}
           className="quick-switch-palette profile-sheet"
           initialFocusSelector="input:not([disabled]), button:not([disabled])"
           onClose={closeLiveImport}
         >
             <div className="quick-switch-header">
               <div>
-                <p className="card-kicker">Import Current Login</p>
-                <h3>Import {titleCase(pendingLiveImport.tool)} login</h3>
+                <p className="card-kicker">Import current account</p>
+                <h3>Import {titleCase(pendingLiveImport.tool)} profile</h3>
               </div>
               <button className="ghost-button" type="button" onClick={closeLiveImport}>
                 Close
@@ -687,7 +687,7 @@ export function SetupPanel({
             </div>
             <p className="inline-note">
               Save the account that {titleCase(pendingLiveImport.tool)} is already using as a
-              reusable profile. This imported profile becomes the active saved login for this tool.
+              reusable profile. This imported profile becomes the active saved account for this tool.
             </p>
             <form className="stacked-form" onSubmit={(event) => submitImport(event, pendingLiveImport.tool)}>
               <label>
