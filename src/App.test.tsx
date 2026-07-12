@@ -4099,7 +4099,8 @@ describe("App", () => {
       expect(screen.getByText(/Expected set:\s*Client Acme/)).toBeInTheDocument();
       expect(screen.getByText(/Guard mode:\s*warn/)).toBeInTheDocument();
       expect(screen.getByText(/Default set:\s*work/)).toBeInTheDocument();
-      expect(screen.getByText("path · /code/acme")).toBeInTheDocument();
+      expect(screen.getAllByText("Folder").length).toBeGreaterThan(0);
+      expect(screen.getByText("Path prefix: /code/acme")).toBeInTheDocument();
       expect(screen.getByText("Matched rule ✓")).toBeInTheDocument();
       expect(screen.getAllByText("Client Acme").length).toBeGreaterThan(0);
       expect(screen.getByText("Project mismatch")).toBeInTheDocument();

@@ -124,6 +124,8 @@ export function WorkspacesPanel({
     ? contextDisplayLabel(settings, selectedRule.context)
     : null;
   const selectedRuleMatched = selectedRule?.key === matchedBindingKey;
+  const statusRuleScopeLabel = formatRuleScopeLabel(statusCard.scope);
+  const statusRuleTargetLabel = formatRuleTarget(statusCard.scope, statusCard.target);
 
   function activateExpectedWorkspaceTarget() {
     if (!expectedWorkspaceTarget) {
@@ -195,13 +197,13 @@ export function WorkspacesPanel({
                 <div className="workspaces-status-grid">
                   <div>
                     <span className="overview-current-set-cell-label">Rule type</span>
-                    <strong>{statusCard.scope}</strong>
-                    <p className="inline-note">Rule type: {statusCard.scope}</p>
+                    <strong>{statusRuleScopeLabel}</strong>
+                    <p className="inline-note">Rule type: {statusRuleScopeLabel}</p>
                   </div>
                   <div>
                     <span className="overview-current-set-cell-label">Matched target</span>
-                    <strong>{statusCard.target}</strong>
-                    <p className="inline-note">Matched target: {statusCard.target}</p>
+                    <strong>{statusRuleTargetLabel}</strong>
+                    <p className="inline-note">Matched target: {statusRuleTargetLabel}</p>
                   </div>
                   <div>
                     <span className="overview-current-set-cell-label">Default set</span>
@@ -257,10 +259,10 @@ export function WorkspacesPanel({
                         <div className="workspaces-rule-row-header">
                           <strong>{contextDisplayLabel(settings, binding.context)}</strong>
                           <span className={`pill ${isMatchedBinding ? "pill-ok" : "pill-soft"}`}>
-                            {isMatchedBinding ? "Matched" : binding.scope}
+                            {isMatchedBinding ? "Matched" : formatRuleScopeLabel(binding.scope)}
                           </span>
                         </div>
-                        <p>{binding.scope === "default" ? "default rule" : binding.target}</p>
+                        <p>{formatRuleTarget(binding.scope, binding.target)}</p>
                       </div>
                       <span className="desktop-source-chevron" aria-hidden="true">
                         ›
@@ -300,7 +302,7 @@ export function WorkspacesPanel({
                   active set is <strong>{currentContextDisplay}</strong>.
                 </p>
                 <p className="inline-note">
-                  Matched by this {statusCard.scope} rule: {statusCard.target}
+                  Matched by this {formatRuleScopeLabel(statusCard.scope).toLowerCase()} rule: {statusRuleTargetLabel}
                 </p>
                 <div className="button-row">
                   <button
@@ -343,13 +345,13 @@ export function WorkspacesPanel({
                     <h3>{selectedRuleContextLabel}</h3>
                   </div>
                   <span className={`pill ${selectedRuleMatched ? "pill-ok" : "pill-soft"}`}>
-                    {selectedRuleMatched ? "Matched" : selectedRule.scope}
+                    {selectedRuleMatched ? "Matched" : formatRuleScopeLabel(selectedRule.scope)}
                   </span>
                 </div>
                 <div className="workspaces-rule-detail-grid">
                   <div>
                     <span className="overview-current-set-cell-label">Rule type</span>
-                    <strong>{selectedRule.scope}</strong>
+                    <strong>{formatRuleScopeLabel(selectedRule.scope)}</strong>
                   </div>
                   <div>
                     <span className="overview-current-set-cell-label">Set</span>
@@ -357,7 +359,7 @@ export function WorkspacesPanel({
                   </div>
                   <div>
                     <span className="overview-current-set-cell-label">Target</span>
-                    <strong>{selectedRule.scope === "default" ? "Default set" : selectedRule.target}</strong>
+                    <strong>{formatRuleTarget(selectedRule.scope, selectedRule.target)}</strong>
                   </div>
                 </div>
                 <p className="inline-note">
@@ -566,4 +568,29 @@ function unbindTargetForBinding(scope: string, target: string): WorkspaceUnbindI
     return { scope: "git_remote", pattern: target };
   }
   return { scope: "default" };
+}
+
+function formatRuleScopeLabel(scope: string) {
+  switch (scope) {
+    case "path":
+      return "Folder";
+    case "git_remote":
+      return "Git remote";
+    case "default":
+      return "Default";
+    case "none":
+      return "No match";
+    default:
+      return scope.replace(/_/g, " ");
+  }
+}
+
+function formatRuleTarget(scope: string, target: string) {
+  if (scope === "default" || target === "default") {
+    return "Default set";
+  }
+  if (!target || target === "none") {
+    return "No target";
+  }
+  return target;
 }

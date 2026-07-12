@@ -73,6 +73,8 @@ export function OverviewPanel({
   const workspaceSummaryLabel = "Expected set";
   const expectedWorkspaceDisplay = contextDisplayLabel(settings, workspaceStatus.expectedContext);
   const currentWorkspaceDisplay = contextDisplayLabel(settings, workspaceStatus.currentContext);
+  const matchedRuleLabel = formatRuleScopeLabel(workspaceStatus.scope);
+  const matchedRuleTarget = formatRuleTarget(workspaceStatus.scope, workspaceStatus.target);
   const workspaceResult = lastCommandResults.global.workspace;
   const contextResult = lastCommandResults.global.context;
   const currentSetLabel = activeSetLabel(settings, snapshot);
@@ -257,7 +259,7 @@ export function OverviewPanel({
                   </div>
                   <div>
                     <span className="overview-current-set-cell-label">Matched rule</span>
-                    <strong>{workspaceStatus.scope}: {workspaceStatus.target}</strong>
+                    <strong>{matchedRuleLabel}: {matchedRuleTarget}</strong>
                   </div>
                 </div>
                 {hasWorkspaceMismatch ? (
@@ -457,6 +459,31 @@ export function OverviewPanel({
       </div>
     </SectionCard>
   );
+}
+
+function formatRuleScopeLabel(scope: string) {
+  switch (scope) {
+    case "path":
+      return "Folder";
+    case "git_remote":
+      return "Git remote";
+    case "default":
+      return "Default";
+    case "none":
+      return "No match";
+    default:
+      return titleCase(scope.replace(/_/g, " "));
+  }
+}
+
+function formatRuleTarget(scope: string, target: string) {
+  if (scope === "default" || target === "default") {
+    return "Default set";
+  }
+  if (!target || target === "none") {
+    return "No target";
+  }
+  return target;
 }
 
 function ToolInspector({
