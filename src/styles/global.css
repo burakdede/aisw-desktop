@@ -2265,19 +2265,19 @@ button {
   align-items: flex-start;
 }
 
-.profiles-library-summary {
+.profiles-library-strip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
 
-.profiles-library-summary > div {
+.profiles-library-strip > div {
   display: grid;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
   padding: 9px 10px;
-  border-radius: 10px;
-  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+  border-radius: 9px;
+  background: color-mix(in srgb, CanvasText 3%, Canvas 97%);
 }
 
 .profiles-overview-meta {
@@ -3447,29 +3447,29 @@ button {
   align-items: flex-start;
 }
 
-.profiles-detail-meta {
+.profiles-detail-strip,
+.profiles-tool-focus-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
-.profiles-detail-meta > div {
+.profiles-detail-strip > div,
+.profiles-tool-focus-strip > div {
   display: grid;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
   padding: 9px 10px;
   border-radius: 10px;
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
 
-.profiles-tool-focus-grid,
 .profiles-management-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
-.profiles-tool-focus-grid > div,
 .profiles-management-block,
 .profiles-technical-block {
   display: grid;
@@ -4123,9 +4123,9 @@ button {
   .overview-tool-facts,
   .overview-focus-grid,
   .overview-project-grid,
-  .profiles-library-summary,
-  .profiles-detail-meta,
-  .profiles-tool-focus-grid,
+  .profiles-library-strip,
+  .profiles-detail-strip,
+  .profiles-tool-focus-strip,
   .profiles-management-grid {
     grid-template-columns: 1fr;
   }

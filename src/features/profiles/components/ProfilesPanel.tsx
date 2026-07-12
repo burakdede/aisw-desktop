@@ -238,6 +238,24 @@ export function ProfilesPanel({
     toolStatus?.credential_backend
       ? formatBackendLabel(toolStatus.credential_backend)
       : "Stored";
+  const inventorySummaryItems = [
+    {
+      label: "Visible",
+      value: `${filteredInventoryProfiles.length} row${filteredInventoryProfiles.length === 1 ? "" : "s"}`,
+    },
+    {
+      label: "Current tool",
+      value: toolDisplayName(tool),
+    },
+    {
+      label: "Active in view",
+      value: String(filteredActiveProfilesCount),
+    },
+    {
+      label: "Current profile",
+      value: currentToolActiveProfile,
+    },
+  ];
   const restoreSheetMode = pendingRestore?.mode ?? null;
   const removalSheetProfile = pendingRemoval
     ? profiles.find((entry) => entry.name === pendingRemoval) ?? null
@@ -521,23 +539,13 @@ export function ProfilesPanel({
                   {activeProfilesCount ? `${activeProfilesCount} active` : "No active profiles"}
                 </span>
               </div>
-              <div className="profiles-library-summary">
-                <div>
-                  <span className="overview-current-set-cell-label">Visible</span>
-                  <strong>{filteredInventoryProfiles.length} row{filteredInventoryProfiles.length === 1 ? "" : "s"}</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Current tool</span>
-                  <strong>{toolDisplayName(tool)}</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Active in view</span>
-                  <strong>{filteredActiveProfilesCount}</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Current profile</span>
-                  <strong>{currentToolActiveProfile}</strong>
-                </div>
+              <div className="profiles-library-strip" aria-label="Profile library summary">
+                {inventorySummaryItems.map((item) => (
+                  <div key={item.label}>
+                    <span className="overview-current-set-cell-label">{item.label}</span>
+                    <strong>{item.value}</strong>
+                  </div>
+                ))}
               </div>
               <div className="profiles-list-header" aria-hidden="true">
                 <span>Name</span>
@@ -712,7 +720,7 @@ export function ProfilesPanel({
                           {profileStatusSummary(snapshot, tool, selectedProfileEntry.name, toolStatus)}
                         </span>
                       </div>
-                      <div className="profiles-tool-focus-grid">
+                      <div className="profiles-tool-focus-strip">
                         <div>
                           <span className="overview-current-set-cell-label">Current tool</span>
                           <strong>{titleCase(tool)}</strong>
@@ -771,7 +779,7 @@ export function ProfilesPanel({
                       </div>
                     </div>
                   </div>
-                  <div className="profiles-detail-meta">
+                  <div className="profiles-detail-strip">
                     <div>
                       <span className="overview-current-set-cell-label">Stored name</span>
                       <strong>{selectedProfileEntry.name}</strong>
@@ -1095,8 +1103,8 @@ export function ProfilesPanel({
               </>
             ) : (
               <article className="diagnostic-card profiles-inspector-card">
-                <div className="profiles-tool-focus-main">
-                  <div className="stack-list">
+                  <div className="profiles-tool-focus-main">
+                    <div className="stack-list">
                     <div className="profiles-tool-focus-header">
                       <div>
                         <p className="card-kicker">Inspector</p>
@@ -1117,7 +1125,7 @@ export function ProfilesPanel({
                         {currentToolStatusLabel}
                       </span>
                     </div>
-                    <div className="profiles-tool-focus-grid">
+                    <div className="profiles-tool-focus-strip">
                       <div>
                         <span className="overview-current-set-cell-label">Current tool</span>
                         <strong>{titleCase(tool)}</strong>
