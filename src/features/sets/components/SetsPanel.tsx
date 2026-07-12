@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { SplitView } from "../../../components/SplitView";
-import { SourceListPanel } from "../../../components/SourceListPanel";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { ContextsPanel } from "../../contexts/components/ContextsPanel";
 import { WorkspacesPanel } from "../../workspaces/components/WorkspacesPanel";
@@ -45,19 +44,50 @@ export function SetsPanel({
   ];
 
   return (
-    <SplitView
-      className="sets-mode-split"
-      primaryClassName="sets-mode-pane"
-      secondaryClassName="sets-detail-pane"
-      primary={
-        <SourceListPanel
-          className="sets-source-card"
-          kicker="Sets"
-          title="Sets"
-          listLabel="Sets sections"
-          badge={<span className="pill pill-soft">{mode === "sets" ? "Library" : "Rules"}</span>}
-          note="Keep reusable switching sets and project-aware expectations in one compact desktop workflow."
-        >
+    <>
+      <article className="diagnostic-card sets-intro-card">
+        <div className="sets-intro-copy">
+          <div>
+            <p className="card-kicker">Sets</p>
+            <h3>{localSetCount ? `${localSetCount} saved set${localSetCount === 1 ? "" : "s"}` : "No saved sets yet"}</h3>
+            <p className="inline-note">
+              People think in work, personal, and client modes. Keep reusable switching sets and project-aware expectations in one compact desktop workflow.
+            </p>
+          </div>
+          <span className="pill pill-soft">{mode === "sets" ? "Library" : "Rules"}</span>
+        </div>
+        <div className="sets-intro-grid">
+          <div>
+            <span className="overview-current-set-cell-label">Saved sets</span>
+            <strong>{localSetCount}</strong>
+          </div>
+          <div>
+            <span className="overview-current-set-cell-label">Imported sets</span>
+            <strong>{importedSetCount}</strong>
+          </div>
+          <div>
+            <span className="overview-current-set-cell-label">Active sets</span>
+            <strong>{activeSetCount}</strong>
+          </div>
+        </div>
+      </article>
+      <SplitView
+        className="sets-mode-split"
+        primaryClassName="sets-mode-pane"
+        secondaryClassName="sets-detail-pane"
+        primary={
+          <article className="diagnostic-card sets-nav-card">
+            <div className="desktop-pane-section-header">
+              <div>
+                <p className="card-kicker">Workspace</p>
+                <h3>Sets</h3>
+              </div>
+              <span className="pill pill-soft">{mode === "sets" ? "Library" : "Rules"}</span>
+            </div>
+            <p className="inline-note">
+              Move between saved sets and project rules without leaving this workspace.
+            </p>
+            <div aria-label="Sets sections" className="stack-list desktop-list-stack">
             {sections.map((section) => (
               <button
                 key={section.value}
@@ -78,25 +108,28 @@ export function SetsPanel({
                   <p id={`sets-section-summary-${section.value}`} className="inline-note">
                     {section.summary}
                   </p>
+                  <p className="inline-note">{section.note}</p>
                 </div>
                 <span className="desktop-source-chevron" aria-hidden="true">
                   ›
                 </span>
               </button>
             ))}
-        </SourceListPanel>
-      }
-      secondary={
-        mode === "sets" ? (
-          <ContextsPanel snapshot={snapshot} settings={settings} />
-        ) : (
-          <WorkspacesPanel
-            snapshot={snapshot}
-            settings={settings}
-            onOpenContexts={onOpenContexts}
-          />
-        )
-      }
-    />
+            </div>
+          </article>
+        }
+        secondary={
+          mode === "sets" ? (
+            <ContextsPanel snapshot={snapshot} settings={settings} />
+          ) : (
+            <WorkspacesPanel
+              snapshot={snapshot}
+              settings={settings}
+              onOpenContexts={onOpenContexts}
+            />
+          )
+        }
+      />
+    </>
   );
 }

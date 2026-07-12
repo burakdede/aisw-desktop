@@ -1805,7 +1805,44 @@ button {
   min-width: 0;
 }
 
-.sets-source-card {
+.sets-intro-card {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+  margin-bottom: 14px;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, Canvas 95%, AccentColor 3%), color-mix(in srgb, Canvas 98%, CanvasText 2%));
+}
+
+.sets-intro-copy {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.sets-intro-copy p {
+  margin: 4px 0 0;
+  max-width: 54ch;
+}
+
+.sets-intro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sets-intro-grid > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
+.sets-nav-card {
   gap: 12px;
 }
 
@@ -3714,6 +3751,7 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .sets-intro-grid,
   .workspaces-intro-grid,
   .workspaces-status-grid,
   .activity-intro-grid,
@@ -3744,6 +3782,7 @@ button {
   }
 
   .settings-overview-copy,
+  .sets-intro-copy,
   .workspaces-intro-copy,
   .activity-intro-copy,
   .backups-intro-copy,
