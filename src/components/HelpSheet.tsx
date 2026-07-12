@@ -21,7 +21,7 @@ export function HelpSheet({
 
   return (
     <DialogSurface
-      ariaLabel="AI Switch Help"
+      ariaLabel="Using AI Switch"
       className="quick-switch-palette profile-sheet"
       initialFocusSelector="button:not([disabled])"
       onClose={onClose}
@@ -29,7 +29,7 @@ export function HelpSheet({
         <div className="quick-switch-header">
           <div>
             <p className="card-kicker">Help</p>
-            <h3>AI Switch at a glance</h3>
+            <h3>Using AI Switch</h3>
             <p className="inline-note">
               AI Switch keeps account switching local to this Mac and stays focused on safe profile
               changes, verification, and recovery.

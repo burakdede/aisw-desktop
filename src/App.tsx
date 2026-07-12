@@ -608,7 +608,7 @@ export function App() {
       <main className="app-shell app-shell-onboarding">
         <section className="hero-card hero-card-compact">
           <p className="eyebrow">AI Switch</p>
-          <h1>AI Switch could not open the desktop switchboard.</h1>
+          <h1>AI Switch could not open this window.</h1>
           <p className="lede">
             Check the included runtime, local permissions, and compatibility details
             before continuing.
@@ -824,7 +824,7 @@ export function App() {
               </div>
               <div>
                 <span className="overview-current-set-cell-label">Recommended</span>
-                <strong>Included runtime managed by AI Switch</strong>
+                <strong>Included runtime</strong>
               </div>
               <div>
                 <span className="overview-current-set-cell-label">Next step</span>
@@ -1127,7 +1127,7 @@ function runtimeSelectionLabel(runtimeKind: AppBootstrap["settings"]["runtime_ki
 
 function sectionTitle(section: string, setupFocused = false) {
   if (setupFocused) {
-    return "Welcome to AI Switch";
+    return "Get started";
   }
   switch (section) {
     case "overview":

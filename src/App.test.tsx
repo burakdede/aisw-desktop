@@ -604,7 +604,7 @@ describe("App", () => {
     expect(screen.getByText("Current selection")).toBeInTheDocument();
     expect(screen.getByText("System runtime override")).toBeInTheDocument();
     expect(screen.getByText("Recommended")).toBeInTheDocument();
-    expect(screen.getByText("Included runtime managed by AI Switch")).toBeInTheDocument();
+    expect(screen.getByText("Included runtime")).toBeInTheDocument();
     expect(
       screen.getByText("Compatibility details"),
     ).toBeInTheDocument();
@@ -613,7 +613,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Runtime Settings" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Runtime" })).not.toBeInTheDocument();
     expect(screen.queryByText("Runtime summary")).not.toBeInTheDocument();
-    expect(screen.queryByText("Welcome to AI Switch")).not.toBeInTheDocument();
+    expect(screen.queryByText("Get started")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Overview" })).not.toBeInTheDocument();
   });
 
@@ -736,7 +736,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("AI Switch could not open the desktop switchboard.")).toBeInTheDocument();
+      expect(screen.getByText("AI Switch could not open this window.")).toBeInTheDocument();
     });
     expect(screen.getByText("AI Switch could not resolve a compatible runtime")).toBeInTheDocument();
     expect(
@@ -6097,15 +6097,15 @@ describe("App", () => {
       handlers?.["menu-open-help"]?.({});
     });
 
-    const dialog = await screen.findByRole("dialog", { name: "AI Switch Help" });
-    expect(within(dialog).getByText("AI Switch at a glance")).toBeInTheDocument();
+    const dialog = await screen.findByRole("dialog", { name: "Using AI Switch" });
+    expect(within(dialog).getByText("Using AI Switch")).toBeInTheDocument();
     expect(within(dialog).getByText("Local profile switching")).toBeInTheDocument();
 
     fireEvent.click(within(dialog).getByRole("button", { name: "Open Diagnostics" }));
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Diagnostics" })).toHaveClass("nav-button-active");
-      expect(screen.queryByRole("dialog", { name: "AI Switch Help" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("dialog", { name: "Using AI Switch" })).not.toBeInTheDocument();
     });
   });
 
