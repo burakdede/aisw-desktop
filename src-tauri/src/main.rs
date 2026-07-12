@@ -41,6 +41,7 @@ fn main() {
             commands::get_settings,
             commands::open_app_data_folder,
             commands::open_reference_document,
+            commands::open_issue_tracker,
             commands::set_tray_visibility,
             commands::get_launch_at_login_status,
             commands::set_launch_at_login,

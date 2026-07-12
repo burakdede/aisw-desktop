@@ -77,6 +77,24 @@ pub async fn open_reference_document(kind: String) -> DesktopResult<String> {
 }
 
 #[tauri::command]
+pub async fn open_issue_tracker() -> DesktopResult<String> {
+    let url = std::env::var("AI_SWITCH_DESKTOP_ISSUES_URL")
+        .ok()
+        .or_else(|| std::env::var("AISW_DESKTOP_ISSUES_URL").ok())
+        .ok_or_else(|| ErrorPayload {
+            kind: GuiErrorKind::Unknown,
+            message: "AI Switch does not have an issue tracker URL configured in this build.".to_owned(),
+            remediation: Some(
+                "Set AI_SWITCH_DESKTOP_ISSUES_URL for this build or export a support report instead."
+                    .to_owned(),
+            ),
+        })?;
+
+    open_target_with_default_app(&url, "AI Switch could not open the issue tracker.")?;
+    Ok(url)
+}
+
+#[tauri::command]
 pub async fn set_tray_visibility(app: tauri::AppHandle, visible: bool) -> DesktopResult<()> {
     if let Some(tray) = app.tray_by_id("main-tray") {
         tray.set_visible(visible).map_err(|error| ErrorPayload {
@@ -505,30 +523,37 @@ async fn make_bridge(state: &tauri::State<'_, AppState>) -> DesktopResult<CliAis
 }
 
 fn open_path_with_default_app(path: &std::path::Path) -> DesktopResult<()> {
+    open_target_with_default_app(
+        &path.display().to_string(),
+        "AI Switch could not open the selected file.",
+    )
+}
+
+fn open_target_with_default_app(target: &str, failure_message: &str) -> DesktopResult<()> {
     #[cfg(target_os = "macos")]
     let mut command = {
         let mut command = Command::new("open");
-        command.arg(path);
+        command.arg(target);
         command
     };
 
     #[cfg(target_os = "windows")]
     let mut command = {
         let mut command = Command::new("cmd");
-        command.args(["/C", "start", "", &path.display().to_string()]);
+        command.args(["/C", "start", "", target]);
         command
     };
 
     #[cfg(all(not(target_os = "macos"), not(target_os = "windows")))]
     let mut command = {
         let mut command = Command::new("xdg-open");
-        command.arg(path);
+        command.arg(target);
         command
     };
 
     command.status().map_err(|error| ErrorPayload {
         kind: GuiErrorKind::Unknown,
-        message: "AI Switch could not open the activity log file.".to_owned(),
+        message: failure_message.to_owned(),
         remediation: Some(error.to_string()),
     })?;
 

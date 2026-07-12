@@ -16,6 +16,7 @@ pub const MENU_OPEN_ADD_PROFILE_EVENT: &str = "menu-open-add-profile";
 pub const MENU_RUN_VERIFY_EVENT: &str = "menu-run-verify";
 pub const MENU_OPEN_TROUBLESHOOTING_EVENT: &str = "menu-open-troubleshooting";
 pub const MENU_OPEN_HELP_EVENT: &str = "menu-open-help";
+pub const MENU_OPEN_ISSUES_EVENT: &str = "menu-open-issues";
 pub const MENU_REAPPLY_ACTIVE_PROFILE_EVENT: &str = "menu-reapply-active-profile";
 
 const SETTINGS_ID: &str = "menu.settings";
@@ -44,7 +45,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let import_current_login = MenuItem::with_id(
         app,
         IMPORT_CURRENT_LOGIN_ID,
-        "Import Current Profile…",
+        "Import Current Login…",
         true,
         None::<&str>,
     )?;
@@ -63,7 +64,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let verify = MenuItem::with_id(
         app,
         VERIFY_ID,
-        "Run Verification",
+        "Verify Current State",
         true,
         Some("CmdOrCtrl+Shift+V"),
     )?;
@@ -109,7 +110,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let help_issues = MenuItem::with_id(
         app,
         "menu.help.issues",
-        "Export Support Report…",
+        "Open GitHub Issues",
         true,
         None::<&str>,
     )?;
@@ -149,7 +150,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         .iter()
         .map(|item| item as &dyn IsMenuItem<R>)
         .collect::<Vec<_>>();
-    let profile_menu = Submenu::with_items(app, "Switching", true, &profile_refs)?;
+    let profile_menu = Submenu::with_items(app, "Profile", true, &profile_refs)?;
 
     let view_items: Vec<MenuItemKind<R>> = vec![
         overview.kind(),
@@ -243,7 +244,7 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
             let _ = app.emit(MENU_OPEN_TROUBLESHOOTING_EVENT, ());
         }
         "menu.help.issues" => {
-            let _ = app.emit(MENU_EXPORT_DIAGNOSTICS_EVENT, ());
+            let _ = app.emit(MENU_OPEN_ISSUES_EVENT, ());
         }
         _ => {}
     }

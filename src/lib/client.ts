@@ -124,6 +124,10 @@ export async function getSnapshot(): Promise<AppSnapshot> {
   return appSnapshotSchema.parse(await invokeDesktop("get_snapshot"));
 }
 
+export async function openIssueTracker(): Promise<string> {
+  return openedPathSchema.parse(await invokeDesktop("open_issue_tracker"));
+}
+
 export async function addProfile(input: AddProfileInput): Promise<MutationResponse> {
   return mutationResponseSchema.parse(
     await invokeDesktop("add_profile", {

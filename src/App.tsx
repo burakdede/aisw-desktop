@@ -43,6 +43,7 @@ import {
   activateProfileSet,
   exportDiagnosticBundle,
   openReferenceDocument,
+  openIssueTracker,
   updateSettings,
   useAllProfiles,
   useProfile,
@@ -526,6 +527,18 @@ export function App() {
         if (!active) return;
         setActiveNav("diagnostics");
         invalidateDiagnostics();
+      });
+    }).then((dispose) => {
+      if (typeof dispose === "function") {
+        disposers.push(dispose);
+      }
+    });
+
+    void listenDesktopEvent("menu-open-issues", () => {
+      if (!active) return;
+      void openIssueTracker().catch(() => {
+        if (!active) return;
+        exportDiagnosticBundleMutation.mutate();
       });
     }).then((dispose) => {
       if (typeof dispose === "function") {

@@ -6156,6 +6156,77 @@ describe("App", () => {
     });
   });
 
+  it("opens the issue tracker from the app menu", async () => {
+    const calls: string[] = [];
+    const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      calls.push(command);
+      return (
+        {
+          open_issue_tracker: "https://github.com/example/ai-switch/issues",
+        } as Record<string, unknown>
+      )[command] ?? defaultMock[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["menu-open-issues"]?.({});
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(calls).toContain("open_issue_tracker");
+      expect(calls).not.toContain("export_diagnostic_bundle");
+    });
+  });
+
+  it("falls back to diagnostic export when opening the issue tracker fails", async () => {
+    const calls: string[] = [];
+    const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      calls.push(command);
+      if (command === "open_issue_tracker") {
+        throw new Error("Issue tracker unavailable");
+      }
+      return (
+        {
+          export_diagnostic_bundle: {
+            path: "/tmp/ai-switch/ai-switch-diagnostics-123.json",
+            filename: "ai-switch-diagnostics-123.json",
+            generated_at: "unix:123",
+          },
+        } as Record<string, unknown>
+      )[command] ?? defaultMock[command];
+    };
+
+    await renderApp();
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
+
+    const handlers = (window as typeof window & {
+      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    }).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    await act(async () => {
+      handlers?.["menu-open-issues"]?.({});
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(calls).toContain("open_issue_tracker");
+      expect(calls).toContain("export_diagnostic_bundle");
+      expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
+        title: "Support report exported",
+        body: "Saved ai-switch-diagnostics-123.json.",
+      });
+    });
+  });
+
   it("opens import current login from the app menu in the profiles flow", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
