@@ -536,7 +536,7 @@ export function DiagnosticsPanel({
                         <div className="stack-list">
                           <p className="inline-note">
                             This AI Switch release cannot import the current {toolDisplayName(fix.importTarget.tool)} login
-                            directly. Open profile setup to choose another sign-in method.
+                            directly. Open account setup to choose another sign-in method.
                           </p>
                           <button
                             className="ghost-button"
@@ -551,7 +551,7 @@ export function DiagnosticsPanel({
                               })
                             }
                           >
-                            Open profile setup
+                            Open account setup
                           </button>
                         </div>
                       )
@@ -878,7 +878,7 @@ function buildQuickFixes(
   if (keyringIssue) {
     fixes.push({
       title: "Use file-backed storage",
-      detail: "Open profile setup with file-backed credential storage preselected for the next import or add flow.",
+      detail: "Open account setup with file-backed credential storage preselected for the next import or add flow.",
       label: "Use file-backed storage",
       status: keyringIssue.status,
       action: () =>

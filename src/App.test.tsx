@@ -2657,9 +2657,9 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
-    expect(screen.getByRole("button", { name: "Open profile setup" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open account setup" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Open profile setup" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open account setup" }));
 
     await waitFor(() => expect(getAddProfileDialog().getByLabelText("Tool")).toHaveValue("claude"));
     expect(getAddProfileDialog().getByLabelText("Tool")).toHaveValue("claude");
@@ -4467,12 +4467,12 @@ describe("App", () => {
 
     await renderApp();
     await openSetsSection();
-    fireEvent.click(screen.getByText("Use imported set"));
+    fireEvent.click(screen.getByText("Use this set"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
     });
-    expect(screen.getByText("Last imported-set result: Activated imported set Client Acme.")).toBeInTheDocument();
+    expect(screen.getByText("Last set result: Activated set Client Acme.")).toBeInTheDocument();
   });
 
   it("marks the active CLI context in contexts and disables reactivation", async () => {
@@ -4536,7 +4536,7 @@ describe("App", () => {
     await renderApp();
     await openSetsSection();
 
-    const activeContextButton = screen.getByRole("button", { name: "Current imported set" });
+    const activeContextButton = screen.getByRole("button", { name: "Current set" });
     expect(activeContextButton).toBeDisabled();
     expect(screen.getByText("Client Acme ✓")).toBeInTheDocument();
   });
@@ -6521,9 +6521,9 @@ describe("App", () => {
       handlers?.["tray-command-result"]?.({
         scope: "global",
         id: "context",
-        label: "Use imported set",
+        label: "Use set",
         status: "success",
-        message: "Activated imported set client-acme.",
+        message: "Activated set client-acme.",
       });
       await Promise.resolve();
     });
@@ -6610,22 +6610,22 @@ describe("App", () => {
       handlers?.["tray-command-result"]?.({
         scope: "global",
         id: "context",
-        label: "Use imported set",
+        label: "Use set",
         status: "error",
-        message: "Imported set switch failed.",
-        remediation: "Re-open AI Switch and verify the saved imported set.",
+        message: "Set switch failed.",
+        remediation: "Re-open AI Switch and verify the saved set.",
       });
       await Promise.resolve();
     });
 
     expect(
       screen.getByText(
-        "Last imported-set result: Imported set switch failed. Remediation: Re-open AI Switch and verify the saved imported set.",
+        "Last set result: Set switch failed. Remediation: Re-open AI Switch and verify the saved set.",
       ),
     ).toBeInTheDocument();
     expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
-      title: "Use imported set",
-      body: "Imported set switch failed. Re-open AI Switch and verify the saved imported set.",
+      title: "Use set",
+      body: "Set switch failed. Re-open AI Switch and verify the saved set.",
     });
   });
 
@@ -7485,7 +7485,7 @@ describe("App", () => {
     await openSetsSection();
 
     expect(screen.getAllByText("Client Acme").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByText("Imported set id: client-acme")).toBeInTheDocument();
+    expect(screen.getByText("Set ID: client-acme")).toBeInTheDocument();
     expect(screen.getAllByText("claude: Office · codex: Code Work · gemini: none")).toHaveLength(1);
     expect(screen.getAllByRole("option", { name: "Office" }).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("option", { name: "Code Work" })).toBeInTheDocument();

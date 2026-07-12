@@ -548,7 +548,7 @@ export function App() {
       const normalizedRemediation = normalizeRuntimeLanguage(payload.remediation);
       const normalizedLabel =
         payload.scope === "global" && payload.id === "context"
-          ? "Use imported set"
+          ? "Use set"
           : normalizeRuntimeLanguage(payload.label);
 
       if (payload.scope === "tool") {

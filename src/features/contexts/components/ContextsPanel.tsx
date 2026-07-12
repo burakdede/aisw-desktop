@@ -359,7 +359,7 @@ export function ContextsPanel({
                         </span>
                       </div>
                       {contextDisplayLabel(settings, context.name) !== context.name ? (
-                        <p className="inline-note">Imported set id: {context.name}</p>
+                        <p className="inline-note">Set ID: {context.name}</p>
                       ) : null}
                       <p>
                         {Object.entries(context.profiles)
@@ -384,7 +384,7 @@ export function ContextsPanel({
                         })
                       }
                     >
-                      {activeContext === context.name ? "Current imported set" : "Use imported set"}
+                      {activeContext === context.name ? "Current set" : "Use this set"}
                     </button>
                   </article>
                 ))}
@@ -399,7 +399,7 @@ export function ContextsPanel({
 
             {contextResult ? (
               <p className={`inline-note ${contextResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
-                Last imported-set result: {normalizeRuntimeLanguage(contextResult.message)}
+                Last set result: {normalizeRuntimeLanguage(contextResult.message)}
                 {contextResult.remediation
                   ? ` Remediation: ${normalizeRuntimeLanguage(contextResult.remediation)}`
                   : ""}

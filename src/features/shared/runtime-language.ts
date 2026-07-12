@@ -21,10 +21,10 @@ export function normalizeRuntimeLanguage(text: string | null | undefined): strin
     .replace(/AISW cannot/g, "AI Switch cannot")
     .replace(/AISW Desktop/g, "AI Switch")
     .replace(/\bAISW\b/g, "AI Switch")
-    .replace(/saved imported context/g, "saved imported set")
-    .replace(/Saved imported context/g, "Saved imported set")
-    .replace(/imported context/g, "imported set")
-    .replace(/Imported context/g, "Imported set")
-    .replace(/CLI context/g, "imported set")
-    .replace(/cli context/g, "imported set");
+    .replace(/saved imported context/g, "saved set")
+    .replace(/Saved imported context/g, "Saved set")
+    .replace(/imported context/g, "set")
+    .replace(/Imported context/g, "Set")
+    .replace(/CLI context/g, "set")
+    .replace(/cli context/g, "set");
 }

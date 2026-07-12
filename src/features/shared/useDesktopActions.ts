@@ -221,10 +221,10 @@ export function useDesktopActions() {
     }),
     useContextMutation: useMutation({
       mutationFn: queueMutation(
-        "Use imported set",
+        "Use set",
         useContext,
         () => ({ type: "global", id: "context" }),
-        (variables) => `Activated imported set ${variables.label ?? variables.context}.`,
+        (variables) => `Activated set ${variables.label ?? variables.context}.`,
       ),
       onSettled: invalidate,
     }),

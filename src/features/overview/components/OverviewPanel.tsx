@@ -323,7 +323,7 @@ export function OverviewPanel({
               ) : null}
               {contextResult ? (
                 <p className={`inline-note overview-recent-item ${contextResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
-                  Last imported-set result: {normalizeRuntimeLanguage(contextResult.message)}
+                  Last set result: {normalizeRuntimeLanguage(contextResult.message)}
                   {contextResult.remediation
                     ? ` Remediation: ${normalizeRuntimeLanguage(contextResult.remediation)}`
                     : ""}
@@ -613,7 +613,7 @@ function ToolInspector({
             <div className="stack-list">
               <p className="inline-note">
                 This app cannot import the current {toolDisplayName(status.tool)} login directly.
-                Open profile setup to choose another sign-in method.
+                Open account setup to choose another sign-in method.
               </p>
               <button
                 className="ghost-button"
@@ -621,7 +621,7 @@ function ToolInspector({
                 disabled={mutationLocked}
                 onClick={() => onAddProfile(status.tool)}
               >
-                Open profile setup
+                Open account setup
               </button>
             </div>
           )}
