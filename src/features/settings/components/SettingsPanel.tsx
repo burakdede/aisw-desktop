@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SectionCard } from "../../../components/SectionCard";
 import { SourceListPanel } from "../../../components/SourceListPanel";
 import { SplitView } from "../../../components/SplitView";
@@ -54,6 +54,14 @@ export function SettingsPanel({
   onResetOnboarding?: () => void;
 }) {
   const queryClient = useQueryClient();
+  const sectionButtonRefs = useRef<Record<SettingsSection, HTMLButtonElement | null>>({
+    general: null,
+    runtime: null,
+    shell: null,
+    keyring: null,
+    updates: null,
+    advanced: null,
+  });
   const { updateSettingsMutation, checkForUpdatesMutation, installUpdateMutation, mutationLock } =
     useDesktopActions();
   const [runtimeKind, setRuntimeKind] = useState(settings.runtime_kind);
@@ -234,6 +242,70 @@ export function SettingsPanel({
     setGeneralMessage("Onboarding reset. AI Switch will reopen the setup assistant.");
   }
 
+  function focusSection(section: SettingsSection) {
+    window.requestAnimationFrame(() => {
+      sectionButtonRefs.current[section]?.focus();
+    });
+  }
+
+  function moveSectionSelection(
+    currentSection: SettingsSection,
+    direction: "next" | "previous" | "first" | "last",
+  ) {
+    const currentIndex = SETTINGS_SECTIONS.indexOf(currentSection);
+    if (currentIndex === -1) {
+      return;
+    }
+
+    const targetIndex =
+      direction === "first"
+        ? 0
+        : direction === "last"
+          ? SETTINGS_SECTIONS.length - 1
+          : direction === "next"
+            ? Math.min(currentIndex + 1, SETTINGS_SECTIONS.length - 1)
+            : Math.max(currentIndex - 1, 0);
+    const targetSection = SETTINGS_SECTIONS[targetIndex];
+    if (!targetSection || targetSection === currentSection) {
+      return;
+    }
+
+    setSelectedSection(targetSection);
+    focusSection(targetSection);
+  }
+
+  function handleSectionKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    section: SettingsSection,
+  ) {
+    if (event.altKey || event.ctrlKey || event.metaKey) {
+      return;
+    }
+
+    switch (event.key) {
+      case "ArrowDown":
+      case "ArrowRight":
+        event.preventDefault();
+        moveSectionSelection(section, "next");
+        break;
+      case "ArrowUp":
+      case "ArrowLeft":
+        event.preventDefault();
+        moveSectionSelection(section, "previous");
+        break;
+      case "Home":
+        event.preventDefault();
+        moveSectionSelection(section, "first");
+        break;
+      case "End":
+        event.preventDefault();
+        moveSectionSelection(section, "last");
+        break;
+      default:
+        break;
+    }
+  }
+
   function saveGeneralPreferences() {
     onUpdateDesktopPreferences?.({
       appearance,
@@ -286,6 +358,9 @@ export function SettingsPanel({
               {SETTINGS_SECTIONS.map((section) => (
                 <button
                   key={section}
+                  ref={(node) => {
+                    sectionButtonRefs.current[section] = node;
+                  }}
                   type="button"
                   aria-label={sectionLabel(section)}
                   aria-describedby={`settings-section-summary-${section}`}
@@ -294,6 +369,7 @@ export function SettingsPanel({
                     selectedSection === section ? "desktop-source-row-selected" : ""
                   }`}
                   onClick={() => setSelectedSection(section)}
+                  onKeyDown={(event) => handleSectionKeyDown(event, section)}
                 >
                   <div className="settings-nav-row-copy">
                     <strong>{sectionLabel(section)}</strong>

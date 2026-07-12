@@ -8115,6 +8115,36 @@ describe("App", () => {
     });
   });
 
+  it("supports arrow-key navigation in settings sections", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+
+    const generalButton = screen.getByRole("button", { name: "General" });
+    generalButton.focus();
+    expect(generalButton).toHaveFocus();
+
+    fireEvent.keyDown(generalButton, { key: "ArrowDown" });
+
+    await waitFor(() => {
+      const runtimeButton = screen.getByRole("button", { name: "Runtime" });
+      expect(runtimeButton).toHaveFocus();
+      expect(runtimeButton).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("heading", { name: "Runtime selection" })).toBeInTheDocument();
+    });
+
+    const runtimeButton = screen.getByRole("button", { name: "Runtime" });
+    fireEvent.keyDown(runtimeButton, { key: "End" });
+
+    await waitFor(() => {
+      const advancedButton = screen.getByRole("button", { name: "Advanced" });
+      expect(advancedButton).toHaveFocus();
+      expect(advancedButton).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("heading", { name: "App data folder" })).toBeInTheDocument();
+    });
+  });
+
   it("shows runtime detection details in settings", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument());
