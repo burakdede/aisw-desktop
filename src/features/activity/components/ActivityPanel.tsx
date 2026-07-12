@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { SectionCard } from "../../../components/SectionCard";
 import { SplitView } from "../../../components/SplitView";
-import { exportDiagnosticBundle } from "../../../lib/client";
+import { exportActivityLog, exportDiagnosticBundle } from "../../../lib/client";
 import { notifyDesktop } from "../../../lib/notifications";
 import {
   clearLastCommandResults,
@@ -36,6 +36,25 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
         title: "Support report exported",
         body: message,
       });
+    },
+  });
+
+  const exportActivityLogMutation = useMutation({
+    mutationFn: exportActivityLog,
+    onSuccess: async (result) => {
+      const message = `Opened ${result.filename}.`;
+      setLogMessage(message);
+      await notifyDesktop({
+        title: "Activity log opened",
+        body: message,
+      });
+    },
+    onError: (error) => {
+      setLogMessage(
+        error instanceof Error
+          ? error.message
+          : "AI Switch could not open the local activity log.",
+      );
     },
   });
 
@@ -94,13 +113,9 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
       ...entry,
       recordedAt: new Date(entry.at).toISOString(),
     }));
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    window.open(url, "_blank", "noopener,noreferrer");
-    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    setLogMessage("Opened a local activity log snapshot.");
+    setClearMessage("");
+    setLogMessage("");
+    exportActivityLogMutation.mutate(JSON.stringify(payload, null, 2));
   }
 
   return (
@@ -111,10 +126,10 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
         <button
           className="ghost-button"
           type="button"
-          disabled={!entries.length}
+          disabled={!entries.length || exportActivityLogMutation.isPending}
           onClick={openActivityLog}
         >
-          Open Log File
+          {exportActivityLogMutation.isPending ? "Opening…" : "Open Log File"}
         </button>
       }
     >

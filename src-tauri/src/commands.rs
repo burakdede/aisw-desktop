@@ -1,6 +1,6 @@
 use crate::bridge::{AiswBridge, CliAiswBridge};
 use crate::diagnostic_bundle::{default_output_dir, write_redacted_bundle, DiagnosticBundleExport};
-use crate::errors::{DesktopResult, ErrorPayload, GuiErrorKind};
+use crate::errors::{DesktopError, DesktopResult, ErrorPayload, GuiErrorKind};
 use crate::models::{
     AddOAuthProfileRequest, AddProfileRequest, AppBootstrap, AppSnapshot, BackupEntry,
     DesktopSettings, DoctorReport, InitReport, InstallUpdateReport, MutationResponse,
@@ -13,6 +13,7 @@ use crate::state::{incompatible_runtime_error, AppState};
 use crate::tray;
 use crate::updater;
 use std::path::PathBuf;
+use std::process::Command;
 use tauri::Emitter;
 
 #[tauri::command]
@@ -310,6 +311,32 @@ pub async fn export_diagnostic_bundle(
 }
 
 #[tauri::command]
+pub async fn export_activity_log(contents: String) -> DesktopResult<DiagnosticBundleExport> {
+    let output_dir = default_output_dir();
+    std::fs::create_dir_all(&output_dir)
+        .map_err(DesktopError::from)
+        .map_err(ErrorPayload::from)?;
+    let generated_at = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|duration| duration.as_secs())
+        .unwrap_or(0);
+    let filename = format!("activity-log-{generated_at}.json");
+    let path = output_dir.join(&filename);
+
+    tokio::fs::write(&path, contents)
+        .await
+        .map_err(DesktopError::from)
+        .map_err(ErrorPayload::from)?;
+    open_path_with_default_app(&path)?;
+
+    Ok(DiagnosticBundleExport {
+        path: path.display().to_string(),
+        filename,
+        generated_at: format!("unix:{generated_at}"),
+    })
+}
+
+#[tauri::command]
 pub async fn list_backups(state: tauri::State<'_, AppState>) -> DesktopResult<Vec<BackupEntry>> {
     make_bridge(&state)
         .await?
@@ -414,4 +441,35 @@ async fn make_bridge(state: &tauri::State<'_, AppState>) -> DesktopResult<CliAis
         settings.runtime_path.map(PathBuf::from),
         settings.aisw_home.map(PathBuf::from),
     ))
+}
+
+fn open_path_with_default_app(path: &std::path::Path) -> DesktopResult<()> {
+    #[cfg(target_os = "macos")]
+    let mut command = {
+        let mut command = Command::new("open");
+        command.arg(path);
+        command
+    };
+
+    #[cfg(target_os = "windows")]
+    let mut command = {
+        let mut command = Command::new("cmd");
+        command.args(["/C", "start", "", &path.display().to_string()]);
+        command
+    };
+
+    #[cfg(all(not(target_os = "macos"), not(target_os = "windows")))]
+    let mut command = {
+        let mut command = Command::new("xdg-open");
+        command.arg(path);
+        command
+    };
+
+    command.status().map_err(|error| ErrorPayload {
+        kind: GuiErrorKind::Unknown,
+        message: "AI Switch could not open the activity log file.".to_owned(),
+        remediation: Some(error.to_string()),
+    })?;
+
+    Ok(())
 }

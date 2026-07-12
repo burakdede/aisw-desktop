@@ -246,6 +246,12 @@ export async function exportDiagnosticBundle(): Promise<DiagnosticBundleExport> 
   return diagnosticBundleExportSchema.parse(await invokeDesktop("export_diagnostic_bundle"));
 }
 
+export async function exportActivityLog(contents: string): Promise<DiagnosticBundleExport> {
+  return diagnosticBundleExportSchema.parse(
+    await invokeDesktop("export_activity_log", { contents }),
+  );
+}
+
 export async function getSettings(): Promise<DesktopSettings> {
   return desktopSettingsSchema.parse(await invokeDesktop("get_settings"));
 }

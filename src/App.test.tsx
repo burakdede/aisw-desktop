@@ -335,6 +335,11 @@ describe("App", () => {
         filename: "ai-switch-diagnostics-123.json",
         generated_at: "unix:123",
       },
+      export_activity_log: {
+        path: "/tmp/ai-switch/activity-log-123.json",
+        filename: "activity-log-123.json",
+        generated_at: "unix:123",
+      },
       get_workspace_status: { result: { status: "match" } },
       get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
       list_backups: [],
@@ -506,6 +511,12 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "export_diagnostic_bundle")).toBe(true);
       expect(screen.getByText("Support report ready")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Open Log File" }));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "export_activity_log")).toBe(true);
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Inspect Saved settings" }));

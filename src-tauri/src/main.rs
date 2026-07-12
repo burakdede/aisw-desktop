@@ -58,6 +58,7 @@ fn main() {
             commands::run_verify,
             commands::run_repair,
             commands::export_diagnostic_bundle,
+            commands::export_activity_log,
             commands::list_backups,
             commands::get_workspace_status,
             commands::get_project_bindings,
