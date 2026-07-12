@@ -784,6 +784,9 @@ button {
 
 .content-shell-setup {
   border-radius: 16px;
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, AccentColor 7%, transparent), transparent 26%),
+    linear-gradient(180deg, color-mix(in srgb, Canvas 97%, transparent), color-mix(in srgb, Canvas 99%, transparent));
 }
 
 .window-toolbar {
@@ -879,12 +882,57 @@ button {
 }
 
 .content-shell-setup .content-main {
-  padding: 18px 20px 20px;
+  padding: 10px 20px 24px;
 }
 
 .content-shell-setup .content-stage {
-  width: min(1160px, 100%);
+  width: min(1080px, 100%);
   margin: 0 auto;
+}
+
+.content-shell-setup .window-toolbar {
+  position: static;
+  min-height: auto;
+  padding: 28px 24px 10px;
+  border-bottom: 0;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.content-shell-setup .window-toolbar-meta {
+  gap: 6px;
+  width: min(720px, 100%);
+}
+
+.content-shell-setup .window-toolbar-copy h2 {
+  font-size: 28px;
+  line-height: 1.04;
+}
+
+.content-shell-setup .window-toolbar-subtitle {
+  max-width: 52ch;
+  font-size: 13px;
+}
+
+.content-shell-setup .toolbar-cluster {
+  border-color: color-mix(in srgb, CanvasText 6%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, Canvas 99%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
+    color-mix(in srgb, Canvas 96%, CanvasText 4%);
+}
+
+.content-shell-setup .section-card {
+  border-radius: 16px;
+  padding: 16px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
+    var(--card-bg);
+  box-shadow: 0 12px 30px rgba(18, 28, 45, 0.06);
+}
+
+.content-shell-setup .section-header {
+  align-items: center;
+  margin-bottom: 14px;
 }
 
 .section-card,

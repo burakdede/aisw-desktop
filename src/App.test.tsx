@@ -1163,7 +1163,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() =>
-      expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0),
+      expect(screen.getAllByRole("heading", { name: "Get started" }).length).toBeGreaterThan(0),
     );
     openSetupStep("Terminal");
     await waitFor(() => expect(screen.getByText("Open terminal setup")).toBeInTheDocument());
@@ -2578,7 +2578,7 @@ describe("App", () => {
       } as InitReport,
     });
     await waitFor(() =>
-      expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0),
+      expect(screen.getAllByRole("heading", { name: "Get started" }).length).toBeGreaterThan(0),
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Import login" }));
@@ -3826,7 +3826,7 @@ describe("App", () => {
       },
     });
 
-    expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("heading", { name: "Get started" }).length).toBeGreaterThan(0);
     openSetupStep("First switch");
     fireEvent.change(screen.getByLabelText("First switch profile"), {
       target: { value: "work" },
@@ -5377,7 +5377,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() =>
-      expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0),
+      expect(screen.getAllByRole("heading", { name: "Get started" }).length).toBeGreaterThan(0),
     );
     openSetupStep("Accounts");
     await waitFor(() => {
@@ -5441,7 +5441,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() =>
-      expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0),
+      expect(screen.getAllByRole("heading", { name: "Get started" }).length).toBeGreaterThan(0),
     );
     await waitFor(() => {
       expect(screen.getByText("Installed, but no saved profile yet")).toBeInTheDocument();
@@ -5521,7 +5521,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() =>
-      expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0),
+      expect(screen.getAllByRole("heading", { name: "Get started" }).length).toBeGreaterThan(0),
     );
     expect(screen.getAllByText("Installed, but no saved profile yet").length).toBeGreaterThan(0);
     expect(screen.getByLabelText("Add codex profile")).toBeInTheDocument();
@@ -5592,10 +5592,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() =>
-      expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0),
+      expect(screen.getAllByRole("heading", { name: "Get started" }).length).toBeGreaterThan(0),
     );
     const setupHeading = screen
-      .getAllByRole("heading", { name: "Welcome to AI Switch" })
+      .getAllByRole("heading", { name: "Get started" })
       .find((element) => element.closest(".section-card"));
     const setupSection = setupHeading?.closest(".section-card");
     if (!(setupSection instanceof HTMLElement)) {
@@ -5666,7 +5666,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() =>
-      expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0),
+      expect(screen.getAllByRole("heading", { name: "Get started" }).length).toBeGreaterThan(0),
     );
     openSetupStep("Terminal");
 
@@ -5734,7 +5734,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() =>
-      expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0),
+      expect(screen.getAllByRole("heading", { name: "Get started" }).length).toBeGreaterThan(0),
     );
     openSetupStep("First switch");
     fireEvent.click(screen.getByText("Open profile setup"));
@@ -7762,7 +7762,7 @@ describe("App", () => {
       },
     });
 
-    expect(screen.getAllByRole("heading", { name: "Welcome to AI Switch" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("heading", { name: "Get started" }).length).toBeGreaterThan(0);
     expect(calls).not.toContain("run_doctor");
     expect(calls).not.toContain("get_shell_guidance");
 

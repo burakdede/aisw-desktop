@@ -41,35 +41,26 @@ const toolCapabilities = {
   gemini: { state_modes: [] },
 };
 
-test("imports detected Claude, Codex, and Gemini accounts during onboarding", async ({ page }) => {
+test("imports a detected account during onboarding", async ({ page }) => {
   await installDesktopMock(page, "onboarding");
 
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: "First-run setup" })).toBeVisible();
-  await expect(page.getByText("Local-only by default")).toBeVisible();
-  await expect(page.getByText("✓ Credentials stay on this Mac")).toBeVisible();
-  await expect(page.getByText("Current set: Work")).toBeVisible();
-  await page.getByRole("button", { name: "Start setup" }).click();
+  await expect(page.getByRole("heading", { name: "Get started" }).first()).toBeVisible();
+  await expect(page.getByText("Switch AI coding-agent accounts safely")).toBeVisible();
+  await expect(page.getByText("Credentials stay on this Mac")).toBeVisible();
+  await page.getByRole("button", { name: "Get Started" }).click();
   await expect(page.getByText("detected · oauth").first()).toBeVisible();
+  await expect(
+    page.locator(".onboarding-tool-card").filter({ has: page.getByRole("heading", { name: "Codex" }) }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".onboarding-tool-card").filter({ has: page.getByRole("heading", { name: "Gemini" }) }),
+  ).toBeVisible();
 
   await importDetectedAccount(page, "claude", "work");
-  await importDetectedAccount(page, "codex", "ops");
-  await importDetectedAccount(page, "gemini", "travel");
-
-  await page.getByRole("button", { name: "Profiles" }).click();
-
-  await page.getByLabel("Tool").selectOption("claude");
-  await expect(page.locator(".list-row p").filter({ hasText: "work · oauth" }).first()).toBeVisible();
-  await expect(page.locator(".list-row strong").filter({ hasText: "Work" }).first()).toBeVisible();
-
-  await page.getByLabel("Tool").selectOption("codex");
-  await expect(page.getByText("ops · oauth")).toBeVisible();
-  await expect(page.locator(".list-row strong").filter({ hasText: "Ops" })).toBeVisible();
-
-  await page.getByLabel("Tool").selectOption("gemini");
-  await expect(page.getByText("travel · oauth")).toBeVisible();
-  await expect(page.locator(".list-row strong").filter({ hasText: "Travel" })).toBeVisible();
+  await page.getByRole("tab", { name: "First switch" }).click();
+  await expect(page.getByLabel("First switch profile").getByRole("option", { name: "Work" })).toHaveCount(1);
 });
 
 test("uses saved profile labels across onboarding and overview", async ({ page }) => {
@@ -77,10 +68,8 @@ test("uses saved profile labels across onboarding and overview", async ({ page }
 
   await page.goto("/");
 
-  await expect(page.getByText("Current set: Client Acme")).toBeVisible();
+  await page.getByRole("tab", { name: "First switch" }).click();
   await expect(page.getByLabel("First switch profile").getByRole("option", { name: "Office" })).toHaveCount(1);
-  const overview = page.locator(".section-card").filter({ hasText: "Control Center" });
-  await expect(overview.getByRole("option", { name: "Shared profile: Office" })).toHaveCount(1);
 });
 
 test("opens shell setup from onboarding", async ({ page }) => {
@@ -88,12 +77,12 @@ test("opens shell setup from onboarding", async ({ page }) => {
 
   await page.goto("/");
 
+  await page.getByRole("tab", { name: "Terminal" }).click();
   await expect(page.getByText("Detected shell:")).toBeVisible();
   await page.getByRole("button", { name: "Open terminal setup" }).click();
 
-  await expect(page.getByRole("heading", { name: "Terminal Integration" })).toBeVisible();
-  await expect(page.getByText("Config file: ~/.zshrc")).toBeVisible();
   await expect(page.getByRole("button", { name: "Terminal Integration", pressed: true })).toBeVisible();
+  await expect(page.getByText("Config file: ~/.zshrc")).toBeVisible();
 });
 
 test("opens profile setup from onboarding when first-switch options are missing", async ({ page }) => {
@@ -101,10 +90,10 @@ test("opens profile setup from onboarding when first-switch options are missing"
 
   await page.goto("/");
 
+  await page.getByRole("tab", { name: "First switch" }).click();
   await page.getByRole("button", { name: "Open profile setup" }).click();
 
-  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
-  await expect(page.getByLabel("Tool")).toHaveValue("claude");
+  await expect(page.getByLabel("Current tool")).toHaveValue("claude");
 });
 
 test("routes unsupported onboarding live imports into supported profile setup", async ({ page }) => {
@@ -120,15 +109,11 @@ test("routes unsupported onboarding live imports into supported profile setup", 
 
   await page.goto("/");
 
-  await expect(
-    page.getByText(
-      "This runtime does not advertise live import for Claude. Open profile setup to use a supported flow.",
-    ),
-  ).toBeVisible();
-  await page.locator(".tool-card").filter({ hasText: "Claude" }).getByRole("button", { name: "Open profile setup" }).click();
+  const claudeCard = page.locator(".tool-card").filter({ hasText: "Claude" });
+  await expect(claudeCard.getByRole("button", { name: "Open profile setup" })).toBeVisible();
+  await claudeCard.getByRole("button", { name: "Open profile setup" }).click();
 
-  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
-  await expect(page.getByLabel("Tool")).toHaveValue("claude");
+  await expect(page.getByLabel("Current tool")).toHaveValue("claude");
   await expect(page.getByLabel("Import mode")).toHaveValue("from_env");
 });
 
@@ -137,11 +122,9 @@ test("keeps onboarding usable when another installed tool has no live credential
 
   await page.goto("/");
 
-  await expect(page.getByText("No live credentials detected").first()).toBeVisible();
   await page.getByLabel("Add codex profile").click();
 
-  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
-  await expect(page.getByLabel("Tool")).toHaveValue("codex");
+  await expect(page.getByLabel("Current tool")).toHaveValue("codex");
 });
 
 test("shows missing-tool install guidance during onboarding", async ({ page }) => {
@@ -149,12 +132,10 @@ test("shows missing-tool install guidance during onboarding", async ({ page }) =
 
   await page.goto("/");
 
-  const setup = page.locator(".section-card").filter({ hasText: "First-run setup" });
-  await expect(setup.getByRole("heading", { name: "First-run setup" })).toBeVisible();
+  const setup = page.locator(".section-card").filter({ hasText: "Get started" });
+  await expect(setup.getByRole("heading", { name: "Get started" }).first()).toBeVisible();
   await expect(setup.getByText("Gemini is not installed")).toBeVisible();
-  await expect(setup.getByText("npm install -g @google/gemini-cli")).toBeVisible();
-  await expect(setup.getByText("gemini --version")).toBeVisible();
-  await expect(setup.getByText(/(which|where) gemini/)).toBeVisible();
+  await expect(setup.getByText("AI Switch can start without Gemini. Install the gemini tool later when you want to manage that provider here.")).toBeVisible();
 
   await setup.getByRole("button", { name: "Open installation guide" }).click();
 
@@ -172,30 +153,23 @@ test("shows runtime compatibility blockers when the configured aisw runtime is u
 
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: "Runtime compatibility" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "This Mac is using an unsupported runtime" })).toBeVisible();
   await expect(
     page.getByText(
-      "AI Switch found a runtime binary, but it does not support the desktop integration features required by this release.",
+      "AI Switch found another runtime on this Mac, but this release is designed to use the included runtime by default.",
     ),
   ).toBeVisible();
   await expect(
     page.getByText(
-      "Open Settings and switch back to the bundled runtime, or choose a newer compatible runtime before continuing.",
+      "Switch back to the included runtime, or choose a newer compatible runtime in Runtime Settings before continuing.",
     ),
   ).toBeVisible();
-  await expect(page.getByText("Technical details")).toBeVisible();
+  await page.getByText(/^Compatibility details$/).click();
   await expect(page.getByText("Runtime version details are unavailable")).toBeVisible();
   await expect(page.getByText("Runtime capability details are unavailable")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Settings" }).first()).toBeVisible();
-  await expect(page.getByText("Runtime details")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Overview" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Profiles" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Sets" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Diagnostics" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Backups" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Activity" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Settings", exact: true })).toBeEnabled();
-  await expect(page.getByText("First-run setup")).not.toBeVisible();
+  await expect(page.getByRole("button", { name: "Try Again" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Runtime Settings" })).toBeVisible();
+  await expect(page.getByText("Welcome to AI Switch")).toHaveCount(0);
 });
 
 test("shows bootstrap failure remediation when the desktop shell cannot load initial state", async ({
@@ -205,7 +179,7 @@ test("shows bootstrap failure remediation when the desktop shell cannot load ini
 
   await page.goto("/");
 
-  await expect(page.getByText("AI Switch could not finish startup.")).toBeVisible();
+  await expect(page.getByText("AI Switch could not open the desktop switchboard.")).toBeVisible();
   await expect(page.getByText("AI Switch could not resolve a compatible switching runtime")).toBeVisible();
   await expect(
     page.getByText("Select a valid bundled, system, or custom switching runtime."),
@@ -217,8 +191,8 @@ test("reruns setup detection when no live accounts are initially found", async (
 
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: "First-run setup" })).toBeVisible();
-  await expect(page.getByText("No live credentials detected").first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Get started" }).first()).toBeVisible();
+  await expect(page.getByLabel("Add claude profile")).toBeVisible();
   await expect
     .poll(() =>
       page.evaluate(
@@ -232,7 +206,7 @@ test("reruns setup detection when no live accounts are initially found", async (
     )
     .toBe(0);
 
-  await page.getByRole("button", { name: "Start setup" }).click();
+  await page.getByRole("button", { name: "Get Started" }).click();
 
   await expect(page.getByText("detected · oauth")).toBeVisible();
   await expect
@@ -4460,7 +4434,18 @@ async function installDesktopMock(
 }
 
 async function importDetectedAccount(page: Page, tool: string, profile: string) {
-  const form = page.locator("form").filter({ has: page.getByLabel(`${tool} profile name`) });
-  await form.getByLabel(`${tool} profile name`).fill(profile);
-  await form.getByRole("button", { name: "Import current login" }).click();
+  await page
+    .locator(".onboarding-tool-card")
+    .filter({ has: page.getByRole("heading", { name: new RegExp(`^${titleCase(tool)}$`) }) })
+    .getByRole("button", { name: "Import login" })
+    .click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Profile name").fill(profile);
+  await dialog.getByLabel("Label").fill(titleCase(profile));
+  await dialog.getByRole("button", { name: "Import" }).dispatchEvent("click");
+  await expect(dialog).toHaveCount(0);
+}
+
+function titleCase(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }

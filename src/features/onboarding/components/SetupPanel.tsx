@@ -240,8 +240,8 @@ export function SetupPanel({
 
   return (
     <SectionCard
-      title="Welcome to AI Switch"
-      kicker="First launch"
+      title="Get started"
+      kicker="Local-only setup"
       actions={
         <button
           className="primary-button"
