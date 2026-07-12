@@ -7,6 +7,7 @@ import {
   recordCommandResult,
   resetLastCommandResultsForTests,
 } from "./features/shared/lastCommandResult";
+import { normalizeRuntimeLanguage } from "./features/shared/runtime-language";
 import { useDesktopActions } from "./features/shared/useDesktopActions";
 import { enqueueMutation, resetMutationQueueForTests } from "./features/shared/mutationQueue";
 import { SettingsPanel } from "./features/settings/components/SettingsPanel";
@@ -8675,5 +8676,15 @@ describe("App", () => {
       expect(screen.getByText("Update available: 0.3.0-beta.1")).toBeInTheDocument();
       expect(screen.getByText("Endpoint: https://updates.example.com/beta.json")).toBeInTheDocument();
     });
+  });
+
+  it("normalizes lowercase runtime wording", () => {
+    expect(
+      normalizeRuntimeLanguage(
+        "aisw cannot switch because credentials changed outside aisw desktop. Re-open aisw desktop and verify the saved imported context.",
+      ),
+    ).toBe(
+      "AI Switch cannot switch because credentials changed outside AI Switch. Re-open AI Switch and verify the saved set.",
+    );
   });
 });
