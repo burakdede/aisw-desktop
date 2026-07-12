@@ -789,6 +789,25 @@ export function App() {
       );
     }
 
+    if (activeSection === "overview") {
+      return (
+        <div className="button-row toolbar-action-row">
+          <button
+            className="primary-button"
+            type="button"
+            disabled={runtimeBlocked}
+            onClick={() => setQuickSwitchOpen(true)}
+          >
+            <span>Quick Switch</span>
+            <kbd aria-hidden="true">⌘K</kbd>
+          </button>
+          <button className="ghost-button" type="button" onClick={runVerifyFlow}>
+            <span>Verify</span>
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div className="button-row toolbar-action-row">
         <button

@@ -1382,14 +1382,16 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getAllByRole("heading", { name: "Work" }).length).toBeGreaterThan(0));
+    await waitFor(() => {
+      expect(screen.getByText("Re-apply Work")).toBeInTheDocument();
+    });
     const quickSwitchDialog = await openQuickSwitchDialog();
     fireEvent.click(quickSwitchDialog.getByRole("option", { name: /Work.*Across/i }));
 
     await waitFor(() => {
-      expect(screen.getAllByRole("heading", { name: "Personal" }).length).toBeGreaterThan(0);
+      expect(screen.getByText("Active profile: Personal")).toBeInTheDocument();
     });
-    expect(screen.getByText("Last bulk result: switch failed")).toBeInTheDocument();
+    expect(screen.getByText("Last set result: switch failed")).toBeInTheDocument();
   });
 
   it("shows the last successful tool command result on the overview card", async () => {
@@ -6512,7 +6514,9 @@ describe("App", () => {
     };
 
     await renderApp();
-    await waitFor(() => expect(screen.getAllByRole("heading", { name: "Work" }).length).toBeGreaterThan(0));
+    await waitFor(() => {
+      expect(screen.getByText("Re-apply Work")).toBeInTheDocument();
+    });
 
     const handlers = (window as typeof window & {
       __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
@@ -6530,7 +6534,7 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getAllByRole("heading", { name: "Personal" }).length).toBeGreaterThan(0);
+      expect(screen.getByText("Active profile: Personal")).toBeInTheDocument();
     });
     expect(screen.getByText("Last result: Switched claude to personal.")).toBeInTheDocument();
   });

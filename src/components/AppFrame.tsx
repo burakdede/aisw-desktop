@@ -161,7 +161,7 @@ export function AppFrame({
           <header className="window-toolbar">
             <div className="window-toolbar-leading" data-tauri-drag-region>
               <div className="window-toolbar-meta">
-                <p className="window-toolbar-kicker">{mode === "setup" ? "Welcome" : "AI Switch"}</p>
+                {mode === "setup" ? <p className="window-toolbar-kicker">Welcome</p> : null}
                 <div className="window-toolbar-copy">
                   <h2>{title}</h2>
                   {detail ? <p className="window-toolbar-subtitle">{detail}</p> : null}
