@@ -467,7 +467,7 @@ export function SettingsPanel({
                     <div className="settings-note-block">
                       <strong>Appearance behavior</strong>
                       <p className="inline-note">
-                        System keeps the window aligned with the OS. Light and Dark pin the app to one appearance until you change it again.
+                        System follows the OS appearance. Light and Dark pin AI Switch to one appearance until you change it again.
                       </p>
                     </div>
                   </div>
@@ -1596,7 +1596,7 @@ function sectionHeading(section: SettingsSection) {
 function sectionDescription(section: SettingsSection) {
   switch (section) {
     case "general":
-      return "General settings should stay short, obvious, and system-driven so the app feels like a native desktop utility.";
+      return "General settings should stay short, obvious, and system-driven so the app feels like a native desktop app.";
     case "runtime":
       return "The included desktop engine is the supported default. System and custom overrides stay available for advanced cases.";
     case "updates":
