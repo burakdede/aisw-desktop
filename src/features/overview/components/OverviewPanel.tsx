@@ -162,17 +162,17 @@ export function OverviewPanel({
           {currentSetLabel || currentSetProfiles.length ? (
             <article className="overview-current-set diagnostic-card">
               <div className="overview-current-set-main">
-                  <div className="overview-current-set-copy">
-                    <div className="overview-current-set-header">
-                      <div>
-                        <p className="card-kicker">Current set</p>
-                        <h3>{currentSetDisplay}</h3>
-                        <p className="inline-note">
-                          {currentSetLabel
-                            ? "Switching stays centered on one working identity across installed tools."
-                            : "No shared active set is pinned yet. Per-tool switching is still available."}
-                        </p>
-                      </div>
+                <div className="overview-current-set-copy">
+                  <div className="overview-current-set-header">
+                    <div>
+                      <p className="card-kicker">Current set</p>
+                      <h3>{currentSetDisplay}</h3>
+                      <p className="inline-note">
+                        {currentSetLabel
+                          ? "Switching stays centered on one working identity across installed tools."
+                          : "No shared active set is pinned yet. Per-tool switching is still available."}
+                      </p>
+                    </div>
                     <span className={`pill ${activeToolsCount ? "pill-ok" : "pill-soft"}`}>
                       {summaryToneLabel}
                     </span>
@@ -186,22 +186,13 @@ export function OverviewPanel({
                       </div>
                     ))}
                   </div>
-                  <div className="overview-current-set-list" aria-label="Current set profiles">
+                  <div className="overview-current-set-profile-bar" aria-label="Current set profiles">
                     {currentSetProfiles.map((entry) => (
-                      <div key={entry.tool} className="overview-current-set-row">
-                        <span
-                          className={`health-dot ${
-                            entry.label ? "health-dot-ok" : "health-dot-neutral"
-                          }`}
-                          aria-hidden="true"
-                        />
-                        <div className="overview-current-set-row-title">
-                          <span className="overview-current-set-cell-label">{toolDisplayName(entry.tool)}</span>
-                          <strong>{entry.label ?? "Not configured"}</strong>
-                        </div>
-                        <span className={`pill ${entry.label ? "pill-ok" : "pill-soft"}`}>
-                          {entry.label ? "Ready" : "Add profile"}
+                      <div key={entry.tool} className="overview-current-set-profile-chip">
+                        <span className="overview-current-set-profile-tool">
+                          {toolDisplayName(entry.tool)}
                         </span>
+                        <strong>{entry.label ?? "Not configured"}</strong>
                       </div>
                     ))}
                   </div>
@@ -226,23 +217,17 @@ export function OverviewPanel({
                         disabled={mutationLock.isBusy}
                         onClick={onOpenQuickSwitch}
                       >
-                        Quick Switch…
+                        Switch Set…
                       </button>
                       <button className="ghost-button" type="button" onClick={onOpenContexts}>
                         Open Sets
                       </button>
                     </div>
-                    <div className="desktop-status-pill-stack overview-status-pill-stack">
-                      {[
-                        currentSetLabel ? "Shared set ready" : "Per-tool switching",
-                        hasWorkspaceMismatch ? "Project mismatch" : "Project aligned",
-                        warningToolsCount ? "Warnings visible" : "Live match visible",
-                      ].map((pill) => (
-                        <span key={pill} className="status-pill">
-                          {pill}
-                        </span>
-                      ))}
-                    </div>
+                    <p className="inline-note">
+                      {warningToolsCount
+                        ? `${warningToolsCount} tool${warningToolsCount === 1 ? "" : "s"} need review before you start coding.`
+                        : "Live match is clear across the currently configured tools."}
+                    </p>
                   </div>
                 </aside>
               </div>

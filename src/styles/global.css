@@ -2393,6 +2393,30 @@ button {
   gap: 7px;
 }
 
+.overview-current-set-profile-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.overview-current-set-profile-chip {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
+  background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
+}
+
+.overview-current-set-profile-tool {
+  font-size: 11px;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+}
+
 .overview-current-set-inline {
   display: grid;
   gap: 4px;
@@ -2450,14 +2474,12 @@ button {
 }
 
 .overview-action-rail {
+  display: grid;
+  gap: 8px;
   padding: 10px;
   border-radius: 11px;
   border: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
   background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
-}
-
-.overview-status-pill-stack {
-  margin-top: 2px;
 }
 
 .overview-focus-card {
