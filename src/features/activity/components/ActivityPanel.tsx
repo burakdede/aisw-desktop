@@ -40,43 +40,21 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
 
   const entries = useMemo(
     () =>
-      [
-        ...Object.entries(lastCommandResults.global).flatMap(([id, result]) =>
-          result
-            ? [
-                {
-                  key: `global-${id}`,
-                  scopeLabel: formatGlobalScope(id),
-                  label: result.label,
-                  status: result.status,
-                  message: result.message,
-                  remediation: result.remediation,
-                  command: result.command,
-                  resultSummary: result.resultSummary,
-                  at: result.at,
-                },
-              ]
-            : [],
-        ),
-        ...Object.entries(lastCommandResults.tool).flatMap(([tool, result]) =>
-          result
-            ? [
-                {
-                  key: `tool-${tool}`,
-                  scopeLabel: formatToolScope(tool),
-                  label: result.label,
-                  status: result.status,
-                  message: result.message,
-                  remediation: result.remediation,
-                  command: result.command,
-                  resultSummary: result.resultSummary,
-                  at: result.at,
-                },
-              ]
-            : [],
-        ),
-      ].sort((left, right) => right.at - left.at),
-    [lastCommandResults.global, lastCommandResults.tool],
+      lastCommandResults.timeline.map((entry) => ({
+        key: entry.key,
+        scopeLabel:
+          entry.scope.type === "tool"
+            ? formatToolScope(entry.scope.tool)
+            : formatGlobalScope(entry.scope.id),
+        label: entry.label,
+        status: entry.status,
+        message: entry.message,
+        remediation: entry.remediation,
+        command: entry.command,
+        resultSummary: entry.resultSummary,
+        at: entry.at,
+      })),
+    [lastCommandResults.timeline],
   );
   const errorCount = entries.filter((entry) => entry.status === "error").length;
   const latestEntry = entries[0] ?? null;
@@ -93,7 +71,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
       return;
     }
     setSelectedEntryKey(null);
-    setClearMessage("Cleared activity recorded in this desktop session.");
+    setClearMessage("Cleared locally stored desktop activity.");
   }, [externalClearSignal]);
 
   const selectedEntry = entries.find((entry) => entry.key === selectedEntryKey) ?? entries[0] ?? null;
@@ -101,7 +79,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
   function clearTimeline() {
     clearLastCommandResults();
     setSelectedEntryKey(null);
-    setClearMessage("Cleared activity recorded in this desktop session.");
+    setClearMessage("Cleared locally stored desktop activity.");
   }
 
   return (
@@ -115,7 +93,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
           disabled={!entries.length}
           onClick={clearTimeline}
         >
-          Clear session
+          Clear history
         </button>
       }
     >
@@ -139,13 +117,13 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
               </div>
               <p className="inline-note">
                 Latest first. Review local switch, verification, setup, and recovery events in one
-                desktop session stream.
+                persistent desktop timeline.
               </p>
               <div className="activity-overview-meta">
                 <div>
-                  <span className="overview-current-set-cell-label">Session</span>
+                  <span className="overview-current-set-cell-label">History</span>
                   <strong>{entries.length ? `${entries.length} event${entries.length === 1 ? "" : "s"}` : "Idle"}</strong>
-                  <p className="inline-note">Only events from the current desktop session are shown here.</p>
+                  <p className="inline-note">Recent events stay on this Mac and persist across relaunches.</p>
                 </div>
                 <div>
                   <span className="overview-current-set-cell-label">Latest scope</span>
@@ -250,7 +228,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                   <div>
                     <span className="overview-current-set-cell-label">Timeline</span>
                     <strong>{formatTimestamp(selectedEntry.at)}</strong>
-                    <p className="inline-note">Latest session events stay local to this desktop app.</p>
+                    <p className="inline-note">Recent desktop events stay local to this Mac unless you export a support report.</p>
                   </div>
                   <div>
                     <span className="overview-current-set-cell-label">Recorded scope</span>

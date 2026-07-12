@@ -464,8 +464,47 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getAllByText("No recent activity").length).toBeGreaterThan(0);
-      expect(screen.getByText("Cleared activity recorded in this desktop session.")).toBeInTheDocument();
+      expect(screen.getByText("Cleared locally stored desktop activity.")).toBeInTheDocument();
     });
+  });
+
+  it("keeps a persisted activity timeline even when the same scope records multiple events", async () => {
+    recordCommandResult(
+      { type: "global", id: "settings" },
+      {
+        label: "Saved settings",
+        status: "success",
+        message: "Updated bundled runtime settings.",
+      },
+    );
+    recordCommandResult(
+      { type: "global", id: "settings" },
+      {
+        label: "Checked for updates",
+        status: "error",
+        message: "The update endpoint did not respond.",
+        remediation: "Try again after verifying the selected update channel.",
+      },
+    );
+
+    await renderApp();
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Activity" })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Activity" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Inspect Saved settings" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Inspect Checked for updates" })).toBeInTheDocument();
+      expect(screen.getByText("Recent events stay on this Mac and persist across relaunches.")).toBeInTheDocument();
+    });
+
+    expect(window.localStorage.getItem("ai-switch.desktop.activity-log")).toContain(
+      "Checked for updates",
+    );
+    expect(window.localStorage.getItem("ai-switch.desktop.activity-log")).toContain(
+      "Saved settings",
+    );
   });
 
   it("shows compatibility blockers when runtime is not usable", async () => {
