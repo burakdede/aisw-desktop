@@ -1,5 +1,9 @@
 export function normalizeTerminalIntegrationText(value: string) {
   return value
+    .replace("workspace guardrails", "project-rule guardrails")
+    .replace("Workspace guardrails", "Project-rule guardrails")
+    .replace("workspace checks", "project-rule checks")
+    .replace("Workspace checks", "Project-rule checks")
     .replace("Shell guidance remains informational.", "Terminal integration guidance remains informational.")
     .replace("Shell hook guidance remains informational.", "Terminal integration guidance remains informational.")
     .replace("Shell hook guidance", "Terminal integration guidance")

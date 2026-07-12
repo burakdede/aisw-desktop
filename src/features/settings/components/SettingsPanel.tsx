@@ -1038,7 +1038,9 @@ export function SettingsPanel({
                       <div className="settings-info-list">
                         {shellGuidance.data.capabilities.map((item) => (
                           <div key={item} className="settings-info-row">
-                            <span className="inline-note">{item}</span>
+                            <span className="inline-note">
+                              {normalizeTerminalIntegrationText(item)}
+                            </span>
                           </div>
                         ))}
                       </div>

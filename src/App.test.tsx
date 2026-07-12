@@ -7802,6 +7802,11 @@ describe("App", () => {
       expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
       expect(screen.getAllByText(/Detected shell:/).length).toBeGreaterThan(0);
       expect(screen.getByText("Config file: ~/.zshrc")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Enforce project-rule guardrails before `claude`, `codex`, or `gemini` launch from that shell.",
+        ),
+      ).toBeInTheDocument();
       expect(screen.getByText("1. Copy the AI Switch setup step.")).toBeInTheDocument();
       expect(
         screen.getByText("Paste it into ~/.zshrc or the matching shell config file."),
