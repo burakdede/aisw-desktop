@@ -420,9 +420,9 @@ function formatGlobalScope(id: string) {
     case "switch-all":
       return "Quick Switch";
     case "profile-set":
-      return "Set";
+      return "Saved set";
     case "context":
-      return "Detected sets";
+      return "Sets";
     case "workspace":
       return "Project rules";
     case "backup":
