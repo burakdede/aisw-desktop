@@ -642,7 +642,7 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Your saved profiles stay local. Switch back to the included desktop engine to continue, or open Runtime Settings only if you intentionally manage another compatible engine.",
+        "Your saved profiles stay local. Switch back to the included desktop engine to continue, or open Engine Settings only if you intentionally manage another compatible engine.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Using now")).toBeInTheDocument();
@@ -655,8 +655,8 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Use Included Engine" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Runtime Settings" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Runtime" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Engine Settings" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Engine" })).not.toBeInTheDocument();
     expect(screen.queryByText("Runtime summary")).not.toBeInTheDocument();
     expect(screen.queryByText("Get started")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Overview" })).not.toBeInTheDocument();
@@ -683,13 +683,13 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Runtime Settings" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Engine Settings" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Runtime Settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Engine Settings" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Runtime" })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("button", { name: "Engine" })).toHaveAttribute("aria-pressed", "true");
       expect(screen.getByText("Engine summary")).toBeInTheDocument();
     });
   });
@@ -1231,7 +1231,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Engine summary")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Runtime" })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("button", { name: "Engine" })).toHaveAttribute("aria-pressed", "true");
     });
     expect(screen.getByRole("button", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "false");
   });
@@ -8174,13 +8174,13 @@ describe("App", () => {
     fireEvent.keyDown(generalButton, { key: "ArrowDown" });
 
     await waitFor(() => {
-      const runtimeButton = screen.getByRole("button", { name: "Runtime" });
+      const runtimeButton = screen.getByRole("button", { name: "Engine" });
       expect(runtimeButton).toHaveFocus();
       expect(runtimeButton).toHaveAttribute("aria-pressed", "true");
       expect(screen.getByRole("heading", { name: "Desktop engine selection" })).toBeInTheDocument();
     });
 
-    const runtimeButton = screen.getByRole("button", { name: "Runtime" });
+    const runtimeButton = screen.getByRole("button", { name: "Engine" });
     fireEvent.keyDown(runtimeButton, { key: "End" });
 
     await waitFor(() => {
@@ -8195,7 +8195,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
-    fireEvent.click(screen.getByRole("button", { name: "Runtime" }));
+    fireEvent.click(screen.getByRole("button", { name: "Engine" }));
 
     await waitFor(() => {
       expect(screen.getByText("Engine summary")).toBeInTheDocument();
@@ -8205,7 +8205,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Advanced" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Runtime details")).toBeInTheDocument();
+      expect(screen.getByText("Engine details")).toBeInTheDocument();
       expect(
         screen.getByText(
           (_, element) => element?.textContent?.trim() === "Data folder: Managed automatically",
@@ -8214,10 +8214,10 @@ describe("App", () => {
       expect(
         screen.getByText((_, element) => element?.textContent?.trim() === "Release track: Stable"),
       ).toBeInTheDocument();
-      expect(screen.getByText("Runtime API 1 · JSON schema 1 · Progress schema 1")).toBeInTheDocument();
+      expect(screen.getByText("Engine API 1 · JSON schema 1 · Progress schema 1")).toBeInTheDocument();
       expect(
         screen.getByText((_, element) =>
-          element?.textContent?.trim() === "Selected runtime source: Included with this app",
+          element?.textContent?.trim() === "Selected engine source: Included with this app",
         ),
       ).toBeInTheDocument();
       expect(
@@ -8274,7 +8274,7 @@ describe("App", () => {
       expect(screen.getByLabelText("Settings sections")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Show manual runtime options")).toBeInTheDocument();
+    expect(screen.getByText("Show manual engine options")).toBeInTheDocument();
 
     await act(async () => {
       rendered.rerender(
@@ -8366,7 +8366,7 @@ describe("App", () => {
     const runtimePathInput = screen.getByDisplayValue("/opt/aisw/bin/aisw");
     expect(runtimePathInput).toBeDisabled();
 
-    fireEvent.click(screen.getByText("Save Runtime Settings"));
+    fireEvent.click(screen.getByText("Save Engine Settings"));
 
     await waitFor(() => {
       expect(updateRequests).toEqual([
@@ -8392,7 +8392,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.queryByLabelText("Runtime path")).not.toBeInTheDocument();
-      expect(screen.getByText("Show manual runtime options")).toBeInTheDocument();
+      expect(screen.getByText("Show manual engine options")).toBeInTheDocument();
     });
   });
 
@@ -8451,7 +8451,7 @@ describe("App", () => {
     const runtimePathInput = screen.getByDisplayValue("/opt/aisw/bin/aisw");
     expect(runtimePathInput).toBeDisabled();
 
-    fireEvent.click(screen.getByText("Save Runtime Settings"));
+    fireEvent.click(screen.getByText("Save Engine Settings"));
 
     await waitFor(() => {
       expect(updateRequests).toEqual([

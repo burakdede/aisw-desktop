@@ -678,7 +678,7 @@ export function SettingsPanel({
                 <article className="diagnostic-card settings-detail-card">
                   <div className="desktop-pane-section-header">
                     <div>
-                      <p className="card-kicker">Runtime</p>
+                      <p className="card-kicker">Engine</p>
                       <h3>Engine source</h3>
                     </div>
                   </div>
@@ -721,7 +721,7 @@ export function SettingsPanel({
                               type="button"
                               onClick={() => setShowAdvancedRuntime(false)}
                             >
-                              Hide manual runtime options
+                              Hide manual engine options
                             </button>
                           </div>
                         ) : null}
@@ -738,7 +738,7 @@ export function SettingsPanel({
                           type="button"
                           onClick={() => setShowAdvancedRuntime(true)}
                         >
-                          Show manual runtime options
+                          Show manual engine options
                         </button>
                       </div>
                     </div>
@@ -750,7 +750,7 @@ export function SettingsPanel({
                   type="submit"
                   disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
                 >
-                  {updateSettingsMutation.isPending ? "Saving…" : "Save Runtime Settings"}
+                  {updateSettingsMutation.isPending ? "Saving…" : "Save Engine Settings"}
                 </button>
               </form>
               <div className="settings-side-stack diagnostics-body">
@@ -1291,7 +1291,7 @@ export function SettingsPanel({
                   <strong>{aiswHome ? "Custom location" : "Managed automatically"}</strong>
                 </div>
                 <div>
-                  <span className="overview-current-set-cell-label">Runtime source</span>
+                  <span className="overview-current-set-cell-label">Engine source</span>
                   <strong>{runtimeKind === "bundled" ? "Included" : titleCase(runtimeKind)}</strong>
                 </div>
                 <div>
@@ -1350,7 +1350,7 @@ export function SettingsPanel({
                   <div className="desktop-pane-section-header">
                     <div>
                       <p className="card-kicker">Status</p>
-                      <h3>Runtime details</h3>
+                      <h3>Engine details</h3>
                     </div>
                   </div>
                   <div className="settings-kv-list">
@@ -1367,7 +1367,7 @@ export function SettingsPanel({
                       <strong>{titleCase(updateChannel)}</strong>
                     </div>
                     <div className="settings-kv-row">
-                      <strong>Selected runtime source</strong>
+                      <strong>Selected engine source</strong>
                       <strong>
                         {runtimeKind === "bundled"
                           ? "Included with this app"
@@ -1398,13 +1398,13 @@ export function SettingsPanel({
                   </p>
                   {runtimeStatus.version ? (
                     <p className="inline-note">
-                      Runtime API {runtimeStatus.version.cli_api_version} · JSON schema{" "}
+                      Engine API {runtimeStatus.version.cli_api_version} · JSON schema{" "}
                       {runtimeStatus.version.json_schema_version} · Progress schema{" "}
                       {runtimeStatus.version.progress_schema_version}
                     </p>
                   ) : null}
                   <p className="inline-note">
-                    Selected runtime source:{" "}
+                    Selected engine source:{" "}
                     <strong>
                       {runtimeKind === "bundled"
                         ? "Included with this app"
@@ -1535,7 +1535,7 @@ function sectionLabel(section: SettingsSection) {
     case "general":
       return "General";
     case "runtime":
-      return "Runtime";
+      return "Engine";
     case "updates":
       return "Updates";
     case "shell":
@@ -1611,7 +1611,7 @@ function sectionPills(section: SettingsSection) {
     case "keyring":
       return ["Credentials stay local", "Native storage", "Recovery guides"];
     case "advanced":
-      return ["Custom paths", "App data", "Runtime inventory"];
+      return ["Custom paths", "App data", "Engine inventory"];
   }
 }
 

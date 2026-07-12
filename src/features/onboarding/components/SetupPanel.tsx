@@ -458,7 +458,7 @@ export function SetupPanel({
                       </button>
                     ) : null}
                     <button className="ghost-button" type="button" onClick={() => onOpenSettings("runtime")}>
-                      Runtime Settings
+                      Engine Settings
                     </button>
                   </div>
                   {restoreBundledRuntimeMutation.error ? (

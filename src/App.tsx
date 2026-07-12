@@ -843,7 +843,7 @@ export function App() {
             <p>{runtimeStatus.compatible ? "Ready" : "Needs attention"}</p>
           </div>
           <div className="sidebar-status-row">
-            <span className="sidebar-status-label">Runtime source</span>
+            <span className="sidebar-status-label">Engine source</span>
             <p>{runtimeSourceLabel(settings.runtime_kind)}</p>
           </div>
         </div>
@@ -858,7 +858,7 @@ export function App() {
             </p>
             <p className="inline-note">
               Your saved profiles stay local. Switch back to the included desktop engine to continue,
-              or open Runtime Settings only if you intentionally manage another compatible engine.
+              or open Engine Settings only if you intentionally manage another compatible engine.
             </p>
             <div className="settings-summary-grid">
               <div>
@@ -891,7 +891,7 @@ export function App() {
                 Try Again
               </button>
               <button className="ghost-button" type="button" onClick={() => setRuntimeRecoveryOpen(true)}>
-                Runtime Settings
+                Engine Settings
               </button>
             </div>
             {restoreBundledRuntimeMutation.error ? (
@@ -1193,7 +1193,7 @@ function describeRuntimeBlocker(runtimeStatus: {
       summary:
         "The current engine works outside the app, but it does not expose the desktop features AI Switch requires.",
       nextStep:
-        "Use the included desktop engine, or choose a newer desktop-compatible engine in Runtime Settings.",
+        "Use the included desktop engine, or choose a newer desktop-compatible engine in Engine Settings.",
     };
   }
 
@@ -1202,14 +1202,14 @@ function describeRuntimeBlocker(runtimeStatus: {
       summary:
         "The current engine was found, but it is not compatible with the desktop app.",
       nextStep:
-        "Use the included desktop engine, or choose a compatible engine in Runtime Settings.",
+        "Use the included desktop engine, or choose a compatible engine in Engine Settings.",
     };
   }
 
   return {
     summary: "AI Switch could not use the current desktop engine source.",
     nextStep:
-      "Use the included desktop engine, or choose a working engine source in Runtime Settings.",
+      "Use the included desktop engine, or choose a working engine source in Engine Settings.",
   };
 }
 
