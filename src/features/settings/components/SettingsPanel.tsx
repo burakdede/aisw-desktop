@@ -34,12 +34,14 @@ export function SettingsPanel({
   initialSection,
   desktopPreferences,
   onUpdateDesktopPreferences,
+  onReopenSetupAssistant,
 }: {
   settings: DesktopSettings;
   runtimeStatus: AppBootstrap["runtime_status"];
   initialSection?: SettingsSection;
   desktopPreferences?: DesktopPreferences;
   onUpdateDesktopPreferences?: (preferences: DesktopPreferences) => void;
+  onReopenSetupAssistant?: () => void;
 }) {
   const { updateSettingsMutation, checkForUpdatesMutation, installUpdateMutation, mutationLock } =
     useDesktopActions();
@@ -196,6 +198,7 @@ export function SettingsPanel({
       appearance,
       defaultSection,
       showMenuBarIcon,
+      reopenSetupAssistant: desktopPreferences?.reopenSetupAssistant ?? false,
     });
     setGeneralMessage("General preferences saved.");
   }
@@ -444,6 +447,30 @@ export function SettingsPanel({
                         Use the source list on the left to move directly to runtime, terminal, security, updates, and storage details.
                       </span>
                     </div>
+                  </div>
+                </article>
+                <article className="diagnostic-card settings-detail-card">
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <p className="card-kicker">Setup assistant</p>
+                      <h3>Start over from guided setup</h3>
+                    </div>
+                  </div>
+                  <div className="settings-note-block">
+                    <p className="inline-note">
+                      Reopen the guided setup assistant to review detection, your first shared switch,
+                      and optional terminal integration from the beginning.
+                    </p>
+                  </div>
+                  <div className="button-row">
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      disabled={!onReopenSetupAssistant}
+                      onClick={onReopenSetupAssistant}
+                    >
+                      Reopen Setup Assistant
+                    </button>
                   </div>
                 </article>
               </div>

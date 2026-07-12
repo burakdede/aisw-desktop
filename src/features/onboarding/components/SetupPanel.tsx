@@ -47,6 +47,7 @@ type SetupStep = "accounts" | "runtime" | "switch" | "terminal";
 export function shouldShowSetupFlow(
   snapshot: AppSnapshot,
   initReport: InitReport | undefined,
+  forceOpen = false,
 ) {
   const totalProfiles = Object.values(snapshot.profiles).reduce(
     (sum, entry) => sum + entry.profiles.length,
@@ -62,6 +63,7 @@ export function shouldShowSetupFlow(
   );
 
   return (
+    forceOpen ||
     totalProfiles === 0 ||
     liveAccounts.length > 0 ||
     installedToolsNeedingProfile.length > 0
@@ -74,12 +76,16 @@ export function SetupPanel({
   initReport,
   onOpenProfiles,
   onOpenSettings,
+  forcedOpen = false,
+  onCloseSetup,
 }: {
   bootstrap: AppBootstrap;
   snapshot: AppSnapshot;
   initReport: InitReport | undefined;
   onOpenProfiles: (tool: string, options?: { mode?: ProfileImportMode }) => void;
   onOpenSettings: (section?: SettingsSection) => void;
+  forcedOpen?: boolean;
+  onCloseSetup?: () => void;
 }) {
   const settings = bootstrap.settings;
   const queryClient = useQueryClient();
@@ -125,7 +131,7 @@ export function SetupPanel({
     () => sharedProfileEntries(settings, snapshot),
     [settings, snapshot],
   );
-  const shouldShowSetup = shouldShowSetupFlow(snapshot, initReport);
+  const shouldShowSetup = shouldShowSetupFlow(snapshot, initReport, forcedOpen);
   const [activeStep, setActiveStep] = useState<SetupStep>(() =>
     defaultSetupStep(snapshot, initReport),
   );
@@ -234,7 +240,7 @@ export function SetupPanel({
     "Credentials stay on this Mac",
     "No telemetry",
     "No prompt or API traffic proxy",
-    "Included runtime managed for you",
+    "Built-in switching engine ready",
   ];
   const installedNow = snapshot.statuses.filter((status) => status.binary_found).map((status) => toolDisplayName(status.tool));
 
@@ -243,13 +249,20 @@ export function SetupPanel({
       title="Get started"
       kicker="Local-only setup"
       actions={
-        <button
-          className="primary-button"
-          disabled={mutationLock.isBusy}
-          onClick={() => initMutation.mutate()}
-        >
-          {setupPrimaryActionLabel}
-        </button>
+        <div className="button-row">
+          {forcedOpen ? (
+            <button className="ghost-button" type="button" onClick={onCloseSetup}>
+              Close setup
+            </button>
+          ) : null}
+          <button
+            className="primary-button"
+            disabled={mutationLock.isBusy}
+            onClick={() => initMutation.mutate()}
+          >
+            {setupPrimaryActionLabel}
+          </button>
+        </div>
       }
     >
       <SplitView
@@ -361,7 +374,7 @@ export function SetupPanel({
                     </span>
                   </div>
                   <p className="inline-note">
-                    This app uses the included runtime by default. Confirm that local storage and
+                    AI Switch includes the switching engine it needs. Confirm local storage and
                     secure storage are ready, then save your first profile.
                   </p>
                   <p className="inline-note">{runtimeSummary.description}</p>
@@ -384,8 +397,8 @@ export function SetupPanel({
                         onClick={() => restoreBundledRuntimeMutation.mutate()}
                       >
                         {restoreBundledRuntimeMutation.isPending
-                          ? "Switching to App Runtime…"
-                          : "Use App Runtime"}
+                          ? "Switching to Included Engine…"
+                          : "Use Included Engine"}
                       </button>
                     ) : null}
                     <button className="ghost-button" type="button" onClick={() => onOpenSettings("runtime")}>
@@ -396,7 +409,7 @@ export function SetupPanel({
                     <p className="inline-note">
                       {restoreBundledRuntimeMutation.error instanceof Error
                         ? restoreBundledRuntimeMutation.error.message
-                        : "Could not switch back to the app runtime."}
+                        : "Could not switch back to the included engine."}
                     </p>
                   ) : null}
                 </article>

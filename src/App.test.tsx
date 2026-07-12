@@ -604,12 +604,12 @@ describe("App", () => {
     });
     expect(
       screen.getByText(
-        "This Mac is pointed at a command-line runtime that this desktop app cannot use for switching.",
+        "This Mac is pointed at an external switching engine that this desktop app cannot use safely.",
       ),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Switch back to the app runtime, or choose a newer compatible runtime in Runtime Settings before continuing.",
+        "Switch back to the included engine to continue, or open Runtime Settings if you need to review the current source.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Current selection")).toBeInTheDocument();
@@ -619,7 +619,7 @@ describe("App", () => {
     expect(
       screen.getByText("Compatibility details"),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Use App Runtime" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Use Included Engine" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Runtime Settings" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Runtime" })).not.toBeInTheDocument();
@@ -660,7 +660,7 @@ describe("App", () => {
     });
   });
 
-  it("switches back to the AI Switch runtime from the blocker screen", async () => {
+  it("switches back to the included engine from the blocker screen", async () => {
     const calls: Array<{ command: string; args?: unknown }> = [];
     let currentSettings: DesktopSettings = {
       ...bootstrap.settings,
@@ -708,10 +708,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Use App Runtime" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Use Included Engine" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Use App Runtime" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use Included Engine" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
@@ -3890,7 +3890,7 @@ describe("App", () => {
     });
 
     openSetupStep("Welcome");
-    fireEvent.click(screen.getByRole("button", { name: "Use App Runtime" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use Included Engine" }));
 
     await waitFor(() => {
       expect(
@@ -7916,6 +7916,7 @@ describe("App", () => {
         "Managed by macOS for now so AI Switch stays aligned with the system login-item model instead of inventing a separate in-app setting.",
       ),
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reopen Setup Assistant" })).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Appearance"), {
       target: { value: "dark" },
@@ -7930,6 +7931,7 @@ describe("App", () => {
       expect(window.localStorage.getItem("ai-switch.desktop.appearance")).toBe("dark");
       expect(window.localStorage.getItem("ai-switch.desktop.default-section")).toBe("profiles");
       expect(window.localStorage.getItem("ai-switch.desktop.show-menu-bar-icon")).toBe("false");
+      expect(window.localStorage.getItem("ai-switch.desktop.reopen-setup-assistant")).toBe("false");
       expect(document.documentElement.dataset.appearance).toBe("dark");
       expect(document.documentElement.style.colorScheme).toBe("dark");
       expect(commands).toContain("set_tray_visibility");
@@ -7940,6 +7942,25 @@ describe("App", () => {
             "Next launch opens on Profiles whenever the app can resume normally.",
         ),
       ).toBeInTheDocument();
+    });
+  });
+
+  it("can reopen and close the setup assistant from settings", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reopen Setup Assistant" }));
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("heading", { name: "Get started" }).length).toBeGreaterThan(0);
+      expect(window.localStorage.getItem("ai-switch.desktop.reopen-setup-assistant")).toBe("true");
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Close setup" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
+      expect(window.localStorage.getItem("ai-switch.desktop.reopen-setup-assistant")).toBe("false");
     });
   });
 

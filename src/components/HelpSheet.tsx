@@ -54,7 +54,7 @@ export function HelpSheet({
             <p className="inline-note">Credentials stay on this Mac.</p>
             <p className="inline-note">No telemetry, prompt logging, or traffic proxy is used.</p>
             <p className="inline-note">
-              The app-managed runtime is the recommended setup for a consistent AI Switch experience.
+              The included switching engine is the recommended setup for a consistent AI Switch experience.
             </p>
           </article>
 

@@ -109,7 +109,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let help_issues = MenuItem::with_id(
         app,
         "menu.help.issues",
-        "Export Redacted Diagnostic Report…",
+        "Export Support Report…",
         true,
         None::<&str>,
     )?;

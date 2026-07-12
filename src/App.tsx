@@ -632,7 +632,10 @@ export function App() {
   const resolvedSnapshot = snapshot.data ?? bootstrap.data.snapshot;
   const toolCapabilities = runtimeStatus.capabilities?.tools ?? {};
   const currentActiveSet = resolvedSnapshot ? activeSetLabel(settings, resolvedSnapshot) : null;
-  const setupRequired = resolvedSnapshot ? shouldShowSetupFlow(resolvedSnapshot, init.data) : false;
+  const setupForced = desktopPreferences.reopenSetupAssistant;
+  const setupRequired = resolvedSnapshot
+    ? shouldShowSetupFlow(resolvedSnapshot, init.data, setupForced)
+    : false;
   const runtimeBlocked = !runtimeStatus.compatible;
   const runtimeRecoveryFocused = runtimeBlocked && !runtimeRecoveryOpen;
   const activeSection = runtimeBlocked
@@ -674,6 +677,21 @@ export function App() {
   function openAddProfile() {
     setProfilesRouteState({ tool: "claude", expandedProfile: null });
     setActiveNav("profiles");
+  }
+
+  function reopenSetupAssistant() {
+    setDesktopPreferences((current) => ({
+      ...current,
+      reopenSetupAssistant: true,
+    }));
+    setActiveNav("overview");
+  }
+
+  function closeSetupAssistant() {
+    setDesktopPreferences((current) => ({
+      ...current,
+      reopenSetupAssistant: false,
+    }));
   }
 
   function renderToolbar() {
@@ -789,7 +807,7 @@ export function App() {
       subtitle="Switch Claude Code, Codex CLI, and Gemini CLI profiles from one focused app."
       detail={
         runtimeRecoveryFocused
-          ? "AI Switch can continue as soon as this Mac switches back to the app runtime."
+          ? "AI Switch can continue as soon as this Mac switches back to the included engine."
           : sectionDetail(activeSection, setupFocused)
       }
       nav={navItems}
@@ -817,12 +835,12 @@ export function App() {
         <SectionCard title="Switching is paused" kicker="Setup paused">
           <div className="stack-list">
             <p className="inline-note">
-              This Mac is pointed at a command-line runtime that this desktop app cannot use for
-              switching.
+              This Mac is pointed at an external switching engine that this desktop app cannot use
+              safely.
             </p>
             <p className="inline-note">
-              Switch back to the app runtime to continue, or open Runtime Settings if you need to
-              review the current source.
+              Switch back to the included engine to continue, or open Runtime Settings if you need
+              to review the current source.
             </p>
             <div className="settings-summary-grid">
               <div>
@@ -847,8 +865,8 @@ export function App() {
                   onClick={() => restoreBundledRuntimeMutation.mutate()}
                 >
                   {restoreBundledRuntimeMutation.isPending
-                    ? "Switching to App Runtime…"
-                    : "Use App Runtime"}
+                    ? "Switching to Included Engine…"
+                    : "Use Included Engine"}
                 </button>
               ) : null}
               <button className="ghost-button" type="button" onClick={() => void retryRuntimeCheck()}>
@@ -889,6 +907,7 @@ export function App() {
           initialSection="runtime"
           desktopPreferences={desktopPreferences}
           onUpdateDesktopPreferences={setDesktopPreferences}
+          onReopenSetupAssistant={reopenSetupAssistant}
         />
       ) : resolvedSnapshot ? (
         <>
@@ -897,6 +916,8 @@ export function App() {
               bootstrap={bootstrap.data}
               snapshot={resolvedSnapshot}
               initReport={init.data}
+              forcedOpen={setupForced}
+              onCloseSetup={closeSetupAssistant}
               onOpenProfiles={(tool, options) => {
                 setProfilesRouteState({ tool, expandedProfile: null, mode: options?.mode });
                 setActiveNav("profiles");
@@ -978,6 +999,7 @@ export function App() {
               initialSection={settingsRouteState.section}
               desktopPreferences={desktopPreferences}
               onUpdateDesktopPreferences={setDesktopPreferences}
+              onReopenSetupAssistant={reopenSetupAssistant}
             />
           ) : null}
         </>
@@ -1099,7 +1121,7 @@ function describeRuntimeBlocker(runtimeStatus: {
       summary:
         "The selected runtime does not report the desktop compatibility details this app needs.",
       nextStep:
-        "Switch back to the app runtime, or choose a newer compatible runtime in Runtime Settings before continuing.",
+        "Switch back to the included engine, or choose a newer compatible runtime in Runtime Settings before continuing.",
     };
   }
 
@@ -1108,14 +1130,14 @@ function describeRuntimeBlocker(runtimeStatus: {
       summary:
         "The selected runtime was found, but it is not compatible with AI Switch.",
       nextStep:
-        "Switch back to the app runtime, or choose a compatible runtime in Runtime Settings before continuing.",
+        "Switch back to the included engine, or choose a compatible runtime in Runtime Settings before continuing.",
     };
   }
 
   return {
     summary: "AI Switch could not use the selected runtime.",
     nextStep:
-      "Switch to the app runtime, or choose a working runtime source in Runtime Settings before continuing.",
+      "Switch to the included engine, or choose a working runtime source in Runtime Settings before continuing.",
   };
 }
 
