@@ -69,6 +69,9 @@ export function ContextsPanel({
   const selectedSet =
     localSets.find((set) => set.name === selectedSetName) ?? localSets[0] ?? null;
   const detailSet = selectedSet;
+  const detailSetSelectionCount = detailSet
+    ? Object.values(detailSet.profiles).filter((profile) => Boolean(profile)).length
+    : 0;
   const profileOptions = useMemo(
     () =>
       Object.fromEntries(
@@ -214,44 +217,32 @@ export function ContextsPanel({
         secondaryClassName="set-editor-pane"
         primary={
           <div className="stack-list desktop-pane-column">
-            <article className="diagnostic-card set-library-intro">
-              <div className="desktop-pane-section-header">
-                <div>
-                  <p className="card-kicker">Library</p>
-                  <h3>{localSets.length ? `${localSets.length} saved set${localSets.length === 1 ? "" : "s"}` : "No saved sets yet"}</h3>
-                </div>
-                <span className={`pill ${activeSetCount ? "pill-ok" : "pill-soft"}`}>
-                  {activeSetCount ? `${activeSetCount} active` : "Library"}
-                </span>
-              </div>
-              <p className="inline-note">
-                Build reusable combinations once, then switch them from Overview, Quick Switch, the menu bar, and project rules.
-              </p>
-              <div className="set-library-meta">
-                <div>
-                  <span className="overview-current-set-cell-label">Current</span>
-                  <strong>{activeSetCount ? "One active" : "None active"}</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Ready</span>
-                  <strong>{readySetCount} ready</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Imported</span>
-                  <strong>{snapshot.contexts.length} available</strong>
-                </div>
-              </div>
-            </article>
-
             <article className="diagnostic-card set-library-card">
               <div className="set-section-header desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Saved sets</p>
                   <h3>{localSets.length ? "Reusable switching sets" : "No saved sets yet"}</h3>
                 </div>
-                <p className="inline-note">
-                  Select a set to review it in the detail pane or switch it immediately.
-                </p>
+                <span className={`pill ${activeSetCount ? "pill-ok" : "pill-soft"}`}>
+                  {activeSetCount ? `${activeSetCount} active` : "Library"}
+                </span>
+              </div>
+              <p className="inline-note">
+                Save work, personal, and client combinations once, then switch them from Overview, Quick Switch, or project rules.
+              </p>
+              <div className="set-library-meta">
+                <div>
+                  <span className="overview-current-set-cell-label">Saved</span>
+                  <strong>{localSets.length}</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Ready</span>
+                  <strong>{readySetCount}</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Runtime</span>
+                  <strong>{snapshot.contexts.length}</strong>
+                </div>
               </div>
               <div className="stack-list desktop-list-stack set-library-list">
                 {localSets.map((set) => (
@@ -358,13 +349,16 @@ export function ContextsPanel({
             <article className="diagnostic-card set-library-card">
               <div className="set-section-header desktop-pane-section-header">
                 <div>
-                  <p className="card-kicker">Detected sets</p>
-                  <h3>{snapshot.contexts.length ? `${snapshot.contexts.length} available` : "None available"}</h3>
+                  <p className="card-kicker">Runtime sets</p>
+                  <h3>{snapshot.contexts.length ? "Detected by the selected runtime" : "No runtime sets detected"}</h3>
                 </div>
-                <p className="inline-note">
-                  These come directly from the selected runtime and remain separate from your desktop-local saved sets.
-                </p>
+                <span className="pill pill-soft">
+                  {snapshot.contexts.length ? `${snapshot.contexts.length} available` : "Runtime"}
+                </span>
               </div>
+              <p className="inline-note">
+                These sets come from the selected runtime and remain separate from your desktop-local saved sets.
+              </p>
               <div className="stack-list set-imported-list">
                 {snapshot.contexts.map((context) => (
                   <article key={context.name} className="list-row set-row set-row-imported">
@@ -435,7 +429,7 @@ export function ContextsPanel({
               <div className="desktop-pane-section-header">
                 <div>
                   <p className="card-kicker">Selected set</p>
-                  <h3>Set details</h3>
+                  <h3>{profileSetDisplayLabel(detailSet)}</h3>
                 </div>
                 <span
                   className={`pill ${
@@ -452,6 +446,23 @@ export function ContextsPanel({
                       ? "Ready"
                       : "Needs attention"}
                 </span>
+              </div>
+              <div className="set-detail-strip">
+                <div className="set-detail-cell">
+                  <span className="overview-current-set-cell-label">Name</span>
+                  <strong>{detailSet.name}</strong>
+                </div>
+                <div className="set-detail-cell">
+                  <span className="overview-current-set-cell-label">Label</span>
+                  <strong>{detailSet.label?.trim() || "Using set name"}</strong>
+                </div>
+                <div className="set-detail-cell">
+                  <span className="overview-current-set-cell-label">Coverage</span>
+                  <strong>
+                    {detailSetSelectionCount} tool
+                    {detailSetSelectionCount === 1 ? "" : "s"}
+                  </strong>
+                </div>
               </div>
               <p className="inline-note">
                 Review the mapped profiles here before switching or editing this saved set.
@@ -511,20 +522,19 @@ export function ContextsPanel({
               </p>
             </div>
           )}
-          <div className="stack-list">
-            <div className="desktop-pane-section-header">
-              <div>
-                <p className="card-kicker">Set editor</p>
-                <h3>Create or update sets in a focused sheet</h3>
+            <div className="stack-list">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Quick actions</p>
+                  <h3>Open the focused set editor only when you need it</h3>
+                </div>
+                <span className="pill pill-soft">Focused</span>
               </div>
-              <span className="pill pill-soft">Focused</span>
-            </div>
-            <p className="inline-note">
-              Save the profiles you want to switch together so Overview, project rules, and quick switching
-              stay tied to one clear working identity without stretching this pane into a long form.
-            </p>
-            <div className="button-row">
-              <button className="primary-button" type="button" onClick={openNewSetEditor}>
+              <p className="inline-note">
+                Keep this inspector short. Create or edit sets in a sheet so the library stays easy to scan.
+              </p>
+              <div className="button-row">
+                <button className="primary-button" type="button" onClick={openNewSetEditor}>
                 Open Set Editor
               </button>
               {detailSet ? (

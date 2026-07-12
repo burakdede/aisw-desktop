@@ -1951,7 +1951,6 @@ button {
   color: var(--text-secondary);
 }
 
-.set-library-intro,
 .set-library-meta {
   gap: 12px;
 }
@@ -2085,6 +2084,12 @@ button {
 }
 
 .set-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.set-detail-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
@@ -4120,6 +4125,7 @@ button {
 
 @media (max-width: 880px) {
   .set-profile-grid,
+  .set-detail-strip,
   .overview-tool-facts,
   .overview-focus-grid,
   .overview-project-grid,
