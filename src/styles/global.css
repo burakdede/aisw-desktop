@@ -245,7 +245,7 @@ button {
 
 .brand-mark {
   flex: none;
-  filter: drop-shadow(0 6px 14px rgba(17, 24, 39, 0.09));
+  filter: drop-shadow(0 8px 16px rgba(17, 24, 39, 0.1));
 }
 
 .brand-mark-highlight {
@@ -253,26 +253,27 @@ button {
 }
 
 .brand-mark-shell {
-  fill: color-mix(in srgb, Canvas 88%, CanvasText 12%);
-  stroke: color-mix(in srgb, CanvasText 8%, transparent);
+  fill: color-mix(in srgb, Canvas 86%, CanvasText 14%);
+  stroke: color-mix(in srgb, CanvasText 10%, transparent);
 }
 
 .brand-mark-core {
-  fill: color-mix(in srgb, Canvas 99%, CanvasText 1%);
-  stroke: color-mix(in srgb, CanvasText 4%, transparent);
+  fill: color-mix(in srgb, Canvas 99%, AccentColor 1%);
+  stroke: color-mix(in srgb, CanvasText 5%, transparent);
 }
 
-.brand-mark-dock {
+.brand-mark-lane-soft {
   fill: color-mix(in srgb, Canvas 98%, CanvasText 2%);
   stroke: color-mix(in srgb, CanvasText 8%, transparent);
 }
 
-.brand-mark-switch {
-  stroke: color-mix(in srgb, AccentColor 76%, CanvasText 24%);
+.brand-mark-lane-strong {
+  fill: color-mix(in srgb, AccentColor 14%, Canvas 86%);
+  stroke: color-mix(in srgb, AccentColor 18%, transparent);
 }
 
-.brand-mark-switch-shadow {
-  stroke: color-mix(in srgb, CanvasText 28%, transparent);
+.brand-mark-flow {
+  stroke: color-mix(in srgb, AccentColor 74%, CanvasText 26%);
 }
 
 .brand-mark-node {
@@ -293,8 +294,8 @@ button {
 }
 
 .brand-mark-joint {
-  fill: color-mix(in srgb, Canvas 98%, AccentColor 2%);
-  stroke: color-mix(in srgb, AccentColor 20%, transparent);
+  fill: color-mix(in srgb, Canvas 96%, AccentColor 4%);
+  stroke: color-mix(in srgb, AccentColor 24%, transparent);
 }
 
 .sidebar-title {

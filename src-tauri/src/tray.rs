@@ -212,8 +212,8 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
                     TrayCommandScope::Global {
                         id: "profile-set".to_owned(),
                     },
-                    "Activate profile set",
-                    format!("Activated profile set {profile_set_label}."),
+                    "Activate saved set",
+                    format!("Activated saved set {profile_set_label}."),
                 );
                 let _ = refresh_tray(&app_handle, state).await;
             });
