@@ -656,7 +656,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
 
     if !snapshot.contexts.is_empty() {
         sections.push(TraySection {
-            title: "Switch Imported Set".to_owned(),
+            title: "Switch Detected Set".to_owned(),
             items: snapshot
                 .contexts
                 .iter()
@@ -674,7 +674,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
         .unwrap_or_default();
     if !profile_sets.is_empty() {
         sections.push(TraySection {
-            title: "Switch Saved Set".to_owned(),
+            title: "Switch Set".to_owned(),
             items: profile_sets,
         });
     }
@@ -1246,7 +1246,7 @@ mod tests {
                     }],
                 },
                 TraySection {
-                    title: "Switch Imported Set".to_owned(),
+                    title: "Switch Detected Set".to_owned(),
                     items: vec![TrayEntry {
                         id: "context:client-acme".to_owned(),
                         label: "Client Acme ✓".to_owned(),
@@ -1254,7 +1254,7 @@ mod tests {
                     }],
                 },
                 TraySection {
-                    title: "Switch Saved Set".to_owned(),
+                    title: "Switch Set".to_owned(),
                     items: vec![TrayEntry {
                         id: "profile-set:personal-focus".to_owned(),
                         label: "personal-focus".to_owned(),

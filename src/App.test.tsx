@@ -4594,7 +4594,7 @@ describe("App", () => {
     await openProjectRulesSection();
 
     expect(screen.getByRole("option", { name: "Saved set: Client Acme" })).toBeInTheDocument();
-    expect(screen.queryByRole("option", { name: "Imported set: client-acme" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Detected set: client-acme" })).not.toBeInTheDocument();
   });
 
   it("blocks unsupported workspace binding submits until a context and target are available", async () => {

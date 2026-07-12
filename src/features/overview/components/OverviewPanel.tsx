@@ -290,7 +290,7 @@ export function OverviewPanel({
                 <h3>Latest results</h3>
               </div>
               <p className="inline-note">
-                Keep bulk switches, project rule changes, and imported-set activations visible without leaving Overview.
+                Keep bulk switches, project rule changes, and detected-set activations visible without leaving Overview.
               </p>
             </div>
             <div className="stack-list overview-recent-list">
