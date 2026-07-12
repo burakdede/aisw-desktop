@@ -17,7 +17,7 @@
         "height": 680,
         "minWidth": 820,
         "minHeight": 560,
-        "titleBarStyle": "transparent",
+        "titleBarStyle": "Transparent",
         "hiddenTitle": true,
         "resizable": true
       }
