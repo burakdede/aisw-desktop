@@ -1267,6 +1267,42 @@ button {
   align-items: start;
 }
 
+.settings-workspace {
+  display: grid;
+  gap: 14px;
+}
+
+.settings-overview-card {
+  display: grid;
+  gap: 12px;
+}
+
+.settings-overview-copy {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.settings-overview-copy p {
+  margin: 4px 0 0;
+  max-width: 46ch;
+}
+
+.settings-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(380px, 1.04fr) minmax(300px, 0.96fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.settings-main-stack,
+.settings-side-stack {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
 .settings-summary-card {
   gap: 12px;
 }
@@ -1293,6 +1329,97 @@ button {
 .settings-pane-section {
   display: grid;
   gap: 12px;
+}
+
+.settings-pane-section-compact {
+  gap: 10px;
+}
+
+.settings-detail-card {
+  display: grid;
+  gap: 14px;
+}
+
+.settings-inline-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-inline-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.settings-note-block {
+  display: grid;
+  gap: 6px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--separator);
+  background: color-mix(in srgb, CanvasText 3%, Canvas 97%);
+}
+
+.settings-note-block p {
+  margin: 0;
+}
+
+.settings-steps-list {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-step-card {
+  display: grid;
+  gap: 8px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--separator);
+  background: color-mix(in srgb, CanvasText 3%, Canvas 97%);
+}
+
+.settings-step-card p,
+.settings-step-card pre {
+  margin: 0;
+}
+
+.settings-step-card pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.settings-info-list {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-info-row {
+  display: grid;
+  gap: 3px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
+.settings-kv-list {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-kv-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+  padding: 9px 0;
+  border-top: 1px solid var(--separator);
+}
+
+.settings-kv-row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.settings-kv-row strong:last-child {
+  text-align: right;
 }
 
 .settings-toggle-list {
@@ -3221,6 +3348,17 @@ button {
   }
 
   .settings-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-overview-copy,
+  .settings-kv-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .settings-detail-grid,
+  .settings-inline-grid-2 {
     grid-template-columns: 1fr;
   }
 

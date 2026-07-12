@@ -250,903 +250,948 @@ export function SettingsPanel({
         secondary={
       <div className="settings-pane">
         {selectedSection === "general" ? (
-          <div className="panel-grid panel-grid-2 settings-layout">
-            <div className="stack-list">
-              <article className="diagnostic-card settings-summary-card">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Current setup</p>
-                    <h3>Desktop defaults</h3>
-                  </div>
-                  <span className="pill pill-soft">Recommended</span>
-                </div>
-                <div className="settings-summary-grid">
-                  <div>
-                    <span className="overview-current-set-cell-label">Appearance</span>
-                    <strong>{titleCase(appearance)}</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Login item</span>
-                    <strong>Managed by macOS</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Menu bar extra</span>
-                    <strong>{showMenuBarIcon ? "Visible" : "Hidden"}</strong>
-                  </div>
-                </div>
-              </article>
-              <article className="diagnostic-card settings-pane-section">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">General</p>
-                    <h3>Desktop appearance</h3>
-                  </div>
+          <div className="settings-workspace">
+            <article className="diagnostic-card settings-overview-card">
+              <div className="settings-overview-copy">
+                <div>
+                  <p className="card-kicker">Current setup</p>
+                  <h3>Desktop defaults</h3>
                   <p className="inline-note">
                     Keep the app aligned with the operating system and choose whether AI Switch follows the system or pins the window to a light or dark appearance.
                   </p>
                 </div>
-                <label>
-                  Appearance
-                  <select
-                    value={appearance}
-                    onChange={(event) =>
-                      setAppearance(event.target.value as DesktopPreferences["appearance"])
-                    }
-                  >
-                    {DESKTOP_APPEARANCES.map((entry) => (
-                      <option key={entry} value={entry}>
-                        {titleCase(entry)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <p className="inline-note">
-                  System keeps the window aligned with the OS. Light and Dark pin the app to one appearance until you change it again.
-                </p>
-              </article>
-              <article className="diagnostic-card settings-pane-section">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Launch</p>
-                    <h3>Launch behavior</h3>
-                  </div>
-                  <p className="inline-note">
-                    AI Switch follows native macOS behavior here. The menu bar extra can be shown or hidden now, while login items continue to be managed by the operating system.
-                  </p>
+                <span className="pill pill-soft">Recommended</span>
+              </div>
+              <div className="settings-summary-grid">
+                <div>
+                  <span className="overview-current-set-cell-label">Appearance</span>
+                  <strong>{titleCase(appearance)}</strong>
                 </div>
-                <div className="settings-toggle-list" aria-label="Launch behavior controls">
-                  <label className="settings-toggle-row settings-toggle-row-disabled">
-                    <span className="settings-toggle-copy">
-                      <strong>Launch at login</strong>
-                      <span className="inline-note">
-                        Managed by macOS for now so AI Switch stays aligned with the system login-item model instead of inventing a separate in-app setting.
+                <div>
+                  <span className="overview-current-set-cell-label">Login item</span>
+                  <strong>Managed by macOS</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Menu bar extra</span>
+                  <strong>{showMenuBarIcon ? "Visible" : "Hidden"}</strong>
+                </div>
+              </div>
+            </article>
+            <div className="settings-detail-grid">
+              <div className="settings-main-stack">
+                <article className="diagnostic-card settings-detail-card">
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <p className="card-kicker">General</p>
+                      <h3>Desktop appearance</h3>
+                    </div>
+                  </div>
+                  <div className="settings-inline-grid settings-inline-grid-2">
+                    <label>
+                      Appearance
+                      <select
+                        value={appearance}
+                        onChange={(event) =>
+                          setAppearance(event.target.value as DesktopPreferences["appearance"])
+                        }
+                      >
+                        {DESKTOP_APPEARANCES.map((entry) => (
+                          <option key={entry} value={entry}>
+                            {titleCase(entry)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <div className="settings-note-block">
+                      <strong>Appearance behavior</strong>
+                      <p className="inline-note">
+                        System keeps the window aligned with the OS. Light and Dark pin the app to one appearance until you change it again.
+                      </p>
+                    </div>
+                  </div>
+                </article>
+                <article className="diagnostic-card settings-detail-card">
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <p className="card-kicker">Launch</p>
+                      <h3>Launch behavior</h3>
+                    </div>
+                  </div>
+                  <div className="settings-toggle-list" aria-label="Launch behavior controls">
+                    <label className="settings-toggle-row settings-toggle-row-disabled">
+                      <span className="settings-toggle-copy">
+                        <strong>Launch at login</strong>
+                        <span className="inline-note">
+                          Managed by macOS for now so AI Switch stays aligned with the system login-item model instead of inventing a separate in-app setting.
+                        </span>
                       </span>
-                    </span>
-                    <input type="checkbox" aria-label="Launch at login" disabled />
-                  </label>
-                  <label className="settings-toggle-row">
-                    <span className="settings-toggle-copy">
-                      <strong>Show menu bar icon</strong>
-                      <span className="inline-note">
-                        Keep the AI Switch menu bar extra available for quick switching, verification, and diagnostics without opening the full app.
+                      <input type="checkbox" aria-label="Launch at login" disabled />
+                    </label>
+                    <label className="settings-toggle-row">
+                      <span className="settings-toggle-copy">
+                        <strong>Show menu bar icon</strong>
+                        <span className="inline-note">
+                          Keep the AI Switch menu bar extra available for quick switching, verification, and diagnostics without opening the full app.
+                        </span>
                       </span>
-                    </span>
-                    <input
-                      type="checkbox"
-                      aria-label="Show menu bar icon"
-                      checked={showMenuBarIcon}
-                      onChange={(event) => setShowMenuBarIcon(event.target.checked)}
-                    />
+                      <input
+                        type="checkbox"
+                        aria-label="Show menu bar icon"
+                        checked={showMenuBarIcon}
+                        onChange={(event) => setShowMenuBarIcon(event.target.checked)}
+                      />
+                    </label>
+                  </div>
+                </article>
+              </div>
+              <div className="settings-side-stack">
+                <article className="diagnostic-card settings-detail-card">
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <p className="card-kicker">Default section</p>
+                      <h3>Start destination</h3>
+                    </div>
+                  </div>
+                  <label>
+                    Default section
+                    <select
+                      value={defaultSection}
+                      onChange={(event) =>
+                        setDefaultSection(event.target.value as DesktopPreferences["defaultSection"])
+                      }
+                    >
+                      {DEFAULT_SECTIONS.map((entry) => (
+                        <option key={entry} value={entry}>
+                          {titleCase(entry)}
+                        </option>
+                      ))}
+                    </select>
                   </label>
-                </div>
-                <p className="inline-note">
-                  This section stays intentionally close to native macOS login-item and menu-bar behavior.
-                </p>
-              </article>
-              <article className="diagnostic-card settings-pane-section">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Default section</p>
-                    <h3>Start destination</h3>
+                  <div className="settings-note-block">
+                    <p className="inline-note">
+                      Runtime blockers and first-run onboarding still take priority when they need your attention.
+                    </p>
+                    <p className="inline-note">
+                      Next launch opens on <strong>{titleCase(defaultSection)}</strong> whenever the app can resume normally.
+                    </p>
                   </div>
-                  <p className="inline-note">
-                    Choose which section opens first when AI Switch starts normally.
-                  </p>
-                </div>
-                <label>
-                  Default section
-                  <select
-                    value={defaultSection}
-                    onChange={(event) =>
-                      setDefaultSection(event.target.value as DesktopPreferences["defaultSection"])
-                    }
-                  >
-                    {DEFAULT_SECTIONS.map((entry) => (
-                      <option key={entry} value={entry}>
-                        {titleCase(entry)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <p className="inline-note">
-                  Runtime blockers and first-run onboarding still take priority when they need your attention.
-                </p>
-                <p className="inline-note">
-                  Next launch opens on <strong>{titleCase(defaultSection)}</strong> whenever the app can resume normally.
-                </p>
-                <div className="button-row">
-                  <button className="primary-button" type="button" onClick={saveGeneralPreferences}>
-                    Save General Settings
-                  </button>
-                </div>
-                {generalMessage ? <p className="inline-note">{generalMessage}</p> : null}
-              </article>
-            </div>
-            <div className="stack-list">
-              <article className="diagnostic-card diagnostic-pass settings-pane-section">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Model</p>
-                    <h3>Desktop behavior</h3>
+                  <div className="button-row">
+                    <button className="primary-button" type="button" onClick={saveGeneralPreferences}>
+                      Save General Settings
+                    </button>
                   </div>
-                  <p className="inline-note">
-                    This app stays a local control surface over the switching runtime rather than becoming a separate credential manager.
-                  </p>
-                </div>
-                <p className="inline-note">Credentials stay local.</p>
-                <p className="inline-note">No telemetry or prompt proxy is used.</p>
-                <p className="inline-note">Every switch, verify, and repair flow uses the same desktop interaction model.</p>
-              </article>
-              <article className="diagnostic-card settings-pane-section">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Navigation</p>
-                    <h3>Preference sections</h3>
+                  {generalMessage ? <p className="inline-note">{generalMessage}</p> : null}
+                </article>
+                <article className="diagnostic-card diagnostic-pass settings-pane-section">
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <p className="card-kicker">Model</p>
+                      <h3>Desktop behavior</h3>
+                    </div>
                   </div>
-                  <p className="inline-note">
-                    The preferences window is split into native-style categories so runtime, terminal, security, updates, and advanced details stay focused instead of appearing in one long settings page.
-                  </p>
-                </div>
-                <p className="inline-note">Use the source list on the left to jump directly to the section you need.</p>
-                <p className="inline-note">
-                  Login at startup remains OS-managed in this build, while the menu bar icon can be shown or hidden directly from the app.
-                </p>
-              </article>
+                  <div className="settings-info-list">
+                    <div className="settings-info-row">
+                      <strong>Credentials stay local.</strong>
+                      <span className="inline-note">No telemetry or prompt proxy is used.</span>
+                    </div>
+                    <div className="settings-info-row">
+                      <strong>One interaction model</strong>
+                      <span className="inline-note">
+                        Every switch, verify, and repair flow uses the same desktop interaction model.
+                      </span>
+                    </div>
+                    <div className="settings-info-row">
+                      <strong>Focused navigation</strong>
+                      <span className="inline-note">
+                        Use the source list on the left to jump directly to runtime, terminal, security, updates, and storage details.
+                      </span>
+                    </div>
+                  </div>
+                </article>
+              </div>
             </div>
           </div>
         ) : null}
 
         {selectedSection === "runtime" ? (
-          <div className="panel-grid panel-grid-2 settings-layout">
-            <form className="stacked-form settings-form" onSubmit={submit}>
-              <article className={`diagnostic-card settings-summary-card ${runtimeKind === "bundled" ? "diagnostic-pass" : "diagnostic-warn"}`}>
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Current setup</p>
-                    <h3>Runtime selection</h3>
-                  </div>
-                  <span className={`pill ${runtimeKind === "bundled" ? "pill-ok" : "pill-warn"}`}>
-                    {runtimeKind === "bundled" ? "Included runtime" : titleCase(runtimeKind)}
-                  </span>
-                </div>
-                <div className="settings-summary-grid">
-                  <div>
-                    <span className="overview-current-set-cell-label">Compatibility</span>
-                    <strong>{runtimeStatus.compatible ? "Ready" : "Needs attention"}</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Version</span>
-                    <strong>{runtimeStatus.version?.version ?? "unknown"}</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Recommended</span>
-                    <strong>Bundled</strong>
-                  </div>
-                </div>
-              </article>
-              <article
-                className={`diagnostic-card ${runtimeKind === "bundled" ? "diagnostic-pass" : "diagnostic-warn"}`}
-              >
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Preferred setup</p>
-                    <h3>Recommended runtime</h3>
-                  </div>
-                  <span className={`pill ${runtimeKind === "bundled" ? "pill-ok" : "pill-warn"}`}>
-                    {runtimeKind === "bundled" ? "Included runtime" : "Override active"}
-                  </span>
-                </div>
-                <p className="inline-note">
-                  This app ships with a compatible runtime and uses it by default.
-                </p>
-                <p className="inline-note">
-                  Use a system or custom runtime only when you intentionally need to replace the supported desktop bundle.
-                </p>
-              </article>
-
-              {runtimeKind !== "bundled" ? (
-                <article className="diagnostic-card diagnostic-warn">
-                  <h3>Manual runtime source is active</h3>
+          <div className="settings-workspace">
+            <article
+              className={`diagnostic-card settings-overview-card ${
+                runtimeKind === "bundled" ? "diagnostic-pass" : "diagnostic-warn"
+              }`}
+            >
+              <div className="settings-overview-copy">
+                <div>
+                  <p className="card-kicker">Current setup</p>
+                  <h3>Runtime selection</h3>
                   <p className="inline-note">
-                    This app session is using a{" "}
-                    {runtimeKind === "system" ? "system" : "custom"} runtime instead of the included runtime.
-                  </p>
-                  <p className="inline-note">
-                    Compatibility for onboarding, switching, and diagnostics is only guaranteed with the included runtime shipped in this app release.
-                  </p>
-                </article>
-              ) : null}
-
-              <article className="diagnostic-card settings-pane-section">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Runtime</p>
-                    <h3>Runtime source</h3>
-                  </div>
-                  <p className="inline-note">
-                    Keep the included runtime selected unless you intentionally need a different runtime source.
+                    This app ships with a compatible runtime and uses it by default. Use a system or custom runtime only when you intentionally need to replace the supported desktop bundle.
                   </p>
                 </div>
-                {showAdvancedRuntime ? (
-                  <>
-                    <label>
-                      Runtime source
-                      <select
-                        value={runtimeKind}
-                        onChange={(event) =>
-                          setRuntimeKind(event.target.value as typeof runtimeKind)
-                        }
-                      >
-                        <option value="bundled">Included runtime</option>
-                        <option value="system">System runtime</option>
-                        <option value="custom">Custom path</option>
-                      </select>
-                    </label>
-                    <label>
-                      Runtime path
-                      <input
-                        value={runtimePath}
-                        disabled={runtimeKind !== "custom"}
-                        placeholder={
-                          runtimeKind === "custom"
-                            ? "/path/to/runtime"
-                            : "Only used for a custom runtime"
-                        }
-                        onChange={(event) => setRuntimePath(event.target.value)}
-                      />
-                    </label>
-                    {runtimeKind === "bundled" ? (
+                <span className={`pill ${runtimeKind === "bundled" ? "pill-ok" : "pill-warn"}`}>
+                  {runtimeKind === "bundled" ? "Included runtime" : titleCase(runtimeKind)}
+                </span>
+              </div>
+              <div className="settings-summary-grid">
+                <div>
+                  <span className="overview-current-set-cell-label">Compatibility</span>
+                  <strong>{runtimeStatus.compatible ? "Ready" : "Needs attention"}</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Version</span>
+                  <strong>{runtimeStatus.version?.version ?? "unknown"}</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Recommended</span>
+                  <strong>Bundled</strong>
+                </div>
+              </div>
+            </article>
+            <div className="settings-detail-grid">
+              <form className="stacked-form settings-form settings-main-stack" onSubmit={submit}>
+                <article className="diagnostic-card settings-detail-card">
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <p className="card-kicker">Runtime</p>
+                      <h3>Runtime source</h3>
+                    </div>
+                  </div>
+                  {showAdvancedRuntime ? (
+                    <>
+                      <label>
+                        Runtime source
+                        <select
+                          value={runtimeKind}
+                          onChange={(event) =>
+                            setRuntimeKind(event.target.value as typeof runtimeKind)
+                          }
+                        >
+                          <option value="bundled">Included runtime</option>
+                          <option value="system">System runtime</option>
+                          <option value="custom">Custom path</option>
+                        </select>
+                      </label>
+                      <label>
+                        Runtime path
+                        <input
+                          value={runtimePath}
+                          disabled={runtimeKind !== "custom"}
+                          placeholder={
+                            runtimeKind === "custom"
+                              ? "/path/to/runtime"
+                              : "Only used for a custom runtime"
+                          }
+                          onChange={(event) => setRuntimePath(event.target.value)}
+                        />
+                      </label>
+                      <div className="settings-note-block">
+                        <p className="inline-note">
+                          Keep the included runtime selected unless you intentionally need a different runtime source.
+                        </p>
+                        {runtimeKind === "bundled" ? (
+                          <div className="button-row">
+                            <button
+                              className="ghost-button"
+                              type="button"
+                              onClick={() => setShowAdvancedRuntime(false)}
+                            >
+                              Hide manual runtime options
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="settings-note-block">
+                      <p className="inline-note">
+                        Keep the included runtime selected unless you intentionally need a different runtime source.
+                      </p>
                       <div className="button-row">
                         <button
                           className="ghost-button"
                           type="button"
-                          onClick={() => setShowAdvancedRuntime(false)}
+                          onClick={() => setShowAdvancedRuntime(true)}
                         >
-                          Hide manual runtime options
+                          Show manual runtime options
                         </button>
                       </div>
-                    ) : null}
-                  </>
-                ) : (
-                  <div className="button-row">
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      onClick={() => setShowAdvancedRuntime(true)}
-                    >
-                      Show manual runtime options
-                    </button>
-                  </div>
-                )}
-              </article>
-
-              <button
-                className="primary-button"
-                type="submit"
-                disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
-              >
-                {updateSettingsMutation.isPending ? "Saving…" : "Save Runtime Settings"}
-              </button>
-            </form>
-            <div className="stack-list diagnostics-body">
-              {updateSettingsMutation.error ? (
-                <MutationErrorCard
-                  title="Settings could not be saved"
-                  error={updateSettingsMutation.error}
-                />
-              ) : null}
-              <article className="diagnostic-card settings-pane-section">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Status</p>
-                    <h3>Runtime summary</h3>
-                  </div>
-                  <p className="inline-note">
-                    Keep the current runtime model visible without pushing raw paths into the main preferences flow.
-                  </p>
-                </div>
-                <div className="settings-summary-grid">
-                  <div>
-                    <span className="overview-current-set-cell-label">Source</span>
-                    <strong>
-                      {runtimeKind === "bundled"
-                        ? "Included with this app"
-                        : runtimeKind === "system"
-                          ? "System override"
-                          : "Custom override"}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Compatibility</span>
-                    <strong>{runtimeStatus.compatible ? "Ready for desktop switching" : "Needs attention"}</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Version</span>
-                    <strong>{runtimeStatus.version?.version ?? "unknown"}</strong>
-                  </div>
-                </div>
-                <p className="inline-note">
-                  Runtime source:{" "}
-                  <strong>
-                    {runtimeKind === "bundled"
-                      ? "Included with this app"
-                      : runtimeKind === "system"
-                        ? "System override"
-                        : "Custom override"}
-                  </strong>
-                </p>
-                <p className="inline-note">
-                  Compatibility:{" "}
-                  <strong>{runtimeStatus.compatible ? "Ready for desktop switching" : "Needs attention"}</strong>
-                </p>
-                <p className="inline-note">
-                  Runtime mode: <strong>{titleCase(runtimeKind)}</strong>
-                </p>
-                <p className="inline-note">
-                  Runtime version: {runtimeStatus.version?.version ?? "unknown"}
-                </p>
-              </article>
-            </div>
-          </div>
-        ) : null}
-
-        {selectedSection === "updates" ? (
-          <div className="panel-grid panel-grid-2 settings-layout">
-            <div className="stack-list">
-              <article className="diagnostic-card settings-summary-card">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Current setup</p>
-                    <h3>Release track</h3>
-                  </div>
-                  <span className="pill pill-soft">{titleCase(updateChannel)}</span>
-                </div>
-                <div className="settings-summary-grid">
-                  <div>
-                    <span className="overview-current-set-cell-label">Channel</span>
-                    <strong>{titleCase(updateChannel)}</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Runtime</span>
-                    <strong>{runtimeKind === "bundled" ? "Bundled" : titleCase(runtimeKind)}</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Updates</span>
-                    <strong>Signed desktop releases</strong>
-                  </div>
-                </div>
-              </article>
-              <form className="stacked-form settings-form" onSubmit={submit}>
-                <article className="diagnostic-card settings-pane-section">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">Signed desktop releases</p>
-                      <h3>Release track</h3>
                     </div>
-                    <p className="inline-note">
-                      Choose the release track for this Mac. Stable is recommended for day-to-day switching. Beta is for earlier builds.
-                    </p>
-                  </div>
-                  <label>
-                    Update channel
-                    <select
-                      value={updateChannel}
-                      onChange={(event) => setUpdateChannel(event.target.value)}
-                    >
-                      <option value="stable">Stable</option>
-                      <option value="beta">Beta</option>
-                    </select>
-                  </label>
+                  )}
                 </article>
+
+                {runtimeKind !== "bundled" ? (
+                  <article className="diagnostic-card diagnostic-warn settings-pane-section">
+                    <h3>Manual runtime source is active</h3>
+                    <p className="inline-note">
+                      This app session is using a {runtimeKind === "system" ? "system" : "custom"} runtime instead of the included runtime.
+                    </p>
+                    <p className="inline-note">
+                      Compatibility for onboarding, switching, and diagnostics is only guaranteed with the included runtime shipped in this app release.
+                    </p>
+                  </article>
+                ) : null}
+
                 <button
                   className="primary-button"
                   type="submit"
                   disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
                 >
-                  {updateSettingsMutation.isPending ? "Saving…" : "Save Update Settings"}
+                  {updateSettingsMutation.isPending ? "Saving…" : "Save Runtime Settings"}
                 </button>
               </form>
-              {updateSettingsMutation.error ? (
-                <MutationErrorCard
-                  title="Settings could not be saved"
-                  error={updateSettingsMutation.error}
-                />
-              ) : null}
+              <div className="settings-side-stack diagnostics-body">
+                {updateSettingsMutation.error ? (
+                  <MutationErrorCard
+                    title="Settings could not be saved"
+                    error={updateSettingsMutation.error}
+                  />
+                ) : null}
+                <article className="diagnostic-card settings-detail-card">
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <p className="card-kicker">Status</p>
+                      <h3>Runtime summary</h3>
+                    </div>
+                  </div>
+                  <div className="settings-kv-list">
+                    <div className="settings-kv-row">
+                      <strong>Source</strong>
+                      <strong>
+                        {runtimeKind === "bundled"
+                          ? "Included with this app"
+                          : runtimeKind === "system"
+                            ? "System override"
+                            : "Custom override"}
+                      </strong>
+                    </div>
+                    <div className="settings-kv-row">
+                      <strong>Compatibility</strong>
+                      <strong>
+                        {runtimeStatus.compatible ? "Ready for desktop switching" : "Needs attention"}
+                      </strong>
+                    </div>
+                    <div className="settings-kv-row">
+                      <strong>Runtime mode</strong>
+                      <strong>{titleCase(runtimeKind)}</strong>
+                    </div>
+                    <div className="settings-kv-row">
+                      <strong>Runtime version</strong>
+                      <strong>{runtimeStatus.version?.version ?? "unknown"}</strong>
+                    </div>
+                  </div>
+                  <p className="inline-note">
+                    Runtime version: {runtimeStatus.version?.version ?? "unknown"}
+                  </p>
+                </article>
+              </div>
             </div>
-            <div className="stack-list">
-              <article className="diagnostic-card settings-pane-section">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Check</p>
-                    <h3>Available releases</h3>
+          </div>
+        ) : null}
+
+        {selectedSection === "updates" ? (
+          <div className="settings-workspace">
+            <article className="diagnostic-card settings-overview-card">
+              <div className="settings-overview-copy">
+                <div>
+                  <p className="card-kicker">Current setup</p>
+                  <h3>Release track</h3>
+                  <p className="inline-note">
+                    Choose the release track for this Mac. Stable is recommended for day-to-day switching. Beta is for earlier builds.
+                  </p>
+                </div>
+                <span className="pill pill-soft">{titleCase(updateChannel)}</span>
+              </div>
+              <div className="settings-summary-grid">
+                <div>
+                  <span className="overview-current-set-cell-label">Channel</span>
+                  <strong>{titleCase(updateChannel)}</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Runtime</span>
+                  <strong>{runtimeKind === "bundled" ? "Bundled" : titleCase(runtimeKind)}</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Updates</span>
+                  <strong>Signed desktop releases</strong>
+                </div>
+              </div>
+            </article>
+            <div className="settings-detail-grid">
+              <div className="settings-main-stack">
+                <form className="stacked-form settings-form" onSubmit={submit}>
+                  <article className="diagnostic-card settings-detail-card">
+                    <div className="desktop-pane-section-header">
+                      <div>
+                        <p className="card-kicker">Signed desktop releases</p>
+                        <h3>Release track</h3>
+                      </div>
+                    </div>
+                    <label>
+                      Update channel
+                      <select
+                        value={updateChannel}
+                        onChange={(event) => setUpdateChannel(event.target.value)}
+                      >
+                        <option value="stable">Stable</option>
+                        <option value="beta">Beta</option>
+                      </select>
+                    </label>
+                    <button
+                      className="primary-button"
+                      type="submit"
+                      disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
+                    >
+                      {updateSettingsMutation.isPending ? "Saving…" : "Save Update Settings"}
+                    </button>
+                  </article>
+                </form>
+                {updateSettingsMutation.error ? (
+                  <MutationErrorCard
+                    title="Settings could not be saved"
+                    error={updateSettingsMutation.error}
+                  />
+                ) : null}
+              </div>
+              <div className="settings-side-stack">
+                <article className="diagnostic-card settings-detail-card">
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <p className="card-kicker">Check</p>
+                      <h3>Available releases</h3>
+                    </div>
                   </div>
                   <p className="inline-note">
                     Check for a signed desktop release on the selected {updateChannel} channel.
                   </p>
-                </div>
-                <div className="button-row">
-                  <button
-                    className="primary-button"
-                    type="button"
-                    disabled={
-                      mutationLock.isBusy ||
-                      checkForUpdatesMutation.isPending ||
-                      hasPendingSettingsChanges
-                    }
-                    onClick={() => checkForUpdatesMutation.mutate()}
-                  >
-                    {checkForUpdatesMutation.isPending ? "Checking…" : "Check for Updates"}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={
-                      mutationLock.isBusy ||
-                      hasPendingSettingsChanges ||
-                      installUpdateMutation.isPending ||
-                      !checkForUpdatesMutation.data?.update
-                    }
-                    onClick={() => installUpdateMutation.mutate()}
-                  >
-                    {installUpdateMutation.isPending ? "Installing…" : "Install Update"}
-                  </button>
-                </div>
-                {hasPendingSettingsChanges ? (
-                  <p className="inline-note">
-                    Save settings before checking for updates so the runtime and channel selection match
-                    the persisted desktop configuration.
-                  </p>
-                ) : null}
-                {checkForUpdatesMutation.data ? (
-                  <div className="stack-list">
-                    <p className="inline-note">
-                      Current app version: {checkForUpdatesMutation.data.current_version}
-                    </p>
-                    <p className="inline-note">Channel: {checkForUpdatesMutation.data.channel}</p>
-                    {checkForUpdatesMutation.data.endpoint ? (
-                      <p className="inline-note">Endpoint: {checkForUpdatesMutation.data.endpoint}</p>
-                    ) : null}
-                    {checkForUpdatesMutation.data.update ? (
-                      <>
-                        <p className="inline-note">
-                          Update available: {checkForUpdatesMutation.data.update.version}
-                        </p>
-                        {checkForUpdatesMutation.data.update.notes ? (
-                          <p className="inline-note">{checkForUpdatesMutation.data.update.notes}</p>
-                        ) : null}
-                      </>
-                    ) : (
-                      <p className="inline-note">
-                        {checkForUpdatesMutation.data.message ?? "No update is currently available."}
-                      </p>
-                    )}
+                  <div className="button-row">
+                    <button
+                      className="primary-button"
+                      type="button"
+                      disabled={
+                        mutationLock.isBusy ||
+                        checkForUpdatesMutation.isPending ||
+                        hasPendingSettingsChanges
+                      }
+                      onClick={() => checkForUpdatesMutation.mutate()}
+                    >
+                      {checkForUpdatesMutation.isPending ? "Checking…" : "Check for Updates"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={
+                        mutationLock.isBusy ||
+                        hasPendingSettingsChanges ||
+                        installUpdateMutation.isPending ||
+                        !checkForUpdatesMutation.data?.update
+                      }
+                      onClick={() => installUpdateMutation.mutate()}
+                    >
+                      {installUpdateMutation.isPending ? "Installing…" : "Install Update"}
+                    </button>
                   </div>
-                ) : null}
-              </article>
-              {checkForUpdatesMutation.error ? (
-                <MutationErrorCard title="Update check failed" error={checkForUpdatesMutation.error} />
-              ) : null}
-              {installUpdateMutation.data ? (
-                <article className="diagnostic-card diagnostic-pass">
-                  <h3>Install status</h3>
-                  <p className="inline-note">
-                    {installUpdateMutation.data.message ??
-                      (installUpdateMutation.data.installed_version
-                        ? `Installed ${installUpdateMutation.data.installed_version}`
-                        : "No update installed.")}
-                  </p>
+                  {hasPendingSettingsChanges ? (
+                    <p className="inline-note">
+                      Save settings before checking for updates so the runtime and channel selection match
+                      the persisted desktop configuration.
+                    </p>
+                  ) : null}
+                  {checkForUpdatesMutation.data ? (
+                    <div className="settings-info-list">
+                      <p className="inline-note">
+                        Current app version: {checkForUpdatesMutation.data.current_version}
+                      </p>
+                      <p className="inline-note">Channel: {checkForUpdatesMutation.data.channel}</p>
+                      {checkForUpdatesMutation.data.endpoint ? (
+                        <p className="inline-note">Endpoint: {checkForUpdatesMutation.data.endpoint}</p>
+                      ) : null}
+                      {checkForUpdatesMutation.data.update ? (
+                        <>
+                          <p className="inline-note">
+                            Update available: {checkForUpdatesMutation.data.update.version}
+                          </p>
+                          {checkForUpdatesMutation.data.update.notes ? (
+                            <p className="inline-note">{checkForUpdatesMutation.data.update.notes}</p>
+                          ) : null}
+                        </>
+                      ) : (
+                        <p className="inline-note">
+                          {checkForUpdatesMutation.data.message ?? "No update is currently available."}
+                        </p>
+                      )}
+                    </div>
+                  ) : null}
                 </article>
-              ) : null}
-              {installUpdateMutation.error ? (
-                <MutationErrorCard title="Update install failed" error={installUpdateMutation.error} />
-              ) : null}
+                {checkForUpdatesMutation.error ? (
+                  <MutationErrorCard title="Update check failed" error={checkForUpdatesMutation.error} />
+                ) : null}
+                {installUpdateMutation.data ? (
+                  <article className="diagnostic-card diagnostic-pass">
+                    <h3>Install status</h3>
+                    <p className="inline-note">
+                      {installUpdateMutation.data.message ??
+                        (installUpdateMutation.data.installed_version
+                          ? `Installed ${installUpdateMutation.data.installed_version}`
+                          : "No update installed.")}
+                    </p>
+                  </article>
+                ) : null}
+                {installUpdateMutation.error ? (
+                  <MutationErrorCard title="Update install failed" error={installUpdateMutation.error} />
+                ) : null}
+              </div>
             </div>
           </div>
         ) : null}
 
         {selectedSection === "shell" ? (
-          <div className="panel-grid panel-grid-2 settings-layout">
-            <div className="stack-list">
-              <article className="diagnostic-card settings-summary-card">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Current setup</p>
-                    <h3>Terminal integration</h3>
-                  </div>
-                  <span className={`pill ${
-                    shellCheck?.status === "pass" ? "pill-ok" : shellCheck?.status === "warn" ? "pill-warn" : "pill-soft"
-                  }`}>
-                    {shellCheck?.status === "pass" ? "Active" : shellCheck?.status === "warn" ? "Optional" : "Unknown"}
-                  </span>
-                </div>
-                <div className="settings-summary-grid">
-                  <div>
-                    <span className="overview-current-set-cell-label">Detected shell</span>
-                    <strong>
-                      {shellGuidance.data?.detected_shell
-                        ? titleCase(shellGuidance.data.detected_shell)
-                        : "Unknown"}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Session state</span>
-                    <strong>{shellCheck ? titleCase(shellCheck.status) : "Unknown"}</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Recommended</span>
-                    <strong>Install later</strong>
-                  </div>
-                </div>
-              </article>
-              <article className="diagnostic-card settings-pane-section">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Terminal integration</p>
-                    <h3>Terminal Integration</h3>
-                  </div>
+          <div className="settings-workspace">
+            <article className="diagnostic-card settings-overview-card">
+              <div className="settings-overview-copy">
+                <div>
+                  <p className="card-kicker">Current setup</p>
+                  <h3>Terminal integration</h3>
                   <p className="inline-note">
                     AI Switch can switch accounts without terminal integration. Turn it on only when you want already-open terminal windows to react immediately after a switch.
                   </p>
                 </div>
-                <p className="inline-note">
-                  Current terminal session
-                </p>
-                {shellCheck ? (
-                  <p className={`diagnostic-status diagnostic-status-${shellCheck.status}`}>
-                    {shellCheck.status === "pass" ? "✓" : shellCheck.status === "warn" ? "!" : "✕"}{" "}
-                    Terminal integration {shellCheck.status}
-                    {shellCheck.detail ? ` · ${shellCheck.detail}` : ""}
-                  </p>
-                ) : (
-                  <p className="inline-note">
-                    Run diagnostics to verify whether terminal integration is active.
-                  </p>
-                )}
-                <p className="inline-note">
-                  Detected shell:{" "}
+                <span
+                  className={`pill ${
+                    shellCheck?.status === "pass"
+                      ? "pill-ok"
+                      : shellCheck?.status === "warn"
+                        ? "pill-warn"
+                        : "pill-soft"
+                  }`}
+                >
+                  {shellCheck?.status === "pass"
+                    ? "Active"
+                    : shellCheck?.status === "warn"
+                      ? "Optional"
+                      : "Unknown"}
+                </span>
+              </div>
+              <div className="settings-summary-grid">
+                <div>
+                  <span className="overview-current-set-cell-label">Detected shell</span>
                   <strong>
                     {shellGuidance.data?.detected_shell
                       ? titleCase(shellGuidance.data.detected_shell)
                       : "Unknown"}
                   </strong>
-                </p>
-                <p className="inline-note">
-                  Without terminal integration, AI Switch still updates saved profiles and live credential files.
-                </p>
-                <p className="inline-note">
-                  Terminal integration is only needed for already-open terminals that should receive
-                  environment updates right away.
-                </p>
-                {shellGuidance.data ? (
-                  <>
-                    <div className="stack-list">
-                      {shellGuidance.data.capabilities.map((item) => (
-                        <p key={item} className="inline-note">
-                          {item}
-                        </p>
-                      ))}
-                    </div>
-                    <label>
-                      Guidance for shell
-                      <select
-                        value={selectedVariant?.shell ?? ""}
-                        onChange={(event) => setSelectedShell(event.target.value)}
-                      >
-                        {shellGuidance.data.variants.map((variant) => (
-                          <option key={variant.shell} value={variant.shell}>
-                            {variant.title}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </>
-                ) : (
-                  <p className="inline-note">
-                    {shellGuidance.isLoading
-                      ? "Loading shell guidance…"
-                      : "Shell guidance is unavailable."}
-                  </p>
-                )}
-              </article>
-            </div>
-            <div className="stack-list">
-              {selectedVariant ? (
-                <article className="diagnostic-card settings-pane-section">
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Session state</span>
+                  <strong>{shellCheck ? titleCase(shellCheck.status) : "Unknown"}</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Recommended</span>
+                  <strong>Install later</strong>
+                </div>
+              </div>
+            </article>
+            <div className="settings-detail-grid">
+              <div className="settings-main-stack">
+                <article className="diagnostic-card settings-detail-card">
                   <div className="desktop-pane-section-header">
                     <div>
-                      <p className="card-kicker">Guided setup</p>
-                      <h3>{selectedVariant.title} terminal setup</h3>
-                    </div>
-                    <p className="inline-note">
-                      Install later unless you know you need immediate environment updates in
-                      already-open terminal windows.
-                    </p>
-                  </div>
-                  <p className="inline-note">Config file: {selectedVariant.config_path}</p>
-                  {selectedVariant.alternate_config_path ? (
-                    <p className="inline-note">
-                      Alternative: {selectedVariant.alternate_config_path}
-                    </p>
-                  ) : null}
-                  <div className="stack-list">
-                    <div>
-                      <p className="inline-note">1. Add the AI Switch line to your shell config.</p>
-                      <div className="button-row">
-                        <button
-                          type="button"
-                          className="ghost-button"
-                          onClick={() =>
-                            void copyText(selectedVariant.install_command, "setup")
-                          }
-                        >
-                          Copy install command
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="inline-note">2. Reload the shell config.</p>
-                      <div className="button-row">
-                        <button
-                          type="button"
-                          className="ghost-button"
-                          onClick={() =>
-                            void copyText(selectedVariant.reload_command, "reload")
-                          }
-                        >
-                          Copy reload command
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="inline-note">3. Verify that terminal integration is active.</p>
-                      <p className="inline-note">
-                        Expected output: {selectedVariant.verify_expected}
-                      </p>
-                      <div className="button-row">
-                        <button
-                          type="button"
-                          className="ghost-button"
-                          onClick={() =>
-                            void copyText(selectedVariant.verify_command, "verify")
-                          }
-                        >
-                          Copy verification command
-                        </button>
-                      </div>
+                      <p className="card-kicker">Terminal integration</p>
+                      <h3>Terminal Integration</h3>
                     </div>
                   </div>
-                  <details className="settings-guide-block">
-                    <summary>Show advanced terminal commands</summary>
-                    <div className="stack-list">
-                      <p className="inline-note">
-                        Most people can skip these raw commands unless they manage shell files manually.
-                      </p>
-                      <div>
-                        <p className="inline-note">Install command</p>
-                        <pre>{selectedVariant.install_command}</pre>
-                      </div>
-                      <div>
-                        <p className="inline-note">Reload command</p>
-                        <pre>{selectedVariant.reload_command}</pre>
-                      </div>
-                      <div>
-                        <p className="inline-note">Verify command</p>
-                        <pre>{selectedVariant.verify_command}</pre>
-                      </div>
+                  {shellCheck ? (
+                    <p className={`diagnostic-status diagnostic-status-${shellCheck.status}`}>
+                      {shellCheck.status === "pass" ? "✓" : shellCheck.status === "warn" ? "!" : "✕"}{" "}
+                      Terminal integration {shellCheck.status}
+                      {shellCheck.detail ? ` · ${shellCheck.detail}` : ""}
+                    </p>
+                  ) : (
+                    <p className="inline-note">
+                      Run diagnostics to verify whether terminal integration is active.
+                    </p>
+                  )}
+                  <div className="settings-kv-list">
+                    <div className="settings-kv-row">
+                      <strong>Current terminal session</strong>
+                      <strong>
+                        {shellGuidance.data?.detected_shell
+                          ? titleCase(shellGuidance.data.detected_shell)
+                          : "Unknown"}
+                      </strong>
                     </div>
-                  </details>
-                </article>
-              ) : null}
-              {shellGuidance.data ? (
-                <article className="diagnostic-card">
-                  <h3>Without terminal integration</h3>
-                  <p className="inline-note">{shellGuidance.data.note}</p>
-                  {shellGuidance.data.manual_apply_examples.length ? (
-                    <details className="settings-guide-block">
-                      <summary>Show advanced terminal examples</summary>
-                      <div className="stack-list">
-                        <p className="inline-note">
-                          These examples are only for people who intentionally apply AI Switch commands from a terminal.
-                        </p>
-                        {shellGuidance.data.manual_apply_examples.map((example) => (
-                          <pre key={example}>{example}</pre>
+                    <div className="settings-kv-row">
+                      <strong>Recommended mode</strong>
+                      <strong>Install later</strong>
+                    </div>
+                  </div>
+                  <div className="settings-note-block">
+                    <p className="inline-note">
+                      Detected shell:{" "}
+                      <strong>
+                        {shellGuidance.data?.detected_shell
+                          ? titleCase(shellGuidance.data.detected_shell)
+                          : "Unknown"}
+                      </strong>
+                    </p>
+                    <p className="inline-note">
+                      Without terminal integration, AI Switch still updates saved profiles and live credential files.
+                    </p>
+                    <p className="inline-note">
+                      Terminal integration is only needed for already-open terminals that should receive environment updates right away.
+                    </p>
+                  </div>
+                  {shellGuidance.data ? (
+                    <>
+                      <div className="settings-info-list">
+                        {shellGuidance.data.capabilities.map((item) => (
+                          <div key={item} className="settings-info-row">
+                            <span className="inline-note">{item}</span>
+                          </div>
                         ))}
                       </div>
-                    </details>
-                  ) : null}
+                      <label>
+                        Guidance for shell
+                        <select
+                          value={selectedVariant?.shell ?? ""}
+                          onChange={(event) => setSelectedShell(event.target.value)}
+                        >
+                          {shellGuidance.data.variants.map((variant) => (
+                            <option key={variant.shell} value={variant.shell}>
+                              {variant.title}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </>
+                  ) : (
+                    <p className="inline-note">
+                      {shellGuidance.isLoading
+                        ? "Loading shell guidance…"
+                        : "Shell guidance is unavailable."}
+                    </p>
+                  )}
                 </article>
-              ) : null}
-              {copyMessage ? <p className="inline-note">{copyMessage}</p> : null}
+              </div>
+              <div className="settings-side-stack">
+                {selectedVariant ? (
+                  <article className="diagnostic-card settings-detail-card">
+                    <div className="desktop-pane-section-header">
+                      <div>
+                        <p className="card-kicker">Guided setup</p>
+                        <h3>{selectedVariant.title} terminal setup</h3>
+                      </div>
+                    </div>
+                    <div className="settings-note-block">
+                      <p className="inline-note">Config file: {selectedVariant.config_path}</p>
+                      {selectedVariant.alternate_config_path ? (
+                        <p className="inline-note">
+                          Alternative: {selectedVariant.alternate_config_path}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="settings-steps-list">
+                      <div className="settings-step-card">
+                        <p className="inline-note">1. Add the AI Switch line to your shell config.</p>
+                        <div className="button-row">
+                          <button
+                            type="button"
+                            className="ghost-button"
+                            onClick={() => void copyText(selectedVariant.install_command, "setup")}
+                          >
+                            Copy install command
+                          </button>
+                        </div>
+                      </div>
+                      <div className="settings-step-card">
+                        <p className="inline-note">2. Reload the shell config.</p>
+                        <div className="button-row">
+                          <button
+                            type="button"
+                            className="ghost-button"
+                            onClick={() => void copyText(selectedVariant.reload_command, "reload")}
+                          >
+                            Copy reload command
+                          </button>
+                        </div>
+                      </div>
+                      <div className="settings-step-card">
+                        <p className="inline-note">3. Verify that terminal integration is active.</p>
+                        <p className="inline-note">Expected output: {selectedVariant.verify_expected}</p>
+                        <div className="button-row">
+                          <button
+                            type="button"
+                            className="ghost-button"
+                            onClick={() => void copyText(selectedVariant.verify_command, "verify")}
+                          >
+                            Copy verification command
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <details className="settings-guide-block">
+                      <summary>Show advanced terminal commands</summary>
+                      <div className="stack-list">
+                        <p className="inline-note">
+                          Most people can skip these raw commands unless they manage shell files manually.
+                        </p>
+                        <div>
+                          <p className="inline-note">Install command</p>
+                          <pre>{selectedVariant.install_command}</pre>
+                        </div>
+                        <div>
+                          <p className="inline-note">Reload command</p>
+                          <pre>{selectedVariant.reload_command}</pre>
+                        </div>
+                        <div>
+                          <p className="inline-note">Verify command</p>
+                          <pre>{selectedVariant.verify_command}</pre>
+                        </div>
+                      </div>
+                    </details>
+                  </article>
+                ) : null}
+                {shellGuidance.data ? (
+                  <article className="diagnostic-card settings-pane-section">
+                    <h3>Without terminal integration</h3>
+                    <p className="inline-note">{shellGuidance.data.note}</p>
+                    {shellGuidance.data.manual_apply_examples.length ? (
+                      <details className="settings-guide-block">
+                        <summary>Show advanced terminal examples</summary>
+                        <div className="stack-list">
+                          <p className="inline-note">
+                            These examples are only for people who intentionally apply AI Switch commands from a terminal.
+                          </p>
+                          {shellGuidance.data.manual_apply_examples.map((example) => (
+                            <pre key={example}>{example}</pre>
+                          ))}
+                        </div>
+                      </details>
+                    ) : null}
+                  </article>
+                ) : null}
+                {copyMessage ? <p className="inline-note">{copyMessage}</p> : null}
+              </div>
             </div>
           </div>
         ) : null}
 
         {selectedSection === "keyring" ? (
-          <div className="panel-grid panel-grid-2 settings-layout">
-            <div className="stack-list">
-              <article className="diagnostic-card settings-summary-card diagnostic-pass">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Current setup</p>
-                    <h3>Local credential model</h3>
-                  </div>
-                  <span className="pill pill-ok">On this Mac</span>
-                </div>
-                <div className="settings-summary-grid">
-                  <div>
-                    <span className="overview-current-set-cell-label">Storage</span>
-                    <strong>Native keyrings first</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Network</span>
-                    <strong>No proxy</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Support</span>
-                    <strong>Redacted bundles</strong>
-                  </div>
-                </div>
-              </article>
-              <article className="diagnostic-card diagnostic-pass settings-pane-section">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Security</p>
-                    <h3>Security</h3>
-                  </div>
+          <div className="settings-workspace">
+            <article className="diagnostic-card settings-overview-card diagnostic-pass">
+              <div className="settings-overview-copy">
+                <div>
+                  <p className="card-kicker">Current setup</p>
+                  <h3>Local credential model</h3>
                   <p className="inline-note">
                     AI Switch keeps credentials local, leans on the operating system for secure storage, and avoids remote switching proxies.
                   </p>
                 </div>
-                <p className="inline-note">Privacy and storage</p>
-                <p className="inline-note">Credentials stay local to this Mac or workstation.</p>
-                <p className="inline-note">
-                  No telemetry or remote credential proxy is used for switching.
-                </p>
-                <p className="inline-note">
-                  Native keyrings remain preferred whenever the OS provides them.
-                </p>
-              </article>
-            </div>
-            <div className="stack-list">
-              <article className="diagnostic-card settings-pane-section">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Diagnostics</p>
-                    <h3>Redacted support report</h3>
+                <span className="pill pill-ok">On this Mac</span>
+              </div>
+              <div className="settings-summary-grid">
+                <div>
+                  <span className="overview-current-set-cell-label">Storage</span>
+                  <strong>Native keyrings first</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Network</span>
+                  <strong>No proxy</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Support</span>
+                  <strong>Redacted bundles</strong>
+                </div>
+              </div>
+            </article>
+            <div className="settings-detail-grid">
+              <div className="settings-main-stack">
+                <article className="diagnostic-card diagnostic-pass settings-detail-card">
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <p className="card-kicker">Security</p>
+                      <h3>Security</h3>
+                    </div>
+                  </div>
+                  <div className="settings-info-list">
+                    <div className="settings-info-row">
+                      <strong>Credentials stay local to this Mac or workstation.</strong>
+                      <span className="inline-note">
+                        No telemetry or remote credential proxy is used for switching.
+                      </span>
+                    </div>
+                    <div className="settings-info-row">
+                      <strong>Native keyrings remain preferred</strong>
+                      <span className="inline-note">
+                        The app uses operating-system storage whenever the OS provides it.
+                      </span>
+                    </div>
+                  </div>
+                </article>
+                <article className="diagnostic-card settings-detail-card">
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <p className="card-kicker">Diagnostics</p>
+                      <h3>Redacted support report</h3>
+                    </div>
                   </div>
                   <p className="inline-note">
                     Export a redacted bundle before sharing troubleshooting details or filing a support request.
                   </p>
-                </div>
-                <div className="button-row">
-                  <button className="ghost-button" type="button" onClick={() => void exportReport()}>
-                    Export Redacted Diagnostic Report
-                  </button>
-                </div>
-                {securityMessage ? <p className="inline-note">{securityMessage}</p> : null}
-              </article>
-              <article className="diagnostic-card settings-pane-section">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Recovery</p>
-                    <h3>Keyring recovery guides</h3>
+                  <div className="button-row">
+                    <button className="ghost-button" type="button" onClick={() => void exportReport()}>
+                      Export Redacted Diagnostic Report
+                    </button>
+                  </div>
+                  {securityMessage ? <p className="inline-note">{securityMessage}</p> : null}
+                </article>
+              </div>
+              <div className="settings-side-stack">
+                <article className="diagnostic-card settings-detail-card">
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <p className="card-kicker">Recovery</p>
+                      <h3>Keyring recovery guides</h3>
+                    </div>
                   </div>
                   <p className="inline-note">
                     If diagnostics report a keyring failure, use the matching OS steps below.
                   </p>
-                </div>
-                {KEYRING_GUIDES.map((guide) => (
-                  <div key={guide.platform} className="settings-guide-block">
-                    <h4>{guide.title}</h4>
-                    <p className="inline-note">Expected backend: {guide.backend}</p>
-                    {guide.steps.map((step) => (
-                      <p key={step} className="inline-note">
-                        {step}
-                      </p>
-                    ))}
-                    <p className="inline-note">Verify: {guide.verify}</p>
-                  </div>
-                ))}
-              </article>
+                  {KEYRING_GUIDES.map((guide) => (
+                    <div key={guide.platform} className="settings-guide-block">
+                      <h4>{guide.title}</h4>
+                      <p className="inline-note">Expected backend: {guide.backend}</p>
+                      {guide.steps.map((step) => (
+                        <p key={step} className="inline-note">
+                          {step}
+                        </p>
+                      ))}
+                      <p className="inline-note">Verify: {guide.verify}</p>
+                    </div>
+                  ))}
+                </article>
+              </div>
             </div>
           </div>
         ) : null}
 
         {selectedSection === "advanced" ? (
-          <div className="panel-grid panel-grid-2 settings-layout">
-            <form className="stacked-form settings-form" onSubmit={submit}>
-              <article className="diagnostic-card settings-summary-card">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Current setup</p>
-                    <h3>Storage and paths</h3>
-                  </div>
-                  <span className="pill pill-soft">{aiswHome ? "Custom" : "Managed"}</span>
-                </div>
-                <div className="settings-summary-grid">
-                  <div>
-                    <span className="overview-current-set-cell-label">Data folder</span>
-                    <strong>{aiswHome ? "Custom location" : "Managed automatically"}</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Runtime source</span>
-                    <strong>{runtimeKind === "bundled" ? "Included" : titleCase(runtimeKind)}</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Release track</span>
-                    <strong>{titleCase(updateChannel)}</strong>
-                  </div>
-                </div>
-              </article>
-              <article className="diagnostic-card settings-pane-section">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Storage &amp; paths</p>
-                    <h3>Data folder</h3>
-                  </div>
+          <div className="settings-workspace">
+            <article className="diagnostic-card settings-overview-card">
+              <div className="settings-overview-copy">
+                <div>
+                  <p className="card-kicker">Current setup</p>
+                  <h3>Storage and paths</h3>
                   <p className="inline-note">
                     Keep custom data locations and runtime details in one place so the main settings stay approachable.
                   </p>
                 </div>
-                <p className="inline-note">
-                  Leave this empty to use the managed app data location.
-                </p>
-                <label>
-                  Custom data folder
-                  <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
-                </label>
-              </article>
-              <button
-                className="primary-button"
-                type="submit"
-                disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
-              >
-                {updateSettingsMutation.isPending ? "Saving…" : "Save Storage Settings"}
-              </button>
-            </form>
-            <div className="stack-list">
-              {updateSettingsMutation.error ? (
-                <MutationErrorCard
-                  title="Settings could not be saved"
-                  error={updateSettingsMutation.error}
-                />
-              ) : null}
-              <article className="diagnostic-card settings-pane-section">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Status</p>
-                    <h3>Runtime details</h3>
+                <span className="pill pill-soft">{aiswHome ? "Custom" : "Managed"}</span>
+              </div>
+              <div className="settings-summary-grid">
+                <div>
+                  <span className="overview-current-set-cell-label">Data folder</span>
+                  <strong>{aiswHome ? "Custom location" : "Managed automatically"}</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Runtime source</span>
+                  <strong>{runtimeKind === "bundled" ? "Included" : titleCase(runtimeKind)}</strong>
+                </div>
+                <div>
+                  <span className="overview-current-set-cell-label">Release track</span>
+                  <strong>{titleCase(updateChannel)}</strong>
+                </div>
+              </div>
+            </article>
+            <div className="settings-detail-grid">
+              <form className="stacked-form settings-form settings-main-stack" onSubmit={submit}>
+                <article className="diagnostic-card settings-detail-card">
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <p className="card-kicker">Storage &amp; paths</p>
+                      <h3>Data folder</h3>
+                    </div>
                   </div>
                   <p className="inline-note">
-                    Review the data folder, compatibility, and runtime availability without cluttering the main preferences.
+                    Leave this empty to use the managed app data location.
                   </p>
-                </div>
-                <div className="settings-summary-grid">
-                  <div>
-                    <span className="overview-current-set-cell-label">Data folder</span>
-                    <strong>{settings.aisw_home ? "Custom data folder" : "Managed automatically"}</strong>
+                  <label>
+                    Custom data folder
+                    <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
+                  </label>
+                  <button
+                    className="primary-button"
+                    type="submit"
+                    disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
+                  >
+                    {updateSettingsMutation.isPending ? "Saving…" : "Save Storage Settings"}
+                  </button>
+                </article>
+              </form>
+              <div className="settings-side-stack">
+                {updateSettingsMutation.error ? (
+                  <MutationErrorCard
+                    title="Settings could not be saved"
+                    error={updateSettingsMutation.error}
+                  />
+                ) : null}
+                <article className="diagnostic-card settings-detail-card">
+                  <div className="desktop-pane-section-header">
+                    <div>
+                      <p className="card-kicker">Status</p>
+                      <h3>Runtime details</h3>
+                    </div>
                   </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Runtime source</span>
+                  <div className="settings-kv-list">
+                    <div className="settings-kv-row">
+                      <strong>Data folder</strong>
+                      <strong>
+                        {settings.aisw_home
+                          ? `Custom data folder (${settings.aisw_home})`
+                          : "Managed automatically"}
+                      </strong>
+                    </div>
+                    <div className="settings-kv-row">
+                      <strong>Release track</strong>
+                      <strong>{titleCase(updateChannel)}</strong>
+                    </div>
+                    <div className="settings-kv-row">
+                      <strong>Selected runtime source</strong>
+                      <strong>
+                        {runtimeKind === "bundled"
+                          ? "Included with this app"
+                          : runtimeKind === "system"
+                            ? "System override"
+                            : "Custom override"}
+                      </strong>
+                    </div>
+                    <div className="settings-kv-row">
+                      <strong>Included runtime</strong>
+                      <strong>
+                        {runtimeStatus.inventory.bundled_path
+                          ? "Available in this build"
+                          : "Not included in this build"}
+                      </strong>
+                    </div>
+                    <div className="settings-kv-row">
+                      <strong>System runtime</strong>
+                      <strong>{runtimeStatus.inventory.system_path ? "Found on this Mac" : "Not found"}</strong>
+                    </div>
+                  </div>
+                  <p className="inline-note">
+                    Data folder:{" "}
+                    {settings.aisw_home ? `Custom data folder (${settings.aisw_home})` : "Managed automatically"}
+                  </p>
+                  <p className="inline-note">
+                    Release track: <strong>{titleCase(updateChannel)}</strong>
+                  </p>
+                  {runtimeStatus.version ? (
+                    <p className="inline-note">
+                      Runtime API {runtimeStatus.version.cli_api_version} · JSON schema{" "}
+                      {runtimeStatus.version.json_schema_version} · Progress schema{" "}
+                      {runtimeStatus.version.progress_schema_version}
+                    </p>
+                  ) : null}
+                  <p className="inline-note">
+                    Selected runtime source:{" "}
                     <strong>
                       {runtimeKind === "bundled"
                         ? "Included with this app"
@@ -1154,52 +1199,24 @@ export function SettingsPanel({
                           ? "System override"
                           : "Custom override"}
                     </strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">System runtime</span>
+                  </p>
+                  <p className="inline-note">
+                    Included runtime:{" "}
+                    <strong>
+                      {runtimeStatus.inventory.bundled_path
+                        ? "Available in this build"
+                        : "Not included in this build"}
+                    </strong>
+                  </p>
+                  <p className="inline-note">
+                    System runtime:{" "}
                     <strong>{runtimeStatus.inventory.system_path ? "Found on this Mac" : "Not found"}</strong>
-                  </div>
-                </div>
-                <p className="inline-note">
-                  Data folder:{" "}
-                  {settings.aisw_home ? `Custom data folder (${settings.aisw_home})` : "Managed automatically"}
-                </p>
-                <p className="inline-note">
-                  Release track: <strong>{titleCase(updateChannel)}</strong>
-                </p>
-                {runtimeStatus.version ? (
-                  <p className="inline-note">
-                    Runtime API {runtimeStatus.version.cli_api_version} · JSON schema{" "}
-                    {runtimeStatus.version.json_schema_version} · Progress schema{" "}
-                    {runtimeStatus.version.progress_schema_version}
                   </p>
-                ) : null}
-                <p className="inline-note">
-                  Selected runtime source:{" "}
-                  <strong>
-                    {runtimeKind === "bundled"
-                      ? "Included with this app"
-                      : runtimeKind === "system"
-                        ? "System override"
-                        : "Custom override"}
-                  </strong>
-                </p>
-                <p className="inline-note">
-                  Included runtime:{" "}
-                  <strong>
-                    {runtimeStatus.inventory.bundled_path ? "Available in this build" : "Not included in this build"}
-                  </strong>
-                </p>
-                <p className="inline-note">
-                  System runtime:{" "}
-                  <strong>{runtimeStatus.inventory.system_path ? "Found on this Mac" : "Not found"}</strong>
-                </p>
-                {runtimeStatus.inventory.configured_path ? (
-                  <p className="inline-note">
-                    A custom runtime path is configured.
-                  </p>
-                ) : null}
-              </article>
+                  {runtimeStatus.inventory.configured_path ? (
+                    <p className="inline-note">A custom runtime path is configured.</p>
+                  ) : null}
+                </article>
+              </div>
             </div>
           </div>
         ) : null}
