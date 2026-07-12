@@ -406,7 +406,7 @@ export function ContextsPanel({
               {!snapshot.contexts.length ? (
                 <p className="inline-note">
                   No detected sets are currently available. Saved sets remain available even when
-                  runtime-level shared switching support is limited.
+                  desktop-engine shared switching support is limited.
                 </p>
               ) : null}
             </article>

@@ -1028,7 +1028,7 @@ export function App() {
         </>
       ) : (
         <SectionCard title="Waiting for snapshot" kicker="Bootstrap">
-          <p className="inline-note">The runtime is compatible, but no state snapshot is available yet.</p>
+          <p className="inline-note">The desktop engine is compatible, but no state snapshot is available yet.</p>
         </SectionCard>
       )}
     </AppFrame>
@@ -1262,11 +1262,11 @@ function sectionDetail(section: string, setupFocused = false) {
     case "sets":
       return "Manage saved sets and project rules in one compact split view before switching a whole project identity.";
     case "diagnostics":
-      return "Verify runtime health, identify drift, and follow guided repair steps when something blocks switching.";
+      return "Verify desktop engine health, identify drift, and follow guided repair steps when something blocks switching.";
     case "backups":
       return "Replay a previous profile state or restore the latest known-good backup without leaving the app.";
     case "activity":
-      return "Track recent desktop actions, command outcomes, and changes applied by the runtime.";
+      return "Track recent desktop actions, command outcomes, and changes applied by the desktop engine.";
     case "settings":
       return "Control app setup, updates, terminal integration, and local storage behavior.";
     default:

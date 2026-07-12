@@ -914,7 +914,7 @@ describe("App", () => {
       expect(screen.getByText("Saved profiles", { selector: ".section-kicker" })).toBeInTheDocument();
       expect(screen.getByDisplayValue("Codex")).toBeInTheDocument();
       expect(screen.getByText("Health details")).toBeInTheDocument();
-      expect(screen.getByText("No additional token or runtime warnings are currently reported for this tool.")).toBeInTheDocument();
+      expect(screen.getByText("No additional token or desktop engine warnings are currently reported for this tool.")).toBeInTheDocument();
       expect(screen.getByLabelText("Current tool")).toHaveValue("codex");
     });
   });
@@ -8553,11 +8553,11 @@ describe("App", () => {
     expect(
       screen.getByText("Check for a signed desktop release on the selected beta channel."),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Save settings before checking for updates so the runtime and channel selection match the persisted desktop configuration.",
-      ),
-    ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Save settings before checking for updates so the engine source and channel selection match the persisted desktop configuration.",
+        ),
+      ).toBeInTheDocument();
     expect(screen.getByText("Check for Updates")).toBeDisabled();
 
     fireEvent.click(screen.getByText("Save Update Settings"));
@@ -8568,7 +8568,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(
         screen.queryByText(
-          "Save settings before checking for updates so the runtime and channel selection match the persisted desktop configuration.",
+          "Save settings before checking for updates so the engine source and channel selection match the persisted desktop configuration.",
         ),
       ).not.toBeInTheDocument();
       expect(screen.getByText("Check for Updates")).not.toBeDisabled();

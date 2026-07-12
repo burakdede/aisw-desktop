@@ -1042,7 +1042,7 @@ export function ProfilesPanel({
                           ) : null}
                           {!toolStatus?.token_warning && !toolStatus?.warnings.length ? (
                             <p className="inline-note">
-                              No additional token or runtime warnings are currently reported for this tool.
+                              No additional token or desktop engine warnings are currently reported for this tool.
                             </p>
                           ) : null}
                         </>
@@ -1447,7 +1447,7 @@ export function ProfilesPanel({
                 <div className="diagnostic-card">
                   <h4>Sign-in flow</h4>
                   <p className="inline-note">
-                    AI Switch will launch the tool&apos;s native login flow and stream progress from the bundled runtime.
+                    AI Switch will launch the tool&apos;s native login flow and stream progress from the included desktop engine.
                   </p>
                   <p className="inline-note">
                     Keep this window open while the browser or terminal login completes.
@@ -1599,8 +1599,8 @@ function profileImportModeNotes(tool: string, mode: ProfileImportMode) {
       ];
     case "api_key":
       return [
-        "Paste the provider key once and AI Switch will hand it to the bundled runtime over stdin instead of writing it into the form state.",
-        "The saved profile stores the resulting local credentials only after the runtime confirms success.",
+        "Paste the provider key once and AI Switch will hand it to the included desktop engine over stdin instead of writing it into the form state.",
+        "The saved profile stores the resulting local credentials only after the desktop engine confirms success.",
       ];
     case "oauth":
       return [

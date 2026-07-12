@@ -884,7 +884,7 @@ export function SettingsPanel({
                   </div>
                   {hasPendingSettingsChanges ? (
                     <p className="inline-note">
-                      Save settings before checking for updates so the runtime and channel selection match
+                      Save settings before checking for updates so the engine source and channel selection match
                       the persisted desktop configuration.
                     </p>
                   ) : null}
@@ -1290,7 +1290,7 @@ export function SettingsPanel({
                   <p className="card-kicker">Advanced</p>
                   <h3>Storage and paths</h3>
                   <p className="inline-note">
-                    Keep custom data locations and runtime details in one place so the default settings stay simple.
+                    Keep custom data locations and engine details in one place so the default settings stay simple.
                   </p>
                 </div>
                 <span className="pill pill-soft">{aiswHome ? "Custom" : "Managed"}</span>

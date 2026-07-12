@@ -259,7 +259,7 @@ export function SetupPanel({
     "Credentials stay on this computer",
     "No telemetry",
     "No prompt or API traffic proxy",
-    "Built-in runtime ready",
+    "Built-in desktop engine ready",
   ];
   const installedNow = snapshot.statuses.filter((status) => status.binary_found).map((status) => toolDisplayName(status.tool));
   const accountItems = useMemo<OnboardingAccountItem[]>(
@@ -508,7 +508,7 @@ export function SetupPanel({
                     ))}
                     {!healthItems.length ? (
                       <p className="inline-note">
-                        Run the setup scan to populate runtime, storage, and tool health details.
+                        Run the setup scan to populate desktop engine, storage, and tool health details.
                       </p>
                     ) : null}
                   </div>
