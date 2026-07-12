@@ -89,6 +89,28 @@ export function OverviewPanel({
   }));
   const matchedToolsCount = snapshot.statuses.filter((status) => status.active_profile_applied !== false).length;
   const warningToolsCount = snapshot.statuses.filter((status) => resolveCardState(status) === "warning").length;
+  const summaryToneLabel = hasWorkspaceMismatch
+    ? "Project needs review"
+    : activeToolsCount
+      ? "Ready to code"
+      : "Needs setup";
+  const summaryStatusRows = [
+    {
+      label: "Active tools",
+      value: `${activeToolsCount}/${snapshot.statuses.length}`,
+      detail: activeToolsCount ? "ready now" : "add first profile",
+    },
+    {
+      label: "Live match",
+      value: `${matchedToolsCount} aligned`,
+      detail: warningToolsCount ? `${warningToolsCount} need review` : "no drift visible",
+    },
+    {
+      label: "Project",
+      value: hasWorkspaceMismatch ? "Needs review" : "Ready",
+      detail: hasWorkspaceMismatch ? "expected set differs" : "no project drift",
+    },
+  ];
 
   useEffect(() => {
     if (!snapshot.statuses.length) {
@@ -140,45 +162,39 @@ export function OverviewPanel({
           {currentSetLabel || currentSetProfiles.length ? (
             <article className="overview-current-set diagnostic-card">
               <div className="overview-current-set-main">
-                <div className="overview-current-set-copy">
-                  <div className="overview-current-set-header">
-                    <div>
-                      <p className="card-kicker">Ready to code</p>
-                      <p className="overview-current-set-cell-label">Current set</p>
-                      <h3>{currentSetDisplay}</h3>
-                    </div>
+                  <div className="overview-current-set-copy">
+                    <div className="overview-current-set-header">
+                      <div>
+                        <p className="card-kicker">Current set</p>
+                        <h3>{currentSetDisplay}</h3>
+                        <p className="inline-note">
+                          {currentSetLabel
+                            ? "Switching stays centered on one working identity across installed tools."
+                            : "No shared active set is pinned yet. Per-tool switching is still available."}
+                        </p>
+                      </div>
                     <span className={`pill ${activeToolsCount ? "pill-ok" : "pill-soft"}`}>
-                      {hasWorkspaceMismatch ? "Project needs review" : activeToolsCount ? "Ready to code" : "Needs setup"}
+                      {summaryToneLabel}
                     </span>
                   </div>
-                  <div className="overview-current-set-grid">
-                    <div className="overview-current-set-cell">
-                      <span className="overview-current-set-cell-label">Live tools</span>
-                      <strong>{activeToolsCount} active</strong>
-                      <p className="inline-note">
-                        {activeToolsCount} of {snapshot.statuses.length} tools are ready to switch.
-                      </p>
-                    </div>
-                    <div className="overview-current-set-cell">
-                      <span className="overview-current-set-cell-label">Live match</span>
-                      <strong>{matchedToolsCount} aligned</strong>
-                      <p className="inline-note">
-                        {warningToolsCount
-                          ? `${warningToolsCount} tool${warningToolsCount === 1 ? "" : "s"} need review.`
-                          : "No drift or warning state is blocking work."}
-                      </p>
-                    </div>
-                    <div className="overview-current-set-cell">
-                      <span className="overview-current-set-cell-label">Project</span>
-                      <strong>{hasWorkspaceMismatch ? "Needs review" : "Ready"}</strong>
-                      <p className="inline-note">
-                        {hasWorkspaceMismatch ? "This project expects a different set." : "No project drift is blocking work."}
-                      </p>
-                    </div>
+                  <div className="overview-current-set-strip" aria-label="Current set status">
+                    {summaryStatusRows.map((row) => (
+                      <div key={row.label} className="overview-current-set-strip-cell">
+                        <span className="overview-current-set-cell-label">{row.label}</span>
+                        <strong>{row.value}</strong>
+                        <p className="inline-note">{row.detail}</p>
+                      </div>
+                    ))}
                   </div>
                   <div className="overview-current-set-list" aria-label="Current set profiles">
                     {currentSetProfiles.map((entry) => (
                       <div key={entry.tool} className="overview-current-set-row">
+                        <span
+                          className={`health-dot ${
+                            entry.label ? "health-dot-ok" : "health-dot-neutral"
+                          }`}
+                          aria-hidden="true"
+                        />
                         <div className="overview-current-set-row-title">
                           <span className="overview-current-set-cell-label">{toolDisplayName(entry.tool)}</span>
                           <strong>{entry.label ?? "Not configured"}</strong>
@@ -193,14 +209,16 @@ export function OverviewPanel({
                     <p className="inline-note">
                       Current set: <strong>{currentSetLabel ?? "No active set"}</strong>
                     </p>
-                    <p className="inline-note">
-                      All-tools switching stays available when profile names line up across installed tools.
-                    </p>
+                    {showWorkspaceSummary ? (
+                      <p className="inline-note">
+                        Project expects <strong>{expectedWorkspaceDisplay}</strong>.
+                      </p>
+                    ) : null}
                   </div>
                 </div>
                 <aside className="overview-current-set-actions">
                   <div className="overview-action-rail">
-                    <span className="overview-current-set-cell-label">Shortcuts</span>
+                    <span className="overview-current-set-cell-label">Actions</span>
                     <div className="button-row button-row-column">
                       <button
                         className="primary-button"
@@ -214,9 +232,9 @@ export function OverviewPanel({
                         Open Sets
                       </button>
                     </div>
-                    <div className="desktop-status-pill-stack">
+                    <div className="desktop-status-pill-stack overview-status-pill-stack">
                       {[
-                        currentSetLabel ? "All tools ready" : "Per-tool switching",
+                        currentSetLabel ? "Shared set ready" : "Per-tool switching",
                         hasWorkspaceMismatch ? "Project mismatch" : "Project aligned",
                         warningToolsCount ? "Warnings visible" : "Live match visible",
                       ].map((pill) => (

@@ -2362,21 +2362,21 @@ button {
 
 .overview-current-set {
   display: grid;
-  gap: 12px;
-  padding: 14px;
+  gap: 10px;
+  padding: 13px;
 }
 
 .overview-current-set-main {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(170px, 210px);
+  gap: 10px;
   align-items: start;
 }
 
 .overview-current-set-copy,
 .overview-action-rail {
   display: grid;
-  gap: 8px;
+  gap: 7px;
 }
 
 .overview-current-set-header {
@@ -2388,15 +2388,15 @@ button {
 
 .overview-current-set-copy h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1.2;
   letter-spacing: -0.02em;
 }
 
-.overview-current-set-grid {
+.overview-current-set-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 7px;
 }
 
 .overview-current-set-inline {
@@ -2410,12 +2410,12 @@ button {
 }
 
 .overview-current-set-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
-  padding: 9px 10px;
-  border-radius: 10px;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 9px;
   border: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
   background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
 }
@@ -2431,12 +2431,16 @@ button {
   line-height: 1.25;
 }
 
-.overview-current-set-cell {
+.overview-current-set-strip-cell {
   display: grid;
   gap: 3px;
-  padding: 9px 10px;
-  border-radius: 10px;
+  padding: 8px 10px;
+  border-radius: 9px;
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
+.overview-current-set-strip-cell strong {
+  font-size: 13px;
 }
 
 .overview-current-set-cell-label {
@@ -2452,10 +2456,14 @@ button {
 }
 
 .overview-action-rail {
-  padding: 11px;
-  border-radius: 12px;
+  padding: 10px;
+  border-radius: 11px;
   border: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
   background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
+}
+
+.overview-status-pill-stack {
+  margin-top: 2px;
 }
 
 .overview-focus-card {

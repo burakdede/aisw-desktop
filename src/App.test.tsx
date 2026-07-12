@@ -4314,8 +4314,11 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
     await waitFor(() => {
-      expect(screen.getByText("Expected set")).toBeInTheDocument();
-      expect(screen.getByText("client-acme")).toBeInTheDocument();
+      const projectCard = screen.getByText("Expected set").closest(".overview-project-card");
+      if (!(projectCard instanceof HTMLElement)) {
+        throw new Error("Missing overview project card.");
+      }
+      expect(within(projectCard).getByText("client-acme")).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getAllByText("Use expected set now")[0]);
