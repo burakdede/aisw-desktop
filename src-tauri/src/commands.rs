@@ -17,6 +17,9 @@ use std::path::PathBuf;
 use std::process::Command;
 use tauri::Emitter;
 
+const DEFAULT_ISSUE_TRACKER_URL: &str =
+    "https://github.com/issues?q=%22AI+Switch%22+desktop+is%3Aissue";
+
 #[tauri::command]
 pub async fn get_bootstrap(state: tauri::State<'_, AppState>) -> DesktopResult<AppBootstrap> {
     state.bootstrap().await
@@ -78,17 +81,7 @@ pub async fn open_reference_document(kind: String) -> DesktopResult<String> {
 
 #[tauri::command]
 pub async fn open_issue_tracker() -> DesktopResult<String> {
-    let url = std::env::var("AI_SWITCH_DESKTOP_ISSUES_URL")
-        .ok()
-        .or_else(|| std::env::var("AISW_DESKTOP_ISSUES_URL").ok())
-        .ok_or_else(|| ErrorPayload {
-            kind: GuiErrorKind::Unknown,
-            message: "AI Switch does not have an issue tracker URL configured in this build.".to_owned(),
-            remediation: Some(
-                "Set AI_SWITCH_DESKTOP_ISSUES_URL for this build or export a support report instead."
-                    .to_owned(),
-            ),
-        })?;
+    let url = resolve_issue_tracker_url();
 
     open_target_with_default_app(&url, "AI Switch could not open the issue tracker.")?;
     Ok(url)
@@ -560,6 +553,18 @@ fn open_target_with_default_app(target: &str, failure_message: &str) -> DesktopR
     Ok(())
 }
 
+fn resolve_issue_tracker_url() -> String {
+    std::env::var("AI_SWITCH_DESKTOP_ISSUES_URL")
+        .ok()
+        .filter(|value| !value.trim().is_empty())
+        .or_else(|| {
+            std::env::var("AISW_DESKTOP_ISSUES_URL")
+                .ok()
+                .filter(|value| !value.trim().is_empty())
+        })
+        .unwrap_or_else(|| DEFAULT_ISSUE_TRACKER_URL.to_owned())
+}
+
 #[cfg(target_os = "macos")]
 fn launch_at_login_status(app: &tauri::AppHandle) -> DesktopResult<LaunchAtLoginStatus> {
     let item_name = "AI Switch";
@@ -666,4 +671,65 @@ fn run_osascript(script: &str) -> DesktopResult<String> {
 #[cfg(target_os = "macos")]
 fn escape_applescript_string(value: &str) -> String {
     value.replace('\\', "\\\\").replace('"', "\\\"")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{resolve_issue_tracker_url, DEFAULT_ISSUE_TRACKER_URL};
+
+    #[test]
+    fn issue_tracker_prefers_primary_env_override() {
+        let primary_key = "AI_SWITCH_DESKTOP_ISSUES_URL";
+        let legacy_key = "AISW_DESKTOP_ISSUES_URL";
+        let primary_previous = std::env::var(primary_key).ok();
+        let legacy_previous = std::env::var(legacy_key).ok();
+
+        std::env::set_var(primary_key, "https://example.com/primary");
+        std::env::set_var(legacy_key, "https://example.com/legacy");
+
+        assert_eq!(resolve_issue_tracker_url(), "https://example.com/primary");
+
+        restore_env(primary_key, primary_previous);
+        restore_env(legacy_key, legacy_previous);
+    }
+
+    #[test]
+    fn issue_tracker_uses_legacy_env_override_when_primary_is_missing() {
+        let primary_key = "AI_SWITCH_DESKTOP_ISSUES_URL";
+        let legacy_key = "AISW_DESKTOP_ISSUES_URL";
+        let primary_previous = std::env::var(primary_key).ok();
+        let legacy_previous = std::env::var(legacy_key).ok();
+
+        std::env::remove_var(primary_key);
+        std::env::set_var(legacy_key, "https://example.com/legacy");
+
+        assert_eq!(resolve_issue_tracker_url(), "https://example.com/legacy");
+
+        restore_env(primary_key, primary_previous);
+        restore_env(legacy_key, legacy_previous);
+    }
+
+    #[test]
+    fn issue_tracker_falls_back_to_default_search_url() {
+        let primary_key = "AI_SWITCH_DESKTOP_ISSUES_URL";
+        let legacy_key = "AISW_DESKTOP_ISSUES_URL";
+        let primary_previous = std::env::var(primary_key).ok();
+        let legacy_previous = std::env::var(legacy_key).ok();
+
+        std::env::remove_var(primary_key);
+        std::env::remove_var(legacy_key);
+
+        assert_eq!(resolve_issue_tracker_url(), DEFAULT_ISSUE_TRACKER_URL);
+
+        restore_env(primary_key, primary_previous);
+        restore_env(legacy_key, legacy_previous);
+    }
+
+    fn restore_env(key: &str, value: Option<String>) {
+        if let Some(value) = value {
+            std::env::set_var(key, value);
+        } else {
+            std::env::remove_var(key);
+        }
+    }
 }
