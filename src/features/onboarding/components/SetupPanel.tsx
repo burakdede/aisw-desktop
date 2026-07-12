@@ -240,7 +240,7 @@ export function SetupPanel({
     "Credentials stay on this computer",
     "No telemetry",
     "No prompt or API traffic proxy",
-    "Built-in switching engine ready",
+    "Built-in runtime ready",
   ];
   const installedNow = snapshot.statuses.filter((status) => status.binary_found).map((status) => toolDisplayName(status.tool));
 
@@ -800,8 +800,8 @@ function buildHealthItems(
       status: bootstrap.runtime_status.compatible ? "pass" : "fail",
       detail: bootstrap.runtime_status.compatible
         ? bootstrap.settings.runtime_kind === "bundled"
-          ? "Included runtime is compatible with this desktop build."
-          : "Selected runtime override is compatible with this desktop build."
+          ? "Included runtime is compatible with this desktop app."
+          : "Selected runtime override is compatible with this desktop app."
         : normalizeRuntimeLanguage(bootstrap.runtime_status.issues.join(" · ")) || "Compatibility checks failed.",
     },
   ];

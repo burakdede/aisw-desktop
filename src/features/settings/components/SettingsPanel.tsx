@@ -634,7 +634,7 @@ export function SettingsPanel({
                   <p className="card-kicker">Current setup</p>
                   <h3>Runtime selection</h3>
                   <p className="inline-note">
-                    This app ships with a compatible runtime and uses it by default. Use a system or custom runtime only when you intentionally need to replace the supported desktop bundle.
+                    This app ships with a compatible runtime and uses it by default. Use a system or custom runtime only when you intentionally need to replace the included desktop runtime.
                   </p>
                 </div>
                 <span className={`pill ${runtimeKind === "bundled" ? "pill-ok" : "pill-warn"}`}>
