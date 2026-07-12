@@ -49,7 +49,7 @@ export function HelpSheet({
               </div>
             </div>
             <p className="inline-note">
-              Switch Claude Code, Codex CLI, and Gemini CLI identities from one app.
+              Switch Claude Code, Codex CLI, and Gemini CLI identities from one local app.
             </p>
             <p className="inline-note">Credentials stay on this computer.</p>
             <p className="inline-note">No telemetry, prompt logging, or traffic proxy is used.</p>

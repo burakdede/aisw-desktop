@@ -419,7 +419,7 @@ export function SettingsPanel({
                   <p className="card-kicker">General</p>
                   <h3>Desktop defaults</h3>
                   <p className="inline-note">
-                    Keep the app aligned with the operating system, choose the launch destination, and decide whether the menu bar utility stays available for quick switching.
+                    Keep the app aligned with the operating system, choose the launch destination, and decide whether the menu bar app stays available for quick switching.
                   </p>
                 </div>
                 <span className="pill pill-soft">Recommended</span>

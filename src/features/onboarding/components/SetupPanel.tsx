@@ -336,7 +336,7 @@ export function SetupPanel({
                       : "Ready"}
                   </span>
                 }
-                note="Manage Claude Code, Codex CLI, and Gemini CLI profiles from one focused local desktop app."
+                note="Manage Claude Code, Codex CLI, and Gemini CLI identities from one focused local control app."
                 meta={
                   <div className="onboarding-welcome-stack">
                     <ul className="onboarding-trust-list" aria-label="Why AI Switch is safe to use">
