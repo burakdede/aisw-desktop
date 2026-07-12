@@ -6394,7 +6394,7 @@ describe("App", () => {
     });
 
     await waitFor(() => expect(screen.getByText("Checks and recovery")).toBeInTheDocument());
-    expect(screen.getByRole("button", { name: "Refresh Checks" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Verify Again" })).toBeDisabled();
     expect(doctorRuns).toBe(0);
     expect(verifyRuns).toBe(0);
     expect(repairRuns).toBe(0);
@@ -6409,7 +6409,7 @@ describe("App", () => {
       expect(verifyRuns).toBeGreaterThan(0);
       expect(repairRuns).toBeGreaterThan(0);
     });
-    expect(screen.getByRole("button", { name: "Refresh Checks" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Verify Again" })).toBeEnabled();
   });
 
   it("records tray command results and shows a desktop notification", async () => {

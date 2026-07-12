@@ -163,7 +163,7 @@ export function DiagnosticsPanel({
               void refreshDiagnostics(queryClient, doctor.refetch, verify.refetch, repair.refetch)
             }
           >
-            Refresh Checks
+            Verify Again
           </button>
           <button
             className="ghost-button"
