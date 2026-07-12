@@ -1,39 +1,51 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <defs>
-    <linearGradient id="shell" x1="118" x2="904" y1="104" y2="920" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#F9FBFE"/>
-      <stop offset="0.54" stop-color="#EDF2F8"/>
-      <stop offset="1" stop-color="#D9E2EC"/>
-    </linearGradient>
-    <linearGradient id="core" x1="168" x2="856" y1="156" y2="870" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFFFFF"/>
-      <stop offset="1" stop-color="#F4F7FB"/>
-    </linearGradient>
-    <linearGradient id="dock" x1="312" x2="452" y1="252" y2="790" gradientUnits="userSpaceOnUse">
+    <linearGradient id="shell" x1="132" x2="896" y1="112" y2="930" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#FBFDFF"/>
-      <stop offset="1" stop-color="#E9EEF5"/>
+      <stop offset="0.52" stop-color="#EAF0F7"/>
+      <stop offset="1" stop-color="#D6E0EC"/>
     </linearGradient>
-    <linearGradient id="accent" x1="420" x2="644" y1="286" y2="706" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#72D1FF"/>
-      <stop offset="0.42" stop-color="#0A84FF"/>
-      <stop offset="1" stop-color="#1555C5"/>
+    <linearGradient id="panel" x1="228" x2="796" y1="216" y2="824" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F3F7FB"/>
+    </linearGradient>
+    <linearGradient id="lane" x1="318" x2="718" y1="350" y2="704" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F9FBFE"/>
+      <stop offset="1" stop-color="#E8EEF5"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="410" x2="676" y1="398" y2="648" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6FD3FF"/>
+      <stop offset="0.44" stop-color="#0A84FF"/>
+      <stop offset="1" stop-color="#2456D9"/>
+    </linearGradient>
+    <linearGradient id="accentSoft" x1="374" x2="650" y1="316" y2="802" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#C6EEFF"/>
+      <stop offset="1" stop-color="#6CB8FF"/>
     </linearGradient>
   </defs>
 
   <rect x="88" y="88" width="848" height="848" rx="248" fill="url(#shell)"/>
-  <rect x="124" y="124" width="776" height="776" rx="224" fill="#FFFFFF" fill-opacity="0.82"/>
-  <rect x="154" y="154" width="716" height="716" rx="208" fill="url(#core)" fill-opacity="0.7"/>
-  <path d="M296 274H728" fill="none" stroke="#FFFFFF" stroke-opacity="0.76" stroke-linecap="round" stroke-width="18"/>
+  <ellipse cx="372" cy="280" rx="314" ry="248" fill="#FFFFFF" fill-opacity="0.4"/>
+  <rect x="124" y="124" width="776" height="776" rx="224" fill="#FFFFFF" fill-opacity="0.56"/>
+  <rect x="156" y="156" width="712" height="712" rx="208" fill="#F7FAFD" fill-opacity="0.88"/>
+  <path d="M264 246H760" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-opacity="0.76" stroke-width="18"/>
 
-  <rect x="286" y="242" width="186" height="540" rx="93" fill="url(#dock)" stroke="#C8D1DC" stroke-width="14"/>
-  <rect x="552" y="242" width="186" height="540" rx="93" fill="url(#dock)" stroke="#C8D1DC" stroke-width="14"/>
+  <rect x="232" y="228" width="560" height="584" rx="168" fill="#A8B6C8" fill-opacity="0.18"/>
+  <rect x="220" y="208" width="584" height="608" rx="172" fill="url(#panel)"/>
+  <rect x="220" y="208" width="584" height="608" rx="172" fill="none" stroke="#D6DFEA" stroke-width="10"/>
 
-  <circle cx="379" cy="363" r="47" fill="#E6EBF2" stroke="#BBC6D1" stroke-width="12"/>
-  <circle cx="379" cy="661" r="47" fill="#FBFCFE" stroke="#D1D9E3" stroke-width="12"/>
-  <circle cx="645" cy="363" r="47" fill="#FBFCFE" stroke="#D1D9E3" stroke-width="12"/>
-  <circle cx="645" cy="661" r="47" fill="url(#accent)" stroke="#0C6FDD" stroke-width="12"/>
+  <rect x="290" y="314" width="444" height="164" rx="82" fill="url(#lane)"/>
+  <rect x="290" y="314" width="444" height="164" rx="82" fill="none" stroke="#D3DDE8" stroke-width="10"/>
+  <circle cx="402" cy="396" r="54" fill="#27384D"/>
+  <circle cx="402" cy="396" r="54" fill="none" stroke="#5D6E84" stroke-width="10" opacity="0.28"/>
+  <path d="M506 396H654" fill="none" stroke="#B3C0CF" stroke-linecap="round" stroke-width="20"/>
 
-  <path d="M445 363L575 512L445 661" fill="none" stroke="url(#accent)" stroke-linecap="round" stroke-linejoin="round" stroke-width="58"/>
-  <path d="M480 512H546" fill="none" stroke="#70839B" stroke-linecap="round" stroke-width="34"/>
-  <circle cx="512" cy="512" r="26" fill="#FCFDFF" stroke="#A8B8CA" stroke-width="12"/>
+  <rect x="290" y="546" width="444" height="164" rx="82" fill="url(#lane)"/>
+  <rect x="290" y="546" width="444" height="164" rx="82" fill="none" stroke="#D3DDE8" stroke-width="10"/>
+  <circle cx="622" cy="628" r="54" fill="url(#accent)"/>
+  <circle cx="622" cy="628" r="54" fill="none" stroke="#0D73E4" stroke-width="10" opacity="0.36"/>
+  <path d="M370 628H518" fill="none" stroke="#B3C0CF" stroke-linecap="round" stroke-width="20"/>
+
+  <path d="M452 450C478 492 523 542 586 584" fill="none" stroke="url(#accentSoft)" stroke-linecap="round" stroke-width="44"/>
+  <path d="M566 548L648 592L576 676" fill="none" stroke="url(#accent)" stroke-linecap="round" stroke-linejoin="round" stroke-width="40"/>
 </svg>
