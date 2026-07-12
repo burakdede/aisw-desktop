@@ -111,6 +111,7 @@ export function BackupsPanel({
   const latestBackupTimestamp = selectedBackup
     ? formatBackupTimestamp(selectedBackup.created_at ?? selectedBackup.backup_id)
     : "No restore points yet";
+  const selectedBackupSummary = selectedTargetDisplay ?? "No selection";
 
   return (
     <SectionCard
@@ -127,36 +128,27 @@ export function BackupsPanel({
         </button>
       }
     >
-      <article className="diagnostic-card backups-intro-card">
-        <div className="backups-intro-copy">
-          <div>
-            <p className="card-kicker">Rollback</p>
-            <h3>
-              {sortedBackups.length
-                ? `${sortedBackups.length} restore point${sortedBackups.length === 1 ? "" : "s"}`
-                : "No restore points yet"}
-            </h3>
-            <p className="inline-note">
-              Inspect one restore point at a time. Restoring saved files does not reactivate a profile unless you choose that explicitly.
-            </p>
-          </div>
-          <span className="pill pill-soft">Files first</span>
-        </div>
-        <div className="backups-intro-grid">
-          <div>
-            <span className="overview-current-set-cell-label">Library</span>
-            <strong>{restorePointCount ? `${restorePointCount} restore point${restorePointCount === 1 ? "" : "s"}` : "Empty"}</strong>
-          </div>
-          <div>
-            <span className="overview-current-set-cell-label">Latest restore point</span>
-            <strong>{selectedTargetDisplay ?? "No selection"}</strong>
-          </div>
-          <div>
-            <span className="overview-current-set-cell-label">Restore mode</span>
-            <strong>Files first</strong>
-          </div>
-        </div>
-      </article>
+      <div className="desktop-status-strip backups-status-strip">
+        <article className="desktop-status-card">
+          <span className="overview-current-set-cell-label">Library</span>
+          <p className="desktop-status-value">
+            {restorePointCount
+              ? `${restorePointCount} restore point${restorePointCount === 1 ? "" : "s"}`
+              : "Empty"}
+          </p>
+          <p className="inline-note">AI Switch creates local restore points before risky profile changes.</p>
+        </article>
+        <article className="desktop-status-card">
+          <span className="overview-current-set-cell-label">Selected backup</span>
+          <p className="desktop-status-value">{selectedBackupSummary}</p>
+          <p className="inline-note">Inspect one restore point at a time before restoring saved files.</p>
+        </article>
+        <article className="desktop-status-card">
+          <span className="overview-current-set-cell-label">Restore mode</span>
+          <p className="desktop-status-value">Files first</p>
+          <p className="inline-note">Restoring saved files does not reactivate a profile unless you choose that explicitly.</p>
+        </article>
+      </div>
       <SplitView
         className="backups-layout"
         primaryClassName="backups-list-pane"
@@ -168,12 +160,12 @@ export function BackupsPanel({
                 <div>
                   <p className="card-kicker">Restore points</p>
                   <h3>Local backup history</h3>
-                  <p className="inline-note">
-                    Review one restore point at a time before restoring saved files or re-activating a profile.
-                  </p>
                 </div>
                 <span className="pill pill-soft">{latestBackupTimestamp}</span>
               </div>
+              <p className="inline-note">
+                Review one restore point at a time before restoring saved files or re-activating a profile.
+              </p>
               <div className="backups-list-columns" aria-hidden="true">
                 <span>Created</span>
                 <span>Tool</span>
