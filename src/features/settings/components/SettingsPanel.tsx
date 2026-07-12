@@ -1079,7 +1079,7 @@ export function SettingsPanel({
                         </p>
                       ) : null}
                       <p className="inline-note">
-                        Terminal setup still uses the bundled command-line hook name <code>aisw</code> and the environment variable <code>AISW_SHELL_HOOK</code>. In the desktop app, that runtime is presented as AI Switch.
+                        The desktop app keeps terminal setup optional. Use the guided copy actions below when you want already-open shells to refresh immediately after a switch.
                       </p>
                     </div>
                     <div className="settings-steps-list">
@@ -1129,7 +1129,7 @@ export function SettingsPanel({
                           Most people can skip these raw commands unless they manage shell files manually.
                         </p>
                         <p className="inline-note">
-                          These are the exact terminal commands, so the legacy executable name <code>aisw</code> stays visible here on purpose.
+                          These are the exact low-level commands behind AI Switch terminal integration.
                         </p>
                         <div>
                           <p className="inline-note">Install command</p>
@@ -1152,7 +1152,7 @@ export function SettingsPanel({
                     <h3>Manual switching still works</h3>
                     <p className="inline-note">{shellGuidance.data.note}</p>
                     <p className="inline-note">
-                      If you intentionally switch from Terminal instead of the desktop app, the underlying command name is still <code>aisw</code>.
+                      If you intentionally switch from Terminal instead of the desktop app, use the advanced examples below.
                     </p>
                     {shellGuidance.data.manual_apply_examples.length ? (
                       <details className="settings-guide-block">
