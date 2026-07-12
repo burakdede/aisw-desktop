@@ -38,6 +38,7 @@ import {
 } from "./lib/profile-display";
 import { DesktopCommandError } from "./lib/tauri";
 import { listenDesktopEvent, type TrayCommandResultEvent } from "./lib/tauri";
+import { syncWindowState } from "./lib/window-state";
 import {
   activateProfileSet,
   exportDiagnosticBundle,
@@ -149,6 +150,18 @@ export function App() {
     saveDesktopPreferences(desktopPreferences);
     void setTrayVisibility(desktopPreferences.showMenuBarIcon);
   }, [desktopPreferences]);
+
+  useEffect(() => {
+    let dispose: (() => void) | undefined;
+
+    void syncWindowState().then((cleanup) => {
+      dispose = cleanup;
+    });
+
+    return () => {
+      dispose?.();
+    };
+  }, []);
 
   const runtimeBlockedForShortcuts = bootstrap.data
     ? !bootstrap.data.runtime_status.compatible

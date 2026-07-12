@@ -373,6 +373,7 @@ describe("App", () => {
     delete (window as typeof window & { __AISW_DESKTOP_EVENT_HANDLERS__?: unknown }).__AISW_DESKTOP_EVENT_HANDLERS__;
     delete window.__AISW_DESKTOP_MOCK__;
     delete window.__AISW_DESKTOP_LISTEN__;
+    delete window.__AISW_WINDOW_MOCK__;
   });
 
   it("renders the overview from bootstrap data", async () => {
@@ -390,6 +391,64 @@ describe("App", () => {
     expect(screen.queryByText("Included runtime")).not.toBeInTheDocument();
     expect(screen.queryByText("Health check")).not.toBeInTheDocument();
     expect(screen.queryByText("Local-only by default")).not.toBeInTheDocument();
+  });
+
+  it("restores and persists the main window frame when the native window API is available", async () => {
+    let resizeHandler: (() => void) | undefined;
+    let moveHandler: (() => void) | undefined;
+    const setSize = vi.fn().mockResolvedValue(undefined);
+    const setPosition = vi.fn().mockResolvedValue(undefined);
+
+    window.localStorage.setItem(
+      "ai-switch.desktop.window-state",
+      JSON.stringify({ width: 1040, height: 720, x: 64, y: 96 }),
+    );
+
+    window.__AISW_WINDOW_MOCK__ = {
+      setSize,
+      setPosition,
+      innerSize: vi.fn().mockResolvedValue({ width: 1180, height: 760 }),
+      outerPosition: vi.fn().mockResolvedValue({ x: 180, y: 144 }),
+      isMaximized: vi.fn().mockResolvedValue(false),
+      onResized: vi.fn(async (handler: () => void) => {
+        resizeHandler = handler;
+        return () => {
+          resizeHandler = undefined;
+        };
+      }),
+      onMoved: vi.fn(async (handler: () => void) => {
+        moveHandler = handler;
+        return () => {
+          moveHandler = undefined;
+        };
+      }),
+    };
+
+    await renderApp();
+
+    await waitFor(() => {
+      expect(setSize).toHaveBeenCalled();
+      expect(setPosition).toHaveBeenCalled();
+    });
+
+    expect(setSize.mock.calls[setSize.mock.calls.length - 1]?.[0]).toMatchObject({
+      width: 1040,
+      height: 720,
+    });
+    expect(setPosition.mock.calls[setPosition.mock.calls.length - 1]?.[0]).toMatchObject({
+      x: 64,
+      y: 96,
+    });
+
+    await act(async () => {
+      resizeHandler?.();
+      moveHandler?.();
+      await new Promise((resolve) => window.setTimeout(resolve, 220));
+    });
+
+    expect(window.localStorage.getItem("ai-switch.desktop.window-state")).toBe(
+      JSON.stringify({ width: 1180, height: 760, x: 180, y: 144 }),
+    );
   });
 
   it("shows activity in a timeline and inspector layout", async () => {
