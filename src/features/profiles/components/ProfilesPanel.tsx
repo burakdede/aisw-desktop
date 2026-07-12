@@ -837,12 +837,10 @@ export function ProfilesPanel({
                   </p>
                   <div className="desktop-pane-section-header profiles-inspector-section-header">
                     <div>
-                      <p className="card-kicker">Manage</p>
-                      <h4>Actions</h4>
+                      <p className="card-kicker">Quick actions</p>
+                      <h4>Switch and recover</h4>
                     </div>
-                    <p className="inline-note">
-                      Switch, restore, rename, relabel, inspect diagnostics, and remove this saved profile without leaving the inspector.
-                    </p>
+                    <p className="inline-note">Core actions stay available without leaving the inspector.</p>
                   </div>
                   <div className="button-row">
                     <button
@@ -908,9 +906,6 @@ export function ProfilesPanel({
                     <div className="profiles-management-block">
                       <p className="card-kicker">Name</p>
                       <h4>Rename profile</h4>
-                      <p className="inline-note">
-                        Keep the stable profile name predictable for switching and recovery.
-                      </p>
                       <div className="inline-form inline-form-compact">
                         <input
                           ref={renameInputRef}
@@ -946,14 +941,13 @@ export function ProfilesPanel({
                         <p className="inline-note">
                           {duplicateWarning(tool, selectedRenameDraft.trim())}
                         </p>
-                      ) : null}
+                      ) : (
+                        <p className="inline-note">Stable names make switching and recovery easier.</p>
+                      )}
                     </div>
                     <div className="profiles-management-block">
                       <p className="card-kicker">Label</p>
                       <h4>Relabel profile</h4>
-                      <p className="inline-note">
-                        Keep the visible profile label readable without changing the stored name.
-                      </p>
                       <div className="inline-form inline-form-compact">
                         <input
                           aria-label={`label ${selectedProfileEntry.name}`}
@@ -995,6 +989,9 @@ export function ProfilesPanel({
                           Relabel
                         </button>
                       </div>
+                      <p className="inline-note">
+                        Visible labels can stay readable without changing the stored name.
+                      </p>
                     </div>
                   </div>
                   {openDiagnosticDetails === selectedProfileEntry.name ? (
@@ -1077,7 +1074,7 @@ export function ProfilesPanel({
                     <p className="card-kicker">Removal</p>
                     <h4>Remove profile</h4>
                     <p className="inline-note">
-                      Removing an active profile requires an extra confirmation before the saved login is deleted.
+                      Active profiles need explicit confirmation before deletion.
                     </p>
                     <div className="button-row">
                       {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? (
