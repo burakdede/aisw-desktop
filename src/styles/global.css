@@ -2036,6 +2036,25 @@ button {
   gap: 12px;
 }
 
+.profiles-table-header {
+  align-items: flex-start;
+}
+
+.profiles-library-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.profiles-library-summary > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
 .profiles-overview-meta {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2951,6 +2970,10 @@ button {
   gap: 12px;
 }
 
+.profiles-inspector-card {
+  gap: 14px;
+}
+
 .profiles-tool-focus-header {
   display: flex;
   justify-content: space-between;
@@ -3534,6 +3557,10 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .profiles-library-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .profiles-tool-focus-main {
     grid-template-columns: 1fr;
   }
@@ -3589,6 +3616,7 @@ button {
   .overview-tool-facts,
   .overview-focus-grid,
   .overview-project-grid,
+  .profiles-library-summary,
   .profiles-detail-meta,
   .profiles-tool-focus-grid,
   .profiles-management-grid {
