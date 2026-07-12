@@ -44,49 +44,36 @@ export function SetsPanel({
   ];
 
   return (
-    <>
-      <article className="diagnostic-card sets-intro-card">
-        <div className="sets-intro-copy">
-          <div>
-            <p className="card-kicker">Sets</p>
-            <h3>{localSetCount ? `${localSetCount} saved set${localSetCount === 1 ? "" : "s"}` : "No saved sets yet"}</h3>
-            <p className="inline-note">
-              People think in work, personal, and client modes. Keep reusable switching sets and project-aware expectations in one compact desktop workflow.
-            </p>
-          </div>
-          <span className="pill pill-soft">{mode === "sets" ? "Library" : "Rules"}</span>
-        </div>
-        <div className="sets-intro-grid">
-          <div>
-            <span className="overview-current-set-cell-label">Saved sets</span>
-            <strong>{localSetCount}</strong>
-          </div>
-          <div>
-            <span className="overview-current-set-cell-label">Detected sets</span>
-            <strong>{importedSetCount}</strong>
-          </div>
-          <div>
-            <span className="overview-current-set-cell-label">Active sets</span>
-            <strong>{activeSetCount}</strong>
-          </div>
-        </div>
-      </article>
-      <SplitView
-        className="sets-mode-split"
+    <SplitView
+        className="sets-layout sets-mode-split"
         primaryClassName="sets-mode-pane"
         secondaryClassName="sets-detail-pane"
         primary={
           <article className="diagnostic-card sets-nav-card">
             <div className="desktop-pane-section-header">
               <div>
-                <p className="card-kicker">Workspace</p>
+                <p className="card-kicker">Sets</p>
                 <h3>Sets</h3>
               </div>
               <span className="pill pill-soft">{mode === "sets" ? "Library" : "Rules"}</span>
             </div>
             <p className="inline-note">
-              Move between saved sets and project rules without leaving this workspace.
+              Keep reusable work, personal, and client switching sets beside project-aware rules.
             </p>
+            <div className="sets-summary-grid">
+              <div>
+                <span className="overview-current-set-cell-label">Saved</span>
+                <strong>{localSetCount}</strong>
+              </div>
+              <div>
+                <span className="overview-current-set-cell-label">Detected</span>
+                <strong>{importedSetCount}</strong>
+              </div>
+              <div>
+                <span className="overview-current-set-cell-label">Active</span>
+                <strong>{activeSetCount}</strong>
+              </div>
+            </div>
             <div aria-label="Sets sections" className="stack-list desktop-list-stack">
             {sections.map((section) => (
               <button
@@ -130,6 +117,5 @@ export function SetsPanel({
           )
         }
       />
-    </>
   );
 }
