@@ -834,17 +834,23 @@ export function App() {
       toolbar={renderToolbar()}
       statusBadge={showSetupWindow ? undefined : (
         <div className="sidebar-status-stack">
-          <div className="sidebar-status-row">
-            <span className="sidebar-status-label">Active set</span>
-            <strong>{currentActiveSet ?? "None"}</strong>
+          <div className="sidebar-status-header">
+            <span className="sidebar-status-kicker">Current state</span>
+            <p className="sidebar-status-caption">At-a-glance switching status for this Mac.</p>
           </div>
-          <div className="sidebar-status-row">
-            <span className="sidebar-status-label">Switching</span>
-            <p>{runtimeStatus.compatible ? "Ready" : "Needs attention"}</p>
-          </div>
-          <div className="sidebar-status-row">
-            <span className="sidebar-status-label">Engine source</span>
-            <p>{runtimeSourceLabel(settings.runtime_kind)}</p>
+          <div className="sidebar-status-grid">
+            <div className="sidebar-status-row">
+              <span className="sidebar-status-label">Active set</span>
+              <strong>{currentActiveSet ?? "None"}</strong>
+            </div>
+            <div className="sidebar-status-row">
+              <span className="sidebar-status-label">Switching</span>
+              <p>{runtimeStatus.compatible ? "Ready" : "Needs attention"}</p>
+            </div>
+            <div className="sidebar-status-row">
+              <span className="sidebar-status-label">Engine source</span>
+              <p>{runtimeSourceLabel(settings.runtime_kind)}</p>
+            </div>
           </div>
         </div>
       )}

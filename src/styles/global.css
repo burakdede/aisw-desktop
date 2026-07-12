@@ -318,6 +318,7 @@ button {
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: nowrap;
 }
 
 .sidebar-brand {
@@ -386,9 +387,10 @@ button {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 730;
-  font-size: 26px;
+  font-size: 30px;
   line-height: 1;
   letter-spacing: -0.034em;
+  white-space: nowrap;
 }
 
 .nav-list {
@@ -470,12 +472,12 @@ button {
   margin-top: auto;
   display: grid;
   gap: 5px;
-  padding-top: 2px;
+  padding: 2px 10px 10px;
 }
 
 .sidebar-status-card {
   margin: 0;
-  padding: 11px 12px 10px;
+  padding: 12px;
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   border-radius: 12px;
   background:
@@ -485,22 +487,54 @@ button {
 
 .sidebar-status-stack {
   display: grid;
+  gap: 12px;
+}
+
+.sidebar-status-header {
+  display: grid;
+  gap: 4px;
+}
+
+.sidebar-status-kicker {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.sidebar-status-caption {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.sidebar-status-grid {
+  display: grid;
   gap: 10px;
 }
 
 .sidebar-status-row {
   display: grid;
-  gap: 3px;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 3%, Canvas 97%);
 }
 
 .sidebar-status-row strong {
-  font-size: 13px;
+  font-size: 17px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
 }
 
 .sidebar-status-label,
 .status-badge p {
   margin: 0;
-  font-size: 11px;
+  font-size: 12px;
+  line-height: 1.35;
   color: var(--text-secondary);
 }
 

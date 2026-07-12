@@ -114,7 +114,7 @@ export function AppFrame({
             <div className="sidebar-scroll">
               <div className="sidebar-brand">
                 <div className="brand-lockup">
-                  <BrandMark size={32} />
+                  <BrandMark size={36} />
                   <div className="sidebar-brand-copy">
                     <h1 className="sidebar-title">AI Switcher</h1>
                   </div>
