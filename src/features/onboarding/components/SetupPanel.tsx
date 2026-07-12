@@ -488,7 +488,7 @@ export function SetupPanel({
                     <div>
                       <p className="diagnostic-status diagnostic-status-pass">2. Try one switch</p>
                       <p className="inline-note">
-                        Re-apply a shared profile once so you know switching works before you start coding.
+                        Re-apply one saved set once so you know switching works before you start coding.
                       </p>
                     </div>
                     <div>
@@ -756,7 +756,7 @@ export function SetupPanel({
                     <h3>Try one safe switch</h3>
                   </div>
                   <p className="inline-note">
-                    Re-apply one shared profile across installed tools so you know switching works
+                    Re-apply one saved set across installed tools so you know switching works
                     before you start coding.
                   </p>
                 </div>
@@ -1017,7 +1017,7 @@ function setupStepSummary(step: SetupStep) {
     case "accounts":
       return "Import current logins or add the first saved profiles you need.";
     case "switch":
-      return "Run one safe shared switch before you start coding.";
+      return "Run one safe set switch before you start coding.";
     case "terminal":
       return "Optional setup for already-open terminal sessions.";
     case "done":
@@ -1048,8 +1048,8 @@ function setupStepFooterNote(step: SetupStep, switchReady: boolean) {
       return "Imported current logins and saved profiles are what make safe switching possible later.";
     case "switch":
       return switchReady
-        ? "Re-apply one shared profile once so you know switching works before you start coding."
-        : "You can continue, but you will need a shared profile name before the first switch can succeed.";
+        ? "Re-apply one saved set once so you know switching works before you start coding."
+        : "You can continue, but you will need one saved set name before the first switch can succeed.";
     case "terminal":
       return "The app already updates local credential files directly. Shell integration is only for already-open terminal sessions.";
     case "done":

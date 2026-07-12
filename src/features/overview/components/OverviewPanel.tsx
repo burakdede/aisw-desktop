@@ -170,7 +170,7 @@ export function OverviewPanel({
                       <p className="inline-note">
                         {currentSetLabel
                           ? "Switching stays centered on one working identity across installed tools."
-                          : "No shared active set is pinned yet. Per-tool switching is still available."}
+                          : "No active set is pinned yet. Per-tool switching is still available."}
                       </p>
                     </div>
                     <span className={`pill ${activeToolsCount ? "pill-ok" : "pill-soft"}`}>
