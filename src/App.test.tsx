@@ -5944,7 +5944,7 @@ describe("App", () => {
     });
   });
 
-  it("opens sets when the app menu requests switch set", async () => {
+  it("opens quick switch when the app menu requests switch set", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
@@ -5953,12 +5953,12 @@ describe("App", () => {
     }).__AISW_DESKTOP_EVENT_HANDLERS__;
 
     await act(async () => {
-      handlers?.["menu-open-sets"]?.({});
+      handlers?.["menu-open-quick-switch"]?.({});
     });
 
     await waitFor(() => {
-      expect(screen.getAllByRole("button", { name: "Sets" })[0]).toHaveClass("nav-button-active");
-      expect(screen.getByLabelText("Sets sections")).toBeInTheDocument();
+      expect(screen.getByRole("dialog", { name: "Quick Switch" })).toBeInTheDocument();
+      expect(screen.getByLabelText("Search Quick Switch")).toBeInTheDocument();
     });
   });
 

@@ -207,7 +207,7 @@ pub fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, id: &str) {
             let _ = app.emit(MENU_OPEN_QUICK_SWITCH_EVENT, ());
         }
         SWITCH_SET_ID => {
-            let _ = app.emit(MENU_OPEN_SETS_EVENT, ());
+            let _ = app.emit(MENU_OPEN_QUICK_SWITCH_EVENT, ());
         }
         VERIFY_ID => {
             let _ = app.emit(MENU_OPEN_DIAGNOSTICS_EVENT, ());
