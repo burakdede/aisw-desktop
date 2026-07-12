@@ -1126,6 +1126,42 @@ button {
   gap: 10px;
 }
 
+.onboarding-account-layout {
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  align-items: start;
+}
+
+.onboarding-account-list-card,
+.onboarding-account-detail-card {
+  display: grid;
+  gap: 10px;
+}
+
+.onboarding-account-row {
+  align-items: flex-start;
+}
+
+.onboarding-account-row-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.onboarding-account-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.onboarding-account-summary > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+}
+
 .onboarding-tool-card {
   display: grid;
   gap: 10px;

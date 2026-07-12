@@ -43,6 +43,18 @@ type HealthItem = {
 };
 
 type SetupStep = "accounts" | "runtime" | "switch" | "terminal";
+type OnboardingAccountItem =
+  | { key: string; kind: "live"; account: LiveAccount }
+  | {
+      key: string;
+      kind: "needs-profile";
+      status: AppSnapshot["statuses"][number];
+    }
+  | {
+      key: string;
+      kind: "missing";
+      status: AppSnapshot["statuses"][number];
+    };
 
 export function shouldShowSetupFlow(
   snapshot: AppSnapshot,
@@ -243,6 +255,39 @@ export function SetupPanel({
     "Built-in runtime ready",
   ];
   const installedNow = snapshot.statuses.filter((status) => status.binary_found).map((status) => toolDisplayName(status.tool));
+  const accountItems = useMemo<OnboardingAccountItem[]>(
+    () => [
+      ...liveAccounts.map((account) => ({
+        key: `live:${account.tool}`,
+        kind: "live" as const,
+        account,
+      })),
+      ...installedToolsNeedingProfile.map((status) => ({
+        key: `needs-profile:${status.tool}`,
+        kind: "needs-profile" as const,
+        status,
+      })),
+      ...missingTools.map((status) => ({
+        key: `missing:${status.tool}`,
+        kind: "missing" as const,
+        status,
+      })),
+    ],
+    [installedToolsNeedingProfile, liveAccounts, missingTools],
+  );
+  const [selectedAccountKey, setSelectedAccountKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedAccountKey && accountItems.some((item) => item.key === selectedAccountKey)) {
+      return;
+    }
+    setSelectedAccountKey(selectDefaultAccountItem(accountItems)?.key ?? null);
+  }, [accountItems, selectedAccountKey]);
+
+  const selectedAccountItem =
+    accountItems.find((item) => item.key === selectedAccountKey) ??
+    selectDefaultAccountItem(accountItems) ??
+    null;
 
   return (
     <SectionCard
@@ -463,128 +508,232 @@ export function SetupPanel({
             {activeStep === "accounts" ? (
               <>
                 <div className="desktop-pane-section onboarding-detection-stack">
-            <div className="desktop-pane-section-header">
-              <div>
-                <p className="card-kicker">Accounts</p>
-                <h3>Detected tools</h3>
-              </div>
-              <p className="inline-note">
-                Save current logins as reusable profiles, add missing profiles where needed, and ignore
-                tools you do not use yet.
-              </p>
-            </div>
-            {liveAccounts.map((account) => (
-              <article
-                key={account.tool}
-                className="diagnostic-card onboarding-tool-card"
-              >
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <h4>{titleCase(account.tool)}</h4>
-                    <p className="inline-note">
-                      {account.outcome ?? "unknown"} · {account.auth_method ?? "unknown"}
-                      {account.matched_profile ? ` · matches ${account.matched_profile}` : ""}
-                    </p>
-                  </div>
-                  <span className="pill pill-ok">Ready to import</span>
-                </div>
-                {!supportsProfileImportMode(account.tool, toolCapabilities, "from_live") ? (
-                  <p className="inline-note">
-                    This release cannot save the current {titleCase(account.tool)} login directly.
-                    Choose another sign-in method instead.
-                  </p>
-                ) : null}
-                <div className="stack-list">
-                  {supportsProfileImportMode(account.tool, toolCapabilities, "from_live") ? (
-                    <p className="inline-note">
-                      Save the current {titleCase(account.tool)} login as a reusable profile in a
-                      focused setup sheet.
-                    </p>
-                  ) : null}
-                </div>
-                <div className="button-row">
-                  {supportsProfileImportMode(account.tool, toolCapabilities, "from_live") ? (
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      disabled={mutationLock.isBusy}
-                      onClick={() => openLiveImport(account)}
-                    >
-                      Import as profile
-                    </button>
-                  ) : (
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      disabled={mutationLock.isBusy}
-                      onClick={() =>
-                        onOpenProfiles(account.tool, {
-                          mode: preferredProfileImportMode(account.tool, toolCapabilities, "from_live"),
-                        })
-                      }
-                    >
-                      Choose sign-in method
-                    </button>
-                  )}
-                </div>
-              </article>
-            ))}
-            {installedToolsNeedingProfile.map((status) => (
-              <article key={status.tool} className="diagnostic-card onboarding-tool-card">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <h4>{titleCase(status.tool)}</h4>
-                    <p className="inline-note">Installed, but no saved profile yet</p>
-                  </div>
-                  <span className="pill pill-soft">Needs profile</span>
-                </div>
-                <div className="button-row">
-                  <button
-                    className="ghost-button"
-                    type="button"
-                    aria-label={`Add ${status.tool} profile`}
-                    disabled={mutationLock.isBusy}
-                    onClick={() => onOpenProfiles(status.tool)}
-                  >
-                    Add profile
-                  </button>
-                </div>
-              </article>
-            ))}
-            {missingTools.map((status) => {
-              const binary = toolBinaryName(status.tool);
-              return (
-                <article key={status.tool} className="diagnostic-card diagnostic-warn onboarding-tool-card">
                   <div className="desktop-pane-section-header">
                     <div>
-                    <h4>{titleCase(status.tool)} is not installed</h4>
-                      <p className="inline-note">Optional for now</p>
+                      <p className="card-kicker">Accounts</p>
+                      <h3>Detected tools</h3>
                     </div>
-                    <span className="pill pill-soft">Not installed</span>
+                    <p className="inline-note">
+                      Save current logins as reusable profiles, add missing profiles where needed, and ignore
+                      tools you do not use yet.
+                    </p>
                   </div>
-                  <p className="inline-note">
-                    You can finish setup without {titleCase(status.tool)}. Install the{" "}
-                    <code>{binary}</code> tool later when you want to manage that provider here.
-                  </p>
-                  <div className="button-row">
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      onClick={() => openExternalGuide(installGuideUrlForTool(status.tool))}
-                    >
-                      Open installation guide
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-            {!liveAccounts.length ? (
-              installedToolsNeedingProfile.length || missingTools.length ? null : (
-                <p className="inline-note">
-                  Run the setup scan to detect live Claude, Codex, and Gemini accounts.
-                </p>
-              )
-            ) : null}
+                  {accountItems.length ? (
+                    <SplitView
+                      className="onboarding-account-layout"
+                      primaryClassName="onboarding-account-list-pane"
+                      secondaryClassName="onboarding-account-detail-pane"
+                      primary={
+                        <article className="diagnostic-card onboarding-account-list-card">
+                          <div className="desktop-pane-section-header">
+                            <div>
+                              <p className="card-kicker">Detected tools</p>
+                              <h4>Choose one tool</h4>
+                            </div>
+                            <span className="pill pill-soft">
+                              {accountItems.length} item{accountItems.length === 1 ? "" : "s"}
+                            </span>
+                          </div>
+                          <div className="desktop-source-list" aria-label="Detected tools">
+                            {accountItems.map((item) => {
+                              const tool =
+                                item.kind === "live" ? item.account.tool : item.status.tool;
+                              const title =
+                                titleCase(tool);
+                              const summary =
+                                item.kind === "live"
+                                  ? `${item.account.outcome ?? "unknown"} · ${item.account.auth_method ?? "unknown"}${item.account.matched_profile ? ` · matches ${item.account.matched_profile}` : ""}`
+                                  : item.kind === "needs-profile"
+                                    ? "No saved profile yet"
+                                    : "Not installed yet";
+                              const badgeClass =
+                                item.kind === "live"
+                                  ? "pill-ok"
+                                  : "pill-soft";
+                              const badgeLabel =
+                                item.kind === "live"
+                                  ? "Ready to import"
+                                  : item.kind === "needs-profile"
+                                    ? "Needs profile"
+                                    : "Not installed";
+
+                              return (
+                                <button
+                                  key={item.key}
+                                  type="button"
+                                  className={`desktop-source-row onboarding-account-row ${
+                                    selectedAccountItem?.key === item.key
+                                      ? "desktop-source-row-selected"
+                                      : ""
+                                  }`}
+                                  aria-label={`Inspect ${title}`}
+                                  aria-pressed={selectedAccountItem?.key === item.key}
+                                  onClick={() => setSelectedAccountKey(item.key)}
+                                >
+                                  <div className="onboarding-account-row-main">
+                                    <strong>{title}</strong>
+                                    <p className="inline-note">{summary}</p>
+                                  </div>
+                                  <div className="settings-nav-row-meta">
+                                    <span className={`pill ${badgeClass}`}>{badgeLabel}</span>
+                                    <span className="desktop-source-chevron" aria-hidden="true">
+                                      ›
+                                    </span>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </article>
+                      }
+                      secondary={
+                        selectedAccountItem ? (
+                          <article
+                            className={`diagnostic-card onboarding-account-detail-card ${
+                              selectedAccountItem.kind === "missing" ? "diagnostic-warn" : ""
+                            }`}
+                          >
+                            {selectedAccountItem.kind === "live" ? (
+                              <>
+                                <div className="desktop-pane-section-header">
+                                  <div>
+                                    <p className="card-kicker">Detected login</p>
+                                    <h3>{titleCase(selectedAccountItem.account.tool)}</h3>
+                                  </div>
+                                  <span className="pill pill-ok">Ready to import</span>
+                                </div>
+                                <div className="onboarding-account-summary">
+                                  <div>
+                                    <span className="overview-current-set-cell-label">Status</span>
+                                    <strong>{selectedAccountItem.account.outcome ?? "unknown"}</strong>
+                                  </div>
+                                  <div>
+                                    <span className="overview-current-set-cell-label">Sign-in method</span>
+                                    <strong>{selectedAccountItem.account.auth_method ?? "unknown"}</strong>
+                                  </div>
+                                  <div>
+                                    <span className="overview-current-set-cell-label">Matched profile</span>
+                                    <strong>{selectedAccountItem.account.matched_profile ?? "Not matched yet"}</strong>
+                                  </div>
+                                </div>
+                                {!supportsProfileImportMode(selectedAccountItem.account.tool, toolCapabilities, "from_live") ? (
+                                  <p className="inline-note">
+                                    This release cannot save the current {titleCase(selectedAccountItem.account.tool)} login directly.
+                                    Choose another sign-in method instead.
+                                  </p>
+                                ) : (
+                                  <p className="inline-note">
+                                    Save the current {titleCase(selectedAccountItem.account.tool)} login as a reusable profile in a
+                                    focused setup sheet.
+                                  </p>
+                                )}
+                                <div className="button-row">
+                                  {supportsProfileImportMode(selectedAccountItem.account.tool, toolCapabilities, "from_live") ? (
+                                    <button
+                                      className="ghost-button"
+                                      type="button"
+                                      disabled={mutationLock.isBusy}
+                                      onClick={() => openLiveImport(selectedAccountItem.account)}
+                                    >
+                                      Import as profile
+                                    </button>
+                                  ) : (
+                                    <button
+                                      className="ghost-button"
+                                      type="button"
+                                      disabled={mutationLock.isBusy}
+                                      onClick={() =>
+                                        onOpenProfiles(selectedAccountItem.account.tool, {
+                                          mode: preferredProfileImportMode(selectedAccountItem.account.tool, toolCapabilities, "from_live"),
+                                        })
+                                      }
+                                    >
+                                      Choose sign-in method
+                                    </button>
+                                  )}
+                                </div>
+                              </>
+                            ) : null}
+
+                            {selectedAccountItem.kind === "needs-profile" ? (
+                              <>
+                                <div className="desktop-pane-section-header">
+                                  <div>
+                                    <p className="card-kicker">Saved profile needed</p>
+                                    <h3>{titleCase(selectedAccountItem.status.tool)}</h3>
+                                  </div>
+                                  <span className="pill pill-soft">Needs profile</span>
+                                </div>
+                                <div className="onboarding-account-summary">
+                                  <div>
+                                    <span className="overview-current-set-cell-label">Status</span>
+                                    <strong>Installed, but no saved profile yet</strong>
+                                  </div>
+                                  <div>
+                                    <span className="overview-current-set-cell-label">Current state</span>
+                                    <strong>No reusable account saved</strong>
+                                  </div>
+                                </div>
+                                <p className="inline-note">
+                                  Add one reusable {titleCase(selectedAccountItem.status.tool)} profile so this computer can switch that tool safely later.
+                                </p>
+                                <div className="button-row">
+                                  <button
+                                    className="ghost-button"
+                                    type="button"
+                                    aria-label={`Add ${selectedAccountItem.status.tool} profile`}
+                                    disabled={mutationLock.isBusy}
+                                    onClick={() => onOpenProfiles(selectedAccountItem.status.tool)}
+                                  >
+                                    Add profile
+                                  </button>
+                                </div>
+                              </>
+                            ) : null}
+
+                            {selectedAccountItem.kind === "missing" ? (
+                              <>
+                                <div className="desktop-pane-section-header">
+                                  <div>
+                                    <p className="card-kicker">Optional tool</p>
+                                    <h3>{titleCase(selectedAccountItem.status.tool)} is not installed</h3>
+                                  </div>
+                                  <span className="pill pill-soft">Not installed</span>
+                                </div>
+                                <div className="onboarding-account-summary">
+                                  <div>
+                                    <span className="overview-current-set-cell-label">Status</span>
+                                    <strong>Optional for now</strong>
+                                  </div>
+                                  <div>
+                                    <span className="overview-current-set-cell-label">Binary</span>
+                                    <strong>{toolBinaryName(selectedAccountItem.status.tool)}</strong>
+                                  </div>
+                                </div>
+                                <p className="inline-note">
+                                  You can finish setup without {titleCase(selectedAccountItem.status.tool)}. Install the{" "}
+                                  <code>{toolBinaryName(selectedAccountItem.status.tool)}</code> tool later when you want to manage that provider here.
+                                </p>
+                                <div className="button-row">
+                                  <button
+                                    className="ghost-button"
+                                    type="button"
+                                    onClick={() => openExternalGuide(installGuideUrlForTool(selectedAccountItem.status.tool))}
+                                  >
+                                    Open installation guide
+                                  </button>
+                                </div>
+                              </>
+                            ) : null}
+                          </article>
+                        ) : null
+                      }
+                    />
+                  ) : (
+                    <p className="inline-note">
+                      Run the setup scan to detect live Claude, Codex, and Gemini accounts.
+                    </p>
+                  )}
                 </div>
               </>
             ) : null}
@@ -851,6 +1000,15 @@ function summarizeRuntime(runtimeKind: AppBootstrap["settings"]["runtime_kind"])
     description:
       "AI Switch is currently pointing at a custom runtime path instead of the included one.",
   };
+}
+
+function selectDefaultAccountItem(items: OnboardingAccountItem[]) {
+  return (
+    items.find((item) => item.kind === "live") ??
+    items.find((item) => item.kind === "missing") ??
+    items.find((item) => item.kind === "needs-profile") ??
+    null
+  );
 }
 
 function buildRuntimeRows(
