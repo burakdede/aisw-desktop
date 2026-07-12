@@ -55,6 +55,7 @@ export function WorkspacesPanel({
   const [context, setContext] = useState(bindingOptions[0]?.value ?? "");
   const [targetValue, setTargetValue] = useState("");
   const [workspaceOverrideDismissed, setWorkspaceOverrideDismissed] = useState(false);
+  const [selectedBindingKey, setSelectedBindingKey] = useState<string | null>(null);
   const trimmedTargetValue = targetValue.trim();
   const requiresExplicitTarget = scope !== "default";
   const canSaveBinding =
@@ -80,6 +81,10 @@ export function WorkspacesPanel({
       ? `${statusCard.scope}:${statusCard.target}:${statusCard.expectedContext}`
       : null;
   const savedRuleCount = bindingsSummary.bindings.length;
+  const ruleEntries = bindingsSummary.bindings.map((binding) => ({
+    ...binding,
+    key: `${binding.scope}:${binding.target}:${binding.context}`,
+  }));
   const currentMatchLabel = hasWorkspaceMismatch
     ? "Needs review"
     : statusCard.status === "match"
@@ -96,6 +101,27 @@ export function WorkspacesPanel({
       setContext(bindingOptions[0]?.value ?? "");
     }
   }, [bindingOptions, context]);
+
+  useEffect(() => {
+    if (selectedBindingKey && ruleEntries.some((entry) => entry.key === selectedBindingKey)) {
+      return;
+    }
+    setSelectedBindingKey(
+      ruleEntries.find((entry) => entry.key === matchedBindingKey)?.key ??
+        ruleEntries[0]?.key ??
+        null,
+    );
+  }, [matchedBindingKey, ruleEntries, selectedBindingKey]);
+
+  const selectedRule =
+    ruleEntries.find((entry) => entry.key === selectedBindingKey) ??
+    ruleEntries.find((entry) => entry.key === matchedBindingKey) ??
+    ruleEntries[0] ??
+    null;
+  const selectedRuleContextLabel = selectedRule
+    ? contextDisplayLabel(settings, selectedRule.context)
+    : null;
+  const selectedRuleMatched = selectedRule?.key === matchedBindingKey;
 
   function activateExpectedWorkspaceTarget() {
     if (!expectedWorkspaceTarget) {
@@ -372,57 +398,110 @@ export function WorkspacesPanel({
                 <p className="card-kicker">Rules</p>
                 <h3>Saved matching rules</h3>
                 <p className="inline-note">
-                  Remove stale path and remote rules here when a project moves or gets renamed.
+                  Review one rule at a time, then remove stale path and remote rules when a project moves or gets renamed.
                 </p>
               </div>
               <span className="pill pill-soft">
                 {savedRuleCount ? `${savedRuleCount} saved` : "No saved rules"}
               </span>
             </div>
-            <div className="stack-list workspaces-rules-list">
-              {bindingsSummary.bindings.map((binding) => {
-              const isMatchedBinding =
-                matchedBindingKey === `${binding.scope}:${binding.target}:${binding.context}`;
+            {ruleEntries.length ? (
+              <SplitView
+                className="workspaces-rules-layout"
+                primaryClassName="workspaces-rules-list-pane"
+                secondaryClassName="workspaces-rules-detail-pane"
+                primary={
+                  <div className="stack-list workspaces-rules-list">
+                    {ruleEntries.map((binding) => {
+                      const isMatchedBinding = matchedBindingKey === binding.key;
+                      const isSelectedBinding = selectedRule?.key === binding.key;
 
-              return (
-                <article
-                  key={`${binding.scope}-${binding.target}-${binding.context}`}
-                  className={`list-row workspaces-rule-row ${isMatchedBinding ? "workspaces-rule-row-active" : ""}`}
-                >
-                  <div className="workspaces-rule-row-main">
-                    <div className="workspaces-rule-row-header">
-                      <strong>{contextDisplayLabel(settings, binding.context)}</strong>
-                      <span className={`pill ${isMatchedBinding ? "pill-ok" : "pill-soft"}`}>
-                        {isMatchedBinding ? "Matched" : binding.scope}
-                      </span>
-                    </div>
-                    <p>
-                      {binding.scope} · {binding.target}
-                    </p>
-                    {isMatchedBinding ? <p className="inline-note">Matched rule ✓</p> : null}
+                      return (
+                        <button
+                          key={binding.key}
+                          type="button"
+                          className={`list-row workspaces-rule-row ${
+                            isSelectedBinding ? "workspaces-rule-row-selected" : ""
+                          } ${isMatchedBinding ? "workspaces-rule-row-active" : ""}`}
+                          aria-label={`Inspect rule for ${contextDisplayLabel(settings, binding.context)}`}
+                          aria-pressed={isSelectedBinding}
+                          onClick={() => setSelectedBindingKey(binding.key)}
+                        >
+                          <div className="workspaces-rule-row-main">
+                            <div className="workspaces-rule-row-header">
+                              <strong>{contextDisplayLabel(settings, binding.context)}</strong>
+                              <span className={`pill ${isMatchedBinding ? "pill-ok" : "pill-soft"}`}>
+                                {isMatchedBinding ? "Matched" : binding.scope}
+                              </span>
+                            </div>
+                            <p>{binding.scope === "default" ? "default rule" : binding.target}</p>
+                          </div>
+                          <span className="desktop-source-chevron" aria-hidden="true">
+                            ›
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
-                  <button
-                    className="ghost-button danger-button"
-                    type="button"
-                    disabled={mutationLock.isBusy}
-                    onClick={() =>
-                      workspaceUnbindMutation.mutate(
-                        unbindTargetForBinding(binding.scope, binding.target),
-                      )
-                    }
-                  >
-                    Remove this rule
-                  </button>
-                </article>
-              );
-              })}
-              {!bindingsSummary.bindings.length ? (
-                <p className="inline-note">
-                  No explicit project rules are configured yet. Save one from the form to attach a
-                  set to a default scope, path prefix, or git remote pattern.
-                </p>
-              ) : null}
-            </div>
+                }
+                secondary={
+                  selectedRule ? (
+                    <article className="workspaces-rule-detail-card">
+                      <div className="desktop-pane-section-header">
+                        <div>
+                          <p className="card-kicker">Selected rule</p>
+                          <h3>{selectedRuleContextLabel}</h3>
+                        </div>
+                        <span className={`pill ${selectedRuleMatched ? "pill-ok" : "pill-soft"}`}>
+                          {selectedRuleMatched ? "Matched" : selectedRule.scope}
+                        </span>
+                      </div>
+                      <div className="workspaces-rule-detail-grid">
+                        <div>
+                          <span className="overview-current-set-cell-label">Rule type</span>
+                          <strong>{selectedRule.scope}</strong>
+                          <p className="inline-note">Rule type: {selectedRule.scope}</p>
+                        </div>
+                        <div>
+                          <span className="overview-current-set-cell-label">Set</span>
+                          <strong>{selectedRuleContextLabel}</strong>
+                          <p className="inline-note">Rule set: {selectedRuleContextLabel}</p>
+                        </div>
+                        <div>
+                          <span className="overview-current-set-cell-label">Target</span>
+                          <strong>{selectedRule.scope === "default" ? "Default set" : selectedRule.target}</strong>
+                          <p className="inline-note">
+                            {selectedRule.scope === "default"
+                              ? "default · applies when no path or remote rule matches"
+                              : `${selectedRule.scope} · ${selectedRule.target}`}
+                          </p>
+                        </div>
+                      </div>
+                      {selectedRuleMatched ? <p className="inline-note">Matched rule ✓</p> : null}
+                      <div className="button-row">
+                        <button
+                          className="ghost-button danger-button"
+                          type="button"
+                          disabled={mutationLock.isBusy}
+                          onClick={() =>
+                            workspaceUnbindMutation.mutate(
+                              unbindTargetForBinding(selectedRule.scope, selectedRule.target),
+                            )
+                          }
+                        >
+                          Remove this rule
+                        </button>
+                      </div>
+                    </article>
+                  ) : null
+                }
+              />
+            ) : (
+              <p className="inline-note">
+                No explicit project rules are configured yet. Save one from the form to attach a
+                set to a default scope, path prefix, or git remote pattern.
+              </p>
+            )}
           </article>
           {workspaceResult ? (
             <p className={`inline-note ${workspaceResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
