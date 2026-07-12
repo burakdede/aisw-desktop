@@ -1600,17 +1600,41 @@ button {
   margin-bottom: 14px;
 }
 
-.workspaces-editor-card {
+.workspaces-layout {
+  grid-template-columns: minmax(360px, 1.02fr) minmax(340px, 0.98fr);
+}
+
+.workspaces-intro-card {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+  margin-bottom: 14px;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, Canvas 95%, AccentColor 3%), color-mix(in srgb, Canvas 98%, CanvasText 2%));
+}
+
+.workspaces-intro-copy {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   gap: 14px;
 }
 
-.workspaces-intro-meta {
+.workspaces-intro-copy p {
+  margin: 4px 0 0;
+  max-width: 54ch;
+}
+
+.workspaces-intro-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
-.workspaces-intro-meta > div {
+.workspaces-intro-grid > div,
+.workspaces-status-grid > div,
+.workspaces-editor-grid label {
   display: grid;
   gap: 4px;
   min-width: 0;
@@ -1619,10 +1643,86 @@ button {
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
 
+.workspaces-editor-card,
+.workspaces-status-card,
+.workspaces-rules-card,
+.workspaces-mismatch-card {
+  gap: 14px;
+}
+
+.workspaces-editor-grid {
+  display: grid;
+  gap: 10px;
+}
+
 .workspace-guard-section {
   gap: 12px;
   padding-top: 6px;
   border-top: 1px solid var(--separator);
+}
+
+.workspaces-status-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
+  gap: 12px;
+}
+
+.workspaces-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.workspaces-status-rail {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
+  background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
+}
+
+.workspaces-rule-count {
+  display: grid;
+  gap: 2px;
+}
+
+.workspaces-rule-count strong {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.workspaces-rules-header {
+  align-items: flex-start;
+}
+
+.workspaces-rules-list {
+  gap: 8px;
+}
+
+.workspaces-rule-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.workspaces-rule-row-active {
+  border-color: color-mix(in srgb, AccentColor 42%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, AccentColor 22%, transparent);
+  background: color-mix(in srgb, AccentColor 8%, Canvas 92%);
+}
+
+.workspaces-rule-row-main {
+  min-width: 0;
+}
+
+.workspaces-rule-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .profiles-toolbar {
@@ -3614,6 +3714,8 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .workspaces-intro-grid,
+  .workspaces-status-grid,
   .activity-intro-grid,
   .activity-overview-meta {
     grid-template-columns: 1fr;
@@ -3642,6 +3744,7 @@ button {
   }
 
   .settings-overview-copy,
+  .workspaces-intro-copy,
   .activity-intro-copy,
   .backups-intro-copy,
   .settings-kv-row,
@@ -3697,6 +3800,7 @@ button {
 
   .backups-detail-main,
   .activity-detail-main,
+  .workspaces-status-main,
   .diagnostics-inspector-main {
     grid-template-columns: 1fr;
   }
@@ -3771,6 +3875,7 @@ button {
 
   .backup-list-row,
   .activity-list-row,
+  .workspaces-rule-row,
   .diagnostic-finding-row {
     grid-template-columns: 1fr;
   }

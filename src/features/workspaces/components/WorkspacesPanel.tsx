@@ -79,6 +79,13 @@ export function WorkspacesPanel({
     statusCard.scope !== "none"
       ? `${statusCard.scope}:${statusCard.target}:${statusCard.expectedContext}`
       : null;
+  const savedRuleCount = bindingsSummary.bindings.length;
+  const currentMatchLabel = hasWorkspaceMismatch
+    ? "Needs review"
+    : statusCard.status === "match"
+      ? "Ready"
+      : "No active match";
+  const statusToneClass = hasWorkspaceMismatch ? "pill-warn" : "pill-ok";
 
   useEffect(() => {
     setWorkspaceOverrideDismissed(false);
@@ -121,49 +128,56 @@ export function WorkspacesPanel({
 
   return (
     <SectionCard title="Project rules" kicker="Expected sets by folder or remote">
-      <SplitView
-        primary={
-          <div className="stack-list desktop-pane-column">
-          <article className="diagnostic-card">
-            <div className="desktop-pane-section-header">
-              <div>
-                <p className="card-kicker">Project rules</p>
-                <h3>{bindingsSummary.bindings.length ? `${bindingsSummary.bindings.length} saved rule${bindingsSummary.bindings.length === 1 ? "" : "s"}` : "No saved rules"}</h3>
-              </div>
-              <span className="pill pill-soft">
-                {bindingsSummary.bindings.length
-                  ? `${bindingsSummary.bindings.length} saved`
-                  : "No saved rules"}
-              </span>
-            </div>
+      <article className="diagnostic-card workspaces-intro-card">
+        <div className="workspaces-intro-copy">
+          <div>
+            <p className="card-kicker">Project rules</p>
+            <h3>
+              {savedRuleCount
+                ? `${savedRuleCount} saved rule${savedRuleCount === 1 ? "" : "s"}`
+                : "No saved rules"}
+            </h3>
             <p className="inline-note">
               Attach a saved set to the current folder, a path prefix, or a git remote pattern so project switching stays predictable.
             </p>
-            <div className="workspaces-intro-meta">
-              <div>
-                <span className="overview-current-set-cell-label">Current match</span>
-                <strong>{hasWorkspaceMismatch ? "Needs review" : "Ready"}</strong>
-              </div>
-              <div>
-                <span className="overview-current-set-cell-label">Guard mode</span>
-                <strong>{bindingsSummary.guardMode}</strong>
-              </div>
-              <div>
-                <span className="overview-current-set-cell-label">Expected set</span>
-                <strong>{expectedContextDisplay}</strong>
-              </div>
-            </div>
-          </article>
+          </div>
+          <span className={`pill ${statusToneClass}`}>{currentMatchLabel}</span>
+        </div>
+        <div className="workspaces-intro-grid">
+          <div>
+            <span className="overview-current-set-cell-label">Current match</span>
+            <strong>{currentMatchLabel}</strong>
+          </div>
+          <div>
+            <span className="overview-current-set-cell-label">Guard mode</span>
+            <strong>{bindingsSummary.guardMode}</strong>
+          </div>
+          <div>
+            <span className="overview-current-set-cell-label">Expected set</span>
+            <strong>{expectedContextDisplay}</strong>
+          </div>
+        </div>
+      </article>
+      <SplitView
+        className="workspaces-layout"
+        primaryClassName="workspaces-editor-pane"
+        secondaryClassName="workspaces-status-pane"
+        primary={
+          <div className="stack-list desktop-pane-column">
           <form className="stacked-form diagnostic-card workspaces-editor-card" onSubmit={submitBind}>
             <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Editor</p>
                 <h3>Save or remove a project rule</h3>
               </div>
-              <p className="inline-note">
-                Pick where the rule applies, then choose the set the app should expect in that project.
-              </p>
+              <span className="pill pill-soft">
+                {bindingOptions.length ? `${bindingOptions.length} set option${bindingOptions.length === 1 ? "" : "s"}` : "No sets available"}
+              </span>
             </div>
+            <p className="inline-note">
+              Pick where the rule applies, then choose the set the app should expect in that project.
+            </p>
+            <div className="workspaces-editor-grid">
             <label>
               Rule scope
               <select value={scope} onChange={(event) => setScope(event.target.value as BindScope)}>
@@ -189,6 +203,7 @@ export function WorkspacesPanel({
                 ))}
               </select>
             </label>
+            </div>
             <div className="button-row">
               <button className="primary-button" type="submit" disabled={mutationLock.isBusy || !canSaveBinding}>
                 Save rule
@@ -226,10 +241,11 @@ export function WorkspacesPanel({
                   <p className="card-kicker">Guard mode</p>
                   <h3>How strictly should mismatches be enforced?</h3>
                 </div>
-                <p className="inline-note">
-                  Use warnings for flexible workflows or strict mode when a mismatched account should block work immediately.
-                </p>
+                <span className="pill pill-soft">{bindingsSummary.guardMode}</span>
               </div>
+              <p className="inline-note">
+                Use warnings for flexible workflows or strict mode when a mismatched account should block work immediately.
+              </p>
               <div className="button-row">
                 <button
                   className="ghost-button"
@@ -255,8 +271,14 @@ export function WorkspacesPanel({
         secondary={
           <div className="stack-list desktop-pane-column">
           {hasWorkspaceMismatch && !workspaceOverrideDismissed ? (
-            <article className="diagnostic-card diagnostic-warn">
-              <h3>Project mismatch</h3>
+            <article className="diagnostic-card diagnostic-warn workspaces-mismatch-card">
+              <div className="desktop-pane-section-header">
+                <div>
+                  <p className="card-kicker">Attention</p>
+                  <h3>Project mismatch</h3>
+                </div>
+                <span className="pill pill-warn">Needs review</span>
+              </div>
               <p className="inline-note">
                 This project matches <strong>{expectedContextDisplay}</strong>, but the current
                 active set is <strong>{currentContextDisplay}</strong>.
@@ -284,55 +306,96 @@ export function WorkspacesPanel({
             </article>
           ) : null}
 
-          <div className="desktop-pane-section">
+          <article className="diagnostic-card workspaces-status-card">
             <div className="desktop-pane-section-header">
               <div>
                 <p className="card-kicker">Resolution</p>
                 <h3>Current project match</h3>
               </div>
-              <p className="inline-note">
-                Review what this folder matched before changing or removing any explicit rule.
-              </p>
+              <span className={`pill ${statusToneClass}`}>{statusCard.status}</span>
             </div>
-            <article className="diagnostic-card">
-              <h3>Resolved rule</h3>
-              <p className="diagnostic-status">{statusCard.status}</p>
-              <p className="inline-note">Current set: {currentContextDisplay}</p>
-              <p className="inline-note">Expected set: {expectedContextDisplay}</p>
-              <p className="inline-note">Rule type: {statusCard.scope}</p>
-              <p className="inline-note">Matched target: {statusCard.target}</p>
-            </article>
+            <div className="workspaces-status-main">
+              <div className="stack-list">
+                <div className="workspaces-status-grid">
+                  <div>
+                    <span className="overview-current-set-cell-label">Current set</span>
+                    <strong>{currentContextDisplay}</strong>
+                    <p className="inline-note">Current set: {currentContextDisplay}</p>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Expected set</span>
+                    <strong>{expectedContextDisplay}</strong>
+                    <p className="inline-note">Expected set: {expectedContextDisplay}</p>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Rule type</span>
+                    <strong>{statusCard.scope}</strong>
+                    <p className="inline-note">Rule type: {statusCard.scope}</p>
+                  </div>
+                </div>
+                <div className="workspaces-status-grid">
+                  <div>
+                    <span className="overview-current-set-cell-label">Matched target</span>
+                    <strong>{statusCard.target}</strong>
+                    <p className="inline-note">Matched target: {statusCard.target}</p>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Guard mode</span>
+                    <strong>{bindingsSummary.guardMode}</strong>
+                    <p className="inline-note">Guard mode: {bindingsSummary.guardMode}</p>
+                  </div>
+                  <div>
+                    <span className="overview-current-set-cell-label">Default set</span>
+                    <strong>{contextDisplayLabel(settings, bindingsSummary.defaultContext)}</strong>
+                    <p className="inline-note">
+                      Default set: {contextDisplayLabel(settings, bindingsSummary.defaultContext)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <aside className="workspaces-status-rail">
+                <span className="overview-current-set-cell-label">Rules</span>
+                <p className="inline-note">
+                  Review what this folder matched before changing or removing any explicit rule.
+                </p>
+                <div className="workspaces-rule-count">
+                  <strong>{savedRuleCount}</strong>
+                  <span>saved</span>
+                </div>
+              </aside>
+            </div>
+          </article>
 
-            <article className="diagnostic-card">
-              <h3>Protection</h3>
-              <p className="inline-note">Guard mode: {bindingsSummary.guardMode}</p>
-              <p className="inline-note">
-                Default set: {contextDisplayLabel(settings, bindingsSummary.defaultContext)}
-              </p>
-            </article>
-          </div>
-
-          <div className="stack-list">
-            <div className="desktop-pane-section-header">
+          <article className="diagnostic-card workspaces-rules-card">
+            <div className="desktop-pane-section-header workspaces-rules-header">
               <div>
                 <p className="card-kicker">Bindings</p>
                 <h3>Saved matching rules</h3>
+                <p className="inline-note">
+                  Remove stale path and remote rules here when a project moves or gets renamed.
+                </p>
               </div>
-              <p className="inline-note">
-                Remove stale path and remote rules here when a project moves or gets renamed.
-              </p>
+              <span className="pill pill-soft">
+                {savedRuleCount ? `${savedRuleCount} saved` : "No saved rules"}
+              </span>
             </div>
-            {bindingsSummary.bindings.map((binding) => {
+            <div className="stack-list workspaces-rules-list">
+              {bindingsSummary.bindings.map((binding) => {
               const isMatchedBinding =
                 matchedBindingKey === `${binding.scope}:${binding.target}:${binding.context}`;
 
               return (
                 <article
                   key={`${binding.scope}-${binding.target}-${binding.context}`}
-                  className="list-row"
+                  className={`list-row workspaces-rule-row ${isMatchedBinding ? "workspaces-rule-row-active" : ""}`}
                 >
-                  <div>
-                    <strong>{contextDisplayLabel(settings, binding.context)}</strong>
+                  <div className="workspaces-rule-row-main">
+                    <div className="workspaces-rule-row-header">
+                      <strong>{contextDisplayLabel(settings, binding.context)}</strong>
+                      <span className={`pill ${isMatchedBinding ? "pill-ok" : "pill-soft"}`}>
+                        {isMatchedBinding ? "Matched" : binding.scope}
+                      </span>
+                    </div>
                     <p>
                       {binding.scope} · {binding.target}
                     </p>
@@ -352,14 +415,15 @@ export function WorkspacesPanel({
                   </button>
                 </article>
               );
-            })}
-            {!bindingsSummary.bindings.length ? (
-              <p className="inline-note">
-                No explicit project rules are configured yet. Save one from the form to attach a
-                set to a default scope, path prefix, or git remote pattern.
-              </p>
-            ) : null}
-          </div>
+              })}
+              {!bindingsSummary.bindings.length ? (
+                <p className="inline-note">
+                  No explicit project rules are configured yet. Save one from the form to attach a
+                  set to a default scope, path prefix, or git remote pattern.
+                </p>
+              ) : null}
+            </div>
+          </article>
           {workspaceResult ? (
             <p className={`inline-note ${workspaceResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
               Last project-rule result: {workspaceResult.message}
