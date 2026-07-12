@@ -44,12 +44,12 @@ fn variants() -> Vec<ShellHookVariant> {
         ShellHookVariant {
             shell: "fish".to_owned(),
             title: "Fish".to_owned(),
-            config_path: "~/.config/fish/conf.d/aisw.fish".to_owned(),
+            config_path: "~/.config/fish/conf.d/ai-switch.fish".to_owned(),
             alternate_config_path: Some("~/.config/fish/config.fish".to_owned()),
             install_command:
-                "mkdir -p ~/.config/fish/conf.d && aisw shell-hook fish > ~/.config/fish/conf.d/aisw.fish"
+                "mkdir -p ~/.config/fish/conf.d && aisw shell-hook fish > ~/.config/fish/conf.d/ai-switch.fish"
                     .to_owned(),
-            reload_command: "source ~/.config/fish/conf.d/aisw.fish".to_owned(),
+            reload_command: "source ~/.config/fish/conf.d/ai-switch.fish".to_owned(),
             verify_command: "echo \"$AISW_SHELL_HOOK\"".to_owned(),
             verify_expected: "1".to_owned(),
         },
