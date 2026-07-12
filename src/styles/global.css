@@ -522,16 +522,19 @@ button {
   display: grid;
   place-items: start center;
   padding: 64px 20px 20px;
+  overflow: auto;
   background: color-mix(in srgb, CanvasText 12%, transparent);
   backdrop-filter: blur(12px);
 }
 
 .quick-switch-palette {
   width: min(620px, 100%);
-  max-height: min(72vh, 680px);
+  max-height: min(calc(100dvh - 84px), 680px);
+  min-height: 0;
   display: grid;
   gap: 10px;
   padding: 14px;
+  overflow: auto;
   border: 1px solid var(--separator);
   border-radius: 14px;
   background: color-mix(in srgb, Canvas 95%, transparent);
@@ -545,6 +548,16 @@ button {
 
 .set-sheet {
   width: min(520px, 100%);
+}
+
+@media (max-height: 820px) {
+  .quick-switch-overlay {
+    padding-top: 20px;
+  }
+
+  .quick-switch-palette {
+    max-height: calc(100dvh - 40px);
+  }
 }
 
 .quick-switch-header {
