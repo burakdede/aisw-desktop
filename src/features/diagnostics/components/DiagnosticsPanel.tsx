@@ -250,7 +250,7 @@ export function DiagnosticsPanel({
           <div>
             <p className="card-kicker">Health</p>
             <h3>{totalIssues ? `${totalIssues} issue${totalIssues === 1 ? "" : "s"} found` : "Everything looks good"}</h3>
-            <p className="inline-note">Diagnostics explains profile drift, installation gaps, and safe recovery in one calm workspace.</p>
+            <p className="inline-note">Diagnostics explains profile drift, installation gaps, and safe recovery in one calm desktop view.</p>
           </div>
           <span className={`pill ${totalIssues ? "pill-warn" : "pill-ok"}`}>
             {repairActions.length ? `${repairActions.length} repairs queued` : "Recovery ready"}

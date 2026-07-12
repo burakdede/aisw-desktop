@@ -189,8 +189,8 @@ export function WorkspacesPanel({
                 </div>
                 <div>
                   <span className="overview-current-set-cell-label">Guard mode</span>
-                  <strong>{bindingsSummary.guardMode}</strong>
-                  <p className="inline-note">Guard mode: {bindingsSummary.guardMode}</p>
+                  <strong>{formatGuardModeLabel(bindingsSummary.guardMode)}</strong>
+                  <p className="inline-note">Guard mode: {formatGuardModeLabel(bindingsSummary.guardMode)}</p>
                 </div>
               </div>
               <div className="workspaces-status-main">
@@ -417,7 +417,7 @@ export function WorkspacesPanel({
                 </div>
                 <div>
                   <span className="overview-current-set-cell-label">Guard mode</span>
-                  <strong>{bindingsSummary.guardMode}</strong>
+                  <strong>{formatGuardModeLabel(bindingsSummary.guardMode)}</strong>
                 </div>
               </div>
               <p className="inline-note">
@@ -441,10 +441,10 @@ export function WorkspacesPanel({
                   <p className="card-kicker">Guard mode</p>
                   <h3>How strictly should mismatches be enforced?</h3>
                 </div>
-                <span className="pill pill-soft">{bindingsSummary.guardMode}</span>
+                <span className="pill pill-soft">{formatGuardModeLabel(bindingsSummary.guardMode)}</span>
               </div>
               <p className="inline-note">
-                Use warnings for flexible workflows or strict mode when a mismatched account should block work immediately.
+                Show a warning when flexibility matters, or block mismatches when the wrong set should stop work immediately.
               </p>
               <div className="button-row">
                 <button
@@ -453,7 +453,7 @@ export function WorkspacesPanel({
                   disabled={mutationLock.isBusy}
                   onClick={() => workspaceGuardMutation.mutate("warn")}
                 >
-                  Warn on mismatch
+                  Warnings only
                 </button>
                 <button
                   className="ghost-button"
@@ -461,7 +461,7 @@ export function WorkspacesPanel({
                   disabled={mutationLock.isBusy}
                   onClick={() => workspaceGuardMutation.mutate("strict")}
                 >
-                  Block on mismatch
+                  Block mismatches
                 </button>
               </div>
             </article>
@@ -593,4 +593,15 @@ function formatRuleTarget(scope: string, target: string) {
     return "No target";
   }
   return target;
+}
+
+function formatGuardModeLabel(mode: string) {
+  switch (mode) {
+    case "warn":
+      return "Warnings only";
+    case "strict":
+      return "Block mismatches";
+    default:
+      return mode.replace(/_/g, " ");
+  }
 }

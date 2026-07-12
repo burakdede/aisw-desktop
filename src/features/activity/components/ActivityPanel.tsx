@@ -173,9 +173,7 @@ export function ActivityPanel({
                 </div>
                 <span className="pill pill-soft">{latestEntry ? formatFullTimestamp(latestEntry.at) : "Idle"}</span>
               </div>
-              <p className="inline-note">
-                Latest first. Inspect one event at a time without leaving the current workspace.
-              </p>
+              <p className="inline-note">Latest first. Inspect one event at a time without leaving this view.</p>
               <div className="activity-list-columns" aria-hidden="true">
                 <span>Time</span>
                 <span>Event</span>

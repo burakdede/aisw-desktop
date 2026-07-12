@@ -4097,7 +4097,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByText(/Current set:\s*work/)).toBeInTheDocument();
       expect(screen.getByText(/Expected set:\s*Client Acme/)).toBeInTheDocument();
-      expect(screen.getByText(/Guard mode:\s*warn/)).toBeInTheDocument();
+      expect(screen.getByText(/Guard mode:\s*Warnings only/)).toBeInTheDocument();
       expect(screen.getByText(/Default set:\s*work/)).toBeInTheDocument();
       expect(screen.getAllByText("Folder").length).toBeGreaterThan(0);
       expect(screen.getByText("Path prefix: /code/acme")).toBeInTheDocument();
@@ -6623,7 +6623,7 @@ describe("App", () => {
     await openProjectRulesSection();
     await waitFor(() => {
       expect(screen.getByText("Project mismatch")).toBeInTheDocument();
-      expect(screen.getByText("Guard mode: warn")).toBeInTheDocument();
+      expect(screen.getByText("Guard mode: Warnings only")).toBeInTheDocument();
     });
 
     const handlers = (window as typeof window & {
@@ -6643,7 +6643,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.queryByText("Project mismatch")).not.toBeInTheDocument();
-      expect(screen.getByText("Guard mode: strict")).toBeInTheDocument();
+      expect(screen.getByText("Guard mode: Block mismatches")).toBeInTheDocument();
     });
   });
 
