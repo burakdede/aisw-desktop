@@ -1,45 +1,46 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <defs>
-    <linearGradient id="shell" x1="124" x2="900" y1="100" y2="924" gradientUnits="userSpaceOnUse">
+    <linearGradient id="shell" x1="118" x2="904" y1="104" y2="920" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#F8FBFF"/>
-      <stop offset="0.52" stop-color="#EEF4FB"/>
-      <stop offset="1" stop-color="#D9E4F0"/>
+      <stop offset="0.58" stop-color="#EDF3FA"/>
+      <stop offset="1" stop-color="#D6E0EC"/>
     </linearGradient>
-    <linearGradient id="plate" x1="262" x2="754" y1="228" y2="812" gradientUnits="userSpaceOnUse">
+    <linearGradient id="core" x1="178" x2="846" y1="158" y2="866" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#FFFFFF"/>
-      <stop offset="1" stop-color="#F2F6FB"/>
+      <stop offset="1" stop-color="#F3F7FB"/>
     </linearGradient>
-    <linearGradient id="track" x1="338" x2="692" y1="344" y2="688" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FDFEFF"/>
-      <stop offset="1" stop-color="#E7EEF7"/>
+    <linearGradient id="plate" x1="272" x2="754" y1="226" y2="806" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F1F5FA"/>
     </linearGradient>
-    <linearGradient id="accent" x1="392" x2="644" y1="334" y2="700" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#56C7FF"/>
-      <stop offset="0.48" stop-color="#0A84FF"/>
-      <stop offset="1" stop-color="#0058C7"/>
+    <linearGradient id="track" x1="322" x2="706" y1="332" y2="696" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FBFDFF"/>
+      <stop offset="1" stop-color="#E8EEF5"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="432" x2="612" y1="314" y2="706" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#64CCFF"/>
+      <stop offset="0.44" stop-color="#0A84FF"/>
+      <stop offset="1" stop-color="#0A5AC2"/>
     </linearGradient>
   </defs>
 
   <rect x="88" y="88" width="848" height="848" rx="248" fill="url(#shell)"/>
-  <rect x="120" y="120" width="784" height="784" rx="228" fill="#FFFFFF" fill-opacity="0.78"/>
-  <rect x="224" y="214" width="576" height="596" rx="180" fill="url(#plate)" stroke="#C9D5E2" stroke-width="14"/>
-  <path d="M296 274H728" fill="none" stroke="#FFFFFF" stroke-opacity="0.74" stroke-width="20" stroke-linecap="round"/>
+  <rect x="124" y="124" width="776" height="776" rx="224" fill="#FFFFFF" fill-opacity="0.82"/>
+  <rect x="220" y="210" width="584" height="604" rx="186" fill="url(#plate)" stroke="#C7D2DE" stroke-width="14"/>
+  <rect x="154" y="154" width="716" height="716" rx="208" fill="url(#core)" fill-opacity="0.56"/>
+  <path d="M294 270H730" fill="none" stroke="#FFFFFF" stroke-opacity="0.72" stroke-width="18" stroke-linecap="round"/>
 
-  <rect x="314" y="330" width="396" height="120" rx="60" fill="url(#track)" stroke="#C7D3E0" stroke-width="14"/>
-  <rect x="314" y="574" width="396" height="120" rx="60" fill="url(#track)" stroke="#C7D3E0" stroke-width="14"/>
-  <rect x="314" y="330" width="144" height="120" rx="60" fill="url(#accent)" stroke="#0B6FD9" stroke-width="14"/>
-  <rect x="566" y="574" width="144" height="120" rx="60" fill="url(#accent)" stroke="#0B6FD9" stroke-width="14"/>
+  <rect x="300" y="326" width="424" height="122" rx="61" fill="url(#track)" stroke="#C7D2DE" stroke-width="14"/>
+  <rect x="300" y="574" width="424" height="122" rx="61" fill="url(#track)" stroke="#C7D2DE" stroke-width="14"/>
 
-  <circle cx="386" cy="390" r="52" fill="url(#accent)" stroke="#0B6FD9" stroke-width="14"/>
-  <circle cx="638" cy="634" r="52" fill="url(#accent)" stroke="#0B6FD9" stroke-width="14"/>
-  <circle cx="386" cy="390" r="18" fill="#FFFFFF" fill-opacity="0.95"/>
-  <circle cx="638" cy="634" r="18" fill="#FFFFFF" fill-opacity="0.95"/>
+  <circle cx="624" cy="387" r="86" fill="url(#accent)" stroke="#0B6FD9" stroke-width="14"/>
+  <circle cx="400" cy="635" r="86" fill="url(#accent)" stroke="#0B6FD9" stroke-width="14"/>
+  <circle cx="624" cy="387" r="28" fill="#FFFFFF" fill-opacity="0.96"/>
+  <circle cx="400" cy="635" r="28" fill="#FFFFFF" fill-opacity="0.96"/>
 
-  <path d="M386 390H646" fill="none" stroke="#6E8098" stroke-width="28" stroke-linecap="round"/>
-  <path d="M386 390H646" fill="none" stroke="#0A84FF" stroke-width="16" stroke-linecap="round"/>
-  <path d="M590 338L646 390L590 442" fill="none" stroke="#0A84FF" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
-
-  <path d="M638 634H378" fill="none" stroke="#6E8098" stroke-width="28" stroke-linecap="round"/>
-  <path d="M638 634H378" fill="none" stroke="#0A84FF" stroke-width="16" stroke-linecap="round"/>
-  <path d="M434 582L378 634L434 686" fill="none" stroke="#0A84FF" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M486 387H560" fill="none" stroke="#72839A" stroke-width="24" stroke-linecap="round"/>
+  <path d="M464 635H538" fill="none" stroke="#72839A" stroke-width="24" stroke-linecap="round"/>
+  <path d="M512 446V576" fill="none" stroke="#0A84FF" stroke-width="18" stroke-linecap="round"/>
+  <path d="M512 446L566 500" fill="none" stroke="#0A84FF" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M512 576L458 522" fill="none" stroke="#0A84FF" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

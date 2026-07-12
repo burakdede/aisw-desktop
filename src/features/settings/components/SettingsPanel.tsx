@@ -311,7 +311,7 @@ export function SettingsPanel({
                     <h3>Launch behavior</h3>
                   </div>
                   <p className="inline-note">
-                    Login at startup stays OS-managed in this development build. The menu bar extra can be shown or hidden directly so the desktop app still behaves like a predictable Mac utility.
+                    AI Switch follows native macOS behavior here. The menu bar extra can be shown or hidden now, while login items continue to be managed by the operating system.
                   </p>
                 </div>
                 <div className="settings-toggle-list" aria-label="Launch behavior controls">
@@ -319,7 +319,7 @@ export function SettingsPanel({
                     <span className="settings-toggle-copy">
                       <strong>Launch at login</strong>
                       <span className="inline-note">
-                        Read-only in this build. Signed releases should mirror the macOS login item instead of using a separate in-app model.
+                        Managed by macOS for now so AI Switch stays aligned with the system login-item model instead of inventing a separate in-app setting.
                       </span>
                     </span>
                     <input type="checkbox" aria-label="Launch at login" disabled />
@@ -340,7 +340,7 @@ export function SettingsPanel({
                   </label>
                 </div>
                 <p className="inline-note">
-                  AI Switch should follow native macOS login-item and menu-bar behavior here rather than inventing app-only toggles.
+                  This section stays intentionally close to native macOS login-item and menu-bar behavior.
                 </p>
               </article>
               <article className="diagnostic-card settings-pane-section">
@@ -989,7 +989,7 @@ export function SettingsPanel({
                     <p className="card-kicker">Current setup</p>
                     <h3>Local credential model</h3>
                   </div>
-                  <span className="pill pill-ok">Local only</span>
+                  <span className="pill pill-ok">On this Mac</span>
                 </div>
                 <div className="settings-summary-grid">
                   <div>

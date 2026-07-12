@@ -7754,7 +7754,7 @@ describe("App", () => {
     expect(screen.getByLabelText("Show menu bar icon")).toBeChecked();
     expect(
       screen.getByText(
-        "Read-only in this build. Signed releases should mirror the macOS login item instead of using a separate in-app model.",
+        "Managed by macOS for now so AI Switch stays aligned with the system login-item model instead of inventing a separate in-app setting.",
       ),
     ).toBeInTheDocument();
 

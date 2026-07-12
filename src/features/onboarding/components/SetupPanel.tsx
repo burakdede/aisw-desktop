@@ -267,7 +267,7 @@ export function SetupPanel({
                   <div className="onboarding-overview-meta">
                     <div>
                       <span className="overview-current-set-cell-label">Privacy</span>
-                      <strong>Local only</strong>
+                      <strong>On this Mac</strong>
                       <p className="inline-note">Credentials stay on this Mac with no telemetry or traffic proxy.</p>
                     </div>
                     <div>

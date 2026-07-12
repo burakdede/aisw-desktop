@@ -113,7 +113,7 @@ export function ActivityPanel({ externalClearSignal = 0 }: { externalClearSignal
                       : "No events yet"}
                   </h3>
                 </div>
-                <span className="pill pill-soft">Local only</span>
+                <span className="pill pill-soft">On this Mac</span>
               </div>
               <p className="inline-note">
                 Latest first. Review local switch, verification, setup, and recovery events in one
