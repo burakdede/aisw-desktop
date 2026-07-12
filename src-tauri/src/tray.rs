@@ -446,7 +446,7 @@ fn tray_menu_model(
         footer_items: vec![
             TrayEntry {
                 id: OPEN_ID.to_owned(),
-                label: "Open AI Switch Desktop".to_owned(),
+                label: "Open AI Switch".to_owned(),
                 enabled: true,
             },
             TrayEntry {
@@ -456,7 +456,7 @@ fn tray_menu_model(
             },
             TrayEntry {
                 id: QUIT_ID.to_owned(),
-                label: "Quit AI Switch Desktop".to_owned(),
+                label: "Quit AI Switch".to_owned(),
                 enabled: true,
             },
         ],
@@ -1537,7 +1537,7 @@ mod tests {
             vec![
                 TrayEntry {
                     id: "open".to_owned(),
-                    label: "Open AI Switch Desktop".to_owned(),
+                    label: "Open AI Switch".to_owned(),
                     enabled: true,
                 },
                 TrayEntry {
@@ -1547,7 +1547,7 @@ mod tests {
                 },
                 TrayEntry {
                     id: "quit".to_owned(),
-                    label: "Quit AI Switch Desktop".to_owned(),
+                    label: "Quit AI Switch".to_owned(),
                     enabled: true,
                 },
             ]

@@ -126,7 +126,7 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         .iter()
         .map(|item| item as &dyn IsMenuItem<R>)
         .collect::<Vec<_>>();
-    let app_menu = Submenu::with_items(app, "AI Switch Desktop", true, &app_refs)?;
+    let app_menu = Submenu::with_items(app, "AI Switch", true, &app_refs)?;
 
     let file_items: Vec<MenuItemKind<R>> = vec![
         add_profile.kind(),
