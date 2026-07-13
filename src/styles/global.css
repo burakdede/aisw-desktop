@@ -134,6 +134,7 @@ body {
   overflow: hidden;
   font-family: var(--font-ui);
   background: var(--body-backdrop), var(--window-bg);
+  background-color: var(--window-bg);
   color: var(--text-primary);
 }
 
@@ -196,12 +197,14 @@ button {
   height: 100dvh;
   padding: 8px;
   overflow: hidden;
+  background-color: var(--window-bg);
   background: var(--window-shell-backdrop), var(--window-bg);
 }
 
 .app-shell-setup-window {
   display: grid;
   padding: 18px;
+  background-color: var(--window-bg);
   background: var(--setup-shell-backdrop);
 }
 
@@ -356,6 +359,7 @@ button {
   overflow: hidden;
   border: 1px solid var(--chrome-border);
   border-radius: 18px;
+  background-color: var(--pane-bg);
   background: var(--pane-bg);
   box-shadow: var(--shadow-window);
 }
