@@ -325,9 +325,6 @@ test("opens the profiles screen from overview details actions", async ({ page })
   );
   await expect(profilesInspector.getByText("Authentication").nth(0)).toBeVisible();
   await expect(profilesInspector.getByText("API Key").first()).toBeVisible();
-  await expect(
-    profilesInspector.getByText("No additional token or desktop engine warnings are currently reported for this tool."),
-  ).toBeVisible();
 });
 
 test("clears route-opened profile details when switching tools manually", async ({ page }) => {
@@ -1881,7 +1878,7 @@ test("warns before renaming a profile to a duplicate name", async ({ page }) => 
   await page.getByRole("button", { name: "Profiles" }).click();
 
   await page.getByRole("button", { name: "Inspect Claude Code Personal" }).click();
-  await page.getByRole("button", { name: "Open profile actions" }).click();
+  await page.getByRole("button", { name: "More profile actions" }).click();
   await page.getByLabel("Profile actions").getByRole("menuitem", { name: "Rename…" }).click();
   const dialog = page.getByRole("dialog", { name: "Edit Profile" });
   await dialog.getByLabel("rename personal").fill("work");
@@ -1914,13 +1911,13 @@ test("renames, relabels, and removes profiles from the profiles screen", async (
   await page.getByRole("button", { name: "Profiles" }).click();
 
   await page.getByRole("option", { name: "Inspect Claude Code Work" }).click();
-  await page.getByRole("button", { name: "Open profile actions" }).click();
+  await page.getByRole("button", { name: "More profile actions" }).click();
   await page.getByLabel("Profile actions").getByRole("menuitem", { name: "Rename…" }).click();
   const renameDialog = page.getByRole("dialog", { name: "Edit Profile" });
   await renameDialog.getByLabel("rename work").fill("client-acme");
   await renameDialog.getByRole("button", { name: "Save" }).click();
 
-  await page.getByRole("button", { name: "Open profile actions" }).click();
+  await page.getByRole("button", { name: "More profile actions" }).click();
   await page.getByLabel("Profile actions").getByRole("menuitem", { name: "Change Label…" }).click();
   const labelDialog = page.getByRole("dialog", { name: "Edit Profile" });
   await expect(labelDialog.getByLabel("label client-acme")).toBeVisible();
@@ -1928,7 +1925,7 @@ test("renames, relabels, and removes profiles from the profiles screen", async (
   await labelDialog.getByRole("button", { name: "Save" }).click();
   await expect(page.getByRole("heading", { name: "Client Acme" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Open profile actions" }).click();
+  await page.getByRole("button", { name: "More profile actions" }).click();
   await page.getByLabel("Profile actions").getByRole("menuitem", { name: "Remove…" }).click();
   await page.getByRole("button", { name: "Remove Profile" }).click();
   await expect(page.getByText("client-acme")).toHaveCount(0);

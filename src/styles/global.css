@@ -2415,12 +2415,12 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .profiles-inspector-header {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .profiles-inspector-title-block {
   display: grid;
-  gap: 4px;
+  gap: 3px;
 }
 
 .profiles-inspector-heading {
@@ -2443,8 +2443,8 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .profiles-inspector-title-block h3 {
   margin: 0;
-  font-size: var(--type-panel-title);
-  line-height: 1.3;
+  font-size: var(--type-body);
+  line-height: 1.25;
 }
 
 .profiles-inspector-status {
@@ -2470,6 +2470,19 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .profiles-inspector-action-row {
   justify-content: flex-start;
+}
+
+.profiles-passive-badge {
+  min-height: var(--control-height);
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--control-padding-inline);
+  border-radius: var(--control-radius);
+  border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
+  background: color-mix(in srgb, CanvasText 3%, Canvas 97%);
+  color: var(--text-secondary);
+  font-size: var(--type-footnote);
+  font-weight: 560;
 }
 
 .profiles-inspector-disclosure {

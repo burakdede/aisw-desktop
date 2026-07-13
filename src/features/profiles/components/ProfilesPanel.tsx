@@ -225,6 +225,16 @@ export function ProfilesPanel({
       selectedProfileDisplay &&
       selectedProfileDisplay !== titleCase(selectedProfileEntry.name),
   );
+  const selectedIsActive = Boolean(
+    selectedProfileEntry && snapshot.profiles[tool]?.active === selectedProfileEntry.name,
+  );
+  const selectedProfileState = selectedProfileEntry
+    ? profileStatusSummary(snapshot, tool, selectedProfileEntry.name, toolStatus)
+    : "Stored";
+  const selectedProfileCanActivate = Boolean(selectedProfileEntry && !selectedIsActive);
+  const selectedProfileNeedsReapply = Boolean(
+    selectedProfileEntry && selectedIsActive && toolStatus?.active_profile_applied === false,
+  );
   const editSheetProfile = pendingEdit
     ? profiles.find((entry) => entry.name === pendingEdit.name) ?? null
     : null;
@@ -294,7 +304,7 @@ export function ProfilesPanel({
 
   useEffect(() => {
     setExpandedDetails(initialExpandedProfile ?? null);
-    setOpenStorageDetails(initialExpandedProfile ?? null);
+    setOpenStorageDetails(null);
   }, [initialExpandedProfile, initialTool]);
 
   useEffect(() => {
@@ -787,54 +797,46 @@ export function ProfilesPanel({
                       <span>{selectedProfileDisplay}</span>
                     </h3>
                     <p className="inline-note">{toolDisplayName(tool)}</p>
-                    <div className={`profiles-inspector-status profiles-inspector-status-${profileStatusTone(
-                        snapshot.profiles[tool]?.active === selectedProfileEntry.name,
-                        profileStatusSummary(snapshot, tool, selectedProfileEntry.name, toolStatus),
-                    )}`}>
-                      <span aria-hidden="true">{profileStatusSymbol(
-                        snapshot.profiles[tool]?.active === selectedProfileEntry.name,
-                        profileStatusSummary(snapshot, tool, selectedProfileEntry.name, toolStatus),
-                      )}</span>
-                      <span>{profileStatusLabel(
-                        snapshot.profiles[tool]?.active === selectedProfileEntry.name,
-                        profileStatusSummary(snapshot, tool, selectedProfileEntry.name, toolStatus),
-                      )}</span>
+                    {selectedHasCustomLabel ? (
+                      <p className="inline-note">Saved as {selectedProfileEntry.name}</p>
+                    ) : null}
+                    <div
+                      className={`profiles-inspector-status profiles-inspector-status-${profileStatusTone(
+                        selectedIsActive,
+                        selectedProfileState,
+                      )}`}
+                    >
+                      <span aria-hidden="true">{profileStatusSymbol(selectedIsActive, selectedProfileState)}</span>
+                      <span>{profileStatusLabel(selectedIsActive, selectedProfileState)}</span>
                     </div>
                   </div>
                   <div className="button-row profiles-inspector-action-row">
-                    <button
-                      className={
-                        snapshot.profiles[tool]?.active === selectedProfileEntry.name &&
-                        toolStatus?.active_profile_applied !== false
-                          ? "ghost-button"
-                          : "primary-button"
-                      }
-                      type="button"
-                      disabled={
-                        mutationLock.isBusy ||
-                        (snapshot.profiles[tool]?.active === selectedProfileEntry.name &&
-                          toolStatus?.active_profile_applied !== false)
-                      }
-                      onClick={() =>
-                        useProfileMutation.mutate({
-                          tool,
-                          profile: selectedProfileEntry.name,
-                          stateMode: availableStateModes.length ? stateMode : null,
-                          label: selectedProfileDisplay ?? selectedProfileEntry.name,
-                        })
-                      }
-                    >
-                      {snapshot.profiles[tool]?.active === selectedProfileEntry.name
-                        ? toolStatus?.active_profile_applied === false
+                    {selectedProfileCanActivate || selectedProfileNeedsReapply ? (
+                      <button
+                        className="primary-button"
+                        type="button"
+                        disabled={mutationLock.isBusy}
+                        onClick={() =>
+                          useProfileMutation.mutate({
+                            tool,
+                            profile: selectedProfileEntry.name,
+                            stateMode: availableStateModes.length ? stateMode : null,
+                            label: selectedProfileDisplay ?? selectedProfileEntry.name,
+                          })
+                        }
+                      >
+                        {selectedProfileNeedsReapply
                           ? `Reapply ${selectedProfileDisplay}`
-                          : "Active"
-                        : "Activate Profile"}
-                    </button>
+                          : "Activate Profile"}
+                      </button>
+                    ) : (
+                      <span className="profiles-passive-badge">Active</span>
+                    )}
                     <div className="profile-row-actions" data-profile-row-actions>
                       <button
                         className="ghost-button profile-row-actions-trigger"
                         type="button"
-                        aria-label="Open profile actions"
+                        aria-label="More profile actions"
                         aria-expanded={
                           openRowActions?.tool === tool &&
                           openRowActions?.name === selectedProfileEntry.name
@@ -899,9 +901,10 @@ export function ProfilesPanel({
                 <KeyValueGrid
                   variant="plain"
                   rows={[
-                    { label: "Profile", value: selectedProfileEntry.name },
-                    { label: "Label", value: selectedProfileDisplay ?? titleCase(selectedProfileEntry.name) },
-                    { label: "Live match", value: profileLiveMatchValue(snapshot, tool, selectedProfileEntry.name, toolStatus) },
+                    {
+                      label: "Live match",
+                      value: profileLiveMatchValue(snapshot, tool, selectedProfileEntry.name, toolStatus),
+                    },
                     { label: "Authentication", value: authDisplayLabel(selectedProfileEntry.auth) },
                     {
                       label: "Credential storage",
@@ -912,10 +915,7 @@ export function ProfilesPanel({
                     },
                     {
                       label: "State mode",
-                      value:
-                        snapshot.profiles[tool]?.active === selectedProfileEntry.name
-                          ? stateModeDisplay(toolStatus?.state_mode)
-                          : "Available after activation",
+                      value: selectedIsActive ? stateModeDisplay(toolStatus?.state_mode) : "Available after activation",
                     },
                     {
                       label: "Added",
@@ -961,7 +961,7 @@ export function ProfilesPanel({
                 </div>
                 {openStorageDetails === selectedProfileEntry.name ? (
                   <div className="profiles-inspector-details">
-                    {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? (
+                    {selectedIsActive ? (
                       <>
                         <p className="inline-note">
                           Credentials present: {booleanLabel(toolStatus?.credentials_present)}
@@ -983,11 +983,6 @@ export function ProfilesPanel({
                               </p>
                             ))}
                           </div>
-                        ) : null}
-                        {!toolStatus?.token_warning && !toolStatus?.warnings.length ? (
-                          <p className="inline-note">
-                            No additional token or desktop engine warnings are currently reported for this tool.
-                          </p>
                         ) : null}
                       </>
                     ) : (

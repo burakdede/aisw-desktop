@@ -198,7 +198,7 @@ function selectOverviewTool(tool: string) {
 
 function selectProfileInventory(tool: string, label: string) {
   const toolLabel = tool === "Claude" ? "Claude Code" : tool === "Codex" ? "Codex CLI" : tool;
-  fireEvent.click(screen.getByRole("button", { name: `Inspect ${toolLabel} ${label}` }));
+  fireEvent.click(screen.getByRole("option", { name: `Inspect ${toolLabel} ${label}` }));
 }
 
 function selectProfilesFilter(label: string) {
@@ -206,7 +206,7 @@ function selectProfilesFilter(label: string) {
 }
 
 function openSelectedProfileMenu() {
-  fireEvent.click(screen.getByRole("button", { name: "Open profile actions" }));
+  fireEvent.click(screen.getByRole("button", { name: "More profile actions" }));
 }
 
 function openProfileRowMenu(tool: string, label: string) {
@@ -1011,7 +1011,6 @@ describe("App", () => {
       expect(
         within(screen.getByLabelText("Profile filters")).getByRole("button", { name: "Codex" }),
       ).toHaveAttribute("aria-pressed", "true");
-      expect(screen.getByText("No additional token or desktop engine warnings are currently reported for this tool.")).toBeInTheDocument();
     });
   });
 
@@ -3734,8 +3733,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Office" })).toBeInTheDocument();
-      expect(screen.getByText("Profile")).toBeInTheDocument();
-      expect(screen.getByText("Label")).toBeInTheDocument();
+      expect(screen.getByText("Saved as work")).toBeInTheDocument();
       expect(screen.getAllByText("work").length).toBeGreaterThan(0);
     });
   });
@@ -3857,7 +3855,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Profiles"));
     selectProfilesFilter("Codex");
     await waitFor(() => expect(screen.getByRole("heading", { name: "Work" })).toBeInTheDocument());
-    fireEvent.click(screen.getByRole("button", { name: "Inspect Codex CLI Personal" }));
+    selectProfileInventory("Codex", "Personal");
     fireEvent.click(screen.getByRole("button", { name: "Shared" }));
     fireEvent.click(screen.getByRole("button", { name: "Activate Profile" }));
 
