@@ -5005,13 +5005,13 @@ describe("App", () => {
         screen.getByText((content) => content.includes("repair can be applied safely")),
       ).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByRole("button", { name: "Review Repair Plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Review Safe Fixes" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("dialog", { name: "Apply Safe Repairs" })).toBeInTheDocument();
+      expect(screen.getByRole("dialog", { name: "Review Safe Fixes" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Apply Safe Repairs" }));
+    fireEvent.click(screen.getByRole("button", { name: "Apply Safe Fixes" }));
 
     await waitFor(() => {
       expect(screen.getByText("Applied 1 safe fix.")).toBeInTheDocument();
@@ -5030,7 +5030,7 @@ describe("App", () => {
           "All configured tools match their active AISW profiles and local storage checks passed.",
         ).length,
       ).toBeGreaterThan(0);
-      expect(screen.getByRole("button", { name: "Review Repair Plan" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Review Safe Fixes" })).toBeDisabled();
     });
   });
 
@@ -5356,7 +5356,8 @@ describe("App", () => {
     });
 
     selectDiagnosticFinding("claude live mismatch");
-    fireEvent.click(screen.getByRole("button", { name: "Import Current…" }));
+    fireEvent.click(screen.getByRole("button", { name: "More finding actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Import Current…" }));
     await waitFor(() => {
       expect(screen.getByLabelText("Tool")).toHaveValue("claude");
       expect(screen.getByLabelText("Import mode")).toHaveValue("from_live");
@@ -6657,7 +6658,7 @@ describe("App", () => {
       handlers?.["tray-run-diagnostics"]?.({});
     });
 
-    await waitFor(() => expect(screen.getByRole("button", { name: "Review Repair Plan" })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Review Safe Fixes" })).toBeInTheDocument());
     expect(
       screen.getAllByRole("button", { name: "Verify Again" }).every((button) => button.hasAttribute("disabled")),
     ).toBe(true);

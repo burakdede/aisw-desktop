@@ -78,6 +78,7 @@ export function DiagnosticsPanel({
   const [repairPlanOpen, setRepairPlanOpen] = useState(false);
   const [selectedSafeFixes, setSelectedSafeFixes] = useState<string[]>([]);
   const [toolbarMenuOpen, setToolbarMenuOpen] = useState(false);
+  const [inspectorMenuOpen, setInspectorMenuOpen] = useState(false);
   const applyRepair = useMutation({
     mutationFn: (fixes: string[]) => runRepair({ apply: true, fixes }),
     onSuccess: async () => {
@@ -245,6 +246,10 @@ export function DiagnosticsPanel({
       : []),
   ];
 
+  useEffect(() => {
+    setInspectorMenuOpen(false);
+  }, [selectedFindingKey]);
+
   return (
     <div className="diagnostics-screen screen-content">
       <div className="diagnostics-toolbar-row">
@@ -261,7 +266,7 @@ export function DiagnosticsPanel({
           </button>
           <button
             className="ghost-button"
-            aria-label="Review Repair Plan"
+            aria-label="Review Safe Fixes"
             onClick={() => setRepairPlanOpen(true)}
             disabled={applyRepair.isPending || !repairActions.length}
           >
@@ -276,7 +281,7 @@ export function DiagnosticsPanel({
               aria-label="Diagnostics more actions"
               onClick={() => setToolbarMenuOpen((open) => !open)}
             >
-              More
+              •••
             </button>
             {toolbarMenuOpen ? (
               <div className="profile-row-actions-menu" role="menu" aria-label="Diagnostics actions">
@@ -483,17 +488,37 @@ export function DiagnosticsPanel({
                         {secondaryInspectorAction.label}
                       </button>
                     ) : null}
-                    {inspectorOverflowActions.map((action) => (
-                      <button
-                        key={action.key}
-                        className="ghost-button"
-                        type="button"
-                        disabled={mutationLock.isBusy}
-                        onClick={() => void action.action()}
-                      >
-                        {action.label}
-                      </button>
-                    ))}
+                    {inspectorOverflowActions.length ? (
+                      <div className="profile-row-actions" data-profile-row-actions>
+                        <button
+                          className="ghost-button profile-row-actions-trigger profile-row-actions-trigger-visible"
+                          type="button"
+                          aria-label="More finding actions"
+                          aria-expanded={inspectorMenuOpen}
+                          onClick={() => setInspectorMenuOpen((open) => !open)}
+                        >
+                          •••
+                        </button>
+                        {inspectorMenuOpen ? (
+                          <div className="profile-row-actions-menu" role="menu" aria-label="Finding actions">
+                            {inspectorOverflowActions.map((action) => (
+                              <button
+                                key={action.key}
+                                type="button"
+                                role="menuitem"
+                                disabled={mutationLock.isBusy}
+                                onClick={() => {
+                                  setInspectorMenuOpen(false);
+                                  void action.action();
+                                }}
+                              >
+                                {action.label}
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
                 <details className="diagnostics-disclosure">
@@ -537,7 +562,7 @@ ${primaryFindingFix?.label ? `# ${primaryFindingFix.label}` : "# Review the expl
       />
       {repairPlanOpen ? (
         <DialogSurface
-          ariaLabel="Apply Safe Repairs"
+          ariaLabel="Review Safe Fixes"
           className="quick-switch-palette profile-sheet"
           initialFocusSelector="button:not([disabled])"
           onClose={() => setRepairPlanOpen(false)}
@@ -596,7 +621,7 @@ ${primaryFindingFix?.label ? `# ${primaryFindingFix.label}` : "# Review the expl
                 </button>
                 <button
                   className="primary-button"
-                  aria-label="Apply Safe Repairs"
+                  aria-label="Apply Safe Fixes"
                   type="button"
                   disabled={!selectedSafeFixes.length || applyRepair.isPending}
                   onClick={() =>

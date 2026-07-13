@@ -455,7 +455,8 @@ test("imports the current login as a new profile from diagnostics", async ({ pag
 
   await page.getByRole("button", { name: "Diagnostics" }).click();
   await page.getByRole("button", { name: /Inspect claude live mismatch/i }).click();
-  await page.getByRole("button", { name: "Import Current…" }).click();
+  await page.getByRole("button", { name: "More finding actions" }).click();
+  await page.getByRole("menuitem", { name: "Import Current…" }).click();
   await expect(page.getByLabel("Tool")).toHaveValue("claude");
   await expect(page.getByLabel("Import mode")).toHaveValue("from_live");
   await page.getByLabel("Profile name").fill("incident");
@@ -799,7 +800,7 @@ test("shows no-action states when diagnostics are healthy", async ({ page }) => 
   await expect(
     page.getByText("Active profiles, local storage, and repair checks are currently passing."),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Review Repair Plan" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Review Safe Fixes" })).toBeDisabled();
 });
 
 test("shows token warnings in the overview cards", async ({ page }) => {
@@ -823,10 +824,10 @@ test("applies safe repairs from diagnostics", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Diagnostics" }).click();
 
-  await page.getByRole("button", { name: "Review Repair Plan" }).click();
+  await page.getByRole("button", { name: "Review Safe Fixes" }).click();
   await expect(page.getByRole("heading", { name: "Review Safe Fixes" })).toBeVisible();
   await expect(page.getByText("4 repairs can be applied without changing account identity.")).toBeVisible();
-  await page.getByRole("button", { name: "Apply Safe Repairs" }).click();
+  await page.getByRole("button", { name: "Apply Safe Fixes" }).click();
 
   await expect(page.getByText("Applied 4 safe fixes.")).toBeVisible();
 });
