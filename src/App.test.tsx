@@ -8257,7 +8257,7 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "Security" })).toBeInTheDocument();
     expect(credentialGroup).not.toBeNull();
     const credentialContent = within(credentialGroup as HTMLElement);
-    expect(credentialContent.getByText("Keychain backend")).toBeInTheDocument();
+    expect(credentialContent.getByText("macOS Keychain")).toBeInTheDocument();
     expect(credentialContent.getByText("Available")).toBeInTheDocument();
     expect(credentialContent.getByText("Remote sync")).toBeInTheDocument();
     expect(credentialContent.getAllByText("Disabled").length).toBeGreaterThan(0);

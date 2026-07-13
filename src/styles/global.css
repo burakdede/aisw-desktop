@@ -5414,6 +5414,10 @@ html[data-appearance="dark"] .tool-logo-codex {
   gap: 6px;
 }
 
+.settings-section-note {
+  max-width: 62ch;
+}
+
 @media (max-width: 900px) {
   .settings-row {
     grid-template-columns: minmax(160px, 200px) minmax(0, 1fr);

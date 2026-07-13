@@ -447,12 +447,6 @@ export function SettingsPanel({
             {selectedSection === "runtime" ? (
               <div className="settings-section-stack">
                 <SettingsGroup title="AISW Runtime">
-                  <SettingsStaticRow label="Bundled runtime" value={runtimeStatus.version?.version ?? "Unknown"} />
-                  <SettingsStaticRow
-                    label="Status"
-                    value={runtimeStatus.compatible ? "Ready" : "Needs attention"}
-                  />
-                  <SettingsStaticRow label="Current path" value={selectedRuntimePath(settings, runtimeStatus)} />
                   <SettingsRow label="Runtime source">
                     <select
                       aria-label="Runtime source"
@@ -476,6 +470,11 @@ export function SettingsPanel({
                       <option value="custom">Custom path</option>
                     </select>
                   </SettingsRow>
+                  <SettingsStaticRow label="Bundled runtime" value={runtimeStatus.version?.version ?? "Unknown"} />
+                  <SettingsStaticRow
+                    label="Status"
+                    value={runtimeStatus.compatible ? "Ready" : "Needs attention"}
+                  />
                   <SettingsStaticRow
                     label="System path"
                     value={runtimeStatus.inventory.system_path ?? "Not found"}
@@ -546,7 +545,6 @@ export function SettingsPanel({
                   {selectedVariant ? (
                     <SettingsActionRow
                       label="Install or verify"
-                      description="Current terminal sessions only need the hook when they must receive live environment changes immediately."
                       action={
                         <div className="button-row">
                           <button
@@ -574,6 +572,9 @@ export function SettingsPanel({
                     </p>
                   )}
                 </SettingsGroup>
+                <p className="inline-note settings-section-note">
+                  Current terminal sessions only need the hook when they must receive live environment changes immediately.
+                </p>
 
                 {copyMessage ? <p className="inline-note">{copyMessage}</p> : null}
               </div>
@@ -582,7 +583,7 @@ export function SettingsPanel({
             {selectedSection === "keyring" ? (
               <div className="settings-section-stack">
                 <SettingsGroup title="Credential Storage">
-                  <SettingsStaticRow label="Keychain backend" value="Available" />
+                  <SettingsStaticRow label="macOS Keychain" value="Available" />
                   <SettingsStaticRow label="File permissions" value="Correct" />
                   <SettingsStaticRow label="Remote sync" value="Disabled" />
                   <SettingsStaticRow label="Telemetry" value="Disabled" />
@@ -617,7 +618,7 @@ export function SettingsPanel({
             {selectedSection === "updates" ? (
               <div className="settings-section-stack">
                 <SettingsGroup title="AISW Desktop">
-                  <SettingsStaticRow label="App version" value={appVersion} />
+                  <SettingsStaticRow label="Current version" value={appVersion} />
                   <SettingsRow label="Update channel">
                     <select
                       aria-label="Update channel"
@@ -667,14 +668,11 @@ export function SettingsPanel({
                 </SettingsGroup>
 
                 <SettingsGroup title="Bundled AISW Engine">
-                  <SettingsStaticRow label="Included engine" value={runtimeStatus.version?.version ?? "Unknown"} />
+                  <SettingsStaticRow label="Version" value={runtimeStatus.version?.version ?? "Unknown"} />
                   <SettingsStaticRow
                     label="Compatibility"
                     value={runtimeStatus.compatible ? "Supported" : "Needs attention"}
                   />
-                  <p className="inline-note">
-                    AI Switch {appVersion} includes desktop engine {runtimeStatus.version?.version ?? "Unknown"}.
-                  </p>
                 </SettingsGroup>
 
                 {checkForUpdatesMutation.data ? (

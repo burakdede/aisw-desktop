@@ -1524,6 +1524,7 @@ test("shows runtime detection and shell guidance in settings", async ({ page }) 
   });
 
   await expect(page.getByRole("heading", { name: "Settings" }).first()).toBeVisible();
+  await expect(runtimeGroup.getByText("Runtime source")).toBeVisible();
   await expect(runtimeGroup.getByText("Bundled runtime")).toBeVisible();
   await expect(runtimeGroup.getByText("0.3.7")).toBeVisible();
   await expect(runtimeGroup.getByText("Status")).toBeVisible();
