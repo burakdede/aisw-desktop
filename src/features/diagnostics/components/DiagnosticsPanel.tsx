@@ -1342,9 +1342,11 @@ function repairActionKey(action: { title: string; detail: string }) {
   return `${action.title}:${action.detail}`;
 }
 
-function repairFixFromAction(action: { title: string }) {
-  const fix = action.title.split("·")[1]?.trim();
-  return fix && fix.length ? fix : action.title.trim().toLowerCase().replace(/\s+/g, "_");
+function repairFixFromAction(action: { title: string; fix?: string }) {
+  if (action.fix && action.fix.length) {
+    return action.fix;
+  }
+  return action.title.trim().toLowerCase().replace(/\s+/g, "_");
 }
 
 function formatRelativeVerifiedTime(timestamp: number) {

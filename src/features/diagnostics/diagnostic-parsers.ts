@@ -19,6 +19,8 @@ export interface RepairActionData {
   title: string;
   detail: string;
   status: string;
+  fix: string;
+  count: number;
 }
 
 function asObject(value: unknown): Record<string, unknown> | undefined {
@@ -122,12 +124,123 @@ export function parseVerifyIssues(payload: Record<string, unknown> | undefined):
 
 export function parseRepairActions(payload: Record<string, unknown> | undefined): RepairActionData[] {
   const result = asObject(payload?.result);
-  return asArray(result?.actions)
+  const grouped = new Map<
+    string,
+    {
+      kind: string;
+      fix: string;
+      path: string;
+      detail: string;
+      status: string;
+      count: number;
+    }
+  >();
+
+  asArray(result?.actions)
     .map((action) => asObject(action))
     .filter((action): action is Record<string, unknown> => Boolean(action))
-    .map((action) => ({
-      title: `${asString(action.kind)} · ${asString(action.fix)}`,
-      detail: `${asString(action.path)} — ${asString(action.detail)}`,
-      status: asString(action.status),
-    }));
+    .forEach((action) => {
+      const kind = asString(action.kind, "");
+      const fix = asString(action.fix, "");
+      const path = asString(action.path, "");
+      const tool = asString(action.tool, "");
+      const profile = asString(action.profile, "");
+      const target = [tool, profile].filter(Boolean).join("/");
+      const detail = asString(action.detail, "");
+      const status = asString(action.status);
+      const key = [kind, fix, target || path].join("|").toLowerCase();
+      const current = grouped.get(key);
+
+      if (current) {
+        current.count += 1;
+        return;
+      }
+
+      grouped.set(key, {
+        kind,
+        fix,
+        path,
+        detail,
+        status,
+        count: 1,
+      });
+    });
+
+  return [...grouped.values()].map((action) => formatRepairAction(action));
+}
+
+function formatRepairAction(action: {
+  kind: string;
+  fix: string;
+  path: string;
+  detail: string;
+  status: string;
+  count: number;
+}): RepairActionData {
+  switch (action.fix.toLowerCase()) {
+    case "permissions":
+      return {
+        title: "Repair permissions",
+        detail:
+          action.count > 1
+            ? `${action.count} AISW-managed items need permission repair.`
+            : "Repair incorrect permissions for AISW-managed files.",
+        status: action.status,
+        fix: action.fix,
+        count: action.count,
+      };
+    case "keyring":
+      return {
+        title: "Unlock keyring integration",
+        detail: "Reconnect AI Switch to the local system keyring service.",
+        status: action.status,
+        fix: action.fix,
+        count: action.count,
+      };
+    case "oauth":
+      return {
+        title: "Retry OAuth recovery",
+        detail: "Retry the OAuth recovery flow for the affected tool.",
+        status: action.status,
+        fix: action.fix,
+        count: action.count,
+      };
+    case "home":
+      return {
+        title: "Create missing AISW data directory",
+        detail: action.path || "Create the missing AISW data directory.",
+        status: action.status,
+        fix: action.fix,
+        count: action.count,
+      };
+    default:
+      return {
+        title: humanizeRepairActionTitle(action.kind, action.fix),
+        detail:
+          action.count > 1
+            ? `${action.count} matching repair steps were combined into one safe action.`
+            : action.path && action.detail
+              ? `${action.path} — ${action.detail}`
+              : action.detail || action.path || "Safe repair available.",
+        status: action.status,
+        fix: action.fix,
+        count: action.count,
+      };
+  }
+}
+
+function humanizeRepairActionTitle(kind: string, fix: string) {
+  const parts = [fix, kind]
+    .filter(Boolean)
+    .map((value) =>
+      value
+        .replace(/[_-]+/g, " ")
+        .trim(),
+    )
+    .filter(Boolean);
+  const label = parts[0] || "repair";
+  return label
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
