@@ -7584,6 +7584,57 @@ describe("App", () => {
     expect(calls.some((entry) => entry.command === "use_profile")).toBe(false);
   });
 
+  it("keeps imported CLI contexts collapsed until the disclosure is opened", async () => {
+    const settingsWithSet: DesktopSettings = {
+      ...bootstrap.settings,
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: null, gemini: null },
+        },
+      ],
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) =>
+      (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            settings: settingsWithSet,
+            snapshot: bootstrap.snapshot,
+          },
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: settingsWithSet,
+        } as Record<string, unknown>
+      )[command];
+
+    await renderApp();
+    await openSetsSection();
+
+    const disclosureSummary = screen.getByText("Imported CLI contexts");
+    const disclosure = disclosureSummary.closest("details");
+    if (!(disclosure instanceof HTMLDetailsElement)) {
+      throw new Error("Missing imported CLI contexts disclosure.");
+    }
+    expect(disclosure.open).toBe(false);
+
+    fireEvent.click(disclosureSummary);
+
+    expect(disclosure.open).toBe(true);
+    expect(
+      screen.getByText("Use an imported CLI context directly without turning it into a saved set."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Use CLI Context Client Acme" })).toBeInTheDocument();
+  });
+
   it("activates a local profile set directly from overview quick switch", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     const settingsWithSet: DesktopSettings = {

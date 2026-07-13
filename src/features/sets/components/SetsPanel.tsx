@@ -532,13 +532,16 @@ export function SetsPanel({
               <section className="sets-pane sets-library-list-pane" aria-label="Set Library">
                 <div className="sets-library-list">{setRows}</div>
                 {importedContexts.length ? (
-                  <section className="sets-secondary-section">
-                    <div className="sets-secondary-header">
-                      <div>
-                        <p className="card-kicker">Imported</p>
-                        <h4>CLI Contexts</h4>
-                      </div>
-                    </div>
+                  <details className="sets-imported-disclosure">
+                    <summary>
+                      Imported CLI contexts
+                      <span className="sets-imported-disclosure-count">
+                        {importedContexts.length}
+                      </span>
+                    </summary>
+                    <p className="inline-note">
+                      Use an imported CLI context directly without turning it into a saved set.
+                    </p>
                     <div className="stack-list">
                       {importedContexts.map((entry) => (
                         <article key={entry.name} className="list-row sets-cli-row">
@@ -577,7 +580,7 @@ export function SetsPanel({
                         </article>
                       ))}
                     </div>
-                  </section>
+                  </details>
                 ) : null}
                 <div className="sets-footer-note">
                   {setCommandResult ? (
@@ -724,15 +727,6 @@ export function SetsPanel({
               </button>
             </div>
             <p className="inline-note">You can also switch individual profiles from Quick Switch.</p>
-            {setCommandResult ? (
-              <p className={`inline-note ${setCommandResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
-                Last set result: {normalizeRuntimeLanguage(setCommandResult.message)}
-                {setCommandResult.remediation
-                  ? ` Remediation: ${normalizeRuntimeLanguage(setCommandResult.remediation)}`
-                  : ""}
-              </p>
-            ) : null}
-            {lastSetAction ? <p className="inline-note">{lastSetAction}</p> : null}
           </section>
         )
       ) : (
@@ -1098,22 +1092,6 @@ export function SetsPanel({
                 </button>
                 <button className="primary-button" type="submit" disabled={mutationLock.isBusy || !canSaveBinding}>
                   {isEditingRule ? "Save Rule" : "Add Rule"}
-                </button>
-                <button
-                  className="ghost-button"
-                  type="button"
-                  disabled={mutationLock.isBusy || !canRemoveBinding}
-                  onClick={() =>
-                    removeRule(
-                      ruleDraft.scope === "default"
-                        ? { scope: "default" }
-                        : ruleDraft.scope === "path"
-                          ? { scope: "path", path: trimmedTargetValue }
-                          : { scope: "git_remote", pattern: trimmedTargetValue },
-                    )
-                  }
-                >
-                  Remove…
                 </button>
               </div>
             </footer>

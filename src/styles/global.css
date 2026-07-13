@@ -2751,6 +2751,54 @@ html[data-appearance="dark"] .tool-logo-codex {
   border-top: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
 }
 
+.sets-imported-disclosure {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 16px 16px;
+  border-top: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
+}
+
+.sets-imported-disclosure summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-display);
+  font-size: var(--type-panel-title);
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+.sets-imported-disclosure summary::-webkit-details-marker {
+  display: none;
+}
+
+.sets-imported-disclosure summary::before {
+  content: "▸";
+  color: var(--text-tertiary);
+  transform: translateY(-1px);
+}
+
+.sets-imported-disclosure[open] summary::before {
+  content: "▾";
+}
+
+.sets-imported-disclosure-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, CanvasText 6%, Canvas 94%);
+  color: var(--text-secondary);
+  font-size: var(--type-caption);
+  font-weight: 500;
+}
+
 .sets-secondary-header {
   display: grid;
   gap: 4px;

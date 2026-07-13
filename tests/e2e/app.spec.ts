@@ -1332,6 +1332,12 @@ test("uses set summaries and selectors in the redesigned sets workspace", async 
   const dialog = page.getByRole("dialog", { name: "New Set" });
   await expect(dialog.getByLabel("Claude Code").getByRole("option", { name: "work" })).toHaveCount(1);
   await expect(dialog.getByLabel("Codex CLI").getByRole("option", { name: "work" })).toHaveCount(1);
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+
+  await page.getByRole("button", { name: "Project Rules" }).click();
+  await page.getByRole("button", { name: "Add Rule…" }).click();
+  const ruleDialog = page.getByRole("dialog", { name: "Add Rule" });
+  await expect(ruleDialog.getByRole("button", { name: "Remove…" })).toHaveCount(0);
 });
 
 test("binds and resolves workspace context from the workspaces panel", async ({ page }) => {
