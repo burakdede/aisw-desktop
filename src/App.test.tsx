@@ -1223,6 +1223,9 @@ describe("App", () => {
         expect(screen.getByLabelText("Profile table")).toBeInTheDocument();
       });
 
+      const compactMeta = document.querySelector(".profiles-table-name-compact-meta");
+      expect(compactMeta?.textContent).toContain("Claude Code · Active");
+
       fireEvent.click(screen.getByRole("option", { name: "Inspect Claude Code Work" }));
 
       await waitFor(() => {

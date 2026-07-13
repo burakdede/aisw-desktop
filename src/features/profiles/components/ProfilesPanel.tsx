@@ -631,7 +631,10 @@ export function ProfilesPanel({
                     >
                       <div className="profiles-table-name-cell">
                         <strong>{inventoryEntry.label}</strong>
-                        <span>{inventoryEntry.name}</span>
+                        <span className="profiles-table-name-secondary">{inventoryEntry.name}</span>
+                        <span className="profiles-table-name-compact-meta">
+                          {profileCompactSummary(inventoryEntry)}
+                        </span>
                       </div>
                       <span className="profiles-table-column">
                         <ToolBrand
@@ -1113,35 +1116,11 @@ export function ProfilesPanel({
                 <p className="card-kicker">Removal</p>
                 <h3>Remove “{removalSheetDisplay}”?</h3>
               </div>
-              <button className="ghost-button" type="button" onClick={() => setPendingRemoval(null)}>
-                Close
-              </button>
             </div>
-            <KeyValueGrid
-              rows={[
-                {
-                  label: "Tool",
-                  value: <ToolBrand tool={tool} className="tool-brand-inline" logoSize={16} shortName />,
-                },
-                { label: "Profile", value: removalSheetDisplay },
-                {
-                  label: "Active profile",
-                  value: snapshot.profiles[tool]?.active === removalSheetProfile.name ? "Yes" : "No",
-                },
-              ]}
-            />
             <p className="inline-note">
               AI Switch creates a backup before removal. Current live credentials are not removed automatically.
             </p>
             <footer className="quick-switch-footer">
-              <div className="quick-switch-selection">
-                <p className="card-kicker">Action</p>
-                <strong>
-                  {snapshot.profiles[tool]?.active === removalSheetProfile.name
-                    ? "Remove active profile"
-                    : "Remove profile"}
-                </strong>
-              </div>
               <div className="button-row">
                 <button className="ghost-button" type="button" onClick={() => setPendingRemoval(null)}>
                   Cancel
@@ -1460,6 +1439,10 @@ function formatBackendLabel(backend: string) {
     default:
       return titleCase(backend.split("_").join(" "));
   }
+}
+
+function profileCompactSummary(entry: InventoryEntry) {
+  return `${toolDisplayName(entry.tool)} · ${profileStatusLabel(entry.active, entry.state)}`;
 }
 
 function effectiveLabel(

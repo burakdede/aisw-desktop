@@ -2366,6 +2366,10 @@ html[data-appearance="dark"] .tool-logo-codex {
   color: var(--text-secondary);
 }
 
+.profiles-table-name-compact-meta {
+  display: none;
+}
+
 .profiles-table-status {
   display: inline-flex;
   align-items: center;
@@ -2515,7 +2519,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   }
 
   .profiles-table-header {
-    grid-template-columns: minmax(0, 1fr) 110px 96px;
+    grid-template-columns: minmax(0, 1fr) 40px;
   }
 
   .profiles-table-row {
@@ -2523,12 +2527,27 @@ html[data-appearance="dark"] .tool-logo-codex {
   }
 
   .profiles-table-row-button {
-    grid-template-columns: minmax(0, 1fr) 110px 96px;
+    grid-template-columns: minmax(0, 1fr);
     align-items: start;
   }
 
+  .profiles-table-header > span:nth-child(2),
+  .profiles-table-header > span:nth-child(3),
   .profiles-table-column-auth {
     display: none;
+  }
+
+  .profiles-table-column,
+  .profiles-table-status {
+    display: none;
+  }
+
+  .profiles-table-name-secondary {
+    display: none;
+  }
+
+  .profiles-table-name-compact-meta {
+    display: block;
   }
 }
 

@@ -392,6 +392,9 @@ test("uses a compact one-pane profile detail flow on narrow widths", async ({ pa
   await page.getByRole("button", { name: "Profiles" }).click();
 
   await expect(page.getByLabel("Profile table")).toBeVisible();
+  await expect(page.locator(".profiles-table-name-compact-meta").first()).toHaveText(
+    "Claude Code · Needs Attention",
+  );
   await page.getByRole("option", { name: "Inspect Claude Code Work" }).click();
 
   await expect(page.getByRole("button", { name: "Back", exact: true })).toBeVisible();
