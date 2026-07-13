@@ -739,18 +739,7 @@ export function App() {
     }
 
     if (activeSection === "profiles") {
-      return (
-        <div className="button-row toolbar-action-row">
-          <button
-            className="primary-button"
-            type="button"
-            disabled={runtimeBlocked}
-            onClick={openAddProfile}
-          >
-            <span>Add Profile</span>
-          </button>
-        </div>
-      );
+      return undefined;
     }
 
     if (activeSection === "overview") {

@@ -502,6 +502,17 @@ export function ProfilesPanel({
     onOpenBackups?.();
   }
 
+  function openProfileSheet() {
+    setOpenRowActions(null);
+    setOauthEvents([]);
+    setOauthError("");
+    setProfile("");
+    setLabel("");
+    setMode("from_live");
+    setCredentialBackend(initialCredentialBackend ?? "auto");
+    setProfileSheetOpen(true);
+  }
+
   function focusInventoryRow(index: number) {
     window.requestAnimationFrame(() => {
       inventoryRowRefs.current[index]?.focus();
@@ -586,6 +597,9 @@ export function ProfilesPanel({
           value={inventoryFilter}
           onChange={setInventoryFilter}
         />
+        <button className="primary-button" type="button" onClick={openProfileSheet}>
+          Add Profile
+        </button>
       </div>
       <SplitView
         className="profiles-layout profiles-split-view"
@@ -1011,9 +1025,6 @@ export function ProfilesPanel({
               <p className="card-kicker">Profile</p>
               <h3>Rename Profile</h3>
             </div>
-            <button className="ghost-button" type="button" onClick={() => setPendingEdit(null)}>
-              Close
-            </button>
           </div>
           <form
             className="stacked-form"
@@ -1158,9 +1169,6 @@ export function ProfilesPanel({
                 <p className="card-kicker">Add Profile</p>
                 <h3>Add a saved login</h3>
               </div>
-              <button className="ghost-button" type="button" onClick={() => setProfileSheetOpen(false)}>
-                Close
-              </button>
             </div>
             <form className="stacked-form" onSubmit={submit}>
               <label>
