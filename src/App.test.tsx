@@ -540,6 +540,43 @@ describe("App", () => {
     });
   });
 
+  it("uses a compact overlay sidebar instead of stacking the shell", async () => {
+    const originalWidth = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      writable: true,
+      value: 760,
+    });
+
+    await renderApp();
+    window.dispatchEvent(new Event("resize"));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Show sidebar" })).toBeInTheDocument();
+      expect(document.querySelector(".sidebar")).toBeNull();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Show sidebar" }));
+
+    await waitFor(() => {
+      expect(document.querySelector(".sidebar")).not.toBeNull();
+      expect(screen.getByRole("button", { name: "Profiles" })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Close sidebar" }));
+
+    await waitFor(() => {
+      expect(document.querySelector(".sidebar")).toBeNull();
+    });
+
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      writable: true,
+      value: originalWidth,
+    });
+    window.dispatchEvent(new Event("resize"));
+  });
+
   it("shows activity in a timeline and inspector layout", async () => {
     const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
     const calls: Array<{ command: string; args: unknown }> = [];
@@ -1175,6 +1212,7 @@ describe("App", () => {
         window.dispatchEvent(new Event("resize"));
       });
 
+      fireEvent.click(screen.getByRole("button", { name: "Show sidebar" }));
       fireEvent.click(screen.getByRole("button", { name: "Profiles" }));
 
       await waitFor(() => {

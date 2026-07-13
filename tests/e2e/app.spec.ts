@@ -384,6 +384,7 @@ test("uses a compact one-pane profile detail flow on narrow widths", async ({ pa
 
   await page.setViewportSize({ width: 760, height: 920 });
   await page.goto("/");
+  await page.getByRole("button", { name: "Show sidebar" }).click();
   await page.getByRole("button", { name: "Profiles" }).click();
 
   await expect(page.getByLabel("Profile table")).toBeVisible();
@@ -397,19 +398,23 @@ test("uses a compact one-pane profile detail flow on narrow widths", async ({ pa
   await expect(page.getByLabel("Profile table")).toBeVisible();
 });
 
-test("clears routed settings sections when reopening settings from the sidebar", async ({ page }) => {
-  await installDesktopMock(page, "onboarding");
+test("uses a compact overlay sidebar on narrow widths", async ({ page }) => {
+  await installDesktopMock(page, "switching");
 
+  await page.setViewportSize({ width: 760, height: 920 });
   await page.goto("/");
-  await page.getByRole("button", { name: "Open terminal setup" }).click();
 
-  await expect(page.getByRole("button", { name: "Terminal Integration", pressed: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Overview" }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Show sidebar" })).toBeVisible();
+  await expect(page.locator(".sidebar")).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Overview" }).click();
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Show sidebar" }).click();
+  await expect(page.locator(".sidebar")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Profiles" })).toBeVisible();
 
-  await expect(page.getByRole("button", { name: "Runtime", pressed: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Terminal Integration", pressed: false })).toBeVisible();
+  await page.getByRole("button", { name: "Close sidebar" }).click();
+  await expect(page.locator(".sidebar")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Overview" }).first()).toBeVisible();
 });
 
 test("refreshes state after a failed switch-all to show the rolled-back profiles", async ({ page }) => {

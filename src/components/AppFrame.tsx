@@ -1,7 +1,9 @@
-import { KeyboardEvent, ReactNode, useRef } from "react";
+import { KeyboardEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { cn } from "../lib/utils";
 import { BrandMark } from "./BrandMark";
 import { SymbolIcon, type SymbolIconName } from "./SymbolIcon";
+
+const COMPACT_SIDEBAR_BREAKPOINT = 880;
 
 interface NavItem {
   id: string;
@@ -37,6 +39,8 @@ export function AppFrame({
   children,
 }: AppFrameProps) {
   const navButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [compactSidebar, setCompactSidebar] = useState(() => window.innerWidth < COMPACT_SIDEBAR_BREAKPOINT);
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= COMPACT_SIDEBAR_BREAKPOINT);
   const groups = nav.reduce<Record<string, NavItem[]>>((acc, item) => {
     acc[item.group] ??= [];
     acc[item.group].push(item);
@@ -106,11 +110,73 @@ export function AppFrame({
     }
   }
 
+  useEffect(() => {
+    function syncSidebarLayout() {
+      const nextCompact = window.innerWidth < COMPACT_SIDEBAR_BREAKPOINT;
+      setCompactSidebar(nextCompact);
+      setSidebarOpen((current) => {
+        if (!nextCompact) {
+          return true;
+        }
+        return current;
+      });
+    }
+
+    syncSidebarLayout();
+    window.addEventListener("resize", syncSidebarLayout);
+    return () => window.removeEventListener("resize", syncSidebarLayout);
+  }, []);
+
+  useEffect(() => {
+    if (!compactSidebar) {
+      return;
+    }
+
+    function handleEscape(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape") {
+        setSidebarOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [compactSidebar]);
+
+  function handleSelectNav(id: string) {
+    onSelectNav(id);
+    if (compactSidebar) {
+      setSidebarOpen(false);
+    }
+  }
+
+  const showSidebar = mode !== "setup" && (!compactSidebar || sidebarOpen);
+
   return (
     <main className={cn("app-shell", mode === "setup" ? "app-shell-setup-window" : "app-shell-window")}>
-      <div className={cn("layout-shell", mode === "setup" && "layout-shell-setup")}>
-        {mode === "setup" ? null : (
-          <aside className="sidebar">
+      <div
+        className={cn(
+          "layout-shell",
+          mode === "setup" && "layout-shell-setup",
+          compactSidebar && "layout-shell-compact",
+        )}
+      >
+        {compactSidebar && sidebarOpen && mode !== "setup" ? (
+          <button
+            type="button"
+            className="sidebar-scrim"
+            aria-label="Close sidebar"
+            onClick={() => setSidebarOpen(false)}
+          />
+        ) : null}
+        {mode === "setup" || !showSidebar ? null : (
+          <aside
+            id="app-sidebar"
+            className={cn(
+              "sidebar",
+              compactSidebar && "sidebar-compact",
+              compactSidebar && sidebarOpen && "sidebar-compact-open",
+            )}
+          >
             <div className="sidebar-scroll">
               <div className="sidebar-brand">
                 <div className="brand-lockup">
@@ -135,7 +201,7 @@ export function AppFrame({
                           disabled={item.disabled}
                           aria-current={activeNav === item.id ? "page" : undefined}
                           aria-keyshortcuts={item.shortcut?.replace("⌘", "Meta+").replace("⌃", "Control+")}
-                          onClick={() => onSelectNav(item.id)}
+                          onClick={() => handleSelectNav(item.id)}
                           onKeyDown={(event) => handleNavKeyDown(event, item)}
                         >
                           <span className="nav-button-icon" aria-hidden="true">
@@ -160,6 +226,18 @@ export function AppFrame({
         <div className={cn("content-shell", mode === "setup" && "content-shell-setup")}>
           <header className="window-toolbar">
             <div className="window-toolbar-leading" data-tauri-drag-region>
+              {mode !== "setup" && compactSidebar ? (
+                <button
+                  type="button"
+                  className="ghost-button icon-button sidebar-toggle"
+                  aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+                  aria-expanded={showSidebar}
+                  aria-controls="app-sidebar"
+                  onClick={() => setSidebarOpen((current) => !current)}
+                >
+                  <SymbolIcon name="sidebar" size="sm" />
+                </button>
+              ) : null}
               <div className="window-toolbar-meta">
                 {mode === "setup" ? <p className="window-toolbar-kicker">Welcome</p> : null}
                 <div className="window-toolbar-copy">

@@ -5,6 +5,7 @@ import { SFGearshape } from "sf-symbols-lib/monochrome/SFGearshape";
 import { SFMagnifyingglass } from "sf-symbols-lib/monochrome/SFMagnifyingglass";
 import { SFPerson2 } from "sf-symbols-lib/monochrome/SFPerson2";
 import { SFRectangleGrid2x2 } from "sf-symbols-lib/monochrome/SFRectangleGrid2x2";
+import { SFSidebarLeft } from "sf-symbols-lib/monochrome/SFSidebarLeft";
 import { SFSquareStack3dUp } from "sf-symbols-lib/monochrome/SFSquareStack3dUp";
 import { SFStethoscope } from "sf-symbols-lib/monochrome/SFStethoscope";
 import { SFXmarkCircleFill } from "sf-symbols-lib/monochrome/SFXmarkCircleFill";
@@ -18,6 +19,7 @@ const ICONS = {
   activity: SFChartLineUptrendXyaxis,
   settings: SFGearshape,
   search: SFMagnifyingglass,
+  sidebar: SFSidebarLeft,
   clear: SFXmarkCircleFill,
 } as const;
 
