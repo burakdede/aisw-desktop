@@ -3390,12 +3390,12 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .overview-status-strip {
-  min-height: 36px;
+  min-height: 34px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 7px 10px;
+  padding: 6px 10px;
 }
 
 .overview-status-summary {
@@ -3451,12 +3451,12 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .overview-set-row {
-  min-height: 36px;
+  min-height: 34px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 7px 10px;
+  padding: 6px 10px;
 }
 
 .overview-set-row-main {
@@ -3585,7 +3585,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .overview-master-detail {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 316px;
+  grid-template-columns: minmax(0, 1fr) 304px;
   gap: 0;
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   border-radius: 8px;
@@ -3598,8 +3598,8 @@ html[data-appearance="dark"] .tool-logo-codex {
   min-height: 0;
   display: grid;
   align-content: start;
-  gap: 7px;
-  padding: 10px 10px;
+  gap: 6px;
+  padding: 9px 10px;
   background: transparent;
   border: 0;
   border-radius: 0;
@@ -3641,8 +3641,8 @@ html[data-appearance="dark"] .tool-logo-codex {
   grid-template-columns: 18px minmax(136px, 1.1fr) minmax(102px, 0.85fr) minmax(102px, auto) 14px;
   align-items: center;
   gap: 8px;
-  min-height: 40px;
-  padding: 6px 8px;
+  min-height: 36px;
+  padding: 5px 8px;
   border: 0;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   background: transparent;
@@ -3680,7 +3680,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .overview-tool-list-profile {
   min-width: 0;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.35;
   color: var(--text-secondary);
   white-space: nowrap;
@@ -3720,7 +3720,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: 999px;
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
   font-size: 10px;
@@ -3738,7 +3738,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .overview-inspector-facts div {
   display: grid;
   gap: 2px;
-  padding: 6px 7px;
+  padding: 7px 8px;
   border-radius: 8px;
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
@@ -3753,14 +3753,14 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .overview-inspector-facts dd {
   margin: 0;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.35;
   color: var(--text-primary);
 }
 
 .overview-inspector-control {
   display: grid;
-  gap: 3px;
+  gap: 4px;
   max-width: 100%;
 }
 
@@ -3814,7 +3814,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: var(--type-footnote);
+  font-size: 12px;
 }
 
 .overview-state-mode-button-active {
@@ -5162,7 +5162,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .settings-layout-v2 {
   min-height: 0;
   display: grid;
-  grid-template-columns: 156px minmax(0, 1fr);
+  grid-template-columns: 150px minmax(0, 1fr);
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   border-radius: 10px;
   overflow: hidden;
@@ -5174,14 +5174,14 @@ html[data-appearance="dark"] .tool-logo-codex {
   display: grid;
   align-content: start;
   gap: 3px;
-  padding: 7px;
+  padding: 6px;
   border-right: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   background: color-mix(in srgb, CanvasText 3%, Canvas 97%);
 }
 
 .settings-category-row {
   min-height: 28px;
-  padding: 5px 10px;
+  padding: 5px 9px;
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -5211,10 +5211,10 @@ html[data-appearance="dark"] .tool-logo-codex {
   min-height: 0;
   height: 100%;
   overflow: auto;
-  padding: 12px 16px 16px;
+  padding: 11px 15px 15px;
   display: grid;
   align-content: start;
-  gap: 12px;
+  gap: 10px;
 }
 
 .settings-section-header {
@@ -5235,7 +5235,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .settings-section-stack {
   width: min(100%, 560px);
   display: grid;
-  gap: 10px;
+  gap: 9px;
 }
 
 .settings-group {
@@ -5267,8 +5267,8 @@ html[data-appearance="dark"] .tool-logo-codex {
   grid-template-columns: minmax(136px, 168px) minmax(0, 1fr);
   align-items: center;
   gap: 10px;
-  min-height: 30px;
-  padding: 7px 12px;
+  min-height: 28px;
+  padding: 6px 12px;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
 }
 
@@ -5299,7 +5299,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .settings-row-control > :where(input, select) {
-  width: min(100%, 288px);
+  width: min(100%, 272px);
 }
 
 .settings-mobile-picker select,
@@ -5339,7 +5339,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .settings-row-value {
-  font-size: var(--type-footnote);
+  font-size: var(--type-body);
   line-height: 1.35;
   font-weight: 600;
   color: var(--text-primary);
