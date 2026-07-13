@@ -35,6 +35,8 @@
   --type-body: 13px;
   --type-callout: 14px;
   --type-subhead: 15px;
+  --type-panel-title: 15px;
+  --type-screen-title: 17px;
   --type-section-title: 21px;
   --control-height: 28px;
   --control-radius: 8px;
@@ -1186,10 +1188,10 @@ html[data-appearance="dark"] .tool-logo-codex {
 .window-toolbar-copy h2 {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 17px;
-  line-height: 1.08;
-  letter-spacing: -0.026em;
+  font-weight: 680;
+  font-size: var(--type-screen-title);
+  line-height: 1.12;
+  letter-spacing: -0.022em;
 }
 
 .window-toolbar-subtitle {
@@ -1325,10 +1327,10 @@ html[data-appearance="dark"] .tool-logo-codex {
 .section-header h2 {
   margin: 2px 0 0;
   font-family: var(--font-display);
-  font-weight: 650;
-  font-size: 19px;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  font-weight: 640;
+  font-size: 18px;
+  line-height: 1.18;
+  letter-spacing: -0.018em;
 }
 
 .section-actions {
@@ -3203,9 +3205,9 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .overview-status-card h3 {
   margin: 0;
-  font-size: 21px;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
+  font-size: 18px;
+  line-height: 1.1;
+  letter-spacing: -0.022em;
 }
 
 .overview-status-card-warning {
@@ -3302,9 +3304,9 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .profiles-status-card h3 {
   margin: 0;
-  font-size: 21px;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
+  font-size: 18px;
+  line-height: 1.1;
+  letter-spacing: -0.022em;
 }
 
 .profiles-overview-card {
@@ -3368,8 +3370,8 @@ html[data-appearance="dark"] .tool-logo-codex {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
+  gap: 10px;
+  padding: 9px 12px;
 }
 
 .overview-status-summary {
@@ -3598,8 +3600,8 @@ html[data-appearance="dark"] .tool-logo-codex {
 .overview-inspector-header h3 {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 15px;
+  font-weight: 620;
+  font-size: var(--type-panel-title);
   line-height: 1.3;
 }
 
@@ -3615,7 +3617,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   grid-template-columns: 18px minmax(144px, 1.1fr) minmax(108px, 0.9fr) minmax(112px, auto) 14px;
   align-items: center;
   gap: 10px;
-  min-height: 52px;
+  min-height: 48px;
   padding: 8px 8px;
   border: 0;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
@@ -3727,7 +3729,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .overview-inspector-facts dd {
   margin: 0;
-  font-size: var(--type-body);
+  font-size: var(--type-footnote);
   line-height: 1.4;
   color: var(--text-primary);
 }
@@ -3895,8 +3897,8 @@ html[data-appearance="dark"] .tool-logo-codex {
 .diagnostic-card h3,
 .diagnostic-card h4 {
   margin: 0;
-  font-size: 15px;
-  line-height: 1.25;
+  font-size: var(--type-panel-title);
+  line-height: 1.3;
 }
 
 .tool-card-meta,
@@ -3991,7 +3993,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   border-radius: var(--control-radius);
   font: inherit;
   font-size: var(--type-body);
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
 .stacked-form input,
@@ -4007,7 +4009,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .ghost-button,
 .segmented-control-button {
   cursor: pointer;
-  padding: 0 11px;
+  padding: 0 10px;
   white-space: nowrap;
 }
 
@@ -4995,9 +4997,9 @@ html[data-appearance="dark"] .tool-logo-codex {
 .activity-inspector-header h3 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 15px;
+  font-size: var(--type-panel-title);
   line-height: 1.3;
-  font-weight: 600;
+  font-weight: 620;
 }
 
 .activity-inspector-status {
@@ -5105,7 +5107,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .settings-layout-v2 {
   min-height: 0;
   display: grid;
-  grid-template-columns: 168px minmax(0, 1fr);
+  grid-template-columns: 156px minmax(0, 1fr);
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   border-radius: 12px;
   overflow: hidden;
@@ -5124,12 +5126,12 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .settings-category-row {
   min-height: 28px;
-  padding: 6px 10px;
+  padding: 5px 10px;
   border: 0;
   border-radius: 8px;
   background: transparent;
   text-align: left;
-  font-size: var(--type-body);
+  font-size: var(--type-footnote);
   line-height: 1.3;
   color: var(--text-primary);
   cursor: pointer;
@@ -5169,16 +5171,16 @@ html[data-appearance="dark"] .tool-logo-codex {
 .settings-section-header h3 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 16px;
-  line-height: 1.15;
-  font-weight: 630;
-  letter-spacing: -0.02em;
+  font-size: var(--type-screen-title);
+  line-height: 1.12;
+  font-weight: 650;
+  letter-spacing: -0.022em;
 }
 
 .settings-section-stack {
-  width: min(100%, 620px);
+  width: min(100%, 600px);
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .settings-group {
@@ -5189,7 +5191,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .settings-group h4 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.2;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -5209,9 +5211,9 @@ html[data-appearance="dark"] .tool-logo-codex {
   display: grid;
   grid-template-columns: minmax(152px, 190px) minmax(0, 1fr);
   align-items: center;
-  gap: 14px;
-  min-height: 32px;
-  padding: 8px 14px;
+  gap: 12px;
+  min-height: 30px;
+  padding: 7px 14px;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
 }
 
@@ -5220,7 +5222,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .settings-row-label {
-  font-size: var(--type-body);
+  font-size: var(--type-footnote);
   line-height: 1.35;
   color: var(--text-primary);
 }
@@ -5242,7 +5244,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .settings-row-control > :where(input, select) {
-  width: min(100%, 320px);
+  width: min(100%, 300px);
 }
 
 .settings-mobile-picker select,
@@ -5282,9 +5284,9 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .settings-row-value {
-  font-size: var(--type-body);
+  font-size: var(--type-footnote);
   line-height: 1.4;
-  font-weight: 560;
+  font-weight: 540;
   color: var(--text-primary);
   text-align: right;
 }
