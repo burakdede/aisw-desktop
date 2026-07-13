@@ -4770,11 +4770,11 @@ html[data-appearance="dark"] .tool-logo-codex {
 .activity-event-tail {
   min-width: 0;
   justify-self: end;
-  font-size: 11px;
-  line-height: 1.25;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
+  max-width: 180px;
+  font-size: var(--type-footnote);
+  line-height: 1.35;
+  color: var(--text-secondary);
+  text-align: right;
 }
 
 .activity-inspector-surface {
@@ -4787,7 +4787,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .activity-inspector-content {
   display: grid;
   align-content: start;
-  gap: 14px;
+  gap: 12px;
   padding: 16px;
 }
 
@@ -4806,6 +4806,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   gap: 8px;
   font-size: var(--type-footnote);
   line-height: 1.35;
+  font-weight: 500;
 }
 
 .activity-inspector-status-success {
@@ -4818,6 +4819,8 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .activity-inspector-message {
   margin: 0;
+  font-size: var(--type-body);
+  line-height: 1.45;
   color: var(--text-secondary);
 }
 
@@ -4839,6 +4842,8 @@ html[data-appearance="dark"] .tool-logo-codex {
   border-radius: 8px;
   background: color-mix(in srgb, CanvasText 5%, transparent);
   overflow: auto;
+  font-size: 12px;
+  line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -4874,6 +4879,16 @@ html[data-appearance="dark"] .tool-logo-codex {
   min-height: 100%;
   align-content: start;
   padding-top: 80px;
+}
+
+@container (max-width: 999px) {
+  .activity-event-row {
+    grid-template-columns: 84px minmax(0, 1fr);
+  }
+
+  .activity-event-tail {
+    display: none;
+  }
 }
 
 .settings-screen {

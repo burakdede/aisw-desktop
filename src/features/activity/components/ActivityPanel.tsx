@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { SearchField } from "../../../components/SearchField";
@@ -175,14 +176,14 @@ export function ActivityPanel({
         />
         <div className="activity-toolbar-menu-wrap">
           <button
-            className="ghost-button"
+            className="ghost-button icon-button"
             type="button"
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             aria-label="Activity more actions"
             onClick={() => setMenuOpen((open) => !open)}
           >
-            More
+            <SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />
           </button>
           {menuOpen ? (
             <div className="profile-row-actions-menu" role="menu" aria-label="Activity actions">
@@ -262,14 +263,14 @@ export function ActivityPanel({
                           <div className="activity-event-main">
                             <div className="activity-event-title-row">
                               <span className={`activity-event-status activity-event-status-${entry.status}`}>
-                                <span aria-hidden="true">{entry.status === "success" ? "●" : "▲"}</span>
+                                <span aria-hidden="true">{entry.status === "success" ? "✓" : "▲"}</span>
                                 <strong>{entry.label}</strong>
                               </span>
                             </div>
                             <p className="activity-event-detail">{activitySecondaryLine(entry)}</p>
                           </div>
                           <div className="activity-event-tail">
-                            <span>{entry.status === "success" ? "Success" : "Failed"}</span>
+                            <span>{activityTrailingLine(entry)}</span>
                           </div>
                         </button>
                       ))}
@@ -324,7 +325,7 @@ export function ActivityPanel({
                     },
                     {
                       label: "Duration",
-                      value: "Not recorded",
+                      value: "Not recorded in this build",
                     },
                     {
                       label: "Initiated by",
@@ -389,9 +390,6 @@ export function ActivityPanel({
                 This removes the locally stored desktop timeline for this Mac. Credentials remain untouched.
               </p>
             </div>
-            <button className="ghost-button" type="button" onClick={() => setPendingClear(false)}>
-              Close
-            </button>
           </div>
           <footer className="quick-switch-footer">
             <div className="quick-switch-selection">
@@ -475,10 +473,22 @@ function activitySecondaryLine(entry: ActivityEntry) {
   }
 
   if (entry.scopeType === "tool" && entry.scopeTool) {
-    return `${formatToolScope(entry.scopeTool)} · ${activityPreview(entry)}`;
+    return `${formatToolScope(entry.scopeTool)} · ${entry.message}`;
   }
 
-  return activityPreview(entry);
+  return entry.message;
+}
+
+function activityTrailingLine(entry: ActivityEntry) {
+  if (entry.resultSummary) {
+    return entry.resultSummary;
+  }
+
+  if (entry.remediation) {
+    return "Recovery available";
+  }
+
+  return entry.status === "success" ? "Success" : "Failed";
 }
 
 function formatToolScope(tool: string) {
@@ -520,10 +530,33 @@ function formatTimestamp(timestamp: number) {
 }
 
 function formatFullTimestamp(timestamp: number) {
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) {
+    return "Date unavailable";
+  }
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
+  const value = date.getTime();
+  const time = new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+
+  if (value >= todayStart) {
+    return `Today at ${time}`;
+  }
+
+  if (value >= yesterdayStart) {
+    return `Yesterday at ${time}`;
+  }
+
   return new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",
+    year: "numeric",
     hour: "numeric",
     minute: "2-digit",
-  }).format(timestamp);
+  }).format(date);
 }
