@@ -43,6 +43,7 @@ export function OverviewPanel({
   onOpenProfiles,
   onOpenContexts,
   onOpenQuickSwitch,
+  onOpenActivity,
 }: {
   snapshot: AppSnapshot;
   settings: DesktopSettings;
@@ -54,25 +55,22 @@ export function OverviewPanel({
   ) => void;
   onOpenContexts: () => void;
   onOpenQuickSwitch: () => void;
+  onOpenActivity: () => void;
 }) {
   const queryClient = useQueryClient();
   const {
-    addProfileMutation,
     activateWorkspaceTargetMutation,
     useProfileMutation,
     mutationLock,
     lastCommandResults,
   } = useDesktopActions();
 
-  const refresh = useMutation({
-    mutationFn: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["bootstrap"] });
-      await queryClient.invalidateQueries({ queryKey: ["snapshot"] });
-    },
-  });
+  const refreshSnapshot = () => {
+    void queryClient.invalidateQueries({ queryKey: ["bootstrap"] });
+    void queryClient.invalidateQueries({ queryKey: ["snapshot"] });
+  };
 
   const workspaceStatus = parseWorkspaceStatus(snapshot.workspace_status ?? undefined);
-  const showWorkspaceSummary = workspaceStatus.expectedContext !== "none";
   const hasWorkspaceMismatch =
     workspaceStatus.status === "mismatch" &&
     workspaceStatus.expectedContext !== workspaceStatus.currentContext;
@@ -201,35 +199,6 @@ export function OverviewPanel({
         </div>
       </div>
 
-      {showWorkspaceSummary && hasWorkspaceMismatch ? (
-        <div className="overview-workspace-row">
-          <div className="overview-workspace-row-copy">
-            <span className="overview-inline-notice-symbol" aria-hidden="true">▲</span>
-            <p>
-              Project rules expect <strong>{expectedWorkspaceDisplay}</strong>, but the current set is{" "}
-              <strong>{currentWorkspaceDisplay}</strong>.
-            </p>
-          </div>
-          <button
-            className="ghost-button"
-            type="button"
-            disabled={mutationLock.isBusy}
-            onClick={() => {
-              if (!workspaceActivationTarget) {
-                onOpenContexts();
-                return;
-              }
-              activateWorkspaceTargetMutation.mutate({
-                ...workspaceActivationTarget,
-                matchedTarget: workspaceStatus.target,
-              });
-            }}
-          >
-            {workspaceActivationTarget ? "Use expected set now" : "Open Sets"}
-          </button>
-        </div>
-      ) : null}
-
       <div className="overview-master-detail">
         {showToolList ? (
         <section className="overview-pane overview-list-pane">
@@ -293,24 +262,16 @@ export function OverviewPanel({
             profiles={snapshot.profiles[selectedStatus.tool]?.profiles ?? []}
             lastResult={lastCommandResults.tool[selectedStatus.tool]}
             mutationLocked={mutationLock.isBusy}
-            refreshLocked={mutationLock.isBusy || refresh.isPending}
-            onRefresh={() => refresh.mutate()}
+            refreshLocked={mutationLock.isBusy}
+            onRefresh={refreshSnapshot}
             stateModes={supportedStateModes(selectedStatus.tool, toolCapabilities)}
             settings={settings}
             snapshot={snapshot}
             compactLayout={compactLayout}
-            onImport={(tool, profile, stateMode) =>
-              supportsProfileImportMode(tool, toolCapabilities, "from_live")
-                ? addProfileMutation.mutate({
-                    tool,
-                    profile,
-                    label: titleCase(profile),
-                    stateMode,
-                    importMode: { kind: "from_live" },
-                  })
-                : onOpenProfiles(tool, null, {
-                    mode: preferredProfileImportMode(tool, toolCapabilities, "from_live"),
-                  })
+            onImport={(tool) =>
+              onOpenProfiles(tool, null, {
+                mode: preferredProfileImportMode(tool, toolCapabilities, "from_live"),
+              })
             }
             onUse={(tool, profile, stateMode) =>
               useProfileMutation.mutate({
@@ -324,6 +285,25 @@ export function OverviewPanel({
             onOpenDetails={(tool, profile) => onOpenProfiles(tool, profile)}
             onBack={compactLayout ? () => setCompactInspectorOpen(false) : undefined}
             toolCapabilities={toolCapabilities}
+            workspaceMismatch={
+              hasWorkspaceMismatch
+                ? {
+                    expected: expectedWorkspaceDisplay,
+                    current: currentWorkspaceDisplay,
+                    onResolve: () => {
+                      if (!workspaceActivationTarget) {
+                        onOpenContexts();
+                        return;
+                      }
+                      activateWorkspaceTargetMutation.mutate({
+                        ...workspaceActivationTarget,
+                        matchedTarget: workspaceStatus.target,
+                      });
+                    },
+                    canResolveDirectly: Boolean(workspaceActivationTarget),
+                  }
+                : null
+            }
           />
         ) : showInspector ? (
           <aside className="overview-pane overview-inspector-pane">
@@ -337,6 +317,9 @@ export function OverviewPanel({
 
       <div className="overview-footer-strip">
         <p>{recentSummary}</p>
+        <button className="ghost-button" type="button" onClick={onOpenActivity}>
+          View Activity
+        </button>
       </div>
     </div>
   );
@@ -358,6 +341,7 @@ function ToolInspector({
   onUse,
   onAddProfile,
   onOpenDetails,
+  workspaceMismatch,
   onBack,
 }: {
   status: ToolStatus;
@@ -376,13 +360,18 @@ function ToolInspector({
   settings: DesktopSettings;
   snapshot: AppSnapshot;
   compactLayout: boolean;
-  onImport: (tool: string, profile: string, stateMode: string | null) => void;
+  onImport: (tool: string) => void;
   onUse: (tool: string, profile: string, stateMode: string | null) => void;
   onAddProfile: (tool: string) => void;
   onOpenDetails: (tool: string, profile: string | null | undefined) => void;
+  workspaceMismatch: {
+    expected: string;
+    current: string;
+    onResolve: () => void;
+    canResolveDirectly: boolean;
+  } | null;
   onBack?: () => void;
 }) {
-  const [importName, setImportName] = useState("");
   const [stateMode, setStateMode] = useState(status.state_mode ?? stateModes[0] ?? "");
   const [selectedProfile, setSelectedProfile] = useState(status.active_profile ?? profiles[0]?.name ?? "");
   const activeProfileLabel = status.active_profile
@@ -441,17 +430,6 @@ function ToolInspector({
         </div>
       </header>
 
-      <div className="button-row overview-inspector-toolbar">
-        <button
-          className="ghost-button"
-          type="button"
-          disabled={refreshLocked}
-          onClick={onRefresh}
-        >
-          Refresh state
-        </button>
-      </div>
-
       <dl className="overview-inspector-facts">
         <div>
           <dt>Active profile</dt>
@@ -469,6 +447,12 @@ function ToolInspector({
           <dt>Live state</dt>
           <dd>{statusLabel}</dd>
         </div>
+        {workspaceMismatch ? (
+          <div>
+            <dt>Project rules</dt>
+            <dd>{`Expected ${workspaceMismatch.expected}`}</dd>
+          </div>
+        ) : null}
       </dl>
 
       {status.active_profile_applied === false ? (
@@ -499,10 +483,7 @@ function ToolInspector({
               <button
                 className="ghost-button"
                 type="button"
-                onClick={() => {
-                  const nextProfile = status.active_profile ?? toolDisplayName(status.tool).toLowerCase();
-                  onImport(status.tool, nextProfile, stateModes.length ? stateMode : null);
-                }}
+                onClick={() => onImport(status.tool)}
               >
                 Import Current…
               </button>
@@ -608,6 +589,16 @@ function ToolInspector({
           >
             Open Profile
           </button>
+          {workspaceMismatch ? (
+            <button
+              className="ghost-button"
+              type="button"
+              disabled={mutationLocked}
+              onClick={workspaceMismatch.onResolve}
+            >
+              {workspaceMismatch.canResolveDirectly ? "Use Expected Set" : "Open Sets"}
+            </button>
+          ) : null}
         </div>
       ) : null}
 
@@ -650,34 +641,6 @@ function ToolInspector({
             onRefresh={onRefresh}
             refreshLocked={refreshLocked}
           />
-        </div>
-      ) : null}
-      {status.active_profile_applied === false && supportsLiveImport ? (
-        <div className="overview-import-inline">
-          <label className="stacked-form overview-inspector-control">
-            <span>Import current login as</span>
-            <div className="inline-form">
-              <input
-                aria-label={`import ${status.tool} current login`}
-                placeholder="new profile name"
-                value={importName}
-                onChange={(event) => setImportName(event.target.value)}
-              />
-              <button
-                className="ghost-button"
-                type="button"
-                disabled={mutationLocked || !importName.trim()}
-                onClick={() => {
-                  const profile = importName.trim();
-                  if (!profile) return;
-                  onImport(status.tool, profile, stateModes.length ? stateMode : null);
-                  setImportName("");
-                }}
-              >
-                Save Imported Profile
-              </button>
-            </div>
-          </label>
         </div>
       ) : null}
     </aside>

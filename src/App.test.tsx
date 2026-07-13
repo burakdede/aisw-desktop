@@ -1739,7 +1739,6 @@ describe("App", () => {
       expect(resolveUseProfile).toBeDefined();
     });
 
-    expect(screen.getByRole("button", { name: "Refresh state" })).toBeDisabled();
     selectOverviewTool("Gemini");
     const geminiCard = screen
       .getByText("Gemini CLI is not available on PATH, so this computer cannot switch or verify that tool yet.")
@@ -1755,7 +1754,6 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Refresh state" })).toBeEnabled();
       expect(within(geminiCard).getByRole("button", { name: "Refresh" })).toBeEnabled();
     });
   });
@@ -4123,10 +4121,15 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
-    fireEvent.change(screen.getByLabelText("import claude current login"), {
+    fireEvent.click(screen.getByRole("button", { name: "Import Current…" }));
+    await waitFor(() => {
+      expect(screen.getByLabelText("Tool")).toHaveValue("claude");
+      expect(screen.getByLabelText("Import mode")).toHaveValue("from_live");
+    });
+    fireEvent.change(screen.getByLabelText("Profile name"), {
       target: { value: "recovered" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Import current as new" }));
+    fireEvent.click(screen.getByRole("button", { name: "Import" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "add_profile")).toBe(true);
@@ -4457,10 +4460,9 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
     await waitFor(() => {
       expect(screen.getAllByText(/Project rules expect/i).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/client-acme|Client Acme/).length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(screen.getAllByText("Use expected set now")[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Use Expected Set" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
@@ -4539,12 +4541,10 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getAllByText(/Project rules expect/i).length).toBeGreaterThan(0);
-      expect(screen.getAllByText("Client Acme").length).toBeGreaterThan(0);
-      expect(screen.getAllByText("Open Sets").length).toBeGreaterThan(0);
+      expect(screen.getAllByRole("button", { name: "Open Sets" }).length).toBeGreaterThan(0);
     });
 
-    const openSetsButtons = screen.getAllByText("Open Sets");
-    fireEvent.click(openSetsButtons[openSetsButtons.length - 1]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Open Sets" })[0]);
 
     await waitFor(() => {
       expect(screen.getByLabelText("Set Library")).toBeInTheDocument();

@@ -284,11 +284,15 @@ test("switches shared profiles and recovers from live mismatch", async ({ page }
 
   await page.goto("/");
 
-  await page.getByLabel("import claude current login").fill("incident");
-  await page.getByRole("button", { name: "Save Imported Profile" }).click();
+  await page.getByRole("button", { name: "Import Current…" }).click();
+  await expect(page.getByLabel("Tool")).toHaveValue("claude");
+  await expect(page.getByLabel("Import mode")).toHaveValue("from_live");
+  await page.getByLabel("Profile name").fill("incident");
+  await page.getByRole("dialog", { name: "Add Profile" }).getByRole("button", { name: "Import" }).click();
+  await expect(page.getByRole("dialog", { name: "Add Profile" })).toHaveCount(0);
+  await expect(page.getByRole("option", { name: "Inspect Claude Code Incident" })).toBeVisible();
 
-  await expect(page.getByText("Last result: Saved claude profile incident.")).toBeVisible();
-
+  await page.getByRole("button", { name: "Overview" }).click();
   await page.getByRole("button", { name: "Quick Switch" }).click();
   await page.getByLabel("Search Quick Switch").fill("work");
   await page
@@ -301,7 +305,7 @@ test("switches shared profiles and recovers from live mismatch", async ({ page }
   await expect(page.getByText("Current set").locator("..").getByText("Client Acme")).toBeVisible();
 
   await page.getByRole("button", { name: "Profiles" }).click();
-  await expect(page.getByRole("button", { name: "Inspect Claude Code Incident" })).toBeVisible();
+  await expect(page.getByRole("option", { name: "Inspect Claude Code Incident" })).toBeVisible();
 });
 
 test("opens the profiles screen from overview details actions", async ({ page }) => {

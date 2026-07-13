@@ -33,13 +33,13 @@
   --type-caption: 11px;
   --type-footnote: 12px;
   --type-body: 13px;
-  --type-callout: 14px;
-  --type-subhead: 15px;
-  --type-panel-title: 15px;
-  --type-screen-title: 17px;
-  --type-section-title: 21px;
-  --control-height: 28px;
-  --control-radius: 8px;
+  --type-callout: 13px;
+  --type-subhead: 14px;
+  --type-panel-title: 14px;
+  --type-screen-title: 16px;
+  --type-section-title: 20px;
+  --control-height: 30px;
+  --control-radius: 9px;
   --shadow-window: 0 18px 34px rgba(16, 24, 40, 0.08);
   --shadow-card: 0 8px 16px rgba(19, 30, 47, 0.035);
   --shadow-panel: inset 0 1px 0 rgba(255, 255, 255, 0.52);
@@ -601,8 +601,8 @@ html[data-appearance="dark"] .tool-logo-codex {
 .sidebar-title {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 730;
-  font-size: clamp(19px, 1.55vw, 22px);
+  font-weight: 700;
+  font-size: clamp(18px, 1.45vw, 20px);
   line-height: 1.04;
   letter-spacing: -0.04em;
   white-space: nowrap;
@@ -629,8 +629,8 @@ html[data-appearance="dark"] .tool-logo-codex {
 .nav-button {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 40px;
+  gap: 11px;
+  min-height: 38px;
   border: 0;
   border-radius: 12px;
   padding: 0 12px;
@@ -638,7 +638,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   color: var(--text-primary);
   text-align: left;
   cursor: pointer;
-  font-size: var(--type-subhead);
+  font-size: var(--type-callout);
   line-height: 1.2;
 }
 
@@ -698,7 +698,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .sidebar-status-card {
   margin: 0;
-  padding: 14px;
+  padding: 12px;
   border: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
   border-radius: 16px;
   background:
@@ -740,8 +740,8 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .sidebar-status-row strong {
-  font-size: 16px;
-  line-height: 1.08;
+  font-size: 15px;
+  line-height: 1.12;
   letter-spacing: -0.03em;
   font-family: var(--font-display);
 }
@@ -1328,7 +1328,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   margin: 2px 0 0;
   font-family: var(--font-display);
   font-weight: 640;
-  font-size: 18px;
+  font-size: var(--type-screen-title);
   line-height: 1.18;
   letter-spacing: -0.018em;
 }
@@ -3351,7 +3351,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .overview-screen {
   container-type: inline-size;
   display: grid;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -3366,12 +3366,12 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .overview-status-strip {
-  min-height: 44px;
+  min-height: 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 9px 12px;
+  padding: 8px 11px;
 }
 
 .overview-status-summary {
@@ -3427,12 +3427,12 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .overview-set-row {
-  min-height: 40px;
+  min-height: 38px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 12px;
+  padding: 8px 11px;
 }
 
 .overview-set-row-main {
@@ -3561,7 +3561,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .overview-master-detail {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 348px;
+  grid-template-columns: minmax(0, 1fr) 332px;
   gap: 0;
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   border-radius: 8px;
@@ -3574,7 +3574,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   min-height: 0;
   display: grid;
   align-content: start;
-  gap: 10px;
+  gap: 8px;
   padding: 12px 12px;
   background: transparent;
   border: 0;
@@ -3614,11 +3614,11 @@ html[data-appearance="dark"] .tool-logo-codex {
 .overview-tool-list-row {
   width: 100%;
   display: grid;
-  grid-template-columns: 18px minmax(144px, 1.1fr) minmax(108px, 0.9fr) minmax(112px, auto) 14px;
+  grid-template-columns: 18px minmax(136px, 1.1fr) minmax(102px, 0.85fr) minmax(102px, auto) 14px;
   align-items: center;
   gap: 10px;
-  min-height: 48px;
-  padding: 8px 8px;
+  min-height: 44px;
+  padding: 7px 8px;
   border: 0;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   background: transparent;
@@ -3685,7 +3685,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .overview-inspector-title-block {
   min-width: 0;
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .overview-inspector-back {
@@ -3696,7 +3696,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: 999px;
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
   font-size: var(--type-caption);
@@ -3714,7 +3714,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .overview-inspector-facts div {
   display: grid;
   gap: 3px;
-  padding: 8px 9px;
+  padding: 7px 8px;
   border-radius: 8px;
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
@@ -3736,8 +3736,38 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .overview-inspector-control {
   display: grid;
-  gap: 5px;
+  gap: 4px;
   max-width: 100%;
+}
+
+.overview-inspector-control > span:first-child {
+  margin: 0;
+  font-size: var(--type-caption);
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.overview-inspector-control select {
+  min-height: var(--control-height);
+  border: 1px solid var(--separator);
+  border-radius: var(--control-radius);
+  background: color-mix(in srgb, Canvas 96%, CanvasText 4%);
+  color: var(--text-primary);
+  font-size: var(--type-body);
+  line-height: 1.25;
+  padding: 0 34px 0 10px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-tertiary) 50%),
+    linear-gradient(135deg, var(--text-tertiary) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) calc(50% - 1px),
+    calc(100% - 11px) calc(50% - 1px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
 }
 
 .overview-state-mode-control {
@@ -3746,21 +3776,21 @@ html[data-appearance="dark"] .tool-logo-codex {
   gap: 2px;
   padding: 2px;
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
-  border-radius: 6px;
+  border-radius: 8px;
   background: color-mix(in srgb, CanvasText 3%, Canvas 97%);
   width: fit-content;
   max-width: 100%;
 }
 
 .overview-state-mode-button {
-  min-height: 28px;
+  min-height: 26px;
   padding: 0 10px;
   border: 0;
-  border-radius: 4px;
+  border-radius: 6px;
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: var(--type-body);
+  font-size: var(--type-footnote);
 }
 
 .overview-state-mode-button-active {
@@ -3784,10 +3814,12 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .overview-footer-strip {
-  min-height: 36px;
+  min-height: 34px;
   display: flex;
   align-items: center;
-  padding: 7px 12px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 11px;
 }
 
 .overview-footer-strip p {
@@ -3815,11 +3847,11 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 @media (max-width: 1120px) {
   .overview-master-detail {
-    grid-template-columns: minmax(0, 1fr) 332px;
+    grid-template-columns: minmax(0, 1fr) 320px;
   }
 
   .overview-tool-list-row {
-    grid-template-columns: 18px minmax(132px, 1fr) minmax(92px, 0.8fr) minmax(94px, auto) 14px;
+    grid-template-columns: 18px minmax(128px, 1fr) minmax(88px, 0.8fr) minmax(90px, auto) 14px;
   }
 }
 
@@ -5107,7 +5139,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .settings-layout-v2 {
   min-height: 0;
   display: grid;
-  grid-template-columns: 156px minmax(0, 1fr);
+  grid-template-columns: 164px minmax(0, 1fr);
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   border-radius: 12px;
   overflow: hidden;
@@ -5119,19 +5151,19 @@ html[data-appearance="dark"] .tool-logo-codex {
   display: grid;
   align-content: start;
   gap: 4px;
-  padding: 10px;
+  padding: 8px;
   border-right: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   background: color-mix(in srgb, CanvasText 3%, Canvas 97%);
 }
 
 .settings-category-row {
-  min-height: 28px;
-  padding: 5px 10px;
+  min-height: 30px;
+  padding: 6px 10px;
   border: 0;
   border-radius: 8px;
   background: transparent;
   text-align: left;
-  font-size: var(--type-footnote);
+  font-size: var(--type-body);
   line-height: 1.3;
   color: var(--text-primary);
   cursor: pointer;
@@ -5159,7 +5191,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   padding: 14px 18px 18px;
   display: grid;
   align-content: start;
-  gap: 16px;
+  gap: 14px;
 }
 
 .settings-section-header {
@@ -5173,12 +5205,12 @@ html[data-appearance="dark"] .tool-logo-codex {
   font-family: var(--font-display);
   font-size: var(--type-screen-title);
   line-height: 1.12;
-  font-weight: 650;
+  font-weight: 640;
   letter-spacing: -0.022em;
 }
 
 .settings-section-stack {
-  width: min(100%, 600px);
+  width: min(100%, 580px);
   display: grid;
   gap: 12px;
 }
@@ -5209,11 +5241,11 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .settings-row {
   display: grid;
-  grid-template-columns: minmax(152px, 190px) minmax(0, 1fr);
+  grid-template-columns: minmax(146px, 178px) minmax(0, 1fr);
   align-items: center;
   gap: 12px;
-  min-height: 30px;
-  padding: 7px 14px;
+  min-height: 32px;
+  padding: 8px 14px;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
 }
 
@@ -5229,7 +5261,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .settings-row-copy {
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
 
 .settings-row-control {
@@ -5284,9 +5316,9 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .settings-row-value {
-  font-size: var(--type-footnote);
+  font-size: var(--type-body);
   line-height: 1.4;
-  font-weight: 540;
+  font-weight: 560;
   color: var(--text-primary);
   text-align: right;
 }
