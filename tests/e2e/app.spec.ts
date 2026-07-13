@@ -1582,10 +1582,10 @@ test("warns before adding a duplicate profile name", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Profiles" }).click();
-
-  const profilesSection = page.locator(".section-card").filter({ hasText: "Profiles" });
-  await profilesSection.getByRole("button", { name: "Add Profile", exact: true }).click();
+  if (await page.getByRole("button", { name: "Profiles" }).count()) {
+    await page.getByRole("button", { name: "Profiles" }).click();
+  }
+  await page.getByRole("button", { name: "Add Profile" }).last().click();
   const dialog = page.getByRole("dialog", { name: "Add Profile" });
   await dialog.getByLabel("Profile name").fill("work");
   await expect(
@@ -1597,26 +1597,28 @@ test("warns before adding a duplicate profile name", async ({ page }) => {
 });
 
 test("runs guided OAuth capture from the profiles screen", async ({ page }) => {
-  await installDesktopMock(page, "profiles");
+  await installDesktopMock(page, "switching");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Profiles" }).click();
+  if (await page.getByRole("button", { name: "Profiles" }).count()) {
+    await page.getByRole("button", { name: "Profiles" }).click();
+  }
+  await page.getByRole("button", { name: "Add Profile" }).last().click();
+  const dialog = page.getByRole("dialog", { name: "Add Profile" });
+  await dialog.getByLabel("Profile name").fill("travel-oauth");
+  await dialog.getByLabel("Import mode").selectOption("oauth");
+  await dialog.getByRole("button", { name: "Start Sign In" }).click();
 
-  const profilesSection = page.locator(".section-card").filter({ hasText: "Provisioning" });
-  await page.getByLabel("Profile name").fill("personal");
-  await page.getByLabel("Import mode").selectOption("oauth");
-  await profilesSection.getByRole("button", { name: "Start OAuth" }).click();
-
-  await expect(page.getByText("OAuth progress")).toBeVisible();
-  await expect(page.getByText("1. Starting Claude login")).toBeVisible();
-  await expect(page.getByText("2. Browser opens")).toBeVisible();
-  await expect(page.getByText("3. Complete login in browser")).toBeVisible();
-  await expect(page.getByText("4. Waiting for credential capture")).toBeVisible();
-  await expect(page.getByText("5. Profile saved")).toBeVisible();
-  await expect(page.getByText("Preparing the native login flow.")).toBeVisible();
-  await expect(page.locator(".inline-note").filter({ hasText: "Launching browser" })).toBeVisible();
-  await expect(page.locator(".inline-note").filter({ hasText: "Waiting for login" })).toBeVisible();
-  await expect(page.locator(".list-row p").filter({ hasText: "personal · oauth" })).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window.__AISW_COMMAND_LOG__ ?? []).filter((entry) => entry.command === "add_profile_oauth")
+            .length,
+      ),
+    )
+    .toBe(1);
+  await expect(page.locator(".profiles-table-name-cell").filter({ hasText: "travel-oauth" })).toBeVisible();
 });
 
 test("shows token and runtime warnings in profile diagnostic details", async ({ page }) => {

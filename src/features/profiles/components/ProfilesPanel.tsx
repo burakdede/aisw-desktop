@@ -26,7 +26,7 @@ import {
   type ProfileCredentialBackend,
   type ProfileImportMode,
 } from "../../shared/profile-capabilities";
-import { resolveStateModeRequest, supportedStateModes } from "../../shared/state-modes";
+import { supportedStateModes } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { StateModeField } from "../../shared/components/StateModeField";
@@ -55,6 +55,7 @@ export function ProfilesPanel({
   initialMode,
   initialCredentialBackend,
   openToken,
+  onOpenBackups,
 }: {
   snapshot: AppSnapshot;
   settings: DesktopSettings;
@@ -64,6 +65,7 @@ export function ProfilesPanel({
   initialMode?: ProfileImportMode;
   initialCredentialBackend?: "file" | "system-keyring" | null;
   openToken?: number;
+  onOpenBackups?: () => void;
 }) {
   const {
     addProfileMutation,
@@ -71,7 +73,6 @@ export function ProfilesPanel({
     useProfileMutation,
     renameProfileMutation,
     removeProfileMutation,
-    restoreBackupMutation,
     updateSettingsMutation,
     apiKeyProfileAction,
     mutationLock,
@@ -97,10 +98,6 @@ export function ProfilesPanel({
   const [oauthEvents, setOauthEvents] = useState<OAuthProgressEvent[]>([]);
   const [oauthError, setOauthError] = useState("");
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
-  const [pendingRestore, setPendingRestore] = useState<{
-    profile: string;
-    mode: "files" | "activate";
-  } | null>(null);
   const [pendingEdit, setPendingEdit] = useState<{
     name: string;
     focus: "name" | "label";
@@ -231,19 +228,6 @@ export function ProfilesPanel({
     editSheetProfile &&
     editSheetRenameDraft.trim().length > 0 &&
     isDuplicateProfileName(profiles, editSheetProfile.name, editSheetRenameDraft);
-  const selectedRestoreTargetDisplay =
-    selectedProfileEntry && selectedProfileDisplay
-      ? `${toolDisplayName(tool)} / ${selectedProfileDisplay}`
-      : null;
-  const isPendingRestoreFiles =
-    selectedProfileEntry &&
-    pendingRestore?.profile === selectedProfileEntry.name &&
-    pendingRestore.mode === "files";
-  const isPendingRestoreAndActivate =
-    selectedProfileEntry &&
-    pendingRestore?.profile === selectedProfileEntry.name &&
-    pendingRestore.mode === "activate";
-  const restoreSheetMode = pendingRestore?.mode ?? null;
   const removalSheetProfile = pendingRemoval
     ? profiles.find((entry) => entry.name === pendingRemoval) ?? null
     : null;
@@ -476,6 +460,12 @@ export function ProfilesPanel({
     });
   }
 
+  function openBackupsForProfile(entryTool: (typeof TOOLS)[number], name: string) {
+    selectInventoryEntry(entryTool, name);
+    setOpenRowActions(null);
+    onOpenBackups?.();
+  }
+
   return (
     <div className="profiles-screen screen-content">
       <div className="profiles-filter-row">
@@ -483,7 +473,7 @@ export function ProfilesPanel({
           className="search-field profiles-search-field"
           inputClassName="search-field-input profiles-search"
           ariaLabel="Search Profiles"
-          placeholder="Search profiles"
+          placeholder="Search profiles…"
           value={search}
           onChange={setSearch}
         />
@@ -501,9 +491,6 @@ export function ProfilesPanel({
           value={inventoryFilter}
           onChange={setInventoryFilter}
         />
-        <span className="quick-switch-count profiles-count" aria-label={`${filteredInventoryProfiles.length} profiles`}>
-          {filteredInventoryProfiles.length}
-        </span>
       </div>
       <SplitView
         className="profiles-layout profiles-split-view"
@@ -622,34 +609,13 @@ export function ProfilesPanel({
                           >
                             Change Label…
                           </button>
-                          {latestBackupForProfile(inventoryEntry.tool, inventoryEntry.name, backups.data) ? (
-                            <>
-                              <button
-                                type="button"
-                                role="menuitem"
-                                disabled={mutationLock.isBusy}
-                                onClick={() => {
-                                  selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
-                                  setPendingRestore({ profile: inventoryEntry.name, mode: "files" });
-                                  setOpenRowActions(null);
-                                }}
-                              >
-                                Restore Latest…
-                              </button>
-                              <button
-                                type="button"
-                                role="menuitem"
-                                disabled={mutationLock.isBusy}
-                                onClick={() => {
-                                  selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
-                                  setPendingRestore({ profile: inventoryEntry.name, mode: "activate" });
-                                  setOpenRowActions(null);
-                                }}
-                              >
-                                Restore Latest + Activate…
-                              </button>
-                            </>
-                          ) : null}
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => openBackupsForProfile(inventoryEntry.tool, inventoryEntry.name)}
+                          >
+                            View Backups
+                          </button>
                           <button
                             type="button"
                             role="menuitem"
@@ -684,7 +650,9 @@ export function ProfilesPanel({
                 <header className="profiles-inspector-header">
                     <div className="profiles-inspector-title-block">
                       <h3>{selectedProfileDisplay}</h3>
-                      <p className="inline-note">{toolDisplayName(tool)}</p>
+                      <p className="inline-note profiles-inspector-tool">
+                        <ToolBrand tool={tool} className="tool-brand-inline" logoSize={16} />
+                      </p>
                       <div className={`profiles-inspector-status profiles-inspector-status-${profileStatusTone(
                         snapshot.profiles[tool]?.active === selectedProfileEntry.name,
                         profileStatusSummary(snapshot, tool, selectedProfileEntry.name, toolStatus),
@@ -770,32 +738,13 @@ export function ProfilesPanel({
                           >
                             Change Label…
                           </button>
-                          {selectedLatestBackup ? (
-                            <>
-                              <button
-                                type="button"
-                                role="menuitem"
-                                disabled={mutationLock.isBusy}
-                                onClick={() => {
-                                  setPendingRestore({ profile: selectedProfileEntry.name, mode: "files" });
-                                  setOpenRowActions(null);
-                                }}
-                              >
-                                Restore Latest…
-                              </button>
-                              <button
-                                type="button"
-                                role="menuitem"
-                                disabled={mutationLock.isBusy}
-                                onClick={() => {
-                                  setPendingRestore({ profile: selectedProfileEntry.name, mode: "activate" });
-                                  setOpenRowActions(null);
-                                }}
-                              >
-                                Restore Latest + Activate…
-                              </button>
-                            </>
-                          ) : null}
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => openBackupsForProfile(tool, selectedProfileEntry.name)}
+                          >
+                            View Backups
+                          </button>
                           <button
                             type="button"
                             role="menuitem"
@@ -815,8 +764,10 @@ export function ProfilesPanel({
                 <KeyValueGrid
                   variant="plain"
                   rows={[
-                    { label: "Profile", value: selectedProfileEntry.name },
-                    { label: "Label", value: selectedProfileDisplay ?? selectedProfileEntry.name },
+                    {
+                      label: "Saved name",
+                      value: selectedProfileEntry.name,
+                    },
                     { label: "Live match", value: profileLiveMatchValue(snapshot, tool, selectedProfileEntry.name, toolStatus) },
                     { label: "Authentication", value: authDisplayLabel(selectedProfileEntry.auth) },
                     {
@@ -1028,91 +979,6 @@ export function ProfilesPanel({
               </button>
             </div>
           </form>
-        </DialogSurface>
-      ) : null}
-      {selectedProfileEntry && selectedLatestBackup && selectedRestoreTargetDisplay && restoreSheetMode ? (
-        <DialogSurface
-          ariaLabel="Restore Latest Backup"
-          className="quick-switch-palette profile-sheet"
-          initialFocusSelector="button:not([disabled])"
-          onClose={() => setPendingRestore(null)}
-        >
-            <div className="quick-switch-header">
-              <div>
-                <p className="card-kicker">Backup</p>
-                <h3>Restore Latest Backup</h3>
-              </div>
-              <button className="ghost-button" type="button" onClick={() => setPendingRestore(null)}>
-                Close
-              </button>
-            </div>
-            <KeyValueGrid
-              rows={[
-                { label: "Target", value: selectedRestoreTargetDisplay },
-                {
-                  label: "Created",
-                  value: formatBackupTimestamp(selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id),
-                },
-                { label: "Backup ID", value: selectedLatestBackup.backup_id },
-              ]}
-            />
-            {restoreSheetMode === "files" ? (
-              <div className="stack-list">
-                <p className="inline-note">
-                  This restores the latest saved files for {selectedRestoreTargetDisplay}.
-                </p>
-                <p className="inline-note">
-                  It will not activate this profile again until you switch to it explicitly.
-                </p>
-              </div>
-            ) : (
-              <div className="stack-list">
-                <p className="inline-note">
-                  This restores the latest saved files for {selectedRestoreTargetDisplay}.
-                </p>
-                <p className="inline-note">
-                  It will also switch the live profile again after the restore completes.
-                </p>
-              </div>
-            )}
-            <footer className="quick-switch-footer">
-              <div className="quick-switch-selection">
-                <p className="card-kicker">Action</p>
-                <strong>{restoreSheetMode === "files" ? "Restore latest" : "Restore latest + activate"}</strong>
-                <p>
-                  {restoreSheetMode === "files"
-                    ? "Restore saved files only."
-                    : "Restore saved files, then reactivate this profile."}
-                </p>
-              </div>
-              <div className="button-row">
-                <button className="ghost-button" type="button" onClick={() => setPendingRestore(null)}>
-                  Cancel
-                </button>
-                <button
-                  className={restoreSheetMode === "files" ? "ghost-button danger-button" : "primary-button"}
-                  type="button"
-                  disabled={mutationLock.isBusy}
-                  onClick={() =>
-                    restoreBackupMutation.mutate(selectedLatestBackup.backup_id, {
-                      onSuccess: () => {
-                        setPendingRestore(null);
-                        if (restoreSheetMode === "activate") {
-                          useProfileMutation.mutate({
-                            tool,
-                            profile: selectedProfileEntry.name,
-                            stateMode: resolveStateModeRequest(tool, toolCapabilities, stateMode),
-                            label: selectedProfileDisplay ?? selectedProfileEntry.name,
-                          });
-                        }
-                      },
-                    })
-                  }
-                >
-                  {restoreSheetMode === "files" ? "Restore" : "Restore latest + activate"}
-                </button>
-              </div>
-            </footer>
         </DialogSurface>
       ) : null}
       {removalSheetProfile && removalSheetDisplay ? (

@@ -3426,13 +3426,10 @@ describe("App", () => {
     });
   });
 
-  it("restores the latest backup directly from a profile row", async () => {
+  it("opens Backups from the selected profile menu instead of restoring inline", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
-      if (command === "restore_backup" || command === "use_profile") {
-        return { command, snapshot: bootstrap.snapshot };
-      }
       return (
         {
           get_bootstrap: bootstrap,
@@ -3460,23 +3457,14 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Profiles"));
 
     openSelectedProfileMenu();
-    await waitFor(() => expect(getLastOpenMenu().getByRole("menuitem", { name: "Restore Latest + Activate…" })).toBeInTheDocument());
-    fireEvent.click(getLastOpenMenu().getByRole("menuitem", { name: "Restore Latest + Activate…" }));
-    expect(
-      within(screen.getByRole("dialog", { name: "Restore Latest Backup" })).getByText(
-        "It will also switch the live profile again after the restore completes.",
-      ),
-    ).toBeInTheDocument();
-    expect(calls.some((entry) => entry.command === "restore_backup")).toBe(false);
-    fireEvent.click(
-      within(screen.getByRole("dialog", { name: "Restore Latest Backup" })).getByRole("button", {
-        name: "Restore latest + activate",
-      }),
+    await waitFor(() =>
+      expect(getLastOpenMenu().getByRole("menuitem", { name: "View Backups" })).toBeInTheDocument(),
     );
+    fireEvent.click(getLastOpenMenu().getByRole("menuitem", { name: "View Backups" }));
 
     await waitFor(() => {
-      expect(calls.some((entry) => entry.command === "restore_backup")).toBe(true);
-      expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
+      expect(screen.getByRole("heading", { name: "Backups" })).toBeInTheDocument();
+      expect(calls.some((entry) => entry.command === "restore_backup")).toBe(false);
     });
   });
 
@@ -3518,7 +3506,7 @@ describe("App", () => {
     });
   });
 
-  it("uses saved labels in latest profile backup confirmations", async () => {
+  it("uses saved labels in the profiles inspector header", async () => {
     const labeledSettings: DesktopSettings = {
       ...bootstrap.settings,
       profile_labels: {
@@ -3557,24 +3545,16 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
 
-    openSelectedProfileMenu();
-    await waitFor(() => expect(getLastOpenMenu().getByRole("menuitem", { name: "Restore Latest + Activate…" })).toBeInTheDocument());
-    fireEvent.click(getLastOpenMenu().getByRole("menuitem", { name: "Restore Latest + Activate…" }));
-    expect(
-      within(screen.getByRole("dialog", { name: "Restore Latest Backup" })).getByText(
-        "This restores the latest saved files for Claude Code / Office.",
-      ),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Office" })).toBeInTheDocument();
+      expect(screen.getByText("Saved name")).toBeInTheDocument();
+      expect(screen.getAllByText("work").length).toBeGreaterThan(0);
+    });
   });
 
-  it("chooses the newest matching backup when restoring latest from a profile row", async () => {
-    const calls: Array<{ command: string; args: unknown }> = [];
-    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
-      calls.push({ command, args });
-      if (command === "restore_backup" || command === "use_profile") {
-        return { command, snapshot: bootstrap.snapshot };
-      }
-      return (
+  it("uses the newest matching backup timestamp in the profiles inspector", async () => {
+    window.__AISW_DESKTOP_MOCK__ = async (command) =>
+      (
         {
           get_bootstrap: bootstrap,
           get_snapshot: bootstrap.snapshot,
@@ -3599,33 +3579,18 @@ describe("App", () => {
           get_settings: bootstrap.settings,
         } as Record<string, unknown>
       )[command];
-    };
 
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
 
-    openSelectedProfileMenu();
-    await waitFor(() => expect(getLastOpenMenu().getByRole("menuitem", { name: "Restore Latest + Activate…" })).toBeInTheDocument());
-    fireEvent.click(getLastOpenMenu().getByRole("menuitem", { name: "Restore Latest + Activate…" }));
-    fireEvent.click(
-      within(screen.getByRole("dialog", { name: "Restore Latest Backup" })).getByRole("button", {
-        name: "Restore latest + activate",
-      }),
-    );
-
     await waitFor(() => {
-      expect(
-        calls.some(
-          (entry) =>
-            entry.command === "restore_backup" &&
-            (entry.args as { backup_id?: string })?.backup_id === "20260327T121500Z-claude-work",
-        ),
-      ).toBe(true);
+      expect(screen.getByText("Added")).toBeInTheDocument();
+      expect(screen.getAllByText(/Mar|2026/).length).toBeGreaterThan(0);
     });
   });
 
-  it("uses the selected state mode when restoring and re-activating from profiles", async () => {
+  it("uses the selected state mode when activating from profiles", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     const sharedModeBootstrap = {
       ...bootstrap,
@@ -3674,7 +3639,7 @@ describe("App", () => {
 
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
-      if (command === "restore_backup" || command === "use_profile") {
+      if (command === "use_profile") {
         return { command, snapshot: sharedModeBootstrap.snapshot };
       }
       return (
@@ -3704,16 +3669,9 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Profiles"));
     selectProfilesFilter("Codex");
     await waitFor(() => expect(screen.getByRole("heading", { name: "Work" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Inspect Codex CLI Personal" }));
     fireEvent.click(screen.getByRole("button", { name: "Shared" }));
-
-    openSelectedProfileMenu();
-    await waitFor(() => expect(getLastOpenMenu().getByRole("menuitem", { name: "Restore Latest + Activate…" })).toBeInTheDocument());
-    fireEvent.click(getLastOpenMenu().getByRole("menuitem", { name: "Restore Latest + Activate…" }));
-    fireEvent.click(
-      within(screen.getByRole("dialog", { name: "Restore Latest Backup" })).getByRole("button", {
-        name: "Restore latest + activate",
-      }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Activate Profile" }));
 
     await waitFor(() => {
       expect(
@@ -3723,7 +3681,7 @@ describe("App", () => {
             (entry.args as { request?: { tool?: string; profile?: string; state_mode?: string | null } })
               ?.request?.tool === "codex" &&
             (entry.args as { request?: { tool?: string; profile?: string; state_mode?: string | null } })
-              ?.request?.profile === "work" &&
+              ?.request?.profile === "personal" &&
             (entry.args as { request?: { tool?: string; profile?: string; state_mode?: string | null } })
               ?.request?.state_mode === "shared",
         ),
@@ -3731,13 +3689,10 @@ describe("App", () => {
     });
   });
 
-  it("warns before restoring the latest profile backup without re-activating", async () => {
+  it("does not attempt a restore when opening Backups from profiles", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
-      if (command === "restore_backup") {
-        return { command, snapshot: bootstrap.snapshot };
-      }
       return (
         {
           get_bootstrap: bootstrap,
@@ -3765,23 +3720,14 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Profiles"));
 
     openSelectedProfileMenu();
-    await waitFor(() => expect(getLastOpenMenu().getByRole("menuitem", { name: "Restore Latest…" })).toBeInTheDocument());
-    fireEvent.click(getLastOpenMenu().getByRole("menuitem", { name: "Restore Latest…" }));
-    expect(
-      within(screen.getByRole("dialog", { name: "Restore Latest Backup" })).getByText(
-        "It will not activate this profile again until you switch to it explicitly.",
-      ),
-    ).toBeInTheDocument();
-    expect(calls.some((entry) => entry.command === "restore_backup")).toBe(false);
-
-    fireEvent.click(
-      within(screen.getByRole("dialog", { name: "Restore Latest Backup" })).getByRole("button", {
-        name: "Restore",
-      }),
+    await waitFor(() =>
+      expect(getLastOpenMenu().getByRole("menuitem", { name: "View Backups" })).toBeInTheDocument(),
     );
+    fireEvent.click(getLastOpenMenu().getByRole("menuitem", { name: "View Backups" }));
 
     await waitFor(() => {
-      expect(calls.some((entry) => entry.command === "restore_backup")).toBe(true);
+      expect(screen.getByRole("heading", { name: "Backups" })).toBeInTheDocument();
+      expect(calls.some((entry) => entry.command === "restore_backup")).toBe(false);
       expect(calls.some((entry) => entry.command === "use_profile")).toBe(false);
     });
   });

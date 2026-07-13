@@ -955,6 +955,9 @@ export function App() {
               initialMode={profilesRouteState.mode}
               initialCredentialBackend={profilesRouteState.credentialBackend}
               openToken={profilesRouteState.openToken}
+              onOpenBackups={() => {
+                setActiveNav("backups");
+              }}
             />
           ) : null}
           {activeSection === "sets" ? (
