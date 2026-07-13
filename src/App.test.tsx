@@ -95,6 +95,29 @@ const bootstrap = {
   },
 };
 
+const switchableBootstrap = {
+  ...bootstrap,
+  snapshot: {
+    ...bootstrap.snapshot,
+    statuses: [
+      {
+        ...bootstrap.snapshot.statuses[0],
+        stored_profiles: 2,
+      },
+    ],
+    profiles: {
+      ...bootstrap.snapshot.profiles,
+      claude: {
+        active: "work",
+        profiles: [
+          { name: "work", auth: "oauth", label: "Work" },
+          { name: "personal", auth: "oauth", label: "Personal" },
+        ],
+      },
+    },
+  },
+};
+
 async function renderApp() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -417,7 +440,8 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
     });
-    expect(screen.getByText("Re-apply Work")).toBeInTheDocument();
+    expect(screen.queryByText("Re-apply Work")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open details" })).toBeInTheDocument();
     expect(screen.getAllByText("Current set").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Work").length).toBeGreaterThan(0);
     expect(
@@ -1416,7 +1440,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("Re-apply Work")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
     });
     const quickSwitchDialog = await openQuickSwitchDialog();
     fireEvent.click(quickSwitchDialog.getByRole("option", { name: /Work.*Across/i }));
@@ -1432,12 +1456,12 @@ describe("App", () => {
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
       if (command === "use_profile") {
-        return { command, snapshot: bootstrap.snapshot };
+        return { command, snapshot: switchableBootstrap.snapshot };
       }
       return (
         {
-          get_bootstrap: bootstrap,
-          get_snapshot: bootstrap.snapshot,
+          get_bootstrap: switchableBootstrap,
+          get_snapshot: switchableBootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
           run_doctor: { summary: { status: "pass" } },
           run_verify: { summary: { status: "pass" } },
@@ -1452,10 +1476,13 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Re-apply Work"));
+    fireEvent.change(screen.getByLabelText("Switch claude profile"), {
+      target: { value: "personal" },
+    });
+    fireEvent.click(screen.getByText("Switch to Personal"));
 
     await waitFor(() => {
-      expect(screen.getByText("Last result: Switched Claude to Work.")).toBeInTheDocument();
+      expect(screen.getByText("Last result: Switched Claude to Personal.")).toBeInTheDocument();
     });
     expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
   });
@@ -1543,9 +1570,9 @@ describe("App", () => {
   it("disables overview refresh actions while a mutation is in progress", async () => {
     let resolveUseProfile: ((value: unknown) => void) | undefined;
     const snapshotWithMissingTool = {
-      ...bootstrap.snapshot,
+      ...switchableBootstrap.snapshot,
       statuses: [
-        ...bootstrap.snapshot.statuses,
+        ...switchableBootstrap.snapshot.statuses,
         {
           tool: "gemini",
           binary_found: false,
@@ -1561,7 +1588,7 @@ describe("App", () => {
         },
       ],
       profiles: {
-        ...bootstrap.snapshot.profiles,
+        ...switchableBootstrap.snapshot.profiles,
         gemini: {
           active: null,
           profiles: [],
@@ -1578,7 +1605,7 @@ describe("App", () => {
       return (
         {
           get_bootstrap: {
-            ...bootstrap,
+            ...switchableBootstrap,
             snapshot: snapshotWithMissingTool,
           },
           get_snapshot: snapshotWithMissingTool,
@@ -1597,7 +1624,10 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
-    fireEvent.click(screen.getByText("Re-apply Work"));
+    fireEvent.change(screen.getByLabelText("Switch claude profile"), {
+      target: { value: "personal" },
+    });
+    fireEvent.click(screen.getByText("Switch to Personal"));
     await waitFor(() => {
       expect(resolveUseProfile).toBeDefined();
     });
@@ -2142,7 +2172,10 @@ describe("App", () => {
     }
     const overview = within(geminiCard);
     expect(overview.getAllByRole("combobox")).toHaveLength(1);
-    fireEvent.click(overview.getByRole("button", { name: "Re-apply Travel Next" }));
+    fireEvent.change(overview.getByLabelText("Switch gemini profile"), {
+      target: { value: "travel" },
+    });
+    fireEvent.click(overview.getByRole("button", { name: "Switch to Travel" }));
 
     await waitFor(() => {
       expect(
@@ -2303,8 +2336,8 @@ describe("App", () => {
       }
       return (
         {
-          get_bootstrap: bootstrap,
-          get_snapshot: bootstrap.snapshot,
+          get_bootstrap: switchableBootstrap,
+          get_snapshot: switchableBootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
           run_doctor: { summary: { status: "pass" } },
           run_verify: { summary: { status: "pass" } },
@@ -2319,7 +2352,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Re-apply Work"));
+    fireEvent.change(screen.getByLabelText("Switch claude profile"), {
+      target: { value: "personal" },
+    });
+    fireEvent.click(screen.getByText("Switch to Personal"));
 
     await waitFor(() => {
       expect(
@@ -2404,8 +2440,8 @@ describe("App", () => {
       }
       return (
         {
-          get_bootstrap: bootstrap,
-          get_snapshot: bootstrap.snapshot,
+          get_bootstrap: switchableBootstrap,
+          get_snapshot: switchableBootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
           run_doctor: { summary: { status: "pass" } },
           run_verify: { summary: { status: "pass" } },
@@ -2420,7 +2456,10 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Re-apply Work"));
+    fireEvent.change(screen.getByLabelText("Switch claude profile"), {
+      target: { value: "personal" },
+    });
+    fireEvent.click(screen.getByText("Switch to Personal"));
 
     await waitFor(() => {
       expect(
@@ -4038,7 +4077,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "add_profile")).toBe(true);
-      expect(screen.getByText("Live credentials changed outside the app. Re-apply the active profile or import the current login as a new profile.")).toBeInTheDocument();
+      expect(screen.getByText("Live credentials do not match the saved profile. Re-apply it or import the current login as a new profile.")).toBeInTheDocument();
     });
   });
 
@@ -6408,8 +6447,8 @@ describe("App", () => {
       }
       return (
         {
-          get_bootstrap: bootstrap,
-          get_snapshot: bootstrap.snapshot,
+          get_bootstrap: switchableBootstrap,
+          get_snapshot: switchableBootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
           get_workspace_status: { result: { status: "match" } },
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
@@ -6441,7 +6480,10 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
     expect(doctorRuns).toBe(0);
 
-    fireEvent.click(screen.getByText("Re-apply Work"));
+    fireEvent.change(screen.getByLabelText("Switch claude profile"), {
+      target: { value: "personal" },
+    });
+    fireEvent.click(screen.getByText("Switch to Personal"));
     await waitFor(() => {
       expect(resolveUseProfile).toBeDefined();
     });
@@ -6568,7 +6610,7 @@ describe("App", () => {
 
     await renderApp();
     await waitFor(() => {
-      expect(screen.getByText("Re-apply Work")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
     });
 
     const handlers = (window as typeof window & {

@@ -131,28 +131,6 @@ export function OverviewPanel({
     return "Review tool readiness";
   }, [attentionCount, blockedCount, notConfiguredCount, notVerifiedCount, readyCount, snapshot.statuses.length]);
 
-  const overviewMeta = useMemo(() => {
-    if (showWorkspaceSummary) {
-      return hasWorkspaceMismatch
-        ? `Project expects ${expectedWorkspaceDisplay}, but the current context is ${currentWorkspaceDisplay}.`
-        : `Project rules currently match ${expectedWorkspaceDisplay}.`;
-    }
-    if (currentSetLabel) {
-      return `Current set ${currentSetLabel} is available for switching across supported tools.`;
-    }
-    if (snapshot.statuses.some((status) => status.active_profile)) {
-      return "Per-tool switching is available even without a pinned shared set.";
-    }
-    return "Import or save a first profile to start switching accounts from the desktop app.";
-  }, [
-    currentSetLabel,
-    currentWorkspaceDisplay,
-    expectedWorkspaceDisplay,
-    hasWorkspaceMismatch,
-    showWorkspaceSummary,
-    snapshot.statuses,
-  ]);
-
   const recentSummary = latestOverviewSummary({
     bulkResult,
     workspaceResult,
@@ -171,7 +149,6 @@ export function OverviewPanel({
           </span>
           <strong>{overviewHeadline}</strong>
         </div>
-        <p className="overview-status-meta">{overviewMeta}</p>
       </div>
 
       <div className="overview-set-row">
@@ -236,10 +213,7 @@ export function OverviewPanel({
       <div className="overview-master-detail">
         <section className="overview-pane overview-list-pane">
           <div className="overview-pane-header">
-            <div>
-              <h3>Tools</h3>
-              <p className="inline-note">Inspect one tool at a time and switch without leaving Overview.</p>
-            </div>
+            <h3>Tools</h3>
             <p className="overview-pane-meta">{snapshot.statuses.length} total</p>
           </div>
           {snapshot.statuses.length ? (
@@ -390,7 +364,7 @@ function ToolInspector({
     ? "Add Profile…"
     : selectedProfile && selectedProfile !== status.active_profile
       ? `Switch to ${selectedProfileLabel}`
-      : selectedProfileLabel
+      : state === "needs_attention" && selectedProfileLabel
         ? `Re-apply ${selectedProfileLabel}`
         : null;
 
@@ -545,7 +519,7 @@ function ToolInspector({
         <div className="overview-inline-notice overview-inline-notice-warn">
           <div className="overview-inline-notice-copy">
             <span className="overview-inline-notice-symbol" aria-hidden="true">▲</span>
-            <p>Live credentials changed outside the app. Re-apply the active profile or import the current login as a new profile.</p>
+            <p>Live credentials do not match the saved profile. Re-apply it or import the current login as a new profile.</p>
           </div>
         </div>
       ) : null}
