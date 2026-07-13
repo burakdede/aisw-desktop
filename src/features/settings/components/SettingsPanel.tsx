@@ -64,9 +64,6 @@ export function SettingsPanel({
     useDesktopActions();
   const [runtimeKind, setRuntimeKind] = useState(settings.runtime_kind);
   const [runtimePath, setRuntimePath] = useState(settings.runtime_path ?? "");
-  const [showAdvancedRuntime, setShowAdvancedRuntime] = useState(
-    settings.runtime_kind !== "bundled",
-  );
   const [aiswHome, setAiswHome] = useState(settings.aisw_home ?? "");
   const [updateChannel, setUpdateChannel] = useState(settings.update_channel);
   const [selectedSection, setSelectedSection] = useState<SettingsSection>(initialSection ?? "general");
@@ -129,7 +126,6 @@ export function SettingsPanel({
   useEffect(() => {
     setRuntimeKind(settings.runtime_kind);
     setRuntimePath(settings.runtime_path ?? "");
-    setShowAdvancedRuntime(settings.runtime_kind !== "bundled");
     setAiswHome(settings.aisw_home ?? "");
     setUpdateChannel(settings.update_channel);
   }, [
@@ -469,71 +465,55 @@ export function SettingsPanel({
               <div className="settings-section-stack">
                 <SettingsGroup title="AISW Runtime">
                   <SettingsStaticRow label="Bundled runtime" value={runtimeStatus.version?.version ?? "Unknown"} />
-                  <SettingsStaticRow label="Selected source" value={selectedEngineSourceLabel(runtimeKind)} />
+                  <SettingsStaticRow
+                    label="Status"
+                    value={runtimeStatus.compatible ? "Ready" : "Needs attention"}
+                  />
                   <SettingsStaticRow label="Current path" value={selectedRuntimePath(settings, runtimeStatus)} />
-                  {showAdvancedRuntime ? (
-                    <>
-                      <SettingsRow label="Runtime source">
-                        <select
-                          aria-label="Runtime source"
-                          value={runtimeKind}
-                          onChange={(event) => {
-                            const nextRuntimeKind = event.target.value as typeof runtimeKind;
-                            const nextRuntimePath =
-                              nextRuntimeKind === "custom" ? runtimePath : "";
-                            setRuntimeKind(nextRuntimeKind);
-                            setRuntimePath(nextRuntimePath);
-                            updateSettingsMutation.mutate(
-                              buildSettingsRequest({
-                                runtimeKind: nextRuntimeKind,
-                                runtimePath: nextRuntimePath,
-                              }),
-                            );
-                          }}
-                        >
-                          <option value="bundled">Bundled</option>
-                          <option value="system">System engine</option>
-                          <option value="custom">Custom path</option>
-                        </select>
-                      </SettingsRow>
-                      <SettingsRow label="Runtime path">
-                        <input
-                          aria-label="Engine path"
-                          value={runtimePath}
-                          disabled={runtimeKind !== "custom"}
-                          placeholder={runtimeKind === "custom" ? "/path/to/aisw" : ""}
-                          onChange={(event) => setRuntimePath(event.target.value)}
-                          onBlur={() => {
-                            if (runtimeKind !== "custom") return;
-                            updateSettingsMutation.mutate(
-                              buildSettingsRequest({
-                                runtimePath,
-                              }),
-                            );
-                          }}
-                        />
-                      </SettingsRow>
-                      <div className="button-row">
-                        <button
-                          className="ghost-button"
-                          type="button"
-                          onClick={() => setShowAdvancedRuntime(false)}
-                        >
-                          Hide manual engine options
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="button-row">
-                      <button
-                        className="ghost-button"
-                        type="button"
-                        onClick={() => setShowAdvancedRuntime(true)}
-                      >
-                        Show manual engine options
-                      </button>
-                    </div>
-                  )}
+                  <SettingsRow label="Runtime source">
+                    <select
+                      aria-label="Runtime source"
+                      value={runtimeKind}
+                      onChange={(event) => {
+                        const nextRuntimeKind = event.target.value as typeof runtimeKind;
+                        const nextRuntimePath =
+                          nextRuntimeKind === "custom" ? runtimePath : "";
+                        setRuntimeKind(nextRuntimeKind);
+                        setRuntimePath(nextRuntimePath);
+                        updateSettingsMutation.mutate(
+                          buildSettingsRequest({
+                            runtimeKind: nextRuntimeKind,
+                            runtimePath: nextRuntimePath,
+                          }),
+                        );
+                      }}
+                    >
+                      <option value="bundled">Bundled</option>
+                      <option value="system">System engine</option>
+                      <option value="custom">Custom path</option>
+                    </select>
+                  </SettingsRow>
+                  <SettingsStaticRow
+                    label="System path"
+                    value={runtimeStatus.inventory.system_path ?? "Not found"}
+                  />
+                  <SettingsRow label="Engine path">
+                    <input
+                      aria-label="Engine path"
+                      value={runtimePath}
+                      disabled={runtimeKind !== "custom"}
+                      placeholder={runtimeKind === "custom" ? "/path/to/aisw" : ""}
+                      onChange={(event) => setRuntimePath(event.target.value)}
+                      onBlur={() => {
+                        if (runtimeKind !== "custom") return;
+                        updateSettingsMutation.mutate(
+                          buildSettingsRequest({
+                            runtimePath,
+                          }),
+                        );
+                      }}
+                    />
+                  </SettingsRow>
                 </SettingsGroup>
 
                 <SettingsGroup title="AISW Data">
@@ -576,46 +556,34 @@ export function SettingsPanel({
                           : "Unknown"
                     }
                   />
+                  <SettingsStaticRow
+                    label="Config file"
+                    value={selectedVariant?.config_path ?? "Unavailable"}
+                  />
+                  <SettingsStaticRow label="Completion scripts" value="Available in this build" />
                   {selectedVariant ? (
-                    <>
-                      <SettingsActionRow
-                        label="Install or verify"
-                        description={`Config file: ${selectedVariant.config_path}`}
-                        action={
-                          <div className="button-row">
-                            <button
-                              className="ghost-button"
-                              type="button"
-                              onClick={() => void copyText(selectedVariant.install_command, "setup")}
-                            >
-                              Copy install command
-                            </button>
-                            <button
-                              className="ghost-button"
-                              type="button"
-                              onClick={() => void copyText(selectedVariant.verify_command, "verify")}
-                            >
-                              Copy verification command
-                            </button>
-                          </div>
-                        }
-                      />
-                      <div className="stack-list">
-                        <p className="inline-note">1. Copy the AI Switch setup step.</p>
-                        <pre>{selectedVariant.install_command}</pre>
-                        <p className="inline-note">
-                          Paste it into {selectedVariant.config_path} or the matching shell config file.
-                        </p>
-                        <p className="inline-note">2. Reload Terminal.</p>
-                        <p className="inline-note">
-                          Run the reload step or open a new terminal window.
-                        </p>
-                        <pre>{selectedVariant.reload_command}</pre>
-                        <p className="inline-note">3. Confirm that terminal integration is active.</p>
-                        <pre>{selectedVariant.verify_command}</pre>
-                        <p className="inline-note">Expected output: {selectedVariant.verify_expected}</p>
-                      </div>
-                    </>
+                    <SettingsActionRow
+                      label="Install or verify"
+                      description="Current terminal sessions only need the hook when they must receive live environment changes immediately."
+                      action={
+                        <div className="button-row">
+                          <button
+                            className="ghost-button"
+                            type="button"
+                            onClick={() => void copyText(selectedVariant.install_command, "setup")}
+                          >
+                            Copy Install
+                          </button>
+                          <button
+                            className="ghost-button"
+                            type="button"
+                            onClick={() => void copyText(selectedVariant.verify_command, "verify")}
+                          >
+                            Copy Verify
+                          </button>
+                        </div>
+                      }
+                    />
                   ) : (
                     <p className="inline-note">
                       {shellGuidance.isLoading
@@ -623,34 +591,7 @@ export function SettingsPanel({
                         : "Terminal setup guidance is unavailable."}
                     </p>
                   )}
-                  <p className="inline-note">
-                    Current terminal sessions need the hook only when they must receive CLAUDE_CONFIG_DIR or CODEX_HOME immediately.
-                  </p>
                 </SettingsGroup>
-
-                {shellGuidance.data?.capabilities.length ? (
-                  <SettingsGroup title="What this changes">
-                    {shellGuidance.data.capabilities.map((item) => (
-                      <p key={item} className="inline-note">
-                        {normalizeTerminalIntegrationText(item)}
-                      </p>
-                    ))}
-                  </SettingsGroup>
-                ) : null}
-
-                {selectedVariant || shellGuidance.data?.manual_apply_examples.length ? (
-                  <details className="settings-inline-details">
-                    <summary>Show advanced terminal commands</summary>
-                    <div className="stack-list">
-                      {selectedVariant ? <pre>{selectedVariant.install_command}</pre> : null}
-                      {selectedVariant ? <pre>{selectedVariant.reload_command}</pre> : null}
-                      {selectedVariant ? <pre>{selectedVariant.verify_command}</pre> : null}
-                      {(shellGuidance.data?.manual_apply_examples ?? []).map((example) => (
-                        <pre key={example}>{example}</pre>
-                      ))}
-                    </div>
-                  </details>
-                ) : null}
 
                 {copyMessage ? <p className="inline-note">{copyMessage}</p> : null}
               </div>
@@ -668,11 +609,11 @@ export function SettingsPanel({
                 <SettingsGroup title="Local Data">
                   <SettingsStaticRow label="AISW data folder" value={settings.aisw_home ?? "~/.aisw"} />
                   <SettingsActionRow
-                    label="Reveal in Finder"
+                    label="Finder"
                     description="Open the local AI Switch data location."
                     action={
                       <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
-                        Open App Data Folder
+                        Reveal in Finder
                       </button>
                     }
                   />
@@ -680,32 +621,16 @@ export function SettingsPanel({
 
                 <SettingsGroup title="Diagnostics">
                   <SettingsActionRow
-                    label="Redacted report"
+                    label="Support bundle"
                     description="Export a redacted support bundle before sharing troubleshooting details."
                     action={
                       <button className="ghost-button" type="button" onClick={() => void exportReport()}>
-                        Export Redacted Diagnostic Report
+                        Copy Redacted Report…
                       </button>
                     }
                   />
                   {securityMessage ? <p className="inline-note">{securityMessage}</p> : null}
                 </SettingsGroup>
-
-                <details className="settings-inline-details">
-                  <summary>Recovery guides</summary>
-                  <div className="stack-list">
-                    {KEYRING_GUIDES.map((guide) => (
-                      <div key={guide.platform} className="settings-guide-stack">
-                        <strong>{guide.title}</strong>
-                        <p className="inline-note">Expected backend: {guide.backend}</p>
-                        {guide.steps.map((step) => (
-                          <p key={step} className="inline-note">{step}</p>
-                        ))}
-                        <p className="inline-note">Verify: {guide.verify}</p>
-                      </div>
-                    ))}
-                  </div>
-                </details>
               </div>
             ) : null}
 
@@ -815,11 +740,16 @@ export function SettingsPanel({
               <div className="settings-section-stack">
                 <SettingsGroup title="Application State">
                   <SettingsActionRow
-                    label="App data folder"
-                    description="Open the local AI Switch Desktop data location."
+                    label="Setup assistant"
+                    description="Reopen the guided setup flow from the current desktop state."
                     action={
-                      <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
-                        Open App Data Folder
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        disabled={!onReopenSetupAssistant}
+                        onClick={onReopenSetupAssistant}
+                      >
+                        Reopen Setup Assistant
                       </button>
                     }
                   />
@@ -835,9 +765,27 @@ export function SettingsPanel({
                 </SettingsGroup>
 
                 <SettingsGroup title="Data">
-                  <SettingsRow label="Custom data folder">
+                  <SettingsActionRow
+                    label="App data folder"
+                    description="Open the local AI Switch Desktop data location."
+                    action={
+                      <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
+                        Open App Data Folder
+                      </button>
+                    }
+                  />
+                  <SettingsActionRow
+                    label="Support bundle"
+                    description="Export a redacted support bundle for troubleshooting."
+                    action={
+                      <button className="ghost-button" type="button" onClick={() => void exportReport()}>
+                        Export Redacted Support Bundle…
+                      </button>
+                    }
+                  />
+                  <SettingsRow label="AISW home">
                     <input
-                      aria-label="Custom data folder"
+                      aria-label="AISW home"
                       value={aiswHome}
                       onChange={(event) => setAiswHome(event.target.value)}
                       onBlur={() =>
@@ -850,26 +798,8 @@ export function SettingsPanel({
                     />
                   </SettingsRow>
                 </SettingsGroup>
-
-                <SettingsGroup title="Engine details">
-                  <p className="inline-note">
-                    Data folder: {settings.aisw_home ? settings.aisw_home : "Managed automatically"}
-                  </p>
-                  <p className="inline-note">Release track: {titleCase(settings.update_channel)}</p>
-                  <p className="inline-note">
-                    Engine API {runtimeStatus.version?.cli_api_version ?? "Unknown"} · JSON schema {runtimeStatus.version?.json_schema_version ?? "Unknown"} · Progress schema {runtimeStatus.version?.progress_schema_version ?? "Unknown"}
-                  </p>
-                  <p className="inline-note">
-                    Selected engine source: {selectedEngineSourceLabel(settings.runtime_kind)}
-                  </p>
-                  <p className="inline-note">
-                    Included engine: {runtimeStatus.inventory?.bundled_path ? "Available in this build" : "Unavailable in this build"}
-                  </p>
-                  <p className="inline-note">
-                    System engine: {runtimeStatus.inventory?.system_path ? "Found on this computer" : "Not found on this computer"}
-                  </p>
-                </SettingsGroup>
                 {advancedMessage ? <p className="inline-note">{advancedMessage}</p> : null}
+                {securityMessage ? <p className="inline-note">{securityMessage}</p> : null}
                 {updateSettingsMutation.error ? (
                   <MutationErrorCard title="Settings could not be saved" error={updateSettingsMutation.error} />
                 ) : null}
@@ -960,42 +890,6 @@ function ToggleRow({
     </div>
   );
 }
-
-const KEYRING_GUIDES = [
-  {
-    platform: "macos",
-    title: "macOS Keychain",
-    backend: "Login keychain",
-    steps: [
-      "Open Keychain Access and confirm the login keychain is unlocked.",
-      "Approve any keychain access prompts for AI Switch, Claude, Codex, or Gemini.",
-      "If access keeps failing, lock and unlock the login keychain, then rerun diagnostics.",
-    ],
-    verify: "Rerun diagnostics and confirm the keyring warning disappears.",
-  },
-  {
-    platform: "windows",
-    title: "Windows Credential Manager",
-    backend: "Credential Manager / DPAPI",
-    steps: [
-      "Stay signed in to a normal desktop session before launching AI Switch.",
-      "Confirm security software is not blocking local credential storage prompts.",
-      "If the machine policy reset credentials, sign in again and retry the profile action.",
-    ],
-    verify: "Retry the failed profile action and confirm no keyring warning returns.",
-  },
-  {
-    platform: "linux",
-    title: "Linux Secret Service",
-    backend: "Secret Service daemon",
-    steps: [
-      "Start a Secret Service provider such as gnome-keyring or KeePassXC with Secret Service enabled.",
-      "Make sure the desktop session has an active D-Bus user session before launching AI Switch.",
-      "If diagnostics still fail, unlock the keyring collection or restart the secret service daemon.",
-    ],
-    verify: "Run diagnostics again after the secret service is available.",
-  },
-] as const;
 
 function MutationErrorCard({ title, error }: { title: string; error: unknown }) {
   const resolved = formatMutationError(error);
@@ -1096,14 +990,4 @@ function selectedRuntimePath(
     return runtimeStatus.inventory?.system_path ?? "Not found";
   }
   return runtimeStatus.inventory?.bundled_path ?? "Not found";
-}
-
-function selectedEngineSourceLabel(runtimeKind: DesktopSettings["runtime_kind"]) {
-  if (runtimeKind === "bundled") {
-    return "Included with this app";
-  }
-  if (runtimeKind === "system") {
-    return "System engine";
-  }
-  return "Custom engine";
 }

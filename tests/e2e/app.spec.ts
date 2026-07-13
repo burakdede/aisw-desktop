@@ -1378,31 +1378,27 @@ test("shows runtime detection and shell guidance in settings", async ({ page }) 
 
   await page.goto("/");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-
-  const settingsSection = page.locator(".section-card").filter({ hasText: "Runtime and local storage" });
-  const shellSection = page.locator(".section-card").filter({ hasText: "Shell setup and current-session switching" });
+  await page.getByRole("button", { name: "Engine" }).click();
+  const runtimeGroup = page.locator("section.settings-group").filter({
+    has: page.getByRole("heading", { name: "AISW Runtime" }),
+  });
 
   await expect(page.getByRole("heading", { name: "Settings" }).first()).toBeVisible();
-  await expect(
-    settingsSection.getByText("Current runtime path: /Applications/AI Switch.app/Contents/Resources/aisw"),
-  ).toBeVisible();
-  await expect(settingsSection.getByText("AI Switch data folder: ~/.aisw")).toBeVisible();
-  await expect(
-    settingsSection.getByText("Bundled switching runtime: /Applications/AI Switch.app/Contents/Resources/aisw"),
-  ).toBeVisible();
-  await expect(settingsSection.getByText("Show advanced runtime options")).toBeVisible();
-  await expect(settingsSection.getByText("Selected update channel: Stable")).toBeVisible();
-  await expect(settingsSection.getByText("Selected runtime: Bundled")).toBeVisible();
-  await expect(settingsSection.getByText("Runtime version: 0.3.7")).toBeVisible();
-  await expect(settingsSection.getByText("CLI API 1 · JSON schema 1 · Progress schema 1")).toBeVisible();
+  await expect(runtimeGroup.getByText("Bundled runtime")).toBeVisible();
+  await expect(runtimeGroup.getByText("0.3.7")).toBeVisible();
+  await expect(runtimeGroup.getByText("Status")).toBeVisible();
+  await expect(runtimeGroup.getByText("Ready")).toBeVisible();
+  await expect(runtimeGroup.getByText("System path")).toBeVisible();
+  await expect(runtimeGroup.getByText("/opt/homebrew/bin/aisw")).toBeVisible();
 
-  await expect(shellSection.getByRole("heading", { name: "Terminal Integration" })).toBeVisible();
-  await expect(shellSection.getByText("Detected shell: Zsh")).toBeVisible();
-  await expect(shellSection.getByText("Config file: ~/.zshrc")).toBeVisible();
-  await expect(shellSection.getByText("echo 'eval \"$(aisw shell-hook zsh)\"' >> ~/.zshrc")).toBeVisible();
-  await expect(shellSection.getByText("source ~/.zshrc")).toBeVisible();
-  await expect(shellSection.getByText("echo \"$AISW_SHELL_HOOK\"")).toBeVisible();
-  await expect(shellSection.getByText("Expected output: 1")).toBeVisible();
+  await page.getByRole("button", { name: "Terminal Integration" }).click();
+  await expect(page.getByRole("heading", { name: "Terminal Integration" })).toBeVisible();
+  await expect(page.getByText("Detected shell")).toBeVisible();
+  await expect(page.getByText("Config file")).toBeVisible();
+  await expect(page.getByText("~/.zshrc")).toBeVisible();
+  await expect(page.getByText("Completion scripts")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copy Install" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copy Verify" })).toBeVisible();
 });
 
 test("saves custom runtime and AISW home settings", async ({ page }) => {
@@ -1412,19 +1408,18 @@ test("saves custom runtime and AISW home settings", async ({ page }) => {
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("button", { name: "Engine" }).click();
 
-  await page.getByRole("button", { name: "Show manual engine options" }).click();
   await page.getByLabel("Runtime source").selectOption("custom");
   await page.getByLabel("Engine path").fill("/opt/custom/aisw");
   await page.getByLabel("Engine path").blur();
   await page.getByRole("button", { name: "Advanced" }).click();
-  await page.getByLabel("Custom data folder").fill("/tmp/aisw-home");
-  await page.getByLabel("Custom data folder").blur();
+  await page.getByLabel("AISW home").fill("/tmp/aisw-home");
+  await page.getByLabel("AISW home").blur();
   await page.getByRole("button", { name: "Engine" }).click();
 
   await expect(page.getByLabel("Runtime source")).toHaveValue("custom");
   await expect(page.getByLabel("Engine path")).toHaveValue("/opt/custom/aisw");
   await page.getByRole("button", { name: "Advanced" }).click();
-  await expect(page.getByLabel("Custom data folder")).toHaveValue("/tmp/aisw-home");
+  await expect(page.getByLabel("AISW home")).toHaveValue("/tmp/aisw-home");
 });
 
 test("requires saving settings before updater actions use a changed channel", async ({ page }) => {
@@ -1483,7 +1478,6 @@ test("clears a saved custom runtime path after switching back to bundled runtime
   await page.goto("/");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("button", { name: "Engine" }).click();
-  await page.getByRole("button", { name: "Show manual engine options" }).click();
   await page.getByLabel("Runtime source").selectOption("custom");
 
   const runtimePath = page.getByLabel("Engine path");
@@ -1492,10 +1486,10 @@ test("clears a saved custom runtime path after switching back to bundled runtime
   await expect(runtimePath).toBeEnabled();
 
   await page.getByLabel("Runtime source").selectOption("bundled");
-  await expect(page.getByLabel("Engine path")).toHaveCount(0);
-
-  await expect(page.getByRole("button", { name: "Show manual engine options" })).toBeVisible();
-  await expect(page.getByText("Included with this app")).toBeVisible();
+  await expect(page.getByLabel("Engine path")).toBeDisabled();
+  await expect(page.getByLabel("Engine path")).toHaveValue("");
+  await expect(page.getByLabel("Runtime source")).toHaveValue("bundled");
+  await expect(page.getByText("Current path")).toBeVisible();
   await expect(page.getByText("/Applications/AI Switch.app/Contents/Resources/aisw")).toBeVisible();
 });
 
@@ -1505,7 +1499,6 @@ test("switches from a custom runtime back to the system aisw selection", async (
   await page.goto("/");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("button", { name: "Engine" }).click();
-  await page.getByRole("button", { name: "Show manual engine options" }).click();
   await page.getByLabel("Runtime source").selectOption("custom");
 
   const runtimePath = page.getByLabel("Engine path");
@@ -1515,11 +1508,15 @@ test("switches from a custom runtime back to the system aisw selection", async (
 
   await page.getByLabel("Runtime source").selectOption("system");
   await expect(runtimePath).toBeDisabled();
+  const runtimeGroup = page.locator("section.settings-group").filter({
+    has: page.getByRole("heading", { name: "AISW Runtime" }),
+  });
+  const systemPathRow = runtimeGroup.locator(".settings-row", { hasText: "System path" });
 
   await expect(runtimePath).toHaveValue("");
   await expect(page.getByLabel("Runtime source")).toHaveValue("system");
-  await expect(page.getByText("System engine").first()).toBeVisible();
-  await expect(page.getByText("/opt/homebrew/bin/aisw")).toBeVisible();
+  await expect(systemPathRow.getByText("System path")).toBeVisible();
+  await expect(systemPathRow.getByText("/opt/homebrew/bin/aisw")).toBeVisible();
 });
 
 test("creates profiles from environment and API key modes", async ({ page }) => {

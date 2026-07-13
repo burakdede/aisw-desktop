@@ -5414,7 +5414,8 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Show keyring setup" }));
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Security" })).toBeInTheDocument();
-      expect(screen.getByText("Linux Secret Service")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Credential Storage" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Reveal in Finder" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Security" })).toHaveAttribute("aria-pressed", "true");
     });
   });
@@ -7839,20 +7840,11 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
       expect(screen.getByText("Detected shell")).toBeInTheDocument();
-      expect(screen.getByText("Config file: ~/.zshrc")).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          "Enforce project-rule guardrails before `claude`, `codex`, or `gemini` launch from that shell.",
-        ),
-      ).toBeInTheDocument();
-      expect(screen.getByText("1. Copy the AI Switch setup step.")).toBeInTheDocument();
-      expect(
-        screen.getByText("Paste it into ~/.zshrc or the matching shell config file."),
-      ).toBeInTheDocument();
-      expect(screen.getByText("2. Reload Terminal.")).toBeInTheDocument();
-      expect(screen.getByText("Run the reload step or open a new terminal window.")).toBeInTheDocument();
-      expect(screen.getByText("3. Confirm that terminal integration is active.")).toBeInTheDocument();
-      expect(screen.getByText("Show advanced terminal commands")).toBeInTheDocument();
+      expect(screen.getByText("Config file")).toBeInTheDocument();
+      expect(screen.getByText("~/.zshrc")).toBeInTheDocument();
+      expect(screen.getByText("Completion scripts")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Copy Install" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Copy Verify" })).toBeInTheDocument();
     });
   });
 
@@ -7912,7 +7904,8 @@ describe("App", () => {
     await waitFor(() => {
       expect(calls).toContain("run_doctor");
       expect(calls).toContain("get_shell_guidance");
-      expect(screen.getByText("Config file: ~/.zshrc")).toBeInTheDocument();
+      expect(screen.getByText("Config file")).toBeInTheDocument();
+      expect(screen.getByText("~/.zshrc")).toBeInTheDocument();
     });
   });
 
@@ -8035,16 +8028,17 @@ describe("App", () => {
 
   it("shows cross-platform keyring setup guidance in settings", async () => {
     await renderSettingsPanel(bootstrap.settings, "keyring");
+    const credentialGroup = screen.getByRole("heading", { name: "Credential Storage" }).closest("section");
 
     expect(screen.getByRole("heading", { name: "Security" })).toBeInTheDocument();
-    expect(screen.getByText("macOS Keychain")).toBeInTheDocument();
-    expect(screen.getByText("Windows Credential Manager")).toBeInTheDocument();
-    expect(screen.getByText("Linux Secret Service")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Start a Secret Service provider such as gnome-keyring or KeePassXC with Secret Service enabled.",
-      ),
-    ).toBeInTheDocument();
+    expect(credentialGroup).not.toBeNull();
+    const credentialContent = within(credentialGroup as HTMLElement);
+    expect(credentialContent.getByText("Keychain backend")).toBeInTheDocument();
+    expect(credentialContent.getByText("Available")).toBeInTheDocument();
+    expect(credentialContent.getByText("Remote sync")).toBeInTheDocument();
+    expect(credentialContent.getAllByText("Disabled").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "Reveal in Finder" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copy Redacted Report…" })).toBeInTheDocument();
   });
 
   it("exports a redacted diagnostic report from security settings", async () => {
@@ -8065,7 +8059,7 @@ describe("App", () => {
     };
 
     await renderSettingsPanel(bootstrap.settings, "keyring");
-    fireEvent.click(screen.getByRole("button", { name: "Export Redacted Diagnostic Report" }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy Redacted Report…" }));
 
     await waitFor(() => {
       expect(calls).toContain("export_diagnostic_bundle");
@@ -8251,37 +8245,17 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     fireEvent.click(screen.getByRole("button", { name: "Engine" }));
 
-    await waitFor(() => {
-      expect(screen.getByText("Bundled runtime")).toBeInTheDocument();
-      expect(screen.getByText("0.3.7")).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: "Advanced" }));
+    const runtimeGroup = screen.getByRole("heading", { name: "AISW Runtime" }).closest("section");
+    expect(runtimeGroup).not.toBeNull();
 
     await waitFor(() => {
-      expect(screen.getByText("Engine details")).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          (_, element) => element?.textContent?.trim() === "Data folder: Managed automatically",
-        ),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText((_, element) => element?.textContent?.trim() === "Release track: Stable"),
-      ).toBeInTheDocument();
-      expect(screen.getByText("Engine API 1 · JSON schema 1 · Progress schema 1")).toBeInTheDocument();
-      expect(
-        screen.getByText((_, element) =>
-          element?.textContent?.trim() === "Selected engine source: Included with this app",
-        ),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText((_, element) =>
-          element?.textContent?.trim() === "Included engine: Available in this build",
-        ),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText((_, element) => element?.textContent?.trim() === "System engine: Found on this computer"),
-      ).toBeInTheDocument();
+      const runtimeContent = within(runtimeGroup as HTMLElement);
+      expect(runtimeContent.getByText("Bundled runtime")).toBeInTheDocument();
+      expect(runtimeContent.getByText("0.3.7")).toBeInTheDocument();
+      expect(runtimeContent.getByText("Status")).toBeInTheDocument();
+      expect(runtimeContent.getByText("Ready")).toBeInTheDocument();
+      expect(runtimeContent.getByText("System path")).toBeInTheDocument();
+      expect(runtimeContent.getByText("/opt/homebrew/bin/aisw")).toBeInTheDocument();
     });
   });
 
@@ -8327,8 +8301,6 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByLabelText("Settings sections")).toBeInTheDocument();
     });
-
-    expect(screen.getByText("Show manual engine options")).toBeInTheDocument();
 
     await act(async () => {
       rendered.rerender(
@@ -8445,8 +8417,9 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByLabelText("Runtime path")).not.toBeInTheDocument();
-      expect(screen.getByText("Show manual engine options")).toBeInTheDocument();
+      expect(screen.getByDisplayValue("Bundled")).toBeInTheDocument();
+      expect(screen.getByLabelText("Engine path")).toHaveValue("");
+      expect(screen.getByLabelText("Engine path")).toBeDisabled();
     });
   });
 
@@ -8530,8 +8503,9 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByDisplayValue("System engine")).toBeInTheDocument();
+      expect(screen.getByLabelText("Runtime source")).toHaveValue("system");
       expect(screen.getByLabelText("Engine path")).toHaveValue("");
+      expect(screen.getByLabelText("Engine path")).toBeDisabled();
     });
   });
 
