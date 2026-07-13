@@ -1,3 +1,4 @@
+import { SegmentedControl } from "../../../components/SegmentedControl";
 import { titleCase } from "../../../lib/utils";
 
 const STATE_MODE_COPY: Record<string, string> = {
@@ -10,12 +11,36 @@ export function StateModeField({
   value,
   options,
   onChange,
+  variant = "cards",
 }: {
   name: string;
   value: string;
   options: string[];
   onChange: (value: string) => void;
+  variant?: "cards" | "compact";
 }) {
+  if (variant === "compact") {
+    const selectedOption = options.find((option) => option === value) ?? options[0];
+    const copy =
+      STATE_MODE_COPY[selectedOption] ??
+      "Use the runtime-supported state handling for this profile.";
+    return (
+      <fieldset className="state-mode-field state-mode-field-compact">
+        <legend>State mode</legend>
+        <SegmentedControl
+          ariaLabel="State mode"
+          options={options.map((option) => ({
+            value: option,
+            label: titleCase(option),
+          }))}
+          value={selectedOption}
+          onChange={onChange}
+        />
+        <p className="state-mode-copy">{copy}</p>
+      </fieldset>
+    );
+  }
+
   return (
     <fieldset className="state-mode-field">
       <legend>State mode</legend>

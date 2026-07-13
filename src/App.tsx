@@ -92,6 +92,7 @@ type ProfilesRouteState = {
   expandedProfile?: string | null;
   mode?: ProfileImportMode;
   credentialBackend?: "file" | "system-keyring" | null;
+  openToken?: number;
 };
 
 type SettingsRouteState = {
@@ -682,7 +683,11 @@ export function App() {
   }
 
   function openAddProfile() {
-    setProfilesRouteState({ tool: "claude", expandedProfile: null });
+    setProfilesRouteState((current) => ({
+      tool: "claude",
+      expandedProfile: null,
+      openToken: (current.openToken ?? 0) + 1,
+    }));
     setActiveNav("profiles");
   }
 
@@ -746,15 +751,6 @@ export function App() {
     if (activeSection === "profiles") {
       return (
         <div className="button-row toolbar-action-row">
-          <button
-            className="ghost-button"
-            type="button"
-            disabled={runtimeBlocked}
-            onClick={() => setQuickSwitchOpen(true)}
-          >
-            <span>Quick Switch</span>
-            <kbd aria-hidden="true">⌘K</kbd>
-          </button>
           <button
             className="primary-button"
             type="button"
@@ -968,6 +964,7 @@ export function App() {
               initialExpandedProfile={profilesRouteState.expandedProfile}
               initialMode={profilesRouteState.mode}
               initialCredentialBackend={profilesRouteState.credentialBackend}
+              openToken={profilesRouteState.openToken}
             />
           ) : null}
           {activeSection === "sets" ? (

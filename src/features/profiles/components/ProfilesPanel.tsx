@@ -54,6 +54,7 @@ export function ProfilesPanel({
   initialExpandedProfile,
   initialMode,
   initialCredentialBackend,
+  openToken,
 }: {
   snapshot: AppSnapshot;
   settings: DesktopSettings;
@@ -62,6 +63,7 @@ export function ProfilesPanel({
   initialExpandedProfile?: string | null;
   initialMode?: ProfileImportMode;
   initialCredentialBackend?: "file" | "system-keyring" | null;
+  openToken?: number;
 }) {
   const {
     addProfileMutation,
@@ -78,7 +80,7 @@ export function ProfilesPanel({
     isSupportedTool(initialTool) ? initialTool : "claude",
   );
   const [inventoryFilter, setInventoryFilter] = useState<InventoryFilter>(
-    isSupportedTool(initialTool) ? initialTool : "claude",
+    isSupportedTool(initialTool) ? initialTool : "all",
   );
   const [search, setSearch] = useState("");
   const [profile, setProfile] = useState("");
@@ -104,7 +106,7 @@ export function ProfilesPanel({
     focus: "name" | "label";
   } | null>(null);
   const [expandedDetails, setExpandedDetails] = useState<string | null>(null);
-  const [openDiagnosticDetails, setOpenDiagnosticDetails] = useState<string | null>(null);
+  const [openStorageDetails, setOpenStorageDetails] = useState<string | null>(null);
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
   const [openRowActions, setOpenRowActions] = useState<{
     tool: (typeof TOOLS)[number];
@@ -131,13 +133,20 @@ export function ProfilesPanel({
           auth: entry.auth,
           label: effectiveLabel(entryTool, entry.name, entry.label, settings) ?? titleCase(entry.name),
           active: snapshot.profiles[entryTool]?.active === entry.name,
-          backend: status?.credential_backend ? formatBackendLabel(status.credential_backend) : "Stored",
-          state: status?.active_profile_applied === false ? "Drifted" : snapshot.profiles[entryTool]?.active === entry.name ? "Active" : "Stored",
+          backend: status?.credential_backend ? formatBackendLabel(status.credential_backend) : "Backend Unavailable",
+          state:
+            snapshot.profiles[entryTool]?.active === entry.name
+              ? status?.active_profile_applied === false
+                ? "Needs Attention"
+                : status?.active_profile_applied == null
+                  ? "Not Verified"
+                  : "Active"
+              : "Stored",
           lastChecked: latestBackup
             ? formatBackupTimestamp(latestBackup.created_at ?? latestBackup.backup_id)
             : snapshot.profiles[entryTool]?.active === entry.name
-              ? "Just now"
-              : "Available locally",
+              ? "Not Verified"
+              : "Date Unavailable",
         };
       }),
     );
@@ -224,7 +233,7 @@ export function ProfilesPanel({
     isDuplicateProfileName(profiles, editSheetProfile.name, editSheetRenameDraft);
   const selectedRestoreTargetDisplay =
     selectedProfileEntry && selectedProfileDisplay
-      ? `${titleCase(tool)} / ${selectedProfileDisplay}`
+      ? `${toolDisplayName(tool)} / ${selectedProfileDisplay}`
       : null;
   const isPendingRestoreFiles =
     selectedProfileEntry &&
@@ -288,17 +297,20 @@ export function ProfilesPanel({
 
   useEffect(() => {
     setExpandedDetails(initialExpandedProfile ?? null);
-    setOpenDiagnosticDetails(initialExpandedProfile ?? null);
+    setOpenStorageDetails(initialExpandedProfile ?? null);
   }, [initialExpandedProfile, initialTool]);
 
   useEffect(() => {
     if (
       initialExpandedProfile == null &&
-      (isSupportedTool(initialTool) || Boolean(initialMode) || Boolean(initialCredentialBackend))
+      (isSupportedTool(initialTool) ||
+        Boolean(initialMode) ||
+        Boolean(initialCredentialBackend) ||
+        openToken != null)
     ) {
       setProfileSheetOpen(true);
     }
-  }, [initialCredentialBackend, initialExpandedProfile, initialMode, initialTool]);
+  }, [initialCredentialBackend, initialExpandedProfile, initialMode, initialTool, openToken]);
 
   useEffect(() => {
     if (inventoryFilter === "all") {
@@ -452,7 +464,6 @@ export function ProfilesPanel({
 
   function selectInventoryEntry(entryTool: (typeof TOOLS)[number], name: string) {
     setTool(entryTool);
-    setOpenDiagnosticDetails(null);
     setExpandedDetails(name);
   }
 
@@ -490,6 +501,9 @@ export function ProfilesPanel({
           value={inventoryFilter}
           onChange={setInventoryFilter}
         />
+        <span className="quick-switch-count profiles-count" aria-label={`${filteredInventoryProfiles.length} profiles`}>
+          {filteredInventoryProfiles.length}
+        </span>
       </div>
       <SplitView
         className="profiles-layout profiles-split-view"
@@ -522,7 +536,7 @@ export function ProfilesPanel({
                     <button
                       type="button"
                       className="profiles-table-row-button"
-                      aria-label={`Inspect ${titleCase(inventoryEntry.tool)} ${inventoryEntry.label}`}
+                      aria-label={`Inspect ${toolDisplayName(inventoryEntry.tool)} ${inventoryEntry.label}`}
                       onClick={() => selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name)}
                       onDoubleClick={() => selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name)}
                     >
@@ -546,7 +560,9 @@ export function ProfilesPanel({
                       >
                         {profileStatusLabel(inventoryEntry.active, inventoryEntry.state)}
                       </span>
-                      <span className="profiles-table-column profiles-table-column-auth">{inventoryEntry.auth}</span>
+                      <span className="profiles-table-column profiles-table-column-auth">
+                        {authDisplayLabel(inventoryEntry.auth)}
+                      </span>
                       <span className="profiles-table-column profiles-table-column-low">{inventoryEntry.backend}</span>
                       <span className="profiles-table-column profiles-table-column-low">{inventoryEntry.lastChecked}</span>
                     </button>
@@ -666,14 +682,12 @@ export function ProfilesPanel({
             {selectedProfileEntry ? (
               <>
                 <header className="profiles-inspector-header">
-                  <div className="profiles-inspector-title-block">
-                    <h3>{selectedProfileDisplay}</h3>
-                    <p className="inline-note">
-                      <ToolBrand tool={tool} className="tool-brand-inline" logoSize={16} />
-                    </p>
-                    <div className={`profiles-inspector-status profiles-inspector-status-${profileStatusTone(
-                      snapshot.profiles[tool]?.active === selectedProfileEntry.name,
-                      profileStatusSummary(snapshot, tool, selectedProfileEntry.name, toolStatus),
+                    <div className="profiles-inspector-title-block">
+                      <h3>{selectedProfileDisplay}</h3>
+                      <p className="inline-note">{toolDisplayName(tool)}</p>
+                      <div className={`profiles-inspector-status profiles-inspector-status-${profileStatusTone(
+                        snapshot.profiles[tool]?.active === selectedProfileEntry.name,
+                        profileStatusSummary(snapshot, tool, selectedProfileEntry.name, toolStatus),
                     )}`}>
                       <span aria-hidden="true">{profileStatusSymbol(
                         snapshot.profiles[tool]?.active === selectedProfileEntry.name,
@@ -799,34 +813,35 @@ export function ProfilesPanel({
                   </div>
                 </header>
                 <KeyValueGrid
+                  variant="plain"
                   rows={[
                     { label: "Profile", value: selectedProfileEntry.name },
                     { label: "Label", value: selectedProfileDisplay ?? selectedProfileEntry.name },
                     { label: "Live match", value: profileLiveMatchValue(snapshot, tool, selectedProfileEntry.name, toolStatus) },
-                    { label: "Authentication", value: selectedProfileEntry.auth },
+                    { label: "Authentication", value: authDisplayLabel(selectedProfileEntry.auth) },
                     {
                       label: "Credential storage",
                       value:
                         snapshot.profiles[tool]?.active === selectedProfileEntry.name
                           ? credentialBackendDisplay(toolStatus?.credential_backend)
-                          : selectedInventoryEntry?.backend ?? "Stored",
+                          : selectedInventoryEntry?.backend ?? "Backend Unavailable",
                     },
                     {
                       label: "State mode",
                       value:
                         snapshot.profiles[tool]?.active === selectedProfileEntry.name
                           ? stateModeDisplay(toolStatus?.state_mode)
-                          : "Stored",
+                          : "Available after activation",
+                    },
+                    {
+                      label: "Added",
+                      value: selectedLatestBackup
+                        ? formatBackupTimestamp(selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id)
+                        : "Date Unavailable",
                     },
                     {
                       label: "Last checked",
-                      value: selectedInventoryEntry?.lastChecked ?? "Available locally",
-                    },
-                    {
-                      label: "Latest backup",
-                      value: selectedLatestBackup
-                        ? formatBackupTimestamp(selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id)
-                        : "No backup yet",
+                      value: selectedInventoryEntry?.lastChecked ?? "Not Verified",
                     },
                   ]}
                 />
@@ -836,31 +851,39 @@ export function ProfilesPanel({
                     value={stateMode}
                     options={availableStateModes}
                     onChange={setStateMode}
+                    variant="compact"
                   />
-                ) : null}
+                ) : (
+                  <div className="state-mode-static">
+                    <span className="state-mode-static-label">State mode</span>
+                    <strong>Isolated</strong>
+                    <p className="state-mode-copy">
+                      Gemini keeps authentication and local state together.
+                    </p>
+                  </div>
+                )}
                 <div className="profiles-inspector-disclosure">
                   <button
                     className="ghost-button"
                     type="button"
                     onClick={() =>
-                      setOpenDiagnosticDetails((current) =>
+                      setOpenStorageDetails((current) =>
                         current === selectedProfileEntry.name ? null : selectedProfileEntry.name,
                       )
                     }
                   >
-                    {openDiagnosticDetails === selectedProfileEntry.name ? "Hide Storage Details" : "Show Storage Details"}
+                    {openStorageDetails === selectedProfileEntry.name ? "Hide Storage Details" : "Storage Details"}
                   </button>
                 </div>
-                {openDiagnosticDetails === selectedProfileEntry.name ? (
+                {openStorageDetails === selectedProfileEntry.name ? (
                   <div className="profiles-inspector-details">
                     {snapshot.profiles[tool]?.active === selectedProfileEntry.name ? (
                       <>
-                        <p className="inline-note">Selected in AI Switch: {booleanLabel(true).toLowerCase()}</p>
                         <p className="inline-note">
-                          Credentials present: {booleanLabel(toolStatus?.credentials_present).toLowerCase()}
+                          Credentials present: {booleanLabel(toolStatus?.credentials_present)}
                         </p>
                         <p className="inline-note">
-                          Local permissions: {booleanLabel(toolStatus?.permissions_ok).toLowerCase()}
+                          Local permissions: {booleanLabel(toolStatus?.permissions_ok)}
                         </p>
                         {toolStatus?.token_warning ? (
                           <p className="inline-note">Token warning: {formatProfileTokenWarning(toolStatus)}</p>
@@ -885,7 +908,7 @@ export function ProfilesPanel({
                       </>
                     ) : (
                       <p className="inline-note">
-                        Live health details are only available for the active profile.
+                        Live storage details are available after this profile becomes active.
                       </p>
                     )}
                   </div>
@@ -913,9 +936,6 @@ export function ProfilesPanel({
             <div>
               <p className="card-kicker">Profile</p>
               <h3>Rename Profile</h3>
-              <p className="inline-note">
-                Update the stored name or display label for {editSheetDisplay}.
-              </p>
             </div>
             <button className="ghost-button" type="button" onClick={() => setPendingEdit(null)}>
               Close
@@ -1004,7 +1024,7 @@ export function ProfilesPanel({
                 type="submit"
                 disabled={mutationLock.isBusy || Boolean(editSheetRenameDuplicate)}
               >
-                Save Changes
+                Save
               </button>
             </div>
           </form>
@@ -1020,10 +1040,7 @@ export function ProfilesPanel({
             <div className="quick-switch-header">
               <div>
                 <p className="card-kicker">Backup</p>
-                <h3>Restore latest backup?</h3>
-                <p className="inline-note">
-                  Review the restore scope before AI Switch changes any saved files.
-                </p>
+                <h3>Restore Latest Backup</h3>
               </div>
               <button className="ghost-button" type="button" onClick={() => setPendingRestore(null)}>
                 Close
@@ -1108,10 +1125,7 @@ export function ProfilesPanel({
             <div className="quick-switch-header">
               <div>
                 <p className="card-kicker">Removal</p>
-                <h3>Remove profile?</h3>
-                <p className="inline-note">
-                  This removes the saved login from AI Switch. Credential contents are never shown here.
-                </p>
+                <h3>Remove “{removalSheetDisplay}”?</h3>
               </div>
               <button className="ghost-button" type="button" onClick={() => setPendingRemoval(null)}>
                 Close
@@ -1131,9 +1145,7 @@ export function ProfilesPanel({
               ]}
             />
             <p className="inline-note">
-              {snapshot.profiles[tool]?.active === removalSheetProfile.name
-                ? "Removing the active profile affects the current desktop selection and needs explicit confirmation."
-                : "This removes the saved profile from the local library only."}
+              AI Switch creates a backup before removal. Current live credentials are not removed automatically.
             </p>
             <footer className="quick-switch-footer">
               <div className="quick-switch-selection">
@@ -1185,9 +1197,6 @@ export function ProfilesPanel({
                 Close
               </button>
             </div>
-            <p className="inline-note">
-              Capture a current login, start provider OAuth, paste an API key, or read from the environment in one step.
-            </p>
             <form className="stacked-form" onSubmit={submit}>
               <label>
                 Tool
@@ -1195,13 +1204,12 @@ export function ProfilesPanel({
                   value={tool}
                   onChange={(event) => {
                     setTool(event.target.value as typeof tool);
-                    setOpenDiagnosticDetails(null);
                     setExpandedDetails(null);
                   }}
                 >
                   {TOOLS.map((entry) => (
                     <option key={entry} value={entry}>
-                      {titleCase(entry)}
+                      {toolDisplayName(entry)}
                     </option>
                   ))}
                 </select>
@@ -1214,7 +1222,7 @@ export function ProfilesPanel({
                 <p className="inline-note">{duplicateWarning(tool, duplicateDraftName)}</p>
               ) : null}
               <label>
-                Label
+                Display label
                 <input value={label} onChange={(event) => setLabel(event.target.value)} />
               </label>
               <label>
@@ -1231,19 +1239,15 @@ export function ProfilesPanel({
                   ))}
                 </select>
               </label>
-              <article className="diagnostic-card settings-pane-section">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">Mode</p>
-                    <h4>{profileImportModeHeading(tool, mode)}</h4>
-                  </div>
-                </div>
+              <div className="profiles-sheet-note">
+                <p className="card-kicker">Mode</p>
+                <h4>{profileImportModeHeading(tool, mode)}</h4>
                 {profileImportModeNotes(tool, mode).map((note) => (
                   <p key={note} className="inline-note">
                     {note}
                   </p>
                 ))}
-              </article>
+              </div>
               <label>
                 Credential backend
                 <select
@@ -1302,14 +1306,16 @@ export function ProfilesPanel({
                   value={stateMode}
                   options={availableStateModes}
                   onChange={setStateMode}
+                  variant="compact"
                 />
               ) : (
-                <label>
-                  State mode
-                  <select value="n/a" disabled>
-                    <option value="n/a">Not configurable</option>
-                  </select>
-                </label>
+                <div className="state-mode-static">
+                  <span className="state-mode-static-label">State mode</span>
+                  <strong>Isolated</strong>
+                  <p className="state-mode-copy">
+                    Gemini keeps authentication and local state together.
+                  </p>
+                </div>
               )}
               {mode === "oauth" ? (
                 <article className="diagnostic-card">
@@ -1431,23 +1437,19 @@ function profileImportModeNotes(tool: string, mode: ProfileImportMode) {
   switch (mode) {
     case "from_live":
       return [
-        `AI Switch will capture the credentials ${toolName} is already using and save them as the profile you name here.`,
-        "This keeps the current login local while turning it into a reusable saved profile.",
+        `Capture the ${toolName} credentials already active on this Mac.`,
       ];
     case "from_env":
       return [
-        `AI Switch will read ${expectedEnvVar(tool)} when you save this profile.`,
-        "Use this when the current shell or launch environment already has the provider key exported.",
+        `Read ${expectedEnvVar(tool)} from the current environment when you save this profile.`,
       ];
     case "api_key":
       return [
-        "Paste the provider key once and AI Switch will hand it to the included desktop engine over stdin instead of writing it into the form state.",
-        "The saved profile stores the resulting local credentials only after the desktop engine confirms success.",
+        "Paste the provider key once. AI Switch sends it to the desktop engine without storing it in the form state.",
       ];
     case "oauth":
       return [
-        `AI Switch will open the normal ${toolName} sign-in flow and capture the resulting local credentials after sign-in finishes.`,
-        "Keep this sheet open while the browser or terminal login completes.",
+        `Open the normal ${toolName} sign-in flow and keep this sheet open until it finishes.`,
       ];
   }
 }
@@ -1708,37 +1710,46 @@ function credentialBackendDisplay(backend: string | null | undefined) {
 
 function stateModeDisplay(mode: string | null | undefined) {
   if (!mode) {
-    return "Not Configurable";
+    return "Not Available";
   }
   return titleCase(mode);
 }
 
 function profileStatusTone(active: boolean, state: string) {
-  if (!active && state !== "Drifted") {
+  if (!active && state !== "Needs Attention" && state !== "Not Verified") {
     return "stored";
   }
-  if (state === "Drifted" || state === "Live mismatch") {
+  if (state === "Needs Attention" || state === "Live mismatch") {
     return "warn";
+  }
+  if (state === "Not Verified") {
+    return "stored";
   }
   return "ok";
 }
 
 function profileStatusLabel(active: boolean, state: string) {
-  if (!active && state !== "Drifted") {
+  if (!active && state !== "Needs Attention" && state !== "Not Verified") {
     return "Stored";
   }
-  if (state === "Drifted" || state === "Live mismatch") {
+  if (state === "Needs Attention" || state === "Live mismatch") {
     return "Needs Attention";
+  }
+  if (state === "Not Verified") {
+    return "Not Verified";
   }
   return "Active";
 }
 
 function profileStatusSymbol(active: boolean, state: string) {
-  if (!active && state !== "Drifted") {
+  if (!active && state !== "Needs Attention" && state !== "Not Verified") {
     return "○";
   }
-  if (state === "Drifted" || state === "Live mismatch") {
+  if (state === "Needs Attention" || state === "Live mismatch") {
     return "▲";
+  }
+  if (state === "Not Verified") {
+    return "?";
   }
   return "●";
 }
@@ -1760,7 +1771,7 @@ function profileLiveMatchValue(
 
 function booleanLabel(value: boolean | null | undefined) {
   if (value === undefined || value === null) {
-    return "Unknown";
+    return "Verification Required";
   }
   return value ? "Yes" : "No";
 }
@@ -1776,6 +1787,9 @@ function profileStatusSummary(
   }
   if (toolStatus?.active_profile_applied === false) {
     return "Live mismatch";
+  }
+  if (toolStatus?.active_profile_applied == null) {
+    return "Not Verified";
   }
   return "Active";
 }
@@ -1795,13 +1809,13 @@ function formatBackupTimestamp(value: string) {
 
   const match = value.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/);
   if (!match) {
-    return "Unknown";
+    return "Date Unavailable";
   }
 
   const [, year, month, day, hour, minute, second] = match;
   const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
   if (Number.isNaN(date.getTime())) {
-    return "Unknown";
+    return "Date Unavailable";
   }
 
   return new Intl.DateTimeFormat(undefined, {
@@ -1812,6 +1826,16 @@ function formatBackupTimestamp(value: string) {
     minute: "2-digit",
     timeZoneName: "short",
   }).format(date);
+}
+
+function authDisplayLabel(auth: string) {
+  if (auth === "oauth") {
+    return "OAuth";
+  }
+  if (auth === "api_key") {
+    return "API Key";
+  }
+  return titleCase(auth.split("_").join(" "));
 }
 
 function duplicateWarning(tool: string, profile: string) {

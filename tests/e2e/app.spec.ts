@@ -228,13 +228,24 @@ test("runs the onboarding first switch flow", async ({ page }) => {
 
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: "First-run setup" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Get started" }).first()).toBeVisible();
+  await page.getByRole("tab", { name: "First switch" }).click();
   await page.getByLabel("First switch profile").selectOption("work");
   await page.getByRole("button", { name: "Switch now" }).click();
 
-  await expect(page.getByText("Last bulk result: Switched all tools to Office.")).toBeVisible();
-  await expect(page.getByText("Shell guidance")).toBeVisible();
-  await expect(page.getByText("Runtime compatibility")).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (
+            window as typeof window & {
+              __AISW_COMMAND_LOG__?: Array<{ command: string }>;
+            }
+          ).__AISW_COMMAND_LOG__?.some((entry) => entry.command === "use_all_profiles") ?? false,
+      ),
+    )
+    .toBe(true);
+  await expect(page.getByText("Try one safe switch")).toBeVisible();
 });
 
 test("keeps Gemini state mode non-configurable when runtime capabilities are stale", async ({
@@ -277,9 +288,10 @@ test("switches shared profiles and recovers from live mismatch", async ({ page }
 
   await expect(page.getByText("Last result: Saved claude profile incident.")).toBeVisible();
 
-  const overview = page.locator(".section-card").filter({ hasText: "Control Center" });
-  await overview.getByRole("combobox").first().selectOption("profile:work");
-  await overview.getByRole("button", { name: "Switch all" }).click();
+  const overview = page.locator(".section-card").filter({ hasText: "Control center" });
+  await overview.getByLabel("Open Quick Switch").click();
+  await page.getByLabel("Search Quick Switch").fill("work");
+  await page.getByRole("button", { name: "Switch all tools to Work" }).click();
 
   await expect(page.getByText("Last bulk result: Switched all tools to Work.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Work" }).nth(1)).toBeVisible();
@@ -444,7 +456,7 @@ test("opens diagnostics when the tray requests it", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
-  await expect(page.getByText("Control Center")).toBeVisible();
+  await expect(page.getByText("Control center")).toBeVisible();
 
   await page.evaluate(() => {
     const handlers = (
@@ -455,14 +467,14 @@ test("opens diagnostics when the tray requests it", async ({ page }) => {
     handlers?.["tray-open-diagnostics"]?.({});
   });
 
-  await expect(page.getByText("Verify and recovery")).toBeVisible();
+  await expect(page.getByText("Checks and recovery")).toBeVisible();
 });
 
 test("reruns diagnostics when the tray requests a diagnostics run", async ({ page }) => {
   await installDesktopMock(page, "trayDiagnosticsRefresh");
 
   await page.goto("/");
-  await expect(page.getByText("Control Center")).toBeVisible();
+  await expect(page.getByText("Control center")).toBeVisible();
 
   await page.evaluate(() => {
     const handlers = (
@@ -473,7 +485,7 @@ test("reruns diagnostics when the tray requests a diagnostics run", async ({ pag
     handlers?.["tray-run-diagnostics"]?.({});
   });
 
-  const diagnosticsSection = page.locator(".section-card").filter({ hasText: "Verify and recovery" });
+  const diagnosticsSection = page.locator(".section-card").filter({ hasText: "Diagnostics" });
   await expect(diagnosticsSection).toBeVisible();
   await expect(
     diagnosticsSection.getByText("Shell hook is not active in the current shell session.").first(),
@@ -484,7 +496,7 @@ test("records tray command results and shows a desktop notification", async ({ p
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
-  await expect(page.getByText("Control Center")).toBeVisible();
+  await expect(page.getByText("Control center")).toBeVisible();
 
   await page.evaluate(() => {
     const handlers = (
@@ -523,7 +535,7 @@ test("refreshes overview state after a successful tray profile switch", async ({
 
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Work" }).first()).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Personal" })).toHaveCount(0);
+  await expect(page.getByText("Personal")).toHaveCount(0);
 
   await page.evaluate(() => {
     const handlers = (
@@ -541,7 +553,7 @@ test("refreshes overview state after a successful tray profile switch", async ({
   });
 
   const claudeCard = page.locator(".tool-card").filter({ hasText: "Claude" });
-  await expect(claudeCard.getByRole("heading", { name: "Personal" })).toBeVisible();
+  await expect(claudeCard.getByText("Personal").first()).toBeVisible();
   await expect(claudeCard.getByText("Last result: Switched claude to personal.")).toBeVisible();
 });
 
@@ -551,7 +563,8 @@ test("refreshes workspace status and bindings after a successful tray context sw
   await installDesktopMock(page, "trayWorkspaceRefresh");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Workspaces" }).click();
+  await page.getByRole("button", { name: "Sets" }).click();
+  await page.getByRole("button", { name: "Project rules" }).click();
 
   await expect(page.getByText("Workspace mismatch")).toBeVisible();
   await expect(page.getByText("Guard mode: warn")).toBeVisible();
@@ -622,7 +635,7 @@ test("records tray context failures and keeps the remediation visible in overvie
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
-  await expect(page.getByText("Control Center")).toBeVisible();
+  await expect(page.getByText("Control center")).toBeVisible();
 
   await page.evaluate(() => {
     const handlers = (
@@ -642,7 +655,7 @@ test("records tray context failures and keeps the remediation visible in overvie
 
   await expect(
     page.getByText(
-      "Last context result: Context switch failed. Remediation: Re-open AISW Desktop and verify the saved CLI context.",
+      "Last imported-set result: Context switch failed. Remediation: Re-open AISW Desktop and verify the saved CLI context.",
     ),
   ).toBeVisible();
   await expect
@@ -664,7 +677,7 @@ test("classifies tray profile failures in diagnostics", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
-  await expect(page.getByText("Control Center")).toBeVisible();
+  await expect(page.getByText("Control center")).toBeVisible();
 
   await page.evaluate(() => {
     const handlers = (
@@ -696,16 +709,16 @@ test("exports a redacted diagnostic bundle from diagnostics", async ({ page }) =
 
   await page.goto("/");
   await page.getByRole("button", { name: "Diagnostics" }).click();
-  await page.getByRole("button", { name: "Export report" }).click();
+  await page.getByRole("button", { name: "Export Report" }).click();
 
-  await expect(page.getByText("Diagnostic bundle exported")).toBeVisible();
+  await expect(page.getByText("Support report ready")).toBeVisible();
   await expect(
     page.getByText("/tmp/aisw-desktop/aisw-desktop-diagnostics-789.json"),
   ).toBeVisible();
 
-  await page.getByRole("button", { name: "Copy bundle path" }).click();
+  await page.getByRole("button", { name: "Copy report path" }).click();
   await expect(
-    page.getByText("Copied bundle path /tmp/aisw-desktop/aisw-desktop-diagnostics-789.json."),
+    page.getByText("Copied report path /tmp/aisw-desktop/aisw-desktop-diagnostics-789.json."),
   ).toBeVisible();
 });
 
@@ -825,6 +838,9 @@ test("uses saved profile labels in overview switch results", async ({ page }) =>
 
   await page.goto("/");
 
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Overview" }).click();
+  await page.getByRole("button", { name: "Inspect Codex" }).click();
   const codexCard = page.locator(".tool-card").filter({ hasText: "Codex" });
   await codexCard.getByLabel("Switch codex profile").selectOption("work");
   await codexCard.getByRole("button", { name: /Code Work/ }).click();
@@ -1160,7 +1176,9 @@ test("uses saved profile labels in context summaries and selectors", async ({ pa
   await installDesktopMock(page, "labelOverrides");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Contexts" }).click();
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Sets" }).click();
+  await page.getByRole("button", { name: "Set Library" }).click();
 
   await expect(page.getByText("claude: Office · codex: Code Work · gemini: none")).toBeVisible();
   const contextsForm = page.locator("form.stacked-form");
@@ -1504,43 +1522,56 @@ test("switches from a custom runtime back to the system aisw selection", async (
 });
 
 test("creates profiles from environment and API key modes", async ({ page }) => {
-  await installDesktopMock(page, "profiles");
+  await installDesktopMock(page, "switching");
 
   await page.goto("/");
 
-  await page.getByRole("button", { name: "Profiles" }).click();
-  const profilesSection = page.locator(".section-card").filter({ hasText: "Provisioning" });
+  if (await page.getByRole("button", { name: "Profiles" }).count()) {
+    await page.getByRole("button", { name: "Profiles" }).click();
+  }
+  await page.getByRole("button", { name: "Add Profile" }).click();
+  const dialog = page.getByRole("dialog", { name: "Add Profile" });
 
-  await page.getByLabel("Tool").selectOption("codex");
-  await page.getByLabel("Profile name").fill("ci");
-  await page.getByLabel("Import mode").selectOption("from_env");
-  await page.getByLabel("Credential backend").selectOption("system-keyring");
-  await expect(page.getByText("OPENAI_API_KEY")).toBeVisible();
-  await profilesSection.getByRole("button", { name: "Add profile" }).click();
-  await expect(page.getByText("ci · api_key")).toBeVisible();
+  await dialog.getByLabel("Tool").selectOption("codex");
+  await dialog.getByLabel("Profile name").fill("ci");
+  await dialog.getByLabel("Import mode").selectOption("from_env");
+  await dialog.getByLabel("Credential backend").selectOption("system-keyring");
+  await expect(dialog.getByText("OPENAI_API_KEY", { exact: true })).toBeVisible();
+  await dialog.getByRole("button", { name: "Save Profile" }).click();
+  await expect(dialog).toHaveCount(0);
   await expect
     .poll(() =>
       page.evaluate(() => {
         const log = window.__AISW_COMMAND_LOG__ ?? [];
-        return [...log].reverse().find((entry) => entry.command === "add_profile")?.args?.request
-          ?.credential_backend;
+        const matches = [...log].filter((entry) => entry.command === "add_profile");
+        return matches.at(-1)?.args?.request?.credential_backend;
       }),
     )
     .toBe("system-keyring");
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => (window.__AISW_COMMAND_LOG__ ?? []).filter((entry) => entry.command === "add_profile").length,
+      ),
+    )
+    .toBe(1);
 
-  await page.getByLabel("Tool").selectOption("claude");
-  await page.getByLabel("Profile name").fill("ops");
-  await page.getByLabel("Import mode").selectOption("api_key");
-  await page.getByLabel("Credential backend").selectOption("file");
-  await page.locator('input[type="password"]').fill("sk-ant-live-secret");
-  await profilesSection.getByRole("button", { name: "Add profile" }).click();
-  await expect(page.locator(".list-row p").filter({ hasText: "ops · api_key" })).toBeVisible();
+  await page.getByRole("button", { name: "Add Profile" }).click();
+  const secondDialog = page.getByRole("dialog", { name: "Add Profile" });
+  await expect(secondDialog).toBeVisible();
+  await secondDialog.getByLabel("Tool").selectOption("claude");
+  await secondDialog.getByLabel("Profile name").fill("ops");
+  await secondDialog.getByLabel("Import mode").selectOption("api_key");
+  await secondDialog.getByLabel("Credential backend").selectOption("file");
+  await secondDialog.locator('input[type="password"]').fill("sk-ant-live-secret");
+  await secondDialog.getByRole("button", { name: "Save Profile" }).click();
+  await expect(secondDialog).toHaveCount(0);
   await expect
     .poll(() =>
       page.evaluate(() => {
         const log = window.__AISW_COMMAND_LOG__ ?? [];
-        return [...log].reverse().find((entry) => entry.command === "add_profile")?.args?.request
-          ?.credential_backend;
+        const matches = [...log].filter((entry) => entry.command === "add_profile");
+        return matches.at(-1)?.args?.request?.credential_backend;
       }),
     )
     .toBe("file");
@@ -1697,14 +1728,17 @@ test("warns before renaming a profile to a duplicate name", async ({ page }) => 
   await page.goto("/");
   await page.getByRole("button", { name: "Profiles" }).click();
 
-  await page.getByRole("button", { name: "Inspect Claude Personal" }).click();
-  await page.getByLabel("rename personal").fill("work");
+  await page.getByRole("button", { name: "Inspect Claude Code Personal" }).click();
+  await page.getByRole("button", { name: "Open profile actions" }).click();
+  await page.getByLabel("Profile actions").getByRole("menuitem", { name: "Rename…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Edit Profile" });
+  await dialog.getByLabel("rename personal").fill("work");
   await expect(
     page.getByText(
       "Claude already has a profile named work. Choose a different name or rename the existing profile first.",
     ),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Rename" })).toBeDisabled();
+  await expect(dialog.getByRole("button", { name: "Save" })).toBeDisabled();
 });
 
 test("shows remediation text for profile command failures", async ({ page }) => {
@@ -1727,16 +1761,23 @@ test("renames, relabels, and removes profiles from the profiles screen", async (
   await page.goto("/");
   await page.getByRole("button", { name: "Profiles" }).click();
 
-  await page.getByLabel("rename work").fill("client-acme");
-  await page.getByRole("button", { name: "Rename" }).click();
-  await expect(page.locator(".list-row p").filter({ hasText: "client-acme" })).toBeVisible();
+  await page.getByRole("button", { name: "Inspect Claude Code Work" }).click();
+  await page.getByRole("button", { name: "Open profile actions" }).click();
+  await page.getByLabel("Profile actions").getByRole("menuitem", { name: "Rename…" }).click();
+  const renameDialog = page.getByRole("dialog", { name: "Edit Profile" });
+  await renameDialog.getByLabel("rename work").fill("client-acme");
+  await renameDialog.getByRole("button", { name: "Save" }).click();
 
-  const renamedRow = page.locator(".list-row").filter({ hasText: "client-acme" });
-  await page.getByLabel("label client-acme").fill("Client Acme");
-  await page.getByRole("button", { name: "Relabel" }).click();
-  await expect(renamedRow.getByText("Client Acme")).toBeVisible();
+  await page.getByRole("button", { name: "Open profile actions" }).click();
+  await page.getByLabel("Profile actions").getByRole("menuitem", { name: "Change Label…" }).click();
+  const labelDialog = page.getByRole("dialog", { name: "Edit Profile" });
+  await expect(labelDialog.getByLabel("label client-acme")).toBeVisible();
+  await labelDialog.getByLabel("label client-acme").fill("Client Acme");
+  await labelDialog.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByRole("heading", { name: "Client Acme" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Remove active…" }).click();
+  await page.getByRole("button", { name: "Open profile actions" }).click();
+  await page.getByLabel("Profile actions").getByRole("menuitem", { name: "Remove…" }).click();
   await page.getByRole("button", { name: "Remove active profile" }).click();
   await expect(page.getByText("client-acme")).toHaveCount(0);
 });
@@ -1747,21 +1788,16 @@ test("warns before backup restore and re-activates the restored profile", async 
   await page.goto("/");
 
   await page.getByRole("button", { name: "Backups" }).click();
-  await expect(
-    page.getByText(
-      "Restore saved files first, then reactivate explicitly only when you want that profile live again.",
-    ),
-  ).toBeVisible();
   await expect(page.getByText("20260325T114502Z-codex-work")).toBeVisible();
-  await expect(page.getByText("Affects Codex / Work. Restore files only unless you explicitly re-activate this profile.")).toBeVisible();
 
-  await page.getByRole("button", { name: "Restore and activate" }).click();
+  await page.getByRole("button", { name: "Backup actions" }).click();
+  await page.getByLabel("Backup actions").getByRole("menuitem", { name: "Restore and Activate…" }).click();
   await expect(
     page.getByText(
-      "This will restore profile files for Codex / Work.",
+      "AI Switch will restore the stored files and then activate Work for Codex CLI.",
     ),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Restore and activate" }).last().click();
+  await page.getByRole("button", { name: "Restore and Activate" }).click();
 
   await expect
     .poll(() =>

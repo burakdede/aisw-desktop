@@ -197,7 +197,8 @@ function selectOverviewTool(tool: string) {
 }
 
 function selectProfileInventory(tool: string, label: string) {
-  fireEvent.click(screen.getByRole("button", { name: `Inspect ${tool} ${label}` }));
+  const toolLabel = tool === "Claude" ? "Claude Code" : tool === "Codex" ? "Codex CLI" : tool;
+  fireEvent.click(screen.getByRole("button", { name: `Inspect ${toolLabel} ${label}` }));
 }
 
 function selectProfilesFilter(label: string) {
@@ -1022,11 +1023,11 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Profiles"));
 
     expect(screen.getAllByText("Work").length).toBeGreaterThan(0);
-    expect(screen.queryByText("Sandbox")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Sandbox").length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: "Codex" }));
     expect(screen.getAllByText("Sandbox").length).toBeGreaterThan(0);
-    expect(screen.queryByText("Work")).not.toBeInTheDocument();
+    expect(screen.queryByText("Claude Code")).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Search Profiles"), {
       target: { value: "office" },
@@ -1120,7 +1121,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Personal" })).toBeInTheDocument();
       expect(getProfilesInspector().getByText("Authentication")).toBeInTheDocument();
-      expect(getProfilesInspector().getAllByText("api_key").length).toBeGreaterThan(0);
+      expect(getProfilesInspector().getAllByText("API Key").length).toBeGreaterThan(0);
     });
 
     selectProfilesFilter("Claude");
@@ -1131,7 +1132,7 @@ describe("App", () => {
       ).toHaveAttribute("aria-pressed", "true");
       expect(screen.getByRole("heading", { name: "Personal" })).toBeInTheDocument();
     });
-    expect(screen.queryByText("api_key")).not.toBeInTheDocument();
+    expect(screen.queryByText("API Key")).not.toBeInTheDocument();
   });
 
   it("clears routed profile details when reopening profiles from the sidebar", async () => {
@@ -1196,7 +1197,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(
-        within(screen.getByLabelText("Profile filters")).getByRole("button", { name: "Claude" }),
+        within(screen.getByLabelText("Profile filters")).getByRole("button", { name: "All" }),
       ).toHaveAttribute("aria-pressed", "true");
     });
     expect(screen.getByRole("heading", { name: "Work" })).toBeInTheDocument();
@@ -1762,7 +1763,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("rename work"), {
       target: { value: "client-acme" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     openSelectedProfileMenu();
     await waitFor(() => expect(getLastOpenMenu().getByRole("menuitem", { name: "Remove…" })).toBeInTheDocument());
@@ -1819,7 +1820,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("label work"), {
       target: { value: "Acme Work" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
@@ -1895,15 +1896,15 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
-    fireEvent.click(screen.getByText("Show Storage Details"));
+    fireEvent.click(screen.getByText("Storage Details"));
 
     await waitFor(() => {
       expect(screen.getByText("Hide Storage Details")).toBeInTheDocument();
     });
     expect(getProfilesInspector().getAllByText("Keychain").length).toBeGreaterThan(0);
     expect(getProfilesInspector().getAllByText("Ready").length).toBeGreaterThan(0);
-    expect(screen.getByText("Credentials present: no")).toBeInTheDocument();
-    expect(screen.getByText("Local permissions: no")).toBeInTheDocument();
+    expect(screen.getByText("Credentials present: No")).toBeInTheDocument();
+    expect(screen.getByText("Local permissions: No")).toBeInTheDocument();
     expect(
       screen.getByText("Token warning: Claude session expires soon Expires in 1 days."),
     ).toBeInTheDocument();
@@ -1987,15 +1988,15 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Profiles"));
 
     selectProfileInventory("Claude", "Personal");
-    fireEvent.click(screen.getByText("Show Storage Details"));
+    fireEvent.click(screen.getByText("Storage Details"));
 
     await waitFor(() => {
       expect(screen.getByText("Hide Storage Details")).toBeInTheDocument();
     });
-    expect(getProfilesSection().getAllByText("oauth").length).toBeGreaterThan(0);
+    expect(getProfilesSection().getAllByText("OAuth").length).toBeGreaterThan(0);
     expect(
       screen.getByText(
-        "Live health details are only available for the active profile.",
+        "Live storage details are available after this profile becomes active.",
       ),
     ).toBeInTheDocument();
     expect(screen.queryByText(/Token warning:/)).not.toBeInTheDocument();
@@ -2147,7 +2148,7 @@ describe("App", () => {
       target: { value: "gemini" },
     });
 
-    expect(profileDialog.getByDisplayValue("Not configurable")).toBeDisabled();
+    expect(profileDialog.getByText("Gemini keeps authentication and local state together.")).toBeInTheDocument();
     fireEvent.change(profileDialog.getByLabelText("Profile name"), {
       target: { value: "travel-next" },
     });
@@ -2278,7 +2279,7 @@ describe("App", () => {
         "Claude already has a profile named work. Choose a different name or rename the existing profile first.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Save Changes" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
     expect(calls.some((entry) => entry.command === "rename_profile")).toBe(false);
   });
 
@@ -3561,7 +3562,7 @@ describe("App", () => {
     fireEvent.click(getLastOpenMenu().getByRole("menuitem", { name: "Restore Latest + Activate…" }));
     expect(
       within(screen.getByRole("dialog", { name: "Restore Latest Backup" })).getByText(
-        "This restores the latest saved files for Claude / Office.",
+        "This restores the latest saved files for Claude Code / Office.",
       ),
     ).toBeInTheDocument();
   });
@@ -3703,7 +3704,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Profiles"));
     selectProfilesFilter("Codex");
     await waitFor(() => expect(screen.getByRole("heading", { name: "Work" })).toBeInTheDocument());
-    fireEvent.click(screen.getByRole("radio", { name: "Shared" }));
+    fireEvent.click(screen.getByRole("button", { name: "Shared" }));
 
     openSelectedProfileMenu();
     await waitFor(() => expect(getLastOpenMenu().getByRole("menuitem", { name: "Restore Latest + Activate…" })).toBeInTheDocument());

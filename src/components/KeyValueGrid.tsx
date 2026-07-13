@@ -6,9 +6,15 @@ interface Row {
   value: ReactNode;
 }
 
-export function KeyValueGrid({ rows }: { rows: Row[] }) {
+export function KeyValueGrid({
+  rows,
+  variant = "default",
+}: {
+  rows: Row[];
+  variant?: "default" | "plain";
+}) {
   return (
-    <div className="kv-grid">
+    <div className={`kv-grid ${variant === "plain" ? "kv-grid-plain" : ""}`}>
       {rows.map((row, index) => (
         <div key={row.key ?? index} className="kv-row">
           <span>{row.label}</span>
@@ -17,4 +23,14 @@ export function KeyValueGrid({ rows }: { rows: Row[] }) {
       ))}
     </div>
   );
+}
+
+export function KeyValueGridInner({
+  rows,
+  variant = "default",
+}: {
+  rows: Row[];
+  variant?: "default" | "plain";
+}) {
+  return <KeyValueGrid rows={rows} variant={variant} />;
 }
