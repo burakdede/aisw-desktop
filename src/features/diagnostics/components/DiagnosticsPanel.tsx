@@ -79,6 +79,7 @@ export function DiagnosticsPanel({
   const [selectedFindingKey, setSelectedFindingKey] = useState<string | null>(null);
   const [repairPlanOpen, setRepairPlanOpen] = useState(false);
   const [selectedSafeFixes, setSelectedSafeFixes] = useState<string[]>([]);
+  const [toolbarMenuOpen, setToolbarMenuOpen] = useState(false);
   const applyRepair = useMutation({
     mutationFn: (fixes: string[]) => runRepair({ apply: true, fixes }),
     onSuccess: async () => {
@@ -169,6 +170,12 @@ export function DiagnosticsPanel({
         Math.max(totalIssues - repairActions.length, 0)
       } ${Math.max(totalIssues - repairActions.length, 0) === 1 ? "requires" : "require"} a decision.`
     : "All configured tools match their active AISW profiles and local storage checks passed.";
+  const lastAppliedCount = Number(
+    ((applyRepair.data?.result as {
+      summary?: { actions_applied?: number };
+    } | undefined)?.summary?.actions_applied ?? 0),
+  );
+  const exportedBundle = exportBundle.data;
 
   useEffect(() => {
     setSelectedSafeFixes(safeFixIds);
@@ -177,10 +184,6 @@ export function DiagnosticsPanel({
   return (
     <div className="diagnostics-screen screen-content">
       <div className="diagnostics-toolbar-row">
-        <div>
-          <p className="card-kicker">Checks and recovery</p>
-          <h3 className="diagnostics-screen-title">Diagnostics</h3>
-        </div>
         <div className="button-row">
           <button
             className="ghost-button"
@@ -200,70 +203,71 @@ export function DiagnosticsPanel({
           >
             {applyRepair.isPending ? "Applying Repairs…" : "Review Safe Fixes…"}
           </button>
-          <button
-            className="ghost-button"
-            onClick={() => exportBundle.mutate()}
-            disabled={exportBundle.isPending}
-          >
-            {exportBundle.isPending ? "Exporting Report…" : "Export Report"}
-          </button>
+          <div className="diagnostics-toolbar-menu-wrap">
+            <button
+              className="ghost-button"
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={toolbarMenuOpen}
+              aria-label="Diagnostics more actions"
+              onClick={() => setToolbarMenuOpen((open) => !open)}
+            >
+              More
+            </button>
+            {toolbarMenuOpen ? (
+              <div className="profile-row-actions-menu" role="menu" aria-label="Diagnostics actions">
+                <button
+                  className="ghost-button"
+                  role="menuitem"
+                  type="button"
+                  onClick={() => {
+                    setToolbarMenuOpen(false);
+                    exportBundle.mutate();
+                  }}
+                  disabled={exportBundle.isPending}
+                >
+                  {exportBundle.isPending ? "Exporting Report…" : "Export Report"}
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 
-      {exportBundle.data ? (
-        <article className="diagnostic-card diagnostic-pass diagnostics-inline-notice">
-          <h3>Support report ready</h3>
-          <p className="inline-note">{exportBundle.data.filename}</p>
-          <p className="inline-note">{exportBundle.data.path}</p>
+      {exportedBundle ? (
+        <section className="diagnostics-inline-notice">
+          <p className="inline-note">
+            Support report ready: {exportedBundle.filename}
+          </p>
           <div className="button-row">
             <button
               className="ghost-button"
               type="button"
-              onClick={() => void copyBundlePath(exportBundle.data.path, setBundleCopyMessage)}
+              onClick={() => void copyBundlePath(exportedBundle.path, setBundleCopyMessage)}
             >
               Copy report path
             </button>
           </div>
+          <p className="inline-note">{exportedBundle.path}</p>
           {bundleCopyMessage ? <p className="inline-note">{bundleCopyMessage}</p> : null}
-        </article>
+        </section>
       ) : null}
       {exportBundle.error ? (
-        <article className="diagnostic-card diagnostic-fail diagnostics-inline-notice">
-          <h3>Support report could not be exported</h3>
+        <section className="diagnostics-inline-notice diagnostics-inline-notice-error">
           <p className="inline-note">
             {exportBundle.error instanceof Error
               ? exportBundle.error.message
               : "Support report export failed."}
           </p>
-        </article>
+        </section>
       ) : null}
 
       {applyRepair.data ? (
-        <article className="diagnostic-card diagnostic-pass diagnostics-inline-notice">
-          <h3>Last repair run</h3>
-          <p className="diagnostic-status">
-            {String(
-              ((applyRepair.data.result as { summary?: { status?: string } } | undefined)
-                ?.summary?.status ?? "unknown"),
-            )}
-          </p>
+        <section className="diagnostics-inline-notice">
           <p className="inline-note">
-            {String(
-              ((applyRepair.data.result as {
-                summary?: { actions_applied?: number };
-              } | undefined)?.summary?.actions_applied ?? 0),
-            )}{" "}
-            actions applied
+            Applied {lastAppliedCount} {lastAppliedCount === 1 ? "safe fix" : "safe fixes"}.
           </p>
-          <p className="inline-note">
-            {String(
-              ((applyRepair.data.result as {
-                summary?: { issues_remaining?: number };
-              } | undefined)?.summary?.issues_remaining ?? 0),
-            )}{" "}
-            issues remaining
-          </p>
-        </article>
+        </section>
       ) : null}
 
       <section className={`diagnostics-summary-strip ${totalIssues ? "diagnostics-summary-strip-warn" : "diagnostics-summary-strip-ok"}`}>
@@ -288,12 +292,6 @@ export function DiagnosticsPanel({
         secondaryClassName="diagnostics-inspector-pane"
         primary={
           <section className="diagnostics-pane">
-            <header className="diagnostics-pane-header">
-              <div>
-                <p className="card-kicker">Findings</p>
-                <h3>Needs attention</h3>
-              </div>
-            </header>
             {findings.length ? (
               <div className="diagnostics-findings-list" aria-label="Diagnostics findings">
                 {findingGroups.map((group) => (
@@ -374,11 +372,11 @@ export function DiagnosticsPanel({
                 <header className="diagnostics-pane-header diagnostics-inspector-header">
                   <div>
                     <h3>{selectedFinding.title}</h3>
-                    <p className="inline-note">{selectedFinding.status === "fail" ? "Blocked" : "Needs attention"}</p>
+                    <p className={`diagnostics-inspector-status diagnostics-inspector-status-${selectedFinding.status}`}>
+                      <span aria-hidden="true">{selectedFinding.status === "fail" ? "⨯" : "▲"}</span>
+                      <span>{selectedFinding.status === "fail" ? "Blocked" : "Needs attention"}</span>
+                    </p>
                   </div>
-                  <span className={`pill ${selectedFinding.status === "fail" ? "pill-warn" : "pill-soft"}`}>
-                    {selectedFinding.scopeLabel}
-                  </span>
                 </header>
                 <section className="diagnostics-inspector-section">
                   <p className="card-kicker">What happened</p>

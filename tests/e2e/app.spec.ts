@@ -709,30 +709,36 @@ test("exports a redacted diagnostic bundle from diagnostics", async ({ page }) =
 
   await page.goto("/");
   await page.getByRole("button", { name: "Diagnostics" }).click();
-  await page.getByRole("button", { name: "Export Report" }).click();
+  await page.getByRole("button", { name: "Diagnostics more actions" }).click();
+  await page.getByRole("menuitem", { name: "Export Report" }).click();
 
-  await expect(page.getByText("Support report ready")).toBeVisible();
+  await expect(page.getByText("Support report ready: aisw-desktop-diagnostics-789.json")).toBeVisible();
   await expect(
     page.getByText("/tmp/aisw-desktop/aisw-desktop-diagnostics-789.json"),
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Copy report path" }).click();
   await expect(
-    page.getByText("Copied report path /tmp/aisw-desktop/aisw-desktop-diagnostics-789.json."),
+    page.getByText("Copied bundle path /tmp/aisw-desktop/aisw-desktop-diagnostics-789.json."),
   ).toBeVisible();
 });
 
 test("shows no-action states when diagnostics are healthy", async ({ page }) => {
-  await installDesktopMock(page, "profiles");
+  await installDesktopMock(page, "trayBackupRefresh");
 
   await page.goto("/");
   await page.getByRole("button", { name: "Diagnostics" }).click();
 
-  await expect(page.getByText("No failing or warning diagnostics are currently reported.")).toBeVisible();
+  await expect(page.getByText("Everything looks good").first()).toBeVisible();
   await expect(
-    page.getByText("No direct fix actions are available from the current diagnostics state."),
+    page
+      .getByText("All configured tools match their active AISW profiles and local storage checks passed.")
+      .first(),
   ).toBeVisible();
-  await expect(page.getByText("No safe automatic repairs are currently planned.")).toBeVisible();
+  await expect(
+    page.getByText("Active profiles, local storage, and repair checks are currently passing."),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Review Repair Plan" })).toBeDisabled();
 });
 
 test("shows token warnings in the overview cards", async ({ page }) => {
@@ -756,11 +762,12 @@ test("applies safe repairs from diagnostics", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Diagnostics" }).click();
 
-  await expect(page.getByText("1 actions planned")).toBeVisible();
-  await page.getByRole("button", { name: "Apply safe repairs" }).click();
+  await page.getByRole("button", { name: "Review Repair Plan" }).click();
+  await expect(page.getByRole("heading", { name: "Review Safe Fixes" })).toBeVisible();
+  await expect(page.getByText("4 repairs can be applied without changing account identity.")).toBeVisible();
+  await page.getByRole("button", { name: "Apply Safe Repairs" }).click();
 
-  await expect(page.getByText("Last applied repair")).toBeVisible();
-  await expect(page.getByText("1 actions applied")).toBeVisible();
+  await expect(page.getByText("Applied 4 safe fixes.")).toBeVisible();
 });
 
 test("shows doctor remediations and targeted repair actions in diagnostics", async ({ page }) => {
@@ -780,7 +787,7 @@ test("shows doctor remediations and targeted repair actions in diagnostics", asy
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Apply keyring repair" }).click();
-  await expect(page.getByText("1 actions applied").first()).toBeVisible();
+  await expect(page.getByText("Applied 1 safe fix.").first()).toBeVisible();
 
   await page.getByRole("button", { name: "Repair permissions" }).click();
   await expect(page.getByText("repair config path permissions")).toBeVisible();

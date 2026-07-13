@@ -4863,8 +4863,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Apply Safe Repairs" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Last repair run")).toBeInTheDocument();
-      expect(screen.getByText("1 actions applied")).toBeInTheDocument();
+      expect(screen.getByText("Applied 1 safe fix.")).toBeInTheDocument();
     });
   });
 
@@ -4994,10 +4993,11 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Diagnostics")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Diagnostics"));
-    fireEvent.click(screen.getByText("Export Report"));
+    fireEvent.click(screen.getByRole("button", { name: "Diagnostics more actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Export Report" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Support report ready")).toBeInTheDocument();
+      expect(screen.getByText("Support report ready: ai-switch-diagnostics-456.json")).toBeInTheDocument();
       expect(screen.getByText("/tmp/ai-switch/ai-switch-diagnostics-456.json")).toBeInTheDocument();
     });
 
@@ -5901,7 +5901,7 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Checks and recovery")).toBeInTheDocument();
+      expect(screen.getAllByText("Everything looks good").length).toBeGreaterThan(0);
     });
   });
 
@@ -5952,7 +5952,7 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Checks and recovery")).toBeInTheDocument();
+      expect(screen.getAllByText("Everything looks good").length).toBeGreaterThan(0);
       expect(doctorRuns).toBe(1);
     });
 
@@ -6225,7 +6225,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Diagnostics" })).toHaveClass("nav-button-active");
-      expect(screen.getByText("Checks and recovery")).toBeInTheDocument();
+      expect(screen.getAllByText("Everything looks good").length).toBeGreaterThan(0);
     });
   });
 
@@ -6494,7 +6494,7 @@ describe("App", () => {
       handlers?.["tray-run-diagnostics"]?.({});
     });
 
-    await waitFor(() => expect(screen.getByText("Checks and recovery")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Review Repair Plan" })).toBeInTheDocument());
     expect(
       screen.getAllByRole("button", { name: "Verify Again" }).every((button) => button.hasAttribute("disabled")),
     ).toBe(true);
