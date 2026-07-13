@@ -436,12 +436,12 @@ test("opens profile diagnostics from a diagnostics live mismatch card", async ({
   await page.goto("/");
 
   await page.getByRole("button", { name: "Diagnostics" }).click();
-  const mismatchCard = page.locator(".diagnostic-card").filter({ hasText: "claude live mismatch" });
-  await mismatchCard.getByRole("button", { name: "Open profile details" }).click();
+  await page.getByRole("button", { name: /Inspect claude live mismatch/i }).click();
+  await page.getByRole("button", { name: "Open Profile Details" }).click();
 
-  await expect(page.getByText("Credential backend: system_keyring")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Hide diagnostic details" }).first()).toBeVisible();
-  await expect(page.getByText("Live mismatch detected")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Work" })).toBeVisible();
+  await expect(page.locator(".profiles-inspector").getByText("Keychain")).toBeVisible();
+  await expect(page.locator(".profiles-inspector").getByText("Needs Attention").first()).toBeVisible();
 });
 
 test("imports the current login as a new profile from diagnostics", async ({ page }) => {
@@ -450,11 +450,20 @@ test("imports the current login as a new profile from diagnostics", async ({ pag
   await page.goto("/");
 
   await page.getByRole("button", { name: "Diagnostics" }).click();
-  await page.getByLabel("import claude current login from diagnostics").fill("incident");
-  await page.getByRole("button", { name: "Save Imported Profile" }).click();
-
-  await page.getByRole("button", { name: "Profiles" }).click();
-  await expect(page.getByText("incident · oauth")).toBeVisible();
+  await page.getByRole("button", { name: /Inspect claude live mismatch/i }).click();
+  await page.getByRole("button", { name: "Import Current…" }).click();
+  await expect(page.getByLabel("Tool")).toHaveValue("claude");
+  await expect(page.getByLabel("Import mode")).toHaveValue("from_live");
+  await page.getByLabel("Profile name").fill("incident");
+  await page.getByRole("dialog", { name: "Add Profile" }).getByRole("button", { name: "Import" }).click();
+  await expect(page.getByRole("dialog", { name: "Add Profile" })).toHaveCount(0);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => (window.__AISW_COMMAND_LOG__ ?? []).filter((entry) => entry.command === "add_profile").length,
+      ),
+    )
+    .toBe(1);
 });
 
 test("offers direct diagnostic fixes for missing tools, live mismatch, and workspace mismatch", async ({
@@ -465,26 +474,21 @@ test("offers direct diagnostic fixes for missing tools, live mismatch, and works
   await page.goto("/");
   await page.getByRole("button", { name: "Diagnostics" }).click();
 
-  await expect(page.getByText("Recommended fixes")).toBeVisible();
-  await expect(page.getByText("codex is missing")).toBeVisible();
-  await expect(page.getByText("claude live mismatch")).toBeVisible();
-  await expect(page.getByText("Workspace context mismatch")).toBeVisible();
-  await expect(
-    page.getByText(
-      "This folder wants Client Acme, but no matching CLI context or non-empty profile set is currently available.",
-    ),
-  ).toBeVisible();
+  await expect(page.getByText(/need attention/i).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: /Inspect codex is missing/i }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: /Inspect claude live mismatch/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Inspect Project set mismatch/i })).toBeVisible();
 
-  const missingToolCard = page.locator(".diagnostic-card").filter({ hasText: "codex is missing" });
-  await missingToolCard.getByRole("button", { name: "Open installation guide" }).click();
+  await page.getByRole("button", { name: /Inspect codex is missing/i }).first().click();
+  await page.getByRole("button", { name: "Open installation guide" }).click();
   await expect
     .poll(() =>
       page.evaluate(() => (window as typeof window & { __AISW_OPENED_GUIDES__?: string[] }).__AISW_OPENED_GUIDES__ ?? []),
     )
     .toContain("https://www.npmjs.com/package/@openai/codex");
 
+  await page.getByRole("button", { name: /Inspect claude live mismatch/i }).click();
   await page.getByRole("button", { name: "Re-apply Work" }).click();
-  await page.getByRole("button", { name: "Open contexts" }).click();
 
   await expect
     .poll(() =>
@@ -500,7 +504,9 @@ test("offers direct diagnostic fixes for missing tools, live mismatch, and works
         expect.objectContaining({ command: "use_profile" }),
       ]),
     );
-  await expect(page.getByRole("heading", { name: "Contexts", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /Inspect Project set mismatch/i }).click();
+  await page.getByRole("button", { name: "Open Sets" }).click();
+  await expect(page.getByLabel("Set Library")).toBeVisible();
 });
 
 test("opens diagnostics when the tray requests it", async ({ page }) => {
@@ -828,34 +834,57 @@ test("shows doctor remediations and targeted repair actions in diagnostics", asy
   await page.getByRole("button", { name: "Diagnostics" }).click();
 
   await expect(page.getByText("Local credential store is locked.").first()).toBeVisible();
-  await expect(page.getByText("AISW cannot write the active config path.").first()).toBeVisible();
+  await expect(page.getByText("AI Switch cannot write the active config path.").first()).toBeVisible();
   await expect(page.getByText("Upstream OAuth session timed out.").first()).toBeVisible();
-  await expect(page.getByText("Unlock the local credential store and retry.")).toBeVisible();
-  await expect(page.getByText("Grant write access to ~/.aisw")).toBeVisible();
-  await expect(page.getByText("Retry the switch")).toBeVisible();
-  await expect(
-    page.getByText("Run the guided OAuth flow again and finish login before timeout."),
-  ).toBeVisible();
-
+  await page.getByRole("button", { name: /Inspect Keyring unavailable/i }).click();
+  await expect(page.getByRole("button", { name: "Apply keyring repair" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Use file-backed storage" })).toBeVisible();
   await page.getByRole("button", { name: "Apply keyring repair" }).click();
   await expect(page.getByText("Applied 1 safe fix.").first()).toBeVisible();
-
+  await page.getByRole("button", { name: /Inspect Permissions incorrect/i }).click();
+  await expect(page.getByRole("button", { name: "Repair permissions" })).toBeVisible();
   await page.getByRole("button", { name: "Repair permissions" }).click();
-  await expect(page.getByText("repair config path permissions")).toBeVisible();
-
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const log = window.__AISW_COMMAND_LOG__ ?? [];
+        return log.some(
+          (entry) =>
+            entry.command === "run_repair" &&
+            entry.args?.request?.apply === true &&
+            entry.args?.request?.fixes?.includes("permissions"),
+        );
+      }),
+    )
+    .toBe(true);
+  await page.getByRole("button", { name: /Inspect OAuth failure/i }).click();
+  await expect(page.getByRole("button", { name: "Retry OAuth repair" })).toBeVisible();
   await page.getByRole("button", { name: "Retry OAuth repair" }).click();
-  await expect(page.getByText("retry the OAuth recovery flow")).toBeVisible();
-
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const log = window.__AISW_COMMAND_LOG__ ?? [];
+        return log.some(
+          (entry) =>
+            entry.command === "run_repair" &&
+            entry.args?.request?.apply === true &&
+            entry.args?.request?.fixes?.includes("oauth"),
+        );
+      }),
+    )
+    .toBe(true);
+  await page.getByRole("button", { name: /Inspect Keyring unavailable/i }).click();
   await page.getByRole("button", { name: "Use file-backed storage" }).click();
+  await expect(page.getByRole("dialog", { name: "Add Profile" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
   await expect(page.getByLabel("Import mode")).toHaveValue("from_live");
   await expect(page.getByLabel("Credential backend")).toHaveValue("file");
+  await page.getByRole("dialog", { name: "Add Profile" }).getByRole("button", { name: "Cancel" }).click();
 
   await page.getByRole("button", { name: "Diagnostics" }).click();
   await page.getByRole("button", { name: "Show keyring setup" }).click();
-  await expect(page.getByRole("button", { name: "Settings", pressed: true, exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Settings", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("heading", { name: "Security" })).toBeVisible();
-  await expect(page.getByText("Linux Secret Service")).toBeVisible();
   await expect(page.getByRole("button", { name: "Security", pressed: true })).toBeVisible();
 });
 

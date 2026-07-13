@@ -5254,14 +5254,25 @@ describe("App", () => {
     });
 
     selectDiagnosticFinding("claude live mismatch");
-    fireEvent.change(screen.getByLabelText("import claude current login from diagnostics"), {
+    fireEvent.click(screen.getByRole("button", { name: "Import Current…" }));
+    await waitFor(() => {
+      expect(screen.getByLabelText("Tool")).toHaveValue("claude");
+      expect(screen.getByLabelText("Import mode")).toHaveValue("from_live");
+    });
+    fireEvent.change(screen.getByLabelText("Profile name"), {
       target: { value: "incident" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Import current as new" }));
+    fireEvent.click(screen.getByRole("button", { name: "Import" }));
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "add_profile")).toBe(true);
     });
+    expect(screen.getByRole("heading", { name: "Profiles" })).toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole("button", { name: "Diagnostics" }));
+    await waitFor(() => {
+      expect(screen.getAllByText("claude live mismatch").length).toBeGreaterThan(0);
+    });
+    selectDiagnosticFinding("claude live mismatch");
     fireEvent.click(screen.getByRole("button", { name: "Re-apply Work" }));
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
@@ -5342,7 +5353,7 @@ describe("App", () => {
 
     await waitFor(() => expect(screen.getAllByText("claude live mismatch").length).toBeGreaterThan(0));
     selectDiagnosticFinding("claude live mismatch");
-    fireEvent.click(screen.getByRole("button", { name: "Open profile details" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open Profile Details" }));
 
     await waitFor(() =>
       expect(getProfilesInspector().getAllByText("Keychain").length).toBeGreaterThan(0),

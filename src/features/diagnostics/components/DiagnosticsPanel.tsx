@@ -57,7 +57,6 @@ export function DiagnosticsPanel({
 }) {
   const queryClient = useQueryClient();
   const {
-    addProfileMutation,
     useProfileMutation,
     useContextMutation,
     activateProfileSetMutation,
@@ -74,7 +73,6 @@ export function DiagnosticsPanel({
     queryFn: () => runRepair({ apply: false, fixes: [] }),
     enabled: readEnabled,
   });
-  const [importDrafts, setImportDrafts] = useState<Record<string, string>>({});
   const [bundleCopyMessage, setBundleCopyMessage] = useState("");
   const [selectedFindingKey, setSelectedFindingKey] = useState<string | null>(null);
   const [repairPlanOpen, setRepairPlanOpen] = useState(false);
@@ -181,12 +179,78 @@ export function DiagnosticsPanel({
     setSelectedSafeFixes(safeFixIds);
   }, [safeFixIds.join("|")]);
 
+  const importCurrentAction =
+    primaryFindingFix?.importTarget
+      ? {
+          key: `import-${quickFixKey(primaryFindingFix)}`,
+          label: supportsProfileImportMode(primaryFindingFix.importTarget.tool, toolCapabilities, "from_live")
+            ? "Import Current…"
+            : "Open Account Setup",
+          action: () =>
+            onOpenProfileSetup({
+              tool: primaryFindingFix.importTarget?.tool,
+              mode:
+                primaryFindingFix.importFallbackMode ??
+                preferredProfileImportMode(primaryFindingFix.importTarget!.tool, toolCapabilities, "from_live"),
+            }),
+        }
+      : null;
+  const secondaryInspectorAction =
+    (primaryFindingFix?.secondaryAction
+      ? {
+          key: `secondary-${quickFixKey(primaryFindingFix)}`,
+          label: primaryFindingFix.secondaryAction.label,
+          action: () => void primaryFindingFix.secondaryAction?.action(),
+        }
+      : null) ??
+    (secondaryFindingFixes[0]
+      ? {
+          key: `fix-${quickFixKey(secondaryFindingFixes[0])}`,
+          label: secondaryFindingFixes[0].label,
+          action: secondaryFindingFixes[0].action,
+        }
+      : null) ??
+    (selectedFinding?.profileTarget
+      ? {
+          key: `profile-${selectedFinding.key}`,
+          label: "Open Profile Details",
+          action: () => onOpenProfiles(selectedFinding.profileTarget!.tool, selectedFinding.profileTarget!.profile),
+        }
+      : null) ??
+    importCurrentAction;
+  const inspectorOverflowActions = [
+    ...(importCurrentAction && secondaryInspectorAction?.key !== importCurrentAction.key ? [importCurrentAction] : []),
+    ...(primaryFindingFix?.secondaryAction && secondaryInspectorAction?.key !== `secondary-${quickFixKey(primaryFindingFix)}`
+      ? [
+          {
+            key: `secondary-${quickFixKey(primaryFindingFix)}`,
+            label: primaryFindingFix.secondaryAction.label,
+            action: () => void primaryFindingFix.secondaryAction?.action(),
+          },
+        ]
+      : []),
+    ...secondaryFindingFixes.slice(secondaryInspectorAction?.key?.startsWith("fix-") ? 1 : 0).map((fix) => ({
+      key: `fix-${quickFixKey(fix)}`,
+      label: fix.label,
+      action: fix.action,
+    })),
+    ...(selectedFinding?.profileTarget && secondaryInspectorAction?.key !== `profile-${selectedFinding.key}`
+      ? [
+          {
+            key: `profile-${selectedFinding.key}`,
+            label: "Open Profile Details",
+            action: () => onOpenProfiles(selectedFinding.profileTarget!.tool, selectedFinding.profileTarget!.profile),
+          },
+        ]
+      : []),
+  ];
+
   return (
     <div className="diagnostics-screen screen-content">
       <div className="diagnostics-toolbar-row">
         <div className="button-row">
           <button
-            className="ghost-button"
+            className="primary-button"
             aria-label="Verify Again"
             disabled={mutationLock.isBusy}
             onClick={() =>
@@ -397,7 +461,7 @@ export function DiagnosticsPanel({
                       "Review the evidence below and decide how you want to correct this state."}
                   </p>
                 </section>
-                {primaryFindingFix || secondaryFindingFixes.length || selectedFinding.profileTarget ? (
+                {primaryFindingFix || secondaryInspectorAction || inspectorOverflowActions.length ? (
                   <div className="button-row diagnostics-inspector-actions">
                     {primaryFindingFix ? (
                       <button
@@ -409,116 +473,28 @@ export function DiagnosticsPanel({
                         {primaryFindingFix.label}
                       </button>
                     ) : null}
-                    {secondaryFindingFixes.map((fix) => (
+                    {secondaryInspectorAction ? (
                       <button
-                        key={quickFixKey(fix)}
                         className="ghost-button"
                         type="button"
                         disabled={mutationLock.isBusy}
-                        onClick={fix.action}
+                        onClick={() => void secondaryInspectorAction.action()}
                       >
-                        {fix.label}
-                      </button>
-                    ))}
-                    {selectedFinding.profileTarget ? (
-                      <button
-                        className="ghost-button"
-                        type="button"
-                        onClick={() =>
-                          onOpenProfiles(
-                            selectedFinding.profileTarget!.tool,
-                            selectedFinding.profileTarget!.profile,
-                          )
-                        }
-                      >
-                        Open profile details
+                        {secondaryInspectorAction.label}
                       </button>
                     ) : null}
+                    {inspectorOverflowActions.map((action) => (
+                      <button
+                        key={action.key}
+                        className="ghost-button"
+                        type="button"
+                        disabled={mutationLock.isBusy}
+                        onClick={() => void action.action()}
+                      >
+                        {action.label}
+                      </button>
+                    ))}
                   </div>
-                ) : null}
-                {primaryFindingFix?.secondaryAction ? (
-                  <div className="button-row diagnostics-inspector-actions">
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      disabled={mutationLock.isBusy}
-                      onClick={() => void primaryFindingFix.secondaryAction?.action()}
-                    >
-                      {primaryFindingFix.secondaryAction.label}
-                    </button>
-                  </div>
-                ) : null}
-                {primaryFindingFix?.importTarget ? (
-                  supportsProfileImportMode(primaryFindingFix.importTarget.tool, toolCapabilities, "from_live") ? (
-                    <section className="diagnostics-inspector-section">
-                      <p className="card-kicker">Import current login</p>
-                      <div className="inline-form">
-                        <input
-                          aria-label={`import ${primaryFindingFix.importTarget.tool} current login from diagnostics`}
-                          placeholder="new profile name"
-                          value={importDrafts[quickFixKey(primaryFindingFix)] ?? ""}
-                          onChange={(event) =>
-                            setImportDrafts((current) => ({
-                              ...current,
-                              [quickFixKey(primaryFindingFix)]: event.target.value,
-                            }))
-                          }
-                        />
-                        <button
-                          className="ghost-button"
-                          type="button"
-                          disabled={mutationLock.isBusy || !importDrafts[quickFixKey(primaryFindingFix)]?.trim()}
-                          onClick={() => {
-                            const profile = importDrafts[quickFixKey(primaryFindingFix)]?.trim();
-                            if (!profile) return;
-                            addProfileMutation.mutate(
-                              {
-                                tool: primaryFindingFix.importTarget!.tool,
-                                profile,
-                                label: titleCase(profile),
-                                stateMode: primaryFindingFix.importTarget!.stateMode,
-                                importMode: { kind: "from_live" },
-                              },
-                              {
-                                onSuccess: () =>
-                                  setImportDrafts((current) => ({
-                                    ...current,
-                                    [quickFixKey(primaryFindingFix)]: "",
-                                  })),
-                              },
-                            );
-                          }}
-                        >
-                          Import current as new
-                        </button>
-                      </div>
-                    </section>
-                  ) : (
-                    <section className="diagnostics-inspector-section">
-                      <p className="card-kicker">Alternative action</p>
-                      <p className="inline-note">
-                        This AI Switch release cannot import the current {toolDisplayName(primaryFindingFix.importTarget.tool)} login
-                        directly. Open account setup to choose another sign-in method.
-                      </p>
-                      <div className="button-row diagnostics-inspector-actions">
-                        <button
-                          className="ghost-button"
-                          type="button"
-                          disabled={mutationLock.isBusy}
-                          onClick={() =>
-                            onOpenProfileSetup({
-                              tool: primaryFindingFix.importTarget?.tool,
-                              mode:
-                                primaryFindingFix.importFallbackMode ??
-                                preferredProfileImportMode(primaryFindingFix.importTarget!.tool, toolCapabilities, "from_live"),
-                            })
-                          }
-                        >
-                          Open account setup
-                        </button>
-                      </div>
-                    </section>
-                  )
                 ) : null}
                 <details className="diagnostics-disclosure">
                   <summary>Evidence</summary>
