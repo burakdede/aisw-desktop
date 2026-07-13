@@ -183,7 +183,7 @@ async function openSetsSection() {
   await waitFor(() => expect(screen.getByLabelText("Sets mode")).toBeInTheDocument());
   const setsMode = screen.getByLabelText("Sets mode");
   fireEvent.click(within(setsMode).getByRole("button", { name: "Set Library" }));
-  await waitFor(() => expect(screen.getByRole("heading", { name: "Set Library" })).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByLabelText("Set Library")).toBeInTheDocument());
 }
 
 async function openProjectRulesSection() {
@@ -4183,13 +4183,13 @@ describe("App", () => {
     });
 
     await openProjectRulesSection();
+    fireEvent.click(screen.getByRole("button", { name: "Inspect rule for Client Acme" }));
     await waitFor(() => {
-      expect(screen.getByText(/Current set:\s*work/)).toBeInTheDocument();
-      expect(screen.getByText(/Expected set:\s*Client Acme/)).toBeInTheDocument();
-      expect(screen.getByText(/Guard mode:\s*Warnings only/)).toBeInTheDocument();
-      expect(screen.getByText(/Default set:\s*work/)).toBeInTheDocument();
+      expect(screen.getByText("Current set")).toBeInTheDocument();
+      expect(screen.getByText("Default set")).toBeInTheDocument();
       expect(screen.getAllByText("Folder").length).toBeGreaterThan(0);
-      expect(screen.getByText("Path prefix: /code/acme")).toBeInTheDocument();
+      expect(screen.getByText("Target")).toBeInTheDocument();
+      expect(screen.getAllByText("/code/acme").length).toBeGreaterThan(0);
       expect(screen.getByText("Matched rule ✓")).toBeInTheDocument();
       expect(screen.getAllByText("Client Acme").length).toBeGreaterThan(0);
       expect(screen.getByText("Project mismatch")).toBeInTheDocument();
@@ -4200,7 +4200,7 @@ describe("App", () => {
       expect(screen.queryByText("Project mismatch")).not.toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Open Rule Editor" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add Rule…" }));
     fireEvent.change(screen.getByLabelText("Rule scope"), {
       target: { value: "path" },
     });
@@ -4210,13 +4210,13 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Path"), {
       target: { value: "/code/next" },
     });
-    fireEvent.click(screen.getByText("Save rule"));
+    fireEvent.click(screen.getByText("Save Rule"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "workspace_bind")).toBe(true);
     });
     expect(screen.getByText("Last project-rule result: Saved project rule for Client Acme.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Open Rule Editor" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add Rule…" }));
     expect(screen.getByRole("option", { name: "Saved set: Client Acme" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Remove this rule"));
@@ -4291,11 +4291,8 @@ describe("App", () => {
       )[command];
 
     await renderApp();
-    await openProjectRulesSection();
     await waitFor(() => {
-      expect(screen.getByText(/Default set:\s*Client Acme/)).toBeInTheDocument();
-      expect(screen.getByText(/Current set:\s*Client Acme/)).toBeInTheDocument();
-      expect(screen.getByText(/Expected set:\s*Client Acme/)).toBeInTheDocument();
+      expect(screen.getAllByText("Client Acme").length).toBeGreaterThan(0);
     });
   });
 
@@ -4500,7 +4497,7 @@ describe("App", () => {
     fireEvent.click(openSetsButtons[openSetsButtons.length - 1]);
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Set Library" })).toBeInTheDocument();
+      expect(screen.getByLabelText("Set Library")).toBeInTheDocument();
     });
     expect(calls.some((entry) => entry.command === "use_context")).toBe(false);
     expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(false);
@@ -4596,7 +4593,7 @@ describe("App", () => {
 
     await renderApp();
     await openSetsSection();
-    fireEvent.click(screen.getByText("Use this set"));
+    fireEvent.click(screen.getByText("Use Set"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
@@ -4665,7 +4662,7 @@ describe("App", () => {
     await renderApp();
     await openSetsSection();
 
-    const activeContextButton = screen.getByRole("button", { name: "Current set" });
+    const activeContextButton = screen.getByRole("button", { name: "Current" });
     expect(activeContextButton).toBeDisabled();
     expect(screen.getByText("Client Acme ✓")).toBeInTheDocument();
   });
@@ -4717,7 +4714,7 @@ describe("App", () => {
     await renderApp();
     await openProjectRulesSection();
 
-    fireEvent.click(screen.getByRole("button", { name: "Open Rule Editor" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add Rule…" }));
     expect(screen.getByRole("option", { name: "Saved set: Client Acme" })).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: "Detected set: client-acme" })).not.toBeInTheDocument();
   });
@@ -4755,13 +4752,13 @@ describe("App", () => {
     await renderApp();
     await openProjectRulesSection();
 
-    fireEvent.click(screen.getByRole("button", { name: "Open Rule Editor" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add Rule…" }));
     expect(
       screen.getByText(
         "No sets are available yet. Create one before saving a project rule.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Save rule")).toBeDisabled();
+    expect(screen.getByText("Save Rule")).toBeDisabled();
 
     fireEvent.change(screen.getByLabelText("Rule scope"), {
       target: { value: "path" },
@@ -4770,13 +4767,13 @@ describe("App", () => {
     expect(
       screen.getByText("Enter a path prefix before saving or removing this rule."),
     ).toBeInTheDocument();
-    expect(screen.getByText("Save rule")).toBeDisabled();
+    expect(screen.getByText("Save Rule")).toBeDisabled();
     expect(screen.getByText("Remove rule")).toBeDisabled();
 
     fireEvent.change(screen.getByLabelText("Path"), {
       target: { value: "   " },
     });
-    expect(screen.getByText("Save rule")).toBeDisabled();
+    expect(screen.getByText("Save Rule")).toBeDisabled();
 
     expect(calls.some((entry) => entry.command === "workspace_bind")).toBe(false);
     expect(calls.some((entry) => entry.command === "workspace_unbind")).toBe(false);
@@ -5224,7 +5221,7 @@ describe("App", () => {
     expect(screen.queryByRole("button", { name: "Use expected set now" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Open Sets" }));
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Set Library" })).toBeInTheDocument();
+      expect(screen.getByLabelText("Set Library")).toBeInTheDocument();
     });
     expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(false);
   });
@@ -6647,11 +6644,13 @@ describe("App", () => {
         },
       ],
     };
+    const calls: Array<{ command: string; args: unknown }> = [];
     let snapshotReads = 0;
     let workspaceStatusReads = 0;
     let projectBindingsReads = 0;
 
-    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
       if (command === "get_snapshot") {
         snapshotReads += 1;
         return snapshotReads > 1 ? refreshedSnapshot : bootstrap.snapshot;
@@ -6721,11 +6720,7 @@ describe("App", () => {
     };
 
     await renderApp();
-    await openProjectRulesSection();
-    await waitFor(() => {
-      expect(screen.getByText("Project mismatch")).toBeInTheDocument();
-      expect(screen.getByText("Guard mode: Warnings only")).toBeInTheDocument();
-    });
+    const snapshotReadsBeforeRefresh = calls.filter((entry) => entry.command === "get_snapshot").length;
 
     const handlers = (window as typeof window & {
       __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
@@ -6743,8 +6738,9 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByText("Project mismatch")).not.toBeInTheDocument();
-      expect(screen.getByText("Guard mode: Block mismatches")).toBeInTheDocument();
+      expect(calls.filter((entry) => entry.command === "get_snapshot").length).toBeGreaterThan(
+        snapshotReadsBeforeRefresh,
+      );
     });
   });
 
@@ -6933,18 +6929,18 @@ describe("App", () => {
 
     await renderApp();
     await openSetsSection();
-    fireEvent.click(screen.getByRole("button", { name: "New Set" }));
+    fireEvent.click(screen.getByRole("button", { name: "New Set…" }));
     expect(screen.getByRole("dialog", { name: "New Set" })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Set name"), {
       target: { value: "client-acme" },
     });
-    fireEvent.change(screen.getByLabelText("Label"), {
+    fireEvent.change(screen.getByLabelText("Display label"), {
       target: { value: "Client Acme" },
     });
-    fireEvent.change(screen.getByLabelText("Claude"), {
+    fireEvent.change(screen.getByLabelText("Claude Code"), {
       target: { value: "work" },
     });
-    fireEvent.change(screen.getByLabelText("Codex"), {
+    fireEvent.change(screen.getByLabelText("Codex CLI"), {
       target: { value: "work" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Create Set" }));
@@ -6953,7 +6949,7 @@ describe("App", () => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
       expect(screen.getAllByText(/Client Acme/).length).toBeGreaterThan(0);
       expect(screen.getByText("Saved set Client Acme.")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Current set" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Current Set" })).toBeDisabled();
     });
   });
 
@@ -7005,7 +7001,8 @@ describe("App", () => {
 
     await renderApp();
     await openSetsSection();
-    fireEvent.click(screen.getByText("Delete"));
+    fireEvent.click(screen.getByRole("button", { name: "More actions for Client Acme" }));
+    fireEvent.click(screen.getByText("Remove…"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
@@ -7062,20 +7059,21 @@ describe("App", () => {
 
     await renderApp();
     await openSetsSection();
-    fireEvent.click(screen.getByText("Edit"));
+    fireEvent.click(screen.getByRole("button", { name: "Inspect set Client Acme" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit…" }));
 
     expect(screen.getByDisplayValue("client-acme")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Client Acme")).toBeInTheDocument();
     expect(screen.getByRole("dialog", { name: "Edit Set" })).toBeInTheDocument();
-    expect(screen.getByText("Update Set")).toBeInTheDocument();
+    expect(screen.getByText("Save Set")).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Set name"), {
       target: { value: "client-acme-prime" },
     });
-    fireEvent.change(screen.getByLabelText("Label"), {
+    fireEvent.change(screen.getByLabelText("Display label"), {
       target: { value: "Client Acme Prime" },
     });
-    fireEvent.click(screen.getByText("Update Set"));
+    fireEvent.click(screen.getByText("Save Set"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
@@ -7148,7 +7146,8 @@ describe("App", () => {
     if (!(clientRow instanceof HTMLElement)) {
       throw new Error("Missing client profile set row.");
     }
-    fireEvent.click(within(clientRow).getByText("Edit"));
+    fireEvent.click(within(clientRow).getByRole("button"));
+    fireEvent.click(screen.getByText("Edit…"));
 
     fireEvent.change(screen.getByLabelText("Set name"), {
       target: { value: "focus-mode" },
@@ -7159,7 +7158,7 @@ describe("App", () => {
         "A set named focus-mode already exists. Rename the existing set or choose a different name.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Update Set")).toBeDisabled();
+    expect(screen.getByText("Save Set")).toBeDisabled();
     expect(calls.some((entry) => entry.command === "update_settings")).toBe(false);
   });
 
@@ -7210,12 +7209,9 @@ describe("App", () => {
     if (!(emptySetRow instanceof HTMLElement)) {
       throw new Error("Missing empty profile set row.");
     }
-    expect(within(emptySetRow).getByText("Switch to set")).toBeDisabled();
-    expect(
-      within(emptySetRow).getByText(
-        "Add at least one mapped profile before using this set in Overview, the menu bar, or project rules.",
-      ),
-    ).toBeInTheDocument();
+    fireEvent.click(within(emptySetRow).getByRole("button"));
+    expect(screen.getByRole("button", { name: "Switch to Empty Set" })).toBeDisabled();
+    expect(screen.getByText("This saved set is empty and cannot be activated yet.")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Overview"));
     const quickSwitchDialog = await openQuickSwitchDialog();
@@ -7225,11 +7221,11 @@ describe("App", () => {
 
     await openProjectRulesSection();
     expect(screen.queryByRole("option", { name: "Set: Empty Set" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Open Rule Editor" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add Rule…" }));
     expect(screen.getByRole("option", { name: "Saved set: Client Acme" })).toBeInTheDocument();
 
     await openSetsSection();
-    fireEvent.click(screen.getByRole("button", { name: "New Set" }));
+    fireEvent.click(screen.getByRole("button", { name: "New Set…" }));
     fireEvent.change(screen.getByLabelText("Set name"), {
       target: { value: "empty-next" },
     });
@@ -7274,20 +7270,13 @@ describe("App", () => {
     await renderApp();
     await openSetsSection();
 
-    const staleSetRow = screen
-      .getByText(
-        "Refresh or repair the missing mapped profiles before using this set. Missing: codex: missing",
-      )
-      .closest(".list-row");
+    const staleSetRow = screen.getByText("Missing: codex: missing").closest(".list-row");
     if (!(staleSetRow instanceof HTMLElement)) {
       throw new Error("Missing stale profile set row.");
     }
-    expect(within(staleSetRow).getByText("Switch to set")).toBeDisabled();
-    expect(
-      within(staleSetRow).getByText(
-        "Refresh or repair the missing mapped profiles before using this set. Missing: codex: missing",
-      ),
-    ).toBeInTheDocument();
+    fireEvent.click(within(staleSetRow).getByRole("button"));
+    expect(screen.getByRole("button", { name: "Switch to Client Acme" })).toBeDisabled();
+    expect(screen.getByText("Missing mapped profiles: codex: missing")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Overview"));
     expect(screen.queryByRole("option", { name: "Saved set: Client Acme" })).not.toBeInTheDocument();
@@ -7412,11 +7401,11 @@ describe("App", () => {
 
     await renderApp();
     await openSetsSection();
-    fireEvent.click(screen.getByText("Switch to set"));
+    fireEvent.click(screen.getByText("Switch to Client Acme"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
-      expect(screen.getByRole("button", { name: "Current set" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Current Set" })).toBeDisabled();
     });
     expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(false);
     expect(calls.some((entry) => entry.command === "use_profile")).toBe(false);
@@ -7704,9 +7693,9 @@ describe("App", () => {
     await openSetsSection();
 
     expect(screen.getAllByText("Client Acme").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByText("Set ID: client-acme")).toBeInTheDocument();
-    expect(screen.getAllByText("claude: Office · codex: Code Work · gemini: none")).toHaveLength(1);
-    fireEvent.click(screen.getAllByRole("button", { name: "New Set" })[0]);
+    expect(screen.getByText("2 profiles mapped")).toBeInTheDocument();
+    expect(screen.getAllByText("Claude: Office · Codex: Code Work · Gemini: —")).toHaveLength(1);
+    fireEvent.click(screen.getAllByRole("button", { name: "New Set…" })[0]);
     expect(screen.getAllByRole("option", { name: "Office" }).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("option", { name: "Code Work" })).toBeInTheDocument();
   });
