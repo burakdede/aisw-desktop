@@ -45,6 +45,7 @@ type InventoryEntry = {
   backend: string;
   state: string;
   lastChecked: string;
+  hasBackup: boolean;
 };
 
 export function ProfilesPanel({
@@ -150,6 +151,7 @@ export function ProfilesPanel({
             : snapshot.profiles[entryTool]?.active === entry.name
               ? "Not Verified"
               : "Date Unavailable",
+          hasBackup: Boolean(latestBackup),
         };
       }),
     );
@@ -217,6 +219,11 @@ export function ProfilesPanel({
         ? latestBackupForProfile(tool, selectedProfileEntry.name, backups.data)
         : undefined,
     [backups.data, selectedProfileEntry, tool],
+  );
+  const selectedHasCustomLabel = Boolean(
+    selectedProfileEntry &&
+      selectedProfileDisplay &&
+      selectedProfileDisplay !== titleCase(selectedProfileEntry.name),
   );
   const editSheetProfile = pendingEdit
     ? profiles.find((entry) => entry.name === pendingEdit.name) ?? null
@@ -707,6 +714,7 @@ export function ProfilesPanel({
                           <button
                             type="button"
                             role="menuitem"
+                            disabled={!inventoryEntry.hasBackup}
                             onClick={() => openBackupsForProfile(inventoryEntry.tool, inventoryEntry.name)}
                           >
                             View Backups
@@ -743,21 +751,24 @@ export function ProfilesPanel({
             {selectedProfileEntry ? (
               <>
                 <header className="profiles-inspector-header">
-                    <div className="profiles-inspector-title-block">
-                      {compactLayout ? (
-                        <button
-                          className="ghost-button profiles-inspector-back"
-                          type="button"
-                          onClick={() => setCompactInspectorOpen(false)}
-                        >
-                          Back
-                        </button>
-                      ) : null}
-                      <h3>{selectedProfileDisplay}</h3>
-                      <p className="inline-note profiles-inspector-tool">
-                        <ToolBrand tool={tool} className="tool-brand-inline" logoSize={16} />
-                      </p>
-                      <div className={`profiles-inspector-status profiles-inspector-status-${profileStatusTone(
+                  <div className="profiles-inspector-title-block">
+                    {compactLayout ? (
+                      <button
+                        className="ghost-button profiles-inspector-back"
+                        type="button"
+                        onClick={() => setCompactInspectorOpen(false)}
+                      >
+                        Back
+                      </button>
+                    ) : null}
+                    <h3 className="profiles-inspector-heading">
+                      <span aria-hidden="true">
+                        <ToolBrand tool={tool} className="tool-brand-inline" logoSize={18} shortName />
+                      </span>
+                      <span>{selectedProfileDisplay}</span>
+                    </h3>
+                    <p className="inline-note">{toolDisplayName(tool)}</p>
+                    <div className={`profiles-inspector-status profiles-inspector-status-${profileStatusTone(
                         snapshot.profiles[tool]?.active === selectedProfileEntry.name,
                         profileStatusSummary(snapshot, tool, selectedProfileEntry.name, toolStatus),
                     )}`}>
@@ -845,6 +856,7 @@ export function ProfilesPanel({
                           <button
                             type="button"
                             role="menuitem"
+                            disabled={!selectedLatestBackup}
                             onClick={() => openBackupsForProfile(tool, selectedProfileEntry.name)}
                           >
                             View Backups
@@ -868,10 +880,14 @@ export function ProfilesPanel({
                 <KeyValueGrid
                   variant="plain"
                   rows={[
-                    {
-                      label: "Saved name",
-                      value: selectedProfileEntry.name,
-                    },
+                    ...(selectedHasCustomLabel
+                      ? [
+                          {
+                            label: "Saved name",
+                            value: selectedProfileEntry.name,
+                          },
+                        ]
+                      : []),
                     { label: "Live match", value: profileLiveMatchValue(snapshot, tool, selectedProfileEntry.name, toolStatus) },
                     { label: "Authentication", value: authDisplayLabel(selectedProfileEntry.auth) },
                     {
