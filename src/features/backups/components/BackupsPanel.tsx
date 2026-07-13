@@ -139,73 +139,67 @@ export function BackupsPanel({
 
   return (
     <div className="backups-screen screen-content">
-      <div className="backups-toolbar-row">
-        <div>
-          <p className="card-kicker">Restore points</p>
-          <h3 className="backups-screen-title">Backups</h3>
-        </div>
-        <div className="backups-toolbar-actions">
-          <label className="visually-hidden" htmlFor="backups-tool-filter">
-            Tool
-          </label>
-          <select
-            id="backups-tool-filter"
-            aria-label="Tool"
-            value={toolFilter}
-            onChange={(event) => setToolFilter(event.target.value as ToolFilter)}
+      <div className="backups-filter-row" role="toolbar" aria-label="Backups filters">
+        <label className="visually-hidden" htmlFor="backups-tool-filter">
+          Tool
+        </label>
+        <select
+          id="backups-tool-filter"
+          aria-label="Tool"
+          value={toolFilter}
+          onChange={(event) => setToolFilter(event.target.value as ToolFilter)}
+        >
+          <option value="all">All tools</option>
+          <option value="claude">Claude</option>
+          <option value="codex">Codex</option>
+          <option value="gemini">Gemini</option>
+        </select>
+        <label className="visually-hidden" htmlFor="backups-date-filter">
+          Date
+        </label>
+        <select
+          id="backups-date-filter"
+          aria-label="Date"
+          value={dateFilter}
+          onChange={(event) => setDateFilter(event.target.value as DateFilter)}
+        >
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+        </select>
+        <SearchField
+          ariaLabel="Search backups"
+          ariaControls="backups-table"
+          placeholder="Search backups…"
+          value={search}
+          onChange={setSearch}
+          className="search-field backups-search-field"
+        />
+        <div className="backups-toolbar-menu-wrap">
+          <button
+            className="ghost-button"
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded={toolbarMenuOpen}
+            aria-label="Backups more actions"
+            onClick={() => setToolbarMenuOpen((open) => !open)}
           >
-            <option value="all">All tools</option>
-            <option value="claude">Claude</option>
-            <option value="codex">Codex</option>
-            <option value="gemini">Gemini</option>
-          </select>
-          <label className="visually-hidden" htmlFor="backups-date-filter">
-            Date
-          </label>
-          <select
-            id="backups-date-filter"
-            aria-label="Date"
-            value={dateFilter}
-            onChange={(event) => setDateFilter(event.target.value as DateFilter)}
-          >
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
-          </select>
-          <SearchField
-            ariaLabel="Search backups"
-            ariaControls="backups-table"
-            placeholder="Search backups…"
-            value={search}
-            onChange={setSearch}
-            className="search-field backups-search-field"
-          />
-          <div className="backups-toolbar-menu-wrap">
-            <button
-              className="ghost-button"
-              type="button"
-              aria-haspopup="menu"
-              aria-expanded={toolbarMenuOpen}
-              aria-label="Backups more actions"
-              onClick={() => setToolbarMenuOpen((open) => !open)}
-            >
-              More
-            </button>
-            {toolbarMenuOpen ? (
-              <div className="profile-row-actions-menu" role="menu" aria-label="Backups actions">
-                <button
-                  className="ghost-button"
-                  role="menuitem"
-                  type="button"
-                  onClick={() => {
-                    setToolbarMenuOpen(false);
-                    void backups.refetch();
-                  }}
-                >
-                  Refresh
-                </button>
-              </div>
-            ) : null}
-          </div>
+            More
+          </button>
+          {toolbarMenuOpen ? (
+            <div className="profile-row-actions-menu" role="menu" aria-label="Backups actions">
+              <button
+                className="ghost-button"
+                role="menuitem"
+                type="button"
+                onClick={() => {
+                  setToolbarMenuOpen(false);
+                  void backups.refetch();
+                }}
+              >
+                Refresh
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -215,15 +209,6 @@ export function BackupsPanel({
         secondaryClassName="backups-inspector-pane"
         primary={
           <section className="backups-pane">
-            <header className="backups-pane-header">
-              <div>
-                <p className="card-kicker">Restore points</p>
-                <h3>Local backup history</h3>
-              </div>
-              <p className="inline-note">
-                Find a restore point, inspect what it contains, and deliberately restore it.
-              </p>
-            </header>
             {filteredBackups.length ? (
               <div className="backups-table-wrap">
                 <div className="backups-table-header" aria-hidden="true">
@@ -288,7 +273,7 @@ export function BackupsPanel({
                 <p className="inline-note">
                   {backups.isLoading
                     ? "Loading local restore points."
-                    : "AI Switch creates restore points before profile changes. They will appear here automatically."}
+                    : "Restore points appear here automatically before AI Switch changes a saved profile."}
                 </p>
               </div>
             )}
@@ -386,6 +371,7 @@ export function BackupsPanel({
 
                 <div className="backups-inspector-content">
                   <KeyValueGrid
+                    variant="plain"
                     rows={[
                       { label: "Created", value: selectedCreated },
                       { label: "Reason", value: selectedReason ?? "Created restore point" },
@@ -398,7 +384,7 @@ export function BackupsPanel({
                     ]}
                   />
                   <section className="backups-inspector-section">
-                    <p className="card-kicker">Backup ID</p>
+                    <p className="overview-current-set-cell-label">Backup ID</p>
                     <div className="backups-id-row">
                       <code>{selectedBackup.backup_id}</code>
                       <button

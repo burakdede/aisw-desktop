@@ -727,17 +727,7 @@ export function App() {
     }
 
     if (activeSection === "backups") {
-      return (
-        <div className="button-row toolbar-action-row">
-          <button
-            className="ghost-button"
-            type="button"
-            onClick={() => void queryClient.invalidateQueries({ queryKey: ["backups"] })}
-          >
-            <span>Refresh</span>
-          </button>
-        </div>
-      );
+      return undefined;
     }
 
     if (activeSection === "activity") {

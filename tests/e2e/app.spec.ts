@@ -1930,13 +1930,13 @@ test("lists backups newest first, copies backup ids, and opens matching profile 
   await page.goto("/");
   await page.getByRole("button", { name: "Backups" }).click();
 
-  const backupsSection = page.locator(".section-card").filter({ hasText: "Backups" });
-  const backupRows = backupsSection.locator(".list-row");
+  const backupRows = page.locator(".backups-table-row");
   await expect(backupRows).toHaveCount(2);
   await expect(backupRows.nth(0)).toContainText("Personal");
   await expect(backupRows.nth(1)).toContainText("Work");
 
-  await backupRows.nth(0).getByRole("button", { name: "Copy backup ID" }).click();
+  await backupRows.nth(0).click();
+  await page.getByRole("button", { name: "Copy" }).click();
   await expect(page.getByText("Copied backup id 20260326T094012Z-codex-personal.")).toBeVisible();
   await expect
     .poll(() =>
@@ -1947,10 +1947,15 @@ test("lists backups newest first, copies backup ids, and opens matching profile 
     )
     .toContain("20260326T094012Z-codex-personal");
 
-  await backupRows.nth(1).getByRole("button", { name: "Open profile details" }).click();
+  await backupRows.nth(1).click();
+  await page.getByRole("button", { name: "Backup actions" }).click();
+  await page.getByRole("menuitem", { name: "Open Profile" }).click();
   await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
-  await expect(page.getByLabel("Tool")).toHaveValue("claude");
-  await expect(page.getByText("Credential backend: system_keyring")).toBeVisible();
+  await expect(
+    page.getByLabel("Profile filters").getByRole("button", { name: "Claude", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("heading", { name: "Work" })).toBeVisible();
+  await expect(page.getByText("Hide Storage Details")).toBeVisible();
 });
 
 async function installDesktopMock(
