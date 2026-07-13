@@ -1,8 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
-import { SectionCard } from "../../../components/SectionCard";
-import { SourceListPanel } from "../../../components/SourceListPanel";
-import { SplitView } from "../../../components/SplitView";
+import { type ReactNode, FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   exportDiagnosticBundle,
   getLaunchAtLoginStatus,
@@ -18,8 +15,8 @@ import {
   type DesktopPreferences,
 } from "../../../lib/desktop-preferences";
 import { notifyDesktop } from "../../../lib/notifications";
+import { type AppBootstrap, type DesktopSettings } from "../../../lib/schemas";
 import { DesktopCommandError } from "../../../lib/tauri";
-import { DesktopSettings, AppBootstrap } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
 import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import { normalizeTerminalIntegrationText } from "../../shared/terminal-integration-language";
@@ -72,18 +69,7 @@ export function SettingsPanel({
   );
   const [aiswHome, setAiswHome] = useState(settings.aisw_home ?? "");
   const [updateChannel, setUpdateChannel] = useState(settings.update_channel);
-  const readEnabled = useMutationAwareQueryEnabled();
-  const shellGuidance = useQuery({
-    queryKey: ["shell-guidance"],
-    queryFn: getShellGuidance,
-    enabled: readEnabled,
-  });
-  const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor, enabled: readEnabled });
-  const launchAtLogin = useQuery({
-    queryKey: ["launch-at-login"],
-    queryFn: getLaunchAtLoginStatus,
-    enabled: readEnabled,
-  });
+  const [selectedSection, setSelectedSection] = useState<SettingsSection>(initialSection ?? "general");
   const [selectedShell, setSelectedShell] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
   const [securityMessage, setSecurityMessage] = useState("");
@@ -99,9 +85,18 @@ export function SettingsPanel({
     desktopPreferences?.showMenuBarIcon ?? true,
   );
   const [generalMessage, setGeneralMessage] = useState("");
-  const [selectedSection, setSelectedSection] = useState<SettingsSection>(
-    initialSection ?? "general",
-  );
+  const readEnabled = useMutationAwareQueryEnabled();
+  const shellGuidance = useQuery({
+    queryKey: ["shell-guidance"],
+    queryFn: getShellGuidance,
+    enabled: readEnabled,
+  });
+  const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor, enabled: readEnabled });
+  const launchAtLogin = useQuery({
+    queryKey: ["launch-at-login"],
+    queryFn: getLaunchAtLoginStatus,
+    enabled: readEnabled,
+  });
   const appVersion = packageJson.version;
 
   const shellCheck = useMemo(() => findShellHookCheck(doctor.data), [doctor.data]);
@@ -125,6 +120,9 @@ export function SettingsPanel({
     effectiveRuntimePath(runtimeKind, runtimePath) !== (settings.runtime_path ?? "") ||
     aiswHome !== (settings.aisw_home ?? "") ||
     updateChannel !== settings.update_channel;
+  const launchAtLoginSupported = launchAtLogin.data?.supported ?? false;
+  const launchAtLoginEnabled = launchAtLogin.data?.enabled ?? false;
+  const launchAtLoginDetail = launchAtLogin.data?.detail;
 
   useEffect(() => {
     if (!shellGuidance.data?.variants.length) return;
@@ -208,10 +206,6 @@ export function SettingsPanel({
       const message =
         error instanceof Error ? error.message : "AI Switch could not complete that action.";
       setSecurityMessage(message);
-      void notifyDesktop({
-        title: "Diagnostic export failed",
-        body: message,
-      });
     }
   }
 
@@ -231,6 +225,25 @@ export function SettingsPanel({
     }
   }
 
+  function updateGeneralPreferences(
+    next: Partial<Pick<DesktopPreferences, "appearance" | "defaultSection" | "showMenuBarIcon">>,
+  ) {
+    setAppearance(next.appearance ?? appearance);
+    setDefaultSection(next.defaultSection ?? defaultSection);
+    setShowMenuBarIcon(next.showMenuBarIcon ?? showMenuBarIcon);
+    setGeneralMessage("");
+  }
+
+  function saveGeneralPreferences() {
+    onUpdateDesktopPreferences?.({
+      appearance,
+      defaultSection,
+      showMenuBarIcon,
+      reopenSetupAssistant: desktopPreferences?.reopenSetupAssistant ?? false,
+    });
+    setGeneralMessage("General preferences saved.");
+  }
+
   function resetOnboarding() {
     const nextPreferences: DesktopPreferences = {
       appearance,
@@ -241,7 +254,6 @@ export function SettingsPanel({
     onUpdateDesktopPreferences?.(nextPreferences);
     onResetOnboarding?.();
     setSelectedSection("general");
-    setGeneralMessage("Onboarding reset. AI Switch will reopen the setup assistant.");
   }
 
   function focusSection(section: SettingsSection) {
@@ -308,194 +320,82 @@ export function SettingsPanel({
     }
   }
 
-  function saveGeneralPreferences() {
-    onUpdateDesktopPreferences?.({
-      appearance,
-      defaultSection,
-      showMenuBarIcon,
-      reopenSetupAssistant: desktopPreferences?.reopenSetupAssistant ?? false,
-    });
-    setGeneralMessage("General preferences saved.");
-  }
-
-  const launchAtLoginSupported = launchAtLogin.data?.supported ?? false;
-  const launchAtLoginEnabled = launchAtLogin.data?.enabled ?? false;
-  const launchAtLoginDetail = launchAtLogin.data?.detail;
-
   return (
-    <SectionCard title="Settings" kicker={sectionKicker(selectedSection)}>
-      <SplitView
-        className="settings-split"
-        primaryClassName="settings-nav-pane"
-        secondaryClassName="settings-detail-pane"
-        primary={
-          <div className="stack-list">
-            <SourceListPanel
-              className="settings-nav-card"
-              kicker="Desktop Preferences"
-              title="Settings"
-              listLabel="Settings sections"
-              badge={<span className="pill pill-soft">{sectionLabel(selectedSection)}</span>}
-              note="Choose a section once, make the change, and return to coding without hunting through a dashboard."
-              meta={
-                <div className="settings-nav-meta">
-                  <div>
-                    <span className="overview-current-set-cell-label">Current section</span>
-                    <strong>{sectionHeading(selectedSection)}</strong>
-                  </div>
-                  <div>
-                    <span className="overview-current-set-cell-label">Why it exists</span>
-                    <strong>{sourceListSummary(selectedSection)}</strong>
-                  </div>
-                  <div className="settings-nav-pill-row">
-                    {sectionPills(selectedSection).map((pill) => (
-                      <span key={pill} className="status-pill">
-                        {pill}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              }
+    <div className="settings-screen screen-content">
+      <div className="settings-mobile-picker">
+        <label className="settings-field">
+          <span className="settings-field-label">Section</span>
+          <select
+            aria-label="Settings section"
+            value={selectedSection}
+            onChange={(event) => setSelectedSection(event.target.value as SettingsSection)}
+          >
+            {SETTINGS_SECTIONS.map((section) => (
+              <option key={section} value={section}>
+                {sectionLabel(section)}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="settings-layout-v2">
+        <aside className="settings-category-pane" aria-label="Settings sections">
+          {SETTINGS_SECTIONS.map((section) => (
+            <button
+              key={section}
+              ref={(node) => {
+                sectionButtonRefs.current[section] = node;
+              }}
+              className={`settings-category-row ${selectedSection === section ? "settings-category-row-active" : ""}`}
+              type="button"
+              aria-pressed={selectedSection === section}
+              onClick={() => setSelectedSection(section)}
+              onKeyDown={(event) => handleSectionKeyDown(event, section)}
             >
-              {SETTINGS_SECTIONS.map((section) => (
-                <button
-                  key={section}
-                  ref={(node) => {
-                    sectionButtonRefs.current[section] = node;
-                  }}
-                  type="button"
-                  aria-label={sectionLabel(section)}
-                  aria-describedby={`settings-section-summary-${section}`}
-                  aria-pressed={selectedSection === section}
-                  className={`desktop-source-row ${
-                    selectedSection === section ? "desktop-source-row-selected" : ""
-                  }`}
-                  onClick={() => setSelectedSection(section)}
-                  onKeyDown={(event) => handleSectionKeyDown(event, section)}
-                >
-                  <div className="settings-nav-row-copy">
-                    <strong>{sectionLabel(section)}</strong>
-                    <p
-                      id={`settings-section-summary-${section}`}
-                      className="inline-note"
-                    >
-                      {sourceListSummary(section)}
-                    </p>
-                  </div>
-                  <div className="settings-nav-row-meta">
-                    <span className="status-pill status-pill-subtle">{sectionShortTag(section)}</span>
-                    <span className="desktop-source-chevron" aria-hidden="true">
-                      ›
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </SourceListPanel>
-          </div>
-        }
-        secondary={
-      <div className="settings-pane">
-        <div className="settings-status-strip">
-          <article className="settings-status-card">
-            <span className="overview-current-set-cell-label">Section</span>
-            <p className="settings-status-value">{sectionHeading(selectedSection)}</p>
-            <p className="inline-note">{sectionDescription(selectedSection)}</p>
-          </article>
-          {sectionFacts(selectedSection).map((fact) => (
-            <article key={fact.label} className="settings-status-card">
-              <span className="overview-current-set-cell-label">{fact.label}</span>
-              <p className="settings-status-value">{fact.value}</p>
-              <div className="settings-status-pill-stack">
-                <span className="pill pill-soft">{sectionLabel(selectedSection)}</span>
-              </div>
-            </article>
+              {sectionLabel(section)}
+            </button>
           ))}
-        </div>
-        {selectedSection === "general" ? (
-          <div className="settings-workspace">
-            <article className="diagnostic-card settings-overview-card">
-              <div className="settings-overview-copy">
-                <div>
-                  <p className="card-kicker">General</p>
-                  <h3>Desktop defaults</h3>
-                  <p className="inline-note">
-                    Keep the app aligned with the operating system, choose the launch destination, and decide whether the menu bar app stays available for quick switching.
-                  </p>
-                </div>
-                <span className="pill pill-soft">Recommended</span>
-              </div>
-              <div className="settings-summary-grid">
-                <div>
-                  <span className="overview-current-set-cell-label">Appearance</span>
-                  <strong>{titleCase(appearance)}</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Login item</span>
-                  <strong>Managed by the operating system</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Menu bar extra</span>
-                  <strong>{showMenuBarIcon ? "Visible" : "Hidden"}</strong>
-                </div>
-              </div>
-            </article>
-            <div className="settings-detail-grid">
-              <div className="settings-main-stack">
-                <article className="diagnostic-card settings-detail-card">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">General</p>
-                      <h3>Desktop appearance</h3>
-                    </div>
-                  </div>
-                  <div className="settings-inline-grid settings-inline-grid-2">
-                    <label>
-                      Appearance
-                      <select
-                        value={appearance}
-                        onChange={(event) =>
-                          setAppearance(event.target.value as DesktopPreferences["appearance"])
-                        }
-                      >
-                        {DESKTOP_APPEARANCES.map((entry) => (
-                          <option key={entry} value={entry}>
-                            {titleCase(entry)}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <div className="settings-note-block">
-                      <strong>Appearance behavior</strong>
-                      <p className="inline-note">
-                        System follows the OS appearance. Light and Dark pin AI Switch to one appearance until you change it again.
-                      </p>
-                    </div>
-                  </div>
-                </article>
-                <article className="diagnostic-card settings-detail-card">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">Launch</p>
-                      <h3>Launch behavior</h3>
-                    </div>
-                  </div>
-                  <div className="settings-toggle-list" aria-label="Launch behavior controls">
-                    <label
-                      className={`settings-toggle-row ${
-                        launchAtLoginSupported ? "" : "settings-toggle-row-disabled"
-                      }`}
+        </aside>
+
+        <section className="settings-form-pane">
+          <div className="settings-form-scroll">
+            <header className="settings-section-header">
+              <h3>{sectionHeading(selectedSection)}</h3>
+              <p className="inline-note">{sectionSummary(selectedSection)}</p>
+            </header>
+
+            {selectedSection === "general" ? (
+              <div className="settings-section-stack">
+                <SettingsGroup title="Appearance">
+                  <SettingsRow label="Appearance">
+                    <select
+                      aria-label="Appearance"
+                      value={appearance}
+                      onChange={(event) =>
+                        updateGeneralPreferences({
+                          appearance: event.target.value as DesktopPreferences["appearance"],
+                        })
+                      }
                     >
-                      <span className="settings-toggle-copy">
-                        <strong>Launch at login</strong>
-                        <span className="inline-note">
-                          {launchAtLogin.isLoading
-                            ? "Checking the operating system login item state for this app."
-                            : launchAtLoginSupported
-                              ? "Open AI Switch automatically after you sign in to this computer."
-                              : launchAtLoginDetail ??
-                                "Launch at login is currently available on supported desktop builds."}
-                        </span>
-                      </span>
+                      {DESKTOP_APPEARANCES.map((entry) => (
+                        <option key={entry} value={entry}>
+                          {titleCase(entry)}
+                        </option>
+                      ))}
+                    </select>
+                  </SettingsRow>
+                </SettingsGroup>
+
+                <SettingsGroup title="Startup">
+                  <ToggleRow
+                    label="Launch at login"
+                    description={
+                      launchAtLoginSupported
+                        ? "Open AI Switch automatically after you sign in to this computer."
+                        : launchAtLoginDetail ?? "Launch at login is not available in this environment."
+                    }
+                    control={
                       <input
                         type="checkbox"
                         aria-label="Launch at login"
@@ -510,39 +410,30 @@ export function SettingsPanel({
                           launchAtLoginMutation.mutate(event.target.checked);
                         }}
                       />
-                    </label>
-                    <label className="settings-toggle-row">
-                      <span className="settings-toggle-copy">
-                        <strong>Show menu bar icon</strong>
-                        <span className="inline-note">
-                          Keep the AI Switch menu bar extra available for quick switching, verification, and diagnostics without opening the full app.
-                        </span>
-                      </span>
+                    }
+                  />
+                  <ToggleRow
+                    label="Show menu bar icon"
+                    description="Keep the AI Switch menu bar extra available for quick switching and diagnostics."
+                    control={
                       <input
                         type="checkbox"
                         aria-label="Show menu bar icon"
                         checked={showMenuBarIcon}
-                        onChange={(event) => setShowMenuBarIcon(event.target.checked)}
+                        onChange={(event) =>
+                          updateGeneralPreferences({ showMenuBarIcon: event.target.checked })
+                        }
                       />
-                    </label>
-                  </div>
-                  {launchMessage ? <p className="inline-note">{launchMessage}</p> : null}
-                </article>
-              </div>
-              <div className="settings-side-stack">
-                <article className="diagnostic-card settings-detail-card">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">Default section</p>
-                      <h3>Start destination</h3>
-                    </div>
-                  </div>
-                  <label>
-                    Default section
+                    }
+                  />
+                  <SettingsRow label="Open at launch">
                     <select
+                      aria-label="Default section"
                       value={defaultSection}
                       onChange={(event) =>
-                        setDefaultSection(event.target.value as DesktopPreferences["defaultSection"])
+                        updateGeneralPreferences({
+                          defaultSection: event.target.value as DesktopPreferences["defaultSection"],
+                        })
                       }
                     >
                       {DEFAULT_SECTIONS.map((entry) => (
@@ -551,512 +442,190 @@ export function SettingsPanel({
                         </option>
                       ))}
                     </select>
-                  </label>
-                  <div className="settings-note-block">
-                    <p className="inline-note">
-                      Engine blockers and first-run onboarding still take priority when they need your attention.
-                    </p>
-                    <p className="inline-note">
-                      Next launch opens on <strong>{titleCase(defaultSection)}</strong> whenever the app can resume normally.
-                    </p>
-                  </div>
-                  <div className="button-row">
-                    <button className="primary-button" type="button" onClick={saveGeneralPreferences}>
-                      Save General Settings
-                    </button>
-                  </div>
-                  {generalMessage ? <p className="inline-note">{generalMessage}</p> : null}
-                </article>
-                <article className="diagnostic-card diagnostic-pass settings-detail-card">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">Desktop behavior</p>
-                      <h3>Focused desktop flow</h3>
-                    </div>
-                  </div>
-                  <div className="settings-info-list">
-                    <div className="settings-info-row">
-                      <strong>One settings language</strong>
-                      <span className="inline-note">Every section follows the same desktop interaction pattern.</span>
-                    </div>
-                    <div className="settings-info-row">
-                      <strong>Credentials stay local.</strong>
-                      <span className="inline-note">
-                        No telemetry or prompt proxy is used.
-                      </span>
-                    </div>
-                    <div className="settings-info-row">
-                      <strong>Focused navigation</strong>
-                      <span className="inline-note">
-                        Use the source list on the left to move directly to runtime, terminal, security, updates, and storage details.
-                      </span>
-                    </div>
-                  </div>
-                  <div className="settings-guide-block">
-                    <h4>Setup assistant</h4>
-                    <p className="inline-note">
-                      Reopen the guided setup assistant to review detection, your first shared switch,
-                      and optional terminal integration from the beginning.
-                    </p>
-                  </div>
-                  <div className="settings-note-block">
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      disabled={!onReopenSetupAssistant}
-                      onClick={onReopenSetupAssistant}
-                    >
-                      Reopen Setup Assistant
-                    </button>
-                  </div>
-                </article>
-              </div>
-            </div>
-          </div>
-        ) : null}
-
-        {selectedSection === "runtime" ? (
-          <div className="settings-workspace">
-            <article
-              className={`diagnostic-card settings-overview-card ${
-                runtimeKind === "bundled" ? "diagnostic-pass" : "diagnostic-warn"
-              }`}
-            >
-              <div className="settings-overview-copy">
-                <div>
-                  <p className="card-kicker">Current setup</p>
-                  <h3>Desktop engine selection</h3>
+                  </SettingsRow>
                   <p className="inline-note">
-                    This app ships with a compatible desktop engine and uses it by default. Use a system or custom engine only when you intentionally need to replace the included desktop engine.
+                    Next launch opens on <strong>{titleCase(defaultSection)}</strong> whenever the app can resume normally.
                   </p>
-                </div>
-                <span className={`pill ${runtimeKind === "bundled" ? "pill-ok" : "pill-warn"}`}>
-                  {runtimeKind === "bundled" ? "Included engine" : titleCase(runtimeKind)}
-                </span>
+                  {launchMessage ? <p className="inline-note">{launchMessage}</p> : null}
+                </SettingsGroup>
+
+                <SettingsGroup title="Setup Assistant">
+                  <SettingsActionRow
+                    label="Guided setup"
+                    description="Reopen the guided setup assistant to review detection and first-switch onboarding."
+                    action={
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        disabled={!onReopenSetupAssistant}
+                        onClick={onReopenSetupAssistant}
+                      >
+                        Reopen Setup Assistant
+                      </button>
+                    }
+                  />
+                </SettingsGroup>
+
+                <SettingsFooter>
+                  <button className="primary-button" type="button" onClick={saveGeneralPreferences}>
+                    Save General Settings
+                  </button>
+                </SettingsFooter>
+                {generalMessage ? <p className="inline-note">{generalMessage}</p> : null}
               </div>
-              <div className="settings-summary-grid">
-                <div>
-                  <span className="overview-current-set-cell-label">Compatibility</span>
-                  <strong>{runtimeStatus.compatible ? "Ready" : "Needs attention"}</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Version</span>
-                  <strong>{runtimeStatus.version?.version ?? "unknown"}</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Recommended</span>
-                  <strong>Included engine</strong>
-                </div>
-              </div>
-              <div className="settings-guide-block">
-                <h4>Engine summary</h4>
-                <div className="settings-kv-list">
-                  <div className="settings-kv-row">
-                    <strong>Source</strong>
-                    <strong>
-                      {runtimeKind === "bundled"
-                        ? "Included with this app"
-                        : runtimeKind === "system"
-                          ? "System engine"
-                          : "Custom engine"}
-                    </strong>
-                  </div>
-                  <div className="settings-kv-row">
-                    <strong>Engine mode</strong>
-                    <strong>{titleCase(runtimeKind)}</strong>
-                  </div>
-                  <div className="settings-kv-row">
-                    <strong>Engine version</strong>
-                    <strong>{runtimeStatus.version?.version ?? "unknown"}</strong>
-                  </div>
-                </div>
-                <p className="inline-note">
-                  Engine version: {runtimeStatus.version?.version ?? "unknown"}
-                </p>
-              </div>
-            </article>
-            <div className="settings-detail-grid">
-              <form className="stacked-form settings-form settings-main-stack" onSubmit={submit}>
-                <article className="diagnostic-card settings-detail-card">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">Engine</p>
-                      <h3>Engine source</h3>
-                    </div>
+            ) : null}
+
+            {selectedSection === "runtime" ? (
+              <form className="settings-section-stack" onSubmit={submit}>
+                <SettingsGroup title="AISW Runtime">
+                  <p className="settings-row-label">Engine summary</p>
+                  <p className="inline-note">Engine version: {runtimeStatus.version?.version ?? "Unknown"}</p>
+                  <div className="settings-result-list">
+                    <p className="inline-note">Selected runtime: {titleCase(runtimeKind)}</p>
+                    <p className="inline-note">Current runtime path: {selectedRuntimePath(settings, runtimeStatus)}</p>
                   </div>
                   {showAdvancedRuntime ? (
                     <>
-                      <label>
-                        Engine source
+                      <SettingsRow label="Runtime source">
                         <select
+                          aria-label="Runtime source"
                           value={runtimeKind}
                           onChange={(event) =>
                             setRuntimeKind(event.target.value as typeof runtimeKind)
                           }
                         >
-                          <option value="bundled">Included engine</option>
+                          <option value="bundled">Bundled</option>
                           <option value="system">System engine</option>
                           <option value="custom">Custom path</option>
                         </select>
-                      </label>
-                      <label>
-                        Engine path
+                      </SettingsRow>
+                      <SettingsRow label="Runtime path">
                         <input
+                          aria-label="Engine path"
                           value={runtimePath}
                           disabled={runtimeKind !== "custom"}
-                          placeholder={
-                            runtimeKind === "custom"
-                              ? "/path/to/engine"
-                              : "Only used for a custom engine"
-                          }
+                          placeholder={runtimeKind === "custom" ? "/path/to/aisw" : ""}
                           onChange={(event) => setRuntimePath(event.target.value)}
                         />
-                      </label>
-                      <div className="settings-note-block">
-                        <p className="inline-note">
-                          Keep the included desktop engine selected unless you intentionally need a different engine source.
-                        </p>
-                        {runtimeKind === "bundled" ? (
-                          <div className="button-row">
-                            <button
-                              className="ghost-button"
-                              type="button"
-                              onClick={() => setShowAdvancedRuntime(false)}
-                            >
-                              Hide manual engine options
-                            </button>
-                          </div>
-                        ) : null}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="settings-note-block">
-                      <p className="inline-note">
-                        Keep the included desktop engine selected unless you intentionally need a different engine source.
-                      </p>
+                      </SettingsRow>
                       <div className="button-row">
                         <button
                           className="ghost-button"
                           type="button"
-                          onClick={() => setShowAdvancedRuntime(true)}
+                          onClick={() => setShowAdvancedRuntime(false)}
                         >
-                          Show manual engine options
+                          Hide manual engine options
                         </button>
                       </div>
+                    </>
+                  ) : (
+                    <div className="button-row">
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        onClick={() => setShowAdvancedRuntime(true)}
+                      >
+                        Show manual engine options
+                      </button>
                     </div>
                   )}
-                </article>
+                </SettingsGroup>
 
-                <button
-                  className="primary-button"
-                  type="submit"
-                  disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
-                >
-                  {updateSettingsMutation.isPending ? "Saving…" : "Save Engine Settings"}
-                </button>
+                <SettingsGroup title="AISW Data">
+                  <SettingsStaticRow label="AISW home" value={settings.aisw_home ?? "~/.aisw"} />
+                  <SettingsActionRow
+                    label="App data folder"
+                    description="Open the local application data directory in Finder."
+                    action={
+                      <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
+                        Open App Data Folder
+                      </button>
+                    }
+                  />
+                </SettingsGroup>
+
+                <SettingsFooter>
+                  <button
+                    className="primary-button"
+                    type="submit"
+                    disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
+                  >
+                    {updateSettingsMutation.isPending ? "Saving…" : "Save Engine Settings"}
+                  </button>
+                </SettingsFooter>
+                {updateSettingsMutation.error ? (
+                  <MutationErrorCard title="Settings could not be saved" error={updateSettingsMutation.error} />
+                ) : null}
+                {advancedMessage ? <p className="inline-note">{advancedMessage}</p> : null}
               </form>
-              <div className="settings-side-stack diagnostics-body">
-                {updateSettingsMutation.error ? (
-                  <MutationErrorCard
-                    title="Settings could not be saved"
-                    error={updateSettingsMutation.error}
-                  />
-                ) : null}
-                {runtimeKind !== "bundled" ? (
-                  <article className="diagnostic-card diagnostic-warn settings-pane-section">
-                    <h3>Manual engine source is active</h3>
-                    <p className="inline-note">
-                      This app session is using a {runtimeKind === "system" ? "system" : "custom"} engine instead of the included desktop engine.
-                    </p>
-                    <p className="inline-note">
-                      Compatibility for onboarding, switching, and diagnostics is only guaranteed with the included desktop engine shipped in this app release.
-                    </p>
-                  </article>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        ) : null}
+            ) : null}
 
-        {selectedSection === "updates" ? (
-          <div className="settings-workspace">
-            <article className="diagnostic-card settings-overview-card">
-              <div className="settings-overview-copy">
-                <div>
-                  <p className="card-kicker">Current setup</p>
-                  <h3>Release track</h3>
+            {selectedSection === "shell" ? (
+              <div className="settings-section-stack">
+                <SettingsGroup title="Shell hook">
                   <p className="inline-note">
-                    Choose the release track for this computer. Stable is recommended for day-to-day switching. Beta is for earlier builds.
-                  </p>
-                </div>
-                <span className="pill pill-soft">{titleCase(updateChannel)}</span>
-              </div>
-              <div className="settings-summary-grid">
-                <div>
-                  <span className="overview-current-set-cell-label">App version</span>
-                  <strong>{appVersion}</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Included engine</span>
-                  <strong>{runtimeStatus.version?.version ?? "unknown"}</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Channel</span>
-                  <strong>{titleCase(updateChannel)}</strong>
-                </div>
-              </div>
-              <p className="inline-note">
-                AI Switch {appVersion} includes desktop engine {runtimeStatus.version?.version ?? "unknown"}.
-              </p>
-            </article>
-            <div className="settings-detail-grid">
-              <div className="settings-main-stack">
-                <form className="stacked-form settings-form" onSubmit={submit}>
-                  <article className="diagnostic-card settings-detail-card">
-                    <div className="desktop-pane-section-header">
-                      <div>
-                        <p className="card-kicker">Signed desktop releases</p>
-                        <h3>Release track</h3>
-                      </div>
-                    </div>
-                    <label>
-                      Update channel
-                      <select
-                        value={updateChannel}
-                        onChange={(event) => setUpdateChannel(event.target.value)}
-                      >
-                        <option value="stable">Stable</option>
-                        <option value="beta">Beta</option>
-                      </select>
-                    </label>
-                    <button
-                      className="primary-button"
-                      type="submit"
-                      disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
-                    >
-                      {updateSettingsMutation.isPending ? "Saving…" : "Save Update Settings"}
-                    </button>
-                  </article>
-                </form>
-                {updateSettingsMutation.error ? (
-                  <MutationErrorCard
-                    title="Settings could not be saved"
-                    error={updateSettingsMutation.error}
-                  />
-                ) : null}
-              </div>
-              <div className="settings-side-stack">
-                <article className="diagnostic-card settings-detail-card">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">Check</p>
-                      <h3>Available releases</h3>
-                    </div>
-                  </div>
-                  <p className="inline-note">
-                    Check for a signed desktop release on the selected {updateChannel} channel.
-                  </p>
-                  <div className="button-row">
-                    <button
-                      className="primary-button"
-                      type="button"
-                      disabled={
-                        mutationLock.isBusy ||
-                        checkForUpdatesMutation.isPending ||
-                        hasPendingSettingsChanges
-                      }
-                      onClick={() => checkForUpdatesMutation.mutate()}
-                    >
-                      {checkForUpdatesMutation.isPending ? "Checking…" : "Check for Updates"}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={
-                        mutationLock.isBusy ||
-                        hasPendingSettingsChanges ||
-                        installUpdateMutation.isPending ||
-                        !checkForUpdatesMutation.data?.update
-                      }
-                      onClick={() => installUpdateMutation.mutate()}
-                    >
-                      {installUpdateMutation.isPending ? "Installing…" : "Install Update"}
-                    </button>
-                  </div>
-                  {hasPendingSettingsChanges ? (
-                    <p className="inline-note">
-                      Save settings before checking for updates so the engine source and channel selection match
-                      the persisted desktop configuration.
-                    </p>
-                  ) : null}
-                  {checkForUpdatesMutation.data ? (
-                    <div className="settings-info-list">
-                      <p className="inline-note">
-                        Current app version: {checkForUpdatesMutation.data.current_version}
-                      </p>
-                      <p className="inline-note">Channel: {checkForUpdatesMutation.data.channel}</p>
-                      {checkForUpdatesMutation.data.endpoint ? (
-                        <p className="inline-note">Endpoint: {checkForUpdatesMutation.data.endpoint}</p>
-                      ) : null}
-                      {checkForUpdatesMutation.data.update ? (
-                        <>
-                          <p className="inline-note">
-                            Update available: {checkForUpdatesMutation.data.update.version}
-                          </p>
-                          {checkForUpdatesMutation.data.update.notes ? (
-                            <p className="inline-note">{checkForUpdatesMutation.data.update.notes}</p>
-                          ) : null}
-                        </>
-                      ) : (
-                        <p className="inline-note">
-                          {checkForUpdatesMutation.data.message ?? "No update is currently available."}
-                        </p>
-                      )}
-                    </div>
-                  ) : null}
-                </article>
-                {checkForUpdatesMutation.error ? (
-                  <MutationErrorCard title="Update check failed" error={checkForUpdatesMutation.error} />
-                ) : null}
-                {installUpdateMutation.data ? (
-                  <article className="diagnostic-card diagnostic-pass">
-                    <h3>Install status</h3>
-                    <p className="inline-note">
-                      {installUpdateMutation.data.message ??
-                        (installUpdateMutation.data.installed_version
-                          ? `Installed ${installUpdateMutation.data.installed_version}`
-                          : "No update installed.")}
-                    </p>
-                  </article>
-                ) : null}
-                {installUpdateMutation.error ? (
-                  <MutationErrorCard title="Update install failed" error={installUpdateMutation.error} />
-                ) : null}
-              </div>
-            </div>
-          </div>
-        ) : null}
-
-        {selectedSection === "shell" ? (
-          <div className="settings-workspace">
-            <article className="diagnostic-card settings-overview-card">
-              <div className="settings-overview-copy">
-                <div>
-                  <p className="card-kicker">Terminal</p>
-                  <h3>Terminal integration</h3>
-                  <p className="inline-note">
-                    Leave terminal integration off unless you want already-open terminal windows to react immediately after a switch.
-                  </p>
-                </div>
-                <span
-                  className={`pill ${
-                    shellCheck?.status === "pass"
-                      ? "pill-ok"
-                      : shellCheck?.status === "warn"
-                        ? "pill-warn"
-                        : "pill-soft"
-                  }`}
-                >
-                  {shellCheck?.status === "pass"
-                    ? "Active"
-                    : shellCheck?.status === "warn"
-                      ? "Optional"
-                      : "Unknown"}
-                </span>
-              </div>
-              <div className="settings-summary-grid">
-                <div>
-                  <span className="overview-current-set-cell-label">Detected shell</span>
-                  <strong>
+                    Detected shell:{" "}
                     {shellGuidance.data?.detected_shell
                       ? titleCase(shellGuidance.data.detected_shell)
                       : "Unknown"}
-                  </strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Session state</span>
-                  <strong>{shellCheck ? titleCase(shellCheck.status) : "Unknown"}</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Recommended</span>
-                  <strong>Only when needed</strong>
-                </div>
-              </div>
-            </article>
-            <div className="settings-detail-grid">
-              <div className="settings-main-stack">
-                <article className="diagnostic-card settings-detail-card">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">Terminal integration</p>
-                      <h3>Terminal Integration</h3>
-                    </div>
-                  </div>
-                  {shellCheck ? (
-                    <p className={`diagnostic-status diagnostic-status-${shellCheck.status}`}>
-                      {shellCheck.status === "pass" ? "✓" : shellCheck.status === "warn" ? "!" : "✕"}{" "}
-                      Terminal integration {shellCheck.status}
-                      {shellCheck.detail ? ` · ${shellCheck.detail}` : ""}
-                    </p>
-                  ) : (
-                    <p className="inline-note">
-                      Run diagnostics to verify whether terminal integration is active.
-                    </p>
-                  )}
-                  <div className="settings-kv-list">
-                    <div className="settings-kv-row">
-                      <strong>Current terminal session</strong>
-                      <strong>
-                        {shellGuidance.data?.detected_shell
-                          ? titleCase(shellGuidance.data.detected_shell)
-                          : "Unknown"}
-                      </strong>
-                    </div>
-                    <div className="settings-kv-row">
-                      <strong>Recommended mode</strong>
-                      <strong>Only when needed</strong>
-                    </div>
-                  </div>
-                  <div className="settings-note-block">
-                    <p className="inline-note">
-                      Detected shell:{" "}
-                      <strong>
-                        {shellGuidance.data?.detected_shell
-                          ? titleCase(shellGuidance.data.detected_shell)
-                          : "Unknown"}
-                      </strong>
-                    </p>
-                    <strong>What changes when this is off</strong>
-                    <p className="inline-note">
-                      Saved profiles and live credential files still update normally.
-                    </p>
-                    <p className="inline-note">
-                      Turn this on only when already-open terminal windows should refresh immediately.
-                    </p>
-                  </div>
-                  {shellGuidance.data ? (
+                  </p>
+                  <SettingsStaticRow
+                    label="Detected shell"
+                    value={
+                      shellGuidance.data?.detected_shell
+                        ? titleCase(shellGuidance.data.detected_shell)
+                        : "Unknown"
+                    }
+                  />
+                  <SettingsStaticRow
+                    label="Shell hook"
+                    value={
+                      shellCheck?.status === "pass"
+                        ? "Installed"
+                        : shellCheck?.status === "warn"
+                          ? "Not installed"
+                          : "Unknown"
+                    }
+                  />
+                  {selectedVariant ? (
                     <>
-                      <div className="settings-info-list">
-                        {shellGuidance.data.capabilities.map((item) => (
-                          <div key={item} className="settings-info-row">
-                            <span className="inline-note">
-                              {normalizeTerminalIntegrationText(item)}
-                            </span>
+                      <SettingsActionRow
+                        label="Install or verify"
+                        description={`Config file: ${selectedVariant.config_path}`}
+                        action={
+                          <div className="button-row">
+                            <button
+                              className="ghost-button"
+                              type="button"
+                              onClick={() => void copyText(selectedVariant.install_command, "setup")}
+                            >
+                              Copy install command
+                            </button>
+                            <button
+                              className="ghost-button"
+                              type="button"
+                              onClick={() => void copyText(selectedVariant.verify_command, "verify")}
+                            >
+                              Copy verification command
+                            </button>
                           </div>
-                        ))}
+                        }
+                      />
+                      <div className="stack-list">
+                        <p className="inline-note">1. Copy the AI Switch setup step.</p>
+                        <pre>{selectedVariant.install_command}</pre>
+                        <p className="inline-note">
+                          Paste it into {selectedVariant.config_path} or the matching shell config file.
+                        </p>
+                        <p className="inline-note">2. Reload Terminal.</p>
+                        <p className="inline-note">
+                          Run the reload step or open a new terminal window.
+                        </p>
+                        <pre>{selectedVariant.reload_command}</pre>
+                        <p className="inline-note">3. Confirm that terminal integration is active.</p>
+                        <pre>{selectedVariant.verify_command}</pre>
+                        <p className="inline-note">Expected output: {selectedVariant.verify_expected}</p>
                       </div>
-                      <label>
-                        Guidance for shell
-                        <select
-                          value={selectedVariant?.shell ?? ""}
-                          onChange={(event) => setSelectedShell(event.target.value)}
-                        >
-                          {shellGuidance.data.variants.map((variant) => (
-                            <option key={variant.shell} value={variant.shell}>
-                              {variant.title}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
                     </>
                   ) : (
                     <p className="inline-note">
@@ -1065,269 +634,259 @@ export function SettingsPanel({
                         : "Terminal setup guidance is unavailable."}
                     </p>
                   )}
-                </article>
-              </div>
-              <div className="settings-side-stack">
-                {selectedVariant ? (
-                  <article className="diagnostic-card settings-detail-card">
-                    <div className="desktop-pane-section-header">
-                      <div>
-                        <p className="card-kicker">Guided setup</p>
-                        <h3>Set up {selectedVariant.title}</h3>
-                      </div>
-                    </div>
-                    <div className="settings-note-block">
-                      <p className="inline-note">Config file: {selectedVariant.config_path}</p>
-                      {selectedVariant.alternate_config_path ? (
-                        <p className="inline-note">
-                          Alternative: {selectedVariant.alternate_config_path}
-                        </p>
-                      ) : null}
-                      <p className="inline-note">
-                        AI Switch keeps terminal setup optional. Use the guided copy actions below when you want already-open shells to refresh immediately after a switch.
+                  <p className="inline-note">
+                    Current terminal sessions need the hook only when they must receive CLAUDE_CONFIG_DIR or CODEX_HOME immediately.
+                  </p>
+                </SettingsGroup>
+
+                {shellGuidance.data?.capabilities.length ? (
+                  <SettingsGroup title="What this changes">
+                    {shellGuidance.data.capabilities.map((item) => (
+                      <p key={item} className="inline-note">
+                        {normalizeTerminalIntegrationText(item)}
                       </p>
-                    </div>
-                    <div className="settings-steps-list">
-                      <div className="settings-step-card">
-                        <p className="inline-note">1. Copy the AI Switch setup step.</p>
-                        <p className="inline-note">
-                          Paste it into {selectedVariant.config_path} or the matching shell config file.
-                        </p>
-                        <div className="button-row">
-                          <button
-                            type="button"
-                            className="ghost-button"
-                            onClick={() => void copyText(selectedVariant.install_command, "setup")}
-                          >
-                            Copy install command
-                          </button>
-                        </div>
-                      </div>
-                      <div className="settings-step-card">
-                        <p className="inline-note">2. Reload Terminal.</p>
-                        <p className="inline-note">Run the reload step or open a new terminal window.</p>
-                        <div className="button-row">
-                          <button
-                            type="button"
-                            className="ghost-button"
-                            onClick={() => void copyText(selectedVariant.reload_command, "reload")}
-                          >
-                            Copy reload command
-                          </button>
-                        </div>
-                      </div>
-                      <div className="settings-step-card">
-                        <p className="inline-note">3. Confirm that terminal integration is active.</p>
-                        <p className="inline-note">Expected output: {selectedVariant.verify_expected}</p>
-                        <div className="button-row">
-                          <button
-                            type="button"
-                            className="ghost-button"
-                            onClick={() => void copyText(selectedVariant.verify_command, "verify")}
-                          >
-                            Copy verification command
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    <details className="settings-guide-block">
-                      <summary>Show advanced terminal commands</summary>
-                      <div className="stack-list">
-                        <p className="inline-note">
-                          Most people can skip these raw commands unless they manage shell files manually.
-                        </p>
-                        <p className="inline-note">
-                          These are the exact low-level commands behind AI Switch terminal integration.
-                        </p>
-                        <div>
-                          <p className="inline-note">Install command</p>
-                          <pre>{selectedVariant.install_command}</pre>
-                        </div>
-                        <div>
-                          <p className="inline-note">Reload command</p>
-                          <pre>{selectedVariant.reload_command}</pre>
-                        </div>
-                        <div>
-                          <p className="inline-note">Verify command</p>
-                          <pre>{selectedVariant.verify_command}</pre>
-                        </div>
-                      </div>
-                    </details>
-                  </article>
+                    ))}
+                  </SettingsGroup>
                 ) : null}
-                {shellGuidance.data ? (
-                  <article className="diagnostic-card settings-pane-section">
-                    <h3>Terminal commands still work manually</h3>
-                    <p className="inline-note">
-                      {normalizeTerminalIntegrationText(shellGuidance.data.note)}
-                    </p>
-                    <p className="inline-note">
-                      If you intentionally switch from Terminal instead of AI Switch, use the advanced examples below.
-                    </p>
-                    {shellGuidance.data.manual_apply_examples.length ? (
-                      <details className="settings-guide-block">
-                        <summary>Show advanced terminal examples</summary>
-                        <div className="stack-list">
-                          <p className="inline-note">
-                            These examples are only for people who intentionally apply AI Switch commands from a terminal.
-                          </p>
-                          {shellGuidance.data.manual_apply_examples.map((example) => (
-                            <pre key={example}>{example}</pre>
-                          ))}
-                        </div>
-                      </details>
-                    ) : null}
-                  </article>
+
+                {selectedVariant || shellGuidance.data?.manual_apply_examples.length ? (
+                  <details className="settings-inline-details">
+                    <summary>Show advanced terminal commands</summary>
+                    <div className="stack-list">
+                      {selectedVariant ? <pre>{selectedVariant.install_command}</pre> : null}
+                      {selectedVariant ? <pre>{selectedVariant.reload_command}</pre> : null}
+                      {selectedVariant ? <pre>{selectedVariant.verify_command}</pre> : null}
+                      {shellGuidance.data.manual_apply_examples.map((example) => (
+                        <pre key={example}>{example}</pre>
+                      ))}
+                    </div>
+                  </details>
                 ) : null}
+
                 {copyMessage ? <p className="inline-note">{copyMessage}</p> : null}
               </div>
-            </div>
-          </div>
-        ) : null}
+            ) : null}
 
-        {selectedSection === "keyring" ? (
-          <div className="settings-workspace">
-            <article className="diagnostic-card settings-overview-card diagnostic-pass">
-              <div className="settings-overview-copy">
-                <div>
-                  <p className="card-kicker">Security</p>
-                  <h3>Local credential model</h3>
-                  <p className="inline-note">
-                    Credentials stay on this machine, storage stays local-first, and support exports are redacted before sharing.
-                  </p>
-                </div>
-                <span className="pill pill-ok">On this computer</span>
-              </div>
-              <div className="settings-summary-grid">
-                <div>
-                  <span className="overview-current-set-cell-label">Storage</span>
-                  <strong>Native keyrings first</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Network</span>
-                  <strong>No proxy</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Support</span>
-                  <strong>Redacted bundles</strong>
-                </div>
-              </div>
-            </article>
-            <div className="settings-detail-grid">
-              <div className="settings-main-stack">
-                <article className="diagnostic-card diagnostic-pass settings-detail-card">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">Security</p>
-                      <h3>Security</h3>
-                    </div>
-                  </div>
-                  <div className="settings-info-list">
-                    <div className="settings-info-row">
-                      <strong>Credentials stay local to this computer or workstation.</strong>
-                      <span className="inline-note">
-                        No telemetry or remote credential proxy is used for switching.
-                      </span>
-                    </div>
-                    <div className="settings-info-row">
-                      <strong>Native keyrings remain preferred</strong>
-                      <span className="inline-note">
-                        The app uses operating-system storage whenever the OS provides it.
-                      </span>
-                    </div>
-                  </div>
-                </article>
-                <article className="diagnostic-card settings-detail-card">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">Diagnostics</p>
-                      <h3>Redacted diagnostic export</h3>
-                    </div>
-                  </div>
-                  <p className="inline-note">
-                    Export a redacted bundle before sharing troubleshooting details or filing a support request.
-                  </p>
-                  <div className="button-row">
-                    <button className="ghost-button" type="button" onClick={() => void exportReport()}>
-                      Export Redacted Diagnostic Report
-                    </button>
-                  </div>
+            {selectedSection === "keyring" ? (
+              <div className="settings-section-stack">
+                <SettingsGroup title="Credential Storage">
+                  <SettingsStaticRow label="Keychain backend" value="Available" />
+                  <SettingsStaticRow label="File permissions" value="Correct" />
+                  <SettingsStaticRow label="Remote sync" value="Disabled" />
+                  <SettingsStaticRow label="Telemetry" value="Disabled" />
+                </SettingsGroup>
+
+                <SettingsGroup title="Local Data">
+                  <SettingsStaticRow label="AISW data folder" value={settings.aisw_home ?? "~/.aisw"} />
+                  <SettingsActionRow
+                    label="Reveal in Finder"
+                    description="Open the local AI Switch data location."
+                    action={
+                      <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
+                        Open App Data Folder
+                      </button>
+                    }
+                  />
+                </SettingsGroup>
+
+                <SettingsGroup title="Diagnostics">
+                  <SettingsActionRow
+                    label="Redacted report"
+                    description="Export a redacted support bundle before sharing troubleshooting details."
+                    action={
+                      <button className="ghost-button" type="button" onClick={() => void exportReport()}>
+                        Export Redacted Diagnostic Report
+                      </button>
+                    }
+                  />
                   {securityMessage ? <p className="inline-note">{securityMessage}</p> : null}
-                </article>
-              </div>
-              <div className="settings-side-stack">
-                <article className="diagnostic-card settings-detail-card">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">Recovery</p>
-                      <h3>OS recovery guides</h3>
-                    </div>
-                  </div>
-                  <p className="inline-note">
-                    If diagnostics report a keyring failure, use the matching OS steps below.
-                  </p>
-                  {KEYRING_GUIDES.map((guide) => (
-                    <div key={guide.platform} className="settings-guide-block">
-                      <h4>{guide.title}</h4>
-                      <p className="inline-note">Expected backend: {guide.backend}</p>
-                      {guide.steps.map((step) => (
-                        <p key={step} className="inline-note">
-                          {step}
-                        </p>
-                      ))}
-                      <p className="inline-note">Verify: {guide.verify}</p>
-                    </div>
-                  ))}
-                </article>
-              </div>
-            </div>
-          </div>
-        ) : null}
+                </SettingsGroup>
 
-        {selectedSection === "advanced" ? (
-          <div className="settings-workspace">
-            <article className="diagnostic-card settings-overview-card">
-              <div className="settings-overview-copy">
-                <div>
-                  <p className="card-kicker">Advanced</p>
-                  <h3>Storage and paths</h3>
-                  <p className="inline-note">
-                    Keep custom data locations and engine details in one place so the default settings stay simple.
-                  </p>
-                </div>
-                <span className="pill pill-soft">{aiswHome ? "Custom" : "Managed"}</span>
-              </div>
-              <div className="settings-summary-grid">
-                <div>
-                  <span className="overview-current-set-cell-label">Data folder</span>
-                  <strong>{aiswHome ? "Custom location" : "Managed automatically"}</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Engine source</span>
-                  <strong>{runtimeKind === "bundled" ? "Included" : titleCase(runtimeKind)}</strong>
-                </div>
-                <div>
-                  <span className="overview-current-set-cell-label">Release track</span>
-                  <strong>{titleCase(updateChannel)}</strong>
-                </div>
-              </div>
-            </article>
-            <div className="settings-detail-grid">
-              <form className="stacked-form settings-form settings-main-stack" onSubmit={submit}>
-                <article className="diagnostic-card settings-detail-card">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">Storage &amp; paths</p>
-                      <h3>App data folder</h3>
-                    </div>
+                <details className="settings-inline-details" open>
+                  <summary>Recovery guides</summary>
+                  <div className="stack-list">
+                    {KEYRING_GUIDES.map((guide) => (
+                      <div key={guide.platform} className="settings-guide-stack">
+                        <strong>{guide.title}</strong>
+                        <p className="inline-note">Expected backend: {guide.backend}</p>
+                        {guide.steps.map((step) => (
+                          <p key={step} className="inline-note">{step}</p>
+                        ))}
+                        <p className="inline-note">Verify: {guide.verify}</p>
+                      </div>
+                    ))}
                   </div>
+                </details>
+              </div>
+            ) : null}
+
+            {selectedSection === "updates" ? (
+              <form className="settings-section-stack" onSubmit={submit}>
+                <SettingsGroup title="AISW Desktop">
+                  <SettingsStaticRow label="App version" value={appVersion} />
+                  <SettingsRow label="Update channel">
+                    <select
+                      aria-label="Update channel"
+                      value={updateChannel}
+                      onChange={(event) => setUpdateChannel(event.target.value)}
+                    >
+                      <option value="stable">Stable</option>
+                      <option value="beta">Beta</option>
+                    </select>
+                  </SettingsRow>
+                  <SettingsActionRow
+                    label="Available releases"
+                    description={`Check for a signed desktop release on the selected ${updateChannel} channel.`}
+                    action={
+                      <div className="button-row">
+                        <button
+                          className="ghost-button"
+                          type="button"
+                          disabled={
+                            mutationLock.isBusy ||
+                            checkForUpdatesMutation.isPending ||
+                            hasPendingSettingsChanges
+                          }
+                          onClick={() => checkForUpdatesMutation.mutate()}
+                        >
+                          Check for Updates
+                        </button>
+                        <button
+                          className="ghost-button"
+                          type="button"
+                          disabled={
+                            mutationLock.isBusy ||
+                            hasPendingSettingsChanges ||
+                            installUpdateMutation.isPending ||
+                            !checkForUpdatesMutation.data?.update
+                          }
+                          onClick={() => installUpdateMutation.mutate()}
+                        >
+                          {installUpdateMutation.isPending ? "Installing…" : "Install Update"}
+                        </button>
+                      </div>
+                    }
+                  />
+                  {hasPendingSettingsChanges ? (
+                    <p className="inline-note">
+                      Save settings before checking for updates so the engine source and channel selection match the persisted desktop configuration.
+                    </p>
+                  ) : null}
+                </SettingsGroup>
+
+                <SettingsGroup title="Bundled AISW Engine">
+                  <SettingsStaticRow label="Included engine" value={runtimeStatus.version?.version ?? "Unknown"} />
+                  <SettingsStaticRow
+                    label="Compatibility"
+                    value={runtimeStatus.compatible ? "Supported" : "Needs attention"}
+                  />
                   <p className="inline-note">
-                    Leave this empty to use the managed app data location.
+                    AI Switch {appVersion} includes desktop engine {runtimeStatus.version?.version ?? "Unknown"}.
                   </p>
-                  <label>
-                    Custom data folder
-                    <input value={aiswHome} onChange={(event) => setAiswHome(event.target.value)} />
-                  </label>
+                </SettingsGroup>
+
+                <SettingsFooter>
+                  <button
+                    className="primary-button"
+                    type="submit"
+                    disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
+                  >
+                    {updateSettingsMutation.isPending ? "Saving…" : "Save Update Settings"}
+                  </button>
+                </SettingsFooter>
+
+                {checkForUpdatesMutation.data ? (
+                  <div className="settings-result-list">
+                    <p className="inline-note">Channel: {checkForUpdatesMutation.data.channel}</p>
+                    {checkForUpdatesMutation.data.endpoint ? (
+                      <p className="inline-note">Endpoint: {checkForUpdatesMutation.data.endpoint}</p>
+                    ) : null}
+                    {checkForUpdatesMutation.data.update ? (
+                      <>
+                        <p className="inline-note">
+                          Update available: {checkForUpdatesMutation.data.update.version}
+                        </p>
+                        {checkForUpdatesMutation.data.update.notes ? (
+                          <p className="inline-note">{checkForUpdatesMutation.data.update.notes}</p>
+                        ) : null}
+                      </>
+                    ) : (
+                      <p className="inline-note">
+                        {checkForUpdatesMutation.data.message ?? "No update is currently available."}
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+                {installUpdateMutation.data?.message ? (
+                  <div className="settings-result-list">
+                    <p className="inline-note">{installUpdateMutation.data.message}</p>
+                  </div>
+                ) : null}
+                {updateSettingsMutation.error ? (
+                  <MutationErrorCard title="Settings could not be saved" error={updateSettingsMutation.error} />
+                ) : null}
+                {checkForUpdatesMutation.error ? (
+                  <MutationErrorCard title="Update check failed" error={checkForUpdatesMutation.error} />
+                ) : null}
+                {installUpdateMutation.error ? (
+                  <MutationErrorCard title="Update install failed" error={installUpdateMutation.error} />
+                ) : null}
+              </form>
+            ) : null}
+
+            {selectedSection === "advanced" ? (
+              <form className="settings-section-stack" onSubmit={submit}>
+                <SettingsGroup title="Application State">
+                  <SettingsActionRow
+                    label="App data folder"
+                    description="Open the local AI Switch Desktop data location."
+                    action={
+                      <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
+                        Open App Data Folder
+                      </button>
+                    }
+                  />
+                  <SettingsActionRow
+                    label="Setup state"
+                    description="Reset onboarding and reopen the setup assistant from the beginning."
+                    action={
+                      <button className="ghost-button" type="button" onClick={resetOnboarding}>
+                        Reset Onboarding
+                      </button>
+                    }
+                  />
+                </SettingsGroup>
+
+                <SettingsGroup title="Data">
+                  <SettingsRow label="Custom data folder">
+                    <input
+                      aria-label="Custom data folder"
+                      value={aiswHome}
+                      onChange={(event) => setAiswHome(event.target.value)}
+                    />
+                  </SettingsRow>
+                </SettingsGroup>
+
+                <SettingsGroup title="Engine details">
+                  <p className="inline-note">
+                    Data folder: {settings.aisw_home ? settings.aisw_home : "Managed automatically"}
+                  </p>
+                  <p className="inline-note">Release track: {titleCase(settings.update_channel)}</p>
+                  <p className="inline-note">
+                    Engine API {runtimeStatus.version?.cli_api_version ?? "Unknown"} · JSON schema {runtimeStatus.version?.json_schema_version ?? "Unknown"} · Progress schema {runtimeStatus.version?.progress_schema_version ?? "Unknown"}
+                  </p>
+                  <p className="inline-note">
+                    Selected engine source: {selectedEngineSourceLabel(settings.runtime_kind)}
+                  </p>
+                  <p className="inline-note">
+                    Included engine: {runtimeStatus.inventory?.bundled_path ? "Available in this build" : "Unavailable in this build"}
+                  </p>
+                  <p className="inline-note">
+                    System engine: {runtimeStatus.inventory?.system_path ? "Found on this computer" : "Not found on this computer"}
+                  </p>
+                </SettingsGroup>
+
+                <SettingsFooter>
                   <button
                     className="primary-button"
                     type="submit"
@@ -1335,121 +894,101 @@ export function SettingsPanel({
                   >
                     {updateSettingsMutation.isPending ? "Saving…" : "Save Storage Settings"}
                   </button>
-                  <div className="button-row">
-                    <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
-                      Open App Data Folder
-                    </button>
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      onClick={resetOnboarding}
-                    >
-                      Reset Onboarding
-                    </button>
-                  </div>
-                  {advancedMessage ? <p className="inline-note">{advancedMessage}</p> : null}
-                  {generalMessage ? <p className="inline-note">{generalMessage}</p> : null}
-                </article>
-              </form>
-              <div className="settings-side-stack">
+                </SettingsFooter>
+                {advancedMessage ? <p className="inline-note">{advancedMessage}</p> : null}
                 {updateSettingsMutation.error ? (
-                  <MutationErrorCard
-                    title="Settings could not be saved"
-                    error={updateSettingsMutation.error}
-                  />
+                  <MutationErrorCard title="Settings could not be saved" error={updateSettingsMutation.error} />
                 ) : null}
-                <article className="diagnostic-card settings-detail-card">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">Status</p>
-                      <h3>Engine details</h3>
-                    </div>
-                  </div>
-                  <div className="settings-kv-list">
-                    <div className="settings-kv-row">
-                      <strong>Data folder</strong>
-                      <strong>
-                        {settings.aisw_home
-                          ? `Custom data folder (${settings.aisw_home})`
-                          : "Managed automatically"}
-                      </strong>
-                    </div>
-                    <div className="settings-kv-row">
-                      <strong>Release track</strong>
-                      <strong>{titleCase(updateChannel)}</strong>
-                    </div>
-                    <div className="settings-kv-row">
-                      <strong>Selected engine source</strong>
-                      <strong>
-                        {runtimeKind === "bundled"
-                          ? "Included with this app"
-                          : runtimeKind === "system"
-                            ? "System override"
-                            : "Custom override"}
-                      </strong>
-                    </div>
-                    <div className="settings-kv-row">
-                      <strong>Included engine</strong>
-                      <strong>
-                        {runtimeStatus.inventory.bundled_path
-                          ? "Available in this build"
-                          : "Not included in this build"}
-                      </strong>
-                    </div>
-                    <div className="settings-kv-row">
-                      <strong>System engine</strong>
-                      <strong>{runtimeStatus.inventory.system_path ? "Found on this computer" : "Not found"}</strong>
-                    </div>
-                  </div>
-                  <p className="inline-note">
-                    Data folder:{" "}
-                    {settings.aisw_home ? `Custom data folder (${settings.aisw_home})` : "Managed automatically"}
-                  </p>
-                  <p className="inline-note">
-                    Release track: <strong>{titleCase(updateChannel)}</strong>
-                  </p>
-                  {runtimeStatus.version ? (
-                    <p className="inline-note">
-                      Engine API {runtimeStatus.version.cli_api_version} · JSON schema{" "}
-                      {runtimeStatus.version.json_schema_version} · Progress schema{" "}
-                      {runtimeStatus.version.progress_schema_version}
-                    </p>
-                  ) : null}
-                  <p className="inline-note">
-                    Selected engine source:{" "}
-                    <strong>
-                      {runtimeKind === "bundled"
-                        ? "Included with this app"
-                        : runtimeKind === "system"
-                          ? "System override"
-                          : "Custom override"}
-                    </strong>
-                  </p>
-                  <p className="inline-note">
-                    Included engine:{" "}
-                    <strong>
-                      {runtimeStatus.inventory.bundled_path
-                        ? "Available in this build"
-                        : "Not included in this build"}
-                    </strong>
-                  </p>
-                  <p className="inline-note">
-                    System engine:{" "}
-                    <strong>{runtimeStatus.inventory.system_path ? "Found on this computer" : "Not found"}</strong>
-                  </p>
-                  {runtimeStatus.inventory.configured_path ? (
-                    <p className="inline-note">A custom engine path is configured.</p>
-                  ) : null}
-                </article>
-              </div>
-            </div>
+              </form>
+            ) : null}
           </div>
-        ) : null}
+        </section>
       </div>
-        }
-      />
-    </SectionCard>
+    </div>
   );
+}
+
+function SettingsGroup({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="settings-group">
+      <h4>{title}</h4>
+      <div className="settings-group-body">{children}</div>
+    </section>
+  );
+}
+
+function SettingsRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <label className="settings-row">
+      <span className="settings-row-label">{label}</span>
+      <span className="settings-row-control">{children}</span>
+    </label>
+  );
+}
+
+function SettingsStaticRow({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="settings-row settings-row-static">
+      <span className="settings-row-label">{label}</span>
+      <strong className="settings-row-value">{value}</strong>
+    </div>
+  );
+}
+
+function SettingsActionRow({
+  label,
+  description,
+  action,
+}: {
+  label: string;
+  description: string;
+  action: ReactNode;
+}) {
+  return (
+    <div className="settings-row settings-row-action">
+      <div className="settings-row-copy">
+        <span className="settings-row-label">{label}</span>
+        <p className="inline-note">{description}</p>
+      </div>
+      <div className="settings-row-control">{action}</div>
+    </div>
+  );
+}
+
+function ToggleRow({
+  label,
+  description,
+  control,
+}: {
+  label: string;
+  description: string;
+  control: ReactNode;
+}) {
+  return (
+    <div className="settings-row settings-row-toggle">
+      <div className="settings-row-copy">
+        <span className="settings-row-label">{label}</span>
+        <p className="inline-note">{description}</p>
+      </div>
+      <div className="settings-row-control">{control}</div>
+    </div>
+  );
+}
+
+function SettingsFooter({ children }: { children: ReactNode }) {
+  return <div className="settings-footer-row">{children}</div>;
 }
 
 const KEYRING_GUIDES = [
@@ -1559,145 +1098,59 @@ function sectionLabel(section: SettingsSection) {
   }
 }
 
-function sectionKicker(section: SettingsSection) {
-  switch (section) {
-    case "general":
-      return "Appearance, launch, and startup";
-    case "runtime":
-      return "Included engine and overrides";
-    case "updates":
-      return "App updates";
-    case "shell":
-      return "Terminal setup and current-session switching";
-    case "keyring":
-      return "Local credential storage";
-    case "advanced":
-      return "Advanced paths and app data";
-  }
-}
-
 function sectionHeading(section: SettingsSection) {
   switch (section) {
     case "general":
-      return "Keep AI Switch aligned with your desktop";
+      return "Desktop defaults";
     case "runtime":
-      return "Choose which AI Switch desktop engine this app should use";
-    case "updates":
-      return "Manage signed desktop releases in one place";
+      return "Desktop engine selection";
     case "shell":
-      return "Set up terminal integration only when you need it";
+      return "Terminal Integration";
     case "keyring":
-      return "Keep credentials local with native OS storage";
+      return "Security";
+    case "updates":
+      return "Desktop updates";
     case "advanced":
-      return "Keep advanced paths and reset tools out of the main settings flow";
+      return "App data folder";
   }
 }
 
-function sectionDescription(section: SettingsSection) {
+function sectionSummary(section: SettingsSection) {
   switch (section) {
     case "general":
-      return "General settings should stay short, obvious, and system-driven so the app feels like a native desktop app.";
+      return "Appearance, startup behavior, and the default place AI Switch opens.";
     case "runtime":
-      return "The included desktop engine is the supported default. System and custom overrides stay available for advanced cases.";
-    case "updates":
-      return "Choose the release track for this computer, then check and install signed desktop updates without leaving the app.";
+      return "Choose the AISW runtime source and review the bundled engine status.";
     case "shell":
-      return "Terminal integration follows one guided copy-and-verify flow across supported shells so it stays approachable for non-terminal users.";
+      return "Optional terminal integration for current shell sessions.";
     case "keyring":
-      return "Security guidance, storage behavior, and recovery steps should stay clear without exposing unnecessary implementation detail.";
+      return "Local credential storage, app data, and redacted diagnostic export.";
+    case "updates":
+      return "Release channel settings and signed desktop update actions.";
     case "advanced":
-      return "Advanced storage, reset, and path details stay available for recovery and debugging without dominating the default AI Switch settings experience.";
+      return "Recovery actions, app data paths, and reset tools.";
   }
 }
 
-function sectionPills(section: SettingsSection) {
-  switch (section) {
-    case "general":
-      return ["System-driven", "Native defaults", "Local control"];
-    case "runtime":
-      return ["Included default", "Cross-platform", "Advanced override"];
-    case "updates":
-      return ["Signed releases", "Stable or beta", "In-app install"];
-    case "shell":
-      return ["Optional setup", "Shell-aware", "Copy and verify"];
-    case "keyring":
-      return ["Credentials stay local", "Native storage", "Recovery guides"];
-    case "advanced":
-      return ["Custom paths", "App data", "Engine inventory"];
+function selectedRuntimePath(
+  settings: DesktopSettings,
+  runtimeStatus: AppBootstrap["runtime_status"],
+) {
+  if (settings.runtime_kind === "custom") {
+    return settings.runtime_path ?? "Not set";
   }
+  if (settings.runtime_kind === "system") {
+    return runtimeStatus.inventory?.system_path ?? "Not found";
+  }
+  return runtimeStatus.inventory?.bundled_path ?? "Not found";
 }
 
-function sourceListSummary(section: SettingsSection) {
-  switch (section) {
-    case "general":
-      return "Appearance and startup";
-    case "runtime":
-      return "Included engine and overrides";
-    case "updates":
-      return "Release channel and signed installs";
-    case "shell":
-      return "Terminal integration guidance";
-    case "keyring":
-      return "Credential storage and recovery";
-    case "advanced":
-      return "App data, reset, and paths";
+function selectedEngineSourceLabel(runtimeKind: DesktopSettings["runtime_kind"]) {
+  if (runtimeKind === "bundled") {
+    return "Included with this app";
   }
-}
-
-function sectionShortTag(section: SettingsSection) {
-  switch (section) {
-    case "general":
-      return "UI";
-    case "runtime":
-      return "Core";
-    case "updates":
-      return "Update";
-    case "shell":
-      return "Shell";
-    case "keyring":
-      return "Local";
-    case "advanced":
-      return "Paths";
+  if (runtimeKind === "system") {
+    return "System engine";
   }
-}
-
-function sectionFacts(section: SettingsSection) {
-  switch (section) {
-    case "general":
-      return [
-        { label: "Scope", value: "Appearance and launch" },
-        { label: "Default", value: "System-first" },
-        { label: "Best for", value: "Daily use" },
-      ];
-    case "runtime":
-      return [
-        { label: "Default", value: "Included engine" },
-        { label: "Overrides", value: "System or custom" },
-        { label: "Risk", value: "Compatibility drift" },
-      ];
-    case "updates":
-      return [
-        { label: "Source", value: "Signed desktop releases" },
-        { label: "Tracks", value: "Stable or beta" },
-        { label: "Install", value: "In app" },
-      ];
-    case "shell":
-      return [
-        { label: "Need", value: "Optional" },
-        { label: "Best for", value: "Open terminals" },
-        { label: "Flow", value: "Copy and verify" },
-      ];
-    case "keyring":
-      return [
-        { label: "Storage", value: "Native first" },
-        { label: "Network", value: "No proxy" },
-        { label: "Support", value: "Redacted export" },
-      ];
-    case "advanced":
-      return [
-        { label: "Focus", value: "Paths and app data" },
-        { label: "Default", value: "Managed automatically" },
-        { label: "Use when", value: "Recovery or debugging" },
-      ];
-  }
+  return "Custom engine";
 }
