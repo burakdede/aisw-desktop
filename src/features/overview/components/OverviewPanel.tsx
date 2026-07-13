@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import {
@@ -374,6 +375,7 @@ function ToolInspector({
 }) {
   const [stateMode, setStateMode] = useState(status.state_mode ?? stateModes[0] ?? "");
   const [selectedProfile, setSelectedProfile] = useState(status.active_profile ?? profiles[0]?.name ?? "");
+  const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
   const activeProfileLabel = status.active_profile
     ? toolProfileDisplayLabel(settings, snapshot, status.tool, status.active_profile)
     : null;
@@ -384,6 +386,38 @@ function ToolInspector({
   const state = resolveOverviewState(status);
   const statusLabel = overviewStatusLabel(state);
   const hasAlternateSelection = Boolean(selectedProfile && selectedProfile !== status.active_profile);
+  const canSwitch = Boolean(hasAlternateSelection && selectedProfile);
+  const currentSelectionLabel = selectedProfileLabel ?? activeProfileLabel ?? "profile";
+  const primaryActionLabel = !profiles.length
+    ? "Add Profile…"
+    : status.active_profile_applied === false && currentSelectionLabel
+      ? `Re-apply ${currentSelectionLabel}`
+      : canSwitch
+        ? "Activate Profile"
+        : null;
+  const secondaryAction = !profiles.length
+    ? null
+    : status.active_profile_applied === false
+      ? supportsLiveImport
+        ? {
+            label: "Import Current…",
+            onClick: () => onImport(status.tool),
+          }
+        : {
+            label: "Open Account Setup",
+            onClick: () => onAddProfile(status.tool),
+          }
+      : status.active_profile
+        ? {
+            label: "Open Profile",
+            onClick: () => onOpenDetails(status.tool, status.active_profile),
+          }
+        : workspaceMismatch
+          ? {
+              label: workspaceMismatch.canResolveDirectly ? "Use Expected Set" : "Open Sets",
+              onClick: workspaceMismatch.onResolve,
+            }
+          : null;
 
   useEffect(() => {
     if (!stateModes.length) {
@@ -401,6 +435,44 @@ function ToolInspector({
       setSelectedProfile(nextProfile);
     }
   }, [profiles, selectedProfile, status.active_profile]);
+
+  useEffect(() => {
+    if (!actionsMenuOpen) {
+      return;
+    }
+
+    function closeActions(event: MouseEvent) {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("[data-overview-actions]")) {
+        return;
+      }
+      setActionsMenuOpen(false);
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setActionsMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", closeActions);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeActions);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [actionsMenuOpen]);
+
+  function runPrimaryAction() {
+    if (!profiles.length) {
+      onAddProfile(status.tool);
+      return;
+    }
+    if (!selectedProfile) {
+      return;
+    }
+    onUse(status.tool, selectedProfile, stateModes.length ? stateMode : null);
+  }
 
   return (
     <aside className="overview-pane overview-inspector-pane tool-card">
@@ -430,31 +502,6 @@ function ToolInspector({
         </div>
       </header>
 
-      <dl className="overview-inspector-facts">
-        <div>
-          <dt>Active profile</dt>
-          <dd>{activeProfileLabel ?? "Not configured"}</dd>
-        </div>
-        <div>
-          <dt>Authentication</dt>
-          <dd>{status.auth_method ? titleCase(status.auth_method.replace(/_/g, " ")) : "Not configured"}</dd>
-        </div>
-        <div>
-          <dt>Backend</dt>
-          <dd>{credentialBackendLabel(status.credential_backend)}</dd>
-        </div>
-        <div>
-          <dt>Live state</dt>
-          <dd>{statusLabel}</dd>
-        </div>
-        {workspaceMismatch ? (
-          <div>
-            <dt>Project rules</dt>
-            <dd>{`Expected ${workspaceMismatch.expected}`}</dd>
-          </div>
-        ) : null}
-      </dl>
-
       {status.active_profile_applied === false ? (
         <div className="overview-inline-notice overview-inline-notice-warn">
           <div className="overview-inline-notice-copy">
@@ -462,41 +509,6 @@ function ToolInspector({
             <p>
               Live credentials do not match <strong>{activeProfileLabel ?? "the saved profile"}</strong>.
             </p>
-          </div>
-          <div className="button-row overview-inline-notice-actions">
-            {selectedProfileLabel ? (
-              <button
-                className="primary-button"
-                type="button"
-                disabled={mutationLocked}
-                onClick={() => {
-                  if (!selectedProfile) {
-                    return;
-                  }
-                  onUse(status.tool, selectedProfile, stateModes.length ? stateMode : null);
-                }}
-              >
-                Re-apply {selectedProfileLabel}
-              </button>
-            ) : null}
-            {supportsLiveImport ? (
-              <button
-                className="ghost-button"
-                type="button"
-                onClick={() => onImport(status.tool)}
-              >
-                Import Current…
-              </button>
-            ) : (
-              <button
-                className="ghost-button"
-                type="button"
-                disabled={mutationLocked}
-                onClick={() => onAddProfile(status.tool)}
-              >
-                Open account setup
-              </button>
-            )}
           </div>
         </div>
       ) : null}
@@ -544,63 +556,150 @@ function ToolInspector({
         </div>
       ) : null}
 
-      {!profiles.length ? (
-        <div className="button-row overview-inspector-actions">
-          <button
-            className="primary-button"
-            type="button"
-            disabled={mutationLocked}
-            onClick={() => onAddProfile(status.tool)}
-          >
-            Add Profile…
-          </button>
-        </div>
-      ) : hasAlternateSelection ? (
-        <div className="button-row overview-inspector-actions">
-          <button
-            className="primary-button"
-            type="button"
-            disabled={mutationLocked}
-            onClick={() => {
-              if (!selectedProfile) {
-                return;
-              }
-              onUse(status.tool, selectedProfile, stateModes.length ? stateMode : null);
-            }}
-          >
-            Switch
-          </button>
-          {status.active_profile ? (
+      <div className="overview-inspector-actions">
+        <div className="button-row">
+          {primaryActionLabel ? (
             <button
-              className="ghost-button"
-              type="button"
-              onClick={() => onOpenDetails(status.tool, status.active_profile)}
-            >
-              Open Profile
-            </button>
-          ) : null}
-        </div>
-      ) : status.active_profile ? (
-        <div className="button-row overview-inspector-actions">
-          <button
-            className="ghost-button"
-            type="button"
-            onClick={() => onOpenDetails(status.tool, status.active_profile)}
-          >
-            Open Profile
-          </button>
-          {workspaceMismatch ? (
-            <button
-              className="ghost-button"
+              className="primary-button"
               type="button"
               disabled={mutationLocked}
-              onClick={workspaceMismatch.onResolve}
+              onClick={runPrimaryAction}
             >
-              {workspaceMismatch.canResolveDirectly ? "Use Expected Set" : "Open Sets"}
+              {primaryActionLabel}
+            </button>
+          ) : activeProfileLabel ? (
+            <span className="overview-passive-badge">Active</span>
+          ) : null}
+          {secondaryAction ? (
+            <button
+              className="ghost-button"
+              type="button"
+              disabled={mutationLocked && secondaryAction.label !== "Open Profile"}
+              onClick={secondaryAction.onClick}
+            >
+              {secondaryAction.label}
             </button>
           ) : null}
+          {(status.active_profile || supportsLiveImport || workspaceMismatch || !status.binary_found) ? (
+            <div className="overview-actions-menu-wrap" data-overview-actions>
+              <button
+                className="ghost-button icon-button"
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={actionsMenuOpen}
+                aria-label="More profile actions"
+                onClick={() => setActionsMenuOpen((open) => !open)}
+              >
+                <SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />
+              </button>
+              {actionsMenuOpen ? (
+                <div className="profile-row-actions-menu" role="menu" aria-label="Overview actions">
+                  {status.active_profile ? (
+                    <button
+                      className="ghost-button"
+                      role="menuitem"
+                      type="button"
+                      disabled={mutationLocked}
+                      onClick={() => {
+                        if (!status.active_profile) {
+                          return;
+                        }
+                        setActionsMenuOpen(false);
+                        onUse(
+                          status.tool,
+                          status.active_profile,
+                          stateModes.length ? stateMode : null,
+                        );
+                      }}
+                    >
+                      Re-apply {activeProfileLabel ?? status.active_profile}
+                    </button>
+                  ) : null}
+                  {status.active_profile ? (
+                    <button
+                      className="ghost-button"
+                      role="menuitem"
+                      type="button"
+                      onClick={() => {
+                        setActionsMenuOpen(false);
+                        onOpenDetails(status.tool, status.active_profile);
+                      }}
+                    >
+                      Open Profile
+                    </button>
+                  ) : null}
+                  {supportsLiveImport ? (
+                    <button
+                      className="ghost-button"
+                      role="menuitem"
+                      type="button"
+                      onClick={() => {
+                        setActionsMenuOpen(false);
+                        onImport(status.tool);
+                      }}
+                    >
+                      Import Current…
+                    </button>
+                  ) : null}
+                  {workspaceMismatch ? (
+                    <button
+                      className="ghost-button"
+                      role="menuitem"
+                      type="button"
+                      disabled={mutationLocked}
+                      onClick={() => {
+                        setActionsMenuOpen(false);
+                        workspaceMismatch.onResolve();
+                      }}
+                    >
+                      {workspaceMismatch.canResolveDirectly ? "Use Expected Set" : "Open Sets"}
+                    </button>
+                  ) : null}
+                  {!status.binary_found ? (
+                    <button
+                      className="ghost-button"
+                      role="menuitem"
+                      type="button"
+                      disabled={refreshLocked}
+                      onClick={() => {
+                        setActionsMenuOpen(false);
+                        onRefresh();
+                      }}
+                    >
+                      Refresh
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
-      ) : null}
+      </div>
+
+      <dl className="overview-inspector-facts">
+        <div>
+          <dt>Live match</dt>
+          <dd>{statusLabel}</dd>
+        </div>
+        <div>
+          <dt>Authentication</dt>
+          <dd>{status.auth_method ? titleCase(status.auth_method.replace(/_/g, " ")) : "Not configured"}</dd>
+        </div>
+        <div>
+          <dt>Credential storage</dt>
+          <dd>{credentialBackendLabel(status.credential_backend)}</dd>
+        </div>
+        <div>
+          <dt>State mode</dt>
+          <dd>{status.state_mode ? titleCase(status.state_mode) : "Not configured"}</dd>
+        </div>
+        {workspaceMismatch ? (
+          <div>
+            <dt>Project rules</dt>
+            <dd>{workspaceMismatch.expected}</dd>
+          </div>
+        ) : null}
+      </dl>
 
       {status.token_warning ? (
         <div className="overview-inline-notice overview-inline-notice-warn">

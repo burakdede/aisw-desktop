@@ -3448,7 +3448,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .overview-screen {
   container-type: inline-size;
   display: grid;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -3659,7 +3659,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .overview-master-detail {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 304px;
+  grid-template-columns: minmax(0, 1fr) 296px;
   gap: 0;
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   border-radius: var(--panel-radius-lg);
@@ -3672,8 +3672,8 @@ html[data-appearance="dark"] .tool-logo-codex {
   min-height: 0;
   display: grid;
   align-content: start;
-  gap: 8px;
-  padding: 12px;
+  gap: 7px;
+  padding: 11px 12px;
   background: transparent;
   border: 0;
   border-radius: 0;
@@ -3699,9 +3699,9 @@ html[data-appearance="dark"] .tool-logo-codex {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 680;
-  font-size: var(--type-panel-title);
+  font-size: var(--type-body);
   line-height: 1.22;
-  letter-spacing: -0.016em;
+  letter-spacing: -0.012em;
 }
 
 .overview-tool-list {
@@ -3716,8 +3716,8 @@ html[data-appearance="dark"] .tool-logo-codex {
   grid-template-columns: 18px minmax(136px, 1.1fr) minmax(102px, 0.85fr) minmax(102px, auto) 14px;
   align-items: center;
   gap: 8px;
-  min-height: 38px;
-  padding: 6px 10px;
+  min-height: 36px;
+  padding: 5px 10px;
   border: 0;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   background: transparent;
@@ -3755,7 +3755,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .overview-tool-list-profile {
   min-width: 0;
-  font-size: var(--type-footnote);
+  font-size: var(--type-caption);
   line-height: 1.35;
   color: var(--text-secondary);
   white-space: nowrap;
@@ -3784,7 +3784,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .overview-inspector-title-block {
   min-width: 0;
   display: grid;
-  gap: 4px;
+  gap: 3px;
 }
 
 .overview-inspector-back {
@@ -3798,7 +3798,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   padding: 3px 8px;
   border-radius: 999px;
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
-  font-size: var(--type-micro);
+  font-size: var(--type-caption);
   line-height: 1.25;
   font-weight: 500;
 }
@@ -3806,19 +3806,12 @@ html[data-appearance="dark"] .tool-logo-codex {
 .overview-inspector-facts {
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.overview-inspector-facts div {
-  display: grid;
-  gap: 3px;
-  padding: 9px 10px;
-  border-radius: var(--panel-radius);
-  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+  gap: 0;
+  border-top: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
 }
 
 .overview-inspector-facts dt {
+  grid-column: 1 / 2;
   font-size: var(--type-micro);
   line-height: 1.2;
   letter-spacing: 0.06em;
@@ -3827,10 +3820,25 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .overview-inspector-facts dd {
+  grid-column: 2 / 3;
   margin: 0;
-  font-size: var(--type-body);
+  font-size: var(--type-footnote);
   line-height: 1.35;
   color: var(--text-primary);
+  text-align: right;
+}
+
+.overview-inspector-facts div {
+  display: grid;
+  grid-template-columns: minmax(96px, 120px) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
+}
+
+.overview-inspector-facts div:last-child {
+  border-bottom: 0;
 }
 
 .overview-inspector-control {
@@ -3902,6 +3910,23 @@ html[data-appearance="dark"] .tool-logo-codex {
   padding-top: 2px;
 }
 
+.overview-actions-menu-wrap {
+  position: relative;
+}
+
+.overview-passive-badge {
+  min-height: var(--control-height);
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--control-padding-inline);
+  border-radius: var(--control-radius);
+  border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
+  background: color-mix(in srgb, CanvasText 3%, Canvas 97%);
+  color: var(--text-secondary);
+  font-size: var(--type-footnote);
+  font-weight: 560;
+}
+
 .overview-inline-notice-actions {
   justify-content: flex-end;
 }
@@ -3946,7 +3971,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 @media (max-width: 1120px) {
   .overview-master-detail {
-    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-columns: minmax(0, 1fr) 304px;
   }
 
   .overview-tool-list-row {
@@ -3998,7 +4023,16 @@ html[data-appearance="dark"] .tool-logo-codex {
   }
 
   .overview-inspector-facts {
+    gap: 0;
+  }
+
+  .overview-inspector-facts div {
     grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+  }
+
+  .overview-inspector-facts dd {
+    text-align: left;
   }
 }
 
@@ -5258,7 +5292,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .settings-layout-v2 {
   min-height: 0;
   display: grid;
-  grid-template-columns: 182px minmax(0, 1fr);
+  grid-template-columns: 170px minmax(0, 1fr);
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   border-radius: var(--panel-radius-lg);
   overflow: hidden;
@@ -5269,21 +5303,21 @@ html[data-appearance="dark"] .tool-logo-codex {
   min-height: 0;
   display: grid;
   align-content: start;
-  gap: 4px;
-  padding: 8px;
+  gap: 3px;
+  padding: 8px 7px;
   border-right: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   background: color-mix(in srgb, CanvasText 3%, Canvas 97%);
 }
 
 .settings-category-row {
-  min-height: 34px;
-  padding: 7px 10px;
+  min-height: 32px;
+  padding: 6px 10px;
   border: 0;
   border-radius: 9px;
   background: transparent;
   text-align: left;
-  font-size: var(--type-body);
-  line-height: 1.25;
+  font-size: var(--type-footnote);
+  line-height: 1.2;
   font-weight: 500;
   color: var(--text-primary);
   cursor: pointer;
@@ -5308,37 +5342,37 @@ html[data-appearance="dark"] .tool-logo-codex {
   min-height: 0;
   height: 100%;
   overflow: auto;
-  padding: 16px 16px 20px;
+  padding: 14px 16px 18px;
   display: grid;
   align-content: start;
-  gap: 12px;
+  gap: 10px;
 }
 
 .settings-section-header {
   display: grid;
   gap: 2px;
-  width: min(100%, 640px);
-  max-width: 640px;
+  width: min(100%, 620px);
+  max-width: 620px;
 }
 
 .settings-section-header h3 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--type-screen-title);
-  line-height: 1.18;
+  font-size: var(--type-panel-title);
+  line-height: 1.2;
   font-weight: 680;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.014em;
 }
 
 .settings-section-stack {
-  width: min(100%, 640px);
+  width: min(100%, 620px);
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .settings-group {
   display: grid;
-  gap: 6px;
+  gap: 5px;
 }
 
 .settings-group h4 {
@@ -5362,11 +5396,11 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .settings-row {
   display: grid;
-  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+  grid-template-columns: minmax(164px, 208px) minmax(0, 1fr);
   align-items: center;
   gap: 12px;
-  min-height: 36px;
-  padding: 6px 12px;
+  min-height: 34px;
+  padding: 5px 12px;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
 }
 
@@ -5376,7 +5410,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .settings-row-label {
   font-size: var(--type-footnote);
-  line-height: 1.35;
+  line-height: 1.3;
   color: var(--text-secondary);
 }
 
@@ -5398,7 +5432,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .settings-row-control > :where(input, select) {
-  width: min(100%, 240px);
+  width: min(100%, 228px);
 }
 
 .settings-mobile-picker select,
@@ -5408,7 +5442,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   border-radius: var(--control-radius);
   background: color-mix(in srgb, Canvas 96%, CanvasText 4%);
   color: var(--text-primary);
-  font-size: var(--type-body);
+  font-size: var(--type-footnote);
   line-height: 1.25;
 }
 
@@ -5438,9 +5472,9 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .settings-row-value {
-  font-size: var(--type-footnote);
-  line-height: 1.35;
-  font-weight: 560;
+  font-size: var(--type-body);
+  line-height: 1.3;
+  font-weight: 520;
   color: var(--text-primary);
   text-align: right;
   min-width: 0;
@@ -5450,7 +5484,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .settings-row-value code,
 .settings-path-value {
   font-family: var(--font-mono);
-  font-size: var(--type-footnote);
+  font-size: var(--type-caption);
   font-weight: 500;
   color: var(--text-primary);
 }
@@ -5466,7 +5500,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .settings-row-toggle {
-  min-height: 40px;
+  min-height: 38px;
 }
 
 .settings-row-toggle input,

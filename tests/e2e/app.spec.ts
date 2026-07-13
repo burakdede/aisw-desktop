@@ -1818,7 +1818,8 @@ test("shows missing-profile remediation when a stale profile is re-applied", asy
   await installDesktopMock(page, "staleProfile");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Re-apply Work" }).click();
+  await page.getByRole("button", { name: "More profile actions" }).click();
+  await page.getByRole("menuitem", { name: "Re-apply Work" }).click();
 
   await expect(
     page.getByText(
