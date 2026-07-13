@@ -3391,6 +3391,82 @@ describe("App", () => {
     });
   });
 
+  it("uses a compact one-pane detail flow for backups on narrow widths", async () => {
+    const originalInnerWidth = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      writable: true,
+      value: 760,
+    });
+
+    window.__AISW_DESKTOP_MOCK__ = async (command) =>
+      (
+        {
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [
+            {
+              backup_id: "20260326T094012Z-codex-personal",
+              tool: "codex",
+              profile: "codex/personal",
+            },
+            {
+              backup_id: "20260325T114502Z-claude-work",
+              tool: "claude",
+              profile: "claude/work",
+            },
+          ],
+          get_settings: bootstrap.settings,
+        } as Record<string, unknown>
+      )[command];
+
+    try {
+      await renderApp();
+      await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
+
+      await act(async () => {
+        window.dispatchEvent(new Event("resize"));
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Show sidebar" }));
+      fireEvent.click(screen.getByRole("button", { name: "Backups" }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("Backups list")).toBeInTheDocument();
+      });
+
+      const firstRow = document.querySelector(".backups-table-row");
+      if (!(firstRow instanceof HTMLButtonElement)) {
+        throw new Error("Missing backup row.");
+      }
+      fireEvent.click(firstRow);
+
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
+        expect(screen.queryByLabelText("Backups list")).not.toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Back" }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("Backups list")).toBeInTheDocument();
+      });
+    } finally {
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        writable: true,
+        value: originalInnerWidth,
+      });
+      window.dispatchEvent(new Event("resize"));
+    }
+  });
+
   it("opens profile details directly from a backup row", async () => {
     window.__AISW_DESKTOP_MOCK__ = async (command) =>
       (

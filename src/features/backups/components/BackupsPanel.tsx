@@ -18,6 +18,7 @@ import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 
 type ToolFilter = "all" | "claude" | "codex" | "gemini";
 type DateFilter = "newest" | "oldest";
+const BACKUPS_COMPACT_BREAKPOINT = 800;
 
 export function BackupsPanel({
   snapshot,
@@ -40,6 +41,10 @@ export function BackupsPanel({
   const [copyMessage, setCopyMessage] = useState("");
   const [toolbarMenuOpen, setToolbarMenuOpen] = useState(false);
   const [inspectorMenuOpen, setInspectorMenuOpen] = useState(false);
+  const [compactLayout, setCompactLayout] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < BACKUPS_COMPACT_BREAKPOINT : false,
+  );
+  const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const [pendingRestore, setPendingRestore] = useState<{
     backupId: string;
     mode: "files" | "activate";
@@ -61,6 +66,24 @@ export function BackupsPanel({
     setSelectedBackupId(filteredBackups[0]?.backup_id ?? null);
   }, [filteredBackups, selectedBackupId]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const updateLayout = () => {
+      setCompactLayout(window.innerWidth < BACKUPS_COMPACT_BREAKPOINT);
+    };
+    updateLayout();
+    window.addEventListener("resize", updateLayout);
+    return () => window.removeEventListener("resize", updateLayout);
+  }, []);
+
+  useEffect(() => {
+    if (!compactLayout) {
+      setCompactInspectorOpen(false);
+    }
+  }, [compactLayout]);
+
   const selectedBackup =
     filteredBackups.find((entry) => entry.backup_id === selectedBackupId) ?? filteredBackups[0] ?? null;
   const selectedTarget = selectedBackup
@@ -78,6 +101,8 @@ export function BackupsPanel({
   const selectedToolLabel = selectedTarget ? toolDisplayName(selectedTarget.tool) : null;
   const selectedTitle = selectedProfileLabel ?? "No backup selected";
   const selectedSubtitle = selectedToolLabel ? `${selectedToolLabel} backup` : "";
+  const showInspector = !compactLayout || compactInspectorOpen;
+  const showTable = !compactLayout || !compactInspectorOpen;
 
   const restoreSheetEntry = pendingRestore
     ? filteredBackups.find((entry) => entry.backup_id === pendingRestore.backupId) ??
@@ -208,7 +233,7 @@ export function BackupsPanel({
         className="backups-master-detail"
         primaryClassName="backups-table-pane"
         secondaryClassName="backups-inspector-pane"
-        primary={
+        primary={showTable ? (
           <section className="backups-pane">
             {filteredBackups.length ? (
               <div className="backups-table-wrap">
@@ -246,6 +271,9 @@ export function BackupsPanel({
                           setSelectedBackupId(entry.backup_id);
                           setCopyMessage("");
                           setInspectorMenuOpen(false);
+                          if (compactLayout) {
+                            setCompactInspectorOpen(true);
+                          }
                         }}
                       >
                         <span>{createdLabel}</span>
@@ -270,13 +298,22 @@ export function BackupsPanel({
               </div>
             )}
           </section>
-        }
-        secondary={
+        ) : null}
+        secondary={showInspector ? (
           <aside className="backups-pane backups-inspector-surface">
             {selectedBackup && selectedTarget && selectedProfileLabel && selectedCreated && selectedContains ? (
               <>
                 <header className="backups-pane-header backups-inspector-header">
                   <div>
+                    {compactLayout ? (
+                      <button
+                        className="ghost-button backups-inspector-back"
+                        type="button"
+                        onClick={() => setCompactInspectorOpen(false)}
+                      >
+                        Back
+                      </button>
+                    ) : null}
                     <h3>{selectedTitle}</h3>
                     <p className="inline-note">{selectedSubtitle}</p>
                   </div>
@@ -400,7 +437,7 @@ export function BackupsPanel({
               </div>
             )}
           </aside>
-        }
+        ) : null}
       />
 
       {restoreSheetEntry && restoreSheetTarget && restoreSheetLabel && restoreSheetToolLabel ? (

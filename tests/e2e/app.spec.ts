@@ -2113,6 +2113,25 @@ test("lists backups newest first, copies backup ids, and opens matching profile 
   await expect(page.getByText("Hide Storage Details")).toBeVisible();
 });
 
+test("uses a compact one-pane backup detail flow on narrow widths", async ({ page }) => {
+  await installDesktopMock(page, "backupCatalog");
+
+  await page.setViewportSize({ width: 760, height: 920 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Show sidebar" }).click();
+  await page.getByRole("button", { name: "Backups" }).click();
+
+  await expect(page.getByLabel("Backups list")).toBeVisible();
+  await page.locator(".backups-table-row").first().click();
+
+  await expect(page.getByRole("button", { name: "Back", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Backups list")).toHaveCount(0);
+  await expect(page.locator(".backups-inspector-surface").getByRole("heading")).toBeVisible();
+
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(page.getByLabel("Backups list")).toBeVisible();
+});
+
 async function installDesktopMock(
   page: Page,
   scenario: ScenarioName,
