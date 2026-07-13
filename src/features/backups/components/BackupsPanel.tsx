@@ -2,16 +2,21 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
-import { SectionCard } from "../../../components/SectionCard";
+import { SearchField } from "../../../components/SearchField";
 import { SplitView } from "../../../components/SplitView";
-import { listBackups } from "../../../lib/client";
-import { compareBackupsNewestFirst } from "../../../lib/backups";
+import { ToolBrand } from "../../../components/ToolBrand";
+import { listBackups, openAppDataFolder } from "../../../lib/client";
+import { compareBackupsNewestFirst, type BackupLike } from "../../../lib/backups";
 import { toolProfileDisplayLabel } from "../../../lib/profile-display";
-import { AppBootstrap, AppSnapshot, DesktopSettings } from "../../../lib/schemas";
+import { AppBootstrap, AppSnapshot, DesktopSettings, type BackupEntry } from "../../../lib/schemas";
+import { toolDisplayName } from "../../../lib/tool-display";
 import { titleCase } from "../../../lib/utils";
 import { resolveStateModeRequest } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
+
+type ToolFilter = "all" | "claude" | "codex" | "gemini";
+type DateFilter = "newest" | "oldest";
 
 export function BackupsPanel({
   snapshot,
@@ -27,23 +32,72 @@ export function BackupsPanel({
   const readEnabled = useMutationAwareQueryEnabled();
   const backups = useQuery({ queryKey: ["backups"], queryFn: listBackups, enabled: readEnabled });
   const { restoreBackupMutation, useProfileMutation, mutationLock } = useDesktopActions();
+  const [toolFilter, setToolFilter] = useState<ToolFilter>("all");
+  const [dateFilter, setDateFilter] = useState<DateFilter>("newest");
+  const [search, setSearch] = useState("");
+  const [selectedBackupId, setSelectedBackupId] = useState<string | null>(null);
   const [copyMessage, setCopyMessage] = useState("");
+  const [toolbarMenuOpen, setToolbarMenuOpen] = useState(false);
+  const [inspectorMenuOpen, setInspectorMenuOpen] = useState(false);
   const [pendingRestore, setPendingRestore] = useState<{
     backupId: string;
     mode: "files" | "activate";
   } | null>(null);
+
   const sortedBackups = useMemo(
-    () => [...(backups.data ?? [])].sort(compareBackupsNewestFirst),
-    [backups.data],
+    () => [...(backups.data ?? [])].sort((left, right) => sortBackups(left, right, dateFilter)),
+    [backups.data, dateFilter],
   );
-  const [selectedBackupId, setSelectedBackupId] = useState<string | null>(null);
+  const filteredBackups = useMemo(
+    () => filterBackups(sortedBackups, toolFilter, search, settings, snapshot),
+    [search, settings, snapshot, sortedBackups, toolFilter],
+  );
 
   useEffect(() => {
-    if (selectedBackupId && sortedBackups.some((entry) => entry.backup_id === selectedBackupId)) {
+    if (selectedBackupId && filteredBackups.some((entry) => entry.backup_id === selectedBackupId)) {
       return;
     }
-    setSelectedBackupId(sortedBackups[0]?.backup_id ?? null);
-  }, [selectedBackupId, sortedBackups]);
+    setSelectedBackupId(filteredBackups[0]?.backup_id ?? null);
+  }, [filteredBackups, selectedBackupId]);
+
+  const selectedBackup =
+    filteredBackups.find((entry) => entry.backup_id === selectedBackupId) ?? filteredBackups[0] ?? null;
+  const selectedTarget = selectedBackup
+    ? resolveBackupTarget(selectedBackup.tool, selectedBackup.profile)
+    : null;
+  const selectedProfileLabel =
+    selectedBackup && selectedTarget
+      ? toolProfileDisplayLabel(settings, snapshot, selectedTarget.tool, selectedTarget.profile)
+      : null;
+  const selectedReason = selectedBackup ? backupReasonLabel(selectedBackup) : null;
+  const selectedContains = selectedBackup ? backupContainsLabel(selectedBackup) : null;
+  const selectedCreated = selectedBackup
+    ? formatBackupInspectorTimestamp(selectedBackup.created_at ?? selectedBackup.backup_id)
+    : null;
+  const selectedToolLabel = selectedTarget ? toolDisplayName(selectedTarget.tool) : null;
+  const selectedTitle = selectedProfileLabel ?? "No backup selected";
+  const selectedSubtitle = selectedToolLabel ? `${selectedToolLabel} backup` : "";
+
+  const restoreSheetEntry = pendingRestore
+    ? filteredBackups.find((entry) => entry.backup_id === pendingRestore.backupId) ??
+      sortedBackups.find((entry) => entry.backup_id === pendingRestore.backupId) ??
+      null
+    : null;
+  const restoreSheetTarget = restoreSheetEntry
+    ? resolveBackupTarget(restoreSheetEntry.tool, restoreSheetEntry.profile)
+    : null;
+  const restoreSheetLabel =
+    restoreSheetEntry && restoreSheetTarget
+      ? toolProfileDisplayLabel(
+          settings,
+          snapshot,
+          restoreSheetTarget.tool,
+          restoreSheetTarget.profile,
+        )
+      : null;
+  const restoreSheetToolLabel = restoreSheetTarget
+    ? toolDisplayName(restoreSheetTarget.tool)
+    : null;
 
   async function copyBackupId(backupId: string) {
     if (!navigator.clipboard?.writeText) {
@@ -54,11 +108,16 @@ export function BackupsPanel({
     setCopyMessage(`Copied backup id ${backupId}.`);
   }
 
-  function confirmRestore(entry: { backup_id: string; tool: string; profile: string }, mode: "files" | "activate") {
+  async function revealBackupFolder() {
+    await openAppDataFolder();
+  }
+
+  function confirmRestore(entry: BackupEntry, mode: "files" | "activate") {
     const target = resolveBackupTarget(entry.tool, entry.profile);
     const profileLabel = toolProfileDisplayLabel(settings, snapshot, target.tool, target.profile);
     const preferredStateMode =
       snapshot.statuses.find((status) => status.tool === target.tool)?.state_mode ?? null;
+
     restoreBackupMutation.mutate(entry.backup_id, {
       onSuccess: () => {
         setPendingRestore(null);
@@ -66,7 +125,11 @@ export function BackupsPanel({
           useProfileMutation.mutate({
             tool: target.tool,
             profile: target.profile,
-            stateMode: resolveStateModeRequest(target.tool, toolCapabilities, preferredStateMode),
+            stateMode: resolveStateModeRequest(
+              target.tool,
+              toolCapabilities,
+              preferredStateMode,
+            ),
             label: profileLabel,
           });
         }
@@ -74,347 +137,379 @@ export function BackupsPanel({
     });
   }
 
-  const selectedBackup =
-    sortedBackups.find((entry) => entry.backup_id === selectedBackupId) ?? sortedBackups[0] ?? null;
-  const selectedTarget = selectedBackup
-    ? resolveBackupTarget(selectedBackup.tool, selectedBackup.profile)
-    : null;
-  const selectedProfileLabel =
-    selectedBackup && selectedTarget
-      ? toolProfileDisplayLabel(settings, snapshot, selectedTarget.tool, selectedTarget.profile)
-      : null;
-  const selectedTargetDisplay =
-    selectedTarget && selectedProfileLabel
-      ? `${titleCase(selectedTarget.tool)} / ${selectedProfileLabel}`
-      : null;
-  const selectedPendingFilesRestore =
-    selectedBackup && pendingRestore?.backupId === selectedBackup.backup_id && pendingRestore.mode === "files";
-  const selectedPendingRestoreAndActivate =
-    selectedBackup && pendingRestore?.backupId === selectedBackup.backup_id && pendingRestore.mode === "activate";
-  const restoreSheetEntry =
-    pendingRestore
-      ? sortedBackups.find((entry) => entry.backup_id === pendingRestore.backupId) ?? null
-      : null;
-  const restoreSheetTarget = restoreSheetEntry
-    ? resolveBackupTarget(restoreSheetEntry.tool, restoreSheetEntry.profile)
-    : null;
-  const restoreSheetLabel =
-    restoreSheetEntry && restoreSheetTarget
-      ? toolProfileDisplayLabel(settings, snapshot, restoreSheetTarget.tool, restoreSheetTarget.profile)
-      : null;
-  const restoreSheetDisplay =
-    restoreSheetTarget && restoreSheetLabel
-      ? `${titleCase(restoreSheetTarget.tool)} / ${restoreSheetLabel}`
-      : null;
-  const restoreSheetMode = pendingRestore?.mode ?? null;
-  const restorePointCount = sortedBackups.length;
-  const latestBackupTimestamp = selectedBackup
-    ? formatBackupTimestamp(selectedBackup.created_at ?? selectedBackup.backup_id)
-    : "No restore points yet";
-  const selectedBackupSummary = selectedTargetDisplay ?? "No selection";
-
   return (
-    <SectionCard
-      title="Backups"
-      kicker="Restore points"
-      actions={
-        <button
-          className="ghost-button"
-          type="button"
-          disabled={backups.isLoading}
-          onClick={() => void backups.refetch()}
-        >
-          {backups.isLoading ? "Refreshing…" : "Refresh"}
-        </button>
-      }
-    >
-      <div className="desktop-status-strip backups-status-strip">
-        <article className="desktop-status-card">
-          <span className="overview-current-set-cell-label">Library</span>
-          <p className="desktop-status-value">
-            {restorePointCount
-              ? `${restorePointCount} restore point${restorePointCount === 1 ? "" : "s"}`
-              : "Empty"}
-          </p>
-          <p className="inline-note">AI Switch creates local restore points before risky profile changes.</p>
-        </article>
-        <article className="desktop-status-card">
-          <span className="overview-current-set-cell-label">Selected backup</span>
-          <p className="desktop-status-value">{selectedBackupSummary}</p>
-          <p className="inline-note">Inspect one restore point at a time before restoring saved files.</p>
-        </article>
-        <article className="desktop-status-card">
-          <span className="overview-current-set-cell-label">Restore mode</span>
-          <p className="desktop-status-value">Files first</p>
-          <p className="inline-note">Restoring saved files does not reactivate a profile unless you choose that explicitly.</p>
-        </article>
+    <div className="backups-screen screen-content">
+      <div className="backups-toolbar-row">
+        <div>
+          <p className="card-kicker">Restore points</p>
+          <h3 className="backups-screen-title">Backups</h3>
+        </div>
+        <div className="backups-toolbar-actions">
+          <label className="visually-hidden" htmlFor="backups-tool-filter">
+            Tool
+          </label>
+          <select
+            id="backups-tool-filter"
+            aria-label="Tool"
+            value={toolFilter}
+            onChange={(event) => setToolFilter(event.target.value as ToolFilter)}
+          >
+            <option value="all">All tools</option>
+            <option value="claude">Claude</option>
+            <option value="codex">Codex</option>
+            <option value="gemini">Gemini</option>
+          </select>
+          <label className="visually-hidden" htmlFor="backups-date-filter">
+            Date
+          </label>
+          <select
+            id="backups-date-filter"
+            aria-label="Date"
+            value={dateFilter}
+            onChange={(event) => setDateFilter(event.target.value as DateFilter)}
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+          </select>
+          <SearchField
+            ariaLabel="Search backups"
+            ariaControls="backups-table"
+            placeholder="Search backups…"
+            value={search}
+            onChange={setSearch}
+            className="search-field backups-search-field"
+          />
+          <div className="backups-toolbar-menu-wrap">
+            <button
+              className="ghost-button"
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={toolbarMenuOpen}
+              aria-label="Backups more actions"
+              onClick={() => setToolbarMenuOpen((open) => !open)}
+            >
+              More
+            </button>
+            {toolbarMenuOpen ? (
+              <div className="profile-row-actions-menu" role="menu" aria-label="Backups actions">
+                <button
+                  className="ghost-button"
+                  role="menuitem"
+                  type="button"
+                  onClick={() => {
+                    setToolbarMenuOpen(false);
+                    void backups.refetch();
+                  }}
+                >
+                  Refresh
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
       </div>
+
       <SplitView
-        className="backups-layout"
-        primaryClassName="backups-list-pane"
-        secondaryClassName="backups-detail-pane"
+        className="backups-master-detail"
+        primaryClassName="backups-table-pane"
+        secondaryClassName="backups-inspector-pane"
         primary={
-          <div className="stack-list desktop-pane-column">
-            <article className="diagnostic-card backups-list-card">
-              <div className="desktop-pane-section-header backups-list-header">
-                <div>
-                  <p className="card-kicker">Restore points</p>
-                  <h3>Local backup history</h3>
-                </div>
-                <span className="pill pill-soft">{latestBackupTimestamp}</span>
+          <section className="backups-pane">
+            <header className="backups-pane-header">
+              <div>
+                <p className="card-kicker">Restore points</p>
+                <h3>Local backup history</h3>
               </div>
               <p className="inline-note">
-                Review one restore point at a time before restoring saved files or re-activating a profile.
+                Find a restore point, inspect what it contains, and deliberately restore it.
               </p>
-              <div className="backups-list-columns" aria-hidden="true">
-                <span>Created</span>
-                <span>Tool</span>
-                <span>Profile</span>
-              </div>
-              <div className="stack-list backups-table-rows">
-              {sortedBackups.map((entry) => {
-                const target = resolveBackupTarget(entry.tool, entry.profile);
-                const profileLabel = toolProfileDisplayLabel(
-                  settings,
-                  snapshot,
-                  target.tool,
-                  target.profile,
-                );
-                const targetDisplay = `${titleCase(target.tool)} / ${profileLabel}`;
+            </header>
+            {filteredBackups.length ? (
+              <div className="backups-table-wrap">
+                <div className="backups-table-header" aria-hidden="true">
+                  <span>Created</span>
+                  <span>Tool</span>
+                  <span>Profile</span>
+                  <span className="backups-table-reason">Reason</span>
+                </div>
+                <div className="backups-table-body" role="list" id="backups-table" aria-label="Backups list">
+                  {filteredBackups.map((entry) => {
+                    const target = resolveBackupTarget(entry.tool, entry.profile);
+                    const profileLabel = toolProfileDisplayLabel(
+                      settings,
+                      snapshot,
+                      target.tool,
+                      target.profile,
+                    );
+                    const createdLabel = formatBackupListTimestamp(
+                      entry.created_at ?? entry.backup_id,
+                    );
+                    const reasonLabel = backupReasonLabel(entry);
 
-                return (
-                  <button
-                    key={entry.backup_id}
-                    type="button"
-                    className={`list-row backup-list-row ${
-                      selectedBackupId === entry.backup_id ? "backup-list-row-selected" : ""
-                    }`}
-                    aria-label={`Inspect backup for ${targetDisplay}`}
-                    aria-pressed={selectedBackupId === entry.backup_id}
-                    onClick={() => {
-                      setSelectedBackupId(entry.backup_id);
-                      setPendingRestore(null);
-                    }}
-                  >
-                    <div className="backup-list-created">
-                      <strong>{formatBackupListTimestamp(entry.created_at ?? entry.backup_id)}</strong>
-                      <p className="inline-note">
-                        {formatBackupTimestamp(entry.created_at ?? entry.backup_id)}
-                      </p>
-                    </div>
-                    <div className="backup-list-main">
-                      <strong>{titleCase(target.tool)}</strong>
-                      <p className="inline-note">Saved profile snapshot</p>
-                    </div>
-                    <div className="backup-list-meta">
-                      <strong>{profileLabel}</strong>
-                      <span>{targetDisplay}</span>
-                    </div>
-                  </button>
-                );
-              })}
-              {!backups.data?.length ? (
-                <article className="diagnostic-card">
-                  <h3>{backups.isLoading ? "Loading backups…" : "No backups found."}</h3>
-                  <p className="inline-note">
-                    {backups.isLoading
-                      ? "Loading local restore points."
-                      : "AI Switch creates backups before profile switches, renames, and removals. They will appear here automatically."}
-                  </p>
-                </article>
-              ) : null}
+                    return (
+                      <button
+                        key={entry.backup_id}
+                        type="button"
+                        role="listitem"
+                        className={`backups-table-row ${
+                          selectedBackup?.backup_id === entry.backup_id
+                            ? "backups-table-row-selected"
+                            : ""
+                        }`}
+                        aria-label={`Inspect backup for ${toolDisplayName(target.tool)} ${profileLabel}`}
+                        aria-pressed={selectedBackup?.backup_id === entry.backup_id}
+                        onClick={() => {
+                          setSelectedBackupId(entry.backup_id);
+                          setCopyMessage("");
+                          setInspectorMenuOpen(false);
+                        }}
+                      >
+                        <span>
+                          <strong>{createdLabel.primary}</strong>
+                          <small>{createdLabel.secondary}</small>
+                        </span>
+                        <span>
+                          <ToolBrand tool={target.tool} className="tool-brand-compact" logoSize={16} shortName />
+                        </span>
+                        <span>
+                          <strong>{profileLabel}</strong>
+                        </span>
+                        <span className="backups-table-reason">
+                          <small>{reasonLabel}</small>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </article>
-            </div>
+            ) : (
+              <div className="backups-empty-state">
+                <h3>{backups.isLoading ? "Loading backups…" : "No backups found"}</h3>
+                <p className="inline-note">
+                  {backups.isLoading
+                    ? "Loading local restore points."
+                    : "AI Switch creates restore points before profile changes. They will appear here automatically."}
+                </p>
+              </div>
+            )}
+          </section>
         }
         secondary={
-          <div className="stack-list desktop-pane-column">
-            {selectedBackup && selectedTarget && selectedProfileLabel ? (
-              <article className="diagnostic-card backups-detail-card">
-                <div className="backups-detail-main">
-                  <div className="stack-list">
-                    <div className="desktop-pane-section-header">
-                      <div>
-                        <p className="card-kicker">Backup</p>
-                        <h3>{selectedTargetDisplay}</h3>
-                      </div>
-                      <p className="inline-note">
-                        Restore saved files first, then reactivate explicitly only when you want that profile live again.
-                      </p>
-                    </div>
-                    <div className="backups-detail-summary">
-                      <div>
-                        <span className="overview-current-set-cell-label">Target</span>
-                        <strong>{selectedTargetDisplay}</strong>
-                      </div>
-                      <div>
-                        <span className="overview-current-set-cell-label">Created</span>
-                        <strong>{formatBackupTimestamp(selectedBackup.created_at ?? selectedBackup.backup_id)}</strong>
-                      </div>
-                      <div>
-                        <span className="overview-current-set-cell-label">Contains</span>
-                        <strong>{titleCase(selectedTarget.tool)} profile: {selectedProfileLabel}</strong>
-                      </div>
-                    </div>
-                    <KeyValueGrid
-                      rows={[
-                        { label: "Tool", value: titleCase(selectedTarget.tool) },
-                        { label: "Profile", value: selectedProfileLabel },
-                        { label: "Backup ID", value: selectedBackup.backup_id },
-                      ]}
-                    />
-                    <div className="backups-detail-block">
-                      <div>
-                        <p className="card-kicker">Contains</p>
-                        <p className="inline-note">
-                          {titleCase(selectedTarget.tool)} profile <strong>{selectedProfileLabel}</strong> and its saved config snapshot.
-                        </p>
-                      </div>
-                      <div>
-                        <p className="card-kicker">Restore behavior</p>
-                        <p className="inline-note">
-                          Affects {selectedTargetDisplay}. Restore files only unless you explicitly re-activate this profile.
-                        </p>
-                      </div>
-                    </div>
+          <aside className="backups-pane backups-inspector-surface">
+            {selectedBackup && selectedTarget && selectedProfileLabel && selectedCreated && selectedContains ? (
+              <>
+                <header className="backups-pane-header backups-inspector-header">
+                  <div>
+                    <h3>{selectedTitle}</h3>
+                    <p className="inline-note">{selectedSubtitle}</p>
                   </div>
-                  <aside className="backups-detail-rail">
-                    <span className="overview-current-set-cell-label">Actions</span>
-                    <div className="button-row button-row-column">
+                  <div className="backups-inspector-header-actions">
+                    <button
+                      className="primary-button"
+                      type="button"
+                      disabled={mutationLock.isBusy}
+                      onClick={() =>
+                        setPendingRestore({
+                          backupId: selectedBackup.backup_id,
+                          mode: "files",
+                        })
+                      }
+                    >
+                      Restore…
+                    </button>
+                    <div className="backups-toolbar-menu-wrap">
                       <button
                         className="ghost-button"
                         type="button"
-                        disabled={mutationLock.isBusy}
-                        onClick={() => onOpenProfiles(selectedTarget.tool, selectedTarget.profile)}
+                        aria-haspopup="menu"
+                        aria-expanded={inspectorMenuOpen}
+                        aria-label="Backup actions"
+                        onClick={() => setInspectorMenuOpen((open) => !open)}
                       >
-                        Open profile details
+                        More
                       </button>
+                      {inspectorMenuOpen ? (
+                        <div className="profile-row-actions-menu" role="menu" aria-label="Backup actions">
+                          <button
+                            className="ghost-button"
+                            role="menuitem"
+                            type="button"
+                            disabled={mutationLock.isBusy}
+                            onClick={() => {
+                              setInspectorMenuOpen(false);
+                              setPendingRestore({
+                                backupId: selectedBackup.backup_id,
+                                mode: "activate",
+                              });
+                            }}
+                          >
+                            Restore and Activate…
+                          </button>
+                          <button
+                            className="ghost-button"
+                            role="menuitem"
+                            type="button"
+                            onClick={() => {
+                              setInspectorMenuOpen(false);
+                              onOpenProfiles(selectedTarget.tool, selectedTarget.profile);
+                            }}
+                          >
+                            Open Profile
+                          </button>
+                          <button
+                            className="ghost-button"
+                            role="menuitem"
+                            type="button"
+                            onClick={() => {
+                              setInspectorMenuOpen(false);
+                              void copyBackupId(selectedBackup.backup_id);
+                            }}
+                          >
+                            Copy Backup ID
+                          </button>
+                          <button
+                            className="ghost-button"
+                            role="menuitem"
+                            type="button"
+                            onClick={() => {
+                              setInspectorMenuOpen(false);
+                              void revealBackupFolder();
+                            }}
+                          >
+                            Reveal Backup Folder
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </header>
+
+                <div className="backups-inspector-content">
+                  <KeyValueGrid
+                    rows={[
+                      { label: "Created", value: selectedCreated },
+                      { label: "Reason", value: selectedReason ?? "Created restore point" },
+                      { label: "Profile", value: selectedProfileLabel },
+                      {
+                        label: "Tool",
+                        value: <ToolBrand tool={selectedTarget.tool} className="tool-brand-inline" logoSize={16} />,
+                      },
+                      { label: "Contains", value: selectedContains },
+                    ]}
+                  />
+                  <section className="backups-inspector-section">
+                    <p className="card-kicker">Backup ID</p>
+                    <div className="backups-id-row">
+                      <code>{selectedBackup.backup_id}</code>
                       <button
                         className="ghost-button"
                         type="button"
                         onClick={() => void copyBackupId(selectedBackup.backup_id)}
                       >
-                        Copy backup ID
+                        Copy
                       </button>
                     </div>
-                    {!selectedPendingFilesRestore && !selectedPendingRestoreAndActivate ? (
-                      <div className="button-row button-row-column">
-                        <button
-                          className="ghost-button"
-                          disabled={mutationLock.isBusy}
-                          onClick={() =>
-                            setPendingRestore({
-                              backupId: selectedBackup.backup_id,
-                              mode: "files",
-                            })
-                          }
-                        >
-                          Restore files only
-                        </button>
-                        <button
-                          className="primary-button"
-                          disabled={mutationLock.isBusy}
-                          onClick={() =>
-                            setPendingRestore({
-                              backupId: selectedBackup.backup_id,
-                              mode: "activate",
-                            })
-                          }
-                        >
-                          Restore and activate
-                        </button>
-                      </div>
-                    ) : null}
-                    {copyMessage ? <p className="inline-note">{copyMessage}</p> : null}
-                  </aside>
+                  </section>
+                  {copyMessage ? <p className="inline-note">{copyMessage}</p> : null}
                 </div>
-              </article>
+              </>
             ) : (
-              <article className="diagnostic-card">
+              <div className="backups-empty-state backups-empty-state-compact">
                 <h3>No backup selected</h3>
                 <p className="inline-note">
-                  Choose a restore point from the list to inspect its scope and restore actions.
+                  Choose a restore point to inspect its contents and restore options.
                 </p>
-              </article>
+              </div>
             )}
-          </div>
+          </aside>
         }
       />
-      {restoreSheetEntry && restoreSheetTarget && restoreSheetLabel && restoreSheetDisplay ? (
+
+      {restoreSheetEntry && restoreSheetTarget && restoreSheetLabel && restoreSheetToolLabel ? (
         <DialogSurface
           ariaLabel="Restore Backup"
           className="quick-switch-palette profile-sheet"
           initialFocusSelector="button:not([disabled])"
           onClose={() => setPendingRestore(null)}
         >
-            <div className="quick-switch-header">
-              <div>
-                <p className="card-kicker">Restore point</p>
-                <h3>Restore backup?</h3>
-                <p className="inline-note">
-                  Review the restore scope before AI Switch changes any saved files.
-                </p>
-              </div>
+          <div className="quick-switch-header">
+            <div>
+              <p className="card-kicker">Restore point</p>
+              <h3>
+                {pendingRestore?.mode === "files"
+                  ? `Restore “${restoreSheetLabel}”?`
+                  : `Restore and Activate “${restoreSheetLabel}”?`}
+              </h3>
+              <p className="inline-note">
+                {pendingRestore?.mode === "files"
+                  ? `This replaces the stored ${restoreSheetToolLabel} profile files with the selected restore point.`
+                  : `AI Switch will restore the stored files and then activate ${restoreSheetLabel} for ${restoreSheetToolLabel}.`}
+              </p>
+            </div>
+            <button className="ghost-button" type="button" onClick={() => setPendingRestore(null)}>
+              Close
+            </button>
+          </div>
+          <KeyValueGrid
+            rows={[
+              { label: "Profile", value: restoreSheetLabel },
+              {
+                label: "Tool",
+                value: <ToolBrand tool={restoreSheetTarget.tool} className="tool-brand-inline" logoSize={16} />,
+              },
+              {
+                label: "Created",
+                value: formatBackupInspectorTimestamp(
+                  restoreSheetEntry.created_at ?? restoreSheetEntry.backup_id,
+                ),
+              },
+            ]}
+          />
+          <p className="inline-note">
+            {pendingRestore?.mode === "files"
+              ? `The active ${restoreSheetToolLabel} account will not change until you activate the profile.`
+              : `This performs the file restore first and only then switches the live profile.`}
+          </p>
+          <footer className="quick-switch-footer">
+            <div className="quick-switch-selection">
+              <p className="card-kicker">Action</p>
+              <strong>
+                {pendingRestore?.mode === "files"
+                  ? "Restore Files"
+                  : "Restore and Activate"}
+              </strong>
+              <p>
+                {pendingRestore?.mode === "files"
+                  ? "Restore stored files only."
+                  : "Restore stored files, then activate the profile."}
+              </p>
+            </div>
+            <div className="button-row">
               <button className="ghost-button" type="button" onClick={() => setPendingRestore(null)}>
-                Close
+                Cancel
+              </button>
+              <button
+                className={
+                  pendingRestore?.mode === "files" ? "primary-button" : "primary-button"
+                }
+                type="button"
+                disabled={mutationLock.isBusy}
+                onClick={() =>
+                  confirmRestore(
+                    restoreSheetEntry,
+                    pendingRestore?.mode === "activate" ? "activate" : "files",
+                  )
+                }
+              >
+                {pendingRestore?.mode === "files"
+                  ? "Restore Files"
+                  : "Restore and Activate"}
               </button>
             </div>
-            <KeyValueGrid
-              rows={[
-                { label: "Target", value: restoreSheetDisplay },
-                {
-                  label: "Created",
-                  value: formatBackupTimestamp(restoreSheetEntry.created_at ?? restoreSheetEntry.backup_id),
-                },
-                { label: "Backup ID", value: restoreSheetEntry.backup_id },
-              ]}
-            />
-            {restoreSheetMode === "files" ? (
-              <div className="stack-list">
-                <p className="inline-note">
-                  This will restore profile files for {restoreSheetDisplay}.
-                </p>
-                <p className="inline-note">
-                  It will not change the active account until you activate it later.
-                </p>
-              </div>
-            ) : (
-              <div className="stack-list">
-                <p className="inline-note">
-                  This will restore profile files for {restoreSheetDisplay}.
-                </p>
-                <p className="inline-note">
-                  It will also switch the live profile again after the restore completes.
-                </p>
-              </div>
-            )}
-            <footer className="quick-switch-footer">
-              <div className="quick-switch-selection">
-                <p className="card-kicker">Action</p>
-                <strong>{restoreSheetMode === "files" ? "Restore files only" : "Restore and activate"}</strong>
-                <p>
-                  {restoreSheetMode === "files"
-                    ? "Restore saved files only."
-                    : "Restore saved files, then reactivate the profile."}
-                </p>
-              </div>
-              <div className="button-row">
-                <button className="ghost-button" type="button" onClick={() => setPendingRestore(null)}>
-                  Cancel
-                </button>
-                <button
-                  className={restoreSheetMode === "files" ? "ghost-button danger-button" : "primary-button"}
-                  type="button"
-                  disabled={mutationLock.isBusy}
-                  onClick={() => confirmRestore(restoreSheetEntry, restoreSheetMode === "files" ? "files" : "activate")}
-                >
-                  {restoreSheetMode === "files" ? "Restore" : "Restore and activate"}
-                </button>
-              </div>
-            </footer>
+          </footer>
         </DialogSurface>
       ) : null}
-    </SectionCard>
+    </div>
   );
 }
 
@@ -428,65 +523,151 @@ function resolveBackupTarget(tool: string, profile: string) {
   return { tool, profile };
 }
 
-function formatBackupTimestamp(value: string) {
-  const isoDate = Date.parse(value);
-  if (!Number.isNaN(isoDate)) {
-    return new Intl.DateTimeFormat(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZoneName: "short",
-    }).format(new Date(isoDate));
-  }
+function filterBackups(
+  backups: BackupEntry[],
+  toolFilter: ToolFilter,
+  search: string,
+  settings: DesktopSettings,
+  snapshot: AppSnapshot,
+) {
+  const normalizedQuery = search.trim().toLowerCase();
 
-  const match = value.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/);
-  if (!match) {
-    return "Unknown";
-  }
-
-  const [, year, month, day, hour, minute, second] = match;
-  const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
-  if (Number.isNaN(date.getTime())) {
-    return "Unknown";
-  }
-  return new Intl.DateTimeFormat(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZoneName: "short",
-  }).format(date);
+  return backups.filter((entry) => {
+    const target = resolveBackupTarget(entry.tool, entry.profile);
+    if (toolFilter !== "all" && target.tool !== toolFilter) {
+      return false;
+    }
+    if (!normalizedQuery) {
+      return true;
+    }
+    const profileLabel = toolProfileDisplayLabel(
+      settings,
+      snapshot,
+      target.tool,
+      target.profile,
+    );
+    return [
+      entry.backup_id,
+      toolDisplayName(target.tool),
+      target.profile,
+      profileLabel,
+      backupReasonLabel(entry),
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(normalizedQuery);
+  });
 }
 
-function formatBackupListTimestamp(value: string) {
-  const isoDate = Date.parse(value);
-  if (!Number.isNaN(isoDate)) {
-    return new Intl.DateTimeFormat(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    }).format(new Date(isoDate));
-  }
+function sortBackups(left: BackupEntry, right: BackupEntry, mode: DateFilter) {
+  return mode === "newest"
+    ? compareBackupsNewestFirst(left, right)
+    : compareBackupsNewestFirst(right, left);
+}
 
-  const match = value.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/);
-  if (!match) {
-    return "Unknown";
+function backupReasonLabel(entry: BackupEntry) {
+  const normalized = entry.backup_id.toLowerCase();
+  if (normalized.includes("before-switch")) {
+    return "Before profile switch";
   }
+  if (normalized.includes("remove")) {
+    return "Before removal";
+  }
+  if (normalized.includes("rename")) {
+    return "Before rename";
+  }
+  return "Created restore point";
+}
 
-  const [, year, month, day, hour, minute, second] = match;
-  const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
-  if (Number.isNaN(date.getTime())) {
-    return "Unknown";
+function backupContainsLabel(entry: BackupEntry) {
+  const target = resolveBackupTarget(entry.tool, entry.profile);
+  if (target.tool === "gemini") {
+    return "Profile data snapshot";
+  }
+  return "Profile files and config snapshot";
+}
+
+function formatBackupInspectorTimestamp(value: string) {
+  const date = backupDate(value);
+  if (!date) {
+    return "Date unavailable";
   }
 
   return new Intl.DateTimeFormat(undefined, {
+    weekday: undefined,
+    year: "numeric",
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
   }).format(date);
+}
+
+function formatBackupListTimestamp(value: string) {
+  const date = backupDate(value);
+  if (!date) {
+    return { primary: "Date unavailable", secondary: "Backup timestamp unavailable" };
+  }
+
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfEntry = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const diffDays = Math.round(
+    (startOfToday.getTime() - startOfEntry.getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  if (diffDays === 0) {
+    return {
+      primary: `Today, ${new Intl.DateTimeFormat(undefined, {
+        hour: "numeric",
+        minute: "2-digit",
+      }).format(date)}`,
+      secondary: formatBackupInspectorTimestamp(value),
+    };
+  }
+
+  if (diffDays === 1) {
+    return {
+      primary: "Yesterday",
+      secondary: new Intl.DateTimeFormat(undefined, {
+        hour: "numeric",
+        minute: "2-digit",
+      }).format(date),
+    };
+  }
+
+  return {
+    primary: new Intl.DateTimeFormat(undefined, {
+      month: "short",
+      day: "numeric",
+      year: now.getFullYear() === date.getFullYear() ? undefined : "numeric",
+    }).format(date),
+    secondary: new Intl.DateTimeFormat(undefined, {
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date),
+  };
+}
+
+function backupDate(value: string) {
+  const isoDate = Date.parse(value);
+  if (!Number.isNaN(isoDate)) {
+    return new Date(isoDate);
+  }
+
+  const compactMatch = value.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/);
+  if (!compactMatch) {
+    return null;
+  }
+
+  const [, year, month, day, hour, minute, second] = compactMatch;
+  const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return date;
+}
+
+function sortKey(entry: BackupLike) {
+  return entry.created_at ?? entry.backup_id;
 }

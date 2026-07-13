@@ -3025,31 +3025,25 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Backups")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Backups"));
-    await waitFor(() => expect(screen.getByText("Restore and activate")).toBeInTheDocument());
-    expect(screen.getAllByText("Files first").length).toBeGreaterThan(0);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Restore…" })).toBeInTheDocument());
     expect(screen.getAllByText("Sandbox").length).toBeGreaterThan(0);
-    expect(
-      screen.getByText(
-        "Affects Codex / Sandbox. Restore files only unless you explicitly re-activate this profile.",
-      ),
-    ).toBeInTheDocument();
     expect(screen.getByText("20260326T094012Z-codex-personal")).toBeInTheDocument();
-    const backupsSection = screen.getAllByRole("heading", { name: "Backups" })[1]?.closest(".section-card");
-    const articles = backupsSection?.querySelectorAll(".list-row") ?? [];
+    const articles = document.querySelectorAll(".backups-table-row");
     expect(articles[0]?.textContent).toContain("Sandbox");
     expect(articles[1]?.textContent).toContain("Work");
-    fireEvent.click(screen.getByText("Copy backup ID"));
+    fireEvent.click(screen.getByRole("button", { name: "Copy" }));
     await waitFor(() => {
       expect(screen.getByText("Copied backup id 20260326T094012Z-codex-personal.")).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByRole("button", { name: "Restore and activate" }));
+    fireEvent.click(screen.getByRole("button", { name: "Backup actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Restore and Activate…" }));
     const restoreDialog = screen.getByRole("dialog", { name: "Restore Backup" });
     expect(
       within(restoreDialog).getByText(
-        "It will also switch the live profile again after the restore completes.",
+        "This performs the file restore first and only then switches the live profile.",
       ),
     ).toBeInTheDocument();
-    fireEvent.click(within(restoreDialog).getByRole("button", { name: "Restore and activate" }));
+    fireEvent.click(within(restoreDialog).getByRole("button", { name: "Restore and Activate" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "restore_backup")).toBe(true);
@@ -3124,12 +3118,13 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Backups")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Backups"));
-    await waitFor(() => expect(screen.getByText("Restore and activate")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Backup actions" })).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole("button", { name: "Restore and activate" }));
+    fireEvent.click(screen.getByRole("button", { name: "Backup actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Restore and Activate…" }));
     fireEvent.click(
       within(screen.getByRole("dialog", { name: "Restore Backup" })).getByRole("button", {
-        name: "Restore and activate",
+        name: "Restore and Activate",
       }),
     );
 
@@ -3182,10 +3177,9 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Backups")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Backups"));
-    await waitFor(() => expect(screen.getByText("Copy backup ID")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument());
 
-    const backupsSection = screen.getAllByRole("heading", { name: "Backups" })[1]?.closest(".section-card");
-    const articles = backupsSection?.querySelectorAll(".list-row") ?? [];
+    const articles = document.querySelectorAll(".backups-table-row");
     expect(articles[0]?.textContent).toContain("Personal");
     expect(articles[1]?.textContent).toContain("Work");
     expect(screen.queryByText("Created: Unknown")).not.toBeInTheDocument();
@@ -3223,18 +3217,18 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Backups")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Backups"));
-    await waitFor(() => expect(screen.getByText("Restore files only")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Restore…" })).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole("button", { name: "Restore files only" }));
+    fireEvent.click(screen.getByRole("button", { name: "Restore…" }));
     const restoreDialog = screen.getByRole("dialog", { name: "Restore Backup" });
     expect(
       within(restoreDialog).getByText(
-        "It will not change the active account until you activate it later.",
+        "The active Codex CLI account will not change until you activate the profile.",
       ),
     ).toBeInTheDocument();
     expect(calls.some((entry) => entry.command === "restore_backup")).toBe(false);
 
-    fireEvent.click(within(restoreDialog).getByRole("button", { name: "Restore" }));
+    fireEvent.click(within(restoreDialog).getByRole("button", { name: "Restore Files" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "restore_backup")).toBe(true);
@@ -3268,8 +3262,9 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Backups")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Backups"));
-    await waitFor(() => expect(screen.getByText(/Open profile details/i)).toBeInTheDocument());
-    fireEvent.click(screen.getByText(/Open profile details/i));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Backup actions" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Backup actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Open Profile" }));
 
     await waitFor(() => {
       expect(
@@ -6748,7 +6743,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Backups")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Backups"));
-    await waitFor(() => expect(screen.getByText("No backups found.")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("No backups found")).toBeInTheDocument());
 
     const handlers = (window as typeof window & {
       __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
