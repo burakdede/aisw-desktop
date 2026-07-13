@@ -8487,6 +8487,11 @@ describe("App", () => {
 
     expect(launchAtLoginSwitch).toHaveAttribute("aria-checked", "false");
     expect(menuBarSwitch).toHaveAttribute("aria-checked", "true");
+
+    await waitFor(() => {
+      expect(launchAtLoginSwitch).not.toBeDisabled();
+    });
+
     fireEvent.click(launchAtLoginSwitch);
 
     fireEvent.change(screen.getByLabelText("Appearance"), {
