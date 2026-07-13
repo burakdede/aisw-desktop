@@ -3367,7 +3367,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .overview-master-detail {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) 320px;
   gap: 0;
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   border-radius: 8px;
@@ -3380,8 +3380,8 @@ html[data-appearance="dark"] .tool-logo-codex {
   min-height: 0;
   display: grid;
   align-content: start;
-  gap: 12px;
-  padding: 12px;
+  gap: 10px;
+  padding: 10px 12px;
   background: transparent;
   border: 0;
   border-radius: 0;
@@ -3423,7 +3423,8 @@ html[data-appearance="dark"] .tool-logo-codex {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  padding: 11px 4px;
+  min-height: 52px;
+  padding: 9px 4px;
   border: 0;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   background: transparent;
@@ -3478,6 +3479,9 @@ html[data-appearance="dark"] .tool-logo-codex {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
   font-size: var(--type-footnote);
   line-height: 1.35;
   font-weight: 500;
@@ -3493,8 +3497,9 @@ html[data-appearance="dark"] .tool-logo-codex {
 .overview-inspector-facts div {
   display: grid;
   gap: 3px;
-  padding: 8px 0;
-  border-top: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
 
 .overview-inspector-facts dt {
@@ -3513,7 +3518,9 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .overview-inspector-control {
+  display: grid;
   gap: 6px;
+  max-width: 320px;
 }
 
 .overview-state-mode-control {
@@ -3524,6 +3531,8 @@ html[data-appearance="dark"] .tool-logo-codex {
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   border-radius: 6px;
   background: color-mix(in srgb, CanvasText 3%, Canvas 97%);
+  width: fit-content;
+  max-width: 100%;
 }
 
 .overview-state-mode-button {
@@ -4787,9 +4796,9 @@ html[data-appearance="dark"] .tool-logo-codex {
 .settings-layout-v2 {
   min-height: 0;
   display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
+  grid-template-columns: 168px minmax(0, 1fr);
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
   background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
 }
@@ -4836,10 +4845,10 @@ html[data-appearance="dark"] .tool-logo-codex {
   min-height: 0;
   height: 100%;
   overflow: auto;
-  padding: 18px 24px 24px;
+  padding: 16px 22px 22px;
   display: grid;
   align-content: start;
-  gap: 20px;
+  gap: 18px;
 }
 
 .settings-section-header {
@@ -4858,27 +4867,27 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .settings-section-stack {
-  width: min(100%, 640px);
+  width: min(100%, 620px);
   display: grid;
-  gap: 20px;
+  gap: 18px;
 }
 
 .settings-group {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .settings-group h4 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--type-subhead);
+  font-size: 14px;
   line-height: 1.25;
   font-weight: 600;
 }
 
 .settings-group-body {
   display: grid;
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   overflow: hidden;
   background: color-mix(in srgb, Canvas 100%, CanvasText 0%);
@@ -4886,11 +4895,11 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .settings-row {
   display: grid;
-  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+  grid-template-columns: minmax(152px, 190px) minmax(0, 1fr);
   align-items: center;
-  gap: 16px;
-  min-height: 38px;
-  padding: 10px 14px;
+  gap: 14px;
+  min-height: 34px;
+  padding: 9px 14px;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
 }
 
@@ -4911,16 +4920,20 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .settings-row-control {
   min-width: 0;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .settings-row-control > :where(input, select) {
-  width: 100%;
+  width: min(100%, 360px);
 }
 
 .settings-row-value {
   font-size: var(--type-body);
   line-height: 1.4;
+  font-weight: 560;
   color: var(--text-primary);
+  text-align: right;
 }
 
 .settings-row-static,
