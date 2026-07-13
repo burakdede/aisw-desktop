@@ -693,6 +693,54 @@ test("refreshes the backup catalog after a successful tray profile switch", asyn
   await expect(page.getByText("20260326T120000Z-claude-work")).toBeVisible();
 });
 
+test("shows the redesigned activity timeline with concise rows and an inspector", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+
+  await page.evaluate(() => {
+    const handlers = (
+      window as typeof window & {
+        __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+      }
+    ).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    handlers?.["tray-command-result"]?.({
+      scope: "global",
+      id: "settings",
+      label: "Saved settings",
+      status: "success",
+      message: "Saved AI Switch settings.",
+    });
+
+    handlers?.["tray-command-result"]?.({
+      scope: "tool",
+      tool: "codex",
+      label: "Switch profile",
+      status: "success",
+      message: "Switched codex to Personal2.",
+    });
+  });
+
+  await page.getByRole("button", { name: "Activity", exact: true }).click();
+
+  const activityRows = page.locator(".activity-event-row");
+  await expect(activityRows).toHaveCount(2);
+  await expect(activityRows.nth(0)).toContainText("Switch profile");
+  await expect(activityRows.nth(0)).toContainText("Codex CLI → Personal2");
+  await expect(activityRows.nth(1)).toContainText("Saved settings");
+  await expect(activityRows.nth(1)).toContainText("Settings");
+
+  await activityRows.nth(0).click();
+  await expect(page.getByRole("heading", { name: "Switch profile" })).toBeVisible();
+  await expect(page.getByText("Switched codex to Personal2.")).toBeVisible();
+  await expect(page.getByText("Recorded Command")).toBeVisible();
+  await expect(page.getByText("Redacted Result")).toBeVisible();
+  await expect(
+    page.getByText("Activity is stored locally and credentials are always redacted."),
+  ).toBeVisible();
+});
+
 test("records tray context failures and keeps the remediation visible in overview", async ({ page }) => {
   await installDesktopMock(page, "switching");
 

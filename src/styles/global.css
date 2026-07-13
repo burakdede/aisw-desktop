@@ -4918,15 +4918,15 @@ html[data-appearance="dark"] .tool-logo-codex {
   min-height: 0;
   max-height: 100%;
   overflow: auto;
-  padding: 8px 0 0;
+  padding: 6px 0 0;
   display: grid;
   align-content: start;
-  gap: 18px;
+  gap: 14px;
 }
 
 .activity-group {
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .activity-group-heading {
@@ -4948,11 +4948,11 @@ html[data-appearance="dark"] .tool-logo-codex {
 .activity-event-row {
   display: grid;
   grid-template-columns: 84px minmax(0, 1fr) 112px;
-  min-height: 56px;
+  min-height: 48px;
   align-items: center;
   gap: 12px;
   width: 100%;
-  padding: 10px 16px;
+  padding: 8px 16px;
   border: 0;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
   background: transparent;
@@ -4981,7 +4981,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .activity-event-main {
   min-width: 0;
   display: grid;
-  gap: 3px;
+  gap: 2px;
 }
 
 .activity-event-title-row {
@@ -5029,7 +5029,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   min-width: 0;
   justify-self: end;
   max-width: 180px;
-  font-size: var(--type-footnote);
+  font-size: 11px;
   line-height: 1.35;
   color: var(--text-secondary);
   text-align: right;
@@ -5077,7 +5077,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .activity-inspector-message {
   margin: 0;
-  font-size: var(--type-body);
+  font-size: var(--type-footnote);
   line-height: 1.45;
   color: var(--text-secondary);
 }

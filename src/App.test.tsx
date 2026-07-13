@@ -614,6 +614,10 @@ describe("App", () => {
       expect(screen.getByRole("button", { name: "Inspect Saved settings" })).toBeInTheDocument();
     });
 
+    const activityRows = document.querySelectorAll(".activity-event-row");
+    expect(activityRows[0]?.textContent).toContain("Claude Code");
+    expect(activityRows[1]?.textContent).toContain("Settings");
+
     fireEvent.click(screen.getByRole("button", { name: "Inspect Switched Claude Code" }));
 
     await waitFor(() => {

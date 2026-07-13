@@ -392,10 +392,6 @@ export function ActivityPanel({
             </div>
           </div>
           <footer className="quick-switch-footer">
-            <div className="quick-switch-selection">
-              <p className="card-kicker">Action</p>
-              <strong>Remove local activity history</strong>
-            </div>
             <div className="button-row">
               <button className="ghost-button" type="button" onClick={() => setPendingClear(false)}>
                 Cancel
@@ -468,19 +464,20 @@ function activityPreview(entry: ActivityEntry) {
 }
 
 function activitySecondaryLine(entry: ActivityEntry) {
-  if (entry.resultSummary) {
+  const targetSummary = parseActivityTargetSummary(entry);
+  if (targetSummary) {
+    return targetSummary;
+  }
+
+  if (entry.resultSummary && !isGenericActivityResult(entry.resultSummary)) {
     return entry.resultSummary;
   }
 
-  if (entry.scopeType === "tool" && entry.scopeTool) {
-    return `${formatToolScope(entry.scopeTool)} · ${entry.message}`;
-  }
-
-  return entry.message;
+  return entry.scopeLabel;
 }
 
 function activityTrailingLine(entry: ActivityEntry) {
-  if (entry.resultSummary) {
+  if (entry.resultSummary && !isGenericActivityResult(entry.resultSummary)) {
     return entry.resultSummary;
   }
 
@@ -489,6 +486,28 @@ function activityTrailingLine(entry: ActivityEntry) {
   }
 
   return entry.status === "success" ? "Success" : "Failed";
+}
+
+function parseActivityTargetSummary(entry: ActivityEntry) {
+  if (entry.scopeType === "tool" && entry.scopeTool) {
+    const switchedMatch = entry.message.match(/\b(?:switched|re-applied)\b.*?\bto\s+([^.;]+)/i);
+    if (switchedMatch?.[1]) {
+      return `${formatToolScope(entry.scopeTool)} → ${switchedMatch[1].trim()}`;
+    }
+
+    const profileMatch = entry.message.match(/\bprofile\s+([^.;]+)/i);
+    if (profileMatch?.[1]) {
+      return `${formatToolScope(entry.scopeTool)} · ${profileMatch[1].trim()}`;
+    }
+
+    return formatToolScope(entry.scopeTool);
+  }
+
+  return null;
+}
+
+function isGenericActivityResult(value: string) {
+  return value.trim().toLowerCase() === "snapshot updated successfully.";
 }
 
 function formatToolScope(tool: string) {
