@@ -3810,6 +3810,19 @@ html[data-appearance="dark"] .tool-logo-codex {
   padding: 0 11px;
 }
 
+.icon-button {
+  width: var(--control-height);
+  min-width: var(--control-height);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-button svg {
+  display: block;
+}
+
 .primary-button {
   border: 1px solid color-mix(in srgb, AccentColor 70%, transparent);
   background: color-mix(in srgb, AccentColor 82%, white 18%);
@@ -4555,6 +4568,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
   font-size: 12px;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }

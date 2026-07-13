@@ -3077,14 +3077,14 @@ describe("App", () => {
     expect(articles[1]?.textContent).toContain("Work");
     fireEvent.click(screen.getByRole("button", { name: "Copy" }));
     await waitFor(() => {
-      expect(screen.getByText("Copied backup id 20260326T094012Z-codex-personal.")).toBeInTheDocument();
+      expect(screen.getByText("Copied backup ID.")).toBeInTheDocument();
     });
     fireEvent.click(screen.getByRole("button", { name: "Backup actions" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Restore and Activate…" }));
     const restoreDialog = screen.getByRole("dialog", { name: "Restore Backup" });
     expect(
       within(restoreDialog).getByText(
-        "This performs the file restore first and only then switches the live profile.",
+        "This restores the files first and only then switches the live profile.",
       ),
     ).toBeInTheDocument();
     fireEvent.click(within(restoreDialog).getByRole("button", { name: "Restore and Activate" }));

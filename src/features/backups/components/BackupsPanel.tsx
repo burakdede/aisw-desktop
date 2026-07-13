@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { SearchField } from "../../../components/SearchField";
@@ -105,7 +106,7 @@ export function BackupsPanel({
       return;
     }
     await navigator.clipboard.writeText(backupId);
-    setCopyMessage(`Copied backup id ${backupId}.`);
+    setCopyMessage(`Copied backup ID.`);
   }
 
   async function revealBackupFolder() {
@@ -176,14 +177,14 @@ export function BackupsPanel({
         />
         <div className="backups-toolbar-menu-wrap">
           <button
-            className="ghost-button"
+            className="ghost-button icon-button"
             type="button"
             aria-haspopup="menu"
             aria-expanded={toolbarMenuOpen}
             aria-label="Backups more actions"
             onClick={() => setToolbarMenuOpen((open) => !open)}
           >
-            More
+            <SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />
           </button>
           {toolbarMenuOpen ? (
             <div className="profile-row-actions-menu" role="menu" aria-label="Backups actions">
@@ -304,14 +305,14 @@ export function BackupsPanel({
                     </button>
                     <div className="backups-toolbar-menu-wrap">
                       <button
-                        className="ghost-button"
+                        className="ghost-button icon-button"
                         type="button"
                         aria-haspopup="menu"
                         aria-expanded={inspectorMenuOpen}
                         aria-label="Backup actions"
                         onClick={() => setInspectorMenuOpen((open) => !open)}
                       >
-                        More
+                        <SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />
                       </button>
                       {inspectorMenuOpen ? (
                         <div className="profile-row-actions-menu" role="menu" aria-label="Backup actions">
@@ -432,9 +433,6 @@ export function BackupsPanel({
                   : `AI Switch will restore the stored files and then activate ${restoreSheetLabel} for ${restoreSheetToolLabel}.`}
               </p>
             </div>
-            <button className="ghost-button" type="button" onClick={() => setPendingRestore(null)}>
-              Close
-            </button>
           </div>
           <KeyValueGrid
             rows={[
@@ -454,7 +452,7 @@ export function BackupsPanel({
           <p className="inline-note">
             {pendingRestore?.mode === "files"
               ? `The active ${restoreSheetToolLabel} account will not change until you activate the profile.`
-              : `This performs the file restore first and only then switches the live profile.`}
+              : `This restores the files first and only then switches the live profile.`}
           </p>
           <footer className="quick-switch-footer">
             <div className="quick-switch-selection">
@@ -556,6 +554,9 @@ function backupReasonLabel(entry: BackupEntry) {
   if (normalized.includes("before-switch")) {
     return "Before profile switch";
   }
+  if (normalized.includes("switch")) {
+    return "Before profile switch";
+  }
   if (normalized.includes("remove")) {
     return "Before removal";
   }
@@ -576,23 +577,15 @@ function backupContainsLabel(entry: BackupEntry) {
 function formatBackupInspectorTimestamp(value: string) {
   const date = backupDate(value);
   if (!date) {
-    return "Date unavailable";
+    return "Date Unavailable";
   }
-
-  return new Intl.DateTimeFormat(undefined, {
-    weekday: undefined,
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
+  return formatFriendlyInspectorDate(date);
 }
 
 function formatBackupListTimestamp(value: string) {
   const date = backupDate(value);
   if (!date) {
-    return { primary: "Date unavailable", secondary: "Backup timestamp unavailable" };
+    return { primary: "Date Unavailable", secondary: "Backup timestamp unavailable" };
   }
 
   const now = new Date();
@@ -652,6 +645,36 @@ function backupDate(value: string) {
     return null;
   }
   return date;
+}
+
+function formatFriendlyInspectorDate(date: Date) {
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfEntry = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const diffDays = Math.round(
+    (startOfToday.getTime() - startOfEntry.getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  const timeLabel = new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+
+  if (diffDays === 0) {
+    return `Today at ${timeLabel}`;
+  }
+
+  if (diffDays === 1) {
+    return `Yesterday at ${timeLabel}`;
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
 }
 
 function sortKey(entry: BackupLike) {

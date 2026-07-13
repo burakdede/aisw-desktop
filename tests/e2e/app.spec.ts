@@ -1823,16 +1823,22 @@ test("restores backup files only without re-activating the profile", async ({ pa
   await page.goto("/");
 
   await page.getByRole("button", { name: "Backups" }).click();
-  await page.getByRole("button", { name: "Restore files only" }).click();
+  await page.getByRole("button", { name: "Restore…" }).click();
   await expect(
     page.getByText(
-      "Confirm before restoring Codex / Work. This replays the saved files only.",
+      "The active Codex CLI account will not change until you activate the profile.",
     ),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Confirm restore files" }).click();
+  await page.getByRole("button", { name: "Restore Files" }).click();
 
-  await page.getByRole("button", { name: "Overview" }).click();
-  await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "Personal" })).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const log = window.__AISW_COMMAND_LOG__ ?? [];
+        return [...log].some((entry) => entry.command === "use_profile");
+      }),
+    )
+    .toBe(false);
 });
 
 test("warns before restoring the latest profile backup from profiles", async ({ page }) => {
@@ -1940,7 +1946,7 @@ test("lists backups newest first, copies backup ids, and opens matching profile 
 
   await backupRows.nth(0).click();
   await page.getByRole("button", { name: "Copy" }).click();
-  await expect(page.getByText("Copied backup id 20260326T094012Z-codex-personal.")).toBeVisible();
+  await expect(page.getByText("Copied backup ID.")).toBeVisible();
   await expect
     .poll(() =>
       page.evaluate(
