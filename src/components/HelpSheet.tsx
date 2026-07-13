@@ -1,4 +1,5 @@
 import { DialogSurface } from "./DialogSurface";
+import { ToolBrand } from "./ToolBrand";
 
 type HelpSheetProps = {
   open: boolean;
@@ -31,8 +32,8 @@ export function HelpSheet({
             <p className="card-kicker">Help</p>
             <h3>Using AI Switch</h3>
             <p className="inline-note">
-              AI Switch keeps account switching local to this computer and stays focused on safe account
-              changes, verification, and recovery.
+              AI Switch keeps account switching local to this computer and focused on profile changes,
+              verification, and recovery.
             </p>
           </div>
           <button className="ghost-button" type="button" onClick={onClose}>
@@ -44,18 +45,17 @@ export function HelpSheet({
           <article className="diagnostic-card">
             <div className="desktop-pane-section-header">
               <div>
-                <p className="card-kicker">What it does</p>
-                <h4>Local account switching</h4>
+                <p className="card-kicker">Supported tools</p>
+                <h4>Desktop control center</h4>
               </div>
             </div>
-            <p className="inline-note">
-              Switch Claude Code, Codex CLI, and Gemini CLI identities from one local control app.
-            </p>
-            <p className="inline-note">Credentials stay on this computer.</p>
-            <p className="inline-note">No telemetry, prompt logging, or traffic proxy is used.</p>
-            <p className="inline-note">
-              The included desktop engine is the recommended setup for a consistent AI Switch experience.
-            </p>
+            <div className="tool-brand-list" aria-label="Supported tools">
+              <ToolBrand tool="claude" className="tool-brand-inline" logoSize={18} />
+              <ToolBrand tool="codex" className="tool-brand-inline" logoSize={18} />
+              <ToolBrand tool="gemini" className="tool-brand-inline" logoSize={18} />
+            </div>
+            <p className="inline-note">Credentials stay on this Mac. No telemetry or prompt proxying is used.</p>
+            <p className="inline-note">Use Profiles to save accounts, Quick Switch to move fast, and Diagnostics when something drifts.</p>
           </article>
 
           <article className="diagnostic-card">

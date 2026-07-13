@@ -6275,7 +6275,7 @@ describe("App", () => {
 
     const dialog = await screen.findByRole("dialog", { name: "Using AI Switch" });
     expect(within(dialog).getByText("Using AI Switch")).toBeInTheDocument();
-    expect(within(dialog).getByText("Local account switching")).toBeInTheDocument();
+    expect(within(dialog).getByText("Desktop control center")).toBeInTheDocument();
 
     fireEvent.click(within(dialog).getByRole("button", { name: "Open Diagnostics" }));
 

@@ -1,8 +1,9 @@
+import type { ReactNode } from "react";
 import { cn } from "../lib/utils";
 
 type SegmentedOption<T extends string> = {
   value: T;
-  label: string;
+  label: ReactNode;
   disabled?: boolean;
 };
 

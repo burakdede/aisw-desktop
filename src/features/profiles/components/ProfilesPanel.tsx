@@ -480,7 +480,12 @@ export function ProfilesPanel({
           ariaLabel="Profile filters"
           options={INVENTORY_FILTERS.map((entry) => ({
             value: entry,
-            label: entry === "all" ? "All" : titleCase(entry),
+            label:
+              entry === "all" ? (
+                "All"
+              ) : (
+                <ToolBrand tool={entry} className="tool-brand-inline" logoSize={15} shortName />
+              ),
           }))}
           value={inventoryFilter}
           onChange={setInventoryFilter}
