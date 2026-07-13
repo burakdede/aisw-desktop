@@ -1255,23 +1255,9 @@ function sectionTitle(section: string, setupFocused = false) {
 
 function sectionDetail(section: string, setupFocused = false) {
   if (setupFocused) {
-    return "Set up AI Switch on this computer before you switch coding-agent profiles.";
+    return "";
   }
   switch (section) {
-    case "overview":
-      return "Review active accounts, shared sets, and switch readiness across every supported tool without leaving the main window.";
-    case "profiles":
-      return "Inspect saved logins, labels, storage mode, and safe activation details in a compact split-view inspector.";
-    case "sets":
-      return "Manage saved sets and project rules in one compact split view before switching a whole project identity.";
-    case "diagnostics":
-      return "Verify desktop engine health, identify drift, and follow guided repair steps when something blocks switching.";
-    case "backups":
-      return "Replay a previous profile state or restore the latest known-good backup without leaving the app.";
-    case "activity":
-      return "Track recent desktop actions, command outcomes, and changes applied by the desktop engine.";
-    case "settings":
-      return "Control app setup, updates, terminal integration, and local storage behavior.";
     default:
       return "";
   }

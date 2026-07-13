@@ -362,7 +362,6 @@ export function SettingsPanel({
           <div className="settings-form-scroll">
             <header className="settings-section-header">
               <h3>{sectionHeading(selectedSection)}</h3>
-              <p className="inline-note">{sectionSummary(selectedSection)}</p>
             </header>
 
             {selectedSection === "general" ? (
@@ -443,9 +442,6 @@ export function SettingsPanel({
                       ))}
                     </select>
                   </SettingsRow>
-                  <p className="inline-note">
-                    Next launch opens on <strong>{titleCase(defaultSection)}</strong> whenever the app can resume normally.
-                  </p>
                   {launchMessage ? <p className="inline-note">{launchMessage}</p> : null}
                 </SettingsGroup>
 
@@ -478,12 +474,9 @@ export function SettingsPanel({
             {selectedSection === "runtime" ? (
               <form className="settings-section-stack" onSubmit={submit}>
                 <SettingsGroup title="AISW Runtime">
-                  <p className="settings-row-label">Engine summary</p>
-                  <p className="inline-note">Engine version: {runtimeStatus.version?.version ?? "Unknown"}</p>
-                  <div className="settings-result-list">
-                    <p className="inline-note">Selected runtime: {titleCase(runtimeKind)}</p>
-                    <p className="inline-note">Current runtime path: {selectedRuntimePath(settings, runtimeStatus)}</p>
-                  </div>
+                  <SettingsStaticRow label="Bundled runtime" value={runtimeStatus.version?.version ?? "Unknown"} />
+                  <SettingsStaticRow label="Selected source" value={selectedEngineSourceLabel(runtimeKind)} />
+                  <SettingsStaticRow label="Current path" value={selectedRuntimePath(settings, runtimeStatus)} />
                   {showAdvancedRuntime ? (
                     <>
                       <SettingsRow label="Runtime source">
@@ -563,12 +556,6 @@ export function SettingsPanel({
             {selectedSection === "shell" ? (
               <div className="settings-section-stack">
                 <SettingsGroup title="Shell hook">
-                  <p className="inline-note">
-                    Detected shell:{" "}
-                    {shellGuidance.data?.detected_shell
-                      ? titleCase(shellGuidance.data.detected_shell)
-                      : "Unknown"}
-                  </p>
                   <SettingsStaticRow
                     label="Detected shell"
                     value={
@@ -702,7 +689,7 @@ export function SettingsPanel({
                   {securityMessage ? <p className="inline-note">{securityMessage}</p> : null}
                 </SettingsGroup>
 
-                <details className="settings-inline-details" open>
+                <details className="settings-inline-details">
                   <summary>Recovery guides</summary>
                   <div className="stack-list">
                     {KEYRING_GUIDES.map((guide) => (
@@ -1101,34 +1088,17 @@ function sectionLabel(section: SettingsSection) {
 function sectionHeading(section: SettingsSection) {
   switch (section) {
     case "general":
-      return "Desktop defaults";
+      return "General";
     case "runtime":
-      return "Desktop engine selection";
+      return "Engine";
     case "shell":
       return "Terminal Integration";
     case "keyring":
       return "Security";
     case "updates":
-      return "Desktop updates";
+      return "Updates";
     case "advanced":
-      return "App data folder";
-  }
-}
-
-function sectionSummary(section: SettingsSection) {
-  switch (section) {
-    case "general":
-      return "Appearance, startup behavior, and the default place AI Switch opens.";
-    case "runtime":
-      return "Choose the AISW runtime source and review the bundled engine status.";
-    case "shell":
-      return "Optional terminal integration for current shell sessions.";
-    case "keyring":
-      return "Local credential storage, app data, and redacted diagnostic export.";
-    case "updates":
-      return "Release channel settings and signed desktop update actions.";
-    case "advanced":
-      return "Recovery actions, app data paths, and reset tools.";
+      return "Advanced";
   }
 }
 

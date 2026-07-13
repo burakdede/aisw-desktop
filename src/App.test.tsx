@@ -687,7 +687,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Try Again" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Engine Settings" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Engine" })).not.toBeInTheDocument();
-    expect(screen.queryByText("Engine summary")).not.toBeInTheDocument();
+    expect(screen.queryByText("Bundled runtime")).not.toBeInTheDocument();
     expect(screen.queryByText("Get started")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Overview" })).not.toBeInTheDocument();
   });
@@ -720,7 +720,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Engine" })).toHaveAttribute("aria-pressed", "true");
-      expect(screen.getByText("Engine summary")).toBeInTheDocument();
+      expect(screen.getByText("Bundled runtime")).toBeInTheDocument();
     });
   });
 
@@ -1265,7 +1265,7 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Engine summary")).toBeInTheDocument();
+      expect(screen.getByText("Bundled runtime")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Engine" })).toHaveAttribute("aria-pressed", "true");
     });
     expect(screen.getByRole("button", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "false");
@@ -7860,7 +7860,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
-      expect(screen.getAllByText(/Detected shell:/).length).toBeGreaterThan(0);
+      expect(screen.getByText("Detected shell")).toBeInTheDocument();
       expect(screen.getByText("Config file: ~/.zshrc")).toBeInTheDocument();
       expect(
         screen.getByText(
@@ -8193,13 +8193,6 @@ describe("App", () => {
       expect(commands).toContain("set_launch_at_login");
       expect(commands).toContain("set_tray_visibility");
       expect(screen.getByText("Launch at login enabled.")).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          (_, element) =>
-            element?.textContent?.trim() ===
-            "Next launch opens on Profiles whenever the app can resume normally.",
-        ),
-      ).toBeInTheDocument();
     });
   });
 
@@ -8262,7 +8255,7 @@ describe("App", () => {
       const runtimeButton = screen.getByRole("button", { name: "Engine" });
       expect(runtimeButton).toHaveFocus();
       expect(runtimeButton).toHaveAttribute("aria-pressed", "true");
-      expect(screen.getByRole("heading", { name: "Desktop engine selection" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Engine" })).toBeInTheDocument();
     });
 
     const runtimeButton = screen.getByRole("button", { name: "Engine" });
@@ -8272,7 +8265,7 @@ describe("App", () => {
       const advancedButton = screen.getByRole("button", { name: "Advanced" });
       expect(advancedButton).toHaveFocus();
       expect(advancedButton).toHaveAttribute("aria-pressed", "true");
-      expect(screen.getByRole("heading", { name: "App data folder" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Advanced" })).toBeInTheDocument();
     });
   });
 
@@ -8283,8 +8276,8 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Engine" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Engine summary")).toBeInTheDocument();
-      expect(screen.getAllByText(/Engine version:/).length).toBeGreaterThan(0);
+      expect(screen.getByText("Bundled runtime")).toBeInTheDocument();
+      expect(screen.getByText("0.3.7")).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Advanced" }));
