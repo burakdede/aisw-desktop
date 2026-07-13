@@ -4186,12 +4186,12 @@ describe("App", () => {
     await openProjectRulesSection();
     fireEvent.click(screen.getByRole("button", { name: "Inspect rule for Client Acme" }));
     await waitFor(() => {
-      expect(screen.getByText("Current set")).toBeInTheDocument();
-      expect(screen.getByText("Default set")).toBeInTheDocument();
+      expect(screen.getByText("Enabled")).toBeInTheDocument();
+      expect(screen.getByText("Last matched")).toBeInTheDocument();
       expect(screen.getAllByText("Folder").length).toBeGreaterThan(0);
-      expect(screen.getByText("Target")).toBeInTheDocument();
+      expect(screen.getByText("Match value")).toBeInTheDocument();
       expect(screen.getAllByText("/code/acme").length).toBeGreaterThan(0);
-      expect(screen.getByText("Matched rule ✓")).toBeInTheDocument();
+      expect(screen.getByText("Current project")).toBeInTheDocument();
       expect(screen.getAllByText("Client Acme").length).toBeGreaterThan(0);
       expect(screen.getByText("Project mismatch")).toBeInTheDocument();
     });
@@ -7147,7 +7147,7 @@ describe("App", () => {
     if (!(clientRow instanceof HTMLElement)) {
       throw new Error("Missing client profile set row.");
     }
-    fireEvent.click(within(clientRow).getByRole("button"));
+    fireEvent.click(clientRow);
     fireEvent.click(screen.getByText("Edit…"));
 
     fireEvent.change(screen.getByLabelText("Set name"), {
@@ -7210,7 +7210,7 @@ describe("App", () => {
     if (!(emptySetRow instanceof HTMLElement)) {
       throw new Error("Missing empty profile set row.");
     }
-    fireEvent.click(within(emptySetRow).getByRole("button"));
+    fireEvent.click(emptySetRow);
     expect(screen.getByRole("button", { name: "Switch to Empty Set" })).toBeDisabled();
     expect(screen.getByText("This saved set is empty and cannot be activated yet.")).toBeInTheDocument();
 
@@ -7275,7 +7275,7 @@ describe("App", () => {
     if (!(staleSetRow instanceof HTMLElement)) {
       throw new Error("Missing stale profile set row.");
     }
-    fireEvent.click(within(staleSetRow).getByRole("button"));
+    fireEvent.click(staleSetRow);
     expect(screen.getByRole("button", { name: "Switch to Client Acme" })).toBeDisabled();
     expect(screen.getByText("Missing mapped profiles: codex: missing")).toBeInTheDocument();
 

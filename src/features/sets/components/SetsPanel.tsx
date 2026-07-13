@@ -16,7 +16,6 @@ import {
   toolProfileDisplayLabel,
 } from "../../../lib/profile-display";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
-import { titleCase } from "../../../lib/utils";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import { resolveGlobalStateMode } from "../../shared/state-modes";
@@ -227,6 +226,25 @@ export function SetsPanel({
     setSetEditorOpen(true);
   }
 
+  function duplicateSet(existingSet: NonNullable<DesktopSettings["profile_sets"]>[number]) {
+    setSetMenuOpen(false);
+    setSelectedSetName(existingSet.name);
+    const baseName = `${existingSet.name}-copy`;
+    let nextName = baseName;
+    let suffix = 2;
+    while (localSets.some((entry) => entry.name === nextName)) {
+      nextName = `${baseName}-${suffix}`;
+      suffix += 1;
+    }
+    setSetDraft({
+      sourceName: null,
+      name: nextName,
+      label: existingSet.label ? `${existingSet.label} Copy` : `${profileSetDisplayLabel(existingSet)} Copy`,
+      profiles: Object.fromEntries(TOOLS.map((tool) => [tool, existingSet.profiles[tool] ?? ""])),
+    });
+    setSetEditorOpen(true);
+  }
+
   function closeSetEditor() {
     setSetEditorOpen(false);
     resetSetDraft();
@@ -373,6 +391,11 @@ export function SetsPanel({
     workspaceUnbindMutation.mutate(target);
   }
 
+  const ruleUsageCountByContext = new Map<string, number>();
+  for (const entry of ruleEntries) {
+    ruleUsageCountByContext.set(entry.context, (ruleUsageCountByContext.get(entry.context) ?? 0) + 1);
+  }
+
   const setRows = localSets.map((set) => {
     const selected = selectedSet?.name === set.name;
     const active = profileSetIsActive(snapshot, set);
@@ -380,42 +403,48 @@ export function SetsPanel({
     const missing = missingProfileSetSelections(snapshot, set);
     const summary = TOOLS.map((tool) => {
       const profile = set.profiles[tool];
+      const toolLabel = toolDisplayLabel(tool);
       const label = profile
         ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
-        : "none";
-      return `${tool}: ${label}`;
+        : "—";
+      return `${toolLabel}: ${label}`;
     }).join(" · ");
+    const statusLabel = active
+      ? "Ready"
+      : ready
+        ? "Available"
+        : "Needs Attention";
+    const usageCount = ruleUsageCountByContext.get(set.name) ?? 0;
 
     return (
-      <article
+      <button
         key={set.name}
-        className={`list-row sets-list-row ${selected ? "sets-list-row-selected" : ""} ${active ? "sets-list-row-active" : ""}`}
+        type="button"
+        className={`list-row sets-library-row ${selected ? "sets-library-row-selected" : ""} ${active ? "sets-library-row-active" : ""}`}
+        aria-pressed={selected}
+        aria-label={`Inspect set ${profileSetDisplayLabel(set)}`}
+        onClick={() => setSelectedSetName(set.name)}
       >
-        <button
-          type="button"
-          className="sets-list-row-button"
-          aria-pressed={selected}
-          aria-label={`Inspect set ${profileSetDisplayLabel(set)}`}
-          onClick={() => setSelectedSetName(set.name)}
-        >
-          <div className="sets-list-row-header">
+        <div className="sets-library-row-main">
+          <div className="sets-library-row-title">
             <strong>{profileSetDisplayLabel(set)}</strong>
-            <span
-              className={`pill ${
-                active ? "pill-ok" : ready ? "pill-soft" : "pill-warn"
-              }`}
-            >
-              {active ? "Current" : ready ? "Ready" : "Needs attention"}
+            <span className={`sets-library-row-state sets-library-row-state-${active ? "ready" : ready ? "available" : "warn"}`}>
+              <span aria-hidden="true">{active || ready ? "●" : "▲"}</span>
+              <span>{statusLabel}</span>
             </span>
           </div>
-          <p>{summary}</p>
+          <p className="sets-library-row-summary">{summary}</p>
           {missing.length ? (
-            <p className="inline-note">
+            <p className="inline-note sets-library-row-note">
               Missing: {missing.map(([tool, profile]) => `${tool}: ${profile}`).join(" · ")}
             </p>
           ) : null}
-        </button>
-      </article>
+        </div>
+        <div className="sets-library-row-meta">
+          {usageCount ? <span>{usageCount} rule{usageCount === 1 ? "" : "s"}</span> : null}
+          {active ? <span>Current</span> : null}
+        </div>
+      </button>
     );
   });
 
@@ -458,30 +487,32 @@ export function SetsPanel({
                   <section className="sets-secondary-section">
                     <div className="sets-secondary-header">
                       <div>
-                        <p className="card-kicker">Imported from CLI</p>
-                        <h4>Available sets</h4>
+                        <p className="card-kicker">Imported</p>
+                        <h4>CLI contexts</h4>
                       </div>
                     </div>
                     <div className="stack-list">
                       {importedContexts.map((entry) => (
                         <article key={entry.name} className="list-row sets-cli-row">
                           <div className="sets-cli-row-copy">
-                            <div className="sets-list-row-header">
+                            <div className="sets-library-row-title">
                               <strong>
                                 {contextDisplayLabel(settings, entry.name)}
                                 {activeContext === entry.name ? " ✓" : ""}
                               </strong>
-                              <span className={`pill ${activeContext === entry.name ? "pill-ok" : "pill-soft"}`}>
-                                {activeContext === entry.name ? "Current" : "Imported"}
+                              <span className={`sets-library-row-state sets-library-row-state-${activeContext === entry.name ? "ready" : "available"}`}>
+                                <span aria-hidden="true">{activeContext === entry.name ? "●" : "○"}</span>
+                                <span>{activeContext === entry.name ? "Current" : "Imported"}</span>
                               </span>
                             </div>
-                            <p>
+                            <p className="sets-library-row-summary">
+                              {"CLI context · "}
                               {Object.entries(entry.profiles)
                                 .map(([tool, profile]) => {
                                   const label = profile
                                     ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
                                     : "—";
-                                  return `${titleCase(tool)}: ${label}`;
+                                  return `${toolDisplayLabel(tool)}: ${label}`;
                                 })
                                 .join(" · ")}
                             </p>
@@ -499,43 +530,30 @@ export function SetsPanel({
                     </div>
                   </section>
                 ) : null}
-                {setCommandResult ? (
-                  <p className={`inline-note ${setCommandResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
-                    Last set result: {normalizeRuntimeLanguage(setCommandResult.message)}
-                    {setCommandResult.remediation
-                      ? ` Remediation: ${normalizeRuntimeLanguage(setCommandResult.remediation)}`
-                      : ""}
-                  </p>
-                ) : null}
-                {lastSetAction ? <p className="inline-note">{lastSetAction}</p> : null}
+                <div className="sets-footer-note">
+                  {setCommandResult ? (
+                    <p className={`inline-note ${setCommandResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
+                      Last set result: {normalizeRuntimeLanguage(setCommandResult.message)}
+                      {setCommandResult.remediation
+                        ? ` Remediation: ${normalizeRuntimeLanguage(setCommandResult.remediation)}`
+                        : ""}
+                    </p>
+                  ) : null}
+                  {lastSetAction ? <p className="inline-note">{lastSetAction}</p> : null}
+                </div>
               </section>
             }
             secondary={
               <aside className="sets-pane sets-inspector">
                 {selectedSet ? (
                   <>
-                    <header className="sets-pane-header">
+                    <header className="sets-inspector-header">
                       <div>
                         <h3>{profileSetDisplayLabel(selectedSet)}</h3>
                         <p className="inline-note">
                           {selectedSetSelectionCount} profile{selectedSetSelectionCount === 1 ? "" : "s"} mapped
                         </p>
                       </div>
-                      <span
-                        className={`pill ${
-                          profileSetIsActive(snapshot, selectedSet)
-                            ? "pill-ok"
-                            : profileSetHasUsableSelections(snapshot, selectedSet)
-                              ? "pill-soft"
-                              : "pill-warn"
-                        }`}
-                      >
-                        {profileSetIsActive(snapshot, selectedSet)
-                          ? "Current"
-                          : profileSetHasUsableSelections(snapshot, selectedSet)
-                            ? "Ready"
-                            : "Needs attention"}
-                      </span>
                     </header>
                     <div className="button-row sets-inspector-actions">
                       <button
@@ -577,6 +595,23 @@ export function SetsPanel({
                             <button
                               type="button"
                               role="menuitem"
+                              onClick={() => duplicateSet(selectedSet)}
+                            >
+                              Duplicate…
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => {
+                                setSetMenuOpen(false);
+                                setMode("rules");
+                              }}
+                            >
+                              Manage Project Rules…
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
                               className="profile-row-actions-danger"
                               disabled={mutationLock.isBusy}
                               onClick={() => deleteSet(selectedSet.name)}
@@ -588,6 +623,7 @@ export function SetsPanel({
                       </div>
                     </div>
                     <KeyValueGrid
+                      variant="plain"
                       rows={TOOLS.map((tool) => ({
                         label: <ToolBrand tool={tool} className="tool-brand-inline" logoSize={16} />,
                         value: selectedSet.profiles[tool]
@@ -595,6 +631,11 @@ export function SetsPanel({
                           : "Not included",
                       }))}
                     />
+                    <div className="sets-inspector-meta">
+                      <p className="inline-note">
+                        Used by project rules: {ruleUsageCountByContext.get(selectedSet.name) ?? 0}
+                      </p>
+                    </div>
                     {!profileSetHasSelections(selectedSet) ? (
                       <p className="inline-note">This saved set is empty and cannot be activated yet.</p>
                     ) : selectedSetMissingMappings.length ? (
@@ -630,43 +671,6 @@ export function SetsPanel({
               </button>
             </div>
             <p className="inline-note">You can also switch individual profiles from Quick Switch.</p>
-            {importedContexts.length ? (
-              <section className="sets-secondary-section sets-empty-secondary">
-                <div className="sets-secondary-header">
-                  <div>
-                    <p className="card-kicker">Imported from CLI</p>
-                    <h4>Available sets</h4>
-                  </div>
-                </div>
-                <div className="stack-list">
-                  {importedContexts.map((entry) => (
-                    <article key={entry.name} className="list-row sets-cli-row">
-                      <div className="sets-cli-row-copy">
-                        <div className="sets-list-row-header">
-                          <strong>{contextDisplayLabel(settings, entry.name)}</strong>
-                          <span className={`pill ${activeContext === entry.name ? "pill-ok" : "pill-soft"}`}>
-                            {activeContext === entry.name ? "Current" : "Imported"}
-                          </span>
-                        </div>
-                        <p>
-                          {Object.entries(entry.profiles)
-                            .map(([tool, profile]) => `${titleCase(tool)}: ${profile ?? "—"}`)
-                            .join(" · ")}
-                        </p>
-                      </div>
-                      <button
-                        className="ghost-button"
-                        type="button"
-                        disabled={mutationLock.isBusy || activeContext === entry.name}
-                        onClick={() => activateImportedContext(entry.name)}
-                      >
-                        {activeContext === entry.name ? "Current" : "Use Set"}
-                      </button>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            ) : null}
             {setCommandResult ? (
               <p className={`inline-note ${setCommandResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
                 Last set result: {normalizeRuntimeLanguage(setCommandResult.message)}
@@ -681,20 +685,18 @@ export function SetsPanel({
       ) : (
         <div className="sets-rules-screen">
           {hasWorkspaceMismatch && !workspaceOverrideDismissed ? (
-            <section className="diagnostic-card diagnostic-warn sets-rules-banner">
-              <div className="desktop-pane-section-header">
+            <section className="sets-rules-banner">
+              <div className="sets-rules-banner-copy">
                 <div>
-                  <p className="card-kicker">Attention</p>
                   <h3>Project mismatch</h3>
+                  <p className="inline-note">Expected set: {expectedContextDisplay}</p>
+                  <p className="inline-note">Current set: {currentContextDisplay}</p>
+                  <p className="inline-note">
+                    Matched by this {formatRuleScopeLabel(workspaceCard.scope).toLowerCase()} rule:{" "}
+                    {formatRuleTarget(workspaceCard.scope, workspaceCard.target)}
+                  </p>
                 </div>
-                <span className="pill pill-warn">Needs review</span>
               </div>
-              <p className="inline-note">Expected set: {expectedContextDisplay}</p>
-              <p className="inline-note">Current set: {currentContextDisplay}</p>
-              <p className="inline-note">
-                Matched by this {formatRuleScopeLabel(workspaceCard.scope).toLowerCase()} rule:{" "}
-                {formatRuleTarget(workspaceCard.scope, workspaceCard.target)}
-              </p>
               <div className="button-row">
                 <button
                   className="primary-button"
@@ -751,49 +753,48 @@ export function SetsPanel({
                   </div>
                 ) : (
                   <div className="sets-empty-state-inline">
-                    <h4>No saved rules</h4>
+                    <h4>No project rules yet</h4>
                     <p className="inline-note">
                       Add a rule to match a default scope, folder, or git remote pattern to a saved set.
                     </p>
                   </div>
                 )}
-                {workspaceCommandResult ? (
-                  <p className={`inline-note ${workspaceCommandResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
-                    Last project-rule result: {normalizeRuntimeLanguage(workspaceCommandResult.message)}
-                    {workspaceCommandResult.remediation
-                      ? ` Remediation: ${normalizeRuntimeLanguage(workspaceCommandResult.remediation)}`
-                      : ""}
-                  </p>
-                ) : null}
+                <div className="sets-footer-note">
+                  {workspaceCommandResult ? (
+                    <p className={`inline-note ${workspaceCommandResult.status === "error" ? "diagnostic-status-fail" : ""}`}>
+                      Last project-rule result: {normalizeRuntimeLanguage(workspaceCommandResult.message)}
+                      {workspaceCommandResult.remediation
+                        ? ` Remediation: ${normalizeRuntimeLanguage(workspaceCommandResult.remediation)}`
+                        : ""}
+                    </p>
+                  ) : null}
+                </div>
               </section>
             }
             secondary={
               <aside className="sets-pane sets-rules-inspector">
                 {selectedRule ? (
                   <>
-                    <header className="sets-pane-header">
+                    <header className="sets-inspector-header">
                       <div>
                         <h3>{selectedRuleContextLabel}</h3>
                         <p className="inline-note">
                           {selectedRuleMatched ? "This rule currently matches" : "Saved project rule"}
                         </p>
                       </div>
-                      <span className={`pill ${selectedRuleMatched ? "pill-ok" : "pill-soft"}`}>
-                        {selectedRuleMatched ? "Matched" : formatRuleScopeLabel(selectedRule.scope)}
-                      </span>
                     </header>
                     <KeyValueGrid
+                      variant="plain"
                       rows={[
                         { label: "Rule type", value: formatRuleScopeLabel(selectedRule.scope) },
                         { label: "Set", value: selectedRuleContextLabel ?? "Unknown" },
-                        { label: "Target", value: formatRuleTarget(selectedRule.scope, selectedRule.target) },
+                        { label: "Match value", value: formatRuleTarget(selectedRule.scope, selectedRule.target) },
                         { label: "Priority", value: selectedRule.scope === "default" ? "Fallback" : "Explicit" },
-                        { label: "Current set", value: currentContextDisplay },
-                        { label: "Default set", value: contextDisplayLabel(settings, bindingsSummary.defaultContext) },
+                        { label: "Enabled", value: "Yes" },
+                        { label: "Last matched", value: selectedRuleMatched ? "Current project" : "Not matched" },
                       ]}
                     />
-                    {selectedRuleMatched ? <p className="inline-note">Matched rule ✓</p> : null}
-                    <div className="button-row">
+                    <div className="button-row sets-inspector-actions">
                       <button className="ghost-button" type="button" onClick={openRuleEditor}>
                         Edit…
                       </button>
@@ -1026,6 +1027,19 @@ function formatRuleTarget(scope: string, target: string) {
     return "No target";
   }
   return target;
+}
+
+function toolDisplayLabel(tool: string) {
+  switch (tool) {
+    case "claude":
+      return "Claude";
+    case "codex":
+      return "Codex";
+    case "gemini":
+      return "Gemini";
+    default:
+      return tool;
+  }
 }
 
 function formatGuardModeLabel(mode: string) {
