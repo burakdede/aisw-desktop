@@ -2,7 +2,6 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { useQuery } from "@tanstack/react-query";
 import { DialogSurface } from "../../../components/DialogSurface";
-import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SplitView } from "../../../components/SplitView";
 import { getProjectBindings, getWorkspaceStatus } from "../../../lib/client";
@@ -410,7 +409,7 @@ export function SetsPanel({
       return `${toolLabel}: ${label}`;
     }).join(" · ");
     const statusLabel = active
-      ? "Ready"
+      ? "Current"
       : ready
         ? "Available"
         : "Needs Attention";
@@ -498,7 +497,6 @@ export function SetsPanel({
                             <div className="sets-library-row-title">
                               <strong>
                                 {contextDisplayLabel(settings, entry.name)}
-                                {activeContext === entry.name ? " ✓" : ""}
                               </strong>
                               <span className={`sets-library-row-state sets-library-row-state-${activeContext === entry.name ? "ready" : "available"}`}>
                                 <span aria-hidden="true">{activeContext === entry.name ? "●" : "○"}</span>
@@ -550,7 +548,7 @@ export function SetsPanel({
                     <header className="sets-inspector-header">
                       <div>
                         <h3>{profileSetDisplayLabel(selectedSet)}</h3>
-                        <p className="inline-note">
+                        <p className="inline-note sets-inspector-subtitle">
                           {selectedSetSelectionCount} profile{selectedSetSelectionCount === 1 ? "" : "s"} mapped
                         </p>
                       </div>
@@ -622,20 +620,26 @@ export function SetsPanel({
                         ) : null}
                       </div>
                     </div>
-                    <KeyValueGrid
-                      variant="plain"
-                      rows={TOOLS.map((tool) => ({
-                        label: <ToolBrand tool={tool} className="tool-brand-inline" logoSize={16} />,
-                        value: selectedSet.profiles[tool]
-                          ? toolProfileDisplayLabel(settings, snapshot, tool, selectedSet.profiles[tool] as string)
-                          : "Not included",
-                      }))}
-                    />
-                    <div className="sets-inspector-meta">
-                      <p className="inline-note">
-                        Used by project rules: {ruleUsageCountByContext.get(selectedSet.name) ?? 0}
-                      </p>
-                    </div>
+                    <section className="sets-detail-list" aria-label="Set mappings">
+                      {TOOLS.map((tool) => (
+                        <div key={tool} className="sets-detail-row">
+                          <span className="sets-detail-key">
+                            <ToolBrand tool={tool} className="tool-brand-inline" logoSize={16} />
+                          </span>
+                          <strong className="sets-detail-value">
+                            {selectedSet.profiles[tool]
+                              ? toolProfileDisplayLabel(settings, snapshot, tool, selectedSet.profiles[tool] as string)
+                              : "Not included"}
+                          </strong>
+                        </div>
+                      ))}
+                      <div className="sets-detail-row">
+                        <span className="sets-detail-key">Project rules</span>
+                        <strong className="sets-detail-value">
+                          {ruleUsageCountByContext.get(selectedSet.name) ?? 0} in use
+                        </strong>
+                      </div>
+                    </section>
                     {!profileSetHasSelections(selectedSet) ? (
                       <p className="inline-note">This saved set is empty and cannot be activated yet.</p>
                     ) : selectedSetMissingMappings.length ? (
@@ -778,22 +782,33 @@ export function SetsPanel({
                     <header className="sets-inspector-header">
                       <div>
                         <h3>{selectedRuleContextLabel}</h3>
-                        <p className="inline-note">
+                        <p className="inline-note sets-inspector-subtitle">
                           {selectedRuleMatched ? "This rule currently matches" : "Saved project rule"}
                         </p>
                       </div>
                     </header>
-                    <KeyValueGrid
-                      variant="plain"
-                      rows={[
-                        { label: "Rule type", value: formatRuleScopeLabel(selectedRule.scope) },
-                        { label: "Set", value: selectedRuleContextLabel ?? "Unknown" },
-                        { label: "Match value", value: formatRuleTarget(selectedRule.scope, selectedRule.target) },
-                        { label: "Priority", value: selectedRule.scope === "default" ? "Fallback" : "Explicit" },
-                        { label: "Enabled", value: "Yes" },
-                        { label: "Last matched", value: selectedRuleMatched ? "Current project" : "Not matched" },
-                      ]}
-                    />
+                    <section className="sets-detail-list" aria-label="Rule details">
+                      <div className="sets-detail-row">
+                        <span className="sets-detail-key">Rule type</span>
+                        <strong className="sets-detail-value">{formatRuleScopeLabel(selectedRule.scope)}</strong>
+                      </div>
+                      <div className="sets-detail-row">
+                        <span className="sets-detail-key">Match value</span>
+                        <strong className="sets-detail-value">{formatRuleTarget(selectedRule.scope, selectedRule.target)}</strong>
+                      </div>
+                      <div className="sets-detail-row">
+                        <span className="sets-detail-key">Set</span>
+                        <strong className="sets-detail-value">{selectedRuleContextLabel ?? "Unknown"}</strong>
+                      </div>
+                      <div className="sets-detail-row">
+                        <span className="sets-detail-key">Priority</span>
+                        <strong className="sets-detail-value">{selectedRule.scope === "default" ? "Fallback" : "Explicit"}</strong>
+                      </div>
+                      <div className="sets-detail-row">
+                        <span className="sets-detail-key">Last matched</span>
+                        <strong className="sets-detail-value">{selectedRuleMatched ? "Current project" : "Not matched"}</strong>
+                      </div>
+                    </section>
                     <div className="button-row sets-inspector-actions">
                       <button className="ghost-button" type="button" onClick={openRuleEditor}>
                         Edit…
