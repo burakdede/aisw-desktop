@@ -379,6 +379,24 @@ test("clears routed profile details when reopening profiles from the sidebar", a
   await expect(page.getByRole("heading", { name: "Work" })).toBeVisible();
 });
 
+test("uses a compact one-pane profile detail flow on narrow widths", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.setViewportSize({ width: 760, height: 920 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  await expect(page.getByLabel("Profile table")).toBeVisible();
+  await page.getByRole("option", { name: "Inspect Claude Code Work" }).click();
+
+  await expect(page.getByRole("button", { name: "Back", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Profile table")).toHaveCount(0);
+  await expect(page.locator(".profiles-inspector").getByRole("heading", { name: "Work" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(page.getByLabel("Profile table")).toBeVisible();
+});
+
 test("clears routed settings sections when reopening settings from the sidebar", async ({ page }) => {
   await installDesktopMock(page, "onboarding");
 

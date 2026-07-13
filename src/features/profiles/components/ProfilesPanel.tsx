@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
@@ -33,6 +33,7 @@ import { StateModeField } from "../../shared/components/StateModeField";
 
 const TOOLS = ["claude", "codex", "gemini"] as const;
 const INVENTORY_FILTERS = ["all", ...TOOLS] as const;
+const PROFILES_COMPACT_BREAKPOINT = 800;
 
 type InventoryFilter = (typeof INVENTORY_FILTERS)[number];
 type InventoryEntry = {
@@ -112,6 +113,11 @@ export function ProfilesPanel({
   const apiKeyInputRef = useRef<HTMLInputElement | null>(null);
   const renameInputRef = useRef<HTMLInputElement | null>(null);
   const editLabelInputRef = useRef<HTMLInputElement | null>(null);
+  const inventoryRowRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const [compactLayout, setCompactLayout] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < PROFILES_COMPACT_BREAKPOINT : false,
+  );
+  const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
 
   const profiles = useMemo(() => snapshot.profiles[tool]?.profiles ?? [], [snapshot, tool]);
   const readEnabled = useMutationAwareQueryEnabled();
@@ -314,6 +320,26 @@ export function ProfilesPanel({
   }, [expandedDetails, profiles, snapshot.profiles, tool]);
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const updateLayout = () => {
+      setCompactLayout(window.innerWidth < PROFILES_COMPACT_BREAKPOINT);
+    };
+
+    updateLayout();
+    window.addEventListener("resize", updateLayout);
+    return () => window.removeEventListener("resize", updateLayout);
+  }, []);
+
+  useEffect(() => {
+    if (!compactLayout) {
+      setCompactInspectorOpen(false);
+    }
+  }, [compactLayout]);
+
+  useEffect(() => {
     let active = true;
     let unlisten: (() => void) | undefined;
     void listenDesktopEvent<unknown>("oauth-progress", (payload) => {
@@ -449,6 +475,9 @@ export function ProfilesPanel({
   function selectInventoryEntry(entryTool: (typeof TOOLS)[number], name: string) {
     setTool(entryTool);
     setExpandedDetails(name);
+    if (compactLayout) {
+      setCompactInspectorOpen(true);
+    }
   }
 
   function activateInventoryEntry(entry: InventoryEntry) {
@@ -465,6 +494,65 @@ export function ProfilesPanel({
     setOpenRowActions(null);
     onOpenBackups?.();
   }
+
+  function focusInventoryRow(index: number) {
+    window.requestAnimationFrame(() => {
+      inventoryRowRefs.current[index]?.focus();
+    });
+  }
+
+  function moveInventorySelection(currentIndex: number, nextIndex: number) {
+    const boundedIndex = Math.max(0, Math.min(nextIndex, filteredInventoryProfiles.length - 1));
+    const target = filteredInventoryProfiles[boundedIndex];
+    if (!target) {
+      return;
+    }
+    setTool(target.tool);
+    setExpandedDetails(target.name);
+    focusInventoryRow(boundedIndex);
+  }
+
+  function handleInventoryKeyDown(
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+    index: number,
+    entry: InventoryEntry,
+  ) {
+    if (event.altKey) {
+      return;
+    }
+
+    switch (event.key) {
+      case "ArrowDown":
+      case "ArrowRight":
+        event.preventDefault();
+        moveInventorySelection(index, index + 1);
+        break;
+      case "ArrowUp":
+      case "ArrowLeft":
+        event.preventDefault();
+        moveInventorySelection(index, index - 1);
+        break;
+      case "Home":
+        event.preventDefault();
+        moveInventorySelection(index, 0);
+        break;
+      case "End":
+        event.preventDefault();
+        moveInventorySelection(index, filteredInventoryProfiles.length - 1);
+        break;
+      case "Enter":
+        if (event.metaKey) {
+          event.preventDefault();
+          activateInventoryEntry(entry);
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  const showInventory = !compactLayout || !compactInspectorOpen;
+  const showInspector = !compactLayout || compactInspectorOpen;
 
   return (
     <div className="profiles-screen screen-content">
@@ -496,7 +584,7 @@ export function ProfilesPanel({
         className="profiles-layout profiles-split-view"
         primaryClassName="profiles-inventory-pane"
         secondaryClassName="profiles-inspector-pane"
-        primary={
+        primary={showInventory ? (
           <section className="profiles-pane profiles-table-pane" aria-label="Profile table">
             <div className="profiles-table-header" aria-hidden="true">
               <span>Name</span>
@@ -507,8 +595,8 @@ export function ProfilesPanel({
               <span className="profiles-table-column-low">Last checked</span>
               <span />
             </div>
-            <div className="profiles-table-body" role="list" aria-label="Profiles">
-              {filteredInventoryProfiles.map((inventoryEntry) => {
+            <div className="profiles-table-body" role="listbox" aria-label="Profiles">
+              {filteredInventoryProfiles.map((inventoryEntry, index) => {
                 const rowSelected = expandedDetails === inventoryEntry.name && tool === inventoryEntry.tool;
                 return (
                   <div
@@ -521,11 +609,18 @@ export function ProfilesPanel({
                     }}
                   >
                     <button
+                      ref={(node) => {
+                        inventoryRowRefs.current[index] = node;
+                      }}
                       type="button"
                       className="profiles-table-row-button"
                       aria-label={`Inspect ${toolDisplayName(inventoryEntry.tool)} ${inventoryEntry.label}`}
+                      role="option"
+                      aria-selected={rowSelected}
+                      tabIndex={rowSelected || (!expandedDetails && index === 0) ? 0 : -1}
                       onClick={() => selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name)}
                       onDoubleClick={() => selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name)}
+                      onKeyDown={(event) => handleInventoryKeyDown(event, index, inventoryEntry)}
                     >
                       <div className="profiles-table-name-cell">
                         <strong>{inventoryEntry.label}</strong>
@@ -642,13 +737,22 @@ export function ProfilesPanel({
               ) : null}
             </div>
           </section>
-        }
-        secondary={
+        ) : null}
+        secondary={showInspector ? (
           <aside className="profiles-pane profiles-inspector">
             {selectedProfileEntry ? (
               <>
                 <header className="profiles-inspector-header">
                     <div className="profiles-inspector-title-block">
+                      {compactLayout ? (
+                        <button
+                          className="ghost-button profiles-inspector-back"
+                          type="button"
+                          onClick={() => setCompactInspectorOpen(false)}
+                        >
+                          Back
+                        </button>
+                      ) : null}
                       <h3>{selectedProfileDisplay}</h3>
                       <p className="inline-note profiles-inspector-tool">
                         <ToolBrand tool={tool} className="tool-brand-inline" logoSize={16} />
@@ -874,7 +978,7 @@ export function ProfilesPanel({
               </div>
             )}
           </aside>
-        }
+        ) : null}
       />
       {editSheetProfile && editSheetDisplay ? (
         <DialogSurface

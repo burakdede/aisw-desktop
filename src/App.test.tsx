@@ -1135,6 +1135,74 @@ describe("App", () => {
     expect(screen.queryByText("API Key")).not.toBeInTheDocument();
   });
 
+  it("supports arrow-key navigation in the profiles inventory", async () => {
+    await renderApp();
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "Profiles" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("listbox", { name: "Profiles" })).toBeInTheDocument();
+    });
+
+    const workRow = screen.getByRole("option", { name: "Inspect Claude Code Work" });
+    const codexRow = screen.getByRole("option", { name: "Inspect Codex CLI Work" });
+
+    workRow.focus();
+    fireEvent.keyDown(workRow, { key: "ArrowDown" });
+
+    await waitFor(() => {
+      expect(codexRow).toHaveAttribute("aria-selected", "true");
+      expect(codexRow).toHaveFocus();
+    });
+    expect(workRow).toHaveAttribute("aria-selected", "false");
+    expect(screen.getByRole("heading", { name: "Work" })).toBeInTheDocument();
+  });
+
+  it("uses a compact one-pane detail flow for profiles on narrow widths", async () => {
+    const originalInnerWidth = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      writable: true,
+      value: 760,
+    });
+
+    try {
+      await renderApp();
+      await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
+
+      await act(async () => {
+        window.dispatchEvent(new Event("resize"));
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Profiles" }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("Profile table")).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole("option", { name: "Inspect Claude Code Work" }));
+
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
+        expect(screen.queryByLabelText("Profile table")).not.toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Back" }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("Profile table")).toBeInTheDocument();
+      });
+    } finally {
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        writable: true,
+        value: originalInnerWidth,
+      });
+      window.dispatchEvent(new Event("resize"));
+    }
+  });
+
   it("clears routed profile details when reopening profiles from the sidebar", async () => {
     const codexStatus = {
       tool: "codex",
