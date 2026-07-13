@@ -968,12 +968,14 @@ test("switches one tool directly from overview and refreshes the active profile 
 
   await page.goto("/");
 
-  const codexCard = page.locator(".tool-card").filter({ hasText: "Codex" });
-  await codexCard.getByLabel("Switch codex profile").selectOption("work");
-  await codexCard.getByRole("button", { name: "Switch to Work" }).click();
+  await page.getByRole("button", { name: "Inspect Codex" }).click();
 
-  await expect(codexCard.getByRole("heading", { name: "Work" })).toBeVisible();
-  await expect(codexCard.getByText("Last result: Switched Codex to Work.")).toBeVisible();
+  const codexInspector = page.locator(".overview-inspector-pane");
+  await codexInspector.getByLabel("Switch codex profile").selectOption("work");
+  await codexInspector.getByRole("button", { name: "Switch" }).click();
+
+  await expect(codexInspector.getByText("Active profile: Work")).toBeVisible();
+  await expect(codexInspector.getByText("Last result: Switched Codex to Work.")).toBeVisible();
 });
 
 test("uses saved profile labels in overview switch results", async ({ page }) => {
