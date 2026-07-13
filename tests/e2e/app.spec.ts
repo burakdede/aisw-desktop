@@ -1902,7 +1902,7 @@ test("renames, relabels, and removes profiles from the profiles screen", async (
   await page.goto("/");
   await page.getByRole("button", { name: "Profiles" }).click();
 
-  await page.getByRole("button", { name: "Inspect Claude Code Work" }).click();
+  await page.getByRole("option", { name: "Inspect Claude Code Work" }).click();
   await page.getByRole("button", { name: "Open profile actions" }).click();
   await page.getByLabel("Profile actions").getByRole("menuitem", { name: "Rename…" }).click();
   const renameDialog = page.getByRole("dialog", { name: "Edit Profile" });
@@ -1919,7 +1919,7 @@ test("renames, relabels, and removes profiles from the profiles screen", async (
 
   await page.getByRole("button", { name: "Open profile actions" }).click();
   await page.getByLabel("Profile actions").getByRole("menuitem", { name: "Remove…" }).click();
-  await page.getByRole("button", { name: "Remove active profile" }).click();
+  await page.getByRole("button", { name: "Remove Profile" }).click();
   await expect(page.getByText("client-acme")).toHaveCount(0);
 });
 

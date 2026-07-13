@@ -695,17 +695,19 @@ export function ProfilesPanel({
                       {openRowActions?.tool === inventoryEntry.tool &&
                       openRowActions?.name === inventoryEntry.name ? (
                         <div className="profile-row-actions-menu" role="menu" aria-label="Profile row actions">
-                          <button
-                            type="button"
-                            role="menuitem"
-                            disabled={mutationLock.isBusy}
-                            onClick={() => {
-                              setOpenRowActions(null);
-                              activateInventoryEntry(inventoryEntry);
-                            }}
-                          >
-                            {inventoryEntry.active ? "Reapply Active Profile" : "Activate"}
-                          </button>
+                          {(!inventoryEntry.active || inventoryEntry.state === "Needs Attention") ? (
+                            <button
+                              type="button"
+                              role="menuitem"
+                              disabled={mutationLock.isBusy}
+                              onClick={() => {
+                                setOpenRowActions(null);
+                                activateInventoryEntry(inventoryEntry);
+                              }}
+                            >
+                              {inventoryEntry.active ? "Reapply Active Profile" : "Activate"}
+                            </button>
+                          ) : null}
                           <button
                             type="button"
                             role="menuitem"
@@ -897,14 +899,8 @@ export function ProfilesPanel({
                 <KeyValueGrid
                   variant="plain"
                   rows={[
-                    ...(selectedHasCustomLabel
-                      ? [
-                          {
-                            label: "Saved name",
-                            value: selectedProfileEntry.name,
-                          },
-                        ]
-                      : []),
+                    { label: "Profile", value: selectedProfileEntry.name },
+                    { label: "Label", value: selectedProfileDisplay ?? titleCase(selectedProfileEntry.name) },
                     { label: "Live match", value: profileLiveMatchValue(snapshot, tool, selectedProfileEntry.name, toolStatus) },
                     { label: "Authentication", value: authDisplayLabel(selectedProfileEntry.auth) },
                     {
@@ -1149,9 +1145,7 @@ export function ProfilesPanel({
                     });
                   }}
                 >
-                  {snapshot.profiles[tool]?.active === removalSheetProfile.name
-                    ? "Remove active profile"
-                    : "Remove"}
+                  Remove Profile
                 </button>
               </div>
             </footer>

@@ -1881,7 +1881,7 @@ describe("App", () => {
     fireEvent.click(getLastOpenMenu().getByRole("menuitem", { name: "Remove…" }));
     fireEvent.click(
       within(screen.getByRole("dialog", { name: "Remove Profile" })).getByRole("button", {
-        name: "Remove active profile",
+        name: "Remove Profile",
       }),
     );
 
@@ -3594,8 +3594,8 @@ describe("App", () => {
 
     await waitFor(() => {
       const dialog = within(screen.getByRole("dialog", { name: "Remove Profile" }));
-      expect(dialog.getByText("Claude")).toBeInTheDocument();
-      expect(dialog.getAllByText("Work").length).toBeGreaterThan(0);
+      expect(dialog.getByRole("heading", { name: "Remove “Work”?" })).toBeInTheDocument();
+      expect(dialog.getByRole("button", { name: "Remove Profile" })).toBeInTheDocument();
     });
   });
 
@@ -3658,7 +3658,8 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Office" })).toBeInTheDocument();
-      expect(screen.getByText("Saved name")).toBeInTheDocument();
+      expect(screen.getByText("Profile")).toBeInTheDocument();
+      expect(screen.getByText("Label")).toBeInTheDocument();
       expect(screen.getAllByText("work").length).toBeGreaterThan(0);
     });
   });
