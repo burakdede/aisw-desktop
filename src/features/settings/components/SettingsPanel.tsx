@@ -410,7 +410,6 @@ export function SettingsPanel({
                   />
                   <ToggleRow
                     label="Show menu bar icon"
-                    description="Keep the AI Switch menu bar extra available for quick switching and diagnostics."
                     control={
                       <input
                         type="checkbox"
@@ -442,22 +441,6 @@ export function SettingsPanel({
                   {launchMessage ? <p className="inline-note">{launchMessage}</p> : null}
                 </SettingsGroup>
 
-                <SettingsGroup title="Setup Assistant">
-                  <SettingsActionRow
-                    label="Guided setup"
-                    description="Reopen the guided setup assistant to review detection and first-switch onboarding."
-                    action={
-                      <button
-                        className="ghost-button"
-                        type="button"
-                        disabled={!onReopenSetupAssistant}
-                        onClick={onReopenSetupAssistant}
-                      >
-                        Reopen Setup Assistant
-                      </button>
-                    }
-                  />
-                </SettingsGroup>
               </div>
             ) : null}
 
@@ -520,10 +503,9 @@ export function SettingsPanel({
                   <SettingsStaticRow label="AISW home" value={settings.aisw_home ?? "~/.aisw"} />
                   <SettingsActionRow
                     label="App data folder"
-                    description="Open the local application data directory in Finder."
                     action={
                       <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
-                        Open App Data Folder
+                        Reveal in Finder
                       </button>
                     }
                   />
@@ -610,7 +592,6 @@ export function SettingsPanel({
                   <SettingsStaticRow label="AISW data folder" value={settings.aisw_home ?? "~/.aisw"} />
                   <SettingsActionRow
                     label="Finder"
-                    description="Open the local AI Switch data location."
                     action={
                       <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
                         Reveal in Finder
@@ -622,7 +603,6 @@ export function SettingsPanel({
                 <SettingsGroup title="Diagnostics">
                   <SettingsActionRow
                     label="Support bundle"
-                    description="Export a redacted support bundle before sharing troubleshooting details."
                     action={
                       <button className="ghost-button" type="button" onClick={() => void exportReport()}>
                         Copy Redacted Report…
@@ -741,7 +721,6 @@ export function SettingsPanel({
                 <SettingsGroup title="Application State">
                   <SettingsActionRow
                     label="Setup assistant"
-                    description="Reopen the guided setup flow from the current desktop state."
                     action={
                       <button
                         className="ghost-button"
@@ -755,7 +734,6 @@ export function SettingsPanel({
                   />
                   <SettingsActionRow
                     label="Setup state"
-                    description="Reset onboarding and reopen the setup assistant from the beginning."
                     action={
                       <button className="ghost-button" type="button" onClick={resetOnboarding}>
                         Reset Onboarding
@@ -767,7 +745,6 @@ export function SettingsPanel({
                 <SettingsGroup title="Data">
                   <SettingsActionRow
                     label="App data folder"
-                    description="Open the local AI Switch Desktop data location."
                     action={
                       <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
                         Open App Data Folder
@@ -776,7 +753,6 @@ export function SettingsPanel({
                   />
                   <SettingsActionRow
                     label="Support bundle"
-                    description="Export a redacted support bundle for troubleshooting."
                     action={
                       <button className="ghost-button" type="button" onClick={() => void exportReport()}>
                         Export Redacted Support Bundle…
@@ -857,14 +833,14 @@ function SettingsActionRow({
   action,
 }: {
   label: string;
-  description: string;
+  description?: string;
   action: ReactNode;
 }) {
   return (
     <div className="settings-row settings-row-action">
       <div className="settings-row-copy">
         <span className="settings-row-label">{label}</span>
-        <p className="inline-note">{description}</p>
+        {description ? <p className="inline-note">{description}</p> : null}
       </div>
       <div className="settings-row-control">{action}</div>
     </div>
@@ -877,14 +853,14 @@ function ToggleRow({
   control,
 }: {
   label: string;
-  description: string;
+  description?: string;
   control: ReactNode;
 }) {
   return (
     <div className="settings-row settings-row-toggle">
       <div className="settings-row-copy">
         <span className="settings-row-label">{label}</span>
-        <p className="inline-note">{description}</p>
+        {description ? <p className="inline-note">{description}</p> : null}
       </div>
       <div className="settings-row-control">{control}</div>
     </div>

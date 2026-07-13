@@ -5181,7 +5181,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .settings-layout-v2 {
   min-height: 0;
   display: grid;
-  grid-template-columns: 150px minmax(0, 1fr);
+  grid-template-columns: 180px minmax(0, 1fr);
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   border-radius: 10px;
   overflow: hidden;
@@ -5199,8 +5199,8 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .settings-category-row {
-  min-height: 28px;
-  padding: 5px 9px;
+  min-height: 32px;
+  padding: 6px 10px;
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -5230,7 +5230,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   min-height: 0;
   height: 100%;
   overflow: auto;
-  padding: 11px 15px 15px;
+  padding: 14px 18px 18px;
   display: grid;
   align-content: start;
   gap: 10px;
@@ -5252,14 +5252,14 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .settings-section-stack {
-  width: min(100%, 560px);
+  width: min(100%, 640px);
   display: grid;
-  gap: 9px;
+  gap: 18px;
 }
 
 .settings-group {
   display: grid;
-  gap: 5px;
+  gap: 8px;
 }
 
 .settings-group h4 {
@@ -5283,11 +5283,11 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .settings-row {
   display: grid;
-  grid-template-columns: minmax(136px, 168px) minmax(0, 1fr);
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
   align-items: center;
   gap: 10px;
-  min-height: 28px;
-  padding: 6px 12px;
+  min-height: 40px;
+  padding: 8px 12px;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
 }
 
@@ -5303,7 +5303,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .settings-row-copy {
   display: grid;
-  gap: 1px;
+  gap: 4px;
 }
 
 .settings-row-control {
@@ -5416,7 +5416,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 @media (max-width: 900px) {
   .settings-row {
-    grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
+    grid-template-columns: minmax(160px, 200px) minmax(0, 1fr);
   }
 
   .activity-event-row {
@@ -5442,7 +5442,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   }
 
   .settings-form-scroll {
-    padding: 18px;
+    padding: 16px;
   }
 
   .settings-section-stack,

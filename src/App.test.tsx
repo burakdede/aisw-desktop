@@ -8365,8 +8365,6 @@ describe("App", () => {
         ),
       ).toBeInTheDocument();
     });
-    expect(screen.getByRole("button", { name: "Reopen Setup Assistant" })).toBeInTheDocument();
-
     fireEvent.click(screen.getByLabelText("Launch at login"));
 
     fireEvent.change(screen.getByLabelText("Appearance"), {
@@ -8395,6 +8393,7 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Advanced" }));
     fireEvent.click(screen.getByRole("button", { name: "Reopen Setup Assistant" }));
 
     await waitFor(() => {
