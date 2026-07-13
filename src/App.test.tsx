@@ -2428,20 +2428,18 @@ describe("App", () => {
 
     fireEvent.click(screen.getByText("Diagnostics"));
 
-    let failureCard: HTMLElement;
     await waitFor(() => {
-      const failureMatch = screen.getAllByText("Config lock timeout");
-      failureCard = failureMatch[failureMatch.length - 1].closest("article") as HTMLElement;
-      expect(failureCard).toBeInTheDocument();
-      expect(within(failureCard).getByText("config lock is busy")).toBeInTheDocument();
+      expect(screen.getAllByText("Config lock timeout").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("config lock is busy").length).toBeGreaterThan(0);
       expect(
-        within(failureCard).getByText(
+        screen.getAllByText(
           "Close other AI Switch windows or wait for the local config lock to clear, then retry.",
-        ),
-      ).toBeInTheDocument();
+        ).length,
+      ).toBeGreaterThan(0);
     });
 
-    fireEvent.click(within(failureCard!).getByText("Open profile"));
+    selectDiagnosticFinding("Config lock timeout");
+    fireEvent.click(screen.getByRole("button", { name: "Open profile details" }));
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Work" })).toBeInTheDocument();
@@ -4815,8 +4813,12 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Diagnostics")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Diagnostics"));
-    await waitFor(() => expect(screen.getByText("1 actions planned")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Review Repair Plan"));
+    await waitFor(() => {
+      expect(
+        screen.getByText((content) => content.includes("repair can be applied safely")),
+      ).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Review Repair Plan" }));
 
     await waitFor(() => {
       expect(screen.getByRole("dialog", { name: "Apply Safe Repairs" })).toBeInTheDocument();
@@ -4838,11 +4840,11 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getAllByText("Everything looks good").length).toBeGreaterThan(0);
       expect(
-        screen.getByText("No direct recovery actions are available from the current diagnostics state."),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText("No safe automatic repairs are currently planned."),
-      ).toBeInTheDocument();
+        screen.getAllByText(
+          "All configured tools match their active AISW profiles and local storage checks passed.",
+        ).length,
+      ).toBeGreaterThan(0);
+      expect(screen.getByRole("button", { name: "Review Repair Plan" })).toBeDisabled();
     });
   });
 
@@ -4895,14 +4897,14 @@ describe("App", () => {
       expect(screen.getAllByText("Upstream OAuth session timed out.").length).toBeGreaterThan(0);
     });
 
-    selectDiagnosticFinding("keyring");
+    selectDiagnosticFinding("Keyring unavailable");
     expect(screen.getAllByText("Unlock the local credential store and retry.").length).toBeGreaterThan(0);
 
-    selectDiagnosticFinding("permissions");
+    selectDiagnosticFinding("Permissions incorrect");
     expect(screen.getAllByText("Grant write access to ~/.aisw").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Retry the switch").length).toBeGreaterThan(0);
 
-    selectDiagnosticFinding("oauth");
+    selectDiagnosticFinding("OAuth failure");
     expect(
       screen.getAllByText("Run the guided OAuth flow again and finish login before timeout.").length,
     ).toBeGreaterThan(0);
@@ -5009,15 +5011,12 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("Diagnostics")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Diagnostics"));
 
-    let shellHookFix: HTMLElement;
     await waitFor(() => {
-      const shellHookMatches = screen.getAllByText("Terminal integration not active");
-      shellHookFix = shellHookMatches[shellHookMatches.length - 1].closest("article") as HTMLElement;
-      expect(shellHookFix).toBeInTheDocument();
-      expect(within(shellHookFix).getByText("Open terminal setup")).toBeInTheDocument();
+      expect(screen.getAllByText("Shell hook not installed").length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(within(shellHookFix!).getByText("Open terminal setup"));
+    selectDiagnosticFinding("Shell hook not installed");
+    fireEvent.click(screen.getByRole("button", { name: "Open terminal setup" }));
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
@@ -5145,25 +5144,13 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Diagnostics"));
 
     await waitFor(() => {
-      expect(screen.getByText("Recommended fixes")).toBeInTheDocument();
       expect(screen.getAllByText("codex is missing").length).toBeGreaterThan(0);
       expect(screen.getAllByText("claude live mismatch").length).toBeGreaterThan(0);
       expect(screen.getByText("Project set mismatch")).toBeInTheDocument();
     });
 
-    const workspaceMismatchCard = screen.getByText("Project set mismatch").closest(".diagnostic-card");
-    if (!(workspaceMismatchCard instanceof HTMLElement)) {
-      throw new Error("Missing workspace mismatch diagnostic card.");
-    }
-    expect(within(workspaceMismatchCard).getByText("Open Sets")).toBeInTheDocument();
-    expect(within(workspaceMismatchCard).queryByText("Use expected set now")).not.toBeInTheDocument();
-
-    const missingToolMatches = screen.getAllByText("codex is missing");
-    const missingToolCard = missingToolMatches[missingToolMatches.length - 1].closest(".diagnostic-card");
-    if (!(missingToolCard instanceof HTMLElement)) {
-      throw new Error("Missing diagnostics tool card.");
-    }
-    fireEvent.click(within(missingToolCard).getByText("Open installation guide"));
+    selectDiagnosticFinding("codex is missing");
+    fireEvent.click(screen.getByRole("button", { name: "Open installation guide" }));
     expect(window.open).toHaveBeenCalledWith(
       "https://www.npmjs.com/package/@openai/codex",
       "_blank",
@@ -5171,7 +5158,7 @@ describe("App", () => {
     );
     const doctorRunsBeforeRefresh = calls.filter((entry) => entry.command === "run_doctor").length;
     const snapshotReadsBeforeRefresh = calls.filter((entry) => entry.command === "get_snapshot").length;
-    fireEvent.click(within(missingToolCard).getByText("Refresh diagnostics"));
+    fireEvent.click(screen.getByRole("button", { name: "Refresh diagnostics" }));
     await waitFor(() => {
       expect(calls.filter((entry) => entry.command === "run_doctor").length).toBeGreaterThan(
         doctorRunsBeforeRefresh,
@@ -5181,6 +5168,7 @@ describe("App", () => {
       );
     });
 
+    selectDiagnosticFinding("claude live mismatch");
     fireEvent.change(screen.getByLabelText("import claude current login from diagnostics"), {
       target: { value: "incident" },
     });
@@ -5189,12 +5177,14 @@ describe("App", () => {
       expect(calls.some((entry) => entry.command === "add_profile")).toBe(true);
     });
 
-    fireEvent.click(screen.getByText("Re-apply Work"));
+    fireEvent.click(screen.getByRole("button", { name: "Re-apply Work" }));
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
     });
 
-    fireEvent.click(screen.getByText("Open Sets"));
+    selectDiagnosticFinding("Project set mismatch");
+    expect(screen.queryByRole("button", { name: "Use expected set now" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open Sets" }));
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Set Library" })).toBeInTheDocument();
     });
@@ -5266,10 +5256,8 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Diagnostics"));
 
     await waitFor(() => expect(screen.getAllByText("claude live mismatch").length).toBeGreaterThan(0));
-    const mismatchMatches = screen.getAllByText("claude live mismatch");
-    const mismatchCard = mismatchMatches[mismatchMatches.length - 1].closest("article");
-    expect(mismatchCard).not.toBeNull();
-    fireEvent.click(within(mismatchCard!).getByText("Open profile"));
+    selectDiagnosticFinding("claude live mismatch");
+    fireEvent.click(screen.getByRole("button", { name: "Open profile details" }));
 
     await waitFor(() =>
       expect(getProfilesInspector().getAllByText("Keychain").length).toBeGreaterThan(0),
@@ -5379,14 +5367,12 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Diagnostics"));
 
     await waitFor(() => {
-      expect(screen.getByText("Apply keyring repair")).toBeInTheDocument();
-      expect(screen.getByText("Repair permissions")).toBeInTheDocument();
-      expect(screen.getByText("Retry OAuth repair")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Apply keyring repair" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Use file-backed storage" })).toBeInTheDocument();
-      expect(screen.getByText("Show keyring setup")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Show keyring setup" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("Apply keyring repair"));
+    fireEvent.click(screen.getByRole("button", { name: "Apply keyring repair" }));
     await waitFor(() => {
       expect(
         calls.some(
@@ -5398,7 +5384,11 @@ describe("App", () => {
       ).toBe(true);
     });
 
-    fireEvent.click(screen.getByText("Repair permissions"));
+    selectDiagnosticFinding("Permissions incorrect");
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Repair permissions" })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Repair permissions" }));
     await waitFor(() => {
       expect(
         calls.some(
@@ -5410,7 +5400,11 @@ describe("App", () => {
       ).toBe(true);
     });
 
-    fireEvent.click(screen.getByText("Retry OAuth repair"));
+    selectDiagnosticFinding("OAuth failure");
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Retry OAuth repair" })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Retry OAuth repair" }));
     await waitFor(() => {
       expect(
         calls.some(
@@ -5422,6 +5416,10 @@ describe("App", () => {
       ).toBe(true);
     });
 
+    selectDiagnosticFinding("Keyring unavailable");
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Use file-backed storage" })).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByRole("button", { name: "Use file-backed storage" }));
     await waitFor(() => {
       expect(getAddProfileDialog().getByLabelText("Tool")).toBeInTheDocument();
@@ -5430,7 +5428,8 @@ describe("App", () => {
     });
 
     fireEvent.click(screen.getByText("Diagnostics"));
-    fireEvent.click(screen.getByText("Show keyring setup"));
+    selectDiagnosticFinding("Keyring unavailable");
+    fireEvent.click(screen.getByRole("button", { name: "Show keyring setup" }));
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Security" })).toBeInTheDocument();
       expect(screen.getByText("Linux Secret Service")).toBeInTheDocument();
@@ -6457,7 +6456,9 @@ describe("App", () => {
     });
 
     await waitFor(() => expect(screen.getByText("Checks and recovery")).toBeInTheDocument());
-    expect(screen.getByRole("button", { name: "Verify Again" })).toBeDisabled();
+    expect(
+      screen.getAllByRole("button", { name: "Verify Again" }).every((button) => button.hasAttribute("disabled")),
+    ).toBe(true);
     expect(doctorRuns).toBe(0);
     expect(verifyRuns).toBe(0);
     expect(repairRuns).toBe(0);
@@ -6472,7 +6473,9 @@ describe("App", () => {
       expect(verifyRuns).toBeGreaterThan(0);
       expect(repairRuns).toBeGreaterThan(0);
     });
-    expect(screen.getByRole("button", { name: "Verify Again" })).toBeEnabled();
+    expect(
+      screen.getAllByRole("button", { name: "Verify Again" }).some((button) => !button.hasAttribute("disabled")),
+    ).toBe(true);
   });
 
   it("records tray command results and shows a desktop notification", async () => {

@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { SplitView } from "../../../components/SplitView";
-import { SectionCard } from "../../../components/SectionCard";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import { exportDiagnosticBundle, runDoctor, runRepair, runVerify } from "../../../lib/client";
 import { openExternalGuide, installGuideUrlForTool } from "../../../lib/tool-guidance";
@@ -79,6 +78,7 @@ export function DiagnosticsPanel({
   const [bundleCopyMessage, setBundleCopyMessage] = useState("");
   const [selectedFindingKey, setSelectedFindingKey] = useState<string | null>(null);
   const [repairPlanOpen, setRepairPlanOpen] = useState(false);
+  const [selectedSafeFixes, setSelectedSafeFixes] = useState<string[]>([]);
   const applyRepair = useMutation({
     mutationFn: (fixes: string[]) => runRepair({ apply: true, fixes }),
     onSuccess: async () => {
@@ -105,10 +105,6 @@ export function DiagnosticsPanel({
   ];
   const repairActions = parseRepairActions(repair.data);
   const recentFailures = buildRecentFailureCards(lastCommandResults, snapshot);
-  const findings = useMemo(
-    () => buildDiagnosticFindings(issueCards, recentFailures, snapshot),
-    [issueCards, recentFailures, snapshot],
-  );
   const quickFixes = buildQuickFixes({
     snapshot,
     doctor: doctor.data,
@@ -126,28 +122,15 @@ export function DiagnosticsPanel({
     onRefreshDiagnostics: () =>
       void refreshDiagnostics(queryClient, doctor.refetch, verify.refetch, repair.refetch),
   });
+  const findings = useMemo(
+    () => buildDiagnosticFindings(issueCards, recentFailures, quickFixes, snapshot),
+    [issueCards, recentFailures, quickFixes, snapshot],
+  );
   const totalIssues = issueCards.length + recentFailures.length;
-  const summaryHighlights = [
-    ...quickFixes.slice(0, 2).map((fix) => fix.title),
-    ...issueCards.flatMap((card) => card.issues).slice(0, 2),
-    ...recentFailures.slice(0, 1).map((failure) => failure.title),
-  ].slice(0, 3);
-  const diagnosticPills = buildDiagnosticPills({
-    totalIssues,
-    repairCount: repairActions.length,
-    exportReady: Boolean(exportBundle.data),
-  });
   const checkRows = useMemo(
     () => buildDiagnosticCheckRows(summaryCards, snapshot),
     [snapshot, summaryCards],
   );
-  const checkSummaryLabel = `${checkRows.length} monitored`;
-  const recoverySummaryLabel = repairActions.length
-    ? `${repairActions.length} safe repair${repairActions.length === 1 ? "" : "s"}`
-    : "No repairs queued";
-  const findingsSummaryLabel = findings.length
-    ? `${findings.length} item${findings.length === 1 ? "" : "s"}`
-    : "Clear";
   useEffect(() => {
     if (selectedFindingKey && findings.some((finding) => finding.key === selectedFindingKey)) {
       return;
@@ -156,28 +139,66 @@ export function DiagnosticsPanel({
   }, [findings, selectedFindingKey]);
   const selectedFinding =
     findings.find((finding) => finding.key === selectedFindingKey) ?? findings[0] ?? null;
+  const findingGroups = useMemo(() => groupDiagnosticFindings(findings), [findings]);
+  const passedChecks = useMemo(
+    () => checkRows.filter((row) => row.status === "pass"),
+    [checkRows],
+  );
+  const safeFixIds = useMemo(
+    () => repairActions.map((action) => repairActionKey(action)),
+    [repairActions],
+  );
+  const selectedFindingQuickFixes = useMemo(
+    () => quickFixes.filter((fix) => matchesQuickFixToFinding(fix, selectedFinding)),
+    [quickFixes, selectedFinding],
+  );
+  const primaryFindingFix =
+    selectedFindingQuickFixes.find((fix) => fix.primary) ?? selectedFindingQuickFixes[0] ?? null;
+  const secondaryFindingFixes = selectedFindingQuickFixes.filter((fix) => fix !== primaryFindingFix);
+  const verifiedAt = Math.max(
+    doctor.dataUpdatedAt || 0,
+    verify.dataUpdatedAt || 0,
+    repair.dataUpdatedAt || 0,
+  );
+  const verifiedLabel = formatRelativeVerifiedTime(verifiedAt);
+  const summaryTitle = totalIssues
+    ? `${totalIssues} issue${totalIssues === 1 ? "" : "s"} need attention`
+    : "Everything looks good";
+  const summaryDetail = totalIssues
+    ? `${repairActions.length} ${repairActions.length === 1 ? "repair can" : "repairs can"} be applied safely. ${
+        Math.max(totalIssues - repairActions.length, 0)
+      } ${Math.max(totalIssues - repairActions.length, 0) === 1 ? "requires" : "require"} a decision.`
+    : "All configured tools match their active AISW profiles and local storage checks passed.";
+
+  useEffect(() => {
+    setSelectedSafeFixes(safeFixIds);
+  }, [safeFixIds.join("|")]);
 
   return (
-    <SectionCard
-      title="Diagnostics"
-      kicker="Checks and recovery"
-      actions={
+    <div className="diagnostics-screen screen-content">
+      <div className="diagnostics-toolbar-row">
+        <div>
+          <p className="card-kicker">Checks and recovery</p>
+          <h3 className="diagnostics-screen-title">Diagnostics</h3>
+        </div>
         <div className="button-row">
           <button
             className="ghost-button"
+            aria-label="Verify Again"
             disabled={mutationLock.isBusy}
             onClick={() =>
               void refreshDiagnostics(queryClient, doctor.refetch, verify.refetch, repair.refetch)
             }
           >
-            Verify Again
+            Verify
           </button>
           <button
             className="ghost-button"
+            aria-label="Review Repair Plan"
             onClick={() => setRepairPlanOpen(true)}
             disabled={applyRepair.isPending || !repairActions.length}
           >
-            {applyRepair.isPending ? "Applying Repairs…" : "Review Repair Plan"}
+            {applyRepair.isPending ? "Applying Repairs…" : "Review Safe Fixes…"}
           </button>
           <button
             className="ghost-button"
@@ -187,10 +208,10 @@ export function DiagnosticsPanel({
             {exportBundle.isPending ? "Exporting Report…" : "Export Report"}
           </button>
         </div>
-      }
-    >
+      </div>
+
       {exportBundle.data ? (
-        <article className="diagnostic-card diagnostic-pass diagnostics-body">
+        <article className="diagnostic-card diagnostic-pass diagnostics-inline-notice">
           <h3>Support report ready</h3>
           <p className="inline-note">{exportBundle.data.filename}</p>
           <p className="inline-note">{exportBundle.data.path}</p>
@@ -207,7 +228,7 @@ export function DiagnosticsPanel({
         </article>
       ) : null}
       {exportBundle.error ? (
-        <article className="diagnostic-card diagnostic-fail diagnostics-body">
+        <article className="diagnostic-card diagnostic-fail diagnostics-inline-notice">
           <h3>Support report could not be exported</h3>
           <p className="inline-note">
             {exportBundle.error instanceof Error
@@ -218,7 +239,7 @@ export function DiagnosticsPanel({
       ) : null}
 
       {applyRepair.data ? (
-        <article className="diagnostic-card diagnostic-pass diagnostics-body">
+        <article className="diagnostic-card diagnostic-pass diagnostics-inline-notice">
           <h3>Last repair run</h3>
           <p className="diagnostic-status">
             {String(
@@ -245,399 +266,299 @@ export function DiagnosticsPanel({
         </article>
       ) : null}
 
-      <article className={`diagnostic-card diagnostics-intro-card ${totalIssues ? "diagnostic-warn" : "diagnostic-pass"}`}>
-        <div className="diagnostics-intro-copy">
-          <div>
-            <p className="card-kicker">Health</p>
-            <h3>{totalIssues ? `${totalIssues} issue${totalIssues === 1 ? "" : "s"} found` : "Everything looks good"}</h3>
-            <p className="inline-note">Diagnostics explains profile drift, installation gaps, and safe recovery in one calm desktop view.</p>
+      <section className={`diagnostics-summary-strip ${totalIssues ? "diagnostics-summary-strip-warn" : "diagnostics-summary-strip-ok"}`}>
+        <div className="diagnostics-summary-copy">
+          <div className="diagnostics-summary-headline">
+            <span className="diagnostics-summary-symbol" aria-hidden="true">
+              {totalIssues ? "▲" : "✓"}
+            </span>
+            <strong>{summaryTitle}</strong>
           </div>
-          <span className={`pill ${totalIssues ? "pill-warn" : "pill-ok"}`}>
-            {repairActions.length ? `${repairActions.length} repairs queued` : "Recovery ready"}
-          </span>
+          <p className="inline-note">{summaryDetail}</p>
         </div>
-        <div className="desktop-status-strip diagnostics-status-strip">
-          <article className="desktop-status-card">
-            <span className="overview-current-set-cell-label">Checks</span>
-            <p className="desktop-status-value">{checkSummaryLabel}</p>
-            <p className="inline-note">Installed tools, profile drift, and local setup health.</p>
-          </article>
-          <article className="desktop-status-card">
-            <span className="overview-current-set-cell-label">Recovery</span>
-            <p className="desktop-status-value">{recoverySummaryLabel}</p>
-            <p className="inline-note">Review Repair Plan and direct quick fixes stay here.</p>
-          </article>
-          <article className="desktop-status-card">
-            <span className="overview-current-set-cell-label">Findings</span>
-            <p className="desktop-status-value">{findingsSummaryLabel}</p>
-            <div className="desktop-status-pill-stack">
-              {(diagnosticPills.length ? diagnosticPills : ["Quick actions"]).map((pill) => (
-                <span key={pill} className="pill pill-soft">
-                  {pill}
-                </span>
-              ))}
-            </div>
-          </article>
+        <div className="diagnostics-summary-meta">
+          <span className="overview-current-set-cell-label">Verified</span>
+          <strong>{verifiedLabel}</strong>
         </div>
-        {summaryHighlights.length ? (
-          <div className="stack-list diagnostics-highlight-list">
-            {summaryHighlights.map((line) => (
-              <p key={line} className="inline-note">{line}</p>
-            ))}
-          </div>
-        ) : (
-          <p className="inline-note">
-            Active profiles, local storage, and repair checks are currently passing.
-          </p>
-        )}
-        <div className="diagnostics-check-summary">
-          {summaryCards.map((card) => (
-            <div key={card.title} className={`diagnostics-check-summary-cell diagnostic-${card.status}`}>
-              <strong>{card.title}</strong>
-              <span className={`pill ${card.status === "pass" ? "pill-ok" : "pill-warn"}`}>
-                {card.status}
-              </span>
-              <p className="inline-note">{card.lines[0]}</p>
-            </div>
-          ))}
-        </div>
-      </article>
+      </section>
 
       <SplitView
-        className="diagnostics-layout diagnostics-body"
-        primaryClassName="diagnostics-checks-pane"
-        secondaryClassName="diagnostics-recovery-pane"
+        className="diagnostics-master-detail"
+        primaryClassName="diagnostics-findings-pane"
+        secondaryClassName="diagnostics-inspector-pane"
         primary={
-          <div className="stack-list desktop-pane-column">
-            <article className={`diagnostic-card diagnostics-details-card ${totalIssues ? "diagnostic-warn" : "diagnostic-pass"}`}>
-              <div className="desktop-pane-section-header">
-                <div>
-                  <p className="card-kicker">Checks</p>
-                  <h3>Checks and findings</h3>
-                </div>
-                <span className={`pill ${findings.length ? "pill-warn" : "pill-ok"}`}>
-                  {findingsSummaryLabel}
-                </span>
+          <section className="diagnostics-pane">
+            <header className="diagnostics-pane-header">
+              <div>
+                <p className="card-kicker">Findings</p>
+                <h3>Needs attention</h3>
               </div>
-              <p className="inline-note">
-                Review the current check output and then inspect the findings that need a response.
-              </p>
-              <div className="diagnostics-details-section">
-                <div>
-                  <p className="card-kicker">Checks</p>
-                  <h4>Monitored checks</h4>
-                </div>
-                <div className="diagnostics-check-list" aria-label="Diagnostics checks">
-                  {checkRows.map((row) => (
-                    <div key={row.label} className="diagnostics-check-row">
-                      <span
-                        className={`diagnostics-check-indicator diagnostics-check-indicator-${row.status}`}
-                        aria-hidden="true"
-                      >
-                        {row.status === "pass" ? "✓" : row.status === "warn" ? "▲" : "●"}
-                      </span>
-                      <div className="diagnostics-check-copy">
-                        <strong>{row.label}</strong>
-                        <p className="inline-note">{row.detail}</p>
+            </header>
+            {findings.length ? (
+              <div className="diagnostics-findings-list" aria-label="Diagnostics findings">
+                {findingGroups.map((group) => (
+                  group.items.length ? (
+                    <section key={group.id} className="diagnostics-finding-group">
+                      <div className="diagnostics-finding-group-header">
+                        <p className="card-kicker">{group.label}</p>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="diagnostics-details-section">
-                <div className="desktop-pane-section-header diagnostics-subsection-header">
-                  <div>
-                    <p className="card-kicker">Findings</p>
-                    <h4>Items that need review</h4>
-                  </div>
-                  <span className={`pill ${findings.length ? "pill-warn" : "pill-ok"}`}>
-                    {findings.length ? `${findings.length} item${findings.length === 1 ? "" : "s"}` : "Clear"}
-                  </span>
-                </div>
-                <p className="inline-note">
-                  Select a finding to inspect the failing details before you apply a recovery action.
-                </p>
-                {findings.length ? (
-                  <div className="stack-list desktop-list-stack">
-                    {findings.map((finding) => (
-                      <button
-                        key={finding.key}
-                        type="button"
-                        aria-label={`Inspect ${finding.title}`}
-                        aria-pressed={selectedFinding?.key === finding.key}
-                        className={`list-row diagnostic-finding-row ${
-                          selectedFinding?.key === finding.key ? "diagnostic-finding-row-selected" : ""
-                        }`}
-                        onClick={() => setSelectedFindingKey(finding.key)}
-                      >
-                        <div className="diagnostic-finding-main">
-                          <div className="diagnostic-finding-title">
-                            <strong>{finding.title}</strong>
-                            <span className={`pill ${finding.status === "fail" ? "pill-warn" : "pill-soft"}`}>
-                              {finding.countLabel}
-                            </span>
-                          </div>
-                          <p className="inline-note">{finding.preview}</p>
-                        </div>
-                        <div className="diagnostic-finding-meta">
-                          <span>{finding.scopeLabel}</span>
-                        </div>
-                        <span className="diagnostic-finding-chevron" aria-hidden="true">
-                          ›
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="diagnostic-card diagnostic-pass diagnostics-empty-card">
-                    <h3>Everything looks good</h3>
-                    <p className="inline-note">All configured tools match their active desktop profiles.</p>
-                  </div>
-                )}
-              </div>
-            </article>
-          </div>
-        }
-        secondary={
-          <div className="stack-list desktop-pane-column">
-            {selectedFinding ? (
-              <article className={`diagnostic-card diagnostic-${selectedFinding.status} diagnostics-inspector-card`}>
-                <div className="diagnostics-inspector-main">
-                  <div className="stack-list">
-                    <div className="desktop-pane-section-header">
-                      <div>
-                        <p className="card-kicker">Inspector</p>
-                        <h3>{selectedFinding.title}</h3>
+                      <div className="stack-list">
+                        {group.items.map((finding) => (
+                          <button
+                            key={finding.key}
+                            type="button"
+                            aria-label={`Inspect ${finding.title}`}
+                            aria-pressed={selectedFinding?.key === finding.key}
+                            className={`list-row diagnostic-finding-row ${
+                              selectedFinding?.key === finding.key ? "diagnostic-finding-row-selected" : ""
+                            }`}
+                            onClick={() => setSelectedFindingKey(finding.key)}
+                          >
+                            <div className="diagnostic-finding-main">
+                              <div className="diagnostic-finding-title">
+                                <span className={`diagnostic-finding-symbol diagnostic-finding-symbol-${finding.status}`} aria-hidden="true">
+                                  {finding.status === "fail" ? "⨯" : "▲"}
+                                </span>
+                                <strong>{finding.title}</strong>
+                              </div>
+                              <p className="inline-note">{finding.preview}</p>
+                            </div>
+                          </button>
+                        ))}
                       </div>
-                      <span className={`pill ${selectedFinding.status === "fail" ? "pill-warn" : "pill-soft"}`}>
-                        {selectedFinding.scopeLabel}
-                      </span>
-                    </div>
-                    <div className="diagnostics-inspector-section">
-                      <p className="card-kicker">What this means</p>
-                      {selectedFinding.lines.map((line) => (
-                        <p key={line} className="inline-note">
-                          {normalizeRuntimeLanguage(line)}
-                        </p>
+                    </section>
+                  ) : null
+                ))}
+                {passedChecks.length ? (
+                  <details className="diagnostics-passed-section">
+                    <summary>{passedChecks.length} checks passed</summary>
+                    <div className="stack-list">
+                      {passedChecks.map((row) => (
+                        <div key={row.label} className="diagnostics-passed-row">
+                          <strong>{row.label}</strong>
+                          <p className="inline-note">{row.detail}</p>
+                        </div>
                       ))}
                     </div>
-                    {selectedFinding.remediation.length ? (
-                      <div className="diagnostics-inspector-section">
-                        <p className="card-kicker">Recommended fix</p>
-                        <div className="diagnostic-remediation">
-                        {selectedFinding.remediation.map((item) => (
-                          <code key={item}>{item}</code>
-                        ))}
-                        </div>
-                      </div>
+                  </details>
+                ) : null}
+              </div>
+            ) : (
+              <div className="diagnostics-healthy-state">
+                <span aria-hidden="true">✓</span>
+                <h3>Everything looks good</h3>
+                <p className="inline-note">
+                  All configured tools match their active AISW profiles and local storage checks passed.
+                </p>
+                <p className="inline-note">{verifiedLabel}</p>
+                <div className="button-row">
+                  <button
+                    className="ghost-button"
+                    aria-label="Verify Again"
+                    disabled={mutationLock.isBusy}
+                    onClick={() =>
+                      void refreshDiagnostics(queryClient, doctor.refetch, verify.refetch, repair.refetch)
+                    }
+                  >
+                    Verify Again
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+        }
+        secondary={
+          <aside className="diagnostics-pane diagnostics-inspector-surface">
+            {selectedFinding ? (
+              <>
+                <header className="diagnostics-pane-header diagnostics-inspector-header">
+                  <div>
+                    <h3>{selectedFinding.title}</h3>
+                    <p className="inline-note">{selectedFinding.status === "fail" ? "Blocked" : "Needs attention"}</p>
+                  </div>
+                  <span className={`pill ${selectedFinding.status === "fail" ? "pill-warn" : "pill-soft"}`}>
+                    {selectedFinding.scopeLabel}
+                  </span>
+                </header>
+                <section className="diagnostics-inspector-section">
+                  <p className="card-kicker">What happened</p>
+                  <p className="inline-note">{normalizeRuntimeLanguage(selectedFinding.preview)}</p>
+                  {selectedFinding.lines.slice(1, 2).map((line) => (
+                    <p key={line} className="inline-note">{normalizeRuntimeLanguage(line)}</p>
+                  ))}
+                </section>
+                <section className="diagnostics-inspector-section">
+                  <p className="card-kicker">Impact</p>
+                  <p className="inline-note">{impactTextForFinding(selectedFinding)}</p>
+                </section>
+                <section className="diagnostics-inspector-section">
+                  <p className="card-kicker">Recommended action</p>
+                  <p className="inline-note">
+                    {primaryFindingFix?.detail ??
+                      selectedFinding.remediation[0] ??
+                      "Review the evidence below and decide how you want to correct this state."}
+                  </p>
+                </section>
+                {primaryFindingFix || secondaryFindingFixes.length || selectedFinding.profileTarget ? (
+                  <div className="button-row diagnostics-inspector-actions">
+                    {primaryFindingFix ? (
+                      <button
+                        className={primaryFindingFix.primary ? "primary-button" : "ghost-button"}
+                        type="button"
+                        disabled={mutationLock.isBusy}
+                        onClick={primaryFindingFix.action}
+                      >
+                        {primaryFindingFix.label}
+                      </button>
+                    ) : null}
+                    {secondaryFindingFixes.map((fix) => (
+                      <button
+                        key={quickFixKey(fix)}
+                        className="ghost-button"
+                        type="button"
+                        disabled={mutationLock.isBusy}
+                        onClick={fix.action}
+                      >
+                        {fix.label}
+                      </button>
+                    ))}
+                    {selectedFinding.profileTarget ? (
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        onClick={() =>
+                          onOpenProfiles(
+                            selectedFinding.profileTarget!.tool,
+                            selectedFinding.profileTarget!.profile,
+                          )
+                        }
+                      >
+                        Open profile details
+                      </button>
                     ) : null}
                   </div>
-                  <aside className="diagnostics-inspector-rail">
-                    <span className="overview-current-set-cell-label">Actions</span>
-                    {selectedFinding.profileTarget ? (
-                      <div className="button-row button-row-column">
+                ) : null}
+                {primaryFindingFix?.secondaryAction ? (
+                  <div className="button-row diagnostics-inspector-actions">
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      disabled={mutationLock.isBusy}
+                      onClick={() => void primaryFindingFix.secondaryAction?.action()}
+                    >
+                      {primaryFindingFix.secondaryAction.label}
+                    </button>
+                  </div>
+                ) : null}
+                {primaryFindingFix?.importTarget ? (
+                  supportsProfileImportMode(primaryFindingFix.importTarget.tool, toolCapabilities, "from_live") ? (
+                    <section className="diagnostics-inspector-section">
+                      <p className="card-kicker">Import current login</p>
+                      <div className="inline-form">
+                        <input
+                          aria-label={`import ${primaryFindingFix.importTarget.tool} current login from diagnostics`}
+                          placeholder="new profile name"
+                          value={importDrafts[quickFixKey(primaryFindingFix)] ?? ""}
+                          onChange={(event) =>
+                            setImportDrafts((current) => ({
+                              ...current,
+                              [quickFixKey(primaryFindingFix)]: event.target.value,
+                            }))
+                          }
+                        />
                         <button
                           className="ghost-button"
                           type="button"
-                          onClick={() =>
-                            onOpenProfiles(
-                              selectedFinding.profileTarget!.tool,
-                              selectedFinding.profileTarget!.profile,
-                            )
-                          }
+                          disabled={mutationLock.isBusy || !importDrafts[quickFixKey(primaryFindingFix)]?.trim()}
+                          onClick={() => {
+                            const profile = importDrafts[quickFixKey(primaryFindingFix)]?.trim();
+                            if (!profile) return;
+                            addProfileMutation.mutate(
+                              {
+                                tool: primaryFindingFix.importTarget!.tool,
+                                profile,
+                                label: titleCase(profile),
+                                stateMode: primaryFindingFix.importTarget!.stateMode,
+                                importMode: { kind: "from_live" },
+                              },
+                              {
+                                onSuccess: () =>
+                                  setImportDrafts((current) => ({
+                                    ...current,
+                                    [quickFixKey(primaryFindingFix)]: "",
+                                  })),
+                              },
+                            );
+                          }}
                         >
-                          Open profile
+                          Import current as new
                         </button>
                       </div>
-                    ) : (
-                      <p className="inline-note">No direct profile action is attached to this finding.</p>
-                    )}
-                  </aside>
-                </div>
-              </article>
+                    </section>
+                  ) : (
+                    <section className="diagnostics-inspector-section">
+                      <p className="card-kicker">Alternative action</p>
+                      <p className="inline-note">
+                        This AI Switch release cannot import the current {toolDisplayName(primaryFindingFix.importTarget.tool)} login
+                        directly. Open account setup to choose another sign-in method.
+                      </p>
+                      <div className="button-row diagnostics-inspector-actions">
+                        <button
+                          className="ghost-button"
+                          type="button"
+                          disabled={mutationLock.isBusy}
+                          onClick={() =>
+                            onOpenProfileSetup({
+                              tool: primaryFindingFix.importTarget?.tool,
+                              mode:
+                                primaryFindingFix.importFallbackMode ??
+                                preferredProfileImportMode(primaryFindingFix.importTarget!.tool, toolCapabilities, "from_live"),
+                            })
+                          }
+                        >
+                          Open account setup
+                        </button>
+                      </div>
+                    </section>
+                  )
+                ) : null}
+                <details className="diagnostics-disclosure">
+                  <summary>Evidence</summary>
+                  <div className="stack-list">
+                    {selectedFinding.lines.map((line) => (
+                      <p key={line} className="inline-note">{normalizeRuntimeLanguage(line)}</p>
+                    ))}
+                  </div>
+                </details>
+                <details className="diagnostics-disclosure">
+                  <summary>Technical Details</summary>
+                  <div className="stack-list">
+                    <p className="inline-note">Suggested commands for validation and recovery.</p>
+                    <pre className="diagnostics-command-block">
+{`aisw doctor --json
+aisw verify --json
+${primaryFindingFix?.label ? `# ${primaryFindingFix.label}` : "# Review the explicit action above"}`}
+                    </pre>
+                    {selectedFinding.remediation.length ? (
+                      <div className="stack-list">
+                        {selectedFinding.remediation.map((item) => (
+                          <code key={item}>{item}</code>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </details>
+              </>
             ) : (
-              <article className="diagnostic-card diagnostic-pass">
+              <div className="diagnostics-healthy-state diagnostics-healthy-state-compact">
+                <span aria-hidden="true">✓</span>
                 <h3>Everything looks good</h3>
                 <p className="inline-note">
                   Active profiles, local storage, and repair checks are currently passing.
                 </p>
-              </article>
+              </div>
             )}
-            <article className="diagnostic-card diagnostics-recovery-panel">
-              <div className="desktop-pane-section-header">
-                <div>
-                  <p className="card-kicker">Recovery</p>
-                  <h3>Recommended fixes</h3>
-                </div>
-                <span className="pill pill-soft">
-                  {quickFixes.length ? `${quickFixes.length} actions` : "No actions"}
-                </span>
-              </div>
-              <p className="inline-note">
-                Apply the safest repair path first, then refresh checks from this pane.
-              </p>
-              <div className="stack-list">
-                {quickFixes.map((fix) => (
-                  <article key={quickFixKey(fix)} className={`diagnostic-card diagnostic-${fix.status}`}>
-                    <h4>{fix.title}</h4>
-                    <p className="inline-note">{fix.detail}</p>
-                    <div className="button-row">
-                        <button
-                          className={fix.primary ? "primary-button" : "ghost-button"}
-                          type="button"
-                          disabled={mutationLock.isBusy}
-                          onClick={fix.action}
-                      >
-                        {fix.label}
-                      </button>
-                      {fix.secondaryAction ? (
-                        <button
-                          className="ghost-button"
-                          type="button"
-                          disabled={mutationLock.isBusy}
-                          onClick={() => void fix.secondaryAction?.action()}
-                        >
-                          {fix.secondaryAction?.label}
-                        </button>
-                      ) : null}
-                      {fix.profileTarget ? (
-                        <button
-                          className="ghost-button"
-                          type="button"
-                          onClick={() => onOpenProfiles(fix.profileTarget!.tool, fix.profileTarget!.profile)}
-                        >
-                          Open profile
-                        </button>
-                      ) : null}
-                    </div>
-                    {fix.importTarget ? (
-                      supportsProfileImportMode(fix.importTarget.tool, toolCapabilities, "from_live") ? (
-                        <div className="inline-form">
-                          <input
-                            aria-label={`import ${fix.importTarget.tool} current login from diagnostics`}
-                            placeholder="new profile name"
-                            value={importDrafts[quickFixKey(fix)] ?? ""}
-                            onChange={(event) =>
-                              setImportDrafts((current) => ({
-                                ...current,
-                                [quickFixKey(fix)]: event.target.value,
-                              }))
-                            }
-                          />
-                          <button
-                            className="ghost-button"
-                            type="button"
-                            disabled={mutationLock.isBusy || !importDrafts[quickFixKey(fix)]?.trim()}
-                            onClick={() => {
-                              const profile = importDrafts[quickFixKey(fix)]?.trim();
-                              if (!profile) return;
-                              addProfileMutation.mutate(
-                                {
-                                  tool: fix.importTarget!.tool,
-                                  profile,
-                                  label: titleCase(profile),
-                                  stateMode: fix.importTarget!.stateMode,
-                                  importMode: { kind: "from_live" },
-                                },
-                                {
-                                  onSuccess: () =>
-                                    setImportDrafts((current) => ({
-                                      ...current,
-                                      [quickFixKey(fix)]: "",
-                                    })),
-                                },
-                              );
-                            }}
-                          >
-                            Import current as new
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="stack-list">
-                          <p className="inline-note">
-                            This AI Switch release cannot import the current {toolDisplayName(fix.importTarget.tool)} login
-                            directly. Open account setup to choose another sign-in method.
-                          </p>
-                          <button
-                            className="ghost-button"
-                            type="button"
-                            disabled={mutationLock.isBusy}
-                            onClick={() =>
-                              onOpenProfileSetup({
-                                tool: fix.importTarget?.tool,
-                                mode:
-                                  fix.importFallbackMode ??
-                                  preferredProfileImportMode(fix.importTarget!.tool, toolCapabilities, "from_live"),
-                              })
-                            }
-                          >
-                            Open account setup
-                          </button>
-                        </div>
-                      )
-                    ) : null}
-                  </article>
-                ))}
-                {!quickFixes.length ? (
-                  <p className="inline-note">No direct recovery actions are available from the current diagnostics state.</p>
-                ) : null}
-              </div>
-              <div className="diagnostics-sidebar-section">
-                <div className="desktop-pane-section-header diagnostics-subsection-header">
-                  <div>
-                    <p className="card-kicker">Repair plan</p>
-                    <h4>Safe automatic repairs</h4>
-                  </div>
-                  <p className="inline-note">
-                    Review the planned safe repairs before applying them.
-                  </p>
-                </div>
-                <div className="stack-list">
-                  {repairActions.map((action) => (
-                    <article key={`${action.title}-${action.detail}`} className="diagnostic-card">
-                      <h4>{action.title}</h4>
-                      <p className="inline-note">{action.detail}</p>
-                      <p className="diagnostic-status">{action.status}</p>
-                    </article>
-                  ))}
-                  {!repairActions.length ? (
-                    <p className="inline-note">No safe automatic repairs are currently planned.</p>
-                  ) : null}
-                </div>
-              </div>
-              <div className="diagnostics-sidebar-section">
-                <div className="desktop-pane-section-header diagnostics-subsection-header">
-                  <div>
-                    <p className="card-kicker">History</p>
-                    <h4>Recent problems</h4>
-                  </div>
-                </div>
-                <div className="stack-list">
-                  {recentFailures.map((failure) => (
-                    <article key={failure.key} className="diagnostic-card diagnostic-fail">
-                      <h4>{failure.title}</h4>
-                      <p className="inline-note">{failure.message}</p>
-                      {failure.remediation ? <p className="inline-note">{failure.remediation}</p> : null}
-                      {failure.profileTarget ? (
-                        <div className="button-row">
-                          <button
-                            className="ghost-button"
-                            type="button"
-                            onClick={() => onOpenProfiles(failure.profileTarget!.tool, failure.profileTarget!.profile)}
-                          >
-                            Open profile
-                          </button>
-                        </div>
-                      ) : null}
-                    </article>
-                  ))}
-                  {!recentFailures.length ? (
-                    <p className="inline-note">No recent command failures are recorded in this session.</p>
-                  ) : null}
-                </div>
-              </div>
-            </article>
-          </div>
+          </aside>
         }
       />
       {repairPlanOpen ? (
@@ -650,9 +571,9 @@ export function DiagnosticsPanel({
             <div className="quick-switch-header">
               <div>
                 <p className="card-kicker">Repair plan</p>
-                <h3>Apply safe repairs</h3>
+                <h3>Review Safe Fixes</h3>
                 <p className="inline-note">
-                  AI Switch only applies repairs that do not switch accounts or overwrite stored profiles.
+                  {repairActions.length} {repairActions.length === 1 ? "repair can" : "repairs can"} be applied without changing account identity.
                 </p>
               </div>
               <button className="ghost-button" type="button" onClick={() => setRepairPlanOpen(false)}>
@@ -662,11 +583,23 @@ export function DiagnosticsPanel({
             {repairActions.length ? (
               <div className="stack-list">
                 {repairActions.map((action) => (
-                  <article key={`sheet-${action.title}-${action.detail}`} className="diagnostic-card">
-                    <h4>{action.title}</h4>
-                    <p className="inline-note">{action.detail}</p>
-                    <p className="diagnostic-status">{action.status}</p>
-                  </article>
+                  <label key={`sheet-${action.title}-${action.detail}`} className="diagnostics-safe-fix-row">
+                    <input
+                      type="checkbox"
+                      checked={selectedSafeFixes.includes(repairActionKey(action))}
+                      onChange={(event) =>
+                        setSelectedSafeFixes((current) =>
+                          event.target.checked
+                            ? [...current, repairActionKey(action)]
+                            : current.filter((item) => item !== repairActionKey(action)),
+                        )
+                      }
+                    />
+                    <div>
+                      <strong>{action.title}</strong>
+                      <p className="inline-note">{action.detail}</p>
+                    </div>
+                  </label>
                 ))}
               </div>
             ) : (
@@ -680,7 +613,7 @@ export function DiagnosticsPanel({
             <footer className="quick-switch-footer">
               <div className="quick-switch-selection">
                 <p className="card-kicker">Repairs</p>
-                <strong>{repairActions.length} planned</strong>
+                <strong>{selectedSafeFixes.length} selected</strong>
                 <p>Profile re-apply, restore, and removal actions still require their own explicit flow.</p>
               </div>
               <div className="button-row">
@@ -689,17 +622,29 @@ export function DiagnosticsPanel({
                 </button>
                 <button
                   className="primary-button"
+                  aria-label="Apply Safe Repairs"
                   type="button"
-                  disabled={!repairActions.length || applyRepair.isPending}
-                  onClick={() => applyRepair.mutate([])}
+                  disabled={!selectedSafeFixes.length || applyRepair.isPending}
+                  onClick={() =>
+                    applyRepair.mutate(
+                      selectedSafeFixes
+                        .map((id) =>
+                          repairActions.find((action) => repairActionKey(action) === id),
+                        )
+                        .filter((action): action is NonNullable<typeof action> => Boolean(action))
+                        .map((action) => repairFixFromAction(action)),
+                    )
+                  }
                 >
-                  {applyRepair.isPending ? "Applying Repairs…" : "Apply Safe Repairs"}
+                  {applyRepair.isPending
+                    ? "Applying Repairs…"
+                    : `Apply ${selectedSafeFixes.length} ${selectedSafeFixes.length === 1 ? "Fix" : "Fixes"}`}
                 </button>
               </div>
             </footer>
         </DialogSurface>
       ) : null}
-    </SectionCard>
+    </div>
   );
 }
 
@@ -741,11 +686,12 @@ type DiagnosticFinding = {
 function buildDiagnosticFindings(
   issueCards: IssueCardData[],
   recentFailures: ReturnType<typeof buildRecentFailureCards>,
+  quickFixes: QuickFixCard[],
   snapshot: AppSnapshot | undefined,
 ): DiagnosticFinding[] {
   const findings: DiagnosticFinding[] = issueCards.map((card) => ({
     key: `issue-${card.title}-${card.status}`,
-    title: card.title,
+    title: formatFindingTitle(card, snapshot),
     preview: normalizeRuntimeLanguage(card.issues[0] ?? "Review diagnostic details."),
     lines: card.issues,
     remediation: card.remediation,
@@ -769,7 +715,55 @@ function buildDiagnosticFindings(
     });
   });
 
+  quickFixes.forEach((fix) => {
+    const duplicate = findings.some((finding) => matchesQuickFixToFinding(fix, finding));
+    if (duplicate) {
+      return;
+    }
+
+    findings.push({
+      key: `quick-fix-${quickFixKey(fix)}`,
+      title: fix.title,
+      preview: normalizeRuntimeLanguage(fix.detail),
+      lines: [normalizeRuntimeLanguage(fix.detail)],
+      remediation: [fix.label],
+      status: fix.status,
+      scopeLabel: "Suggested fix",
+      countLabel: "Action",
+      profileTarget: fix.profileTarget,
+    });
+  });
+
   return findings;
+}
+
+function formatFindingTitle(card: IssueCardData, snapshot: AppSnapshot | undefined) {
+  const tool = resolveDiagnosticTool(card.title);
+  if (tool) {
+    const status = snapshot?.statuses.find((entry) => entry.tool === tool);
+    if (status && status.binary_found === false) {
+      return `${tool} is missing`;
+    }
+    if (status?.active_profile_applied === false || card.remediation.some((item) => item.toLowerCase().includes("re-apply"))) {
+      return `${tool} live mismatch`;
+    }
+  }
+
+  const normalized = card.title.trim().toLowerCase();
+  if (normalized.includes("permission")) {
+    return "Permissions incorrect";
+  }
+  if (normalized.includes("keyring")) {
+    return "Keyring unavailable";
+  }
+  if (normalized.includes("oauth")) {
+    return "OAuth failure";
+  }
+  if (normalized.includes("shell")) {
+    return "Shell hook not installed";
+  }
+
+  return card.title;
 }
 
 function buildDiagnosticCheckRows(
@@ -1221,22 +1215,6 @@ function buildRecentFailureCards(
   return failures.sort((left, right) => right.at - left.at);
 }
 
-function buildDiagnosticPills({
-  totalIssues,
-  repairCount,
-  exportReady,
-}: {
-  totalIssues: number;
-  repairCount: number;
-  exportReady: boolean;
-}) {
-  return [
-    totalIssues ? `${totalIssues} active issue${totalIssues === 1 ? "" : "s"}` : "No active issues",
-    repairCount ? `${repairCount} safe repair${repairCount === 1 ? "" : "s"}` : "Manual review only",
-    exportReady ? "Report exported" : "Bundle export ready",
-  ];
-}
-
 function recentFailureTitle(input: {
   kind?: string;
   scope: "tool" | "global";
@@ -1271,6 +1249,128 @@ function recentFailureTitle(input: {
 
 function quickFixKey(fix: QuickFixCard) {
   return `${fix.title}:${fix.label}`;
+}
+
+function matchesQuickFixToFinding(fix: QuickFixCard, finding: DiagnosticFinding | null) {
+  if (!finding) {
+    return false;
+  }
+  const findingTitle = finding.title.trim().toLowerCase();
+  const fixTitle = fix.title.trim().toLowerCase();
+
+  if (findingTitle === fixTitle) {
+    return true;
+  }
+
+  if (finding.profileTarget?.tool && fix.profileTarget?.tool === finding.profileTarget.tool) {
+    if (findingTitle.includes("live mismatch") && fixTitle.includes("live mismatch")) {
+      return true;
+    }
+    if (findingTitle.includes("profile missing") && fixTitle.includes(finding.profileTarget.tool)) {
+      return true;
+    }
+  }
+
+  if (findingTitle.includes("permission") && fixTitle.includes("permission")) {
+    return true;
+  }
+  if (findingTitle.includes("keyring") && (fixTitle.includes("keyring") || fixTitle.includes("file-backed storage"))) {
+    return true;
+  }
+  if (findingTitle.includes("oauth") && fixTitle.includes("oauth")) {
+    return true;
+  }
+  if (findingTitle.includes("shell") && fixTitle.includes("terminal integration")) {
+    return true;
+  }
+  if (findingTitle.includes("project") && fixTitle.includes("project")) {
+    return true;
+  }
+  if (findingTitle.includes("missing") && fixTitle.includes("missing")) {
+    return true;
+  }
+
+  return false;
+}
+
+function groupDiagnosticFindings(findings: DiagnosticFinding[]) {
+  const groups = [
+    { id: "blocked", label: "Blocked", items: [] as DiagnosticFinding[] },
+    { id: "needs-attention", label: "Needs Attention", items: [] as DiagnosticFinding[] },
+    { id: "suggestions", label: "Suggestions", items: [] as DiagnosticFinding[] },
+  ];
+
+  findings.forEach((finding) => {
+    const title = finding.title.toLowerCase();
+    if (finding.status === "fail") {
+      groups[0].items.push(finding);
+      return;
+    }
+    if (title.includes("missing") || title.includes("shell") || title.includes("setup")) {
+      groups[2].items.push(finding);
+      return;
+    }
+    groups[1].items.push(finding);
+  });
+
+  return groups;
+}
+
+function impactTextForFinding(finding: DiagnosticFinding) {
+  const title = finding.title.toLowerCase();
+  if (title.includes("live mismatch")) {
+    return "Switching is no longer guaranteed to match the saved profile, so you may start coding with the wrong account identity.";
+  }
+  if (title.includes("keyring")) {
+    return "Stored credentials may not be readable or writable until local credential storage is repaired.";
+  }
+  if (title.includes("permission")) {
+    return "AI Switch may fail to update local state, backups, or profile changes until local file permissions are corrected.";
+  }
+  if (title.includes("shell")) {
+    return "Shell commands can drift from the desktop state until terminal integration is installed or refreshed.";
+  }
+  if (title.includes("missing")) {
+    return "This tool cannot be switched or verified from the desktop app until its CLI is installed.";
+  }
+  if (title.includes("project")) {
+    return "Project rules are no longer protecting the active workspace from using the wrong saved set.";
+  }
+  return "This state needs review before you rely on the current desktop switching state.";
+}
+
+function repairActionKey(action: { title: string; detail: string }) {
+  return `${action.title}:${action.detail}`;
+}
+
+function repairFixFromAction(action: { title: string }) {
+  const fix = action.title.split("·")[1]?.trim();
+  return fix && fix.length ? fix : action.title.trim().toLowerCase().replace(/\s+/g, "_");
+}
+
+function formatRelativeVerifiedTime(timestamp: number) {
+  if (!timestamp) {
+    return "Unavailable";
+  }
+
+  const diffMs = Math.max(Date.now() - timestamp, 0);
+  const diffSeconds = Math.floor(diffMs / 1000);
+  if (diffSeconds < 10) {
+    return "just now";
+  }
+  if (diffSeconds < 60) {
+    return `${diffSeconds} sec ago`;
+  }
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  if (diffMinutes < 60) {
+    return `${diffMinutes} min ago`;
+  }
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) {
+    return `${diffHours} hr ago`;
+  }
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
 }
 
 async function refreshDiagnostics(
