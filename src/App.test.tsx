@@ -5703,8 +5703,8 @@ describe("App", () => {
     );
     const setupHeading = screen
       .getAllByRole("heading", { name: "Get started" })
-      .find((element) => element.closest(".section-card"));
-    const setupSection = setupHeading?.closest(".section-card");
+      .find((element) => element.closest(".setup-screen"));
+    const setupSection = setupHeading?.closest(".setup-screen");
     if (!(setupSection instanceof HTMLElement)) {
       throw new Error("Missing onboarding section.");
     }

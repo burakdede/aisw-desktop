@@ -1203,7 +1203,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .content-shell-setup .content-stage {
-  width: min(1080px, 100%);
+  width: min(1180px, 100%);
   margin: 0 auto;
 }
 
@@ -1238,20 +1238,6 @@ html[data-appearance="dark"] .tool-logo-codex {
   background:
     linear-gradient(180deg, color-mix(in srgb, Canvas 99%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
     color-mix(in srgb, Canvas 96%, CanvasText 4%);
-}
-
-.content-shell-setup .section-card {
-  border-radius: 16px;
-  padding: 16px;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
-    var(--card-bg);
-  box-shadow: 0 12px 30px rgba(18, 28, 45, 0.06);
-}
-
-.content-shell-setup .section-header {
-  align-items: center;
-  margin-bottom: 14px;
 }
 
 .section-card,
@@ -1289,6 +1275,44 @@ html[data-appearance="dark"] .tool-logo-codex {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.setup-screen {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.setup-screen-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 2px 2px 0;
+}
+
+.setup-screen-toolbar-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.setup-screen-kicker {
+  font-size: 11px;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.setup-screen-toolbar-copy .inline-note {
+  max-width: 54ch;
+}
+
+.setup-screen-toolbar-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .onboarding-overview {
@@ -1389,7 +1413,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .onboarding-layout-compact {
-  grid-template-columns: minmax(290px, 360px) minmax(0, 1fr);
+  grid-template-columns: minmax(340px, 400px) minmax(520px, 1fr);
   align-items: start;
 }
 
@@ -1398,7 +1422,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .onboarding-account-layout {
-  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
   align-items: start;
 }
 

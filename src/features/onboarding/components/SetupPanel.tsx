@@ -1,7 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DialogSurface } from "../../../components/DialogSurface";
-import { SectionCard } from "../../../components/SectionCard";
 import { SourceListPanel } from "../../../components/SourceListPanel";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
@@ -298,11 +297,16 @@ export function SetupPanel({
     null;
 
   return (
-    <SectionCard
-      title="Get started"
-      kicker="Local-only setup"
-      actions={
-        <div className="button-row">
+    <div className="setup-screen screen-content">
+      <div className="setup-screen-toolbar">
+        <div className="setup-screen-toolbar-copy">
+          <h2 className="visually-hidden">Get started</h2>
+          <span className="setup-screen-kicker">Local-only setup</span>
+          <p className="inline-note">
+            Set up AI Switch on this computer before you switch coding-agent profiles.
+          </p>
+        </div>
+        <div className="button-row setup-screen-toolbar-actions">
           {forcedOpen ? (
             <button className="ghost-button" type="button" onClick={onCloseSetup}>
               Close setup
@@ -316,8 +320,7 @@ export function SetupPanel({
             {setupPrimaryActionLabel}
           </button>
         </div>
-      }
-    >
+      </div>
       <SplitView
         className="onboarding-layout onboarding-layout-compact"
         primaryClassName="onboarding-summary-pane"
@@ -326,8 +329,8 @@ export function SetupPanel({
           <div className="stack-list desktop-pane-column">
             <article className="diagnostic-card onboarding-overview">
               <SourceListPanel
-                kicker="Welcome"
-                title="Switch AI coding-agent accounts safely"
+                kicker="Setup"
+                title="Switch accounts safely"
                 listLabel="Setup steps"
                 listRole="tablist"
                 badge={
@@ -371,7 +374,7 @@ export function SetupPanel({
                             "No supported tools detected yet"
                           )}
                         </strong>
-                        <p className="inline-note">Missing tools are informational. You can finish setup and add them later.</p>
+                        <p className="inline-note">Missing tools are optional. You can finish setup and add them later.</p>
                       </div>
                       <div>
                         <span className="overview-current-set-cell-label">Ready to switch</span>
@@ -1014,10 +1017,10 @@ export function SetupPanel({
               {addProfileMutation.error ? (
                 <p className="inline-note">{addProfileMutation.error.message}</p>
               ) : null}
-            </form>
+          </form>
         </DialogSurface>
       ) : null}
-    </SectionCard>
+    </div>
   );
 }
 
