@@ -269,6 +269,7 @@ test("keeps Gemini state mode non-configurable when runtime capabilities are sta
 
   await page.getByRole("button", { name: "Overview" }).click();
 
+  await page.getByRole("button", { name: "Inspect Gemini" }).click();
   const geminiCard = page.locator(".tool-card").filter({ hasText: "Gemini" });
   await expect(geminiCard.getByText("State mode: n/a")).toBeVisible();
   await expect(geminiCard.locator("select")).toHaveCount(1);
@@ -284,20 +285,23 @@ test("switches shared profiles and recovers from live mismatch", async ({ page }
   await page.goto("/");
 
   await page.getByLabel("import claude current login").fill("incident");
-  await page.getByRole("button", { name: "Import current as new" }).click();
+  await page.getByRole("button", { name: "Save Imported Profile" }).click();
 
   await expect(page.getByText("Last result: Saved claude profile incident.")).toBeVisible();
 
-  const overview = page.locator(".section-card").filter({ hasText: "Control center" });
-  await overview.getByLabel("Open Quick Switch").click();
+  await page.getByRole("button", { name: "Quick Switch" }).click();
   await page.getByLabel("Search Quick Switch").fill("work");
-  await page.getByRole("button", { name: "Switch all tools to Work" }).click();
+  await page
+    .locator(".quick-switch-group")
+    .filter({ hasText: "Matching profiles" })
+    .getByRole("option", { name: /Work/i })
+    .click();
 
-  await expect(page.getByText("Last bulk result: Switched all tools to Work.")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Work" }).nth(1)).toBeVisible();
+  await expect(page.getByText("Last set result: Switched all tools to Work.")).toBeVisible();
+  await expect(page.getByText("Current set").locator("..").getByText("Client Acme")).toBeVisible();
 
   await page.getByRole("button", { name: "Profiles" }).click();
-  await expect(page.getByText("incident · oauth")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Inspect Claude Code Incident" })).toBeVisible();
 });
 
 test("opens the profiles screen from overview details actions", async ({ page }) => {
@@ -305,14 +309,20 @@ test("opens the profiles screen from overview details actions", async ({ page })
 
   await page.goto("/");
 
+  await page.getByRole("button", { name: "Inspect Codex" }).click();
   const codexCard = page.locator(".tool-card").filter({ hasText: "Codex" });
-  await codexCard.getByRole("button", { name: "Open details" }).click();
+  await codexCard.getByRole("button", { name: "Open Profile" }).click();
+  const profilesInspector = page.locator(".profiles-inspector");
 
-  await expect(page.getByText("Provisioning")).toBeVisible();
-  await expect(page.getByLabel("Tool")).toHaveValue("codex");
-  await expect(page.getByRole("heading", { name: "Diagnostic details" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Personal" })).toBeVisible();
+  await expect(page.getByLabel("Profile filters").getByRole("button", { name: "Codex" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(profilesInspector.getByText("Authentication").nth(0)).toBeVisible();
+  await expect(profilesInspector.getByText("API Key").first()).toBeVisible();
   await expect(
-    page.getByText("No additional token or runtime warnings are currently reported for this tool."),
+    profilesInspector.getByText("No additional token or desktop engine warnings are currently reported for this tool."),
   ).toBeVisible();
 });
 
@@ -321,16 +331,27 @@ test("clears route-opened profile details when switching tools manually", async 
 
   await page.goto("/");
 
+  await page.getByRole("button", { name: "Inspect Codex" }).click();
   const codexCard = page.locator(".tool-card").filter({ hasText: "Codex" });
-  await codexCard.getByRole("button", { name: "Open details" }).click();
+  await codexCard.getByRole("button", { name: "Open Profile" }).click();
+  const profilesInspector = page.locator(".profiles-inspector");
 
-  await expect(page.getByLabel("Tool")).toHaveValue("codex");
-  await expect(page.getByRole("heading", { name: "Diagnostic details" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Personal" })).toBeVisible();
+  await expect(page.getByLabel("Profile filters").getByRole("button", { name: "Codex" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(profilesInspector.getByText("API Key").first()).toBeVisible();
 
-  await page.getByLabel("Tool").selectOption("claude");
+  await page.getByLabel("Profile filters").getByRole("button", { name: "Claude" }).click();
 
-  await expect(page.getByLabel("Tool")).toHaveValue("claude");
-  await expect(page.getByRole("heading", { name: "Diagnostic details" })).toHaveCount(0);
+  await expect(page.getByLabel("Profile filters").getByRole("button", { name: "Claude" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.getByRole("heading", { name: "Personal" })).toBeVisible();
+  await expect(profilesInspector.getByText("Authentication").nth(0)).toBeVisible();
+  await expect(profilesInspector.getByText("API Key")).toHaveCount(0);
 });
 
 test("clears routed profile details when reopening profiles from the sidebar", async ({ page }) => {
@@ -338,17 +359,24 @@ test("clears routed profile details when reopening profiles from the sidebar", a
 
   await page.goto("/");
 
+  await page.getByRole("button", { name: "Inspect Codex" }).click();
   const codexCard = page.locator(".tool-card").filter({ hasText: "Codex" });
-  await codexCard.getByRole("button", { name: "Open details" }).click();
+  await codexCard.getByRole("button", { name: "Open Profile" }).click();
 
-  await expect(page.getByLabel("Tool")).toHaveValue("codex");
-  await expect(page.getByRole("heading", { name: "Diagnostic details" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Personal" })).toBeVisible();
+  await expect(page.getByLabel("Profile filters").getByRole("button", { name: "Codex" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
 
   await page.getByRole("button", { name: "Overview" }).click();
   await page.getByRole("button", { name: "Profiles" }).click();
 
-  await expect(page.getByLabel("Tool")).toHaveValue("claude");
-  await expect(page.getByRole("heading", { name: "Diagnostic details" })).toHaveCount(0);
+  await expect(page.getByLabel("Profile filters").getByRole("button", { name: "All" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.getByRole("heading", { name: "Work" })).toBeVisible();
 });
 
 test("clears routed settings sections when reopening settings from the sidebar", async ({ page }) => {
@@ -400,7 +428,7 @@ test("imports the current login as a new profile from diagnostics", async ({ pag
 
   await page.getByRole("button", { name: "Diagnostics" }).click();
   await page.getByLabel("import claude current login from diagnostics").fill("incident");
-  await page.getByRole("button", { name: "Import current as new" }).click();
+  await page.getByRole("button", { name: "Save Imported Profile" }).click();
 
   await page.getByRole("button", { name: "Profiles" }).click();
   await expect(page.getByText("incident · oauth")).toBeVisible();
@@ -456,7 +484,7 @@ test("opens diagnostics when the tray requests it", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
-  await expect(page.getByText("Control center")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
 
   await page.evaluate(() => {
     const handlers = (
@@ -474,7 +502,7 @@ test("reruns diagnostics when the tray requests a diagnostics run", async ({ pag
   await installDesktopMock(page, "trayDiagnosticsRefresh");
 
   await page.goto("/");
-  await expect(page.getByText("Control center")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
 
   await page.evaluate(() => {
     const handlers = (
@@ -496,7 +524,7 @@ test("records tray command results and shows a desktop notification", async ({ p
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
-  await expect(page.getByText("Control center")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
 
   await page.evaluate(() => {
     const handlers = (
@@ -635,7 +663,7 @@ test("records tray context failures and keeps the remediation visible in overvie
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
-  await expect(page.getByText("Control center")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
 
   await page.evaluate(() => {
     const handlers = (
@@ -677,7 +705,7 @@ test("classifies tray profile failures in diagnostics", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
-  await expect(page.getByText("Control center")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
 
   await page.evaluate(() => {
     const handlers = (
@@ -1647,7 +1675,7 @@ test("limits live runtime diagnostics to the active profile details", async ({ p
   await page.getByRole("button", { name: "Profiles" }).click();
 
   const personalRow = page.locator(".list-row").filter({ hasText: "personal · oauth" });
-  await personalRow.getByRole("button", { name: "Open details" }).click();
+  await personalRow.getByRole("button", { name: "Open Profile" }).click();
   await page.getByRole("button", { name: "View diagnostic details" }).click();
 
   await expect(page.getByRole("heading", { name: "Diagnostic details" })).toBeVisible();

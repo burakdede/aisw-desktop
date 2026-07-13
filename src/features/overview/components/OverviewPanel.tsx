@@ -34,6 +34,8 @@ type OverviewHealthState =
   | "not_configured"
   | "not_verified";
 
+const OVERVIEW_COMPACT_BREAKPOINT = 800;
+
 export function OverviewPanel({
   snapshot,
   settings,
@@ -79,6 +81,10 @@ export function OverviewPanel({
   const currentSetLabel = activeSetLabel(settings, snapshot);
   const currentSetDisplay = currentSetLabel ?? "None";
   const [selectedTool, setSelectedTool] = useState(snapshot.statuses[0]?.tool ?? "");
+  const [compactLayout, setCompactLayout] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < OVERVIEW_COMPACT_BREAKPOINT : false,
+  );
+  const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const selectedStatus =
     snapshot.statuses.find((status) => status.tool === selectedTool) ?? snapshot.statuses[0] ?? null;
   const overviewStates = snapshot.statuses.map(resolveOverviewState);
@@ -112,6 +118,24 @@ export function OverviewPanel({
     }
   }, [selectedTool, snapshot.statuses]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const updateLayout = () => {
+      setCompactLayout(window.innerWidth < OVERVIEW_COMPACT_BREAKPOINT);
+    };
+    updateLayout();
+    window.addEventListener("resize", updateLayout);
+    return () => window.removeEventListener("resize", updateLayout);
+  }, []);
+
+  useEffect(() => {
+    if (!compactLayout) {
+      setCompactInspectorOpen(false);
+    }
+  }, [compactLayout]);
+
   const overviewHeadline = useMemo(() => {
     if (blockedCount) {
       return `${blockedCount} tool${blockedCount === 1 ? "" : "s"} blocked`;
@@ -139,6 +163,14 @@ export function OverviewPanel({
   const workspaceActivationTarget = hasWorkspaceMismatch
     ? resolveWorkspaceActivationTarget(workspaceStatus.expectedContext, settings, snapshot)
     : null;
+  const statusMeta = hasWorkspaceMismatch
+    ? `Project rules expect ${expectedWorkspaceDisplay}`
+    : readyCount
+      ? `${readyCount}/${snapshot.statuses.length} ready`
+      : "Review local switching state";
+  const showInspector = !compactLayout || compactInspectorOpen;
+  const showToolList = !compactLayout || !compactInspectorOpen;
+  const selectedToolName = selectedStatus ? toolDisplayName(selectedStatus.tool) : "Tool";
 
   return (
     <div className="overview-screen screen-content">
@@ -149,6 +181,7 @@ export function OverviewPanel({
           </span>
           <strong>{overviewHeadline}</strong>
         </div>
+        <p className="overview-status-meta">{statusMeta}</p>
       </div>
 
       <div className="overview-set-row">
@@ -168,49 +201,37 @@ export function OverviewPanel({
         </div>
       </div>
 
-      {showWorkspaceSummary ? (
-        <div className={`overview-inline-notice overview-inline-notice-${hasWorkspaceMismatch ? "warn" : "ok"}`}>
-          <div className="overview-inline-notice-copy overview-project-card">
-            <span className="overview-inline-notice-symbol" aria-hidden="true">
-              {hasWorkspaceMismatch ? "▲" : "●"}
-            </span>
-            <div className="overview-project-copy">
-              <p>
-                {hasWorkspaceMismatch
-                  ? `Project rules expect ${expectedWorkspaceDisplay}, but the current context is ${currentWorkspaceDisplay}.`
-                  : `Project rules match ${expectedWorkspaceDisplay}.`}
-              </p>
-              <div className="overview-project-facts">
-                <span>Expected set</span>
-                <strong>{expectedWorkspaceDisplay}</strong>
-                <span>Current set</span>
-                <strong>{currentWorkspaceDisplay}</strong>
-              </div>
-            </div>
+      {showWorkspaceSummary && hasWorkspaceMismatch ? (
+        <div className="overview-workspace-row">
+          <div className="overview-workspace-row-copy">
+            <span className="overview-inline-notice-symbol" aria-hidden="true">▲</span>
+            <p>
+              Project rules expect <strong>{expectedWorkspaceDisplay}</strong>, but the current set is{" "}
+              <strong>{currentWorkspaceDisplay}</strong>.
+            </p>
           </div>
-          {hasWorkspaceMismatch ? (
-            <button
-              className="ghost-button"
-              type="button"
-              disabled={mutationLock.isBusy}
-              onClick={() => {
-                if (!workspaceActivationTarget) {
-                  onOpenContexts();
-                  return;
-                }
-                activateWorkspaceTargetMutation.mutate({
-                  ...workspaceActivationTarget,
-                  matchedTarget: workspaceStatus.target,
-                });
-              }}
-            >
-              {workspaceActivationTarget ? "Use expected set now" : "Open Sets"}
-            </button>
-          ) : null}
+          <button
+            className="ghost-button"
+            type="button"
+            disabled={mutationLock.isBusy}
+            onClick={() => {
+              if (!workspaceActivationTarget) {
+                onOpenContexts();
+                return;
+              }
+              activateWorkspaceTargetMutation.mutate({
+                ...workspaceActivationTarget,
+                matchedTarget: workspaceStatus.target,
+              });
+            }}
+          >
+            {workspaceActivationTarget ? "Use expected set now" : "Open Sets"}
+          </button>
         </div>
       ) : null}
 
       <div className="overview-master-detail">
+        {showToolList ? (
         <section className="overview-pane overview-list-pane">
           <div className="overview-pane-header">
             <h3>Tools</h3>
@@ -232,20 +253,26 @@ export function OverviewPanel({
                     type="button"
                     aria-label={`Inspect ${titleCase(status.tool)}`}
                     aria-pressed={selectedTool === status.tool}
-                    onClick={() => setSelectedTool(status.tool)}
+                    onClick={() => {
+                      setSelectedTool(status.tool);
+                      if (compactLayout) {
+                        setCompactInspectorOpen(true);
+                      }
+                    }}
                   >
-                    <div className="overview-tool-list-cell overview-tool-list-cell-main">
+                    <div className="overview-tool-list-cell overview-tool-list-cell-status">
                       <span className={`overview-status-symbol overview-status-symbol-${state}`} aria-hidden="true">
                         {overviewStatusSymbol(state)}
                       </span>
-                      <div className="overview-tool-list-copy">
-                        <ToolBrand tool={status.tool} className="tool-brand-inline" logoSize={18} />
-                        <span>{activeProfileLabel}</span>
-                      </div>
                     </div>
+                    <div className="overview-tool-list-cell overview-tool-list-cell-main">
+                      <ToolBrand tool={status.tool} className="tool-brand-inline" logoSize={18} />
+                    </div>
+                    <span className="overview-tool-list-profile">{activeProfileLabel}</span>
                     <span className={`overview-tool-list-status overview-tool-list-status-${state}`}>
                       {overviewStatusLabel(state)}
                     </span>
+                    <span className="overview-tool-list-chevron" aria-hidden="true">›</span>
                   </button>
                 );
               })}
@@ -257,8 +284,9 @@ export function OverviewPanel({
             </div>
           )}
         </section>
+        ) : null}
 
-        {selectedStatus ? (
+        {selectedStatus && showInspector ? (
           <ToolInspector
             key={selectedStatus.tool}
             status={selectedStatus}
@@ -270,6 +298,7 @@ export function OverviewPanel({
             stateModes={supportedStateModes(selectedStatus.tool, toolCapabilities)}
             settings={settings}
             snapshot={snapshot}
+            compactLayout={compactLayout}
             onImport={(tool, profile, stateMode) =>
               supportsProfileImportMode(tool, toolCapabilities, "from_live")
                 ? addProfileMutation.mutate({
@@ -293,16 +322,17 @@ export function OverviewPanel({
             }
             onAddProfile={(tool) => onOpenProfiles(tool)}
             onOpenDetails={(tool, profile) => onOpenProfiles(tool, profile)}
+            onBack={compactLayout ? () => setCompactInspectorOpen(false) : undefined}
             toolCapabilities={toolCapabilities}
           />
-        ) : (
+        ) : showInspector ? (
           <aside className="overview-pane overview-inspector-pane">
             <div className="overview-empty-state">
-              <h3>No tool selected</h3>
+              <h3>{compactLayout ? selectedToolName : "No tool selected"}</h3>
               <p className="inline-note">Choose a tool to inspect its active profile and switching state.</p>
             </div>
           </aside>
-        )}
+        ) : null}
       </div>
 
       <div className="overview-footer-strip">
@@ -323,10 +353,12 @@ function ToolInspector({
   toolCapabilities,
   settings,
   snapshot,
+  compactLayout,
   onImport,
   onUse,
   onAddProfile,
   onOpenDetails,
+  onBack,
 }: {
   status: ToolStatus;
   profiles: AppSnapshot["profiles"][string]["profiles"];
@@ -343,10 +375,12 @@ function ToolInspector({
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
   settings: DesktopSettings;
   snapshot: AppSnapshot;
+  compactLayout: boolean;
   onImport: (tool: string, profile: string, stateMode: string | null) => void;
   onUse: (tool: string, profile: string, stateMode: string | null) => void;
   onAddProfile: (tool: string) => void;
   onOpenDetails: (tool: string, profile: string | null | undefined) => void;
+  onBack?: () => void;
 }) {
   const [importName, setImportName] = useState("");
   const [stateMode, setStateMode] = useState(status.state_mode ?? stateModes[0] ?? "");
@@ -360,13 +394,7 @@ function ToolInspector({
   const supportsLiveImport = supportsProfileImportMode(status.tool, toolCapabilities, "from_live");
   const state = resolveOverviewState(status);
   const statusLabel = overviewStatusLabel(state);
-  const primaryActionLabel = !profiles.length
-    ? "Add Profile…"
-    : selectedProfile && selectedProfile !== status.active_profile
-      ? `Switch to ${selectedProfileLabel}`
-      : state === "needs_attention" && selectedProfileLabel
-        ? `Re-apply ${selectedProfileLabel}`
-        : null;
+  const hasAlternateSelection = Boolean(selectedProfile && selectedProfile !== status.active_profile);
 
   useEffect(() => {
     if (!stateModes.length) {
@@ -388,7 +416,12 @@ function ToolInspector({
   return (
     <aside className="overview-pane overview-inspector-pane tool-card">
       <header className="overview-inspector-header">
-        <div>
+        <div className="overview-inspector-title-block">
+          {compactLayout && onBack ? (
+            <button className="ghost-button overview-inspector-back" type="button" onClick={onBack}>
+              Back
+            </button>
+          ) : null}
           <h3>
             <ToolBrand tool={status.tool} className="tool-brand-heading" logoSize={20} />
           </h3>
@@ -438,6 +471,55 @@ function ToolInspector({
         </div>
       </dl>
 
+      {status.active_profile_applied === false ? (
+        <div className="overview-inline-notice overview-inline-notice-warn">
+          <div className="overview-inline-notice-copy">
+            <span className="overview-inline-notice-symbol" aria-hidden="true">▲</span>
+            <p>
+              Live credentials do not match <strong>{activeProfileLabel ?? "the saved profile"}</strong>.
+            </p>
+          </div>
+          <div className="button-row overview-inline-notice-actions">
+            {selectedProfileLabel ? (
+              <button
+                className="primary-button"
+                type="button"
+                disabled={mutationLocked}
+                onClick={() => {
+                  if (!selectedProfile) {
+                    return;
+                  }
+                  onUse(status.tool, selectedProfile, stateModes.length ? stateMode : null);
+                }}
+              >
+                Re-apply {selectedProfileLabel}
+              </button>
+            ) : null}
+            {supportsLiveImport ? (
+              <button
+                className="ghost-button"
+                type="button"
+                onClick={() => {
+                  const nextProfile = status.active_profile ?? toolDisplayName(status.tool).toLowerCase();
+                  onImport(status.tool, nextProfile, stateModes.length ? stateMode : null);
+                }}
+              >
+                Import Current…
+              </button>
+            ) : (
+              <button
+                className="ghost-button"
+                type="button"
+                disabled={mutationLocked}
+                onClick={() => onAddProfile(status.tool)}
+              >
+                Open account setup
+              </button>
+            )}
+          </div>
+        </div>
+      ) : null}
+
       {profiles.length ? (
         <label className="stacked-form overview-inspector-control">
           <span>Active profile</span>
@@ -471,27 +553,41 @@ function ToolInspector({
               </button>
             ))}
           </div>
+          <p className="inline-note">
+            {stateModes.includes("shared")
+              ? stateMode === "shared"
+                ? "Keep the normal tool config and history while switching credentials only."
+                : "Separate configuration, history, and extensions for this profile."
+              : "This tool keeps authentication and local state together."}
+          </p>
         </div>
       ) : null}
 
-      {primaryActionLabel ? (
+      {!profiles.length ? (
+        <div className="button-row overview-inspector-actions">
+          <button
+            className="primary-button"
+            type="button"
+            disabled={mutationLocked}
+            onClick={() => onAddProfile(status.tool)}
+          >
+            Add Profile…
+          </button>
+        </div>
+      ) : hasAlternateSelection ? (
         <div className="button-row overview-inspector-actions">
           <button
             className="primary-button"
             type="button"
             disabled={mutationLocked}
             onClick={() => {
-              if (!profiles.length) {
-                onAddProfile(status.tool);
-                return;
-              }
               if (!selectedProfile) {
                 return;
               }
               onUse(status.tool, selectedProfile, stateModes.length ? stateMode : null);
             }}
           >
-            {primaryActionLabel}
+            Switch
           </button>
           {status.active_profile ? (
             <button
@@ -499,7 +595,7 @@ function ToolInspector({
               type="button"
               onClick={() => onOpenDetails(status.tool, status.active_profile)}
             >
-              Open details
+              Open Profile
             </button>
           ) : null}
         </div>
@@ -510,17 +606,8 @@ function ToolInspector({
             type="button"
             onClick={() => onOpenDetails(status.tool, status.active_profile)}
           >
-            Open details
+            Open Profile
           </button>
-        </div>
-      ) : null}
-
-      {status.active_profile_applied === false ? (
-        <div className="overview-inline-notice overview-inline-notice-warn">
-          <div className="overview-inline-notice-copy">
-            <span className="overview-inline-notice-symbol" aria-hidden="true">▲</span>
-            <p>Live credentials do not match the saved profile. Re-apply it or import the current login as a new profile.</p>
-          </div>
         </div>
       ) : null}
 
@@ -565,47 +652,33 @@ function ToolInspector({
           />
         </div>
       ) : null}
-
-      {status.active_profile_applied === false ? (
-        supportsLiveImport ? (
-          <div className="overview-import-inline">
-            <label className="stacked-form overview-inspector-control">
-              <span>Import current login as</span>
-              <div className="inline-form">
-                <input
-                  aria-label={`import ${status.tool} current login`}
-                  placeholder="new profile name"
-                  value={importName}
-                  onChange={(event) => setImportName(event.target.value)}
-                />
-                <button
-                  className="ghost-button"
-                  type="button"
-                  disabled={mutationLocked || !importName.trim()}
-                  onClick={() => {
-                    const profile = importName.trim();
-                    if (!profile) return;
-                    onImport(status.tool, profile, stateModes.length ? stateMode : null);
-                    setImportName("");
-                  }}
-                >
-                  Import current as new
-                </button>
-              </div>
-            </label>
-          </div>
-        ) : (
-          <div className="button-row overview-inspector-actions">
-            <button
-              className="ghost-button"
-              type="button"
-              disabled={mutationLocked}
-              onClick={() => onAddProfile(status.tool)}
-            >
-              Open account setup
-            </button>
-          </div>
-        )
+      {status.active_profile_applied === false && supportsLiveImport ? (
+        <div className="overview-import-inline">
+          <label className="stacked-form overview-inspector-control">
+            <span>Import current login as</span>
+            <div className="inline-form">
+              <input
+                aria-label={`import ${status.tool} current login`}
+                placeholder="new profile name"
+                value={importName}
+                onChange={(event) => setImportName(event.target.value)}
+              />
+              <button
+                className="ghost-button"
+                type="button"
+                disabled={mutationLocked || !importName.trim()}
+                onClick={() => {
+                  const profile = importName.trim();
+                  if (!profile) return;
+                  onImport(status.tool, profile, stateModes.length ? stateMode : null);
+                  setImportName("");
+                }}
+              >
+                Save Imported Profile
+              </button>
+            </div>
+          </label>
+        </div>
       ) : null}
     </aside>
   );

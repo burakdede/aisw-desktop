@@ -442,7 +442,7 @@ describe("App", () => {
       expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
     });
     expect(screen.queryByText("Re-apply Work")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Open details" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open Profile" })).toBeInTheDocument();
     expect(screen.getAllByText("Current set").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Work").length).toBeGreaterThan(0);
     expect(
@@ -963,7 +963,7 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     selectOverviewTool("Codex");
-    fireEvent.click(screen.getByRole("button", { name: "Open details" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open Profile" }));
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Personal" })).toBeInTheDocument();
@@ -1116,7 +1116,7 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     selectOverviewTool("Codex");
-    fireEvent.click(screen.getByRole("button", { name: "Open details" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open Profile" }));
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Personal" })).toBeInTheDocument();
@@ -1183,7 +1183,7 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     selectOverviewTool("Codex");
-    fireEvent.click(screen.getByRole("button", { name: "Open details" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open Profile" }));
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Personal" })).toBeInTheDocument();
@@ -1480,7 +1480,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch claude profile"), {
       target: { value: "personal" },
     });
-    fireEvent.click(screen.getByText("Switch to Personal"));
+    fireEvent.click(screen.getByRole("button", { name: "Switch" }));
 
     await waitFor(() => {
       expect(screen.getByText("Last result: Switched Claude to Personal.")).toBeInTheDocument();
@@ -1560,7 +1560,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch codex profile"), {
       target: { value: "work" },
     });
-    fireEvent.click(screen.getByText("Switch to Code Work"));
+    fireEvent.click(screen.getByRole("button", { name: "Switch" }));
 
     await waitFor(() => {
       expect(screen.getByText("Last result: Switched Codex to Code Work.")).toBeInTheDocument();
@@ -1628,7 +1628,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch claude profile"), {
       target: { value: "personal" },
     });
-    fireEvent.click(screen.getByText("Switch to Personal"));
+    fireEvent.click(screen.getByRole("button", { name: "Switch" }));
     await waitFor(() => {
       expect(resolveUseProfile).toBeDefined();
     });
@@ -1716,7 +1716,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch codex profile"), {
       target: { value: "work" },
     });
-    fireEvent.click(screen.getByText("Switch to Work"));
+    fireEvent.click(screen.getByRole("button", { name: "Switch" }));
 
     await waitFor(() => {
       expect(
@@ -2356,7 +2356,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch claude profile"), {
       target: { value: "personal" },
     });
-    fireEvent.click(screen.getByText("Switch to Personal"));
+    fireEvent.click(screen.getByRole("button", { name: "Switch" }));
 
     await waitFor(() => {
       expect(
@@ -2460,7 +2460,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch claude profile"), {
       target: { value: "personal" },
     });
-    fireEvent.click(screen.getByText("Switch to Personal"));
+    fireEvent.click(screen.getByRole("button", { name: "Switch" }));
 
     await waitFor(() => {
       expect(
@@ -4020,11 +4020,11 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("import claude current login"), {
       target: { value: "recovered" },
     });
-    fireEvent.click(screen.getByText("Import current as new"));
+    fireEvent.click(screen.getByRole("button", { name: "Import current as new" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "add_profile")).toBe(true);
-      expect(screen.getByText("Live credentials do not match the saved profile. Re-apply it or import the current login as a new profile.")).toBeInTheDocument();
+      expect(screen.getByText("Live credentials do not match")).toBeInTheDocument();
     });
   });
 
@@ -4350,11 +4350,8 @@ describe("App", () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
     await waitFor(() => {
-      const projectCard = screen.getByText("Expected set").closest(".overview-project-card");
-      if (!(projectCard instanceof HTMLElement)) {
-        throw new Error("Missing overview project card.");
-      }
-      expect(within(projectCard).getByText("client-acme")).toBeInTheDocument();
+      expect(screen.getAllByText(/Project rules expect/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/client-acme|Client Acme/).length).toBeGreaterThan(0);
     });
 
     fireEvent.click(screen.getAllByText("Use expected set now")[0]);
@@ -4435,7 +4432,7 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
 
     await waitFor(() => {
-      expect(screen.getByText("Expected set")).toBeInTheDocument();
+      expect(screen.getAllByText(/Project rules expect/i).length).toBeGreaterThan(0);
       expect(screen.getAllByText("Client Acme").length).toBeGreaterThan(0);
       expect(screen.getAllByText("Open Sets").length).toBeGreaterThan(0);
     });
@@ -5154,7 +5151,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("import claude current login from diagnostics"), {
       target: { value: "incident" },
     });
-    fireEvent.click(screen.getByText("Import current as new"));
+    fireEvent.click(screen.getByRole("button", { name: "Import current as new" }));
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "add_profile")).toBe(true);
     });
@@ -6428,7 +6425,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch claude profile"), {
       target: { value: "personal" },
     });
-    fireEvent.click(screen.getByText("Switch to Personal"));
+    fireEvent.click(screen.getByRole("button", { name: "Switch" }));
     await waitFor(() => {
       expect(resolveUseProfile).toBeDefined();
     });
