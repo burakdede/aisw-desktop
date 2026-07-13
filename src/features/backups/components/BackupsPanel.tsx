@@ -227,9 +227,7 @@ export function BackupsPanel({
                       target.tool,
                       target.profile,
                     );
-                    const createdLabel = formatBackupListTimestamp(
-                      entry.created_at ?? entry.backup_id,
-                    );
+                    const createdLabel = formatBackupListTimestamp(entry.created_at ?? entry.backup_id);
                     const reasonLabel = backupReasonLabel(entry);
 
                     return (
@@ -250,19 +248,12 @@ export function BackupsPanel({
                           setInspectorMenuOpen(false);
                         }}
                       >
-                        <span>
-                          <strong>{createdLabel.primary}</strong>
-                          <small>{createdLabel.secondary}</small>
-                        </span>
+                        <span>{createdLabel}</span>
                         <span>
                           <ToolBrand tool={target.tool} className="tool-brand-compact" logoSize={16} shortName />
                         </span>
-                        <span>
-                          <strong>{profileLabel}</strong>
-                        </span>
-                        <span className="backups-table-reason">
-                          <small>{reasonLabel}</small>
-                        </span>
+                        <span>{profileLabel}</span>
+                        <span className="backups-table-reason">{reasonLabel}</span>
                       </button>
                     );
                   })}
@@ -455,19 +446,6 @@ export function BackupsPanel({
               : `This restores the files first and only then switches the live profile.`}
           </p>
           <footer className="quick-switch-footer">
-            <div className="quick-switch-selection">
-              <p className="card-kicker">Action</p>
-              <strong>
-                {pendingRestore?.mode === "files"
-                  ? "Restore Files"
-                  : "Restore and Activate"}
-              </strong>
-              <p>
-                {pendingRestore?.mode === "files"
-                  ? "Restore stored files only."
-                  : "Restore stored files, then activate the profile."}
-              </p>
-            </div>
             <div className="button-row">
               <button className="ghost-button" type="button" onClick={() => setPendingRestore(null)}>
                 Cancel
@@ -585,7 +563,7 @@ function formatBackupInspectorTimestamp(value: string) {
 function formatBackupListTimestamp(value: string) {
   const date = backupDate(value);
   if (!date) {
-    return { primary: "Date Unavailable", secondary: "Backup timestamp unavailable" };
+    return "Date unavailable";
   }
 
   const now = new Date();
@@ -596,36 +574,27 @@ function formatBackupListTimestamp(value: string) {
   );
 
   if (diffDays === 0) {
-    return {
-      primary: `Today, ${new Intl.DateTimeFormat(undefined, {
-        hour: "numeric",
-        minute: "2-digit",
-      }).format(date)}`,
-      secondary: formatBackupInspectorTimestamp(value),
-    };
+    return `Today, ${new Intl.DateTimeFormat(undefined, {
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date)}`;
   }
 
   if (diffDays === 1) {
-    return {
-      primary: "Yesterday",
-      secondary: new Intl.DateTimeFormat(undefined, {
-        hour: "numeric",
-        minute: "2-digit",
-      }).format(date),
-    };
-  }
-
-  return {
-    primary: new Intl.DateTimeFormat(undefined, {
-      month: "short",
-      day: "numeric",
-      year: now.getFullYear() === date.getFullYear() ? undefined : "numeric",
-    }).format(date),
-    secondary: new Intl.DateTimeFormat(undefined, {
+    return `Yesterday, ${new Intl.DateTimeFormat(undefined, {
       hour: "numeric",
       minute: "2-digit",
-    }).format(date),
-  };
+    }).format(date)}`;
+  }
+
+  return `${new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: now.getFullYear() === date.getFullYear() ? undefined : "numeric",
+  }).format(date)}, ${new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date)}`;
 }
 
 function backupDate(value: string) {

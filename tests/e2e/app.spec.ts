@@ -663,7 +663,7 @@ test("refreshes the backup catalog after a successful tray profile switch", asyn
   await page.goto("/");
   await page.getByRole("button", { name: "Backups" }).click();
 
-  await expect(page.getByText("No backups found.")).toBeVisible();
+  await expect(page.getByText("No backups found")).toBeVisible();
 
   await page.evaluate(() => {
     (
@@ -685,12 +685,12 @@ test("refreshes the backup catalog after a successful tray profile switch", asyn
     });
   });
 
-  await expect(page.getByText("Claude backup · 20260326T120000Z-claude-work")).toBeVisible();
-  await expect(
-    page.getByText(
-      "Affects Claude / Work. Restore files only unless you explicitly re-activate this profile.",
-    ),
-  ).toBeVisible();
+  const backupRows = page.locator(".backups-table-row");
+  await expect(backupRows).toHaveCount(1);
+  await expect(backupRows.first()).toContainText("Work");
+  await expect(backupRows.first()).toContainText("Created restore point");
+  await backupRows.first().click();
+  await expect(page.getByText("20260326T120000Z-claude-work")).toBeVisible();
 });
 
 test("records tray context failures and keeps the remediation visible in overview", async ({ page }) => {
