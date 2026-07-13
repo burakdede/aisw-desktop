@@ -565,14 +565,16 @@ describe("App", () => {
       expect(screen.getAllByText("Open the profile and refresh credentials.").length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Export support report" })[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Activity more actions" }));
+    fireEvent.click(getLastOpenMenu().getByRole("menuitem", { name: "Export Redacted Activity…" }));
 
     await waitFor(() => {
-      expect(calls.some((entry) => entry.command === "export_diagnostic_bundle")).toBe(true);
-      expect(screen.getByText("Support report ready")).toBeInTheDocument();
+      expect(calls.some((entry) => entry.command === "export_activity_log")).toBe(true);
+      expect(screen.getByText("Opened activity-log-123.json.")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Open Log File" }));
+    fireEvent.click(screen.getByRole("button", { name: "Activity more actions" }));
+    fireEvent.click(getLastOpenMenu().getByRole("menuitem", { name: "Open Log File" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "export_activity_log")).toBe(true);
@@ -584,12 +586,12 @@ describe("App", () => {
       expect(screen.getByRole("heading", { name: "Saved settings" })).toBeInTheDocument();
       expect(screen.getAllByText("Updated the bundled runtime preference.").length).toBeGreaterThan(0);
       expect(screen.getByText("Snapshot updated successfully.")).toBeInTheDocument();
-      expect(
-        screen.getByText("No extra recovery steps were recorded for this event."),
-      ).toBeInTheDocument();
+      expect(screen.getByText("None required")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+    fireEvent.click(screen.getByRole("button", { name: "Activity more actions" }));
+    fireEvent.click(getLastOpenMenu().getByRole("menuitem", { name: "Clear Activity History…" }));
+    fireEvent.click(screen.getByRole("button", { name: "Clear History" }));
 
     await waitFor(() => {
       expect(screen.getAllByText("No recent activity").length).toBeGreaterThan(0);
@@ -625,7 +627,9 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Inspect Saved settings" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Inspect Checked for updates" })).toBeInTheDocument();
-      expect(screen.getByText("Recent events stay on this computer and persist across relaunches.")).toBeInTheDocument();
+      expect(
+        screen.getByText("Activity is stored locally and credentials are always redacted."),
+      ).toBeInTheDocument();
     });
 
     expect(window.localStorage.getItem("ai-switch.desktop.activity-log")).toContain(
@@ -6057,7 +6061,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getAllByRole("button", { name: "Activity" })[0]).toHaveClass("nav-button-active");
-      expect(screen.getByRole("button", { name: "Open Log File" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Activity more actions" })).toBeInTheDocument();
     });
   });
 

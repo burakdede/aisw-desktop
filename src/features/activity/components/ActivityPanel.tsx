@@ -1,15 +1,19 @@
-import { useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
-import { SectionCard } from "../../../components/SectionCard";
+import { SearchField } from "../../../components/SearchField";
+import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
-import { exportActivityLog, exportDiagnosticBundle } from "../../../lib/client";
+import { exportActivityLog } from "../../../lib/client";
 import { notifyDesktop } from "../../../lib/notifications";
 import {
   clearLastCommandResults,
   useLastCommandResults,
 } from "../../shared/lastCommandResult";
+
+type ActivityFilter = "all" | "success" | "error";
 
 type ActivityEntry = {
   key: string;
@@ -32,42 +36,17 @@ export function ActivityPanel({
   externalClearSignal?: number;
   externalOpenLogSignal?: number;
 }) {
+  const queryClient = useQueryClient();
   const lastCommandResults = useLastCommandResults();
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<ActivityFilter>("all");
   const [selectedEntryKey, setSelectedEntryKey] = useState<string | null>(null);
   const [clearMessage, setClearMessage] = useState("");
   const [logMessage, setLogMessage] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [pendingClear, setPendingClear] = useState(false);
 
-  const exportBundleMutation = useMutation({
-    mutationFn: exportDiagnosticBundle,
-    onSuccess: async (result) => {
-      const message = `Saved ${result.filename}.`;
-      await notifyDesktop({
-        title: "Support report exported",
-        body: message,
-      });
-    },
-  });
-
-  const exportActivityLogMutation = useMutation({
-    mutationFn: exportActivityLog,
-    onSuccess: async (result) => {
-      const message = `Opened ${result.filename}.`;
-      setLogMessage(message);
-      await notifyDesktop({
-        title: "Activity log opened",
-        body: message,
-      });
-    },
-    onError: (error) => {
-      setLogMessage(
-        error instanceof Error
-          ? error.message
-          : "AI Switch could not open the local activity log.",
-      );
-    },
-  });
-
-  const entries = useMemo(
+  const entries = useMemo<ActivityEntry[]>(
     () =>
       lastCommandResults.timeline.map((entry) => ({
         key: entry.key,
@@ -87,48 +66,38 @@ export function ActivityPanel({
       })),
     [lastCommandResults.timeline],
   );
-  const errorCount = entries.filter((entry) => entry.status === "error").length;
-  const latestEntry = entries[0] ?? null;
-  const historySummary = entries.length
-    ? `${entries.length} event${entries.length === 1 ? "" : "s"}`
-    : "Idle";
-  const attentionSummary = errorCount
-    ? `${errorCount} item${errorCount === 1 ? "" : "s"}`
-    : "None";
+
+  const filteredEntries = useMemo(
+    () => filterActivity(entries, search, filter),
+    [entries, filter, search],
+  );
+  const groupedEntries = useMemo(() => groupEntries(filteredEntries), [filteredEntries]);
+  const selectedEntry =
+    filteredEntries.find((entry) => entry.key === selectedEntryKey) ?? filteredEntries[0] ?? null;
+  const hasEntries = entries.length > 0;
 
   useEffect(() => {
-    if (selectedEntryKey && entries.some((entry) => entry.key === selectedEntryKey)) {
+    if (selectedEntryKey && filteredEntries.some((entry) => entry.key === selectedEntryKey)) {
       return;
     }
-    setSelectedEntryKey(entries[0]?.key ?? null);
-  }, [entries, selectedEntryKey]);
+    setSelectedEntryKey(filteredEntries[0]?.key ?? null);
+  }, [filteredEntries, selectedEntryKey]);
 
   useEffect(() => {
     if (externalClearSignal < 1) {
       return;
     }
-    setSelectedEntryKey(null);
-    setClearMessage("Cleared locally stored desktop activity.");
-    setLogMessage("");
+    applyClear();
   }, [externalClearSignal]);
 
   useEffect(() => {
     if (externalOpenLogSignal < 1 || !entries.length) {
       return;
     }
-    openActivityLog();
+    void openActivityLog();
   }, [entries.length, externalOpenLogSignal]);
 
-  const selectedEntry = entries.find((entry) => entry.key === selectedEntryKey) ?? entries[0] ?? null;
-
-  function clearTimeline() {
-    clearLastCommandResults();
-    setSelectedEntryKey(null);
-    setClearMessage("Cleared locally stored desktop activity.");
-    setLogMessage("");
-  }
-
-  function openActivityLog() {
+  async function openActivityLog() {
     if (!entries.length) {
       return;
     }
@@ -137,294 +106,375 @@ export function ActivityPanel({
       ...entry,
       recordedAt: new Date(entry.at).toISOString(),
     }));
+    const result = await exportActivityLog(JSON.stringify(payload, null, 2));
+    const message = `Opened ${result.filename}.`;
+    setClearMessage("");
+    setLogMessage(message);
+    await notifyDesktop({
+      title: "Activity log opened",
+      body: message,
+    });
+  }
+
+  async function exportRedactedActivity() {
+    if (!entries.length) {
+      return;
+    }
+
+    const payload = entries.map((entry) => ({
+      ...entry,
+      recordedAt: new Date(entry.at).toISOString(),
+    }));
+    const result = await exportActivityLog(JSON.stringify(payload, null, 2));
+    const message = `Opened ${result.filename}.`;
+    setClearMessage("");
+    setLogMessage(message);
+    await notifyDesktop({
+      title: "Redacted activity exported",
+      body: message,
+    });
+  }
+
+  function applyClear() {
+    clearLastCommandResults();
+    setSelectedEntryKey(null);
+    setPendingClear(false);
+    setClearMessage("Cleared locally stored desktop activity.");
+    setLogMessage("");
+    setMenuOpen(false);
+  }
+
+  function refreshActivity() {
+    setMenuOpen(false);
     setClearMessage("");
     setLogMessage("");
-    exportActivityLogMutation.mutate(JSON.stringify(payload, null, 2));
+    setSelectedEntryKey(filteredEntries[0]?.key ?? null);
+    void queryClient.invalidateQueries({ queryKey: ["bootstrap"] });
   }
 
   return (
-    <SectionCard title="Activity" kicker="Recent activity">
-      <div className="desktop-status-strip activity-status-strip">
-        <article className="desktop-status-card">
-          <span className="overview-current-set-cell-label">History</span>
-          <p className="desktop-status-value">{historySummary}</p>
-          <p className="inline-note">Local switch, verification, and setup events stay on this computer.</p>
-        </article>
-        <article className="desktop-status-card">
-          <span className="overview-current-set-cell-label">Latest</span>
-          <p className="desktop-status-value">{latestEntry?.label ?? "No activity yet"}</p>
-          <p className="inline-note">Open the latest entry to inspect the recorded command and result.</p>
-        </article>
-        <article className="desktop-status-card">
-          <span className="overview-current-set-cell-label">Attention</span>
-          <p className="desktop-status-value">{attentionSummary}</p>
-          <div className="desktop-status-pill-stack">
-            <span className="pill pill-soft">Redacted</span>
-            <span className="pill pill-soft">Local only</span>
-          </div>
-        </article>
+    <div className="activity-screen screen-content">
+      <div className="activity-toolbar-row">
+        <SearchField
+          className="search-field activity-search-field"
+          inputClassName="search-field-input"
+          ariaLabel="Search activity"
+          placeholder="Search activity…"
+          value={search}
+          onChange={setSearch}
+        />
+        <SegmentedControl
+          ariaLabel="Activity filters"
+          options={[
+            { value: "all", label: "All" },
+            { value: "success", label: "Success" },
+            { value: "error", label: "Failed" },
+          ]}
+          value={filter}
+          onChange={(value) => setFilter(value as ActivityFilter)}
+        />
+        <div className="activity-toolbar-menu-wrap">
+          <button
+            className="ghost-button"
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            aria-label="Activity more actions"
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            More
+          </button>
+          {menuOpen ? (
+            <div className="profile-row-actions-menu" role="menu" aria-label="Activity actions">
+              <button className="ghost-button" role="menuitem" type="button" onClick={refreshActivity}>
+                Refresh
+              </button>
+              <button
+                className="ghost-button"
+                role="menuitem"
+                type="button"
+                disabled={!hasEntries}
+                onClick={() => {
+                  setMenuOpen(false);
+                  void openActivityLog();
+                }}
+              >
+                Open Log File
+              </button>
+              <button
+                className="ghost-button"
+                role="menuitem"
+                type="button"
+                disabled={!hasEntries}
+                onClick={() => {
+                  setMenuOpen(false);
+                  void exportRedactedActivity();
+                }}
+              >
+                Export Redacted Activity…
+              </button>
+              <div className="menu-divider" aria-hidden="true" />
+              <button
+                className="ghost-button profile-row-actions-danger"
+                role="menuitem"
+                type="button"
+                disabled={!hasEntries}
+                onClick={() => {
+                  setMenuOpen(false);
+                  setPendingClear(true);
+                }}
+              >
+                Clear Activity History…
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
+
       <SplitView
-        className="activity-layout"
+        className="activity-master-detail"
         primaryClassName="activity-list-pane"
-        secondaryClassName="activity-detail-pane"
+        secondaryClassName="activity-inspector-pane"
         primary={
-          <div className="stack-list desktop-pane-column">
-            <article className="diagnostic-card activity-list-card">
-              <div className="desktop-pane-section-header activity-list-header">
-                <div>
-                  <p className="card-kicker">Events</p>
-                  <h3>Recent desktop activity</h3>
-                </div>
-                <span className="pill pill-soft">{latestEntry ? formatFullTimestamp(latestEntry.at) : "Idle"}</span>
-              </div>
-              <p className="inline-note">Latest first. Inspect one event at a time without leaving this view.</p>
-              <div className="activity-list-columns" aria-hidden="true">
-                <span>Time</span>
-                <span>Event</span>
-                <span>Scope</span>
-              </div>
-              <div className="stack-list activity-table-rows">
-              {entries.length ? (
-                entries.map((entry) => (
-                  <button
-                    key={entry.key}
-                    type="button"
-                    className={`list-row activity-list-row ${
-                      selectedEntry?.key === entry.key ? "activity-list-row-selected" : ""
-                    }`}
-                    onClick={() => setSelectedEntryKey(entry.key)}
-                    aria-pressed={selectedEntry?.key === entry.key}
-                    aria-label={`Inspect ${entry.label}`}
-                  >
-                    <div className="activity-list-time">
-                      <strong>{formatTimestamp(entry.at)}</strong>
-                      <p className="inline-note">{formatDayTimestamp(entry.at)}</p>
-                    </div>
-                    <div className="activity-list-main">
-                      <div className="activity-list-title">
-                        <strong>{entry.label}</strong>
-                        <span
-                          className={`pill ${entry.status === "success" ? "pill-ok" : "pill-warn"}`}
+          <section className="activity-pane">
+            <div className="activity-list-body" aria-label="Activity timeline">
+              {groupedEntries.length ? (
+                groupedEntries.map((group) => (
+                  <section key={group.label} className="activity-group" aria-label={group.label}>
+                    <h3 className="activity-group-heading">{group.label}</h3>
+                    <div className="activity-group-list">
+                      {group.entries.map((entry) => (
+                        <button
+                          key={entry.key}
+                          type="button"
+                          className={`activity-event-row ${
+                            selectedEntry?.key === entry.key ? "activity-event-row-selected" : ""
+                          }`}
+                          aria-label={`Inspect ${entry.label}`}
+                          aria-pressed={selectedEntry?.key === entry.key}
+                          onClick={() => {
+                            setSelectedEntryKey(entry.key);
+                            setClearMessage("");
+                            setLogMessage("");
+                          }}
                         >
-                          {entry.status === "success" ? "Success" : "Needs attention"}
-                        </span>
-                      </div>
-                      <p className="inline-note">{entry.message}</p>
+                          <div className="activity-event-time">{formatTimestamp(entry.at)}</div>
+                          <div className="activity-event-main">
+                            <div className="activity-event-title-row">
+                              <span className={`activity-event-status activity-event-status-${entry.status}`}>
+                                <span aria-hidden="true">{entry.status === "success" ? "●" : "▲"}</span>
+                                <strong>{entry.label}</strong>
+                              </span>
+                            </div>
+                            <p className="activity-event-detail">{activityPreview(entry)}</p>
+                          </div>
+                          <div className="activity-event-tail">
+                            {entry.scopeType === "tool" && entry.scopeTool ? (
+                              <ToolBrand
+                                tool={entry.scopeTool}
+                                className="tool-brand-compact"
+                                logoSize={15}
+                                shortName
+                              />
+                            ) : (
+                              <span>{entry.scopeLabel}</span>
+                            )}
+                          </div>
+                        </button>
+                      ))}
                     </div>
-                    <div className="activity-list-meta">
-                      <span>
-                        {entry.scopeType === "tool" && entry.scopeTool ? (
-                          <ToolBrand tool={entry.scopeTool} className="tool-brand-compact" logoSize={15} shortName />
-                        ) : (
-                          entry.scopeLabel
-                        )}
-                      </span>
-                      <span>{entry.status === "success" ? "Success" : "Needs attention"}</span>
-                    </div>
-                    <span className="activity-row-chevron" aria-hidden="true">
-                      ›
-                    </span>
-                  </button>
+                  </section>
                 ))
               ) : (
-                <article className="diagnostic-card">
+                <div className="activity-empty-state">
                   <h3>No recent activity</h3>
                   <p className="inline-note">
-                    Switch a set, change a profile, or run verification to build a local activity trail.
+                    Local switch, verification, and setup events will appear here as soon as you use the app.
                   </p>
-                </article>
+                  {clearMessage ? <p className="inline-note">{clearMessage}</p> : null}
+                </div>
               )}
-              </div>
-            </article>
             </div>
+          </section>
         }
         secondary={
-          <div className="stack-list desktop-pane-column">
+          <aside className="activity-pane activity-inspector-surface">
             {selectedEntry ? (
-              <article
-                className={`diagnostic-card activity-detail-card ${
-                  selectedEntry.status === "success" ? "diagnostic-pass" : "diagnostic-warn"
-                }`}
-              >
-                <div className="activity-detail-main">
-                  <div className="activity-detail-copy stack-list">
-                    <div className="desktop-pane-section-header">
-                      <div>
-                        <p className="card-kicker">Entry</p>
-                        <h3>{selectedEntry.label}</h3>
-                      </div>
-                      <span
-                        className={`pill ${selectedEntry.status === "success" ? "pill-ok" : "pill-warn"}`}
-                      >
-                        {selectedEntry.status === "success" ? "Success" : "Needs attention"}
-                      </span>
-                    </div>
-                    <div className="activity-detail-summary">
-                      <div>
-                        <span className="overview-current-set-cell-label">Time</span>
-                        <strong>{formatFullTimestamp(selectedEntry.at)}</strong>
-                      </div>
-                      <div>
-                        <span className="overview-current-set-cell-label">Scope</span>
-                        <strong>
-                          {selectedEntry.scopeType === "tool" && selectedEntry.scopeTool ? (
-                            <ToolBrand tool={selectedEntry.scopeTool} className="tool-brand-inline" logoSize={16} shortName />
-                          ) : (
-                            selectedEntry.scopeLabel
-                          )}
-                        </strong>
-                      </div>
-                      <div>
-                        <span className="overview-current-set-cell-label">Result</span>
-                        <strong>{selectedEntry.status === "success" ? "Success" : "Needs attention"}</strong>
-                      </div>
-                    </div>
-                    <div className="activity-detail-block">
-                      <div>
-                        <p className="card-kicker">What happened</p>
-                        <p className="inline-note">{selectedEntry.message}</p>
-                      </div>
-                      <div>
-                        <p className="card-kicker">Result</p>
-                        <p className="inline-note">
-                          {selectedEntry.status === "success"
-                            ? "Completed successfully."
-                            : "Needs attention before you retry or continue."}
-                        </p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="card-kicker">Recovery</p>
-                      {selectedEntry.remediation ? (
-                        <p className="inline-note">{selectedEntry.remediation}</p>
-                      ) : (
-                        <p className="inline-note">
-                          No extra recovery steps were recorded for this event.
-                        </p>
-                      )}
-                    </div>
-                    <KeyValueGrid
-                      rows={[
-                        {
-                          label: "Recorded",
-                          value: formatFullTimestamp(selectedEntry.at),
-                        },
-                        {
-                          label: "Scope",
-                          value:
-                            selectedEntry.scopeType === "tool" && selectedEntry.scopeTool ? (
-                              <ToolBrand tool={selectedEntry.scopeTool} className="tool-brand-inline" logoSize={16} shortName />
-                            ) : (
-                              selectedEntry.scopeLabel
-                            ),
-                        },
-                        {
-                          label: "Duration",
-                          value: "Not recorded",
-                        },
-                      ]}
-                    />
-                    <div className="activity-detail-block">
-                      <div>
-                        <p className="card-kicker">Recorded command</p>
-                        {selectedEntry.command ? (
-                          <pre>{selectedEntry.command}</pre>
-                        ) : (
-                          <p className="inline-note">
-                            Command details were not recorded for this event.
-                          </p>
-                        )}
-                      </div>
-                      <div>
-                        <p className="card-kicker">Redacted result</p>
-                        {selectedEntry.resultSummary ? (
-                          <pre>{selectedEntry.resultSummary}</pre>
-                        ) : (
-                          <p className="inline-note">
-                            {selectedEntry.status === "success"
-                              ? "Snapshot updated successfully."
-                              : "AI Switch recorded a recoverable failure for this event."}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <aside className="activity-detail-rail">
-                    <span className="overview-current-set-cell-label">Actions</span>
-                    <p className="inline-note">
-                      Export a support report only when this event needs deeper debugging or sharing.
+              <div className="activity-inspector-content">
+                <header className="activity-inspector-header">
+                  <div>
+                    <h3>{selectedEntry.label}</h3>
+                    <p className={`activity-inspector-status activity-inspector-status-${selectedEntry.status}`}>
+                      <span aria-hidden="true">{selectedEntry.status === "success" ? "●" : "▲"}</span>
+                      <span>{selectedEntry.status === "success" ? "Success" : "Needs attention"}</span>
                     </p>
-                    {selectedEntry.status === "error" ? (
-                      <div className="button-row button-row-column">
-                        <button
-                          className="ghost-button"
-                          type="button"
-                          disabled={exportBundleMutation.isPending}
-                          onClick={() => exportBundleMutation.mutate()}
-                        >
-                          {exportBundleMutation.isPending ? "Exporting…" : "Export support report"}
-                        </button>
-                      </div>
-                    ) : (
-                      <p className="inline-note">No extra action is needed for this completed event.</p>
-                    )}
-                  </aside>
-                </div>
-              </article>
-            ) : (
-              <article className="diagnostic-card">
-                <h3>No recent activity</h3>
-                <p className="inline-note">
-                  Local switch, verification, and setup events will appear here as soon as you use the app.
-                </p>
-              </article>
-            )}
-            <article className="diagnostic-card activity-session-card">
-              <div className="desktop-pane-section-header">
-                <div>
-                  <p className="card-kicker">Local log</p>
-                  <h3>Activity storage</h3>
-                </div>
-                <span className="pill pill-soft">On this computer</span>
+                  </div>
+                </header>
+                <p className="inline-note activity-inspector-message">{selectedEntry.message}</p>
+                <KeyValueGrid
+                  rows={[
+                    {
+                      label: "Recorded",
+                      value: formatFullTimestamp(selectedEntry.at),
+                    },
+                    {
+                      label: "Scope",
+                      value:
+                        selectedEntry.scopeType === "tool" && selectedEntry.scopeTool ? (
+                          <ToolBrand
+                            tool={selectedEntry.scopeTool}
+                            className="tool-brand-inline"
+                            logoSize={16}
+                          />
+                        ) : (
+                          selectedEntry.scopeLabel
+                        ),
+                    },
+                    {
+                      label: "Duration",
+                      value: "Not recorded",
+                    },
+                    {
+                      label: "Initiated by",
+                      value: "Desktop app",
+                    },
+                    {
+                      label: "Recovery",
+                      value: selectedEntry.remediation ?? "None required",
+                    },
+                  ]}
+                />
+                <details className="activity-disclosure">
+                  <summary>Recorded Command</summary>
+                  {selectedEntry.command ? (
+                    <pre>{selectedEntry.command}</pre>
+                  ) : (
+                    <p className="inline-note">Command details were not recorded for this event.</p>
+                  )}
+                </details>
+                <details className="activity-disclosure">
+                  <summary>Redacted Result</summary>
+                  {selectedEntry.resultSummary ? (
+                    <pre>{selectedEntry.resultSummary}</pre>
+                  ) : (
+                    <p className="inline-note">
+                      {selectedEntry.status === "success"
+                        ? "Snapshot updated successfully."
+                        : "No redacted result payload was recorded for this event."}
+                    </p>
+                  )}
+                </details>
+                {logMessage ? <p className="inline-note">{logMessage}</p> : null}
+                {clearMessage ? <p className="inline-note">{clearMessage}</p> : null}
               </div>
-              {clearMessage || logMessage ? (
-                <div className="stack-list">
-                  <h4>{clearMessage ? "Timeline cleared" : "Log snapshot opened"}</h4>
-                  <p className="inline-note">{clearMessage || logMessage}</p>
-                </div>
-              ) : (
-                <div className="stack-list">
-                  <p className="inline-note">
-                    Keep a short local history while you are debugging switches, setup flows, or recovery actions.
-                  </p>
-                  <p className="inline-note">
-                    Recent events stay on this computer and persist across relaunches.
-                  </p>
-                </div>
-              )}
-              {exportBundleMutation.data ? (
-                <article className="diagnostic-card diagnostic-pass activity-session-card-nested">
-                  <h4>Support report ready</h4>
-                  <p className="inline-note">Saved {exportBundleMutation.data.filename}.</p>
-                </article>
-              ) : null}
-              {exportBundleMutation.error ? (
-                <article className="diagnostic-card diagnostic-warn activity-session-card-nested">
-                  <h4>Support report could not be exported</h4>
-                  <p className="inline-note">
-                    {exportBundleMutation.error instanceof Error
-                      ? exportBundleMutation.error.message
-                      : "AI Switch could not complete that action."}
-                  </p>
-                </article>
-              ) : null}
-            </article>
-          </div>
+            ) : (
+              <div className="activity-empty-state activity-empty-state-compact">
+                <h3>No event selected</h3>
+                <p className="inline-note">Choose an event to inspect its recorded details.</p>
+                {logMessage ? <p className="inline-note">{logMessage}</p> : null}
+              </div>
+            )}
+          </aside>
         }
       />
-    </SectionCard>
+
+      <div className="activity-footer-line">
+        <p>Activity is stored locally and credentials are always redacted.</p>
+      </div>
+
+      {pendingClear ? (
+        <DialogSurface
+          ariaLabel="Clear Activity History"
+          className="quick-switch-palette profile-sheet"
+          initialFocusSelector="button:not([disabled])"
+          onClose={() => setPendingClear(false)}
+        >
+          <div className="quick-switch-header">
+            <div>
+              <p className="card-kicker">History</p>
+              <h3>Clear Activity History?</h3>
+              <p className="inline-note">
+                This removes the locally stored desktop timeline for this Mac. Credentials remain untouched.
+              </p>
+            </div>
+            <button className="ghost-button" type="button" onClick={() => setPendingClear(false)}>
+              Close
+            </button>
+          </div>
+          <footer className="quick-switch-footer">
+            <div className="quick-switch-selection">
+              <p className="card-kicker">Action</p>
+              <strong>Remove local activity history</strong>
+            </div>
+            <div className="button-row">
+              <button className="ghost-button" type="button" onClick={() => setPendingClear(false)}>
+                Cancel
+              </button>
+              <button className="ghost-button danger-button" type="button" onClick={applyClear}>
+                Clear History
+              </button>
+            </div>
+          </footer>
+        </DialogSurface>
+      ) : null}
+    </div>
   );
+}
+
+function filterActivity(entries: ActivityEntry[], search: string, filter: ActivityFilter) {
+  const query = search.trim().toLowerCase();
+
+  return entries.filter((entry) => {
+    if (filter !== "all" && entry.status !== filter) {
+      return false;
+    }
+
+    if (!query) {
+      return true;
+    }
+
+    return [
+      entry.label,
+      entry.message,
+      entry.remediation ?? "",
+      entry.scopeLabel,
+      activityPreview(entry),
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(query);
+  });
+}
+
+function groupEntries(entries: ActivityEntry[]) {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
+
+  const groups = [
+    { label: "Today", entries: [] as ActivityEntry[] },
+    { label: "Yesterday", entries: [] as ActivityEntry[] },
+    { label: "Earlier", entries: [] as ActivityEntry[] },
+  ];
+
+  for (const entry of entries) {
+    if (entry.at >= todayStart) {
+      groups[0].entries.push(entry);
+    } else if (entry.at >= yesterdayStart) {
+      groups[1].entries.push(entry);
+    } else {
+      groups[2].entries.push(entry);
+    }
+  }
+
+  return groups.filter((group) => group.entries.length > 0);
+}
+
+function activityPreview(entry: ActivityEntry) {
+  if (entry.scopeType === "tool" && entry.scopeTool) {
+    return entry.message;
+  }
+  return entry.message;
 }
 
 function formatToolScope(tool: string) {
@@ -471,12 +521,5 @@ function formatFullTimestamp(timestamp: number) {
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-  }).format(timestamp);
-}
-
-function formatDayTimestamp(timestamp: number) {
-  return new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
   }).format(timestamp);
 }

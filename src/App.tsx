@@ -736,29 +736,7 @@ export function App() {
     }
 
     if (activeSection === "activity") {
-      return (
-        <div className="button-row toolbar-action-row">
-          <button
-            className="ghost-button"
-            type="button"
-            disabled={!hasActivityEntries}
-            onClick={() => {
-              clearLastCommandResults();
-              setActivityClearSignal((value) => value + 1);
-            }}
-          >
-            <span>Clear</span>
-          </button>
-          <button
-            className="ghost-button"
-            type="button"
-            disabled={!hasActivityEntries}
-            onClick={() => setActivityOpenLogSignal((value) => value + 1)}
-          >
-            <span>Open Log File</span>
-          </button>
-        </div>
-      );
+      return undefined;
     }
 
     if (activeSection === "settings") {
