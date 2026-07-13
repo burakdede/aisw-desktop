@@ -1341,7 +1341,8 @@ test("shows remediation when the updater configuration is invalid", async ({ pag
 
   await page.goto("/");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await page.getByRole("button", { name: "Check for updates" }).click();
+  await page.getByRole("button", { name: "Updates" }).click();
+  await page.getByRole("button", { name: "Check for Updates" }).click();
 
   await expect(page.getByRole("heading", { name: "Update check failed" })).toBeVisible();
   await expect(page.getByText("Desktop update failed: invalid endpoint")).toBeVisible();
@@ -1357,10 +1358,11 @@ test("shows remediation when update install fails", async ({ page }) => {
 
   await page.goto("/");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await page.getByRole("button", { name: "Check for updates" }).click();
+  await page.getByRole("button", { name: "Updates" }).click();
+  await page.getByRole("button", { name: "Check for Updates" }).click();
 
   await expect(page.getByText("Update available: 0.2.0")).toBeVisible();
-  await page.getByRole("button", { name: "Install update" }).click();
+  await page.getByRole("button", { name: "Install Update" }).click();
 
   await expect(page.getByText("Update install failed")).toBeVisible();
   await expect(page.getByText("Desktop update failed: signature mismatch")).toBeVisible();
@@ -1404,60 +1406,50 @@ test("shows runtime detection and shell guidance in settings", async ({ page }) 
 });
 
 test("saves custom runtime and AISW home settings", async ({ page }) => {
-  await installDesktopMock(page, "profiles");
+  await installDesktopMock(page, "switching");
 
   await page.goto("/");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Engine" }).click();
 
-  await page.getByRole("button", { name: "Show advanced runtime options" }).click();
+  await page.getByRole("button", { name: "Show manual engine options" }).click();
   await page.getByLabel("Runtime source").selectOption("custom");
-  await page.getByLabel("Runtime path").fill("/opt/custom/aisw");
-  await page.getByLabel("Local data folder override").fill("/tmp/aisw-home");
-  await page.getByRole("button", { name: "Save settings" }).click();
+  await page.getByLabel("Engine path").fill("/opt/custom/aisw");
+  await page.getByLabel("Engine path").blur();
+  await page.getByRole("button", { name: "Advanced" }).click();
+  await page.getByLabel("Custom data folder").fill("/tmp/aisw-home");
+  await page.getByLabel("Custom data folder").blur();
+  await page.getByRole("button", { name: "Engine" }).click();
 
   await expect(page.getByLabel("Runtime source")).toHaveValue("custom");
-  await expect(page.getByLabel("Runtime path")).toHaveValue("/opt/custom/aisw");
-  await expect(page.getByLabel("Local data folder override")).toHaveValue("/tmp/aisw-home");
-
-  const settingsSection = page.locator(".section-card").filter({ hasText: "Runtime and local storage" });
-  await expect(settingsSection.getByText("Selected runtime: Custom")).toBeVisible();
+  await expect(page.getByLabel("Engine path")).toHaveValue("/opt/custom/aisw");
+  await page.getByRole("button", { name: "Advanced" }).click();
+  await expect(page.getByLabel("Custom data folder")).toHaveValue("/tmp/aisw-home");
 });
 
 test("requires saving settings before updater actions use a changed channel", async ({ page }) => {
-  await installDesktopMock(page, "profiles");
+  await installDesktopMock(page, "switching");
 
   await page.goto("/");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Updates" }).click();
 
   await page.getByLabel("Update channel").selectOption("beta");
   await expect(
-    page.getByText("Check for a signed AI Switch release on the selected beta channel."),
+    page.getByText("Check for a signed desktop release on the selected beta channel."),
   ).toBeVisible();
-  await expect(
-    page.getByText(
-      "Save settings before checking for updates so the runtime and channel selection match the persisted desktop configuration.",
-    ),
-  ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Check for updates" })).toBeDisabled();
-
-  await page.getByRole("button", { name: "Save settings" }).click();
-  await expect(
-    page.getByText(
-      "Save settings before checking for updates so the runtime and channel selection match the persisted desktop configuration.",
-    ),
-  ).not.toBeVisible();
-
-  await page.getByRole("button", { name: "Check for updates" }).click();
+  await page.getByRole("button", { name: "Check for Updates" }).click();
   await expect(page.getByText("Channel: beta", { exact: true })).toBeVisible();
   await expect(page.getByText(/Endpoint:\s*https:\/\/updates\.example\.com\/beta\.json/)).toBeVisible();
 });
 
 test("clears stale update results after channel edits until the user checks again", async ({ page }) => {
-  await installDesktopMock(page, "profiles");
+  await installDesktopMock(page, "switching");
 
   await page.goto("/");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await page.getByRole("button", { name: "Check for updates" }).click();
+  await page.getByRole("button", { name: "Updates" }).click();
+  await page.getByRole("button", { name: "Check for Updates" }).click();
 
   await expect(page.getByText("Update available: 0.2.0")).toBeVisible();
   await expect(page.getByText(/Endpoint:\s*https:\/\/updates\.example\.com\/stable\.json/)).toBeVisible();
@@ -1466,66 +1458,68 @@ test("clears stale update results after channel edits until the user checks agai
   await expect(page.getByText("Update available: 0.2.0")).not.toBeVisible();
   await expect(page.getByText(/Endpoint:\s*https:\/\/updates\.example\.com\/stable\.json/)).not.toBeVisible();
 
-  await page.getByRole("button", { name: "Save settings" }).click();
-  await expect(page.getByText("Update available: 0.2.0")).not.toBeVisible();
-  await expect(page.getByText(/Endpoint:\s*https:\/\/updates\.example\.com\/stable\.json/)).not.toBeVisible();
-
-  await page.getByRole("button", { name: "Check for updates" }).click();
+  await page.getByRole("button", { name: "Check for Updates" }).click();
   await expect(page.getByText("Update available: 0.3.0-beta.1")).toBeVisible();
   await expect(page.getByText(/Endpoint:\s*https:\/\/updates\.example\.com\/beta\.json/)).toBeVisible();
 });
 
 test("checks and installs a signed desktop update", async ({ page }) => {
-  await installDesktopMock(page, "profiles");
+  await installDesktopMock(page, "switching");
 
   await page.goto("/");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await page.getByRole("button", { name: "Check for updates" }).click();
+  await page.getByRole("button", { name: "Updates" }).click();
+  await page.getByRole("button", { name: "Check for Updates" }).click();
 
   await expect(page.getByText("Update available: 0.2.0")).toBeVisible();
-  await page.getByRole("button", { name: "Install update" }).click();
+  await page.getByRole("button", { name: "Install Update" }).click();
 
   await expect(page.getByText("Update installed. Restart has been requested.")).toBeVisible();
 });
 
 test("clears a saved custom runtime path after switching back to bundled runtime", async ({ page }) => {
-  await installDesktopMock(page, "customRuntime");
+  await installDesktopMock(page, "switching");
 
   await page.goto("/");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Engine" }).click();
+  await page.getByRole("button", { name: "Show manual engine options" }).click();
+  await page.getByLabel("Runtime source").selectOption("custom");
 
-  const runtimePath = page.getByLabel("Runtime path");
-  await expect(runtimePath).toHaveValue("/opt/aisw/bin/aisw");
+  const runtimePath = page.getByLabel("Engine path");
+  await runtimePath.fill("/opt/aisw/bin/aisw");
+  await runtimePath.blur();
   await expect(runtimePath).toBeEnabled();
 
   await page.getByLabel("Runtime source").selectOption("bundled");
-  await expect(runtimePath).toBeDisabled();
+  await expect(page.getByLabel("Engine path")).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Save settings" }).click();
-
-  await expect(page.getByRole("button", { name: "Show advanced runtime options" })).toBeVisible();
-  await expect(page.getByText("Selected runtime: Bundled").first()).toBeVisible();
-  await expect(page.getByText("Current runtime path: /Applications/AI Switch.app/Contents/Resources/aisw")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Show manual engine options" })).toBeVisible();
+  await expect(page.getByText("Included with this app")).toBeVisible();
+  await expect(page.getByText("/Applications/AI Switch.app/Contents/Resources/aisw")).toBeVisible();
 });
 
 test("switches from a custom runtime back to the system aisw selection", async ({ page }) => {
-  await installDesktopMock(page, "customRuntime");
+  await installDesktopMock(page, "switching");
 
   await page.goto("/");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Engine" }).click();
+  await page.getByRole("button", { name: "Show manual engine options" }).click();
+  await page.getByLabel("Runtime source").selectOption("custom");
 
-  const runtimePath = page.getByLabel("Runtime path");
-  await expect(runtimePath).toHaveValue("/opt/aisw/bin/aisw");
+  const runtimePath = page.getByLabel("Engine path");
+  await runtimePath.fill("/opt/aisw/bin/aisw");
+  await runtimePath.blur();
   await expect(runtimePath).toBeEnabled();
 
   await page.getByLabel("Runtime source").selectOption("system");
   await expect(runtimePath).toBeDisabled();
 
-  await page.getByRole("button", { name: "Save settings" }).click();
-
   await expect(runtimePath).toHaveValue("");
-  await expect(page.getByText("Selected runtime: System").first()).toBeVisible();
-  await expect(page.getByText("Current runtime path: /opt/homebrew/bin/aisw")).toBeVisible();
+  await expect(page.getByLabel("Runtime source")).toHaveValue("system");
+  await expect(page.getByText("System engine").first()).toBeVisible();
+  await expect(page.getByText("/opt/homebrew/bin/aisw")).toBeVisible();
 });
 
 test("creates profiles from environment and API key modes", async ({ page }) => {

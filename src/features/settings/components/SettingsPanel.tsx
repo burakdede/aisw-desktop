@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type ReactNode, FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   exportDiagnosticBundle,
   getLaunchAtLoginStatus,
@@ -84,7 +84,6 @@ export function SettingsPanel({
   const [showMenuBarIcon, setShowMenuBarIcon] = useState(
     desktopPreferences?.showMenuBarIcon ?? true,
   );
-  const [generalMessage, setGeneralMessage] = useState("");
   const readEnabled = useMutationAwareQueryEnabled();
   const shellGuidance = useQuery({
     queryKey: ["shell-guidance"],
@@ -115,11 +114,6 @@ export function SettingsPanel({
     if (!variants.length) return undefined;
     return variants.find((variant) => variant.shell === selectedShell) ?? variants[0];
   }, [selectedShell, shellGuidance.data]);
-  const hasPendingSettingsChanges =
-    runtimeKind !== settings.runtime_kind ||
-    effectiveRuntimePath(runtimeKind, runtimePath) !== (settings.runtime_path ?? "") ||
-    aiswHome !== (settings.aisw_home ?? "") ||
-    updateChannel !== settings.update_channel;
   const launchAtLoginSupported = launchAtLogin.data?.supported ?? false;
   const launchAtLoginEnabled = launchAtLogin.data?.enabled ?? false;
   const launchAtLoginDetail = launchAtLogin.data?.detail;
@@ -152,7 +146,10 @@ export function SettingsPanel({
     checkForUpdatesMutation.reset();
     installUpdateMutation.reset();
   }, [
-    hasPendingSettingsChanges,
+    runtimeKind,
+    runtimePath,
+    aiswHome,
+    updateChannel,
     settings.runtime_kind,
     settings.runtime_path,
     settings.aisw_home,
@@ -167,20 +164,28 @@ export function SettingsPanel({
     setAppearance(desktopPreferences?.appearance ?? "system");
     setDefaultSection(desktopPreferences?.defaultSection ?? "overview");
     setShowMenuBarIcon(desktopPreferences?.showMenuBarIcon ?? true);
-    setGeneralMessage("");
     setLaunchMessage("");
   }, [desktopPreferences]);
 
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    updateSettingsMutation.mutate({
-      runtime_kind: runtimeKind,
-      runtime_path: effectiveRuntimePath(runtimeKind, runtimePath) || null,
-      aisw_home: aiswHome || null,
-      update_channel: updateChannel,
+  function buildSettingsRequest(next?: {
+    runtimeKind?: DesktopSettings["runtime_kind"];
+    runtimePath?: string;
+    aiswHome?: string;
+    updateChannel?: string;
+  }): DesktopSettings {
+    const nextRuntimeKind = next?.runtimeKind ?? runtimeKind;
+    const nextRuntimePath = next?.runtimePath ?? runtimePath;
+    const nextAiswHome = next?.aiswHome ?? aiswHome;
+    const nextUpdateChannel = next?.updateChannel ?? updateChannel;
+
+    return {
+      runtime_kind: nextRuntimeKind,
+      runtime_path: effectiveRuntimePath(nextRuntimeKind, nextRuntimePath) || null,
+      aisw_home: nextAiswHome || null,
+      update_channel: nextUpdateChannel,
       profile_labels: settings.profile_labels ?? {},
       profile_sets: settings.profile_sets,
-    });
+    };
   }
 
   async function copyText(value: string, label: string) {
@@ -228,20 +233,16 @@ export function SettingsPanel({
   function updateGeneralPreferences(
     next: Partial<Pick<DesktopPreferences, "appearance" | "defaultSection" | "showMenuBarIcon">>,
   ) {
-    setAppearance(next.appearance ?? appearance);
-    setDefaultSection(next.defaultSection ?? defaultSection);
-    setShowMenuBarIcon(next.showMenuBarIcon ?? showMenuBarIcon);
-    setGeneralMessage("");
-  }
-
-  function saveGeneralPreferences() {
-    onUpdateDesktopPreferences?.({
-      appearance,
-      defaultSection,
-      showMenuBarIcon,
+    const nextPreferences: DesktopPreferences = {
+      appearance: next.appearance ?? appearance,
+      defaultSection: next.defaultSection ?? defaultSection,
+      showMenuBarIcon: next.showMenuBarIcon ?? showMenuBarIcon,
       reopenSetupAssistant: desktopPreferences?.reopenSetupAssistant ?? false,
-    });
-    setGeneralMessage("General preferences saved.");
+    };
+    setAppearance(nextPreferences.appearance);
+    setDefaultSection(nextPreferences.defaultSection);
+    setShowMenuBarIcon(nextPreferences.showMenuBarIcon);
+    onUpdateDesktopPreferences?.(nextPreferences);
   }
 
   function resetOnboarding() {
@@ -461,18 +462,11 @@ export function SettingsPanel({
                     }
                   />
                 </SettingsGroup>
-
-                <SettingsFooter>
-                  <button className="primary-button" type="button" onClick={saveGeneralPreferences}>
-                    Save General Settings
-                  </button>
-                </SettingsFooter>
-                {generalMessage ? <p className="inline-note">{generalMessage}</p> : null}
               </div>
             ) : null}
 
             {selectedSection === "runtime" ? (
-              <form className="settings-section-stack" onSubmit={submit}>
+              <div className="settings-section-stack">
                 <SettingsGroup title="AISW Runtime">
                   <SettingsStaticRow label="Bundled runtime" value={runtimeStatus.version?.version ?? "Unknown"} />
                   <SettingsStaticRow label="Selected source" value={selectedEngineSourceLabel(runtimeKind)} />
@@ -483,9 +477,19 @@ export function SettingsPanel({
                         <select
                           aria-label="Runtime source"
                           value={runtimeKind}
-                          onChange={(event) =>
-                            setRuntimeKind(event.target.value as typeof runtimeKind)
-                          }
+                          onChange={(event) => {
+                            const nextRuntimeKind = event.target.value as typeof runtimeKind;
+                            const nextRuntimePath =
+                              nextRuntimeKind === "custom" ? runtimePath : "";
+                            setRuntimeKind(nextRuntimeKind);
+                            setRuntimePath(nextRuntimePath);
+                            updateSettingsMutation.mutate(
+                              buildSettingsRequest({
+                                runtimeKind: nextRuntimeKind,
+                                runtimePath: nextRuntimePath,
+                              }),
+                            );
+                          }}
                         >
                           <option value="bundled">Bundled</option>
                           <option value="system">System engine</option>
@@ -499,6 +503,14 @@ export function SettingsPanel({
                           disabled={runtimeKind !== "custom"}
                           placeholder={runtimeKind === "custom" ? "/path/to/aisw" : ""}
                           onChange={(event) => setRuntimePath(event.target.value)}
+                          onBlur={() => {
+                            if (runtimeKind !== "custom") return;
+                            updateSettingsMutation.mutate(
+                              buildSettingsRequest({
+                                runtimePath,
+                              }),
+                            );
+                          }}
                         />
                       </SettingsRow>
                       <div className="button-row">
@@ -536,21 +548,11 @@ export function SettingsPanel({
                     }
                   />
                 </SettingsGroup>
-
-                <SettingsFooter>
-                  <button
-                    className="primary-button"
-                    type="submit"
-                    disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
-                  >
-                    {updateSettingsMutation.isPending ? "Saving…" : "Save Engine Settings"}
-                  </button>
-                </SettingsFooter>
                 {updateSettingsMutation.error ? (
                   <MutationErrorCard title="Settings could not be saved" error={updateSettingsMutation.error} />
                 ) : null}
                 {advancedMessage ? <p className="inline-note">{advancedMessage}</p> : null}
-              </form>
+              </div>
             ) : null}
 
             {selectedSection === "shell" ? (
@@ -708,14 +710,22 @@ export function SettingsPanel({
             ) : null}
 
             {selectedSection === "updates" ? (
-              <form className="settings-section-stack" onSubmit={submit}>
+              <div className="settings-section-stack">
                 <SettingsGroup title="AISW Desktop">
                   <SettingsStaticRow label="App version" value={appVersion} />
                   <SettingsRow label="Update channel">
                     <select
                       aria-label="Update channel"
                       value={updateChannel}
-                      onChange={(event) => setUpdateChannel(event.target.value)}
+                      onChange={(event) => {
+                        const nextUpdateChannel = event.target.value;
+                        setUpdateChannel(nextUpdateChannel);
+                        updateSettingsMutation.mutate(
+                          buildSettingsRequest({
+                            updateChannel: nextUpdateChannel,
+                          }),
+                        );
+                      }}
                     >
                       <option value="stable">Stable</option>
                       <option value="beta">Beta</option>
@@ -729,11 +739,7 @@ export function SettingsPanel({
                         <button
                           className="ghost-button"
                           type="button"
-                          disabled={
-                            mutationLock.isBusy ||
-                            checkForUpdatesMutation.isPending ||
-                            hasPendingSettingsChanges
-                          }
+                          disabled={mutationLock.isBusy || checkForUpdatesMutation.isPending}
                           onClick={() => checkForUpdatesMutation.mutate()}
                         >
                           Check for Updates
@@ -743,7 +749,6 @@ export function SettingsPanel({
                           type="button"
                           disabled={
                             mutationLock.isBusy ||
-                            hasPendingSettingsChanges ||
                             installUpdateMutation.isPending ||
                             !checkForUpdatesMutation.data?.update
                           }
@@ -754,11 +759,6 @@ export function SettingsPanel({
                       </div>
                     }
                   />
-                  {hasPendingSettingsChanges ? (
-                    <p className="inline-note">
-                      Save settings before checking for updates so the engine source and channel selection match the persisted desktop configuration.
-                    </p>
-                  ) : null}
                 </SettingsGroup>
 
                 <SettingsGroup title="Bundled AISW Engine">
@@ -771,16 +771,6 @@ export function SettingsPanel({
                     AI Switch {appVersion} includes desktop engine {runtimeStatus.version?.version ?? "Unknown"}.
                   </p>
                 </SettingsGroup>
-
-                <SettingsFooter>
-                  <button
-                    className="primary-button"
-                    type="submit"
-                    disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
-                  >
-                    {updateSettingsMutation.isPending ? "Saving…" : "Save Update Settings"}
-                  </button>
-                </SettingsFooter>
 
                 {checkForUpdatesMutation.data ? (
                   <div className="settings-result-list">
@@ -818,11 +808,11 @@ export function SettingsPanel({
                 {installUpdateMutation.error ? (
                   <MutationErrorCard title="Update install failed" error={installUpdateMutation.error} />
                 ) : null}
-              </form>
+              </div>
             ) : null}
 
             {selectedSection === "advanced" ? (
-              <form className="settings-section-stack" onSubmit={submit}>
+              <div className="settings-section-stack">
                 <SettingsGroup title="Application State">
                   <SettingsActionRow
                     label="App data folder"
@@ -850,6 +840,13 @@ export function SettingsPanel({
                       aria-label="Custom data folder"
                       value={aiswHome}
                       onChange={(event) => setAiswHome(event.target.value)}
+                      onBlur={() =>
+                        updateSettingsMutation.mutate(
+                          buildSettingsRequest({
+                            aiswHome,
+                          }),
+                        )
+                      }
                     />
                   </SettingsRow>
                 </SettingsGroup>
@@ -872,21 +869,11 @@ export function SettingsPanel({
                     System engine: {runtimeStatus.inventory?.system_path ? "Found on this computer" : "Not found on this computer"}
                   </p>
                 </SettingsGroup>
-
-                <SettingsFooter>
-                  <button
-                    className="primary-button"
-                    type="submit"
-                    disabled={mutationLock.isBusy || updateSettingsMutation.isPending}
-                  >
-                    {updateSettingsMutation.isPending ? "Saving…" : "Save Storage Settings"}
-                  </button>
-                </SettingsFooter>
                 {advancedMessage ? <p className="inline-note">{advancedMessage}</p> : null}
                 {updateSettingsMutation.error ? (
                   <MutationErrorCard title="Settings could not be saved" error={updateSettingsMutation.error} />
                 ) : null}
-              </form>
+              </div>
             ) : null}
           </div>
         </section>
@@ -972,10 +959,6 @@ function ToggleRow({
       <div className="settings-row-control">{control}</div>
     </div>
   );
-}
-
-function SettingsFooter({ children }: { children: ReactNode }) {
-  return <div className="settings-footer-row">{children}</div>;
 }
 
 const KEYRING_GUIDES = [

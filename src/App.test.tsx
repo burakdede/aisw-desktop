@@ -8212,7 +8212,6 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Default section"), {
       target: { value: "profiles" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save General Settings" }));
 
     await waitFor(() => {
       expect(screen.getByLabelText("Launch at login")).toBeChecked();
@@ -8255,7 +8254,6 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Default section"), {
       target: { value: "profiles" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save General Settings" }));
 
     await waitFor(() => {
       expect(window.localStorage.getItem("ai-switch.desktop.default-section")).toBe("profiles");
@@ -8467,16 +8465,16 @@ describe("App", () => {
     const rendered = await renderSettingsPanel(currentSettings);
     await waitFor(() => expect(screen.getByLabelText("Settings sections")).toBeInTheDocument());
 
-    expect(screen.getByDisplayValue("/opt/aisw/bin/aisw")).toBeEnabled();
+    const runtimePathInput = screen.getByLabelText("Engine path");
+    expect(runtimePathInput).toHaveValue("/opt/aisw/bin/aisw");
+    expect(runtimePathInput).toBeEnabled();
 
     fireEvent.change(screen.getByDisplayValue("Custom path"), {
       target: { value: "bundled" },
     });
 
-    const runtimePathInput = screen.getByDisplayValue("/opt/aisw/bin/aisw");
     expect(runtimePathInput).toBeDisabled();
-
-    fireEvent.click(screen.getByText("Save Engine Settings"));
+    expect(runtimePathInput).toHaveValue("");
 
     await waitFor(() => {
       expect(updateRequests).toEqual([
@@ -8552,16 +8550,16 @@ describe("App", () => {
     const rendered = await renderSettingsPanel(currentSettings);
     await waitFor(() => expect(screen.getByLabelText("Settings sections")).toBeInTheDocument());
 
-    expect(screen.getByDisplayValue("/opt/aisw/bin/aisw")).toBeEnabled();
+    const runtimePathInput = screen.getByLabelText("Engine path");
+    expect(runtimePathInput).toHaveValue("/opt/aisw/bin/aisw");
+    expect(runtimePathInput).toBeEnabled();
 
     fireEvent.change(screen.getByDisplayValue("Custom path"), {
       target: { value: "system" },
     });
 
-    const runtimePathInput = screen.getByDisplayValue("/opt/aisw/bin/aisw");
     expect(runtimePathInput).toBeDisabled();
-
-    fireEvent.click(screen.getByText("Save Engine Settings"));
+    expect(runtimePathInput).toHaveValue("");
 
     await waitFor(() => {
       expect(updateRequests).toEqual([
@@ -8643,24 +8641,9 @@ describe("App", () => {
     expect(
       screen.getByText("Check for a signed desktop release on the selected beta channel."),
     ).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          "Save settings before checking for updates so the engine source and channel selection match the persisted desktop configuration.",
-        ),
-      ).toBeInTheDocument();
-    expect(screen.getByText("Check for Updates")).toBeDisabled();
-
-    fireEvent.click(screen.getByText("Save Update Settings"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
-    });
-    await waitFor(() => {
-      expect(
-        screen.queryByText(
-          "Save settings before checking for updates so the engine source and channel selection match the persisted desktop configuration.",
-        ),
-      ).not.toBeInTheDocument();
       expect(screen.getByText("Check for Updates")).not.toBeDisabled();
     });
 
@@ -8674,7 +8657,14 @@ describe("App", () => {
 
   it("clears stale update results when settings change and requires a fresh check", async () => {
     let currentSettings: DesktopSettings = bootstrap.settings;
-    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      if (command === "update_settings") {
+        currentSettings = {
+          ...currentSettings,
+          ...(args as { request?: DesktopSettings }).request,
+        };
+        return currentSettings;
+      }
       if (command === "check_for_updates") {
         return {
           configured: true,
