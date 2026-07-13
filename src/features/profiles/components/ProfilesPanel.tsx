@@ -110,6 +110,7 @@ export function ProfilesPanel({
   const [openRowActions, setOpenRowActions] = useState<{
     tool: (typeof TOOLS)[number];
     name: string;
+    scope: "row" | "inspector";
   } | null>(null);
   const apiKeyInputRef = useRef<HTMLInputElement | null>(null);
   const renameInputRef = useRef<HTMLInputElement | null>(null);
@@ -636,7 +637,11 @@ export function ProfilesPanel({
                     onContextMenu={(event) => {
                       event.preventDefault();
                       selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
-                      setOpenRowActions({ tool: inventoryEntry.tool, name: inventoryEntry.name });
+                      setOpenRowActions({
+                        tool: inventoryEntry.tool,
+                        name: inventoryEntry.name,
+                        scope: "row",
+                      });
                     }}
                   >
                     <button
@@ -689,21 +694,29 @@ export function ProfilesPanel({
                         aria-label={`Open actions for ${titleCase(inventoryEntry.tool)} ${inventoryEntry.label}`}
                         aria-expanded={
                           openRowActions?.tool === inventoryEntry.tool &&
-                          openRowActions?.name === inventoryEntry.name
+                          openRowActions?.name === inventoryEntry.name &&
+                          openRowActions.scope === "row"
                         }
                         onClick={() => {
                           selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
                           setOpenRowActions((current) =>
-                            current?.tool === inventoryEntry.tool && current?.name === inventoryEntry.name
+                            current?.tool === inventoryEntry.tool &&
+                            current?.name === inventoryEntry.name &&
+                            current.scope === "row"
                               ? null
-                              : { tool: inventoryEntry.tool, name: inventoryEntry.name },
+                              : {
+                                  tool: inventoryEntry.tool,
+                                  name: inventoryEntry.name,
+                                  scope: "row",
+                                },
                           );
                         }}
                       >
                         •••
                       </button>
                       {openRowActions?.tool === inventoryEntry.tool &&
-                      openRowActions?.name === inventoryEntry.name ? (
+                      openRowActions?.name === inventoryEntry.name &&
+                      openRowActions.scope === "row" ? (
                         <div className="profile-row-actions-menu" role="menu" aria-label="Profile row actions">
                           {(!inventoryEntry.active || inventoryEntry.state === "Needs Attention") ? (
                             <button
@@ -839,20 +852,24 @@ export function ProfilesPanel({
                         aria-label="More profile actions"
                         aria-expanded={
                           openRowActions?.tool === tool &&
-                          openRowActions?.name === selectedProfileEntry.name
+                          openRowActions?.name === selectedProfileEntry.name &&
+                          openRowActions.scope === "inspector"
                         }
                         onClick={() =>
                           setOpenRowActions((current) =>
-                            current?.tool === tool && current?.name === selectedProfileEntry.name
+                            current?.tool === tool &&
+                            current?.name === selectedProfileEntry.name &&
+                            current.scope === "inspector"
                               ? null
-                              : { tool, name: selectedProfileEntry.name },
+                              : { tool, name: selectedProfileEntry.name, scope: "inspector" },
                           )
                         }
                       >
                         •••
                       </button>
                       {openRowActions?.tool === tool &&
-                      openRowActions?.name === selectedProfileEntry.name ? (
+                      openRowActions?.name === selectedProfileEntry.name &&
+                      openRowActions.scope === "inspector" ? (
                         <div className="profile-row-actions-menu" role="menu" aria-label="Profile actions">
                           <button
                             type="button"

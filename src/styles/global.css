@@ -2300,10 +2300,10 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .profiles-table-header {
   display: grid;
-  grid-template-columns: minmax(180px, 1.45fr) 100px 105px 100px 95px 110px 44px;
+  grid-template-columns: minmax(180px, 1.45fr) 100px 105px 100px 95px 110px 56px;
   gap: 12px;
   align-items: center;
-  padding: 9px 12px;
+  padding: 9px 14px 9px 12px;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   font-size: 11px;
   line-height: 1.2;
@@ -2318,7 +2318,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .profiles-table-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 44px;
+  grid-template-columns: minmax(0, 1fr) 56px;
   gap: 0;
   align-items: stretch;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
@@ -2469,7 +2469,11 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .profiles-inspector-action-row {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   justify-content: flex-start;
+  padding-top: 4px;
 }
 
 .profiles-passive-badge {
@@ -2506,7 +2510,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 @container (max-width: 1039px) {
   .profiles-table-header {
-    grid-template-columns: minmax(0, 1fr) 96px 110px 96px;
+    grid-template-columns: minmax(0, 1fr) 96px 110px 96px 56px;
   }
 
   .profiles-table-row-button {
@@ -2538,11 +2542,11 @@ html[data-appearance="dark"] .tool-logo-codex {
   }
 
   .profiles-table-header {
-    grid-template-columns: minmax(0, 1fr) 40px;
+    grid-template-columns: minmax(0, 1fr) 48px;
   }
 
   .profiles-table-row {
-    grid-template-columns: minmax(0, 1fr) 40px;
+    grid-template-columns: minmax(0, 1fr) 48px;
   }
 
   .profiles-table-row-button {
@@ -3875,7 +3879,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   border-radius: var(--control-radius);
   background: color-mix(in srgb, Canvas 96%, CanvasText 4%);
   color: var(--text-primary);
-  font-size: var(--type-body);
+  font-size: var(--type-footnote);
   line-height: 1.25;
   padding: 0 34px 0 var(--control-padding-inline);
   appearance: none;
@@ -3911,6 +3915,8 @@ html[data-appearance="dark"] .tool-logo-codex {
   color: var(--text-secondary);
   cursor: pointer;
   font-size: var(--type-footnote);
+  line-height: 1.2;
+  font-weight: 500;
 }
 
 .overview-state-mode-button-active {
@@ -3937,7 +3943,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   background: color-mix(in srgb, CanvasText 3%, Canvas 97%);
   color: var(--text-secondary);
   font-size: var(--type-footnote);
-  font-weight: 560;
+  font-weight: 500;
 }
 
 .overview-inline-notice-actions {
@@ -4612,6 +4618,12 @@ html[data-appearance="dark"] .tool-logo-codex {
   padding: 0 16px;
 }
 
+.diagnostics-group-count {
+  font-size: var(--type-caption);
+  line-height: 1.2;
+  color: var(--text-tertiary);
+}
+
 .diagnostic-finding-row {
   display: grid;
   gap: 6px;
@@ -4770,13 +4782,25 @@ html[data-appearance="dark"] .tool-logo-codex {
   grid-template-columns: auto minmax(0, 1fr);
   gap: 12px;
   align-items: start;
-  padding: 12px;
-  border-radius: 10px;
-  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
+  padding: 10px 0;
+  border-bottom: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
+  background: transparent;
 }
 
 .diagnostics-safe-fix-row input {
   margin-top: 2px;
+}
+
+.diagnostics-sheet-empty {
+  display: grid;
+  gap: 6px;
+  padding: 10px 0 4px;
+}
+
+.diagnostics-sheet-empty h3 {
+  margin: 0;
+  font-size: var(--type-panel-title);
+  line-height: 1.3;
 }
 
 .backups-screen {
@@ -5305,7 +5329,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .settings-layout-v2 {
   min-height: 0;
   display: grid;
-  grid-template-columns: 170px minmax(0, 1fr);
+  grid-template-columns: 160px minmax(0, 1fr);
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   border-radius: var(--panel-radius-lg);
   overflow: hidden;
@@ -5317,14 +5341,14 @@ html[data-appearance="dark"] .tool-logo-codex {
   display: grid;
   align-content: start;
   gap: 3px;
-  padding: 8px 7px;
+  padding: 8px 8px 10px;
   border-right: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   background: color-mix(in srgb, CanvasText 3%, Canvas 97%);
 }
 
 .settings-category-row {
-  min-height: 32px;
-  padding: 6px 10px;
+  min-height: 30px;
+  padding: 5px 10px;
   border: 0;
   border-radius: 9px;
   background: transparent;
@@ -5358,40 +5382,40 @@ html[data-appearance="dark"] .tool-logo-codex {
   padding: 14px 16px 18px;
   display: grid;
   align-content: start;
-  gap: 10px;
+  gap: 8px;
 }
 
 .settings-section-header {
   display: grid;
-  gap: 2px;
-  width: min(100%, 620px);
-  max-width: 620px;
+  gap: 1px;
+  width: min(100%, 608px);
+  max-width: 608px;
 }
 
 .settings-section-header h3 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--type-panel-title);
+  font-size: 15px;
   line-height: 1.2;
-  font-weight: 680;
-  letter-spacing: -0.014em;
+  font-weight: 640;
+  letter-spacing: -0.018em;
 }
 
 .settings-section-stack {
-  width: min(100%, 620px);
+  width: min(100%, 608px);
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .settings-group {
   display: grid;
-  gap: 5px;
+  gap: 6px;
 }
 
 .settings-group h4 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--type-caption);
+  font-size: var(--type-micro);
   line-height: 1.2;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -5404,16 +5428,16 @@ html[data-appearance="dark"] .tool-logo-codex {
   border-radius: var(--panel-radius);
   border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   overflow: hidden;
-  background: color-mix(in srgb, Canvas 100%, CanvasText 0%);
+  background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
 }
 
 .settings-row {
   display: grid;
-  grid-template-columns: minmax(164px, 208px) minmax(0, 1fr);
+  grid-template-columns: minmax(148px, 188px) minmax(0, 1fr);
   align-items: center;
   gap: 12px;
-  min-height: 34px;
-  padding: 5px 12px;
+  min-height: 32px;
+  padding: 6px 12px;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
 }
 
@@ -5424,12 +5448,13 @@ html[data-appearance="dark"] .tool-logo-codex {
 .settings-row-label {
   font-size: var(--type-footnote);
   line-height: 1.3;
+  font-weight: 500;
   color: var(--text-secondary);
 }
 
 .settings-row-copy {
   display: grid;
-  gap: 2px;
+  gap: 1px;
 }
 
 .settings-row-control {
@@ -5437,7 +5462,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .settings-row-control > :where(input, select, button) {
@@ -5445,7 +5470,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .settings-row-control > :where(input, select) {
-  width: min(100%, 228px);
+  width: min(100%, 216px);
 }
 
 .settings-mobile-picker select,
@@ -5485,9 +5510,9 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .settings-row-value {
-  font-size: var(--type-body);
+  font-size: var(--type-footnote);
   line-height: 1.3;
-  font-weight: 520;
+  font-weight: 560;
   color: var(--text-primary);
   text-align: right;
   min-width: 0;
@@ -5509,11 +5534,11 @@ html[data-appearance="dark"] .tool-logo-codex {
 .settings-row-static,
 .settings-row-toggle,
 .settings-row-action {
-  align-items: start;
+  align-items: center;
 }
 
 .settings-row-toggle {
-  min-height: 38px;
+  min-height: 34px;
 }
 
 .settings-row-toggle input,
@@ -5529,38 +5554,42 @@ html[data-appearance="dark"] .tool-logo-codex {
   appearance: none;
   -webkit-appearance: none;
   position: relative;
-  width: 34px;
-  min-width: 34px;
-  height: 20px;
+  width: 38px;
+  min-width: 38px;
+  height: 24px;
   margin: 0;
-  border: 1px solid color-mix(in srgb, CanvasText 10%, transparent);
+  border: 0;
   border-radius: 999px;
-  background: color-mix(in srgb, CanvasText 10%, Canvas 90%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: color-mix(in srgb, CanvasText 18%, Canvas 82%);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, CanvasText 14%, transparent),
+    inset 0 1px 1px rgba(255, 255, 255, 0.06);
   cursor: pointer;
   transition:
     background-color 120ms ease,
-    border-color 120ms ease;
+    box-shadow 120ms ease;
 }
 
 .settings-row-toggle input[type="checkbox"]::after {
   content: "";
   position: absolute;
-  top: 1px;
-  left: 1px;
-  width: 16px;
-  height: 16px;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
   border-radius: 999px;
-  background: white;
+  background: rgba(255, 255, 255, 0.98);
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+    0 1px 3px rgba(0, 0, 0, 0.24),
+    0 0.5px 0 rgba(255, 255, 255, 0.42);
   transition: transform 120ms ease;
 }
 
 .settings-row-toggle input[type="checkbox"]:checked {
-  border-color: color-mix(in srgb, AccentColor 42%, transparent);
   background: color-mix(in srgb, AccentColor 78%, white 22%);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, AccentColor 24%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
 .settings-row-toggle input[type="checkbox"]:checked::after {
@@ -6090,6 +6119,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0 10px 0 6px;
 }
 
 .profiles-table-row .profile-row-actions-trigger {
@@ -6098,8 +6128,8 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .profile-row-actions-trigger {
-  min-width: 34px;
-  padding: 0 10px;
+  min-width: 32px;
+  padding: 0 8px;
   letter-spacing: 0.08em;
 }
 
@@ -6113,15 +6143,17 @@ html[data-appearance="dark"] .tool-logo-codex {
 .profile-row-actions-menu {
   position: absolute;
   top: calc(100% + 6px);
-  right: 0;
-  z-index: 4;
+  right: 6px;
+  z-index: 12;
   display: grid;
   min-width: 168px;
   padding: 6px;
   border-radius: 10px;
   border: 1px solid color-mix(in srgb, CanvasText 10%, transparent);
   background: color-mix(in srgb, Canvas 98%, CanvasText 2%);
-  box-shadow: var(--shadow-panel);
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.16),
+    var(--shadow-panel);
 }
 
 .profile-row-actions-menu button {

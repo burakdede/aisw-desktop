@@ -1389,7 +1389,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByText("Detected shell")).toBeInTheDocument();
     });
 
     const handlers = (window as typeof window & {
@@ -1592,7 +1592,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch claude profile"), {
       target: { value: "personal" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Switch" }));
+    fireEvent.click(screen.getByRole("button", { name: "Activate Profile" }));
 
     await waitFor(() => {
       expect(screen.getByText("Last result: Switched Claude to Personal.")).toBeInTheDocument();
@@ -1672,7 +1672,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch codex profile"), {
       target: { value: "work" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Switch" }));
+    fireEvent.click(screen.getByRole("button", { name: "Activate Profile" }));
 
     await waitFor(() => {
       expect(screen.getByText("Last result: Switched Codex to Code Work.")).toBeInTheDocument();
@@ -1740,7 +1740,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch claude profile"), {
       target: { value: "personal" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Switch" }));
+    fireEvent.click(screen.getByRole("button", { name: "Activate Profile" }));
     await waitFor(() => {
       expect(resolveUseProfile).toBeDefined();
     });
@@ -1826,7 +1826,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch codex profile"), {
       target: { value: "work" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Switch" }));
+    fireEvent.click(screen.getByRole("button", { name: "Activate Profile" }));
 
     await waitFor(() => {
       expect(
@@ -2466,7 +2466,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch claude profile"), {
       target: { value: "personal" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Switch" }));
+    fireEvent.click(screen.getByRole("button", { name: "Activate Profile" }));
 
     await waitFor(() => {
       expect(
@@ -2570,7 +2570,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch claude profile"), {
       target: { value: "personal" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Switch" }));
+    fireEvent.click(screen.getByRole("button", { name: "Activate Profile" }));
 
     await waitFor(() => {
       expect(
@@ -5543,6 +5543,7 @@ describe("App", () => {
     await waitFor(() =>
       expect(getProfilesInspector().getAllByText("Keychain").length).toBeGreaterThan(0),
     );
+    fireEvent.click(screen.getByRole("button", { name: "Storage Details" }));
     expect(screen.getByText("Hide Storage Details")).toBeInTheDocument();
     expect(getProfilesInspector().getAllByText("Keychain").length).toBeGreaterThan(0);
     expect(getProfilesInspector().getAllByText("Needs Attention").length).toBeGreaterThan(0);
@@ -6727,7 +6728,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch claude profile"), {
       target: { value: "personal" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Switch" }));
+    fireEvent.click(screen.getByRole("button", { name: "Activate Profile" }));
     await waitFor(() => {
       expect(resolveUseProfile).toBeDefined();
     });
@@ -8484,13 +8485,6 @@ describe("App", () => {
 
     expect(screen.getByLabelText("Launch at login")).not.toBeChecked();
     expect(screen.getByLabelText("Show menu bar icon")).toBeChecked();
-    await waitFor(() => {
-      expect(
-        screen.getByText(
-          "Open AI Switch automatically after you sign in to this computer.",
-        ),
-      ).toBeInTheDocument();
-    });
     fireEvent.click(screen.getByLabelText("Launch at login"));
 
     fireEvent.change(screen.getByLabelText("Appearance"), {
