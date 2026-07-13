@@ -266,19 +266,10 @@ export function ActivityPanel({
                                 <strong>{entry.label}</strong>
                               </span>
                             </div>
-                            <p className="activity-event-detail">{activityPreview(entry)}</p>
+                            <p className="activity-event-detail">{activitySecondaryLine(entry)}</p>
                           </div>
                           <div className="activity-event-tail">
-                            {entry.scopeType === "tool" && entry.scopeTool ? (
-                              <ToolBrand
-                                tool={entry.scopeTool}
-                                className="tool-brand-compact"
-                                logoSize={15}
-                                shortName
-                              />
-                            ) : (
-                              <span>{entry.scopeLabel}</span>
-                            )}
+                            <span>{entry.status === "success" ? "Success" : "Failed"}</span>
                           </div>
                         </button>
                       ))}
@@ -306,12 +297,13 @@ export function ActivityPanel({
                     <h3>{selectedEntry.label}</h3>
                     <p className={`activity-inspector-status activity-inspector-status-${selectedEntry.status}`}>
                       <span aria-hidden="true">{selectedEntry.status === "success" ? "●" : "▲"}</span>
-                      <span>{selectedEntry.status === "success" ? "Success" : "Needs attention"}</span>
+                      <span>{selectedEntry.status === "success" ? "Success" : "Failed"}</span>
                     </p>
                   </div>
                 </header>
                 <p className="inline-note activity-inspector-message">{selectedEntry.message}</p>
                 <KeyValueGrid
+                  variant="plain"
                   rows={[
                     {
                       label: "Recorded",
@@ -475,6 +467,18 @@ function activityPreview(entry: ActivityEntry) {
     return entry.message;
   }
   return entry.message;
+}
+
+function activitySecondaryLine(entry: ActivityEntry) {
+  if (entry.resultSummary) {
+    return entry.resultSummary;
+  }
+
+  if (entry.scopeType === "tool" && entry.scopeTool) {
+    return `${formatToolScope(entry.scopeTool)} · ${activityPreview(entry)}`;
+  }
+
+  return activityPreview(entry);
 }
 
 function formatToolScope(tool: string) {

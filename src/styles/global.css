@@ -4508,27 +4508,23 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .activity-master-detail {
   min-height: 0;
-  border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
-  border-radius: 12px;
+  border: 0;
+  border-radius: 0;
   overflow: hidden;
-  background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
+  background: transparent;
 }
 
 .activity-pane {
   min-width: 0;
   min-height: 0;
-  background: color-mix(in srgb, Canvas 99%, CanvasText 1%);
-}
-
-.activity-list-pane {
-  border-right: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
+  background: var(--pane-bg);
 }
 
 .activity-list-body {
   min-height: 0;
   max-height: 100%;
   overflow: auto;
-  padding: 16px;
+  padding: 8px 0 0;
   display: grid;
   align-content: start;
   gap: 18px;
@@ -4536,32 +4532,33 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .activity-group {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .activity-group-heading {
   margin: 0;
+  padding: 0 16px;
   font-size: 11px;
-  line-height: 1.2;
-  letter-spacing: 0.08em;
+  line-height: 1.25;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-tertiary);
 }
 
 .activity-group-list {
   display: grid;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
-  overflow: hidden;
+  overflow: clip;
 }
 
 .activity-event-row {
   display: grid;
-  grid-template-columns: 84px minmax(0, 1fr) minmax(120px, 0.5fr);
-  align-items: start;
+  grid-template-columns: 84px minmax(0, 1fr) 112px;
+  min-height: 56px;
+  align-items: center;
   gap: 12px;
   width: 100%;
-  padding: 12px 14px;
+  padding: 10px 16px;
   border: 0;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
   background: transparent;
@@ -4574,7 +4571,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .activity-event-row:hover {
-  background: color-mix(in srgb, AccentColor 4%, Canvas 96%);
+  background: color-mix(in srgb, CanvasText 4%, Canvas 96%);
 }
 
 .activity-event-row-selected {
@@ -4582,7 +4579,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .activity-event-time {
-  font-size: 12px;
+  font-size: var(--type-footnote);
   line-height: 1.35;
   color: var(--text-secondary);
 }
@@ -4618,28 +4615,36 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .activity-event-status strong {
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: var(--type-body);
   line-height: 1.35;
+  font-weight: 500;
 }
 
 .activity-event-detail {
   margin: 0;
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: var(--type-footnote);
+  line-height: 1.35;
   color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .activity-event-tail {
   min-width: 0;
   justify-self: end;
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: 11px;
+  line-height: 1.25;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--text-tertiary);
 }
 
 .activity-inspector-surface {
   min-height: 0;
-  padding: 16px;
+  padding: 0;
+  border-left: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   overflow: auto;
 }
 
@@ -4647,22 +4652,23 @@ html[data-appearance="dark"] .tool-logo-codex {
   display: grid;
   align-content: start;
   gap: 14px;
+  padding: 16px;
 }
 
 .activity-inspector-header h3 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 24px;
-  line-height: 1.15;
-  font-weight: 650;
+  font-size: 15px;
+  line-height: 1.3;
+  font-weight: 600;
 }
 
 .activity-inspector-status {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--type-footnote);
   line-height: 1.35;
 }
 
@@ -4676,6 +4682,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .activity-inspector-message {
   margin: 0;
+  color: var(--text-secondary);
 }
 
 .activity-disclosure {
@@ -4686,6 +4693,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .activity-disclosure summary {
   cursor: pointer;
   font-weight: 600;
+  font-size: var(--type-body);
   color: var(--text-primary);
 }
 
@@ -4705,7 +4713,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .activity-footer-line p {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--type-footnote);
   line-height: 1.4;
   color: var(--text-tertiary);
 }
@@ -4713,7 +4721,10 @@ html[data-appearance="dark"] .tool-logo-codex {
 .activity-empty-state {
   display: grid;
   gap: 8px;
-  padding: 10px 2px;
+  justify-items: center;
+  align-content: start;
+  padding: 120px 24px 24px;
+  text-align: center;
 }
 
 .activity-empty-state h3 {
@@ -4726,6 +4737,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .activity-empty-state-compact {
   min-height: 100%;
   align-content: start;
+  padding-top: 80px;
 }
 
 .settings-screen {
