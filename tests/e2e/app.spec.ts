@@ -1537,11 +1537,13 @@ test("shows runtime detection and shell guidance in settings", async ({ page }) 
   await expect(runtimeGroup.getByText("0.3.7")).toBeVisible();
   await expect(runtimeGroup.getByText("Status")).toBeVisible();
   await expect(runtimeGroup.getByText("Ready")).toBeVisible();
-  await expect(runtimeGroup.getByText("System path")).toBeVisible();
+  await expect(runtimeGroup.getByText("Current path")).toBeVisible();
+  await expect(runtimeGroup.getByText("/Applications/AI Switch.app/Contents/Resources/aisw")).toBeVisible();
+  await expect(runtimeGroup.getByText("System runtime")).toBeVisible();
   await expect(runtimeGroup.getByText("/opt/homebrew/bin/aisw")).toBeVisible();
 
   await page.getByRole("button", { name: "Terminal Integration" }).click();
-  await expect(page.getByRole("heading", { name: "Terminal Integration" })).toBeVisible();
+  await expect(page.locator(".settings-section-header").getByRole("heading", { name: "Terminal Integration" })).toBeVisible();
   await expect(page.getByText("Detected shell")).toBeVisible();
   await expect(page.getByText("Config file")).toBeVisible();
   await expect(page.getByText("~/.zshrc")).toBeVisible();
@@ -1660,11 +1662,11 @@ test("switches from a custom runtime back to the system aisw selection", async (
   const runtimeGroup = page.locator("section.settings-group").filter({
     has: page.getByRole("heading", { name: "AISW Runtime" }),
   });
-  const systemPathRow = runtimeGroup.locator(".settings-row", { hasText: "System path" });
+  const systemPathRow = runtimeGroup.locator(".settings-row", { hasText: "System runtime" });
 
   await expect(runtimePath).toHaveValue("");
   await expect(page.getByLabel("Runtime source")).toHaveValue("system");
-  await expect(systemPathRow.getByText("System path")).toBeVisible();
+  await expect(systemPathRow.getByText("System runtime")).toBeVisible();
   await expect(systemPathRow.getByText("/opt/homebrew/bin/aisw")).toBeVisible();
 });
 

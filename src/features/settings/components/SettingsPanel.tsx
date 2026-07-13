@@ -114,6 +114,14 @@ export function SettingsPanel({
   const launchAtLoginSupported = launchAtLogin.data?.supported ?? false;
   const launchAtLoginEnabled = launchAtLogin.data?.enabled ?? false;
   const launchAtLoginDetail = launchAtLogin.data?.detail;
+  const runtimePathValue = selectedRuntimePath(
+    {
+      ...settings,
+      runtime_kind: runtimeKind,
+      runtime_path: effectiveRuntimePath(runtimeKind, runtimePath) || null,
+    },
+    runtimeStatus,
+  );
 
   useEffect(() => {
     if (!shellGuidance.data?.variants.length) return;
@@ -386,11 +394,7 @@ export function SettingsPanel({
                 <SettingsGroup title="Startup">
                   <ToggleRow
                     label="Launch at login"
-                    description={
-                      launchAtLoginSupported
-                        ? "Open AI Switch automatically after you sign in to this computer."
-                        : launchAtLoginDetail ?? "Launch at login is not available in this environment."
-                    }
+                    description={launchAtLoginSupported ? undefined : launchAtLoginDetail ?? "Launch at login is not available in this environment."}
                     control={
                       <input
                         type="checkbox"
@@ -438,8 +442,8 @@ export function SettingsPanel({
                       ))}
                     </select>
                   </SettingsRow>
-                  {launchMessage ? <p className="inline-note">{launchMessage}</p> : null}
                 </SettingsGroup>
+                {launchMessage ? <p className="inline-note settings-feedback-note">{launchMessage}</p> : null}
 
               </div>
             ) : null}
@@ -447,6 +451,15 @@ export function SettingsPanel({
             {selectedSection === "runtime" ? (
               <div className="settings-section-stack">
                 <SettingsGroup title="AISW Runtime">
+                  <SettingsStaticRow label="Bundled runtime" value={runtimeStatus.version?.version ?? "Date Unavailable"} />
+                  <SettingsStaticRow
+                    label="Status"
+                    value={runtimeStatus.compatible ? "Ready" : "Needs Attention"}
+                  />
+                  <SettingsStaticRow
+                    label="Current path"
+                    value={<code className="settings-path-value">{runtimePathValue}</code>}
+                  />
                   <SettingsRow label="Runtime source">
                     <select
                       aria-label="Runtime source"
@@ -470,16 +483,11 @@ export function SettingsPanel({
                       <option value="custom">Custom path</option>
                     </select>
                   </SettingsRow>
-                  <SettingsStaticRow label="Bundled runtime" value={runtimeStatus.version?.version ?? "Unknown"} />
                   <SettingsStaticRow
-                    label="Status"
-                    value={runtimeStatus.compatible ? "Ready" : "Needs attention"}
+                    label="System runtime"
+                    value={<code className="settings-path-value">{runtimeStatus.inventory.system_path ?? "Not found"}</code>}
                   />
-                  <SettingsStaticRow
-                    label="System path"
-                    value={runtimeStatus.inventory.system_path ?? "Not found"}
-                  />
-                  <SettingsRow label="Engine path">
+                  <SettingsRow label="Custom runtime">
                     <input
                       aria-label="Engine path"
                       value={runtimePath}
@@ -499,9 +507,9 @@ export function SettingsPanel({
                 </SettingsGroup>
 
                 <SettingsGroup title="AISW Data">
-                  <SettingsStaticRow label="AISW home" value={settings.aisw_home ?? "~/.aisw"} />
+                  <SettingsStaticRow label="AISW home" value={<code className="settings-path-value">{settings.aisw_home ?? "~/.aisw"}</code>} />
                   <SettingsActionRow
-                    label="App data folder"
+                    label="Local data folder"
                     action={
                       <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
                         Reveal in Finder
@@ -518,13 +526,13 @@ export function SettingsPanel({
 
             {selectedSection === "shell" ? (
               <div className="settings-section-stack">
-                <SettingsGroup title="Shell hook">
+                <SettingsGroup title="Terminal Integration">
                   <SettingsStaticRow
                     label="Detected shell"
                     value={
                       shellGuidance.data?.detected_shell
                         ? titleCase(shellGuidance.data.detected_shell)
-                        : "Unknown"
+                        : "Unavailable"
                     }
                   />
                   <SettingsStaticRow
@@ -534,17 +542,17 @@ export function SettingsPanel({
                         ? "Installed"
                         : shellCheck?.status === "warn"
                           ? "Not installed"
-                          : "Unknown"
+                          : "Unavailable"
                     }
                   />
                   <SettingsStaticRow
                     label="Config file"
-                    value={selectedVariant?.config_path ?? "Unavailable"}
+                    value={<code className="settings-path-value">{selectedVariant?.config_path ?? "Unavailable"}</code>}
                   />
                   <SettingsStaticRow label="Completion scripts" value="Available in this build" />
                   {selectedVariant ? (
                     <SettingsActionRow
-                      label="Install or verify"
+                      label="Shell hook actions"
                       action={
                         <div className="button-row">
                           <button
@@ -572,11 +580,11 @@ export function SettingsPanel({
                     </p>
                   )}
                 </SettingsGroup>
-                <p className="inline-note settings-section-note">
+                <p className="inline-note settings-feedback-note settings-section-note">
                   Current terminal sessions only need the hook when they must receive live environment changes immediately.
                 </p>
 
-                {copyMessage ? <p className="inline-note">{copyMessage}</p> : null}
+                {copyMessage ? <p className="inline-note settings-feedback-note">{copyMessage}</p> : null}
               </div>
             ) : null}
 
@@ -590,7 +598,7 @@ export function SettingsPanel({
                 </SettingsGroup>
 
                 <SettingsGroup title="Local Data">
-                  <SettingsStaticRow label="AISW data folder" value={settings.aisw_home ?? "~/.aisw"} />
+                  <SettingsStaticRow label="AISW data folder" value={<code className="settings-path-value">{settings.aisw_home ?? "~/.aisw"}</code>} />
                   <SettingsActionRow
                     label="Finder"
                     action={
@@ -610,8 +618,8 @@ export function SettingsPanel({
                       </button>
                     }
                   />
-                  {securityMessage ? <p className="inline-note">{securityMessage}</p> : null}
                 </SettingsGroup>
+                {securityMessage ? <p className="inline-note settings-feedback-note">{securityMessage}</p> : null}
               </div>
             ) : null}
 
@@ -668,10 +676,10 @@ export function SettingsPanel({
                 </SettingsGroup>
 
                 <SettingsGroup title="Bundled AISW Engine">
-                  <SettingsStaticRow label="Version" value={runtimeStatus.version?.version ?? "Unknown"} />
+                  <SettingsStaticRow label="Version" value={runtimeStatus.version?.version ?? "Date Unavailable"} />
                   <SettingsStaticRow
                     label="Compatibility"
-                    value={runtimeStatus.compatible ? "Supported" : "Needs attention"}
+                    value={runtimeStatus.compatible ? "Supported" : "Needs Attention"}
                   />
                 </SettingsGroup>
 
@@ -772,8 +780,8 @@ export function SettingsPanel({
                     />
                   </SettingsRow>
                 </SettingsGroup>
-                {advancedMessage ? <p className="inline-note">{advancedMessage}</p> : null}
-                {securityMessage ? <p className="inline-note">{securityMessage}</p> : null}
+                {advancedMessage ? <p className="inline-note settings-feedback-note">{advancedMessage}</p> : null}
+                {securityMessage ? <p className="inline-note settings-feedback-note">{securityMessage}</p> : null}
                 {updateSettingsMutation.error ? (
                   <MutationErrorCard title="Settings could not be saved" error={updateSettingsMutation.error} />
                 ) : null}
@@ -820,7 +828,7 @@ function SettingsStaticRow({ label, value }: { label: string; value: ReactNode }
   return (
     <div className="settings-row settings-row-static">
       <span className="settings-row-label">{label}</span>
-      <strong className="settings-row-value">{value}</strong>
+      <div className="settings-row-value">{value}</div>
     </div>
   );
 }

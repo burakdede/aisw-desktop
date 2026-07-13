@@ -8605,7 +8605,9 @@ describe("App", () => {
       expect(runtimeContent.getByText("0.3.7")).toBeInTheDocument();
       expect(runtimeContent.getByText("Status")).toBeInTheDocument();
       expect(runtimeContent.getByText("Ready")).toBeInTheDocument();
-      expect(runtimeContent.getByText("System path")).toBeInTheDocument();
+      expect(runtimeContent.getByText("Current path")).toBeInTheDocument();
+      expect(runtimeContent.getByText("/Applications/AI Switch.app/Contents/Resources/aisw")).toBeInTheDocument();
+      expect(runtimeContent.getByText("System runtime")).toBeInTheDocument();
       expect(runtimeContent.getByText("/opt/homebrew/bin/aisw")).toBeInTheDocument();
     });
   });
