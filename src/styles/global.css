@@ -5541,7 +5541,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   min-height: 34px;
 }
 
-.settings-row-toggle input,
+.settings-row-toggle .settings-switch,
 .settings-row-action .button-row {
   justify-self: end;
 }
@@ -5550,27 +5550,27 @@ html[data-appearance="dark"] .tool-logo-codex {
   gap: 6px;
 }
 
-.settings-row-toggle input[type="checkbox"] {
-  appearance: none;
-  -webkit-appearance: none;
+.settings-switch {
   position: relative;
   width: 38px;
   min-width: 38px;
   height: 24px;
   margin: 0;
+  padding: 0;
   border: 0;
   border-radius: 999px;
-  background: color-mix(in srgb, CanvasText 18%, Canvas 82%);
+  background: color-mix(in srgb, CanvasText 16%, Canvas 84%);
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, CanvasText 14%, transparent),
-    inset 0 1px 1px rgba(255, 255, 255, 0.06);
+    inset 0 0 0 1px color-mix(in srgb, CanvasText 18%, transparent),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
   cursor: pointer;
   transition:
     background-color 120ms ease,
-    box-shadow 120ms ease;
+    box-shadow 120ms ease,
+    opacity 120ms ease;
 }
 
-.settings-row-toggle input[type="checkbox"]::after {
+.settings-switch::after {
   content: "";
   position: absolute;
   top: 2px;
@@ -5585,18 +5585,23 @@ html[data-appearance="dark"] .tool-logo-codex {
   transition: transform 120ms ease;
 }
 
-.settings-row-toggle input[type="checkbox"]:checked {
+.settings-switch[aria-checked="true"] {
   background: color-mix(in srgb, AccentColor 78%, white 22%);
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, AccentColor 24%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
-.settings-row-toggle input[type="checkbox"]:checked::after {
+.settings-switch[aria-checked="true"]::after {
   transform: translateX(14px);
 }
 
-.settings-row-toggle input[type="checkbox"]:disabled {
+.settings-switch:focus-visible {
+  outline: 2px solid color-mix(in srgb, AccentColor 72%, white 28%);
+  outline-offset: 2px;
+}
+
+.settings-switch:disabled {
   cursor: default;
   opacity: 0.52;
 }

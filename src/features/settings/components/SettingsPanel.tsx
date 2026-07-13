@@ -396,18 +396,20 @@ export function SettingsPanel({
                     label="Launch at login"
                     description={launchAtLoginSupported ? undefined : launchAtLoginDetail ?? "Launch at login is not available in this environment."}
                     control={
-                      <input
-                        type="checkbox"
+                      <button
+                        type="button"
+                        role="switch"
+                        className="settings-switch"
                         aria-label="Launch at login"
-                        checked={launchAtLoginEnabled}
+                        aria-checked={launchAtLoginEnabled}
                         disabled={
                           launchAtLogin.isLoading ||
                           launchAtLoginMutation.isPending ||
                           !launchAtLoginSupported
                         }
-                        onChange={(event) => {
+                        onClick={() => {
                           setLaunchMessage("");
-                          launchAtLoginMutation.mutate(event.target.checked);
+                          launchAtLoginMutation.mutate(!launchAtLoginEnabled);
                         }}
                       />
                     }
@@ -415,12 +417,14 @@ export function SettingsPanel({
                   <ToggleRow
                     label="Show menu bar icon"
                     control={
-                      <input
-                        type="checkbox"
+                      <button
+                        type="button"
+                        role="switch"
+                        className="settings-switch"
                         aria-label="Show menu bar icon"
-                        checked={showMenuBarIcon}
-                        onChange={(event) =>
-                          updateGeneralPreferences({ showMenuBarIcon: event.target.checked })
+                        aria-checked={showMenuBarIcon}
+                        onClick={() =>
+                          updateGeneralPreferences({ showMenuBarIcon: !showMenuBarIcon })
                         }
                       />
                     }

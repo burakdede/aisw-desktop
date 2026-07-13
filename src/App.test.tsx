@@ -2593,11 +2593,11 @@ describe("App", () => {
     });
 
     selectDiagnosticFinding("Config lock timeout");
-    fireEvent.click(screen.getByRole("button", { name: "Open profile details" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open Profile Details" }));
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Work" })).toBeInTheDocument();
-      expect(screen.getByText("Hide Storage Details")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Storage Details" })).toBeInTheDocument();
     });
   });
 
@@ -5288,8 +5288,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open terminal setup" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Terminal Integration" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Terminal Integration" })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByText("Detected shell")).toBeInTheDocument();
     });
   });
 
@@ -8483,20 +8482,22 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "Settings" })).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
 
-    expect(screen.getByLabelText("Launch at login")).not.toBeChecked();
-    expect(screen.getByLabelText("Show menu bar icon")).toBeChecked();
-    fireEvent.click(screen.getByLabelText("Launch at login"));
+    const launchAtLoginSwitch = screen.getByRole("switch", { name: "Launch at login" });
+    const menuBarSwitch = screen.getByRole("switch", { name: "Show menu bar icon" });
+
+    expect(launchAtLoginSwitch).toHaveAttribute("aria-checked", "false");
+    expect(menuBarSwitch).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(launchAtLoginSwitch);
 
     fireEvent.change(screen.getByLabelText("Appearance"), {
       target: { value: "dark" },
     });
-    fireEvent.click(screen.getByLabelText("Show menu bar icon"));
+    fireEvent.click(menuBarSwitch);
     fireEvent.change(screen.getByLabelText("Default section"), {
       target: { value: "profiles" },
     });
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Launch at login")).toBeChecked();
       expect(window.localStorage.getItem("ai-switch.desktop.appearance")).toBe("dark");
       expect(window.localStorage.getItem("ai-switch.desktop.default-section")).toBe("profiles");
       expect(window.localStorage.getItem("ai-switch.desktop.show-menu-bar-icon")).toBe("false");

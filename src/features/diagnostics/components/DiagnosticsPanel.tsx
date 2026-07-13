@@ -368,6 +368,7 @@ export function DiagnosticsPanel({
                     <section key={group.id} className="diagnostics-finding-group">
                       <div className="diagnostics-finding-group-header">
                         <p className="card-kicker">{group.label}</p>
+                        <span className="diagnostics-group-count">{group.items.length}</span>
                       </div>
                       <div className="stack-list">
                         {group.items.map((finding) => (
@@ -417,7 +418,7 @@ export function DiagnosticsPanel({
                 <p className="inline-note">
                   All configured tools match their active AISW profiles and local storage checks passed.
                 </p>
-                <p className="inline-note">{verifiedLabel}</p>
+                <p className="inline-note">Verified {verifiedLabel.toLowerCase()}</p>
                 <div className="button-row">
                   <button
                     className="ghost-button"
@@ -602,12 +603,12 @@ ${primaryFindingFix?.label ? `# ${primaryFindingFix.label}` : "# Review the expl
                 ))}
               </div>
             ) : (
-              <article className="diagnostic-card diagnostic-pass">
+              <div className="diagnostics-sheet-empty">
                 <h3>No safe repairs queued</h3>
                 <p className="inline-note">
                   Diagnostics did not find any safe automatic repairs to apply right now.
                 </p>
-              </article>
+              </div>
             )}
             <footer className="quick-switch-footer">
               <div className="quick-switch-selection">
