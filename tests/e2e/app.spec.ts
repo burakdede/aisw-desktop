@@ -966,61 +966,64 @@ test("opens the quick switch palette from the keyboard shortcut", async ({ page 
   await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "Work" })).toBeVisible();
 });
 
-test("saves and deletes a local profile set from contexts", async ({ page }) => {
+test("saves and deletes a local profile set from sets", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
   await page.getByRole("button", { name: "Sets" }).click();
+  await page.getByRole("button", { name: "New Set…" }).click();
 
-  const contextsForm = page.locator("form.stacked-form");
-  await contextsForm.getByLabel("Set name").fill("focus-mode");
-  await contextsForm.getByLabel("Label").fill("Focus Mode");
-  await contextsForm.getByLabel("Claude").selectOption("work");
-  await contextsForm.getByLabel("Codex").selectOption("work");
-  await contextsForm.getByRole("button", { name: "Save set" }).click();
+  const dialog = page.getByRole("dialog", { name: "New Set" });
+  await dialog.getByLabel("Set name").fill("focus-mode");
+  await dialog.getByLabel("Display label").fill("Focus Mode");
+  await dialog.getByLabel("Claude Code").selectOption("work");
+  await dialog.getByLabel("Codex CLI").selectOption("work");
+  await dialog.getByRole("button", { name: "Create Set" }).click();
 
-  await expect(page.getByText("Saved profile set Focus Mode.")).toBeVisible();
-  const focusModeRow = page.locator(".list-row").filter({ hasText: "Focus Mode" });
-  await expect(focusModeRow).toHaveCount(1);
-  await focusModeRow.getByRole("button", { name: "Delete" }).click();
-  await expect(page.getByText("Deleted profile set Focus Mode.")).toBeVisible();
-  await expect(focusModeRow).toHaveCount(0);
+  await expect(page.getByText("Saved set Focus Mode.")).toBeVisible();
+  await page.getByRole("button", { name: "Inspect set Focus Mode" }).click();
+  await page.getByRole("button", { name: "More actions for Focus Mode" }).click();
+  await page.getByRole("menuitem", { name: "Remove…" }).click();
+  await expect(page.getByText("Deleted set Focus Mode.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Inspect set Focus Mode" })).toHaveCount(0);
 });
 
-test("renames a local profile set from contexts without leaving the old entry behind", async ({ page }) => {
+test("renames a local profile set from sets without leaving the old entry behind", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
   await page.getByRole("button", { name: "Sets" }).click();
+  await page.getByRole("button", { name: "Inspect set Client Acme" }).click();
+  await page.getByRole("button", { name: "Edit…" }).click();
 
-  await page.locator(".list-row").filter({ hasText: "Client Acme" }).getByRole("button", { name: "Edit" }).click();
+  const dialog = page.getByRole("dialog", { name: "Edit Set" });
+  await expect(dialog.getByLabel("Set name")).toHaveValue("client-acme");
+  await expect(dialog.getByRole("button", { name: "Save Set" })).toBeVisible();
 
-  const contextsForm = page.locator("form.stacked-form");
-  await expect(contextsForm.getByLabel("Set name")).toHaveValue("client-acme");
-  await expect(contextsForm.getByRole("button", { name: "Update set" })).toBeVisible();
+  await dialog.getByLabel("Set name").fill("client-acme-prime");
+  await dialog.getByLabel("Display label").fill("Client Acme Prime");
+  await dialog.getByRole("button", { name: "Save Set" }).click();
 
-  await contextsForm.getByLabel("Set name").fill("client-acme-prime");
-  await contextsForm.getByLabel("Label").fill("Client Acme Prime");
-  await contextsForm.getByRole("button", { name: "Update set" }).click();
-
-  await expect(page.getByText("Updated profile set Client Acme Prime.")).toBeVisible();
-  await expect(page.locator(".list-row").filter({ hasText: "Client Acme Prime" })).toHaveCount(1);
+  await expect(page.getByText("Updated set Client Acme Prime.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Inspect set Client Acme Prime" })).toBeVisible();
   await expect(page.getByText("Client Acme", { exact: true })).toHaveCount(0);
 });
 
-test("activates a local profile set from contexts", async ({ page }) => {
+test("activates a local profile set from sets", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
   await page.getByRole("button", { name: "Sets" }).click();
+  await page.getByRole("button", { name: "Inspect set Client Acme" }).click();
+  await page.getByRole("button", { name: "Switch to Client Acme" }).click();
 
-  await page.locator(".list-row").filter({ hasText: "Client Acme" }).getByRole("button", { name: "Switch to set" }).click();
-
-  await expect(page.getByText("Activated profile set Client Acme.")).toBeVisible();
-  const activeSetRow = page.locator(".list-row").filter({ hasText: "Client Acme" }).first();
-  await expect(activeSetRow.getByRole("button", { name: "Current set" })).toBeDisabled();
-  await page.getByRole("button", { name: "Project rules" }).click();
-  await expect(page.locator(".section-card").filter({ hasText: "Project rules" }).getByText("Current set: Client Acme")).toBeVisible();
+  await expect(page.getByText("Activated saved set Client Acme.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Current" })).toBeDisabled();
+  await page.getByRole("button", { name: "Project Rules" }).click();
+  await expect(page.getByRole("button", { name: "Inspect rule for Client Acme" })).toBeVisible();
+  await page.getByRole("button", { name: "Inspect rule for Client Acme" }).click();
+  await expect(page.getByText("Rule type")).toBeVisible();
+  await expect(page.getByText("Match value")).toBeVisible();
 });
 
 test("uses native profile-set activation when a matching CLI context exists", async ({ page }) => {
@@ -1263,17 +1266,18 @@ test("routes stale workspace recovery into contexts instead of sending an invali
     });
 });
 
-test("uses saved profile labels in context summaries and selectors", async ({ page }) => {
-  await installDesktopMock(page, "labelOverrides");
+test("uses set summaries and selectors in the redesigned sets workspace", async ({ page }) => {
+  await installDesktopMock(page, "switching");
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Get Started" }).click();
   await page.getByRole("button", { name: "Sets" }).click();
   await page.getByRole("button", { name: "Set Library" }).click();
 
-  await expect(page.getByText("claude: Office · codex: Code Work · gemini: none")).toBeVisible();
-  const contextsForm = page.locator("form.stacked-form");
-  await expect(contextsForm.getByLabel("Codex").getByRole("option", { name: "Code Work" })).toHaveCount(1);
+  await expect(page.getByText("Claude: work · Codex: work · Gemini: —")).toBeVisible();
+  await page.getByRole("button", { name: "New Set…" }).click();
+  const dialog = page.getByRole("dialog", { name: "New Set" });
+  await expect(dialog.getByLabel("Claude Code").getByRole("option", { name: "work" })).toHaveCount(1);
+  await expect(dialog.getByLabel("Codex CLI").getByRole("option", { name: "work" })).toHaveCount(1);
 });
 
 test("binds and resolves workspace context from the workspaces panel", async ({ page }) => {

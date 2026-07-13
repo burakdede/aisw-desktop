@@ -2592,6 +2592,12 @@ html[data-appearance="dark"] .tool-logo-codex {
   border-bottom: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
 }
 
+.sets-rules-pane-header {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+
 .sets-pane-header h3,
 .sets-inspector-header h3,
 .sets-secondary-header h4,
@@ -2703,6 +2709,10 @@ html[data-appearance="dark"] .tool-logo-codex {
   overflow: auto;
   gap: 12px;
   padding: 0 16px 16px;
+}
+
+.sets-rules-list-panel {
+  grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
 .sets-inspector-subtitle {
@@ -2850,6 +2860,11 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .sets-rule-table-row:last-child {
   border-bottom: 0;
+}
+
+.profile-row-actions-trigger-visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .sets-library-row:hover,

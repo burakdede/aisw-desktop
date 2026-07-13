@@ -34,6 +34,12 @@ type EditableProfileSet = {
 
 type BindScope = "default" | "path" | "git_remote";
 type SetMode = "sets" | "rules";
+type EditableRule = {
+  source: WorkspaceUnbindInput | null;
+  scope: BindScope;
+  context: string;
+  targetValue: string;
+};
 
 export function SetsPanel({
   snapshot,
@@ -74,10 +80,17 @@ export function SetsPanel({
   const [setEditorOpen, setSetEditorOpen] = useState(false);
   const [ruleEditorOpen, setRuleEditorOpen] = useState(false);
   const [setMenuOpen, setSetMenuOpen] = useState(false);
+  const [rulesMenuOpen, setRulesMenuOpen] = useState(false);
   const [workspaceOverrideDismissed, setWorkspaceOverrideDismissed] = useState(false);
   const [scope, setScope] = useState<BindScope>("default");
   const [context, setContext] = useState("");
   const [targetValue, setTargetValue] = useState("");
+  const [ruleDraft, setRuleDraft] = useState<EditableRule>({
+    source: null,
+    scope: "default",
+    context: "",
+    targetValue: "",
+  });
   const [selectedBindingKey, setSelectedBindingKey] = useState<string | null>(null);
   const [setDraft, setSetDraft] = useState<EditableProfileSet>({
     sourceName: null,
@@ -163,11 +176,12 @@ export function SetsPanel({
     : workspaceCard.status === "match"
       ? "Ready"
       : "No active match";
-  const requiresExplicitTarget = scope !== "default";
-  const trimmedTargetValue = targetValue.trim();
+  const requiresExplicitTarget = ruleDraft.scope !== "default";
+  const trimmedTargetValue = ruleDraft.targetValue.trim();
   const canSaveBinding =
-    Boolean(context) && (!requiresExplicitTarget || trimmedTargetValue.length > 0);
-  const canRemoveBinding = scope === "default" || trimmedTargetValue.length > 0;
+    Boolean(ruleDraft.context) && (!requiresExplicitTarget || trimmedTargetValue.length > 0);
+  const canRemoveBinding = ruleDraft.scope === "default" || trimmedTargetValue.length > 0;
+  const isEditingRule = ruleDraft.source !== null;
 
   useEffect(() => {
     if (selectedSetName && localSets.some((entry) => entry.name === selectedSetName)) {
@@ -177,10 +191,13 @@ export function SetsPanel({
   }, [localSets, selectedSetName]);
 
   useEffect(() => {
-    if (!bindingOptions.some((entry) => entry.value === context)) {
-      setContext(bindingOptions[0]?.value ?? "");
+    if (!bindingOptions.some((entry) => entry.value === ruleDraft.context)) {
+      setRuleDraft((current) => ({
+        ...current,
+        context: bindingOptions[0]?.value ?? "",
+      }));
     }
-  }, [bindingOptions, context]);
+  }, [bindingOptions, ruleDraft.context]);
 
   useEffect(() => {
     if (selectedBindingKey && ruleEntries.some((entry) => entry.key === selectedBindingKey)) {
@@ -198,6 +215,10 @@ export function SetsPanel({
   useEffect(() => {
     setSetMenuOpen(false);
   }, [selectedSetName]);
+
+  useEffect(() => {
+    setRulesMenuOpen(false);
+  }, [mode, selectedBindingKey]);
 
   function resetSetDraft() {
     setSetDraft({
@@ -346,12 +367,33 @@ export function SetsPanel({
     );
   }
 
+  function resetRuleDraft() {
+    setRuleDraft({
+      source: null,
+      scope: "default",
+      context: bindingOptions[0]?.value ?? "",
+      targetValue: "",
+    });
+  }
+
   function openRuleEditor() {
+    resetRuleDraft();
+    setRuleEditorOpen(true);
+  }
+
+  function openEditRuleEditor(binding: (typeof ruleEntries)[number]) {
+    setRuleDraft({
+      source: unbindTargetForBinding(binding.scope, binding.target),
+      scope: binding.scope === "path" || binding.scope === "git_remote" ? binding.scope : "default",
+      context: binding.context,
+      targetValue: binding.scope === "default" ? "" : binding.target,
+    });
     setRuleEditorOpen(true);
   }
 
   function closeRuleEditor() {
     setRuleEditorOpen(false);
+    resetRuleDraft();
   }
 
   function activateExpectedWorkspaceMatch() {
@@ -367,23 +409,34 @@ export function SetsPanel({
 
   function submitRule(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!context || !canSaveBinding) {
+    if (!ruleDraft.context || !canSaveBinding) {
       return;
     }
 
-    const selectedContext = bindingOptions.find((entry) => entry.value === context);
+    const selectedContext = bindingOptions.find((entry) => entry.value === ruleDraft.context);
     const label = selectedContext?.label.startsWith("Saved set: ")
       ? selectedContext.label.slice("Saved set: ".length)
       : undefined;
 
     const target =
-      scope === "default"
+      ruleDraft.scope === "default"
         ? { scope: "default" as const }
-        : scope === "path"
+        : ruleDraft.scope === "path"
           ? { scope: "path" as const, path: trimmedTargetValue }
           : { scope: "git_remote" as const, pattern: trimmedTargetValue };
 
-    workspaceBindMutation.mutate({ target, context, label });
+    const saveRule = async () => {
+      if (
+        ruleDraft.source &&
+        JSON.stringify(ruleDraft.source) !== JSON.stringify(unbindTargetForBinding(target.scope, trimmedTargetValue))
+      ) {
+        await workspaceUnbindMutation.mutateAsync(ruleDraft.source);
+      }
+      await workspaceBindMutation.mutateAsync({ target, context: ruleDraft.context, label });
+      closeRuleEditor();
+    };
+
+    void saveRule();
   }
 
   function removeRule(target: WorkspaceUnbindInput) {
@@ -460,17 +513,13 @@ export function SetsPanel({
           value={mode}
           onChange={(value) => setMode(value as SetMode)}
         />
-        <div className="button-row">
-          {mode === "sets" ? (
+        {mode === "sets" ? (
+          <div className="button-row">
             <button className="primary-button" type="button" onClick={openNewSetEditor}>
               New Set…
             </button>
-          ) : (
-            <button className="primary-button" type="button" onClick={openRuleEditor}>
-              Add Rule…
-            </button>
-          )}
-        </div>
+          </div>
+        ) : null}
       </div>
 
       {mode === "sets" ? (
@@ -487,7 +536,7 @@ export function SetsPanel({
                     <div className="sets-secondary-header">
                       <div>
                         <p className="card-kicker">Imported</p>
-                        <h4>CLI contexts</h4>
+                        <h4>CLI Contexts</h4>
                       </div>
                     </div>
                     <div className="stack-list">
@@ -521,7 +570,9 @@ export function SetsPanel({
                             disabled={mutationLock.isBusy || activeContext === entry.name}
                             onClick={() => activateImportedContext(entry.name)}
                           >
-                            {activeContext === entry.name ? "Current" : "Use Set"}
+                            {activeContext === entry.name
+                              ? "Current"
+                              : `Use CLI Context ${contextDisplayLabel(settings, entry.name)}`}
                           </button>
                         </article>
                       ))}
@@ -565,7 +616,7 @@ export function SetsPanel({
                         onClick={() => activateSavedSet(selectedSet)}
                       >
                         {profileSetIsActive(snapshot, selectedSet)
-                          ? "Current Set"
+                          ? "Current"
                           : `Switch to ${profileSetDisplayLabel(selectedSet)}`}
                       </button>
                       <button className="ghost-button" type="button" onClick={() => openEditSetEditor(selectedSet)}>
@@ -636,7 +687,7 @@ export function SetsPanel({
                       <div className="sets-detail-row">
                         <span className="sets-detail-key">Project rules</span>
                         <strong className="sets-detail-value">
-                          {ruleUsageCountByContext.get(selectedSet.name) ?? 0} in use
+                          {ruleUsageCountByContext.get(selectedSet.name) ?? 0} active
                         </strong>
                       </div>
                     </section>
@@ -666,9 +717,7 @@ export function SetsPanel({
               <span>▤</span>
             </div>
             <h3>No sets yet</h3>
-            <p className="inline-note">
-              Combine work, personal, or client profiles so you can switch multiple coding agents in one action.
-            </p>
+            <p className="inline-note">Combine work, personal, or client profiles so you can switch multiple coding agents in one action.</p>
             <div className="button-row">
               <button className="primary-button" type="button" onClick={openNewSetEditor}>
                 Create Set…
@@ -708,7 +757,7 @@ export function SetsPanel({
                   disabled={mutationLock.isBusy}
                   onClick={activateExpectedWorkspaceMatch}
                 >
-                  {expectedWorkspaceTarget ? "Use expected set now" : "Open Sets"}
+                  {expectedWorkspaceTarget ? "Use Expected Set" : "Open Sets"}
                 </button>
                 <button
                   className="ghost-button"
@@ -727,6 +776,44 @@ export function SetsPanel({
             secondaryClassName="sets-rules-inspector-pane"
             primary={
               <section className="sets-pane sets-rules-list-panel" aria-label="Project Rules">
+                <header className="sets-pane-header sets-rules-pane-header">
+                  <div>
+                    <h3>Project Rules</h3>
+                    <p className="inline-note">
+                      Match folders, remotes, or a default fallback to a saved set.
+                    </p>
+                  </div>
+                  <div className="button-row">
+                    <button className="primary-button" type="button" onClick={openRuleEditor}>
+                      Add Rule…
+                    </button>
+                    <div className="profile-row-actions" data-profile-row-actions>
+                      <button
+                        className="ghost-button profile-row-actions-trigger profile-row-actions-trigger-visible"
+                        type="button"
+                        aria-label="Project rules actions"
+                        aria-expanded={rulesMenuOpen}
+                        onClick={() => setRulesMenuOpen((open) => !open)}
+                      >
+                        •••
+                      </button>
+                      {rulesMenuOpen ? (
+                        <div className="profile-row-actions-menu" role="menu" aria-label="Project rules actions">
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setRulesMenuOpen(false);
+                              onOpenContexts();
+                            }}
+                          >
+                            Open Sets
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </header>
                 {currentRuleCount ? (
                   <div className="sets-rule-table">
                     <div className="sets-rule-table-header" aria-hidden="true">
@@ -805,12 +892,16 @@ export function SetsPanel({
                         <strong className="sets-detail-value">{selectedRule.scope === "default" ? "Fallback" : "Explicit"}</strong>
                       </div>
                       <div className="sets-detail-row">
+                        <span className="sets-detail-key">Enabled</span>
+                        <strong className="sets-detail-value">Yes</strong>
+                      </div>
+                      <div className="sets-detail-row">
                         <span className="sets-detail-key">Last matched</span>
                         <strong className="sets-detail-value">{selectedRuleMatched ? "Current project" : "Not matched"}</strong>
                       </div>
                     </section>
                     <div className="button-row sets-inspector-actions">
-                      <button className="ghost-button" type="button" onClick={openRuleEditor}>
+                      <button className="ghost-button" type="button" onClick={() => openEditRuleEditor(selectedRule)}>
                         Edit…
                       </button>
                       <button
@@ -821,7 +912,7 @@ export function SetsPanel({
                           removeRule(unbindTargetForBinding(selectedRule.scope, selectedRule.target))
                         }
                       >
-                        Remove this rule
+                        Remove…
                       </button>
                     </div>
                   </>
@@ -924,7 +1015,7 @@ export function SetsPanel({
 
       {ruleEditorOpen ? (
         <DialogSurface
-          ariaLabel="Rule Editor"
+          ariaLabel={isEditingRule ? "Edit Rule" : "Add Rule"}
           className="quick-switch-palette profile-sheet set-sheet"
           initialFocusSelector="select:not([disabled]), input:not([disabled]), button:not([disabled])"
           onClose={closeRuleEditor}
@@ -933,7 +1024,7 @@ export function SetsPanel({
             <div className="quick-switch-header">
               <div>
                 <p className="card-kicker">Project rule</p>
-                <h3>Add Project Rule</h3>
+                <h3>{isEditingRule ? "Edit Project Rule" : "Add Project Rule"}</h3>
               </div>
               <button className="ghost-button" type="button" onClick={closeRuleEditor}>
                 Close
@@ -942,21 +1033,45 @@ export function SetsPanel({
             <div className="stacked-form diagnostics-body">
               <label>
                 Rule scope
-                <select value={scope} onChange={(event) => setScope(event.target.value as BindScope)}>
+                <select
+                  value={ruleDraft.scope}
+                  onChange={(event) =>
+                    setRuleDraft((current) => ({
+                      ...current,
+                      scope: event.target.value as BindScope,
+                    }))
+                  }
+                >
                   <option value="default">Default set</option>
                   <option value="path">Path prefix</option>
                   <option value="git_remote">Git remote pattern</option>
                 </select>
               </label>
-              {scope !== "default" ? (
+              {ruleDraft.scope !== "default" ? (
                 <label>
-                  {scope === "path" ? "Path" : "Git remote pattern"}
-                  <input value={targetValue} onChange={(event) => setTargetValue(event.target.value)} />
+                  {ruleDraft.scope === "path" ? "Path" : "Git remote pattern"}
+                  <input
+                    value={ruleDraft.targetValue}
+                    onChange={(event) =>
+                      setRuleDraft((current) => ({
+                        ...current,
+                        targetValue: event.target.value,
+                      }))
+                    }
+                  />
                 </label>
               ) : null}
               <label>
                 Set
-                <select value={context} onChange={(event) => setContext(event.target.value)}>
+                <select
+                  value={ruleDraft.context}
+                  onChange={(event) =>
+                    setRuleDraft((current) => ({
+                      ...current,
+                      context: event.target.value,
+                    }))
+                  }
+                >
                   <option value="">Select set</option>
                   {bindingOptions.map((entry) => (
                     <option key={entry.value} value={entry.value}>
@@ -972,7 +1087,7 @@ export function SetsPanel({
               ) : null}
               {requiresExplicitTarget && trimmedTargetValue.length === 0 ? (
                 <p className="inline-note">
-                  Enter a {scope === "path" ? "path prefix" : "git remote pattern"} before saving or removing this rule.
+                  Enter a {ruleDraft.scope === "path" ? "path prefix" : "git remote pattern"} before saving or removing this rule.
                 </p>
               ) : null}
             </div>
@@ -982,7 +1097,7 @@ export function SetsPanel({
                   Cancel
                 </button>
                 <button className="primary-button" type="submit" disabled={mutationLock.isBusy || !canSaveBinding}>
-                  Save Rule
+                  {isEditingRule ? "Save Rule" : "Add Rule"}
                 </button>
                 <button
                   className="ghost-button"
@@ -990,15 +1105,15 @@ export function SetsPanel({
                   disabled={mutationLock.isBusy || !canRemoveBinding}
                   onClick={() =>
                     removeRule(
-                      scope === "default"
+                      ruleDraft.scope === "default"
                         ? { scope: "default" }
-                        : scope === "path"
+                        : ruleDraft.scope === "path"
                           ? { scope: "path", path: trimmedTargetValue }
                           : { scope: "git_remote", pattern: trimmedTargetValue },
                     )
                   }
                 >
-                  Remove rule
+                  Remove…
                 </button>
               </div>
             </footer>

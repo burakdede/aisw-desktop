@@ -4226,7 +4226,7 @@ describe("App", () => {
       ).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getAllByText("Use expected set now")[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Use Expected Set" }));
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
     });
@@ -4266,7 +4266,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Path"), {
       target: { value: "/code/next" },
     });
-    fireEvent.click(screen.getByText("Save Rule"));
+    fireEvent.click(screen.getByText("Add Rule"));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "workspace_bind")).toBe(true);
@@ -4275,7 +4275,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add Rule…" }));
     expect(screen.getByRole("option", { name: "Saved set: Client Acme" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("Remove this rule"));
+    fireEvent.click(screen.getByRole("button", { name: "Remove…" }));
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "workspace_unbind")).toBe(true);
     });
@@ -4285,6 +4285,108 @@ describe("App", () => {
           entry.command === "workspace_unbind" &&
           (entry.args as { target?: { scope?: string; path?: string } })?.target?.scope === "path" &&
           (entry.args as { target?: { scope?: string; path?: string } })?.target?.path === "/code/acme",
+      ),
+    ).toBe(true);
+  });
+
+  it("edits an existing project rule from the inspector", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    const settingsWithSet = {
+      ...bootstrap.settings,
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    };
+    const workspaceSnapshot = {
+      ...bootstrap.snapshot,
+      workspace_status: {
+        status: "match",
+        current_context: "client-acme",
+        expected_context: "client-acme",
+        matched_scope: "path",
+        matched_target: "/code/acme",
+      },
+    };
+    const projectBindings = {
+      result: {
+        user_bindings: {
+          guard_mode: "warn",
+          bindings: [
+            {
+              scope: "path",
+              path: "/code/acme",
+              context: "client-acme",
+            },
+          ],
+        },
+      },
+    };
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      return (
+        {
+          get_bootstrap: {
+            ...bootstrap,
+            settings: settingsWithSet,
+            snapshot: workspaceSnapshot,
+          },
+          get_snapshot: workspaceSnapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: workspaceSnapshot.workspace_status },
+          get_project_bindings: projectBindings,
+          list_backups: [],
+          get_settings: settingsWithSet,
+          workspace_unbind: { command: "workspace_unbind", snapshot: workspaceSnapshot },
+          workspace_bind: { command: "workspace_bind", snapshot: workspaceSnapshot },
+        } as Record<string, unknown>
+      )[command];
+    };
+
+    await renderApp();
+    await openProjectRulesSection();
+
+    fireEvent.click(screen.getByRole("button", { name: "Inspect rule for Client Acme" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit…" }));
+
+    expect(screen.getByRole("dialog", { name: "Edit Rule" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Rule scope")).toHaveValue("path");
+    expect(screen.getByLabelText("Path")).toHaveValue("/code/acme");
+    expect(screen.getByLabelText("Set")).toHaveValue("client-acme");
+
+    fireEvent.change(screen.getByLabelText("Path"), {
+      target: { value: "/code/acme-next" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save Rule" }));
+
+    await waitFor(() => {
+      expect(calls.some((entry) => entry.command === "workspace_unbind")).toBe(true);
+      expect(calls.some((entry) => entry.command === "workspace_bind")).toBe(true);
+    });
+
+    expect(
+      calls.some(
+        (entry) =>
+          entry.command === "workspace_unbind" &&
+          (entry.args as { target?: { scope?: string; path?: string } })?.target?.scope === "path" &&
+          (entry.args as { target?: { scope?: string; path?: string } })?.target?.path === "/code/acme",
+      ),
+    ).toBe(true);
+    expect(
+      calls.some(
+        (entry) =>
+          entry.command === "workspace_bind" &&
+          (entry.args as { request?: { target?: { scope?: string; path?: string } } })?.request?.target?.scope ===
+            "path" &&
+          (entry.args as { request?: { target?: { scope?: string; path?: string } } })?.request?.target?.path ===
+            "/code/acme-next",
       ),
     ).toBe(true);
   });
@@ -4643,7 +4745,7 @@ describe("App", () => {
 
     await renderApp();
     await openSetsSection();
-    fireEvent.click(screen.getByText("Use Set"));
+    fireEvent.click(screen.getByRole("button", { name: "Use CLI Context Client Acme" }));
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_context")).toBe(true);
@@ -4808,7 +4910,7 @@ describe("App", () => {
         "No sets are available yet. Create one before saving a project rule.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Save Rule")).toBeDisabled();
+    expect(screen.getByText("Add Rule")).toBeDisabled();
 
     fireEvent.change(screen.getByLabelText("Rule scope"), {
       target: { value: "path" },
@@ -4817,13 +4919,13 @@ describe("App", () => {
     expect(
       screen.getByText("Enter a path prefix before saving or removing this rule."),
     ).toBeInTheDocument();
-    expect(screen.getByText("Save Rule")).toBeDisabled();
-    expect(screen.getByText("Remove rule")).toBeDisabled();
+    expect(screen.getByText("Add Rule")).toBeDisabled();
+    expect(screen.getByText("Remove…")).toBeDisabled();
 
     fireEvent.change(screen.getByLabelText("Path"), {
       target: { value: "   " },
     });
-    expect(screen.getByText("Save Rule")).toBeDisabled();
+    expect(screen.getByText("Add Rule")).toBeDisabled();
 
     expect(calls.some((entry) => entry.command === "workspace_bind")).toBe(false);
     expect(calls.some((entry) => entry.command === "workspace_unbind")).toBe(false);
@@ -5279,7 +5381,7 @@ describe("App", () => {
     });
 
     selectDiagnosticFinding("Project set mismatch");
-    expect(screen.queryByRole("button", { name: "Use expected set now" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Use Expected Set" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Open Sets" }));
     await waitFor(() => {
       expect(screen.getByLabelText("Set Library")).toBeInTheDocument();
@@ -7011,7 +7113,7 @@ describe("App", () => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);
       expect(screen.getAllByText(/Client Acme/).length).toBeGreaterThan(0);
       expect(screen.getByText("Saved set Client Acme.")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Current Set" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Current" })).toBeDisabled();
     });
   });
 
@@ -7467,7 +7569,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "activate_profile_set")).toBe(true);
-      expect(screen.getByRole("button", { name: "Current Set" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Current" })).toBeDisabled();
     });
     expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(false);
     expect(calls.some((entry) => entry.command === "use_profile")).toBe(false);
