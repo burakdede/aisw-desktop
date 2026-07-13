@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { ToolBrand } from "../../../components/ToolBrand";
 import { useQuery } from "@tanstack/react-query";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
@@ -591,7 +592,7 @@ export function SetsPanel({
                     </div>
                     <KeyValueGrid
                       rows={TOOLS.map((tool) => ({
-                        label: tool === "claude" ? "Claude Code" : tool === "codex" ? "Codex CLI" : "Gemini CLI",
+                        label: <ToolBrand tool={tool} className="tool-brand-inline" logoSize={16} />,
                         value: selectedSet.profiles[tool]
                           ? toolProfileDisplayLabel(settings, snapshot, tool, selectedSet.profiles[tool] as string)
                           : "Not included",

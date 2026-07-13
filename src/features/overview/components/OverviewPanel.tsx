@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { ToolBrand } from "../../../components/ToolBrand";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import {
   commandForCurrentPlatform,
@@ -264,7 +265,7 @@ export function OverviewPanel({
                         {overviewStatusSymbol(state)}
                       </span>
                       <div className="overview-tool-list-copy">
-                        <strong>{toolDisplayName(status.tool)}</strong>
+                        <ToolBrand tool={status.tool} className="tool-brand-inline" logoSize={18} />
                         <span>{activeProfileLabel}</span>
                       </div>
                     </div>
@@ -414,7 +415,9 @@ function ToolInspector({
     <aside className="overview-pane overview-inspector-pane tool-card">
       <header className="overview-inspector-header">
         <div>
-          <h3>{toolDisplayName(status.tool)}</h3>
+          <h3>
+            <ToolBrand tool={status.tool} className="tool-brand-heading" logoSize={20} />
+          </h3>
           <p className="inline-note">
             {activeProfileLabel
               ? `Active profile: ${activeProfileLabel}`

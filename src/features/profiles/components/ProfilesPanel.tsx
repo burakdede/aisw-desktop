@@ -5,6 +5,7 @@ import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { SearchField } from "../../../components/SearchField";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SplitView } from "../../../components/SplitView";
+import { ToolBrand } from "../../../components/ToolBrand";
 import {
   AppBootstrap,
   AppSnapshot,
@@ -524,7 +525,14 @@ export function ProfilesPanel({
                         <strong>{inventoryEntry.label}</strong>
                         <span>{inventoryEntry.name}</span>
                       </div>
-                      <span className="profiles-table-column">{titleCase(inventoryEntry.tool)}</span>
+                      <span className="profiles-table-column">
+                        <ToolBrand
+                          tool={inventoryEntry.tool}
+                          className="tool-brand-compact"
+                          logoSize={16}
+                          shortName
+                        />
+                      </span>
                       <span
                         className={`profiles-table-status profiles-table-status-${profileStatusTone(
                           inventoryEntry.active,
@@ -655,7 +663,9 @@ export function ProfilesPanel({
                 <header className="profiles-inspector-header">
                   <div className="profiles-inspector-title-block">
                     <h3>{selectedProfileDisplay}</h3>
-                    <p className="inline-note">{toolDisplayName(tool)}</p>
+                    <p className="inline-note">
+                      <ToolBrand tool={tool} className="tool-brand-inline" logoSize={16} />
+                    </p>
                     <div className={`profiles-inspector-status profiles-inspector-status-${profileStatusTone(
                       snapshot.profiles[tool]?.active === selectedProfileEntry.name,
                       profileStatusSummary(snapshot, tool, selectedProfileEntry.name, toolStatus),
@@ -1104,7 +1114,10 @@ export function ProfilesPanel({
             </div>
             <KeyValueGrid
               rows={[
-                { label: "Tool", value: titleCase(tool) },
+                {
+                  label: "Tool",
+                  value: <ToolBrand tool={tool} className="tool-brand-inline" logoSize={16} shortName />,
+                },
                 { label: "Profile", value: removalSheetDisplay },
                 {
                   label: "Active profile",

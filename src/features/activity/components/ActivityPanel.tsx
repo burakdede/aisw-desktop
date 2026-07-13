@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { SectionCard } from "../../../components/SectionCard";
 import { SplitView } from "../../../components/SplitView";
+import { ToolBrand } from "../../../components/ToolBrand";
 import { exportActivityLog, exportDiagnosticBundle } from "../../../lib/client";
 import { notifyDesktop } from "../../../lib/notifications";
 import {
@@ -13,6 +14,8 @@ import {
 type ActivityEntry = {
   key: string;
   scopeLabel: string;
+  scopeType: "tool" | "global";
+  scopeTool?: string;
   label: string;
   status: "success" | "error";
   message: string;
@@ -72,6 +75,8 @@ export function ActivityPanel({
           entry.scope.type === "tool"
             ? formatToolScope(entry.scope.tool)
             : formatGlobalScope(entry.scope.id),
+        scopeType: entry.scope.type,
+        scopeTool: entry.scope.type === "tool" ? entry.scope.tool : undefined,
         label: entry.label,
         status: entry.status,
         message: entry.message,
@@ -208,7 +213,13 @@ export function ActivityPanel({
                       <p className="inline-note">{entry.message}</p>
                     </div>
                     <div className="activity-list-meta">
-                      <span>{entry.scopeLabel}</span>
+                      <span>
+                        {entry.scopeType === "tool" && entry.scopeTool ? (
+                          <ToolBrand tool={entry.scopeTool} className="tool-brand-compact" logoSize={15} shortName />
+                        ) : (
+                          entry.scopeLabel
+                        )}
+                      </span>
                       <span>{entry.status === "success" ? "Success" : "Needs attention"}</span>
                     </div>
                     <span className="activity-row-chevron" aria-hidden="true">
@@ -256,7 +267,13 @@ export function ActivityPanel({
                       </div>
                       <div>
                         <span className="overview-current-set-cell-label">Scope</span>
-                        <strong>{selectedEntry.scopeLabel}</strong>
+                        <strong>
+                          {selectedEntry.scopeType === "tool" && selectedEntry.scopeTool ? (
+                            <ToolBrand tool={selectedEntry.scopeTool} className="tool-brand-inline" logoSize={16} shortName />
+                          ) : (
+                            selectedEntry.scopeLabel
+                          )}
+                        </strong>
                       </div>
                       <div>
                         <span className="overview-current-set-cell-label">Result</span>
@@ -295,7 +312,12 @@ export function ActivityPanel({
                         },
                         {
                           label: "Scope",
-                          value: selectedEntry.scopeLabel,
+                          value:
+                            selectedEntry.scopeType === "tool" && selectedEntry.scopeTool ? (
+                              <ToolBrand tool={selectedEntry.scopeTool} className="tool-brand-inline" logoSize={16} shortName />
+                            ) : (
+                              selectedEntry.scopeLabel
+                            ),
                         },
                         {
                           label: "Duration",
