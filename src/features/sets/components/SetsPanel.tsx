@@ -879,7 +879,7 @@ export function SetsPanel({
                       </div>
                       <div className="sets-detail-row">
                         <span className="sets-detail-key">Set</span>
-                        <strong className="sets-detail-value">{selectedRuleContextLabel ?? "Unknown"}</strong>
+                        <strong className="sets-detail-value">{selectedRuleContextLabel ?? "Set Unavailable"}</strong>
                       </div>
                       <div className="sets-detail-row">
                         <span className="sets-detail-key">Priority</span>

@@ -1204,7 +1204,7 @@ function runtimeSelectionLabel(runtimeKind: AppBootstrap["settings"]["runtime_ki
     case "custom":
       return "Custom engine";
     default:
-      return "Unknown engine";
+      return "Engine Unavailable";
   }
 }
 
