@@ -4,6 +4,7 @@ import { DialogSurface } from "../../../components/DialogSurface";
 import { SectionCard } from "../../../components/SectionCard";
 import { SourceListPanel } from "../../../components/SourceListPanel";
 import { SplitView } from "../../../components/SplitView";
+import { ToolBrand } from "../../../components/ToolBrand";
 import { getShellGuidance, runDoctor, updateSettings } from "../../../lib/client";
 import { sharedProfileEntries } from "../../../lib/profile-display";
 import { AppBootstrap, AppSnapshot, InitReport } from "../../../lib/schemas";
@@ -261,7 +262,7 @@ export function SetupPanel({
     "No prompt or API traffic proxy",
     "Built-in desktop engine ready",
   ];
-  const installedNow = snapshot.statuses.filter((status) => status.binary_found).map((status) => toolDisplayName(status.tool));
+  const installedNow = snapshot.statuses.filter((status) => status.binary_found).map((status) => status.tool);
   const accountItems = useMemo<OnboardingAccountItem[]>(
     () => [
       ...liveAccounts.map((account) => ({
@@ -354,7 +355,22 @@ export function SetupPanel({
                     <div className="onboarding-overview-meta">
                       <div>
                         <span className="overview-current-set-cell-label">Installed now</span>
-                        <strong>{installedNow.length ? installedNow.join(", ") : "No supported tools detected yet"}</strong>
+                        <strong>
+                          {installedNow.length ? (
+                            <span className="tool-brand-list">
+                              {installedNow.map((tool) => (
+                                <ToolBrand
+                                  key={tool}
+                                  tool={tool}
+                                  className="tool-brand-inline"
+                                  logoSize={15}
+                                />
+                              ))}
+                            </span>
+                          ) : (
+                            "No supported tools detected yet"
+                          )}
+                        </strong>
                         <p className="inline-note">Missing tools are informational. You can finish setup and add them later.</p>
                       </div>
                       <div>
@@ -581,7 +597,9 @@ export function SetupPanel({
                                   onClick={() => setSelectedAccountKey(item.key)}
                                 >
                                   <div className="onboarding-account-row-main">
-                                    <strong>{title}</strong>
+                                    <strong>
+                                      <ToolBrand tool={tool} className="tool-brand-inline" logoSize={16} />
+                                    </strong>
                                     <p className="inline-note">{summary}</p>
                                   </div>
                                   <div className="settings-nav-row-meta">
@@ -608,7 +626,9 @@ export function SetupPanel({
                                 <div className="desktop-pane-section-header">
                                   <div>
                                     <p className="card-kicker">Detected login</p>
-                                    <h3>{toolDisplayName(selectedAccountItem.account.tool)}</h3>
+                                    <h3>
+                                      <ToolBrand tool={selectedAccountItem.account.tool} className="tool-brand-heading" logoSize={18} />
+                                    </h3>
                                   </div>
                                   <span className="pill pill-ok">Ready to import</span>
                                 </div>
@@ -670,7 +690,9 @@ export function SetupPanel({
                                 <div className="desktop-pane-section-header">
                                   <div>
                                     <p className="card-kicker">Saved profile needed</p>
-                                    <h3>{toolDisplayName(selectedAccountItem.status.tool)}</h3>
+                                    <h3>
+                                      <ToolBrand tool={selectedAccountItem.status.tool} className="tool-brand-heading" logoSize={18} />
+                                    </h3>
                                   </div>
                                   <span className="pill pill-soft">Needs profile</span>
                                 </div>
@@ -710,6 +732,9 @@ export function SetupPanel({
                                   </div>
                                   <span className="pill pill-soft">Not installed</span>
                                 </div>
+                                <p className="inline-note">
+                                  <ToolBrand tool={selectedAccountItem.status.tool} className="tool-brand-inline" logoSize={16} />
+                                </p>
                                 <div className="onboarding-account-summary">
                                   <div>
                                     <span className="overview-current-set-cell-label">Status</span>
@@ -867,7 +892,9 @@ export function SetupPanel({
                             : "Not configured";
                     return (
                       <div key={status.tool} className="onboarding-complete-cell">
-                        <span className="overview-current-set-cell-label">{toolDisplayName(status.tool)}</span>
+                        <span className="overview-current-set-cell-label">
+                          <ToolBrand tool={status.tool} className="tool-brand-inline" logoSize={15} />
+                        </span>
                         <strong>{state}</strong>
                         <p className="inline-note">
                           {!status.binary_found
@@ -935,7 +962,9 @@ export function SetupPanel({
             <div className="quick-switch-header">
               <div>
                 <p className="card-kicker">Import current account</p>
-                <h3>Import {toolDisplayName(pendingLiveImport.tool)} profile</h3>
+                <h3>
+                  Import <ToolBrand tool={pendingLiveImport.tool} className="tool-brand-inline" logoSize={18} shortName /> profile
+                </h3>
               </div>
               <button className="ghost-button" type="button" onClick={closeLiveImport}>
                 Close

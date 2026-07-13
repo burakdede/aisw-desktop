@@ -656,7 +656,7 @@ export function SettingsPanel({
                       {selectedVariant ? <pre>{selectedVariant.install_command}</pre> : null}
                       {selectedVariant ? <pre>{selectedVariant.reload_command}</pre> : null}
                       {selectedVariant ? <pre>{selectedVariant.verify_command}</pre> : null}
-                      {shellGuidance.data.manual_apply_examples.map((example) => (
+                      {(shellGuidance.data?.manual_apply_examples ?? []).map((example) => (
                         <pre key={example}>{example}</pre>
                       ))}
                     </div>

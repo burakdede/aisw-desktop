@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DialogSurface } from "./DialogSurface";
 import { SearchField } from "./SearchField";
+import { ToolBrand } from "./ToolBrand";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "../lib/schemas";
 import {
   profileSetDisplayLabel,
@@ -307,12 +308,25 @@ export function QuickSwitchPalette({
                         />
                         <div className="quick-switch-option-copy">
                           <div className="quick-switch-option-line">
-                            <strong>{item.title}</strong>
+                            <strong>
+                              {item.kind === "tool_profile" ? (
+                                <ToolBrand
+                                  tool={item.tool}
+                                  className="tool-brand-inline"
+                                  logoSize={15}
+                                  shortName
+                                />
+                              ) : (
+                                item.title
+                              )}
+                            </strong>
                             {item.active ? (
                               <span className="quick-switch-option-badge">Current</span>
                             ) : null}
                           </div>
-                          <p>{item.subtitle}</p>
+                          <p>
+                            {item.kind === "tool_profile" ? `${item.title} · ${item.profile}` : item.subtitle}
+                          </p>
                         </div>
                         <span className="quick-switch-option-meta">
                           {item.active ? "Selected" : "Return"}

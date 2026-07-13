@@ -194,6 +194,13 @@ button {
   gap: 0.55rem;
 }
 
+.tool-brand-list {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
 .tool-brand-heading {
   font: inherit;
 }
@@ -1437,8 +1444,9 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .onboarding-step-footer-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  flex-direction: column;
   gap: 16px;
   padding-top: 14px;
 }
@@ -1450,8 +1458,9 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .onboarding-step-footer-actions {
-  justify-content: flex-end;
-  flex-shrink: 0;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  width: 100%;
 }
 
 .onboarding-complete-card {
@@ -5589,6 +5598,16 @@ html[data-appearance="dark"] .tool-logo-codex {
   color: var(--text-secondary);
 }
 
+@media (max-width: 1320px) {
+  .onboarding-account-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .onboarding-step-footer-actions > * {
+    flex: 1 1 220px;
+  }
+}
+
 @media (max-width: 1080px) {
   .launch-card-body {
     grid-template-columns: 1fr;
@@ -5645,6 +5664,10 @@ html[data-appearance="dark"] .tool-logo-codex {
   }
 
   .onboarding-overview-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .onboarding-account-layout {
     grid-template-columns: 1fr;
   }
 
