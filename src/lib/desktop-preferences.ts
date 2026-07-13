@@ -23,6 +23,7 @@ const DEFAULT_SECTION_KEY = "ai-switch.desktop.default-section";
 const SHOW_MENU_BAR_ICON_KEY = "ai-switch.desktop.show-menu-bar-icon";
 const REOPEN_SETUP_ASSISTANT_KEY = "ai-switch.desktop.reopen-setup-assistant";
 const memoryStorage = createMemoryStorage();
+let nativeThemeSyncToken = 0;
 
 export const DEFAULT_DESKTOP_PREFERENCES: DesktopPreferences = {
   appearance: "system",
@@ -83,6 +84,7 @@ export function applyAppearancePreference(appearance: DesktopAppearance) {
   const root = document.documentElement;
   root.dataset.appearance = appearance;
   root.style.colorScheme = appearance === "system" ? "light dark" : appearance;
+  void syncNativeWindowTheme(appearance);
 }
 
 function isDesktopAppearance(value: string | null): value is DesktopAppearance {
@@ -121,4 +123,27 @@ function createMemoryStorage() {
       values.delete(key);
     },
   };
+}
+
+async function syncNativeWindowTheme(appearance: DesktopAppearance) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (!(window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__) {
+    return;
+  }
+
+  const token = nativeThemeSyncToken + 1;
+  nativeThemeSyncToken = token;
+
+  try {
+    const { getCurrentWindow } = await import("@tauri-apps/api/window");
+    if (nativeThemeSyncToken !== token) {
+      return;
+    }
+    await getCurrentWindow().setTheme(appearance === "system" ? null : appearance);
+  } catch {
+    // Ignore native theme sync failures and keep the app interactive.
+  }
 }

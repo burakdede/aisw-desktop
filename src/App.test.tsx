@@ -461,13 +461,13 @@ describe("App", () => {
 
     window.localStorage.setItem(
       "ai-switch.desktop.window-state",
-      JSON.stringify({ width: 1040, height: 720, x: 64, y: 96 }),
+      JSON.stringify({ width: 1280, height: 820, x: 64, y: 96 }),
     );
 
     window.__AISW_WINDOW_MOCK__ = {
       setSize,
       setPosition,
-      innerSize: vi.fn().mockResolvedValue({ width: 1180, height: 760 }),
+      innerSize: vi.fn().mockResolvedValue({ width: 1360, height: 860 }),
       outerPosition: vi.fn().mockResolvedValue({ x: 180, y: 144 }),
       isMaximized: vi.fn().mockResolvedValue(false),
       onResized: vi.fn(async (handler: () => void) => {
@@ -492,8 +492,8 @@ describe("App", () => {
     });
 
     expect(setSize.mock.calls[setSize.mock.calls.length - 1]?.[0]).toMatchObject({
-      width: 1040,
-      height: 720,
+      width: 1280,
+      height: 820,
     });
     expect(setPosition.mock.calls[setPosition.mock.calls.length - 1]?.[0]).toMatchObject({
       x: 64,
@@ -507,7 +507,7 @@ describe("App", () => {
     });
 
     expect(window.localStorage.getItem("ai-switch.desktop.window-state")).toBe(
-      JSON.stringify({ width: 1180, height: 760, x: 180, y: 144 }),
+      JSON.stringify({ width: 1360, height: 860, x: 180, y: 144 }),
     );
   });
 

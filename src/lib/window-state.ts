@@ -24,8 +24,8 @@ type WindowModule = {
 };
 
 const WINDOW_STATE_KEY = "ai-switch.desktop.window-state";
-const MIN_WIDTH = 820;
-const MIN_HEIGHT = 560;
+const MIN_WIDTH = 1120;
+const MIN_HEIGHT = 720;
 
 declare global {
   interface Window {

@@ -13,10 +13,10 @@
     "windows": [
       {
         "title": "AI Switch",
-        "width": 1220,
-        "height": 780,
-        "minWidth": 820,
-        "minHeight": 560,
+        "width": 1440,
+        "height": 900,
+        "minWidth": 1120,
+        "minHeight": 720,
         "titleBarStyle": "Transparent",
         "hiddenTitle": true,
         "resizable": true

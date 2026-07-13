@@ -47,6 +47,7 @@
   --setup-shell-backdrop:
     radial-gradient(circle at top left, rgba(116, 146, 189, 0.08), transparent 28%),
     linear-gradient(180deg, rgba(250, 251, 252, 0.94), rgba(241, 244, 247, 0.98));
+  --sidebar-width: 276px;
 }
 
 html[data-appearance="dark"] {
@@ -284,7 +285,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .app-shell-window {
   display: grid;
   height: 100dvh;
-  padding: 8px;
+  padding: 0;
   overflow: hidden;
   background-color: var(--window-bg);
   background: var(--window-shell-backdrop), var(--window-bg);
@@ -440,17 +441,17 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .layout-shell {
-  height: calc(100dvh - 16px);
+  height: 100dvh;
   min-height: 0;
   display: grid;
-  grid-template-columns: 236px minmax(0, 1fr);
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
   gap: 0;
   overflow: hidden;
-  border: 1px solid var(--chrome-border);
-  border-radius: 18px;
+  border: 0;
+  border-radius: 0;
   background-color: var(--pane-bg);
   background: var(--pane-bg);
-  box-shadow: var(--shadow-window);
+  box-shadow: none;
 }
 
 .layout-shell-setup {
@@ -475,12 +476,13 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .sidebar-scroll {
   min-height: 0;
+  flex: 1 1 auto;
   overflow-x: hidden;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 12px 10px 0;
+  gap: 18px;
+  padding: 16px 14px 0;
 }
 
 .sidebar-brand,
@@ -490,7 +492,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .brand-lockup {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   align-items: center;
   flex-wrap: nowrap;
   min-width: 0;
@@ -498,10 +500,12 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .sidebar-brand {
   overflow: hidden;
-  padding: 14px 14px 15px;
-  border-radius: 12px;
+  padding: 16px;
+  border-radius: 16px;
   border: 1px solid color-mix(in srgb, CanvasText 5%, transparent);
-  background: color-mix(in srgb, var(--pane-bg) 92%, CanvasText 8%);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 95%, transparent)),
+    color-mix(in srgb, var(--pane-bg) 92%, CanvasText 8%);
 }
 
 .sidebar-brand-copy {
@@ -563,9 +567,9 @@ html[data-appearance="dark"] .tool-logo-codex {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 730;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: -0.034em;
+  font-size: clamp(19px, 1.55vw, 22px);
+  line-height: 1.04;
+  letter-spacing: -0.04em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -573,32 +577,34 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .nav-list {
   display: grid;
-  gap: 10px;
-  padding-bottom: 10px;
+  gap: 16px;
+  padding-bottom: 16px;
 }
 
 .nav-group {
   display: grid;
-  gap: 5px;
+  gap: 7px;
 }
 
 .nav-group-items {
   display: grid;
-  gap: 2px;
+  gap: 4px;
 }
 
 .nav-button {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 30px;
+  gap: 12px;
+  min-height: 42px;
   border: 0;
-  border-radius: 7px;
-  padding: 0 9px;
+  border-radius: 12px;
+  padding: 0 12px;
   background: transparent;
   color: var(--text-primary);
   text-align: left;
   cursor: pointer;
+  font-size: 15px;
+  line-height: 1.2;
 }
 
 .nav-button:hover {
@@ -617,8 +623,8 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .nav-button-icon {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -627,8 +633,8 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .nav-button-icon svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 
 .nav-button-label {
@@ -650,16 +656,16 @@ html[data-appearance="dark"] .tool-logo-codex {
 .status-badge {
   margin-top: auto;
   display: grid;
-  gap: 5px;
+  gap: 8px;
   flex: none;
-  padding: 12px 10px 10px;
+  padding: 16px 14px 14px;
 }
 
 .sidebar-status-card {
   margin: 0;
-  padding: 12px;
-  border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
-  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
+  border-radius: 16px;
   background:
     linear-gradient(180deg, color-mix(in srgb, Canvas 98%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
     color-mix(in srgb, Canvas 96%, CanvasText 4%);
@@ -667,12 +673,12 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .sidebar-status-stack {
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
 .sidebar-status-header {
   display: grid;
-  gap: 4px;
+  gap: 0;
 }
 
 .sidebar-status-kicker {
@@ -684,30 +690,32 @@ html[data-appearance="dark"] .tool-logo-codex {
   color: var(--text-tertiary);
 }
 
-.sidebar-status-caption {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--text-secondary);
-}
-
 .sidebar-status-grid {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .sidebar-status-row {
   display: grid;
-  gap: 4px;
-  padding: 8px 10px;
-  border-radius: 10px;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, CanvasText 5%, transparent);
   background: color-mix(in srgb, CanvasText 3%, Canvas 97%);
 }
 
 .sidebar-status-row strong {
-  font-size: 17px;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+  font-size: 18px;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  font-family: var(--font-display);
+}
+
+.sidebar-status-row p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.2;
+  color: var(--text-primary);
 }
 
 .sidebar-status-label,
@@ -1116,7 +1124,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   top: 0;
   z-index: 2;
   min-height: 58px;
-  padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 8px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 20px 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1198,7 +1206,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .content-main {
   min-height: 0;
   overflow: auto;
-  padding: 10px 12px 12px;
+  padding: 14px 16px 16px;
   background:
     linear-gradient(180deg, color-mix(in srgb, Canvas 99%, transparent), color-mix(in srgb, Canvas 97%, transparent));
 }
@@ -5654,15 +5662,6 @@ html[data-appearance="dark"] .tool-logo-codex {
     border-top: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
   }
 
-  .layout-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .sidebar {
-    border-right: 0;
-    border-bottom: 1px solid var(--separator);
-  }
-
   .panel-grid-2 {
     grid-template-columns: 1fr;
   }
@@ -5837,6 +5836,17 @@ html[data-appearance="dark"] .tool-logo-codex {
 
   .desktop-pane-section-header .inline-note {
     text-align: left;
+  }
+}
+
+@media (max-width: 920px) {
+  .layout-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    border-right: 0;
+    border-bottom: 1px solid var(--separator);
   }
 }
 

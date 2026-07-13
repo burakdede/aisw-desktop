@@ -833,7 +833,6 @@ export function App() {
         <div className="sidebar-status-stack">
           <div className="sidebar-status-header">
             <span className="sidebar-status-kicker">Current state</span>
-            <p className="sidebar-status-caption">At-a-glance switching status for this Mac.</p>
           </div>
           <div className="sidebar-status-grid">
             <div className="sidebar-status-row">
