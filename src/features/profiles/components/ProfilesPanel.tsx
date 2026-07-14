@@ -35,6 +35,17 @@ const TOOLS = ["claude", "codex", "gemini"] as const;
 const INVENTORY_FILTERS = ["all", ...TOOLS] as const;
 const PROFILES_COMPACT_BREAKPOINT = 800;
 
+function measuredPaneWidth(element: HTMLDivElement | null) {
+  if (!element) {
+    return typeof window !== "undefined" ? window.innerWidth : PROFILES_COMPACT_BREAKPOINT;
+  }
+  const width = element.getBoundingClientRect().width;
+  if (width > 0) {
+    return width;
+  }
+  return typeof window !== "undefined" ? window.innerWidth : PROFILES_COMPACT_BREAKPOINT;
+}
+
 type InventoryFilter = (typeof INVENTORY_FILTERS)[number];
 type InventoryEntry = {
   tool: (typeof TOOLS)[number];
@@ -116,9 +127,8 @@ export function ProfilesPanel({
   const renameInputRef = useRef<HTMLInputElement | null>(null);
   const editLabelInputRef = useRef<HTMLInputElement | null>(null);
   const inventoryRowRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const [compactLayout, setCompactLayout] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth < PROFILES_COMPACT_BREAKPOINT : false,
-  );
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [compactLayout, setCompactLayout] = useState(false);
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
 
   const profiles = useMemo(() => snapshot.profiles[tool]?.profiles ?? [], [snapshot, tool]);
@@ -341,14 +351,32 @@ export function ProfilesPanel({
     if (typeof window === "undefined") {
       return;
     }
+    const rootElement = rootRef.current;
 
     const updateLayout = () => {
-      setCompactLayout(window.innerWidth < PROFILES_COMPACT_BREAKPOINT);
+      setCompactLayout(measuredPaneWidth(rootRef.current) < PROFILES_COMPACT_BREAKPOINT);
     };
 
     updateLayout();
     window.addEventListener("resize", updateLayout);
-    return () => window.removeEventListener("resize", updateLayout);
+    const observer =
+      typeof ResizeObserver !== "undefined" && rootElement
+        ? new ResizeObserver(() => updateLayout())
+        : null;
+    if (observer && rootElement) {
+      observer.observe(rootElement);
+    }
+    return () => {
+      window.removeEventListener("resize", updateLayout);
+      observer?.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!rootRef.current) {
+      return;
+    }
+    setCompactLayout(measuredPaneWidth(rootRef.current) < PROFILES_COMPACT_BREAKPOINT);
   }, []);
 
   useEffect(() => {
@@ -584,7 +612,7 @@ export function ProfilesPanel({
   const showInspector = !compactLayout || compactInspectorOpen;
 
   return (
-    <div className="profiles-screen screen-content">
+    <div ref={rootRef} className="profiles-screen screen-content">
       <div className="profiles-filter-row">
         <SearchField
           className="search-field profiles-search-field"
