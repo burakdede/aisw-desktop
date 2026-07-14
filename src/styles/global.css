@@ -2470,6 +2470,8 @@ html[data-appearance="dark"] .tool-logo-codex {
   gap: 8px;
   justify-content: flex-start;
   padding-top: 4px;
+  position: relative;
+  z-index: 1;
 }
 
 .profiles-passive-badge {
@@ -2582,6 +2584,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .sets-screen {
+  container-type: inline-size;
   display: grid;
   gap: 12px;
 }
@@ -2624,6 +2627,10 @@ html[data-appearance="dark"] .tool-logo-codex {
   gap: 4px;
   padding: 14px 16px;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
+}
+
+.sets-inspector-back {
+  justify-self: start;
 }
 
 .sets-rules-pane-header {
@@ -2991,6 +2998,29 @@ html[data-appearance="dark"] .tool-logo-codex {
   min-height: 40px;
   padding: 10px 0;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
+}
+
+@container (max-width: 900px) {
+  .sets-toolbar-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .sets-library-layout,
+  .sets-rules-layout {
+    display: block;
+    min-height: 0;
+  }
+
+  .sets-library-list-pane,
+  .sets-rules-list-panel {
+    border-right: 0;
+  }
+
+  .sets-inspector,
+  .sets-rules-inspector {
+    padding: 0 14px 16px;
+  }
 }
 
 .sets-detail-row:last-child {
@@ -6181,6 +6211,11 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .profile-row-actions-danger {
   color: #b42318;
+}
+
+.profiles-inspector .profile-row-actions-menu {
+  left: 0;
+  right: auto;
 }
 
 .backup-list-row {
