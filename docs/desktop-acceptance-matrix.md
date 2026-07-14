@@ -22,7 +22,7 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
 - The Tauri main window is bound to an explicit least-privilege capability under `src-tauri/capabilities/main.json`.
 - The app invoke surface is enumerated in `src-tauri/permissions/desktop-commands.json`.
 - OAuth progress uses event listeners only; desktop notifications use the narrow notification permission set only.
-- Tray-triggered mutations use the same post-mutation refresh contract as in-window actions, so overview, diagnostics, workspaces, backups, and bootstrap-derived state stay coherent.
+- Tray-triggered mutations use the same post-mutation refresh contract as in-window actions, so overview, diagnostics, sets, backups, and bootstrap-derived state stay coherent.
 
 ## Acceptance Criteria
 
@@ -101,7 +101,7 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
 
 - Status: implemented
 - Evidence:
-  - `tests/e2e/app.spec.ts` covers tray-triggered refresh of overview, workspaces, and backups.
+  - `tests/e2e/app.spec.ts` covers tray-triggered refresh of overview, sets, and backups.
   - `src/App.test.tsx` covers tray-result invalidation across snapshot, workspace, bindings, and backup queries.
 
 ### 12. Backend init cannot race with desktop mutations
@@ -178,7 +178,7 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
 
 - Status: implemented
 - Evidence:
-  - `src/features/contexts/components/ContextsPanel.tsx` passes the resolved context display label through `useContextMutation`, while `src/features/shared/useDesktopActions.ts` prefers that label in success messages without changing the backend request.
+  - `src/features/sets/components/SetsPanel.tsx` passes the resolved imported-context display label through `useContextMutation`, while `src/features/shared/useDesktopActions.ts` prefers that label in success messages without changing the backend request.
   - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify activating the `client-acme` CLI context reports `Client Acme` when a matching saved profile set exists, while raw CLI ids remain intact for unlabeled contexts.
 
 ### 23. In-window switch results prefer saved profile labels over raw ids
@@ -200,8 +200,8 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
 
 - Status: implemented
 - Evidence:
-  - `src/features/contexts/components/ContextsPanel.tsx` renders CLI contexts with `contextDisplayLabel(settings, context.name)` in the primary heading, but still shows `CLI context id: ...` whenever the saved display label differs from the backend context id.
-  - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify the Contexts screen shows `Client Acme` alongside `CLI context id: client-acme`, while activation results and workspace summaries continue to use the same saved label.
+  - `src/features/sets/components/SetsPanel.tsx` renders imported CLI contexts with `contextDisplayLabel(settings, context.name)` while preserving the backend context id in the activation payload.
+  - `src/App.test.tsx` verifies the Sets screen shows imported contexts with saved labels such as `Client Acme`, while activation results and workspace summaries continue to use the same saved label.
 
 ### 26. CI keeps cross-platform desktop smoke coverage for supported platforms
 
@@ -210,19 +210,19 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
   - `.github/workflows/ci.yml` runs the desktop verification matrix on `macos-latest`, `ubuntu-22.04`, and `windows-latest` through a shared platform matrix.
   - `scripts/verify-release.mjs` and `scripts/verify-release.test.mjs` fail release-contract verification if the CI workflow drops the shared matrix or any required desktop platform runner.
 
-### 27. Contexts screen marks the active CLI context and prevents redundant activation
+### 27. Sets screen marks the active imported CLI context and prevents redundant activation
 
 - Status: implemented
 - Evidence:
-  - `src/features/contexts/components/ContextsPanel.tsx` derives the active CLI context from workspace status, appends the active marker to the current context row, and replaces the action with a disabled `Active context` button when that context is already selected.
-  - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify the Contexts screen updates from `Activate CLI context` to `Active context` after activation and shows the active marker alongside the saved display label.
+  - `src/features/sets/components/SetsPanel.tsx` derives the active CLI context from workspace status, appends the active marker to the imported-context row, and replaces the action with a disabled `Current` button when that context is already selected.
+  - `src/App.test.tsx` verifies the Sets screen updates imported CLI contexts after activation and keeps the active marker alongside the saved display label.
 
-### 28. Workspaces screen marks the explicit binding row that currently matches
+### 28. Sets screen marks the project-rule row that currently matches
 
 - Status: implemented
 - Evidence:
-  - `src/features/workspaces/components/WorkspacesPanel.tsx` derives the current matched binding from workspace status and annotates the matching explicit binding row with `Matched binding ✓`.
-  - `src/App.test.tsx` and `tests/e2e/app.spec.ts` verify the matched-binding marker appears for the active `/code/acme` workspace binding.
+  - `src/features/sets/components/SetsPanel.tsx` derives the current matched binding from workspace status and annotates the matching explicit binding row with `Matched`.
+  - `src/App.test.tsx` verifies the matched-binding marker appears for the active `/code/acme` project rule.
 
 ### 29. Tray context entries prefer saved labels and mark the active context
 
@@ -297,15 +297,15 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
 - Evidence:
   - `src/features/workspaces/workspace-activation.ts` now treats only non-empty saved profile sets as valid workspace activation targets, so mismatch recovery falls back to the matching CLI context when a same-named saved set has no mapped profiles.
   - `src/features/workspaces/workspace-activation.test.ts` verifies both branches: a non-empty saved profile set still wins, while an empty same-named set defers to the CLI context and preserves the resolved shared state mode.
-  - `tests/e2e/app.spec.ts` verifies the Workspaces mismatch action uses `use_context` and refreshes the UI to `Current context: Client Acme` instead of trying to activate an empty saved profile set.
+  - `src/App.test.tsx` verifies project-rule mismatch recovery uses `use_context` and refreshes the UI to the matching imported context instead of trying to activate an empty saved profile set.
 
-### 39. Stale workspace targets route users into Contexts instead of sending invalid activations
+### 39. Stale workspace targets route users into Sets instead of sending invalid activations
 
 - Status: implemented
 - Evidence:
   - `src/features/workspaces/workspace-activation.ts` now returns `null` when the expected workspace target resolves to neither a non-empty saved profile set nor a live CLI context, instead of fabricating a doomed `use_context` request.
-  - `src/App.tsx`, `src/features/overview/components/OverviewPanel.tsx`, `src/features/diagnostics/components/DiagnosticsPanel.tsx`, and `src/features/workspaces/components/WorkspacesPanel.tsx` route that stale-target case into the Contexts screen with `Open contexts` recovery affordances.
-  - `src/features/workspaces/workspace-activation.test.ts`, `src/App.test.tsx`, and `tests/e2e/app.spec.ts` verify stale workspace recovery opens Contexts and does not dispatch `use_context` or `activate_profile_set`.
+  - `src/App.tsx`, `src/features/overview/components/OverviewPanel.tsx`, `src/features/diagnostics/components/DiagnosticsPanel.tsx`, and `src/features/sets/components/SetsPanel.tsx` route that stale-target case into the Sets screen so the user can repair imported contexts or saved sets.
+  - `src/features/workspaces/workspace-activation.test.ts` and `src/App.test.tsx` verify stale workspace recovery opens Sets and does not dispatch `use_context` or `activate_profile_set`.
 
 ### 40. Stale profile sets fail closed before activation
 
@@ -313,7 +313,7 @@ This document tracks the shipped desktop architecture, acceptance criteria, and 
 - Evidence:
   - `src/lib/profile-display.ts` distinguishes non-empty profile sets from usable profile sets by reporting missing mapped profiles against the live snapshot.
   - `src/features/overview/components/OverviewPanel.tsx` and `src/features/workspaces/workspace-activation.ts` exclude stale saved profile sets from quick-switch and workspace-binding activation surfaces while still allowing matching CLI contexts to participate.
-  - `src/features/contexts/components/ContextsPanel.tsx` keeps stale saved profile sets visible for editing and deletion, disables `Activate set`, and explains which mapped profiles are missing.
+  - `src/features/sets/components/SetsPanel.tsx` keeps stale saved profile sets visible for editing and deletion, disables `Switch to ...`, and explains which mapped profiles are missing.
   - `src-tauri/src/state.rs` preflights profile-set activation and returns a `ProfileMissing` error before issuing any partial per-tool switch when mapped profiles no longer exist.
   - `src-tauri/src/tray.rs` excludes stale saved profile sets from tray activation sections, matching the main-window fail-closed behavior for quick-switch surfaces.
   - `src/App.test.tsx`, `tests/e2e/app.spec.ts`, `src-tauri/src/state.rs`, and `src-tauri/src/tray.rs` tests verify stale sets are blocked in-window, omitted from activation pickers and tray menus, and rejected by the backend preflight.
