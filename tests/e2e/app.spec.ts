@@ -1158,6 +1158,41 @@ test("keeps the profile actions menu inside the visible inspector pane", async (
   }
 });
 
+test("opens the table row context menu without activating a profile", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  const row = page.getByRole("option", { name: "Inspect Claude Code Personal" });
+  await row.click({ button: "right" });
+
+  const menu = page.getByRole("menu", { name: "Profile actions" });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Activate" })).toBeVisible();
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const log = window.__AISW_COMMAND_LOG__ ?? [];
+        return log.filter((entry) => entry.command === "use_profile").length;
+      }),
+    )
+    .toBe(0);
+});
+
+test("shows a single visible state mode label in the profiles inspector", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+  await page.getByRole("option", { name: "Inspect Claude Code Personal" }).click();
+
+  const inspector = page.locator(".profiles-inspector");
+  await expect(inspector.getByText("State mode", { exact: true })).toHaveCount(1);
+  await expect(inspector.getByRole("button", { name: "Isolated" })).toBeVisible();
+});
+
 test("keeps the backup actions menu inside the visible inspector pane", async ({ page }) => {
   await installDesktopMock(page, "backupCatalog");
 
@@ -2068,7 +2103,7 @@ test("warns before renaming a profile to a duplicate name", async ({ page }) => 
   await page.goto("/");
   await page.getByRole("button", { name: "Profiles" }).click();
 
-  await page.getByRole("button", { name: "Inspect Claude Code Personal" }).click();
+  await page.getByRole("option", { name: "Inspect Claude Code Personal" }).click();
   await page.getByRole("button", { name: "More profile actions" }).click();
   await page.getByLabel("Profile actions").getByRole("menuitem", { name: "Rename…" }).click();
   const dialog = page.getByRole("dialog", { name: "Edit Profile" });

@@ -122,13 +122,14 @@ export function ProfilesPanel({
   const [openRowActions, setOpenRowActions] = useState<{
     tool: (typeof TOOLS)[number];
     name: string;
-    scope: "inspector";
+    scope: "inspector" | "table";
   } | null>(null);
   const apiKeyInputRef = useRef<HTMLInputElement | null>(null);
   const renameInputRef = useRef<HTMLInputElement | null>(null);
   const editLabelInputRef = useRef<HTMLInputElement | null>(null);
   const inspectorMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
   const inventoryRowRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const rowActionAnchorRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [compactLayout, setCompactLayout] = useState(false);
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
@@ -543,6 +544,20 @@ export function ProfilesPanel({
     onOpenBackups?.();
   }
 
+  function openProfileActions(
+    entryTool: (typeof TOOLS)[number],
+    name: string,
+    scope: "inspector" | "table",
+  ) {
+    setTool(entryTool);
+    setExpandedDetails(name);
+    setOpenRowActions((current) =>
+      current?.tool === entryTool && current?.name === name && current.scope === scope
+        ? null
+        : { tool: entryTool, name, scope },
+    );
+  }
+
   function openProfileSheet() {
     setOpenRowActions(null);
     setOauthEvents([]);
@@ -660,13 +675,20 @@ export function ProfilesPanel({
             <div className="profiles-table-body" role="listbox" aria-label="Profiles">
               {filteredInventoryProfiles.map((inventoryEntry, index) => {
                 const rowSelected = expandedDetails === inventoryEntry.name && tool === inventoryEntry.tool;
+                const menuKey = `${inventoryEntry.tool}:${inventoryEntry.name}`;
+                const rowNeedsReapply =
+                  inventoryEntry.active &&
+                  snapshot.statuses.find((entry) => entry.tool === inventoryEntry.tool)?.active_profile_applied === false;
+                const rowActionAnchorRef = {
+                  current: rowActionAnchorRefs.current[menuKey] ?? null,
+                };
                 return (
                   <div
                     key={`${inventoryEntry.tool}:${inventoryEntry.name}`}
                     className={`profiles-table-row ${rowSelected ? "profiles-table-row-selected" : ""}`}
                     onContextMenu={(event) => {
                       event.preventDefault();
-                      selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
+                      openProfileActions(inventoryEntry.tool, inventoryEntry.name, "table");
                     }}
                   >
                     <button
@@ -712,6 +734,103 @@ export function ProfilesPanel({
                       <span className="profiles-table-column profiles-table-column-low">{inventoryEntry.backend}</span>
                       <span className="profiles-table-column profiles-table-column-low">{inventoryEntry.lastChecked}</span>
                     </button>
+                    <div className="profile-row-actions" data-profile-row-actions>
+                      <button
+                        ref={(node) => {
+                          rowActionAnchorRefs.current[menuKey] = node;
+                        }}
+                        className="ghost-button profile-row-actions-trigger"
+                        type="button"
+                        aria-label={`More actions for ${toolDisplayName(inventoryEntry.tool)} ${inventoryEntry.label}`}
+                        aria-haspopup="menu"
+                        aria-expanded={
+                          openRowActions?.tool === inventoryEntry.tool &&
+                          openRowActions?.name === inventoryEntry.name &&
+                          openRowActions.scope === "table"
+                        }
+                        onClick={() => openProfileActions(inventoryEntry.tool, inventoryEntry.name, "table")}
+                      >
+                        •••
+                      </button>
+                      {openRowActions?.tool === inventoryEntry.tool &&
+                      openRowActions?.name === inventoryEntry.name &&
+                      openRowActions.scope === "table" ? (
+                        <AnchoredMenu
+                          anchorRef={rowActionAnchorRef}
+                          className="profile-row-actions-menu"
+                          align="end"
+                          boundaryAttribute="data-profile-row-actions"
+                          role="menu"
+                          aria-label="Profile actions"
+                        >
+                          {!inventoryEntry.active ? (
+                            <button
+                              type="button"
+                              role="menuitem"
+                              disabled={mutationLock.isBusy}
+                              onClick={() => {
+                                activateInventoryEntry(inventoryEntry);
+                                setOpenRowActions(null);
+                              }}
+                            >
+                              Activate
+                            </button>
+                          ) : null}
+                          {rowNeedsReapply ? (
+                            <button
+                              type="button"
+                              role="menuitem"
+                              disabled={mutationLock.isBusy}
+                              onClick={() => {
+                                activateInventoryEntry(inventoryEntry);
+                                setOpenRowActions(null);
+                              }}
+                            >
+                              Reapply Active Profile
+                            </button>
+                          ) : null}
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setPendingEdit({ name: inventoryEntry.name, focus: "name" });
+                              setOpenRowActions(null);
+                            }}
+                          >
+                            Rename…
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setPendingEdit({ name: inventoryEntry.name, focus: "label" });
+                              setOpenRowActions(null);
+                            }}
+                          >
+                            Change Label…
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            disabled={!inventoryEntry.hasBackup}
+                            onClick={() => openBackupsForProfile(inventoryEntry.tool, inventoryEntry.name)}
+                          >
+                            View Backups
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="profile-row-actions-danger"
+                            onClick={() => {
+                              setPendingRemoval(inventoryEntry.name);
+                              setOpenRowActions(null);
+                            }}
+                          >
+                            Remove…
+                          </button>
+                        </AnchoredMenu>
+                      ) : null}
+                    </div>
                   </div>
                 );
               })}
@@ -875,10 +994,6 @@ export function ProfilesPanel({
                           : selectedInventoryEntry?.backend ?? "Backend Unavailable",
                     },
                     {
-                      label: "State mode",
-                      value: selectedIsActive ? stateModeDisplay(toolStatus?.state_mode) : "Available after activation",
-                    },
-                    {
                       label: "Added",
                       value: selectedLatestBackup
                         ? formatBackupTimestamp(selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id)
@@ -888,6 +1003,16 @@ export function ProfilesPanel({
                       label: "Last checked",
                       value: selectedInventoryEntry?.lastChecked ?? "Not Verified",
                     },
+                    ...(!availableStateModes.length
+                      ? [
+                          {
+                            label: "State mode",
+                            value: selectedIsActive
+                              ? stateModeDisplay(toolStatus?.state_mode)
+                              : "Available after activation",
+                          },
+                        ]
+                      : []),
                   ]}
                 />
                 {availableStateModes.length ? (

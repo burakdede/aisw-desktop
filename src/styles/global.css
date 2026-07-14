@@ -2296,6 +2296,9 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .profiles-table-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
   background: transparent;
 }
@@ -2320,7 +2323,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   width: 100%;
   min-width: 0;
   min-height: 52px;
-  padding: 9px 12px;
+  padding: 9px 6px 9px 12px;
   border: 0;
   background: transparent;
   text-align: left;
@@ -6178,7 +6181,8 @@ html[data-appearance="dark"] .tool-logo-codex {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 10px 0 6px;
+  align-self: stretch;
+  padding: 0 12px 0 2px;
   z-index: 6;
 }
 
