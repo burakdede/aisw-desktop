@@ -12,6 +12,7 @@ import { normalizeTerminalIntegrationText } from "./features/shared/terminal-int
 import { useDesktopActions } from "./features/shared/useDesktopActions";
 import { enqueueMutation, resetMutationQueueForTests } from "./features/shared/mutationQueue";
 import { SettingsPanel } from "./features/settings/components/SettingsPanel";
+import { loadDesktopPreferences } from "./lib/desktop-preferences";
 import { desktopSettingsSchema } from "./lib/schemas";
 import type { AppBootstrap, AppSnapshot, DesktopSettings, InitReport } from "./lib/schemas";
 
@@ -140,6 +141,7 @@ async function renderApp() {
 async function renderSettingsPanel(
   settings: DesktopSettings,
   initialSection?: "general" | "runtime" | "updates" | "shell" | "keyring" | "advanced",
+  desktopPreferences = loadDesktopPreferences(),
 ) {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -157,6 +159,7 @@ async function renderSettingsPanel(
           settings={settings}
           runtimeStatus={bootstrap.runtime_status}
           initialSection={initialSection ?? "runtime"}
+          desktopPreferences={desktopPreferences}
         />
       </QueryClientProvider>,
     );
@@ -8458,6 +8461,21 @@ describe("App", () => {
     });
   });
 
+  it("clears the saved window layout from advanced settings", async () => {
+    window.localStorage.setItem(
+      "ai-switch.desktop.window-state",
+      JSON.stringify({ width: 1280, height: 820, x: 64, y: 96 }),
+    );
+
+    await renderSettingsPanel(bootstrap.settings, "advanced");
+    fireEvent.click(screen.getByRole("button", { name: "Reset Window Layout" }));
+
+    await waitFor(() => {
+      expect(window.localStorage.getItem("ai-switch.desktop.window-state")).toBeNull();
+      expect(screen.getByText("Cleared the saved window size and position.")).toBeInTheDocument();
+    });
+  });
+
   it("saves general desktop preferences from settings", async () => {
     const commands: string[] = [];
     let launchAtLoginEnabled = false;
@@ -8488,9 +8506,13 @@ describe("App", () => {
 
     const launchAtLoginSwitch = screen.getByRole("switch", { name: "Launch at login" });
     const menuBarSwitch = screen.getByRole("switch", { name: "Show menu bar icon" });
+    const windowStateSwitch = screen.getByRole("switch", {
+      name: "Restore previous window size and position",
+    });
 
     expect(launchAtLoginSwitch).toHaveAttribute("aria-checked", "false");
     expect(menuBarSwitch).toHaveAttribute("aria-checked", "true");
+    expect(windowStateSwitch).toHaveAttribute("aria-checked", "true");
 
     await waitFor(() => {
       expect(launchAtLoginSwitch).not.toBeDisabled();
@@ -8502,6 +8524,7 @@ describe("App", () => {
       target: { value: "dark" },
     });
     fireEvent.click(menuBarSwitch);
+    fireEvent.click(windowStateSwitch);
     fireEvent.change(screen.getByLabelText("Default section"), {
       target: { value: "profiles" },
     });
@@ -8510,6 +8533,7 @@ describe("App", () => {
       expect(window.localStorage.getItem("ai-switch.desktop.appearance")).toBe("dark");
       expect(window.localStorage.getItem("ai-switch.desktop.default-section")).toBe("profiles");
       expect(window.localStorage.getItem("ai-switch.desktop.show-menu-bar-icon")).toBe("false");
+      expect(window.localStorage.getItem("ai-switch.desktop.restore-window-state")).toBe("false");
       expect(window.localStorage.getItem("ai-switch.desktop.reopen-setup-assistant")).toBe("false");
       expect(document.documentElement.dataset.appearance).toBe("dark");
       expect(document.documentElement.style.colorScheme).toBe("dark");

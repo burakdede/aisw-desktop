@@ -5319,9 +5319,11 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .settings-screen {
+  container-type: inline-size;
   display: grid;
   gap: 12px;
   min-height: 0;
+  min-width: 0;
 }
 
 .settings-mobile-picker {
@@ -5650,7 +5652,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   max-width: 62ch;
 }
 
-@media (max-width: 900px) {
+@container (max-width: 900px) {
   .settings-row {
     grid-template-columns: minmax(160px, 200px) minmax(0, 1fr);
   }
@@ -5664,7 +5666,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   }
 }
 
-@media (max-width: 800px) {
+@container (max-width: 800px) {
   .settings-mobile-picker {
     display: block;
   }
@@ -5694,7 +5696,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   }
 
   .settings-row-control,
-  .settings-row-toggle input,
+  .settings-row-toggle .settings-switch,
   .settings-row-action .button-row {
     justify-self: stretch;
   }

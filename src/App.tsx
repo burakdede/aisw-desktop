@@ -156,6 +156,10 @@ export function App() {
   }, [desktopPreferences]);
 
   useEffect(() => {
+    if (!desktopPreferences.restoreWindowState) {
+      return;
+    }
+
     let dispose: (() => void) | undefined;
 
     void syncWindowState().then((cleanup) => {
@@ -165,7 +169,7 @@ export function App() {
     return () => {
       dispose?.();
     };
-  }, []);
+  }, [desktopPreferences.restoreWindowState]);
 
   const runtimeBlockedForShortcuts = bootstrap.data
     ? !bootstrap.data.runtime_status.compatible

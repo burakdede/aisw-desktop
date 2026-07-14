@@ -1547,6 +1547,11 @@ test("shows runtime detection and shell guidance in settings", async ({ page }) 
   await expect(page.getByText("Completion scripts")).toBeVisible();
   await expect(page.getByRole("button", { name: "Copy Install" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Copy Verify" })).toBeVisible();
+
+  await page.getByRole("button", { name: "General" }).click();
+  await expect(
+    page.getByRole("switch", { name: "Restore previous window size and position" }),
+  ).toHaveAttribute("aria-checked", "true");
 });
 
 test("saves custom runtime and AISW home settings", async ({ page }) => {
@@ -1568,6 +1573,27 @@ test("saves custom runtime and AISW home settings", async ({ page }) => {
   await expect(page.getByLabel("Engine path")).toHaveValue("/opt/custom/aisw");
   await page.getByRole("button", { name: "Advanced" }).click();
   await expect(page.getByLabel("AISW home")).toHaveValue("/tmp/aisw-home");
+});
+
+test("can clear the saved window layout from advanced settings", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.evaluate(() => {
+    window.localStorage.setItem(
+      "ai-switch.desktop.window-state",
+      JSON.stringify({ width: 1280, height: 820, x: 64, y: 96 }),
+    );
+  });
+
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Advanced" }).click();
+  await page.getByRole("button", { name: "Reset Window Layout" }).click();
+
+  await expect(page.getByText("Cleared the saved window size and position.")).toBeVisible();
+  await expect
+    .poll(() => page.evaluate(() => window.localStorage.getItem("ai-switch.desktop.window-state")))
+    .toBeNull();
 });
 
 test("requires saving settings before updater actions use a changed channel", async ({ page }) => {

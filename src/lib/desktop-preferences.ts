@@ -15,12 +15,14 @@ export type DesktopPreferences = {
   appearance: DesktopAppearance;
   defaultSection: DefaultSection;
   showMenuBarIcon: boolean;
+  restoreWindowState: boolean;
   reopenSetupAssistant: boolean;
 };
 
 const APPEARANCE_KEY = "ai-switch.desktop.appearance";
 const DEFAULT_SECTION_KEY = "ai-switch.desktop.default-section";
 const SHOW_MENU_BAR_ICON_KEY = "ai-switch.desktop.show-menu-bar-icon";
+const RESTORE_WINDOW_STATE_KEY = "ai-switch.desktop.restore-window-state";
 const REOPEN_SETUP_ASSISTANT_KEY = "ai-switch.desktop.reopen-setup-assistant";
 const memoryStorage = createMemoryStorage();
 let nativeThemeSyncToken = 0;
@@ -29,6 +31,7 @@ export const DEFAULT_DESKTOP_PREFERENCES: DesktopPreferences = {
   appearance: "system",
   defaultSection: "overview",
   showMenuBarIcon: true,
+  restoreWindowState: true,
   reopenSetupAssistant: false,
 };
 
@@ -41,6 +44,7 @@ export function loadDesktopPreferences(): DesktopPreferences {
   const storedAppearance = storage.getItem(APPEARANCE_KEY);
   const storedSection = storage.getItem(DEFAULT_SECTION_KEY);
   const storedShowMenuBarIcon = storage.getItem(SHOW_MENU_BAR_ICON_KEY);
+  const storedRestoreWindowState = storage.getItem(RESTORE_WINDOW_STATE_KEY);
   const storedReopenSetupAssistant = storage.getItem(REOPEN_SETUP_ASSISTANT_KEY);
 
   return {
@@ -54,6 +58,10 @@ export function loadDesktopPreferences(): DesktopPreferences {
       storedShowMenuBarIcon === null
         ? DEFAULT_DESKTOP_PREFERENCES.showMenuBarIcon
         : storedShowMenuBarIcon === "true",
+    restoreWindowState:
+      storedRestoreWindowState === null
+        ? DEFAULT_DESKTOP_PREFERENCES.restoreWindowState
+        : storedRestoreWindowState === "true",
     reopenSetupAssistant:
       storedReopenSetupAssistant === null
         ? DEFAULT_DESKTOP_PREFERENCES.reopenSetupAssistant
@@ -70,6 +78,10 @@ export function saveDesktopPreferences(preferences: DesktopPreferences) {
   storage.setItem(APPEARANCE_KEY, preferences.appearance);
   storage.setItem(DEFAULT_SECTION_KEY, preferences.defaultSection);
   storage.setItem(SHOW_MENU_BAR_ICON_KEY, String(preferences.showMenuBarIcon));
+  storage.setItem(
+    RESTORE_WINDOW_STATE_KEY,
+    String(preferences.restoreWindowState),
+  );
   storage.setItem(
     REOPEN_SETUP_ASSISTANT_KEY,
     String(preferences.reopenSetupAssistant),

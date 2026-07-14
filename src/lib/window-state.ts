@@ -66,6 +66,18 @@ export async function syncWindowState(): Promise<Unlisten> {
   };
 }
 
+export function clearPersistedWindowState() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(WINDOW_STATE_KEY);
+  } catch {
+    // Ignore storage failures and allow the app to continue.
+  }
+}
+
 async function restoreWindowState(module: WindowModule, appWindow: WindowGeometryHandle) {
   const state = loadWindowState();
   if (!state) {

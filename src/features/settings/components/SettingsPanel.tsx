@@ -18,6 +18,7 @@ import { notifyDesktop } from "../../../lib/notifications";
 import { type AppBootstrap, type DesktopSettings } from "../../../lib/schemas";
 import { DesktopCommandError } from "../../../lib/tauri";
 import { titleCase } from "../../../lib/utils";
+import { clearPersistedWindowState } from "../../../lib/window-state";
 import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import { normalizeTerminalIntegrationText } from "../../shared/terminal-integration-language";
 import { useDesktopActions } from "../../shared/useDesktopActions";
@@ -80,6 +81,9 @@ export function SettingsPanel({
   );
   const [showMenuBarIcon, setShowMenuBarIcon] = useState(
     desktopPreferences?.showMenuBarIcon ?? true,
+  );
+  const [restoreWindowState, setRestoreWindowState] = useState(
+    desktopPreferences?.restoreWindowState ?? true,
   );
   const readEnabled = useMutationAwareQueryEnabled();
   const shellGuidance = useQuery({
@@ -168,6 +172,7 @@ export function SettingsPanel({
     setAppearance(desktopPreferences?.appearance ?? "system");
     setDefaultSection(desktopPreferences?.defaultSection ?? "overview");
     setShowMenuBarIcon(desktopPreferences?.showMenuBarIcon ?? true);
+    setRestoreWindowState(desktopPreferences?.restoreWindowState ?? true);
     setLaunchMessage("");
   }, [desktopPreferences]);
 
@@ -235,17 +240,24 @@ export function SettingsPanel({
   }
 
   function updateGeneralPreferences(
-    next: Partial<Pick<DesktopPreferences, "appearance" | "defaultSection" | "showMenuBarIcon">>,
+    next: Partial<
+      Pick<
+        DesktopPreferences,
+        "appearance" | "defaultSection" | "showMenuBarIcon" | "restoreWindowState"
+      >
+    >,
   ) {
     const nextPreferences: DesktopPreferences = {
       appearance: next.appearance ?? appearance,
       defaultSection: next.defaultSection ?? defaultSection,
       showMenuBarIcon: next.showMenuBarIcon ?? showMenuBarIcon,
+      restoreWindowState: next.restoreWindowState ?? restoreWindowState,
       reopenSetupAssistant: desktopPreferences?.reopenSetupAssistant ?? false,
     };
     setAppearance(nextPreferences.appearance);
     setDefaultSection(nextPreferences.defaultSection);
     setShowMenuBarIcon(nextPreferences.showMenuBarIcon);
+    setRestoreWindowState(nextPreferences.restoreWindowState);
     onUpdateDesktopPreferences?.(nextPreferences);
   }
 
@@ -254,11 +266,17 @@ export function SettingsPanel({
       appearance,
       defaultSection: DEFAULT_DESKTOP_PREFERENCES.defaultSection,
       showMenuBarIcon,
+      restoreWindowState,
       reopenSetupAssistant: true,
     };
     onUpdateDesktopPreferences?.(nextPreferences);
     onResetOnboarding?.();
     setSelectedSection("general");
+  }
+
+  function resetWindowLayout() {
+    clearPersistedWindowState();
+    setAdvancedMessage("Cleared the saved window size and position.");
   }
 
   function focusSection(section: SettingsSection) {
@@ -446,6 +464,25 @@ export function SettingsPanel({
                       ))}
                     </select>
                   </SettingsRow>
+                </SettingsGroup>
+                <SettingsGroup title="Window">
+                  <ToggleRow
+                    label="Restore previous window size and position"
+                    control={
+                      <button
+                        type="button"
+                        role="switch"
+                        className="settings-switch"
+                        aria-label="Restore previous window size and position"
+                        aria-checked={restoreWindowState}
+                        onClick={() =>
+                          updateGeneralPreferences({
+                            restoreWindowState: !restoreWindowState,
+                          })
+                        }
+                      />
+                    }
+                  />
                 </SettingsGroup>
                 {launchMessage ? <p className="inline-note settings-feedback-note">{launchMessage}</p> : null}
 
@@ -753,6 +790,14 @@ export function SettingsPanel({
                 </SettingsGroup>
 
                 <SettingsGroup title="Data">
+                  <SettingsActionRow
+                    label="Window layout"
+                    action={
+                      <button className="ghost-button" type="button" onClick={resetWindowLayout}>
+                        Reset Window Layout
+                      </button>
+                    }
+                  />
                   <SettingsActionRow
                     label="App data folder"
                     action={
