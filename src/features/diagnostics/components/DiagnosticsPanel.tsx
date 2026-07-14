@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
-import { measuredPaneWidth } from "../../../components/measuredPaneWidth";
 import { SplitView } from "../../../components/SplitView";
+import { useCompactLayout } from "../../../components/useCompactLayout";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import { exportDiagnosticBundle, runDoctor, runRepair, runVerify } from "../../../lib/client";
 import { openExternalGuide, installGuideUrlForTool } from "../../../lib/tool-guidance";
@@ -84,9 +84,9 @@ export function DiagnosticsPanel({
   const [inspectorMenuOpen, setInspectorMenuOpen] = useState(false);
   const toolbarMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
   const inspectorMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
-  const [compactLayout, setCompactLayout] = useState(false);
-  const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const compactLayout = useCompactLayout(rootRef, DIAGNOSTICS_COMPACT_BREAKPOINT);
+  const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const applyRepair = useMutation({
     mutationFn: (fixes: string[]) => runRepair({ apply: true, fixes }),
     onSuccess: async () => {
@@ -267,42 +267,6 @@ export function DiagnosticsPanel({
   useEffect(() => {
     setInspectorMenuOpen(false);
   }, [selectedFindingKey]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const rootElement = rootRef.current;
-    const updateLayout = () => {
-      setCompactLayout(
-        measuredPaneWidth(rootRef.current, DIAGNOSTICS_COMPACT_BREAKPOINT) <
-          DIAGNOSTICS_COMPACT_BREAKPOINT,
-      );
-    };
-    updateLayout();
-    window.addEventListener("resize", updateLayout);
-    const observer =
-      typeof ResizeObserver !== "undefined" && rootElement
-        ? new ResizeObserver(() => updateLayout())
-        : null;
-    if (observer && rootElement) {
-      observer.observe(rootElement);
-    }
-    return () => {
-      window.removeEventListener("resize", updateLayout);
-      observer?.disconnect();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!rootRef.current) {
-      return;
-    }
-    setCompactLayout(
-      measuredPaneWidth(rootRef.current, DIAGNOSTICS_COMPACT_BREAKPOINT) <
-        DIAGNOSTICS_COMPACT_BREAKPOINT,
-    );
-  }, []);
 
   useEffect(() => {
     if (!compactLayout) {

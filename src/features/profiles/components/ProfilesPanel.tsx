@@ -3,11 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
-import { measuredPaneWidth } from "../../../components/measuredPaneWidth";
 import { SearchField } from "../../../components/SearchField";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
+import { useCompactLayout } from "../../../components/useCompactLayout";
 import {
   AppBootstrap,
   AppSnapshot,
@@ -121,7 +121,7 @@ export function ProfilesPanel({
   const inventoryRowRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const rowActionAnchorRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const [compactLayout, setCompactLayout] = useState(false);
+  const compactLayout = useCompactLayout(rootRef, PROFILES_COMPACT_BREAKPOINT);
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
 
   const profiles = useMemo(() => snapshot.profiles[tool]?.profiles ?? [], [snapshot, tool]);
@@ -339,42 +339,6 @@ export function ProfilesPanel({
       setExpandedDetails(nextDefault);
     }
   }, [expandedDetails, profiles, snapshot.profiles, tool]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const rootElement = rootRef.current;
-
-    const updateLayout = () => {
-      setCompactLayout(
-        measuredPaneWidth(rootRef.current, PROFILES_COMPACT_BREAKPOINT) < PROFILES_COMPACT_BREAKPOINT,
-      );
-    };
-
-    updateLayout();
-    window.addEventListener("resize", updateLayout);
-    const observer =
-      typeof ResizeObserver !== "undefined" && rootElement
-        ? new ResizeObserver(() => updateLayout())
-        : null;
-    if (observer && rootElement) {
-      observer.observe(rootElement);
-    }
-    return () => {
-      window.removeEventListener("resize", updateLayout);
-      observer?.disconnect();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!rootRef.current) {
-      return;
-    }
-    setCompactLayout(
-      measuredPaneWidth(rootRef.current, PROFILES_COMPACT_BREAKPOINT) < PROFILES_COMPACT_BREAKPOINT,
-    );
-  }, []);
 
   useEffect(() => {
     if (!compactLayout) {

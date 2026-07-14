@@ -4,11 +4,11 @@ import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
 import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
-import { measuredPaneWidth } from "../../../components/measuredPaneWidth";
 import { SearchField } from "../../../components/SearchField";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
+import { useCompactLayout } from "../../../components/useCompactLayout";
 import { exportActivityLog } from "../../../lib/client";
 import { notifyDesktop } from "../../../lib/notifications";
 import {
@@ -50,7 +50,7 @@ export function ActivityPanel({
   const [logMessage, setLogMessage] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [pendingClear, setPendingClear] = useState(false);
-  const [compactLayout, setCompactLayout] = useState(false);
+  const compactLayout = useCompactLayout(rootRef, ACTIVITY_COMPACT_BREAKPOINT);
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const menuAnchorRef = useRef<HTMLButtonElement | null>(null);
 
@@ -93,47 +93,6 @@ export function ActivityPanel({
     }
     setSelectedEntryKey(filteredEntries[0]?.key ?? null);
   }, [filteredEntries, selectedEntryKey]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const updateLayout = () => {
-      setCompactLayout(
-        measuredPaneWidth(rootRef.current, ACTIVITY_COMPACT_BREAKPOINT) <
-          ACTIVITY_COMPACT_BREAKPOINT,
-      );
-    };
-
-    updateLayout();
-    const observer =
-      typeof ResizeObserver === "function"
-        ? new ResizeObserver(() => {
-            updateLayout();
-          })
-        : null;
-
-    if (rootRef.current) {
-      observer?.observe(rootRef.current);
-    }
-    window.addEventListener("resize", updateLayout);
-
-    return () => {
-      observer?.disconnect();
-      window.removeEventListener("resize", updateLayout);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!rootRef.current) {
-      return;
-    }
-
-    setCompactLayout(
-      measuredPaneWidth(rootRef.current, ACTIVITY_COMPACT_BREAKPOINT) < ACTIVITY_COMPACT_BREAKPOINT,
-    );
-  });
 
   useEffect(() => {
     if (!compactLayout) {

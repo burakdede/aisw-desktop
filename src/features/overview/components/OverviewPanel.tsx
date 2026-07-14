@@ -2,8 +2,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
 import { AnchoredMenu } from "../../../components/AnchoredMenu";
-import { measuredPaneWidth } from "../../../components/measuredPaneWidth";
 import { ToolBrand } from "../../../components/ToolBrand";
+import { useCompactLayout } from "../../../components/useCompactLayout";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import {
   installGuideUrlForTool,
@@ -80,7 +80,7 @@ export function OverviewPanel({
   const currentSetDisplay = currentSetLabel ?? "None";
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [selectedTool, setSelectedTool] = useState(snapshot.statuses[0]?.tool ?? "");
-  const [compactLayout, setCompactLayout] = useState(false);
+  const compactLayout = useCompactLayout(rootRef, OVERVIEW_COMPACT_BREAKPOINT);
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const selectedStatus =
     snapshot.statuses.find((status) => status.tool === selectedTool) ?? snapshot.statuses[0] ?? null;
@@ -114,40 +114,6 @@ export function OverviewPanel({
       setSelectedTool(snapshot.statuses[0].tool);
     }
   }, [selectedTool, snapshot.statuses]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const rootElement = rootRef.current;
-    const updateLayout = () => {
-      setCompactLayout(
-        measuredPaneWidth(rootRef.current, OVERVIEW_COMPACT_BREAKPOINT) < OVERVIEW_COMPACT_BREAKPOINT,
-      );
-    };
-    updateLayout();
-    window.addEventListener("resize", updateLayout);
-    const observer =
-      typeof ResizeObserver !== "undefined" && rootElement
-        ? new ResizeObserver(() => updateLayout())
-        : null;
-    if (observer && rootElement) {
-      observer.observe(rootElement);
-    }
-    return () => {
-      window.removeEventListener("resize", updateLayout);
-      observer?.disconnect();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!rootRef.current) {
-      return;
-    }
-    setCompactLayout(
-      measuredPaneWidth(rootRef.current, OVERVIEW_COMPACT_BREAKPOINT) < OVERVIEW_COMPACT_BREAKPOINT,
-    );
-  }, []);
 
   useEffect(() => {
     if (!compactLayout) {

@@ -2,10 +2,10 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
-import { measuredPaneWidth } from "../../../components/measuredPaneWidth";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
+import { useCompactLayout } from "../../../components/useCompactLayout";
 import { getProjectBindings, getWorkspaceStatus } from "../../../lib/client";
 import {
   contextDisplayLabel,
@@ -86,7 +86,8 @@ export function SetsPanel({
   const [rulesMenuOpen, setRulesMenuOpen] = useState(false);
   const setMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
   const rulesMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
-  const [compactLayout, setCompactLayout] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const compactLayout = useCompactLayout(rootRef, SETS_COMPACT_BREAKPOINT);
   const [compactSetInspectorOpen, setCompactSetInspectorOpen] = useState(false);
   const [compactRuleInspectorOpen, setCompactRuleInspectorOpen] = useState(false);
   const [workspaceOverrideDismissed, setWorkspaceOverrideDismissed] = useState(false);
@@ -107,7 +108,6 @@ export function SetsPanel({
     profiles: Object.fromEntries(TOOLS.map((tool) => [tool, ""])),
   });
   const [lastSetAction, setLastSetAction] = useState("");
-  const rootRef = useRef<HTMLDivElement | null>(null);
 
   const localSets = settings.profile_sets ?? [];
   const importedContexts = snapshot.contexts;
@@ -228,40 +228,6 @@ export function SetsPanel({
   useEffect(() => {
     setRulesMenuOpen(false);
   }, [mode, selectedBindingKey]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const rootElement = rootRef.current;
-    const updateLayout = () => {
-      setCompactLayout(
-        measuredPaneWidth(rootRef.current, SETS_COMPACT_BREAKPOINT) < SETS_COMPACT_BREAKPOINT,
-      );
-    };
-    updateLayout();
-    window.addEventListener("resize", updateLayout);
-    const observer =
-      typeof ResizeObserver !== "undefined" && rootElement
-        ? new ResizeObserver(() => updateLayout())
-        : null;
-    if (observer && rootElement) {
-      observer.observe(rootElement);
-    }
-    return () => {
-      window.removeEventListener("resize", updateLayout);
-      observer?.disconnect();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!rootRef.current) {
-      return;
-    }
-    setCompactLayout(
-      measuredPaneWidth(rootRef.current, SETS_COMPACT_BREAKPOINT) < SETS_COMPACT_BREAKPOINT,
-    );
-  }, []);
 
   useEffect(() => {
     if (!compactLayout) {

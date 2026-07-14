@@ -4,10 +4,10 @@ import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
 import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
-import { measuredPaneWidth } from "../../../components/measuredPaneWidth";
 import { SearchField } from "../../../components/SearchField";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
+import { useCompactLayout } from "../../../components/useCompactLayout";
 import { listBackups, openAppDataFolder } from "../../../lib/client";
 import { compareBackupsNewestFirst, type BackupLike } from "../../../lib/backups";
 import { toolProfileDisplayLabel } from "../../../lib/profile-display";
@@ -46,7 +46,7 @@ export function BackupsPanel({
   const [inspectorMenuOpen, setInspectorMenuOpen] = useState(false);
   const toolbarMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
   const inspectorMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
-  const [compactLayout, setCompactLayout] = useState(false);
+  const compactLayout = useCompactLayout(rootRef, BACKUPS_COMPACT_BREAKPOINT);
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const [pendingRestore, setPendingRestore] = useState<{
     backupId: string;
@@ -68,46 +68,6 @@ export function BackupsPanel({
     }
     setSelectedBackupId(filteredBackups[0]?.backup_id ?? null);
   }, [filteredBackups, selectedBackupId]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const updateLayout = () => {
-      setCompactLayout(
-        measuredPaneWidth(rootRef.current, BACKUPS_COMPACT_BREAKPOINT) < BACKUPS_COMPACT_BREAKPOINT,
-      );
-    };
-
-    updateLayout();
-    const observer =
-      typeof ResizeObserver === "function"
-        ? new ResizeObserver(() => {
-            updateLayout();
-          })
-        : null;
-
-    if (rootRef.current) {
-      observer?.observe(rootRef.current);
-    }
-    window.addEventListener("resize", updateLayout);
-
-    return () => {
-      observer?.disconnect();
-      window.removeEventListener("resize", updateLayout);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!rootRef.current) {
-      return;
-    }
-
-    setCompactLayout(
-      measuredPaneWidth(rootRef.current, BACKUPS_COMPACT_BREAKPOINT) < BACKUPS_COMPACT_BREAKPOINT,
-    );
-  });
 
   useEffect(() => {
     if (!compactLayout) {
