@@ -1924,6 +1924,113 @@ test("uses the compact settings section picker without horizontal scrolling", as
   expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1);
 });
 
+test("keeps the main screens usable at 840 by 600 without horizontal overflow", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.setViewportSize({ width: 840, height: 600 });
+  await page.goto("/");
+
+  const screens = [
+    {
+      nav: "Overview",
+      heading: "Overview",
+      containers: [".overview-tool-list", ".overview-inspector-pane"],
+    },
+    {
+      nav: "Profiles",
+      heading: "Profiles",
+      containers: [".profiles-table-body", ".profiles-inspector"],
+    },
+    {
+      nav: "Sets",
+      heading: "Sets",
+      containers: [".sets-library-list", ".sets-inspector"],
+    },
+    {
+      nav: "Diagnostics",
+      heading: "Diagnostics",
+      containers: [".diagnostics-findings-list", ".diagnostics-inspector-surface"],
+    },
+    {
+      nav: "Backups",
+      heading: "Backups",
+      containers: [".backups-table-wrap", ".backups-inspector-surface"],
+    },
+    {
+      nav: "Activity",
+      heading: "Activity",
+      containers: [".activity-list-body", ".activity-inspector-surface"],
+    },
+    {
+      nav: "Settings",
+      heading: "Settings",
+      containers: [".settings-form-scroll"],
+    },
+  ] as const;
+
+  async function openScreen(nav: string) {
+    if (nav === "Overview") {
+      return;
+    }
+
+    await page.getByRole("button", { name: "Show sidebar" }).click();
+    await page.getByRole("button", { name: nav, exact: true }).click();
+  }
+
+  for (const screen of screens) {
+    await openScreen(screen.nav);
+    await expect(page.getByRole("heading", { name: screen.heading }).first()).toBeVisible();
+
+    const contentMetrics = await page.locator(".content-main").evaluate((node) => ({
+      clientWidth: node.clientWidth,
+      scrollWidth: node.scrollWidth,
+      clientHeight: node.clientHeight,
+      scrollHeight: node.scrollHeight,
+      overflowX: window.getComputedStyle(node).overflowX,
+      overflowY: window.getComputedStyle(node).overflowY,
+    }));
+    expect(contentMetrics.scrollWidth).toBeLessThanOrEqual(contentMetrics.clientWidth + 1);
+    expect(contentMetrics.clientHeight).toBeGreaterThan(0);
+    expect(contentMetrics.scrollHeight).toBeGreaterThan(0);
+    expect(contentMetrics.overflowX).not.toBe("scroll");
+    expect(["auto", "scroll", "visible"]).toContain(contentMetrics.overflowY);
+
+    const pageMetrics = await page.evaluate(() => ({
+      docScrollWidth: document.documentElement.scrollWidth,
+      docScrollHeight: document.documentElement.scrollHeight,
+      bodyScrollWidth: document.body.scrollWidth,
+      bodyScrollHeight: document.body.scrollHeight,
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight,
+    }));
+    expect(pageMetrics.docScrollWidth).toBeLessThanOrEqual(pageMetrics.innerWidth + 1);
+    expect(pageMetrics.bodyScrollWidth).toBeLessThanOrEqual(pageMetrics.innerWidth + 1);
+    expect(pageMetrics.docScrollHeight).toBeLessThanOrEqual(pageMetrics.innerHeight + 1);
+    expect(pageMetrics.bodyScrollHeight).toBeLessThanOrEqual(pageMetrics.innerHeight + 1);
+
+    for (const selector of screen.containers) {
+      const container = page.locator(selector).first();
+      if ((await container.count()) === 0) {
+        continue;
+      }
+
+      const metrics = await container.evaluate((node) => ({
+        clientWidth: node.clientWidth,
+        scrollWidth: node.scrollWidth,
+        clientHeight: node.clientHeight,
+        scrollHeight: node.scrollHeight,
+        overflowX: window.getComputedStyle(node).overflowX,
+        overflowY: window.getComputedStyle(node).overflowY,
+      }));
+      expect(metrics.clientWidth).toBeGreaterThan(0);
+      expect(metrics.clientHeight).toBeGreaterThan(0);
+      expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1);
+      expect(metrics.overflowX).not.toBe("scroll");
+      expect(["auto", "scroll", "visible"]).toContain(metrics.overflowY);
+    }
+  }
+});
+
 test("saves custom runtime and AISW home settings", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
