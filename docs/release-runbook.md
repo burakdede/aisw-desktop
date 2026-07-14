@@ -35,6 +35,8 @@ npm run test:coverage
 npm run build
 npm run test:e2e
 npm run verify:release
+cargo fmt --manifest-path src-tauri/Cargo.toml --check
+cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
 ```
@@ -61,6 +63,7 @@ npm run tauri:build
 - `Bundled` runtime mode reports blocked when no packaged sidecar exists.
 - `System` runtime mode resolves the AI Switch runtime from `PATH` without relying on bundled paths.
 - The standard frontend and Rust test suites pass before packaging.
+- Rust formatting and clippy checks pass before packaging.
 - Frontend coverage stays above the enforced Vitest thresholds before packaging.
 - CI and publish workflows enforce the same verification matrix used for local release checks.
 
@@ -116,7 +119,7 @@ npm run tauri:build
 
 - Stage the correct AI Switch sidecar for the target with `npm run prepare:sidecar`.
 - Pass the standard verification matrix:
-  `npm test`, `npm run test:coverage`, `npm run build`, `npm run test:e2e`, `npm run verify:release`, `cargo test --manifest-path src-tauri/Cargo.toml`, `cargo check --manifest-path src-tauri/Cargo.toml`.
+  `npm test`, `npm run test:coverage`, `npm run build`, `npm run test:e2e`, `npm run verify:release`, `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings`, `cargo test --manifest-path src-tauri/Cargo.toml`, `cargo check --manifest-path src-tauri/Cargo.toml`.
 - Run `npm run tauri:bundle-local` to smoke-test an unsigned local bundle before release signing.
 - Build the desktop bundle with `npm run tauri:build`.
 - Launch the packaged app in `Bundled` mode and confirm the embedded runtime path resolves in runtime status.

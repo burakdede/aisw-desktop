@@ -188,6 +188,8 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         runbook.includes("npm run build") &&
         runbook.includes("npm run test:e2e") &&
         runbook.includes("npm run verify:release") &&
+        runbook.includes("cargo fmt --manifest-path src-tauri/Cargo.toml --check") &&
+        runbook.includes("cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings") &&
         runbook.includes("cargo test --manifest-path src-tauri/Cargo.toml") &&
         runbook.includes("cargo check --manifest-path src-tauri/Cargo.toml"),
     },
@@ -222,8 +224,14 @@ export function verifyReleaseContract(rootDir = repoRoot) {
     {
       label: "CI workflow enforces Rust verification matrix",
       ok:
+        ciWorkflow.includes("cargo fmt --manifest-path src-tauri/Cargo.toml --check") &&
+        ciWorkflow.includes("cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings") &&
         ciWorkflow.includes("cargo test --manifest-path src-tauri/Cargo.toml") &&
         ciWorkflow.includes("cargo check --manifest-path src-tauri/Cargo.toml"),
+    },
+    {
+      label: "CI workflow pins the documented Node runtime",
+      ok: ciWorkflow.includes("node-version: 20.19.0"),
     },
     {
       label: "CI workflow keeps cross-platform desktop smoke coverage",
@@ -265,8 +273,14 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         publishWorkflow.includes("npm run test:e2e") &&
         publishWorkflow.includes("npm run build") &&
         publishWorkflow.includes("npm run verify:release") &&
+        publishWorkflow.includes("cargo fmt --manifest-path src-tauri/Cargo.toml --check") &&
+        publishWorkflow.includes("cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings") &&
         publishWorkflow.includes("cargo test --manifest-path src-tauri/Cargo.toml") &&
         publishWorkflow.includes("cargo check --manifest-path src-tauri/Cargo.toml"),
+    },
+    {
+      label: "publish workflow pins the documented Node runtime",
+      ok: publishWorkflow.includes("node-version: 20.19.0"),
     },
     {
       label: "publish workflow produces signed Tauri artifacts",

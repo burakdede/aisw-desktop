@@ -110,6 +110,8 @@ run: |
   npm run test:e2e
   npm run build
   npm run verify:release
+  cargo fmt --manifest-path src-tauri/Cargo.toml --check
+  cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
   cargo test --manifest-path src-tauri/Cargo.toml
   cargo check --manifest-path src-tauri/Cargo.toml
 runs-on: \${{ matrix.platform }}
@@ -119,6 +121,7 @@ strategy:
       - macos-latest
       - ubuntu-22.04
       - windows-latest
+node-version: 20.19.0
 `,
   );
   writeFixture(
@@ -134,6 +137,8 @@ npm run test:coverage
 npm run test:e2e
 npm run build
 npm run verify:release
+cargo fmt --manifest-path src-tauri/Cargo.toml --check
+cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
 tauri-apps/tauri-action@v1
@@ -149,6 +154,7 @@ AISW_SIDECAR_URL_WINDOWS_X64
 AISW_DESKTOP_UPDATER_ENDPOINT_STABLE
 AISW_DESKTOP_UPDATER_ENDPOINT_BETA
 TAURI_SIGNING_PUBLIC_KEY
+node-version: 20.19.0
 `,
   );
   writeFixture(
@@ -194,6 +200,8 @@ npm run test:coverage
 npm run build
 npm run test:e2e
 npm run verify:release
+cargo fmt --manifest-path src-tauri/Cargo.toml --check
+cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
 ## Platform signing flow
@@ -254,6 +262,8 @@ npm run test:coverage
 npm run build
 npm run test:e2e
 npm run verify:release
+cargo fmt --manifest-path src-tauri/Cargo.toml --check
+cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
 ## Platform signing flow

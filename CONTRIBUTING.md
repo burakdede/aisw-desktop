@@ -31,6 +31,8 @@ npm run test:coverage
 npm run build
 npm run test:e2e
 npm run verify:release
+cargo fmt --manifest-path src-tauri/Cargo.toml --check
+cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
 ```

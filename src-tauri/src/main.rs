@@ -24,7 +24,7 @@ fn main() {
     let app_state = AppState::new(SettingsStore::new(resolve_settings_dir()));
     tauri::Builder::default()
         .manage(app_state)
-        .menu(|app| menu::build_menu(app))
+        .menu(menu::build_menu)
         .on_menu_event(|app, event| {
             menu::handle_menu_event(app, event.id().as_ref());
         })
