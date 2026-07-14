@@ -143,7 +143,10 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
                         state
                             .mutate("tray_use_context", move |bridge| async move {
                                 bridge
-                                    .use_context(tray_use_context_request(context.clone(), snapshot.as_ref()))
+                                    .use_context(tray_use_context_request(
+                                        context.clone(),
+                                        snapshot.as_ref(),
+                                    ))
                                     .await
                             })
                             .await
@@ -177,7 +180,10 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
                         state
                             .mutate("tray_use_all_profiles", move |bridge| async move {
                                 bridge
-                                    .use_all_profiles(tray_use_all_profiles_request(profile.clone(), snapshot.as_ref()))
+                                    .use_all_profiles(tray_use_all_profiles_request(
+                                        profile.clone(),
+                                        snapshot.as_ref(),
+                                    ))
                                     .await
                             })
                             .await
@@ -234,7 +240,11 @@ fn handle_menu_event<R: Runtime>(app: &AppHandle<R>, state: AppState, id: String
                         state
                             .mutate("tray_use_profile", move |bridge| async move {
                                 bridge
-                                    .use_profile(tray_use_profile_request(tool.clone(), profile.clone(), snapshot.as_ref()))
+                                    .use_profile(tray_use_profile_request(
+                                        tool.clone(),
+                                        profile.clone(),
+                                        snapshot.as_ref(),
+                                    ))
                                     .await
                             })
                             .await
@@ -306,10 +316,7 @@ fn tray_use_profile_request(
     }
 }
 
-fn tray_use_context_request(
-    context: String,
-    snapshot: Option<&AppSnapshot>,
-) -> UseContextRequest {
+fn tray_use_context_request(context: String, snapshot: Option<&AppSnapshot>) -> UseContextRequest {
     UseContextRequest {
         context,
         state_mode: preferred_global_state_mode(snapshot),
@@ -531,7 +538,11 @@ fn active_set_label(
             .into_iter()
             .find(|set| profile_set_is_active(set, snapshot))
         {
-            return Some(profile_set_label(active_set, snapshot).trim_end_matches(" ✓").to_owned());
+            return Some(
+                profile_set_label(active_set, snapshot)
+                    .trim_end_matches(" ✓")
+                    .to_owned(),
+            );
         }
     }
     let mut active_profiles = snapshot
@@ -559,7 +570,12 @@ fn tray_status_items(
         id: "status.current-set".to_owned(),
         label: active_set_label(settings, snapshot)
             .map(|name| format!("Current Set: {name}"))
-            .unwrap_or_else(|| format!("Current Set: {}", tray_status_label(runtime_compatible, snapshot))),
+            .unwrap_or_else(|| {
+                format!(
+                    "Current Set: {}",
+                    tray_status_label(runtime_compatible, snapshot)
+                )
+            }),
         enabled: false,
     }];
 
@@ -584,7 +600,10 @@ fn tray_tool_order(snapshot: &AppSnapshot) -> Vec<String> {
     let preferred = ["claude", "codex", "gemini"];
     let mut ordered = preferred
         .iter()
-        .filter(|tool| snapshot.profiles.contains_key(**tool) || snapshot.statuses.iter().any(|status| status.tool == **tool))
+        .filter(|tool| {
+            snapshot.profiles.contains_key(**tool)
+                || snapshot.statuses.iter().any(|status| status.tool == **tool)
+        })
         .map(|tool| (*tool).to_owned())
         .collect::<Vec<_>>();
 
@@ -739,7 +758,8 @@ fn combined_set_entries(
             enabled: true,
         })
         .collect::<Vec<_>>();
-    context_entries.sort_by(|left, right| left.label.to_lowercase().cmp(&right.label.to_lowercase()));
+    context_entries
+        .sort_by(|left, right| left.label.to_lowercase().cmp(&right.label.to_lowercase()));
 
     let mut entries = Vec::with_capacity(
         shared_entries.len()
@@ -842,18 +862,24 @@ fn profile_set_is_active(set: &ProfileSet, snapshot: &AppSnapshot) -> bool {
     let selected = set
         .profiles
         .iter()
-        .filter_map(|(tool, profile)| profile.as_ref().map(|profile| (tool.as_str(), profile.as_str())))
+        .filter_map(|(tool, profile)| {
+            profile
+                .as_ref()
+                .map(|profile| (tool.as_str(), profile.as_str()))
+        })
         .collect::<Vec<_>>();
     !selected.is_empty()
-        && selected.into_iter().all(|(tool, profile)| {
-            active_profile_for_tool(snapshot, tool) == Some(profile)
-        })
+        && selected
+            .into_iter()
+            .all(|(tool, profile)| active_profile_for_tool(snapshot, tool) == Some(profile))
 }
 
 fn profile_set_has_selections(set: &ProfileSet) -> bool {
-    set.profiles
-        .values()
-        .any(|profile| profile.as_deref().is_some_and(|value| !value.trim().is_empty()))
+    set.profiles.values().any(|profile| {
+        profile
+            .as_deref()
+            .is_some_and(|value| !value.trim().is_empty())
+    })
 }
 
 fn profile_set_has_usable_selections(set: &ProfileSet, snapshot: &AppSnapshot) -> bool {
@@ -872,7 +898,12 @@ fn profile_set_has_usable_selections(set: &ProfileSet, snapshot: &AppSnapshot) -
                 snapshot
                     .profiles
                     .get(tool)
-                    .map(|entry| entry.profiles.iter().any(|candidate| candidate.name == profile))
+                    .map(|entry| {
+                        entry
+                            .profiles
+                            .iter()
+                            .any(|candidate| candidate.name == profile)
+                    })
                     .unwrap_or(false)
             })
 }
@@ -936,7 +967,8 @@ fn shared_profile_display_name(
 
     let mut tools = snapshot.profiles.keys().collect::<Vec<_>>();
     tools.sort();
-    tools.into_iter()
+    tools
+        .into_iter()
         .find_map(|tool| {
             snapshot.profiles.get(tool).and_then(|entry| {
                 entry
@@ -1001,13 +1033,12 @@ fn active_profile_for_tool<'a>(snapshot: &'a AppSnapshot, tool: &str) -> Option<
 #[cfg(test)]
 mod tests {
     use super::{
-        active_set_label, active_summary, active_summary_or_default, build_tray_command_result_event,
-        parse_tray_action, profile_set_entries, profile_set_is_active, shared_profile_entries,
-        tray_context_display_label, tray_context_entry_label, tray_menu_model,
-        tray_profile_display_name,
-        tray_runtime_notice, tray_sections, tray_status_label,
-        tray_use_all_profiles_request, tray_use_context_request, tray_use_profile_request,
-        TrayAction, TrayCommandScope, TrayEntry, TraySection,
+        active_set_label, active_summary, active_summary_or_default,
+        build_tray_command_result_event, parse_tray_action, profile_set_entries,
+        profile_set_is_active, shared_profile_entries, tray_context_display_label,
+        tray_context_entry_label, tray_menu_model, tray_profile_display_name, tray_runtime_notice,
+        tray_sections, tray_status_label, tray_use_all_profiles_request, tray_use_context_request,
+        tray_use_profile_request, TrayAction, TrayCommandScope, TrayEntry, TraySection,
     };
     use crate::errors::{ErrorPayload, GuiErrorKind};
     use crate::models::{
@@ -1067,7 +1098,9 @@ mod tests {
         assert_eq!(tray_status_label(false, None), "Desktop engine unavailable");
         assert_eq!(
             tray_runtime_notice(false),
-            Some("Switching is unavailable. Switch back to the included desktop engine in Settings.")
+            Some(
+                "Switching is unavailable. Switch back to the included desktop engine in Settings."
+            )
         );
         assert_eq!(tray_runtime_notice(true), None);
     }
@@ -1110,7 +1143,10 @@ mod tests {
             workspace_status: None,
             project_bindings: None,
         };
-        assert_eq!(active_set_label(None, Some(&snapshot)).as_deref(), Some("Work"));
+        assert_eq!(
+            active_set_label(None, Some(&snapshot)).as_deref(),
+            Some("Work")
+        );
     }
 
     #[test]
@@ -1451,13 +1487,11 @@ mod tests {
                 },
                 TraySection {
                     title: "Switch Claude Code".to_owned(),
-                    items: vec![
-                        TrayEntry {
-                            id: "profile:claude:work".to_owned(),
-                            label: "Office ✓".to_owned(),
-                            enabled: true,
-                        },
-                    ],
+                    items: vec![TrayEntry {
+                        id: "profile:claude:work".to_owned(),
+                        label: "Office ✓".to_owned(),
+                        enabled: true,
+                    },],
                 },
                 TraySection {
                     title: "Switch Codex CLI".to_owned(),
@@ -1614,7 +1648,9 @@ mod tests {
         );
         assert_eq!(
             model.runtime_notice.as_deref(),
-            Some("Switching is unavailable. Switch back to the included desktop engine in Settings.")
+            Some(
+                "Switching is unavailable. Switch back to the included desktop engine in Settings."
+            )
         );
         assert_eq!(
             model.sections,
@@ -1763,12 +1799,14 @@ mod tests {
             workspace_status: None,
             project_bindings: None,
         };
-        let claude = tray_use_profile_request("claude".to_owned(), "work".to_owned(), Some(&snapshot));
+        let claude =
+            tray_use_profile_request("claude".to_owned(), "work".to_owned(), Some(&snapshot));
         assert_eq!(claude.tool, "claude");
         assert_eq!(claude.profile, "work");
         assert_eq!(claude.state_mode.as_deref(), Some("shared"));
 
-        let gemini = tray_use_profile_request("gemini".to_owned(), "travel".to_owned(), Some(&snapshot));
+        let gemini =
+            tray_use_profile_request("gemini".to_owned(), "travel".to_owned(), Some(&snapshot));
         assert_eq!(gemini.tool, "gemini");
         assert_eq!(gemini.profile, "travel");
         assert_eq!(gemini.state_mode, None);
@@ -1778,7 +1816,10 @@ mod tests {
     fn tray_actions_map_ids_to_matching_commands() {
         assert_eq!(parse_tray_action("open"), TrayAction::Open);
         assert_eq!(parse_tray_action("settings"), TrayAction::OpenSettings);
-        assert_eq!(parse_tray_action("diagnostics"), TrayAction::OpenDiagnostics);
+        assert_eq!(
+            parse_tray_action("diagnostics"),
+            TrayAction::OpenDiagnostics
+        );
         assert_eq!(parse_tray_action("quit"), TrayAction::Quit);
         assert_eq!(
             parse_tray_action("context:client-acme"),

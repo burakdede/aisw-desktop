@@ -161,9 +161,8 @@ impl AppState {
                 .fetch_snapshot(&*bridge)
                 .await
                 .map_err(ErrorPayload::from)?;
-            let raw =
-                activate_profile_set_on_bridge(&*bridge, &set, &contexts, &current_snapshot)
-                    .await?;
+            let raw = activate_profile_set_on_bridge(&*bridge, &set, &contexts, &current_snapshot)
+                .await?;
             let snapshot = self
                 .fetch_snapshot(&*bridge)
                 .await
@@ -206,7 +205,8 @@ impl AppState {
         if let Some(version) = &version {
             if version.cli_api_version != 1 || version.json_schema_version != 1 {
                 issues.push(
-                    "The selected switching engine uses an unsupported desktop contract version.".to_owned(),
+                    "The selected switching engine uses an unsupported desktop contract version."
+                        .to_owned(),
                 );
             }
         } else {
@@ -214,7 +214,9 @@ impl AppState {
         }
         if let Some(capabilities) = &capabilities {
             for feature in missing_required_features(capabilities) {
-                issues.push(format!("The selected switching engine does not include {feature} support"));
+                issues.push(format!(
+                    "The selected switching engine does not include {feature} support"
+                ));
             }
         } else {
             issues.push("Engine capability details are unavailable".to_owned());
@@ -260,7 +262,13 @@ fn missing_required_features(capabilities: &CapabilitiesInfo) -> Vec<&'static st
     REQUIRED_RUNTIME_FEATURES
         .iter()
         .copied()
-        .filter(|feature| !capabilities.features.get(*feature).copied().unwrap_or(false))
+        .filter(|feature| {
+            !capabilities
+                .features
+                .get(*feature)
+                .copied()
+                .unwrap_or(false)
+        })
         .collect()
 }
 
@@ -300,7 +308,11 @@ async fn activate_profile_set_on_bridge(
     let selected = set
         .profiles
         .iter()
-        .filter_map(|(tool, profile)| profile.as_ref().map(|profile| (tool.clone(), profile.clone())))
+        .filter_map(|(tool, profile)| {
+            profile
+                .as_ref()
+                .map(|profile| (tool.clone(), profile.clone()))
+        })
         .collect::<Vec<_>>();
 
     if selected.is_empty() {
@@ -378,18 +390,24 @@ async fn activate_profile_set_on_bridge(
     }))
 }
 
-fn missing_profile_set_mappings(
-    set: &ProfileSet,
-    snapshot: &AppSnapshot,
-) -> Vec<(String, String)> {
+fn missing_profile_set_mappings(set: &ProfileSet, snapshot: &AppSnapshot) -> Vec<(String, String)> {
     set.profiles
         .iter()
-        .filter_map(|(tool, profile)| profile.as_ref().map(|profile| (tool.clone(), profile.clone())))
+        .filter_map(|(tool, profile)| {
+            profile
+                .as_ref()
+                .map(|profile| (tool.clone(), profile.clone()))
+        })
         .filter(|(tool, profile)| {
             !snapshot
                 .profiles
                 .get(tool)
-                .map(|entry| entry.profiles.iter().any(|candidate| candidate.name == *profile))
+                .map(|entry| {
+                    entry
+                        .profiles
+                        .iter()
+                        .any(|candidate| candidate.name == *profile)
+                })
                 .unwrap_or(false)
         })
         .collect()
@@ -566,35 +584,62 @@ mod tests {
 
     #[test]
     fn preferred_global_state_mode_preserves_shared_when_all_editable_tools_match() {
-        let snapshot = snapshot(vec![status("claude", Some("shared")), status("codex", Some("shared"))]);
-        assert_eq!(preferred_global_state_mode(Some(&snapshot)).as_deref(), Some("shared"));
+        let snapshot = snapshot(vec![
+            status("claude", Some("shared")),
+            status("codex", Some("shared")),
+        ]);
+        assert_eq!(
+            preferred_global_state_mode(Some(&snapshot)).as_deref(),
+            Some("shared")
+        );
     }
 
     #[test]
     fn preferred_global_state_mode_falls_back_to_isolated_for_missing_or_mixed_modes() {
-        let mixed = snapshot(vec![status("claude", Some("shared")), status("codex", Some("isolated"))]);
-        assert_eq!(preferred_global_state_mode(Some(&mixed)).as_deref(), Some("isolated"));
+        let mixed = snapshot(vec![
+            status("claude", Some("shared")),
+            status("codex", Some("isolated")),
+        ]);
+        assert_eq!(
+            preferred_global_state_mode(Some(&mixed)).as_deref(),
+            Some("isolated")
+        );
 
         let missing = snapshot(vec![status("claude", None), status("gemini", None)]);
-        assert_eq!(preferred_global_state_mode(Some(&missing)).as_deref(), Some("isolated"));
-        assert_eq!(preferred_global_state_mode(None).as_deref(), Some("isolated"));
+        assert_eq!(
+            preferred_global_state_mode(Some(&missing)).as_deref(),
+            Some("isolated")
+        );
+        assert_eq!(
+            preferred_global_state_mode(None).as_deref(),
+            Some("isolated")
+        );
     }
 
     #[test]
     fn preferred_tool_state_mode_preserves_shared_for_supported_tools_only() {
-        let snapshot = snapshot(vec![status("claude", Some("shared")), status("gemini", None)]);
+        let snapshot = snapshot(vec![
+            status("claude", Some("shared")),
+            status("gemini", None),
+        ]);
         assert_eq!(
             preferred_tool_state_mode("claude", Some(&snapshot)).as_deref(),
             Some("shared")
         );
-        assert_eq!(preferred_tool_state_mode("codex", Some(&snapshot)).as_deref(), Some("isolated"));
+        assert_eq!(
+            preferred_tool_state_mode("codex", Some(&snapshot)).as_deref(),
+            Some("isolated")
+        );
         assert_eq!(preferred_tool_state_mode("gemini", Some(&snapshot)), None);
     }
 
     #[test]
     fn missing_profile_set_mappings_reports_stale_profile_refs() {
         let snapshot = snapshot_with_profiles(
-            vec![status("claude", Some("isolated")), status("codex", Some("isolated"))],
+            vec![
+                status("claude", Some("isolated")),
+                status("codex", Some("isolated")),
+            ],
             HashMap::from([
                 (
                     "claude".to_owned(),

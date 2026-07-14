@@ -692,9 +692,13 @@ fn windows_path_exts() -> Vec<String> {
 
 fn map_command_failure(command: &str, stderr: &str) -> DesktopError {
     let lower = stderr.to_ascii_lowercase();
-    let kind = if lower.contains("profile") && (lower.contains("not found") || lower.contains("missing")) {
+    let kind = if lower.contains("profile")
+        && (lower.contains("not found") || lower.contains("missing"))
+    {
         GuiErrorKind::ProfileMissing
-    } else if lower.contains("context") && (lower.contains("not found") || lower.contains("missing")) {
+    } else if lower.contains("context")
+        && (lower.contains("not found") || lower.contains("missing"))
+    {
         GuiErrorKind::ContextMissing
     } else if lower.contains("not found") {
         GuiErrorKind::ToolMissing
@@ -822,7 +826,9 @@ fn remediation_for_kind(kind: &GuiErrorKind) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{map_command_failure, map_machine_failure, remediation_for_kind, AiswBridge, CliAiswBridge};
+    use super::{
+        map_command_failure, map_machine_failure, remediation_for_kind, AiswBridge, CliAiswBridge,
+    };
     use crate::errors::GuiErrorKind;
     use crate::models::{
         AddOAuthProfileRequest, AddProfileMode, AddProfileRequest, RuntimeKind,
@@ -1129,7 +1135,10 @@ printf '{}'
         let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path.clone()), None);
         let inventory = bridge.runtime_inventory().await;
 
-        assert_eq!(inventory.configured_path, Some(path.to_string_lossy().to_string()));
+        assert_eq!(
+            inventory.configured_path,
+            Some(path.to_string_lossy().to_string())
+        );
     }
 
     #[tokio::test]
@@ -1160,7 +1169,10 @@ printf '{}'
 "#,
         );
         let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
-        let report = bridge.doctor().await.expect("doctor JSON should still parse");
+        let report = bridge
+            .doctor()
+            .await
+            .expect("doctor JSON should still parse");
 
         assert_eq!(report.raw["checks"].as_array().map(Vec::len), Some(1));
         assert_eq!(report.raw["checks"][0]["name"], "shell/hook");
@@ -1178,7 +1190,10 @@ printf '{}'
 "#,
         );
         let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
-        let report = bridge.verify().await.expect("verify JSON should still parse");
+        let report = bridge
+            .verify()
+            .await
+            .expect("verify JSON should still parse");
 
         assert_eq!(report.raw["summary"]["status"], "fail");
         assert_eq!(report.raw["summary"]["failed"], 1);
@@ -1224,9 +1239,7 @@ printf '{}'
     fn command_failures_include_default_remediation() {
         let error = map_command_failure("add_profile", "keyring unavailable");
         let crate::errors::DesktopError::CommandFailed {
-            kind,
-            remediation,
-            ..
+            kind, remediation, ..
         } = error
         else {
             panic!("expected command failure");
@@ -1243,9 +1256,7 @@ printf '{}'
     fn command_failures_classify_missing_profiles() {
         let error = map_command_failure("use_profile", "profile work not found");
         let crate::errors::DesktopError::CommandFailed {
-            kind,
-            remediation,
-            ..
+            kind, remediation, ..
         } = error
         else {
             panic!("expected command failure");
@@ -1260,12 +1271,12 @@ printf '{}'
 
     #[test]
     fn command_failures_classify_non_interactive_mode() {
-        let error =
-            map_command_failure("add_profile", "interactive login required in non-interactive mode");
+        let error = map_command_failure(
+            "add_profile",
+            "interactive login required in non-interactive mode",
+        );
         let crate::errors::DesktopError::CommandFailed {
-            kind,
-            remediation,
-            ..
+            kind, remediation, ..
         } = error
         else {
             panic!("expected command failure");
@@ -1289,9 +1300,7 @@ printf '{}'
         });
 
         let crate::errors::DesktopError::CommandFailed {
-            kind,
-            remediation,
-            ..
+            kind, remediation, ..
         } = map_machine_failure("use_profile", &value).expect("expected machine failure")
         else {
             panic!("expected command failure");
@@ -1315,9 +1324,7 @@ printf '{}'
         });
 
         let crate::errors::DesktopError::CommandFailed {
-            kind,
-            remediation,
-            ..
+            kind, remediation, ..
         } = map_machine_failure("use_context", &value).expect("expected machine failure")
         else {
             panic!("expected command failure");

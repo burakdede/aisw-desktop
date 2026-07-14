@@ -37,11 +37,21 @@ const VIEW_ACTIVITY_ID: &str = "menu.view.activity";
 
 pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let settings = MenuItem::with_id(app, SETTINGS_ID, "Settings…", true, Some("CmdOrCtrl+Comma"))?;
-    let check_updates =
-        MenuItem::with_id(app, CHECK_UPDATES_ID, "Check for Updates…", true, None::<&str>)?;
+    let check_updates = MenuItem::with_id(
+        app,
+        CHECK_UPDATES_ID,
+        "Check for Updates…",
+        true,
+        None::<&str>,
+    )?;
 
-    let add_profile =
-        MenuItem::with_id(app, ADD_PROFILE_ID, "Add Profile…", true, Some("CmdOrCtrl+N"))?;
+    let add_profile = MenuItem::with_id(
+        app,
+        ADD_PROFILE_ID,
+        "Add Profile…",
+        true,
+        Some("CmdOrCtrl+N"),
+    )?;
     let import_current_login = MenuItem::with_id(
         app,
         IMPORT_CURRENT_LOGIN_ID,
@@ -57,10 +67,14 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         None::<&str>,
     )?;
 
-    let quick_switch =
-        MenuItem::with_id(app, QUICK_SWITCH_ID, "Quick Switch…", true, Some("CmdOrCtrl+K"))?;
-    let switch_set =
-        MenuItem::with_id(app, SWITCH_SET_ID, "Switch Set…", true, None::<&str>)?;
+    let quick_switch = MenuItem::with_id(
+        app,
+        QUICK_SWITCH_ID,
+        "Quick Switch…",
+        true,
+        Some("CmdOrCtrl+K"),
+    )?;
+    let switch_set = MenuItem::with_id(app, SWITCH_SET_ID, "Switch Set…", true, None::<&str>)?;
     let verify = MenuItem::with_id(
         app,
         VERIFY_ID,
@@ -76,10 +90,8 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         None::<&str>,
     )?;
 
-    let overview =
-        MenuItem::with_id(app, VIEW_OVERVIEW_ID, "Overview", true, Some("CmdOrCtrl+1"))?;
-    let profiles =
-        MenuItem::with_id(app, VIEW_PROFILES_ID, "Profiles", true, Some("CmdOrCtrl+2"))?;
+    let overview = MenuItem::with_id(app, VIEW_OVERVIEW_ID, "Overview", true, Some("CmdOrCtrl+1"))?;
+    let profiles = MenuItem::with_id(app, VIEW_PROFILES_ID, "Profiles", true, Some("CmdOrCtrl+2"))?;
     let sets = MenuItem::with_id(app, VIEW_SETS_ID, "Sets", true, Some("CmdOrCtrl+3"))?;
     let diagnostics = MenuItem::with_id(
         app,
@@ -88,10 +100,8 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         true,
         Some("CmdOrCtrl+4"),
     )?;
-    let backups =
-        MenuItem::with_id(app, VIEW_BACKUPS_ID, "Backups", true, Some("CmdOrCtrl+5"))?;
-    let activity =
-        MenuItem::with_id(app, VIEW_ACTIVITY_ID, "Activity", true, Some("CmdOrCtrl+6"))?;
+    let backups = MenuItem::with_id(app, VIEW_BACKUPS_ID, "Backups", true, Some("CmdOrCtrl+5"))?;
+    let activity = MenuItem::with_id(app, VIEW_ACTIVITY_ID, "Activity", true, Some("CmdOrCtrl+6"))?;
 
     let help_docs = MenuItem::with_id(
         app,
@@ -177,13 +187,8 @@ pub fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         .collect::<Vec<_>>();
     let help_menu = Submenu::with_items(app, "Help", true, &help_refs)?;
 
-    let items: [&dyn IsMenuItem<R>; 5] = [
-        &app_menu,
-        &file_menu,
-        &profile_menu,
-        &view_menu,
-        &help_menu,
-    ];
+    let items: [&dyn IsMenuItem<R>; 5] =
+        [&app_menu, &file_menu, &profile_menu, &view_menu, &help_menu];
 
     let menu = Menu::with_items(app, &items)?;
     Ok(menu)

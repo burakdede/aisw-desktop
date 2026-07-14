@@ -60,7 +60,9 @@ impl From<DesktopError> for ErrorPayload {
             },
             DesktopError::InvalidJson { command } => Self {
                 kind: GuiErrorKind::CommandContractError,
-                message: format!("The selected switching engine returned invalid data for `{command}`."),
+                message: format!(
+                    "The selected switching engine returned invalid data for `{command}`."
+                ),
                 remediation: Some(
                     "Check engine compatibility and command support before retrying.".to_owned(),
                 ),

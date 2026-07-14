@@ -27,9 +27,7 @@ pub async fn check_for_updates<R: Runtime>(
             current_version,
             endpoint: None,
             update: None,
-            message: Some(
-                "Updates are not configured for this desktop build yet.".to_owned(),
-            ),
+            message: Some("Updates are not configured for this desktop build yet.".to_owned()),
         });
     };
 
@@ -63,9 +61,7 @@ pub async fn install_update<R: Runtime>(
             current_version,
             installed_version: None,
             restart_requested: false,
-            message: Some(
-                "Updates are not configured for this desktop build yet.".to_owned(),
-            ),
+            message: Some("Updates are not configured for this desktop build yet.".to_owned()),
         });
     };
 
@@ -169,11 +165,7 @@ where
     }))
 }
 
-fn resolve_endpoint<F>(
-    channel: &str,
-    get_var: &F,
-    plugin_config: Option<&Value>,
-) -> Option<String>
+fn resolve_endpoint<F>(channel: &str, get_var: &F, plugin_config: Option<&Value>) -> Option<String>
 where
     F: Fn(&str) -> Option<String>,
 {
@@ -250,13 +242,10 @@ mod tests {
             },
             "pubkey": "configured-pubkey"
         });
-        let config = resolve_updater_config_from(
-            "beta",
-            |key| env.get(key).cloned(),
-            Some(&plugin_config),
-        )
-            .unwrap()
-            .unwrap();
+        let config =
+            resolve_updater_config_from("beta", |key| env.get(key).cloned(), Some(&plugin_config))
+                .unwrap()
+                .unwrap();
         assert_eq!(
             config.endpoint.as_str(),
             "https://updates.example.com/beta.json"
@@ -273,14 +262,14 @@ mod tests {
             },
             "pubkey": "configured-pubkey"
         });
-        let config = resolve_updater_config_from(
-            "beta",
-            |key| env.get(key).cloned(),
-            Some(&plugin_config),
-        )
-        .unwrap()
-        .unwrap();
-        assert_eq!(config.endpoint.as_str(), "https://releases.example.com/beta.json");
+        let config =
+            resolve_updater_config_from("beta", |key| env.get(key).cloned(), Some(&plugin_config))
+                .unwrap()
+                .unwrap();
+        assert_eq!(
+            config.endpoint.as_str(),
+            "https://releases.example.com/beta.json"
+        );
         assert!(config.pubkey_override.is_none());
     }
 
@@ -306,14 +295,12 @@ mod tests {
 
     #[test]
     fn rejects_invalid_endpoint() {
-        let env = HashMap::from([
-            (
-                "AISW_DESKTOP_UPDATER_ENDPOINT_STABLE".to_owned(),
-                "not-a-url".to_owned(),
-            ),
-        ]);
-        let error = resolve_updater_config_from("stable", |key| env.get(key).cloned(), None)
-            .unwrap_err();
+        let env = HashMap::from([(
+            "AISW_DESKTOP_UPDATER_ENDPOINT_STABLE".to_owned(),
+            "not-a-url".to_owned(),
+        )]);
+        let error =
+            resolve_updater_config_from("stable", |key| env.get(key).cloned(), None).unwrap_err();
         assert!(error.to_string().contains("desktop_updater"));
     }
 
@@ -341,8 +328,8 @@ mod tests {
             "AISW_DESKTOP_UPDATER_ENDPOINT_STABLE".to_owned(),
             "http://updates.example.com/stable.json".to_owned(),
         )]);
-        let error = resolve_updater_config_from("stable", |key| env.get(key).cloned(), None)
-            .unwrap_err();
+        let error =
+            resolve_updater_config_from("stable", |key| env.get(key).cloned(), None).unwrap_err();
         match error {
             DesktopError::CommandFailed { message, .. } => {
                 assert!(message.contains("expected https:// URL"));

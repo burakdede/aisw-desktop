@@ -58,24 +58,24 @@ mod tests {
 
     #[test]
     fn writes_redacted_bundle_to_disk() {
-      let dir = tempdir().unwrap();
-      let export = write_redacted_bundle(
-          &json!({
-              "doctor": {
-                  "detail": "token sk-ant-api03-secret"
-              },
-              "verify": {
-                  "secondary": "AIzaSecret123"
-              }
-          }),
-          dir.path(),
-      )
-      .unwrap();
+        let dir = tempdir().unwrap();
+        let export = write_redacted_bundle(
+            &json!({
+                "doctor": {
+                    "detail": "token sk-ant-api03-secret"
+                },
+                "verify": {
+                    "secondary": "AIzaSecret123"
+                }
+            }),
+            dir.path(),
+        )
+        .unwrap();
 
-      assert!(export.path.ends_with(".json"));
-      let written = std::fs::read_to_string(&export.path).unwrap();
-      assert!(written.contains("[REDACTED]"));
-      assert!(!written.contains("sk-ant-api03-secret"));
-      assert!(!written.contains("AIzaSecret123"));
+        assert!(export.path.ends_with(".json"));
+        let written = std::fs::read_to_string(&export.path).unwrap();
+        assert!(written.contains("[REDACTED]"));
+        assert!(!written.contains("sk-ant-api03-secret"));
+        assert!(!written.contains("AIzaSecret123"));
     }
 }
