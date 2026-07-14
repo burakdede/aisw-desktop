@@ -636,7 +636,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "export_activity_log")).toBe(true);
-      expect(screen.getByText("Opened activity-log-123.json.")).toBeInTheDocument();
+      expect(screen.getByText((content) => content.includes("Opened activity-log-123.json."))).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Activity more actions" }));
@@ -661,7 +661,9 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getAllByText("No recent activity").length).toBeGreaterThan(0);
-      expect(screen.getByText("Cleared locally stored desktop activity.")).toBeInTheDocument();
+      expect(
+        screen.getByText((content) => content.includes("Cleared locally stored desktop activity.")),
+      ).toBeInTheDocument();
     });
   });
 
@@ -694,7 +696,9 @@ describe("App", () => {
       expect(screen.getByRole("button", { name: "Inspect Saved settings" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Inspect Checked for updates" })).toBeInTheDocument();
       expect(
-        screen.getByText("Activity is stored locally and credentials are always redacted."),
+        screen.getByText((content) =>
+          content.includes("Activity is stored locally and credentials are always redacted."),
+        ),
       ).toBeInTheDocument();
     });
 

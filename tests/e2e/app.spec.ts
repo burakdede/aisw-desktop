@@ -737,7 +737,7 @@ test("shows the redesigned activity timeline with concise rows and an inspector"
   await expect(page.getByText("Recorded Command")).toBeVisible();
   await expect(page.getByText("Redacted Result")).toBeVisible();
   await expect(
-    page.getByText("Activity is stored locally and credentials are always redacted."),
+    page.getByText(/Activity is stored locally and credentials are always redacted\./),
   ).toBeVisible();
 });
 

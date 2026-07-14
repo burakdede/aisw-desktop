@@ -76,6 +76,7 @@ export function ActivityPanel({
   const selectedEntry =
     filteredEntries.find((entry) => entry.key === selectedEntryKey) ?? filteredEntries[0] ?? null;
   const hasEntries = entries.length > 0;
+  const footerMessage = clearMessage || logMessage;
 
   useEffect(() => {
     if (selectedEntryKey && filteredEntries.some((entry) => entry.key === selectedEntryKey)) {
@@ -283,7 +284,6 @@ export function ActivityPanel({
                   <p className="inline-note">
                     Local switch, verification, and setup events will appear here as soon as you use the app.
                   </p>
-                  {clearMessage ? <p className="inline-note">{clearMessage}</p> : null}
                 </div>
               )}
             </div>
@@ -325,7 +325,7 @@ export function ActivityPanel({
                     },
                     {
                       label: "Duration",
-                      value: "Not recorded in this build",
+                      value: "Not Recorded",
                     },
                     {
                       label: "Initiated by",
@@ -357,14 +357,11 @@ export function ActivityPanel({
                     </p>
                   )}
                 </details>
-                {logMessage ? <p className="inline-note">{logMessage}</p> : null}
-                {clearMessage ? <p className="inline-note">{clearMessage}</p> : null}
               </div>
             ) : (
               <div className="activity-empty-state activity-empty-state-compact">
                 <h3>No event selected</h3>
                 <p className="inline-note">Choose an event to inspect its recorded details.</p>
-                {logMessage ? <p className="inline-note">{logMessage}</p> : null}
               </div>
             )}
           </aside>
@@ -372,7 +369,10 @@ export function ActivityPanel({
       />
 
       <div className="activity-footer-line">
-        <p>Activity is stored locally and credentials are always redacted.</p>
+        <p>
+          Activity is stored locally and credentials are always redacted.
+          {footerMessage ? ` ${footerMessage}` : ""}
+        </p>
       </div>
 
       {pendingClear ? (
