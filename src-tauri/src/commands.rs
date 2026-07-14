@@ -4,10 +4,10 @@ use crate::errors::{DesktopError, DesktopResult, ErrorPayload, GuiErrorKind};
 use crate::models::{
     AddOAuthProfileRequest, AddProfileRequest, AppBootstrap, AppSnapshot, BackupEntry,
     DesktopSettings, DoctorReport, InitReport, InstallUpdateReport, LaunchAtLoginStatus,
-    MutationResponse,
-    ProjectBindingsReport, RepairReport, RepairRequest, ShellHookGuidance, UpdateCheckReport,
-    UpdateSettingsRequest, UseAllProfilesRequest, UseContextRequest, UseProfileRequest,
-    VerifyReport, WorkspaceBindRequest, WorkspaceStatusReport, WorkspaceUnbindTarget,
+    MutationResponse, ProjectBindingsReport, RepairReport, RepairRequest, ShellHookGuidance,
+    UpdateCheckReport, UpdateSettingsRequest, UseAllProfilesRequest, UseContextRequest,
+    UseProfileRequest, VerifyReport, WorkspaceBindRequest, WorkspaceStatusReport,
+    WorkspaceUnbindTarget,
 };
 use crate::shell;
 use crate::state::{incompatible_runtime_error, AppState};
@@ -36,9 +36,7 @@ pub async fn get_settings(state: tauri::State<'_, AppState>) -> DesktopResult<De
 }
 
 #[tauri::command]
-pub async fn open_app_data_folder(
-    state: tauri::State<'_, AppState>,
-) -> DesktopResult<String> {
+pub async fn open_app_data_folder(state: tauri::State<'_, AppState>) -> DesktopResult<String> {
     let settings = state.load_settings().await.map_err(ErrorPayload::from)?;
     let path = settings
         .aisw_home
@@ -54,7 +52,9 @@ pub async fn open_app_data_folder(
 
 #[tauri::command]
 pub async fn open_reference_document(kind: String) -> DesktopResult<String> {
-    let current_dir = std::env::current_dir().map_err(DesktopError::from).map_err(ErrorPayload::from)?;
+    let current_dir = std::env::current_dir()
+        .map_err(DesktopError::from)
+        .map_err(ErrorPayload::from)?;
     let path = match kind.as_str() {
         "documentation" => current_dir.join("README.md"),
         "troubleshooting" => current_dir.join("docs").join("release-runbook.md"),
@@ -148,12 +148,15 @@ pub async fn update_settings(
     state: tauri::State<'_, AppState>,
     request: UpdateSettingsRequest,
 ) -> DesktopResult<DesktopSettings> {
-    let settings = state
-        .update_settings(request)
-        .await
-        .map_err(ErrorPayload::from)?;
-    let _ = tray::refresh_tray(&app, state.inner().clone()).await;
-    Ok(settings)
+    refresh_tray_after(
+        &app,
+        &state,
+        state
+            .update_settings(request)
+            .await
+            .map_err(ErrorPayload::from),
+    )
+    .await
 }
 
 #[tauri::command]
@@ -163,13 +166,16 @@ pub async fn add_profile(
     request: AddProfileRequest,
 ) -> DesktopResult<MutationResponse> {
     ensure_compatible(&state).await?;
-    let result = state
-        .mutate("add_profile", move |bridge| async move {
-            bridge.add_profile(request).await
-        })
-        .await?;
-    let _ = tray::refresh_tray(&app, state.inner().clone()).await;
-    Ok(result)
+    refresh_tray_after(
+        &app,
+        &state,
+        state
+            .mutate("add_profile", move |bridge| async move {
+                bridge.add_profile(request).await
+            })
+            .await,
+    )
+    .await
 }
 
 #[tauri::command]
@@ -180,17 +186,20 @@ pub async fn add_profile_oauth(
 ) -> DesktopResult<MutationResponse> {
     ensure_compatible(&state).await?;
     let app_handle = app.clone();
-    let result = state
-        .mutate_cli("add_profile_oauth", move |bridge| async move {
-            bridge
-                .add_profile_oauth(request, move |event| {
-                    let _ = app_handle.emit("oauth-progress", event);
-                })
-                .await
-        })
-        .await?;
-    let _ = tray::refresh_tray(&app, state.inner().clone()).await;
-    Ok(result)
+    refresh_tray_after(
+        &app,
+        &state,
+        state
+            .mutate_cli("add_profile_oauth", move |bridge| async move {
+                bridge
+                    .add_profile_oauth(request, move |event| {
+                        let _ = app_handle.emit("oauth-progress", event);
+                    })
+                    .await
+            })
+            .await,
+    )
+    .await
 }
 
 #[tauri::command]
@@ -200,13 +209,16 @@ pub async fn use_profile(
     request: UseProfileRequest,
 ) -> DesktopResult<MutationResponse> {
     ensure_compatible(&state).await?;
-    let result = state
-        .mutate("use_profile", move |bridge| async move {
-            bridge.use_profile(request).await
-        })
-        .await?;
-    let _ = tray::refresh_tray(&app, state.inner().clone()).await;
-    Ok(result)
+    refresh_tray_after(
+        &app,
+        &state,
+        state
+            .mutate("use_profile", move |bridge| async move {
+                bridge.use_profile(request).await
+            })
+            .await,
+    )
+    .await
 }
 
 #[tauri::command]
@@ -216,13 +228,16 @@ pub async fn use_all_profiles(
     request: UseAllProfilesRequest,
 ) -> DesktopResult<MutationResponse> {
     ensure_compatible(&state).await?;
-    let result = state
-        .mutate("use_all_profiles", move |bridge| async move {
-            bridge.use_all_profiles(request).await
-        })
-        .await?;
-    let _ = tray::refresh_tray(&app, state.inner().clone()).await;
-    Ok(result)
+    refresh_tray_after(
+        &app,
+        &state,
+        state
+            .mutate("use_all_profiles", move |bridge| async move {
+                bridge.use_all_profiles(request).await
+            })
+            .await,
+    )
+    .await
 }
 
 #[tauri::command]
@@ -232,13 +247,16 @@ pub async fn use_context(
     request: UseContextRequest,
 ) -> DesktopResult<MutationResponse> {
     ensure_compatible(&state).await?;
-    let result = state
-        .mutate("use_context", move |bridge| async move {
-            bridge.use_context(request).await
-        })
-        .await?;
-    let _ = tray::refresh_tray(&app, state.inner().clone()).await;
-    Ok(result)
+    refresh_tray_after(
+        &app,
+        &state,
+        state
+            .mutate("use_context", move |bridge| async move {
+                bridge.use_context(request).await
+            })
+            .await,
+    )
+    .await
 }
 
 #[tauri::command]
@@ -248,9 +266,7 @@ pub async fn activate_profile_set(
     name: String,
 ) -> DesktopResult<MutationResponse> {
     ensure_compatible(&state).await?;
-    let result = state.activate_profile_set(&name).await?;
-    let _ = tray::refresh_tray(&app, state.inner().clone()).await;
-    Ok(result)
+    refresh_tray_after(&app, &state, state.activate_profile_set(&name).await).await
 }
 
 #[tauri::command]
@@ -262,13 +278,16 @@ pub async fn rename_profile(
     new_name: String,
 ) -> DesktopResult<MutationResponse> {
     ensure_compatible(&state).await?;
-    let result = state
-        .mutate("rename_profile", move |bridge| async move {
-            bridge.rename_profile(tool, old_name, new_name).await
-        })
-        .await?;
-    let _ = tray::refresh_tray(&app, state.inner().clone()).await;
-    Ok(result)
+    refresh_tray_after(
+        &app,
+        &state,
+        state
+            .mutate("rename_profile", move |bridge| async move {
+                bridge.rename_profile(tool, old_name, new_name).await
+            })
+            .await,
+    )
+    .await
 }
 
 #[tauri::command]
@@ -280,13 +299,16 @@ pub async fn remove_profile(
     force: bool,
 ) -> DesktopResult<MutationResponse> {
     ensure_compatible(&state).await?;
-    let result = state
-        .mutate("remove_profile", move |bridge| async move {
-            bridge.remove_profile(tool, profile, force).await
-        })
-        .await?;
-    let _ = tray::refresh_tray(&app, state.inner().clone()).await;
-    Ok(result)
+    refresh_tray_after(
+        &app,
+        &state,
+        state
+            .mutate("remove_profile", move |bridge| async move {
+                bridge.remove_profile(tool, profile, force).await
+            })
+            .await,
+    )
+    .await
 }
 
 #[tauri::command]
@@ -296,13 +318,16 @@ pub async fn restore_backup(
     backup_id: String,
 ) -> DesktopResult<MutationResponse> {
     ensure_compatible(&state).await?;
-    let result = state
-        .mutate("restore_backup", move |bridge| async move {
-            bridge.restore_backup(backup_id).await
-        })
-        .await?;
-    let _ = tray::refresh_tray(&app, state.inner().clone()).await;
-    Ok(result)
+    refresh_tray_after(
+        &app,
+        &state,
+        state
+            .mutate("restore_backup", move |bridge| async move {
+                bridge.restore_backup(backup_id).await
+            })
+            .await,
+    )
+    .await
 }
 
 #[tauri::command]
@@ -422,9 +447,7 @@ pub async fn run_init(
     app: tauri::AppHandle,
     state: tauri::State<'_, AppState>,
 ) -> DesktopResult<InitReport> {
-    let result = state.run_init().await?;
-    let _ = tray::refresh_tray(&app, state.inner().clone()).await;
-    Ok(result)
+    refresh_tray_after(&app, &state, state.run_init().await).await
 }
 
 #[tauri::command]
@@ -456,13 +479,16 @@ pub async fn workspace_bind(
     request: WorkspaceBindRequest,
 ) -> DesktopResult<MutationResponse> {
     ensure_compatible(&state).await?;
-    let result = state
-        .mutate("workspace_bind", move |bridge| async move {
-            bridge.workspace_bind(request).await
-        })
-        .await?;
-    let _ = tray::refresh_tray(&app, state.inner().clone()).await;
-    Ok(result)
+    refresh_tray_after(
+        &app,
+        &state,
+        state
+            .mutate("workspace_bind", move |bridge| async move {
+                bridge.workspace_bind(request).await
+            })
+            .await,
+    )
+    .await
 }
 
 #[tauri::command]
@@ -472,13 +498,16 @@ pub async fn workspace_unbind(
     target: WorkspaceUnbindTarget,
 ) -> DesktopResult<MutationResponse> {
     ensure_compatible(&state).await?;
-    let result = state
-        .mutate("workspace_unbind", move |bridge| async move {
-            bridge.workspace_unbind(target).await
-        })
-        .await?;
-    let _ = tray::refresh_tray(&app, state.inner().clone()).await;
-    Ok(result)
+    refresh_tray_after(
+        &app,
+        &state,
+        state
+            .mutate("workspace_unbind", move |bridge| async move {
+                bridge.workspace_unbind(target).await
+            })
+            .await,
+    )
+    .await
 }
 
 #[tauri::command]
@@ -488,13 +517,16 @@ pub async fn workspace_guard(
     mode: String,
 ) -> DesktopResult<MutationResponse> {
     ensure_compatible(&state).await?;
-    let result = state
-        .mutate("workspace_guard", move |bridge| async move {
-            bridge.workspace_guard(mode).await
-        })
-        .await?;
-    let _ = tray::refresh_tray(&app, state.inner().clone()).await;
-    Ok(result)
+    refresh_tray_after(
+        &app,
+        &state,
+        state
+            .mutate("workspace_guard", move |bridge| async move {
+                bridge.workspace_guard(mode).await
+            })
+            .await,
+    )
+    .await
 }
 
 async fn ensure_compatible(state: &tauri::State<'_, AppState>) -> DesktopResult<()> {
@@ -513,6 +545,16 @@ async fn make_bridge(state: &tauri::State<'_, AppState>) -> DesktopResult<CliAis
         settings.runtime_path.map(PathBuf::from),
         settings.aisw_home.map(PathBuf::from),
     ))
+}
+
+async fn refresh_tray_after<T>(
+    app: &tauri::AppHandle,
+    state: &tauri::State<'_, AppState>,
+    result: DesktopResult<T>,
+) -> DesktopResult<T> {
+    let value = result?;
+    let _ = tray::refresh_tray(app, state.inner().clone()).await;
+    Ok(value)
 }
 
 fn open_path_with_default_app(path: &std::path::Path) -> DesktopResult<()> {
@@ -659,9 +701,7 @@ fn run_osascript(script: &str) -> DesktopResult<String> {
         return Err(ErrorPayload {
             kind: GuiErrorKind::Unknown,
             message: "AI Switch could not update the macOS login item.".to_owned(),
-            remediation: Some(
-                String::from_utf8_lossy(&output.stderr).trim().to_owned(),
-            ),
+            remediation: Some(String::from_utf8_lossy(&output.stderr).trim().to_owned()),
         });
     }
 
