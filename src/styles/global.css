@@ -557,51 +557,9 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .brand-mark {
   flex: none;
+  display: block;
+  border-radius: 22%;
   filter: drop-shadow(0 10px 18px rgba(15, 23, 42, 0.05));
-}
-
-.brand-mark-shell {
-  fill: color-mix(in srgb, Canvas 88%, CanvasText 12%);
-  stroke: color-mix(in srgb, CanvasText 12%, transparent);
-}
-
-.brand-mark-core {
-  fill: color-mix(in srgb, Canvas 96%, AccentColor 4%);
-  stroke: color-mix(in srgb, CanvasText 7%, transparent);
-}
-
-.brand-mark-ribbon {
-  stroke: color-mix(in srgb, CanvasText 72%, AccentColor 28%);
-}
-
-.brand-mark-flow {
-  stroke: color-mix(in srgb, AccentColor 62%, CanvasText 38%);
-}
-
-.brand-mark-divider {
-  stroke: color-mix(in srgb, CanvasText 18%, transparent);
-}
-
-.brand-mark-node {
-  stroke: color-mix(in srgb, CanvasText 10%, transparent);
-}
-
-.brand-mark-node-soft {
-  fill: color-mix(in srgb, Canvas 92%, CanvasText 8%);
-}
-
-.brand-mark-node-muted {
-  fill: color-mix(in srgb, Canvas 97%, CanvasText 3%);
-}
-
-.brand-mark-node-accent {
-  fill: color-mix(in srgb, AccentColor 76%, Canvas 24%);
-  stroke: color-mix(in srgb, AccentColor 24%, transparent);
-}
-
-.brand-mark-node-core {
-  fill: color-mix(in srgb, Canvas 97%, AccentColor 3%);
-  stroke: color-mix(in srgb, Canvas 84%, AccentColor 16%);
 }
 
 .sidebar-title {
