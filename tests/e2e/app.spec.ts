@@ -1360,6 +1360,56 @@ test("activates a local profile set from sets", async ({ page }) => {
   await expect(page.getByText("Match value")).toBeVisible();
 });
 
+test("keeps the set actions menu inside the visible inspector pane", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Sets" }).click();
+  await page.getByRole("button", { name: "Inspect set Client Acme" }).click();
+
+  const inspector = page.locator(".sets-inspector");
+  await page.getByRole("button", { name: "More actions for Client Acme" }).click();
+
+  const menu = page.getByRole("menu", { name: "Set actions" });
+  await expect(menu).toBeVisible();
+
+  const inspectorBox = await inspector.boundingBox();
+  const menuBox = await menu.boundingBox();
+
+  expect(inspectorBox).not.toBeNull();
+  expect(menuBox).not.toBeNull();
+
+  if (inspectorBox && menuBox) {
+    expect(menuBox.x).toBeGreaterThanOrEqual(inspectorBox.x - 1);
+    expect(menuBox.x + menuBox.width).toBeLessThanOrEqual(inspectorBox.x + inspectorBox.width + 1);
+  }
+});
+
+test("keeps the project rules actions menu inside the visible rules pane", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Sets" }).click();
+  await page.getByRole("button", { name: "Project Rules" }).click();
+
+  const rulesPane = page.locator(".sets-rules-list-panel");
+  await page.getByRole("button", { name: "Project rules actions" }).click();
+
+  const menu = page.getByRole("menu", { name: "Project rules actions" });
+  await expect(menu).toBeVisible();
+
+  const rulesPaneBox = await rulesPane.boundingBox();
+  const menuBox = await menu.boundingBox();
+
+  expect(rulesPaneBox).not.toBeNull();
+  expect(menuBox).not.toBeNull();
+
+  if (rulesPaneBox && menuBox) {
+    expect(menuBox.x).toBeGreaterThanOrEqual(rulesPaneBox.x - 1);
+    expect(menuBox.x + menuBox.width).toBeLessThanOrEqual(rulesPaneBox.x + rulesPaneBox.width + 1);
+  }
+});
+
 test("uses native profile-set activation when a matching CLI context exists", async ({ page }) => {
   await installDesktopMock(page, "matchingContextSet");
 

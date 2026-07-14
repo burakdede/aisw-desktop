@@ -717,6 +717,7 @@ export function SetsPanel({
                             className="profile-row-actions-menu"
                             align="start"
                             boundaryAttribute="data-profile-row-actions"
+                            containmentSelector=".sets-inspector"
                             role="menu"
                             aria-label="Set actions"
                           >
@@ -880,6 +881,7 @@ export function SetsPanel({
                           anchorRef={rulesMenuAnchorRef}
                           className="profile-row-actions-menu"
                           boundaryAttribute="data-profile-row-actions"
+                          containmentSelector=".sets-rules-list-panel"
                           role="menu"
                           aria-label="Project rules actions"
                         >
