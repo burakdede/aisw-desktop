@@ -429,11 +429,12 @@ function ToolInspector({
   const healthText = overviewHealthText(status, state);
   const hasAlternateSelection = Boolean(selectedProfile && selectedProfile !== status.active_profile);
   const canSwitch = Boolean(hasAlternateSelection && selectedProfile);
+  const canReapplyActiveProfile = Boolean(status.active_profile && status.active_profile_applied === false);
   const currentSelectionLabel = selectedProfileLabel ?? activeProfileLabel ?? "profile";
   const hasProfiles = profiles.length > 0;
   const primaryAction = !hasProfiles
     ? null
-    : status.active_profile_applied === false && currentSelectionLabel
+    : canReapplyActiveProfile && currentSelectionLabel
       ? {
           label: `Re-apply ${currentSelectionLabel}`,
           ariaLabel: `Re-apply ${currentSelectionLabel}`,
@@ -446,7 +447,7 @@ function ToolInspector({
         : null;
   const secondaryAction = !hasProfiles
     ? null
-    : status.active_profile_applied === false
+    : canReapplyActiveProfile
       ? supportsLiveImport
         ? {
             label: "Import Current…",
@@ -677,7 +678,7 @@ function ToolInspector({
                   role="menu"
                   aria-label="Overview actions"
                 >
-                  {status.active_profile ? (
+                  {canReapplyActiveProfile ? (
                     <button
                       className="ghost-button"
                       role="menuitem"

@@ -442,7 +442,9 @@ describe("App", () => {
     });
     expect(screen.queryByText("Re-apply Work")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open Profile" })).toBeInTheDocument();
-    expect(screen.getAllByText("Current set").length).toBeGreaterThan(0);
+    expect(
+      screen.queryAllByText((content, element) => element?.textContent?.includes("Current set:") ?? false).length,
+    ).toBeGreaterThan(0);
     expect(screen.getAllByText("Work").length).toBeGreaterThan(0);
     expect(
       screen.getByText((_, element) => element?.textContent?.trim() === "SwitchingReady"),
@@ -451,6 +453,20 @@ describe("App", () => {
     expect(screen.queryByText("Included runtime")).not.toBeInTheDocument();
     expect(screen.queryByText("Health check")).not.toBeInTheDocument();
     expect(screen.queryByText("Local-only by default")).not.toBeInTheDocument();
+  });
+
+  it("keeps reapply out of healthy overview menus", async () => {
+    await renderApp();
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "More profile actions" }));
+
+    await waitFor(() => {
+      expect(getLastOpenMenu().getByRole("menuitem", { name: "Open Profile" })).toBeInTheDocument();
+      expect(getLastOpenMenu().queryByRole("menuitem", { name: /Re-apply/i })).not.toBeInTheDocument();
+    });
   });
 
   it("restores and persists the main window frame when the native window API is available", async () => {

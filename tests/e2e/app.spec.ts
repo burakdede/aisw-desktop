@@ -1240,6 +1240,20 @@ test("keeps the profile actions menu inside the visible inspector pane", async (
   }
 });
 
+test("hides reapply from the overview actions menu when the selected tool is healthy", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Inspect Codex" }).click();
+  await page.getByRole("button", { name: "More profile actions" }).click();
+
+  await expect(page.getByRole("menu", { name: "Overview actions" })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: /Re-apply/i })).toHaveCount(0);
+  await expect(page.getByRole("menuitem", { name: "Open Profile" })).toBeVisible();
+});
+
 test("opens the table row context menu without activating a profile", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
