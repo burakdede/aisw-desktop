@@ -138,6 +138,24 @@ async function renderApp() {
   });
 }
 
+async function renderOverviewApp() {
+  await renderApp();
+  await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
+}
+
+function desktopEventHandlers() {
+  return (window as typeof window & {
+    __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+  }).__AISW_DESKTOP_EVENT_HANDLERS__;
+}
+
+async function dispatchDesktopEvent(event: string, payload: unknown = {}) {
+  await act(async () => {
+    desktopEventHandlers()?.[event]?.(payload);
+    await Promise.resolve();
+  });
+}
+
 async function renderSettingsPanel(
   settings: DesktopSettings,
   initialSection?: "general" | "runtime" | "updates" | "shell" | "keyring" | "advanced",
@@ -6439,16 +6457,8 @@ describe("App", () => {
   });
 
   it("opens the updates settings section when the app menu requests it", async () => {
-    await renderApp();
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
-
-    const handlers = (window as typeof window & {
-      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
-    }).__AISW_DESKTOP_EVENT_HANDLERS__;
-
-    await act(async () => {
-      handlers?.["menu-open-settings-updates"]?.({});
-    });
+    await renderOverviewApp();
+    await dispatchDesktopEvent("menu-open-settings-updates");
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Updates" })).toHaveAttribute("aria-pressed", "true");
@@ -6457,16 +6467,8 @@ describe("App", () => {
   });
 
   it("opens quick switch when the app menu requests switch set", async () => {
-    await renderApp();
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
-
-    const handlers = (window as typeof window & {
-      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
-    }).__AISW_DESKTOP_EVENT_HANDLERS__;
-
-    await act(async () => {
-      handlers?.["menu-open-quick-switch"]?.({});
-    });
+    await renderOverviewApp();
+    await dispatchDesktopEvent("menu-open-quick-switch");
 
     await waitFor(() => {
       expect(screen.getByRole("dialog", { name: "Quick Switch" })).toBeInTheDocument();
@@ -6475,16 +6477,8 @@ describe("App", () => {
   });
 
   it("opens quick switch when the app menu requests it", async () => {
-    await renderApp();
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
-
-    const handlers = (window as typeof window & {
-      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
-    }).__AISW_DESKTOP_EVENT_HANDLERS__;
-
-    await act(async () => {
-      handlers?.["menu-open-quick-switch"]?.({});
-    });
+    await renderOverviewApp();
+    await dispatchDesktopEvent("menu-open-quick-switch");
 
     await waitFor(() => {
       expect(screen.getByRole("dialog", { name: "Quick Switch" })).toBeInTheDocument();
@@ -6558,17 +6552,8 @@ describe("App", () => {
       )[command];
     };
 
-    await renderApp();
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
-
-    const handlers = (window as typeof window & {
-      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
-    }).__AISW_DESKTOP_EVENT_HANDLERS__;
-
-    await act(async () => {
-      handlers?.["menu-reapply-active-profile"]?.({});
-      await Promise.resolve();
-    });
+    await renderOverviewApp();
+    await dispatchDesktopEvent("menu-reapply-active-profile");
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "use_all_profiles")).toBe(true);
@@ -6611,17 +6596,8 @@ describe("App", () => {
       )[command];
     };
 
-    await renderApp();
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
-
-    const handlers = (window as typeof window & {
-      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
-    }).__AISW_DESKTOP_EVENT_HANDLERS__;
-
-    await act(async () => {
-      handlers?.["menu-export-diagnostics"]?.({});
-      await Promise.resolve();
-    });
+    await renderOverviewApp();
+    await dispatchDesktopEvent("menu-export-diagnostics");
 
     await waitFor(() => {
       expect(calls).toContain("export_diagnostic_bundle");
@@ -6633,16 +6609,8 @@ describe("App", () => {
   });
 
   it("opens troubleshooting from the app menu", async () => {
-    await renderApp();
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
-
-    const handlers = (window as typeof window & {
-      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
-    }).__AISW_DESKTOP_EVENT_HANDLERS__;
-
-    await act(async () => {
-      handlers?.["menu-open-troubleshooting"]?.({});
-    });
+    await renderOverviewApp();
+    await dispatchDesktopEvent("menu-open-troubleshooting");
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Diagnostics" })).toHaveClass("nav-button-active");
@@ -6662,17 +6630,8 @@ describe("App", () => {
       )[command] ?? defaultMock[command];
     };
 
-    await renderApp();
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
-
-    const handlers = (window as typeof window & {
-      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
-    }).__AISW_DESKTOP_EVENT_HANDLERS__;
-
-    await act(async () => {
-      handlers?.["menu-open-help"]?.({});
-      await Promise.resolve();
-    });
+    await renderOverviewApp();
+    await dispatchDesktopEvent("menu-open-help");
 
     await waitFor(() => {
       expect(calls).toContain("open_reference_document");
@@ -6681,16 +6640,8 @@ describe("App", () => {
   });
 
   it("opens AI Switch help from the app menu", async () => {
-    await renderApp();
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
-
-    const handlers = (window as typeof window & {
-      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
-    }).__AISW_DESKTOP_EVENT_HANDLERS__;
-
-    await act(async () => {
-      handlers?.["menu-open-help"]?.({});
-    });
+    await renderOverviewApp();
+    await dispatchDesktopEvent("menu-open-help");
 
     const dialog = await screen.findByRole("dialog", { name: "Using AI Switch" });
     expect(within(dialog).getByText("Using AI Switch")).toBeInTheDocument();
@@ -6716,17 +6667,8 @@ describe("App", () => {
       )[command] ?? defaultMock[command];
     };
 
-    await renderApp();
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
-
-    const handlers = (window as typeof window & {
-      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
-    }).__AISW_DESKTOP_EVENT_HANDLERS__;
-
-    await act(async () => {
-      handlers?.["menu-open-issues"]?.({});
-      await Promise.resolve();
-    });
+    await renderOverviewApp();
+    await dispatchDesktopEvent("menu-open-issues");
 
     await waitFor(() => {
       expect(calls).toContain("open_issue_tracker");
@@ -6753,17 +6695,8 @@ describe("App", () => {
       )[command] ?? defaultMock[command];
     };
 
-    await renderApp();
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
-
-    const handlers = (window as typeof window & {
-      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
-    }).__AISW_DESKTOP_EVENT_HANDLERS__;
-
-    await act(async () => {
-      handlers?.["menu-open-issues"]?.({});
-      await Promise.resolve();
-    });
+    await renderOverviewApp();
+    await dispatchDesktopEvent("menu-open-issues");
 
     await waitFor(() => {
       expect(calls).toContain("open_issue_tracker");
@@ -6776,17 +6709,8 @@ describe("App", () => {
   });
 
   it("opens import current login from the app menu in the profiles flow", async () => {
-    await renderApp();
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
-
-    const handlers = (window as typeof window & {
-      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
-    }).__AISW_DESKTOP_EVENT_HANDLERS__;
-
-    await act(async () => {
-      handlers?.["menu-open-import-current-login"]?.({});
-      await Promise.resolve();
-    });
+    await renderOverviewApp();
+    await dispatchDesktopEvent("menu-open-import-current-login");
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Profiles" })).toHaveClass("nav-button-active");
@@ -6811,17 +6735,8 @@ describe("App", () => {
       return defaultMock[command];
     };
 
-    await renderApp();
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
-
-    const handlers = (window as typeof window & {
-      __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
-    }).__AISW_DESKTOP_EVENT_HANDLERS__;
-
-    await act(async () => {
-      handlers?.["menu-open-troubleshooting"]?.({});
-      await Promise.resolve();
-    });
+    await renderOverviewApp();
+    await dispatchDesktopEvent("menu-open-troubleshooting");
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Diagnostics" })).toHaveClass("nav-button-active");
