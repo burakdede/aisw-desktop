@@ -34,6 +34,7 @@
           "run_verify",
           "run_repair",
           "export_diagnostic_bundle",
+          "export_activity_log",
           "list_backups",
           "get_workspace_status",
           "get_project_bindings",

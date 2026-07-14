@@ -14,6 +14,43 @@ function isHttpsUrl(value) {
   }
 }
 
+export const expectedDesktopCommands = [
+  "get_bootstrap",
+  "get_snapshot",
+  "get_settings",
+  "open_app_data_folder",
+  "open_reference_document",
+  "open_issue_tracker",
+  "set_tray_visibility",
+  "get_launch_at_login_status",
+  "set_launch_at_login",
+  "get_shell_guidance",
+  "check_for_updates",
+  "install_update",
+  "update_settings",
+  "run_init",
+  "add_profile",
+  "add_profile_oauth",
+  "use_profile",
+  "use_all_profiles",
+  "use_context",
+  "activate_profile_set",
+  "rename_profile",
+  "remove_profile",
+  "restore_backup",
+  "run_doctor",
+  "run_verify",
+  "run_repair",
+  "export_diagnostic_bundle",
+  "export_activity_log",
+  "list_backups",
+  "get_workspace_status",
+  "get_project_bindings",
+  "workspace_bind",
+  "workspace_unbind",
+  "workspace_guard",
+];
+
 export function verifyReleaseContract(rootDir = repoRoot) {
   const packageJson = JSON.parse(readFileSync(resolve(rootDir, "package.json"), "utf8"));
   const tauriConfig = JSON.parse(readFileSync(resolve(rootDir, "src-tauri/tauri.conf.json"), "utf8"));
@@ -30,36 +67,6 @@ export function verifyReleaseContract(rootDir = repoRoot) {
     "utf8",
   );
   const runbook = readFileSync(resolve(rootDir, "docs/release-runbook.md"), "utf8");
-  const expectedDesktopCommands = [
-    "get_bootstrap",
-    "get_snapshot",
-    "get_settings",
-    "set_tray_visibility",
-    "get_shell_guidance",
-    "check_for_updates",
-    "install_update",
-    "update_settings",
-    "run_init",
-    "add_profile",
-    "add_profile_oauth",
-    "use_profile",
-    "use_all_profiles",
-    "use_context",
-    "activate_profile_set",
-    "rename_profile",
-    "remove_profile",
-    "restore_backup",
-    "run_doctor",
-    "run_verify",
-    "run_repair",
-    "export_diagnostic_bundle",
-    "list_backups",
-    "get_workspace_status",
-    "get_project_bindings",
-    "workspace_bind",
-    "workspace_unbind",
-    "workspace_guard",
-  ];
   const allowedDesktopCommands =
     desktopPermissions.permission?.find((entry) => entry.identifier === "desktop-commands")?.commands?.allow ?? [];
   const mainCapabilityPermissions = Array.isArray(mainCapability.permissions)

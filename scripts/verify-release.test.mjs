@@ -2,7 +2,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { verifyReleaseContract } from "./verify-release.mjs";
+import { expectedDesktopCommands, verifyReleaseContract } from "./verify-release.mjs";
 
 const tempDirs = [];
 
@@ -68,36 +68,7 @@ function createReleaseFixture(overrides = {}) {
           {
             identifier: "desktop-commands",
             commands: {
-              allow: [
-                "get_bootstrap",
-                "get_snapshot",
-                "get_settings",
-                "set_tray_visibility",
-                "get_shell_guidance",
-                "check_for_updates",
-                "install_update",
-                "update_settings",
-                "run_init",
-                "add_profile",
-                "add_profile_oauth",
-                "use_profile",
-                "use_all_profiles",
-                "use_context",
-                "activate_profile_set",
-                "rename_profile",
-                "remove_profile",
-                "restore_backup",
-                "run_doctor",
-                "run_verify",
-                "run_repair",
-                "export_diagnostic_bundle",
-                "list_backups",
-                "get_workspace_status",
-                "get_project_bindings",
-                "workspace_bind",
-                "workspace_unbind",
-                "workspace_guard",
-              ],
+              allow: expectedDesktopCommands,
               deny: [],
             },
           },
