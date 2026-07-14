@@ -3560,6 +3560,14 @@ html[data-appearance="dark"] .tool-logo-codex {
   gap: 1px;
 }
 
+.overview-set-row-inline {
+  min-width: 0;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+
 .overview-set-row-main strong {
   font-size: var(--type-footnote);
   line-height: 1.35;
@@ -3627,6 +3635,12 @@ html[data-appearance="dark"] .tool-logo-codex {
   display: inline-flex;
   align-items: flex-start;
   gap: 8px;
+}
+
+.overview-inline-notice-body {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
 }
 
 .overview-project-card {
@@ -3737,8 +3751,8 @@ html[data-appearance="dark"] .tool-logo-codex {
   grid-template-columns: 18px minmax(136px, 1.1fr) minmax(102px, 0.85fr) minmax(102px, auto) 14px;
   align-items: center;
   gap: 8px;
-  min-height: 36px;
-  padding: 5px 10px;
+  min-height: 56px;
+  padding: 8px 10px;
   border: 0;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
   background: transparent;
@@ -3877,6 +3891,13 @@ html[data-appearance="dark"] .tool-logo-codex {
   color: var(--text-tertiary);
 }
 
+.overview-static-value {
+  font-size: var(--type-footnote);
+  line-height: 1.35;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 .overview-inspector-control select {
   min-height: var(--control-height);
   border: 1px solid var(--separator);
@@ -3937,19 +3958,6 @@ html[data-appearance="dark"] .tool-logo-codex {
   position: relative;
 }
 
-.overview-passive-badge {
-  min-height: var(--control-height);
-  display: inline-flex;
-  align-items: center;
-  padding: 0 var(--control-padding-inline);
-  border-radius: var(--control-radius);
-  border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
-  background: color-mix(in srgb, CanvasText 3%, Canvas 97%);
-  color: var(--text-secondary);
-  font-size: var(--type-footnote);
-  font-weight: 500;
-}
-
 .overview-inline-notice-actions {
   justify-content: flex-end;
 }
@@ -3958,6 +3966,11 @@ html[data-appearance="dark"] .tool-logo-codex {
 .overview-import-inline {
   display: grid;
   gap: 8px;
+}
+
+.overview-empty-state-inline {
+  width: 100%;
+  padding-top: 2px;
 }
 
 .overview-footer-strip {

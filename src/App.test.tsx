@@ -938,20 +938,16 @@ describe("App", () => {
     });
     selectOverviewTool("Gemini");
     const overviewCard = screen
-      .getByText("Gemini CLI is not available on PATH, so this computer cannot switch or verify that tool yet.")
+      .getByText("Gemini CLI is not installed on this Mac.")
       .closest(".tool-card");
     if (!(overviewCard instanceof HTMLElement)) {
       throw new Error("Missing Gemini overview card.");
     }
     const overview = within(overviewCard);
-    expect(overview.getByText("Install command:")).toBeInTheDocument();
-    expect(overview.getByText("npm install -g @google/gemini-cli")).toBeInTheDocument();
-    expect(overview.getByText("Confirm installation:")).toBeInTheDocument();
-    expect(overview.getByText("gemini --version")).toBeInTheDocument();
-    expect(overview.getByText("Check terminal path:")).toBeInTheDocument();
-    expect(overview.getByText("which gemini")).toBeInTheDocument();
+    expect(overview.getByRole("button", { name: "Installation Help" })).toBeInTheDocument();
+    expect(overview.getByRole("button", { name: "Refresh" })).toBeInTheDocument();
 
-    fireEvent.click(overview.getByText("Open installation guide"));
+    fireEvent.click(overview.getByText("Installation Help"));
     expect(window.open).toHaveBeenCalledWith(
       "https://www.npmjs.com/package/@google/gemini-cli",
       "_blank",
@@ -1743,7 +1739,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch claude profile"), {
       target: { value: "personal" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Activate Profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "Switch to Personal" }));
 
     await waitFor(() => {
       expect(screen.getByText("Last result: Switched Claude to Personal.")).toBeInTheDocument();
@@ -1823,7 +1819,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch codex profile"), {
       target: { value: "work" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Activate Profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "Switch to Code Work" }));
 
     await waitFor(() => {
       expect(screen.getByText("Last result: Switched Codex to Code Work.")).toBeInTheDocument();
@@ -1891,14 +1887,14 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch claude profile"), {
       target: { value: "personal" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Activate Profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "Switch to Personal" }));
     await waitFor(() => {
       expect(resolveUseProfile).toBeDefined();
     });
 
     selectOverviewTool("Gemini");
     const geminiCard = screen
-      .getByText("Gemini CLI is not available on PATH, so this computer cannot switch or verify that tool yet.")
+      .getByText("Gemini CLI is not installed on this Mac.")
       .closest(".tool-card");
     if (!(geminiCard instanceof HTMLElement)) {
       throw new Error("Missing Gemini tool card.");
@@ -1977,7 +1973,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch codex profile"), {
       target: { value: "work" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Activate Profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "Switch to Work" }));
 
     await waitFor(() => {
       expect(
@@ -2617,7 +2613,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch claude profile"), {
       target: { value: "personal" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Activate Profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "Switch to Personal" }));
 
     await waitFor(() => {
       expect(
@@ -2721,7 +2717,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch claude profile"), {
       target: { value: "personal" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Activate Profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "Switch to Personal" }));
 
     await waitFor(() => {
       expect(
@@ -4010,7 +4006,7 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByRole("heading", { name: "Work" })).toBeInTheDocument());
     selectProfileInventory("Codex", "Personal");
     fireEvent.click(screen.getByRole("button", { name: "Shared" }));
-    fireEvent.click(screen.getByRole("button", { name: "Activate Profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "Switch to Personal" }));
 
     await waitFor(() => {
       expect(
@@ -6880,7 +6876,7 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("Switch claude profile"), {
       target: { value: "personal" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Activate Profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "Switch to Personal" }));
     await waitFor(() => {
       expect(resolveUseProfile).toBeDefined();
     });

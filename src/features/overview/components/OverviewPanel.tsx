@@ -5,11 +5,8 @@ import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import {
-  commandForCurrentPlatform,
-  installCommandForTool,
   installGuideUrlForTool,
   openExternalGuide,
-  toolBinaryName,
 } from "../../../lib/tool-guidance";
 import { supportedStateModes } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
@@ -182,6 +179,21 @@ export function OverviewPanel({
     }
     return "Review tool readiness";
   }, [attentionCount, blockedCount, notConfiguredCount, notVerifiedCount, readyCount, snapshot.statuses.length]);
+  const overviewMetaLabel = useMemo(() => {
+    if (blockedCount) {
+      return "Fix blocked tools first";
+    }
+    if (attentionCount) {
+      return "Review mismatches before coding";
+    }
+    if (notVerifiedCount) {
+      return "Verification pending";
+    }
+    if (readyCount) {
+      return "Ready to switch";
+    }
+    return "No profiles configured";
+  }, [attentionCount, blockedCount, notVerifiedCount, readyCount]);
 
   const recentSummary = latestOverviewSummary({
     bulkResult,
@@ -191,11 +203,6 @@ export function OverviewPanel({
   const workspaceActivationTarget = hasWorkspaceMismatch
     ? resolveWorkspaceActivationTarget(workspaceStatus.expectedContext, settings, snapshot)
     : null;
-  const statusMeta = hasWorkspaceMismatch
-    ? `Project rules expect ${expectedWorkspaceDisplay}`
-    : readyCount
-      ? `${readyCount}/${snapshot.statuses.length} ready`
-      : "Review local switching state";
   const showInspector = !compactLayout || compactInspectorOpen;
   const showToolList = !compactLayout || !compactInspectorOpen;
   const selectedToolName = selectedStatus ? toolDisplayName(selectedStatus.tool) : "Tool";
@@ -209,13 +216,17 @@ export function OverviewPanel({
           </span>
           <strong>{overviewHeadline}</strong>
         </div>
-        <p className="overview-status-meta">{statusMeta}</p>
+        <p className="overview-status-meta">
+          {hasWorkspaceMismatch ? `Expected set: ${expectedWorkspaceDisplay}` : overviewMetaLabel}
+        </p>
       </div>
 
       <div className="overview-set-row">
         <div className="overview-set-row-main">
-          <span className="overview-set-row-label">Current set</span>
-          <strong>{currentSetDisplay}</strong>
+          <span className="overview-set-row-inline">
+            <span className="overview-set-row-label">Current set:</span>
+            <strong>{currentSetDisplay}</strong>
+          </span>
         </div>
         <div className="button-row overview-set-row-actions">
           <button
@@ -269,7 +280,7 @@ export function OverviewPanel({
                     </div>
                     <span className="overview-tool-list-profile">{activeProfileLabel}</span>
                     <span className={`overview-tool-list-status overview-tool-list-status-${state}`}>
-                      {overviewStatusLabel(state)}
+                      {overviewHealthText(status, state)}
                     </span>
                     <span className="overview-tool-list-chevron" aria-hidden="true">›</span>
                   </button>
@@ -415,17 +426,25 @@ function ToolInspector({
   const supportsLiveImport = supportsProfileImportMode(status.tool, toolCapabilities, "from_live");
   const state = resolveOverviewState(status);
   const statusLabel = overviewStatusLabel(state);
+  const healthText = overviewHealthText(status, state);
   const hasAlternateSelection = Boolean(selectedProfile && selectedProfile !== status.active_profile);
   const canSwitch = Boolean(hasAlternateSelection && selectedProfile);
   const currentSelectionLabel = selectedProfileLabel ?? activeProfileLabel ?? "profile";
-  const primaryActionLabel = !profiles.length
-    ? "Add Profile…"
+  const hasProfiles = profiles.length > 0;
+  const primaryAction = !hasProfiles
+    ? null
     : status.active_profile_applied === false && currentSelectionLabel
-      ? `Re-apply ${currentSelectionLabel}`
+      ? {
+          label: `Re-apply ${currentSelectionLabel}`,
+          ariaLabel: `Re-apply ${currentSelectionLabel}`,
+        }
       : canSwitch
-        ? "Activate Profile"
+        ? {
+            label: "Switch",
+            ariaLabel: `Switch to ${currentSelectionLabel}`,
+          }
         : null;
-  const secondaryAction = !profiles.length
+  const secondaryAction = !hasProfiles
     ? null
     : status.active_profile_applied === false
       ? supportsLiveImport
@@ -494,10 +513,6 @@ function ToolInspector({
   }, [actionsMenuOpen]);
 
   function runPrimaryAction() {
-    if (!profiles.length) {
-      onAddProfile(status.tool);
-      return;
-    }
     if (!selectedProfile) {
       return;
     }
@@ -516,13 +531,7 @@ function ToolInspector({
           <h3>
             <ToolBrand tool={status.tool} className="tool-brand-heading" logoSize={20} />
           </h3>
-          <p className="inline-note">
-            {activeProfileLabel
-              ? `Active profile: ${activeProfileLabel}`
-              : !status.binary_found
-                ? "Tool not installed"
-                : "No saved profile yet"}
-          </p>
+          <p className="inline-note">{activeProfileLabel ? `Active profile: ${activeProfileLabel}` : overviewInspectorEmptyLabel(status)}</p>
         </div>
         <div className={`overview-inspector-status overview-inspector-status-${state}`}>
           <span className={`overview-status-symbol overview-status-symbol-${state}`} aria-hidden="true">
@@ -536,14 +545,43 @@ function ToolInspector({
         <div className="overview-inline-notice overview-inline-notice-warn">
           <div className="overview-inline-notice-copy">
             <span className="overview-inline-notice-symbol" aria-hidden="true">▲</span>
-            <p>
-              Live credentials do not match <strong>{activeProfileLabel ?? "the saved profile"}</strong>.
-            </p>
+            <div className="overview-inline-notice-body">
+              <p>
+                Live credentials do not match <strong>{activeProfileLabel ?? "the saved profile"}</strong>.
+              </p>
+              <p>{toolDisplayName(status.tool)} appears to have been signed into outside AI Switch.</p>
+            </div>
           </div>
         </div>
       ) : null}
 
-      {profiles.length ? (
+      {!status.binary_found ? (
+        <div className="overview-missing-binary">
+          <p className="inline-note">{toolDisplayName(status.tool)} is not installed on this Mac.</p>
+          <div className="button-row">
+            <button className="ghost-button" type="button" onClick={() => openExternalGuide(installGuideUrlForTool(status.tool))}>
+              Installation Help
+            </button>
+            <button className="ghost-button" type="button" disabled={refreshLocked} onClick={onRefresh}>
+              Refresh
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {status.binary_found && !hasProfiles ? (
+        <div className="overview-empty-state overview-empty-state-inline">
+          <h3>No profile configured</h3>
+          <p className="inline-note">Add a saved profile before switching this tool from Overview.</p>
+          <div className="button-row">
+            <button className="primary-button" type="button" onClick={() => onAddProfile(status.tool)}>
+              Add Profile…
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {hasProfiles ? (
         <label className="stacked-form overview-inspector-control">
           <span>Active profile</span>
           <select
@@ -584,21 +622,27 @@ function ToolInspector({
               : "This tool keeps authentication and local state together."}
           </p>
         </div>
+      ) : hasProfiles && status.binary_found ? (
+        <div className="overview-inspector-control">
+          <span className="overview-inspector-control-label">State mode</span>
+          <strong className="overview-static-value">Isolated</strong>
+          <p className="inline-note">Gemini keeps authentication and local state together.</p>
+        </div>
       ) : null}
 
+      {hasProfiles || !status.binary_found ? (
       <div className="overview-inspector-actions">
         <div className="button-row">
-          {primaryActionLabel ? (
+          {primaryAction ? (
             <button
               className="primary-button"
               type="button"
+              aria-label={primaryAction.ariaLabel}
               disabled={mutationLocked}
               onClick={runPrimaryAction}
             >
-              {primaryActionLabel}
+              {primaryAction.label}
             </button>
-          ) : activeProfileLabel ? (
-            <span className="overview-passive-badge">Active</span>
           ) : null}
           {secondaryAction ? (
             <button
@@ -713,33 +757,34 @@ function ToolInspector({
           ) : null}
         </div>
       </div>
+      ) : null}
 
+      {hasProfiles && status.binary_found ? (
       <dl className="overview-inspector-facts">
         <div>
-          <dt>Live match</dt>
-          <dd>{statusLabel}</dd>
+          <dt>Active profile</dt>
+          <dd>{activeProfileLabel ?? "None"}</dd>
+        </div>
+        <div>
+          <dt>Live state</dt>
+          <dd>{healthText}</dd>
         </div>
         <div>
           <dt>Authentication</dt>
           <dd>{status.auth_method ? titleCase(status.auth_method.replace(/_/g, " ")) : "Not configured"}</dd>
         </div>
         <div>
-          <dt>Credential storage</dt>
+          <dt>Backend</dt>
           <dd>{credentialBackendLabel(status.credential_backend)}</dd>
         </div>
         <div>
-          <dt>State mode</dt>
-          <dd>{status.state_mode ? titleCase(status.state_mode) : "Not configured"}</dd>
+          <dt>Last verified</dt>
+          <dd>{overviewVerifiedLabel(status)}</dd>
         </div>
-        {workspaceMismatch ? (
-          <div>
-            <dt>Project rules</dt>
-            <dd>{workspaceMismatch.expected}</dd>
-          </div>
-        ) : null}
       </dl>
+      ) : null}
 
-      {status.token_warning ? (
+      {hasProfiles && status.token_warning ? (
         <div className="overview-inline-notice overview-inline-notice-warn">
           <div className="overview-inline-notice-copy">
             <span className="overview-inline-notice-symbol" aria-hidden="true">▲</span>
@@ -748,7 +793,7 @@ function ToolInspector({
         </div>
       ) : null}
 
-      {status.warnings.length ? (
+      {hasProfiles && status.warnings.length ? (
         <div className="overview-inline-notice overview-inline-notice-warn">
           <div className="overview-inline-notice-copy">
             <span className="overview-inline-notice-symbol" aria-hidden="true">▲</span>
@@ -757,7 +802,7 @@ function ToolInspector({
         </div>
       ) : null}
 
-      {lastResult ? (
+      {hasProfiles && lastResult ? (
         <div className={`overview-inline-notice overview-inline-notice-${lastResult.status === "error" ? "warn" : "ok"}`}>
           <div className="overview-inline-notice-copy">
             <span className="overview-inline-notice-symbol" aria-hidden="true">
@@ -771,57 +816,7 @@ function ToolInspector({
         </div>
       ) : null}
 
-      {!status.binary_found ? (
-        <div className="overview-missing-binary">
-          <MissingBinaryGuidance
-            tool={status.tool}
-            onRefresh={onRefresh}
-            refreshLocked={refreshLocked}
-          />
-        </div>
-      ) : null}
     </aside>
-  );
-}
-
-function MissingBinaryGuidance({
-  tool,
-  onRefresh,
-  refreshLocked,
-}: {
-  tool: string;
-  onRefresh: () => void;
-  refreshLocked: boolean;
-}) {
-  const binary = toolBinaryName(tool);
-  const verifyCommand = commandForCurrentPlatform(binary, "verify");
-  const pathCommand = commandForCurrentPlatform(binary, "path");
-  const installCommand = installCommandForTool(tool);
-  const guideUrl = installGuideUrlForTool(tool);
-
-  return (
-    <div className="stack-list">
-      <p className="inline-note">
-        {toolDisplayName(tool)} is not available on PATH, so this computer cannot switch or verify that tool yet.
-      </p>
-      <p className="inline-note">
-        Install command: <code>{installCommand}</code>
-      </p>
-      <p className="inline-note">
-        Confirm installation: <code>{verifyCommand}</code>
-      </p>
-      <p className="inline-note">
-        Check terminal path: <code>{pathCommand}</code>
-      </p>
-      <div className="button-row">
-        <button className="ghost-button" type="button" onClick={() => openExternalGuide(guideUrl)}>
-          Open installation guide
-        </button>
-        <button className="ghost-button" type="button" disabled={refreshLocked} onClick={onRefresh}>
-          Refresh
-        </button>
-      </div>
-    </div>
   );
 }
 
@@ -860,12 +855,22 @@ function latestOverviewSummary({
 
 function toolListEmptyLabel(status: ToolStatus) {
   if (!status.binary_found) {
+    return "Not installed";
+  }
+  if (!status.active_profile) {
+    return "No profile";
+  }
+  return "Verification pending";
+}
+
+function overviewInspectorEmptyLabel(status: ToolStatus) {
+  if (!status.binary_found) {
     return "Tool not installed";
   }
   if (!status.active_profile) {
-    return "Not configured";
+    return "No saved profile yet";
   }
-  return "Verification required";
+  return "Not verified yet";
 }
 
 function resolveOverviewState(status: ToolStatus): OverviewHealthState {
@@ -896,6 +901,30 @@ function overviewStatusLabel(state: OverviewHealthState) {
       return "Not Configured";
     case "not_verified":
       return "Not Verified";
+  }
+}
+
+function overviewHealthText(status: ToolStatus, state: OverviewHealthState) {
+  if (!status.binary_found) {
+    return "Not installed";
+  }
+  if (!status.active_profile) {
+    return "Not configured";
+  }
+  if (status.active_profile_applied === false) {
+    return "Live mismatch";
+  }
+  switch (state) {
+    case "ready":
+      return "Ready";
+    case "needs_attention":
+      return "Needs attention";
+    case "blocked":
+      return "Blocked";
+    case "not_configured":
+      return "Not configured";
+    case "not_verified":
+      return "Not verified";
   }
 }
 
@@ -932,6 +961,19 @@ function formatTokenWarning(status: ToolStatus) {
 function formatDiagnosticWarning(warning: ToolStatus["warnings"][number]) {
   const detail = warning.message ?? warning.code ?? "Warning reported by the runtime.";
   return warning.remediation ? `Warning: ${detail} Remediation: ${warning.remediation}` : `Warning: ${detail}`;
+}
+
+function overviewVerifiedLabel(status: ToolStatus) {
+  if (!status.binary_found || !status.active_profile) {
+    return "Unavailable";
+  }
+  if (status.active_profile_applied === true) {
+    return "Verified in this session";
+  }
+  if (status.active_profile_applied === false) {
+    return "Needs re-apply";
+  }
+  return "Not verified yet";
 }
 
 function credentialBackendLabel(backend: string | null | undefined) {

@@ -257,6 +257,9 @@ test("keeps Gemini state mode non-configurable when runtime capabilities are sta
   });
 
   await page.goto("/");
+  if (await page.getByRole("button", { name: "Get Started" }).count()) {
+    await page.getByRole("button", { name: "Get Started" }).click();
+  }
   await page.getByRole("button", { name: "Profiles" }).click();
   const profilesSection = page.locator(".section-card").filter({ hasText: "Profiles" });
   await profilesSection.locator("form select").first().selectOption("gemini");
@@ -271,12 +274,12 @@ test("keeps Gemini state mode non-configurable when runtime capabilities are sta
 
   await page.getByRole("button", { name: "Inspect Gemini" }).click();
   const geminiCard = page.locator(".tool-card").filter({ hasText: "Gemini" });
-  await expect(geminiCard.getByText("State mode: n/a")).toBeVisible();
+  await expect(geminiCard.getByText("Gemini keeps authentication and local state together.")).toBeVisible();
   await expect(geminiCard.locator("select")).toHaveCount(1);
 
   await geminiCard.getByRole("button", { name: "Re-apply Travel" }).click();
   await expect(geminiCard.getByText("Last result: Switched Gemini to Travel.")).toBeVisible();
-  await expect(geminiCard.getByText("State mode: n/a")).toBeVisible();
+  await expect(geminiCard.getByText("Gemini keeps authentication and local state together.")).toBeVisible();
 });
 
 test("switches shared profiles and recovers from live mismatch", async ({ page }) => {
@@ -1007,7 +1010,7 @@ test("switches one tool directly from overview and refreshes the active profile 
 
   const codexInspector = page.locator(".overview-inspector-pane");
   await codexInspector.getByLabel("Switch codex profile").selectOption("work");
-  await codexInspector.getByRole("button", { name: "Activate Profile" }).click();
+  await codexInspector.getByRole("button", { name: "Switch to Work" }).click();
 
   await expect(codexInspector.getByText("Active profile: Work")).toBeVisible();
   await expect(codexInspector.getByText("Last result: Switched Codex to Work.")).toBeVisible();
@@ -1019,7 +1022,6 @@ test("uses saved profile labels in overview switch results", async ({ page }) =>
   await page.goto("/");
 
   await page.getByRole("button", { name: "Get Started" }).click();
-  await page.getByRole("button", { name: "Overview" }).click();
   await page.getByRole("button", { name: "Inspect Codex" }).click();
   const codexCard = page.locator(".tool-card").filter({ hasText: "Codex" });
   await codexCard.getByLabel("Switch codex profile").selectOption("work");
@@ -1532,12 +1534,11 @@ test("shows missing-tool guidance and opens the install guide from diagnostics",
   await page.goto("/");
 
   const geminiCard = page.locator(".tool-card").filter({
-    hasText: "Gemini is not available on PATH, so AISW Desktop cannot switch or verify that tool yet.",
+    hasText: "Gemini CLI is not installed on this Mac.",
   });
   await expect(geminiCard).toBeVisible();
-  await expect(geminiCard.getByText("npm install -g @google/gemini-cli")).toBeVisible();
-  await expect(geminiCard.getByText("gemini --version")).toBeVisible();
-  await expect(geminiCard.getByText(/(which|where) gemini/)).toBeVisible();
+  await expect(geminiCard.getByRole("button", { name: "Installation Help" })).toBeVisible();
+  await expect(geminiCard.getByRole("button", { name: "Refresh" })).toBeVisible();
 
   await page.getByRole("button", { name: "Diagnostics" }).click();
   const missingToolCard = page.locator(".diagnostic-card").filter({ hasText: "gemini is missing" });
