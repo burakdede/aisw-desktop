@@ -2,7 +2,7 @@
 
 ## Development setup
 
-1. Install Node.js 20+, Rust stable, and the Tauri 2 system prerequisites for your platform.
+1. Install Node.js `>=20.19.0`, npm `>=10`, Rust stable, and the Tauri 2 system prerequisites for your platform.
 2. Install dependencies:
 
 ```sh
@@ -19,6 +19,12 @@ npm run prepare:sidecar -- /absolute/path/to/aisw
 
 ```sh
 npm run tauri:dev
+```
+
+5. Install the Playwright browser used by the desktop smoke tests:
+
+```sh
+npx playwright install --with-deps chromium
 ```
 
 ## Verification
