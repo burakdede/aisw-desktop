@@ -21,6 +21,13 @@ Architecture details live in [docs/architecture.md](docs/architecture.md). Relea
 
 ## Development
 
+Prerequisites:
+
+- Node.js `>=20.19.0`
+- npm `>=10`
+- Rust toolchain with Cargo
+- Playwright browser binaries via `npx playwright install --with-deps chromium`
+
 Install dependencies:
 
 ```sh
