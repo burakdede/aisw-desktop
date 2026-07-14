@@ -5379,8 +5379,16 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "Export Report" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Support report ready: ai-switch-diagnostics-456.json")).toBeInTheDocument();
-      expect(screen.getByText("/tmp/ai-switch/ai-switch-diagnostics-456.json")).toBeInTheDocument();
+      expect(
+        screen.getByText((content) =>
+          content.includes("Support report ready: ai-switch-diagnostics-456.json."),
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText((content) =>
+          content.includes("/tmp/ai-switch/ai-switch-diagnostics-456.json"),
+        ),
+      ).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText("Copy report path"));

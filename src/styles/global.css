@@ -4538,6 +4538,24 @@ html[data-appearance="dark"] .tool-logo-codex {
   color: var(--danger);
 }
 
+.diagnostics-footer-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px;
+}
+
+.diagnostics-footer-line p {
+  margin: 0;
+  min-width: 0;
+  color: var(--text-tertiary);
+}
+
+.diagnostics-footer-line-error {
+  color: var(--danger);
+}
+
 .diagnostics-summary-strip {
   display: flex;
   align-items: center;
@@ -4821,7 +4839,8 @@ html[data-appearance="dark"] .tool-logo-codex {
 @container (max-width: 900px) {
   .diagnostics-toolbar-row,
   .diagnostics-summary-strip,
-  .diagnostics-inline-notice {
+  .diagnostics-inline-notice,
+  .diagnostics-footer-line {
     align-items: flex-start;
     flex-direction: column;
   }

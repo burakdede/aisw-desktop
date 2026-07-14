@@ -193,6 +193,16 @@ export function DiagnosticsPanel({
     } | undefined)?.summary?.actions_applied ?? 0),
   );
   const exportedBundle = exportBundle.data;
+  const diagnosticsStatusMessage = bundleCopyMessage
+    || (exportedBundle ? `Support report ready: ${exportedBundle.filename}. ${exportedBundle.path}` : "")
+    || (exportBundle.error
+      ? exportBundle.error instanceof Error
+        ? exportBundle.error.message
+        : "Support report export failed."
+      : "")
+    || (applyRepair.data
+      ? `Applied ${lastAppliedCount} ${lastAppliedCount === 1 ? "safe fix" : "safe fixes"}.`
+      : "");
 
   useEffect(() => {
     setSelectedSafeFixes(safeFixIds);
@@ -365,42 +375,6 @@ export function DiagnosticsPanel({
           </div>
         </div>
       </div>
-
-      {exportedBundle ? (
-        <section className="diagnostics-inline-notice">
-          <p className="inline-note">
-            Support report ready: {exportedBundle.filename}
-          </p>
-          <div className="button-row">
-            <button
-              className="ghost-button"
-              type="button"
-              onClick={() => void copyBundlePath(exportedBundle.path, setBundleCopyMessage)}
-            >
-              Copy report path
-            </button>
-          </div>
-          <p className="inline-note">{exportedBundle.path}</p>
-          {bundleCopyMessage ? <p className="inline-note">{bundleCopyMessage}</p> : null}
-        </section>
-      ) : null}
-      {exportBundle.error ? (
-        <section className="diagnostics-inline-notice diagnostics-inline-notice-error">
-          <p className="inline-note">
-            {exportBundle.error instanceof Error
-              ? exportBundle.error.message
-              : "Support report export failed."}
-          </p>
-        </section>
-      ) : null}
-
-      {applyRepair.data ? (
-        <section className="diagnostics-inline-notice">
-          <p className="inline-note">
-            Applied {lastAppliedCount} {lastAppliedCount === 1 ? "safe fix" : "safe fixes"}.
-          </p>
-        </section>
-      ) : null}
 
       <section className={`diagnostics-summary-strip ${totalIssues ? "diagnostics-summary-strip-warn" : "diagnostics-summary-strip-ok"}`}>
         <div className="diagnostics-summary-copy">
@@ -728,6 +702,22 @@ ${primaryFindingFix?.label ? `# ${primaryFindingFix.label}` : "# Review the expl
               </div>
             </footer>
         </DialogSurface>
+      ) : null}
+      {diagnosticsStatusMessage ? (
+        <div className="diagnostics-footer-line">
+          <p className={`inline-note ${exportBundle.error ? "diagnostics-footer-line-error" : ""}`}>
+            {diagnosticsStatusMessage}
+          </p>
+          {exportedBundle ? (
+            <button
+              className="ghost-button"
+              type="button"
+              onClick={() => void copyBundlePath(exportedBundle.path, setBundleCopyMessage)}
+            >
+              Copy report path
+            </button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );
