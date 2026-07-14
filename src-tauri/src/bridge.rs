@@ -1107,7 +1107,7 @@ printf '{}'
         let bundled = resources_dir.join(&sidecar_name);
         fs::write(&bundled, "").unwrap();
 
-        let candidates = super::bundled_binary_candidates(&exe_dir.join("aisw-desktop"));
+        let candidates = super::bundled_binary_candidates(&exe_dir.join("ai-switcher"));
         assert!(candidates.iter().any(
             |candidate| candidate.ends_with(PathBuf::from(format!("Resources/{sidecar_name}")))
         ));
