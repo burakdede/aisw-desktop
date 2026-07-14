@@ -2339,6 +2339,27 @@ test("lists backups newest first, copies backup ids, and opens matching profile 
   await expect(page.getByRole("button", { name: "Storage Details" })).toBeVisible();
 });
 
+test("shows concise backup inspector metadata with friendly list dates", async ({ page }) => {
+  await installDesktopMock(page, "backupCatalog");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Backups" }).click();
+
+  const backupRows = page.locator(".backups-table-row");
+  await expect(backupRows.nth(0)).toContainText("Mar 26");
+  await expect(backupRows.nth(0)).not.toContainText("9:40");
+
+  await backupRows.nth(0).click();
+  const inspector = page.locator(".backups-inspector-surface");
+  await expect(inspector.getByRole("heading", { name: "Personal" })).toBeVisible();
+  await expect(inspector.getByText("Codex CLI backup")).toBeVisible();
+  await expect(inspector.getByText("Created", { exact: true })).toBeVisible();
+  await expect(inspector.getByText("Reason", { exact: true })).toBeVisible();
+  await expect(inspector.getByText("Contains", { exact: true })).toBeVisible();
+  await expect(inspector.getByText("Profile", { exact: true })).toHaveCount(0);
+  await expect(inspector.getByText("Tool", { exact: true })).toHaveCount(0);
+});
+
 test("uses a compact one-pane backup detail flow on narrow widths", async ({ page }) => {
   await installDesktopMock(page, "backupCatalog");
 

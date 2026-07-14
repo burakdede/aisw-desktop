@@ -459,11 +459,6 @@ export function BackupsPanel({
                     rows={[
                       { label: "Created", value: selectedCreated },
                       { label: "Reason", value: selectedReason ?? "Created restore point" },
-                      { label: "Profile", value: selectedProfileLabel },
-                      {
-                        label: "Tool",
-                        value: <ToolBrand tool={selectedTarget.tool} className="tool-brand-inline" logoSize={16} />,
-                      },
                       { label: "Contains", value: selectedContains },
                     ]}
                   />
@@ -683,9 +678,6 @@ function formatBackupListTimestamp(value: string) {
     month: "short",
     day: "numeric",
     year: now.getFullYear() === date.getFullYear() ? undefined : "numeric",
-  }).format(date)}, ${new Intl.DateTimeFormat(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
   }).format(date)}`;
 }
 
