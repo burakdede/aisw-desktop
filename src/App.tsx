@@ -38,6 +38,7 @@ import {
 } from "./lib/profile-display";
 import { DesktopCommandError } from "./lib/tauri";
 import { listenDesktopEvent, type TrayCommandResultEvent } from "./lib/tauri";
+import { subscribeDesktopEvents, type DesktopEventHandler } from "./lib/desktop-events";
 import { syncWindowState } from "./lib/window-state";
 import {
   activateProfileSet,
@@ -360,258 +361,148 @@ export function App() {
   }
 
   useEffect(() => {
-    let active = true;
-    const disposers: Array<() => void> = [];
+    const desktopEventHandlers: DesktopEventHandler[] = [
+      { event: "tray-open-diagnostics", handler: () => setActiveNav("diagnostics") },
+      {
+        event: "tray-run-diagnostics",
+        handler: () => {
+          setActiveNav("diagnostics");
+          invalidateDiagnostics();
+        },
+      },
+      { event: "menu-open-settings", handler: () => openSettings("runtime") },
+      { event: "menu-open-settings-updates", handler: () => openSettings("updates") },
+      {
+        event: "menu-open-profiles",
+        handler: () => {
+          setProfilesRouteState({});
+          setActiveNav("profiles");
+        },
+      },
+      {
+        event: "menu-open-add-profile",
+        handler: () => {
+          setProfilesRouteState({ tool: "claude", expandedProfile: null });
+          setActiveNav("profiles");
+        },
+      },
+      {
+        event: "menu-open-import-current-login",
+        handler: () => {
+          setProfilesRouteState({ tool: "claude", expandedProfile: null, mode: "from_live" });
+          setActiveNav("profiles");
+        },
+      },
+      { event: "menu-open-overview", handler: () => setActiveNav("overview") },
+      { event: "menu-open-sets", handler: () => setActiveNav("sets") },
+      { event: "menu-open-diagnostics", handler: () => setActiveNav("diagnostics") },
+      {
+        event: "menu-run-verify",
+        handler: () => {
+          setActiveNav("diagnostics");
+          invalidateDiagnostics();
+        },
+      },
+      { event: "menu-open-backups", handler: () => setActiveNav("backups") },
+      { event: "menu-open-activity", handler: () => setActiveNav("activity") },
+      { event: "menu-open-quick-switch", handler: () => setQuickSwitchOpen(true) },
+      {
+        event: "menu-open-help",
+        handler: () => {
+          void openReferenceDocument("documentation").catch(() => {
+            setHelpOpen(true);
+          });
+        },
+      },
+      {
+        event: "menu-export-diagnostics",
+        handler: () => {
+          void exportDiagnosticBundle()
+            .then((result) =>
+              notifyDesktop({
+                title: "Diagnostic report exported",
+                body: `Saved ${result.filename}.`,
+              }),
+            )
+            .catch((error) =>
+              notifyDesktop({
+                title: "Diagnostic export failed",
+                body: error instanceof Error ? error.message : "AI Switch could not complete that action.",
+              }),
+            );
+        },
+      },
+      {
+        event: "menu-open-troubleshooting",
+        handler: () => {
+          void openReferenceDocument("troubleshooting").catch(() => {
+            setActiveNav("diagnostics");
+            invalidateDiagnostics();
+          });
+        },
+      },
+      {
+        event: "menu-open-issues",
+        handler: () => {
+          void openIssueTracker().catch(() => {
+            exportDiagnosticBundleMutation.mutate();
+          });
+        },
+      },
+      {
+        event: "menu-reapply-active-profile",
+        handler: () => {
+          reapplyActiveProfileMutation.mutate();
+        },
+      },
+      {
+        event: "tray-command-result",
+        handler: (payload) => {
+          const event = payload as TrayCommandResultEvent;
+          const normalizedMessage = normalizeRuntimeLanguage(event.message);
+          const normalizedRemediation = normalizeRuntimeLanguage(event.remediation);
+          const normalizedLabel =
+            event.scope === "global" && event.id === "context"
+              ? "Use set"
+              : normalizeRuntimeLanguage(event.label);
 
-    void listenDesktopEvent("tray-open-diagnostics", () => {
-      if (!active) return;
-      setActiveNav("diagnostics");
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
+          if (event.scope === "tool") {
+            recordCommandResult(
+              { type: "tool", tool: event.tool },
+              {
+                label: normalizedLabel,
+                status: event.status,
+                message: normalizedMessage,
+                kind: "kind" in event && typeof event.kind === "string" ? event.kind : undefined,
+                remediation: normalizedRemediation,
+              },
+            );
+          } else {
+            recordCommandResult(
+              { type: "global", id: event.id },
+              {
+                label: normalizedLabel,
+                status: event.status,
+                message: normalizedMessage,
+                kind: "kind" in event && typeof event.kind === "string" ? event.kind : undefined,
+                remediation: normalizedRemediation,
+              },
+            );
+          }
 
-    void listenDesktopEvent("tray-run-diagnostics", () => {
-      if (!active) return;
-      setActiveNav("diagnostics");
-      invalidateDiagnostics();
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
+          void notifyDesktop({
+            title: normalizedLabel,
+            body:
+              event.status === "success"
+                ? normalizedMessage
+                : [normalizedMessage, normalizedRemediation].filter(Boolean).join(" "),
+          });
+          void invalidatePostMutationQueries(queryClient);
+        },
+      },
+    ];
 
-    void listenDesktopEvent("menu-open-settings", () => {
-      if (!active) return;
-      openSettings("runtime");
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    void listenDesktopEvent("menu-open-settings-updates", () => {
-      if (!active) return;
-      openSettings("updates");
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    void listenDesktopEvent("menu-open-profiles", () => {
-      if (!active) return;
-      setProfilesRouteState({});
-      setActiveNav("profiles");
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    void listenDesktopEvent("menu-open-add-profile", () => {
-      if (!active) return;
-      setProfilesRouteState({ tool: "claude", expandedProfile: null });
-      setActiveNav("profiles");
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    void listenDesktopEvent("menu-open-import-current-login", () => {
-      if (!active) return;
-      setProfilesRouteState({ tool: "claude", expandedProfile: null, mode: "from_live" });
-      setActiveNav("profiles");
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    void listenDesktopEvent("menu-open-overview", () => {
-      if (!active) return;
-      setActiveNav("overview");
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    void listenDesktopEvent("menu-open-sets", () => {
-      if (!active) return;
-      setActiveNav("sets");
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    void listenDesktopEvent("menu-open-diagnostics", () => {
-      if (!active) return;
-      setActiveNav("diagnostics");
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    void listenDesktopEvent("menu-run-verify", () => {
-      if (!active) return;
-      setActiveNav("diagnostics");
-      invalidateDiagnostics();
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    void listenDesktopEvent("menu-open-backups", () => {
-      if (!active) return;
-      setActiveNav("backups");
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    void listenDesktopEvent("menu-open-activity", () => {
-      if (!active) return;
-      setActiveNav("activity");
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    void listenDesktopEvent("menu-open-quick-switch", () => {
-      if (!active) return;
-      setQuickSwitchOpen(true);
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    void listenDesktopEvent("menu-open-help", () => {
-      if (!active) return;
-      void openReferenceDocument("documentation").catch(() => {
-        if (!active) return;
-        setHelpOpen(true);
-      });
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    void listenDesktopEvent("menu-export-diagnostics", () => {
-      if (!active) return;
-      void exportDiagnosticBundle()
-        .then((result) =>
-          notifyDesktop({
-            title: "Diagnostic report exported",
-            body: `Saved ${result.filename}.`,
-          }),
-        )
-        .catch((error) =>
-          notifyDesktop({
-            title: "Diagnostic export failed",
-            body: error instanceof Error ? error.message : "AI Switch could not complete that action.",
-          }),
-        );
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    void listenDesktopEvent("menu-open-troubleshooting", () => {
-      if (!active) return;
-      void openReferenceDocument("troubleshooting").catch(() => {
-        if (!active) return;
-        setActiveNav("diagnostics");
-        invalidateDiagnostics();
-      });
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    void listenDesktopEvent("menu-open-issues", () => {
-      if (!active) return;
-      void openIssueTracker().catch(() => {
-        if (!active) return;
-        exportDiagnosticBundleMutation.mutate();
-      });
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    void listenDesktopEvent("menu-reapply-active-profile", () => {
-      if (!active) return;
-      reapplyActiveProfileMutation.mutate();
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    void listenDesktopEvent<TrayCommandResultEvent>("tray-command-result", (payload) => {
-      if (!active) return;
-      const normalizedMessage = normalizeRuntimeLanguage(payload.message);
-      const normalizedRemediation = normalizeRuntimeLanguage(payload.remediation);
-      const normalizedLabel =
-        payload.scope === "global" && payload.id === "context"
-          ? "Use set"
-          : normalizeRuntimeLanguage(payload.label);
-
-      if (payload.scope === "tool") {
-        recordCommandResult(
-          { type: "tool", tool: payload.tool },
-          {
-            label: normalizedLabel,
-            status: payload.status,
-            message: normalizedMessage,
-            kind: "kind" in payload && typeof payload.kind === "string" ? payload.kind : undefined,
-            remediation: normalizedRemediation,
-          },
-        );
-      } else {
-        recordCommandResult(
-          { type: "global", id: payload.id },
-          {
-            label: normalizedLabel,
-            status: payload.status,
-            message: normalizedMessage,
-            kind: "kind" in payload && typeof payload.kind === "string" ? payload.kind : undefined,
-            remediation: normalizedRemediation,
-          },
-        );
-      }
-
-      void notifyDesktop({
-        title: normalizedLabel,
-        body:
-          payload.status === "success"
-            ? normalizedMessage
-            : [normalizedMessage, normalizedRemediation].filter(Boolean).join(" "),
-      });
-      void invalidatePostMutationQueries(queryClient);
-    }).then((dispose) => {
-      if (typeof dispose === "function") {
-        disposers.push(dispose);
-      }
-    });
-
-    return () => {
-      active = false;
-      disposers.forEach((dispose) => dispose());
-    };
+    return subscribeDesktopEvents(desktopEventHandlers, listenDesktopEvent);
   }, [queryClient]);
 
   if (bootstrap.isLoading) {
