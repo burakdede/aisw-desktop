@@ -19,6 +19,13 @@ AI Switch Desktop is a local-first desktop app for switching between coding-agen
 
 Architecture details live in [docs/architecture.md](docs/architecture.md). Release and packaging steps live in [docs/release-runbook.md](docs/release-runbook.md).
 
+## Architecture
+
+- React feature panels talk to typed client helpers only.
+- The Tauri command layer is the only frontend-to-native entry point.
+- Rust owns runtime selection, command execution, updater validation, tray behavior, and error normalization.
+- The bundled or selected `aisw` runtime remains the source of truth for switching state, backups, verification, repair, and provider auth handling.
+
 ## Development
 
 Prerequisites:
