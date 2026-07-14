@@ -1,46 +1,88 @@
 # AI Switch Desktop
 
-AI Switch Desktop is a Tauri 2 + Rust + React/TypeScript desktop control plane for the AI Switch CLI and bundled switching engine.
+AI Switch Desktop is a local-first desktop app for switching between coding-agent identities through the `aisw` runtime. It uses Tauri 2 for the native shell, Rust for the desktop bridge, and React + TypeScript for the UI.
 
-## Current scope
+## What it does
 
-- Bundled/system/custom switching engine selection
-- Bundled AI Switch sidecar packaging via Tauri `externalBin`
-- Typed Rust bridge for AI Switch JSON contracts
-- Desktop bootstrap and compatibility gating
-- Overview, profiles, contexts, diagnostics, backups, and settings screens
-- Local settings persistence
-- Mutation queue on the Rust side
-- Frontend schema validation with Zod
+- manages saved profiles for Claude Code, Codex CLI, and Gemini CLI
+- switches one tool or a saved multi-tool set from a native desktop UI
+- runs diagnostics, verification, repair, and backup flows through the runtime
+- supports bundled, system, and custom `aisw` runtime sources
+- keeps credentials and provider-specific auth handling inside the runtime
 
-## Commands
+## Tech stack
+
+- React 18 + TypeScript + Vite
+- TanStack Query, Zustand, Zod
+- Tauri 2
+- Rust
+
+Architecture details live in [docs/architecture.md](docs/architecture.md). Release and packaging steps live in [docs/release-runbook.md](docs/release-runbook.md).
+
+## Development
+
+Install dependencies:
 
 ```sh
 npm install
+```
+
+Stage a local `aisw` binary for desktop development:
+
+```sh
 npm run prepare:sidecar -- /absolute/path/to/aisw
+```
+
+Run the desktop app:
+
+```sh
 npm run tauri:dev
+```
+
+## Verification
+
+Frontend:
+
+```sh
 npm test
 npm run build
+npm run test:e2e
+npm run verify:release
+```
+
+Rust:
+
+```sh
 cargo test --manifest-path src-tauri/Cargo.toml
+cargo check --manifest-path src-tauri/Cargo.toml
+```
+
+## Packaging
+
+Unsigned local smoke bundle:
+
+```sh
+npm run tauri:bundle-local
+```
+
+Signed release bundle:
+
+```sh
 npm run tauri:build
 ```
 
-## Real-app testing
+Before either build, stage the correct `aisw` sidecar with `npm run prepare:sidecar`. The repository does not track staged sidecar binaries.
 
-For local macOS testing, use the bundled desktop window instead of the browser-only Vite server:
+## Repository notes
 
-```sh
-npm install
-npm run prepare:sidecar -- /absolute/path/to/aisw
-npm run tauri:dev
-```
+- local-only planning documents and scratch artifacts are intentionally ignored
+- the desktop app is a control plane for the runtime, not a replacement for its credential and switching logic
+- the release verifier checks CI, workflow, capability, and packaging contracts before a public release
 
-That starts the Vite frontend and the Tauri desktop shell together. For the current codebase, this is the primary way to exercise onboarding, set switching, project rules, tray behavior, diagnostics, and settings in the real app.
+## Contributing
 
-## Notes
+See [CONTRIBUTING.md](CONTRIBUTING.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), and [SECURITY.md](SECURITY.md).
 
-- The local product spec file is intentionally ignored and not tracked in Git.
-- The tracked delivery architecture, acceptance criteria, and verification plan live in `docs/desktop-delivery-plan.md`.
-- The desktop app treats the bundled AI Switch engine as the source of truth and does not parse provider auth files directly.
-- Sidecar binaries are staged into `src-tauri/binaries/` and intentionally remain untracked.
-- Release-specific build and verification steps live in `docs/release-runbook.md`.
+## License
+
+[MIT](LICENSE)

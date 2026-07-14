@@ -8,3 +8,6 @@ src-tauri/binaries/aisw*
 *.log
 .DS_Store
 docs/aisw-desktop-product-spec.md
+ai-switch-desktop-uiux-spec.md
+aisw-redesign-screens.md
+tmp-backups-mock.png
