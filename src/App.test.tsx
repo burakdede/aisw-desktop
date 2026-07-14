@@ -3505,7 +3505,7 @@ describe("App", () => {
         within(screen.getByLabelText("Profile filters")).getByRole("button", { name: "Claude" }),
       ).toHaveAttribute("aria-pressed", "true");
       expect(screen.getByRole("heading", { name: "Work" })).toBeInTheDocument();
-      expect(screen.getByText("Hide Storage Details")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Storage Details" })).toBeInTheDocument();
     });
   });
 

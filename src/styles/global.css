@@ -4804,9 +4804,11 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .backups-screen {
+  container-type: inline-size;
   display: grid;
   min-height: 0;
   gap: 12px;
+  min-width: 0;
 }
 
 .backups-filter-row {

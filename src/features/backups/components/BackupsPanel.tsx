@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
@@ -20,6 +20,19 @@ type ToolFilter = "all" | "claude" | "codex" | "gemini";
 type DateFilter = "newest" | "oldest";
 const BACKUPS_COMPACT_BREAKPOINT = 800;
 
+function measuredPaneWidth(element: HTMLDivElement | null) {
+  if (!element) {
+    return typeof window !== "undefined" ? window.innerWidth : BACKUPS_COMPACT_BREAKPOINT;
+  }
+
+  const width = element.getBoundingClientRect().width;
+  if (width > 0) {
+    return width;
+  }
+
+  return typeof window !== "undefined" ? window.innerWidth : BACKUPS_COMPACT_BREAKPOINT;
+}
+
 export function BackupsPanel({
   snapshot,
   settings,
@@ -31,6 +44,7 @@ export function BackupsPanel({
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
   onOpenProfiles: (tool: string, expandedProfile?: string | null) => void;
 }) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const readEnabled = useMutationAwareQueryEnabled();
   const backups = useQuery({ queryKey: ["backups"], queryFn: listBackups, enabled: readEnabled });
   const { restoreBackupMutation, useProfileMutation, mutationLock } = useDesktopActions();
@@ -41,9 +55,7 @@ export function BackupsPanel({
   const [copyMessage, setCopyMessage] = useState("");
   const [toolbarMenuOpen, setToolbarMenuOpen] = useState(false);
   const [inspectorMenuOpen, setInspectorMenuOpen] = useState(false);
-  const [compactLayout, setCompactLayout] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth < BACKUPS_COMPACT_BREAKPOINT : false,
-  );
+  const [compactLayout, setCompactLayout] = useState(false);
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const [pendingRestore, setPendingRestore] = useState<{
     backupId: string;
@@ -70,13 +82,37 @@ export function BackupsPanel({
     if (typeof window === "undefined") {
       return;
     }
+
     const updateLayout = () => {
-      setCompactLayout(window.innerWidth < BACKUPS_COMPACT_BREAKPOINT);
+      setCompactLayout(measuredPaneWidth(rootRef.current) < BACKUPS_COMPACT_BREAKPOINT);
     };
+
     updateLayout();
+    const observer =
+      typeof ResizeObserver === "function"
+        ? new ResizeObserver(() => {
+            updateLayout();
+          })
+        : null;
+
+    if (rootRef.current) {
+      observer?.observe(rootRef.current);
+    }
     window.addEventListener("resize", updateLayout);
-    return () => window.removeEventListener("resize", updateLayout);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", updateLayout);
+    };
   }, []);
+
+  useEffect(() => {
+    if (!rootRef.current) {
+      return;
+    }
+
+    setCompactLayout(measuredPaneWidth(rootRef.current) < BACKUPS_COMPACT_BREAKPOINT);
+  });
 
   useEffect(() => {
     if (!compactLayout) {
@@ -164,7 +200,7 @@ export function BackupsPanel({
   }
 
   return (
-    <div className="backups-screen screen-content">
+    <div ref={rootRef} className="backups-screen screen-content">
       <div className="backups-filter-row" role="toolbar" aria-label="Backups filters">
         <label className="visually-hidden" htmlFor="backups-tool-filter">
           Tool
@@ -253,6 +289,9 @@ export function BackupsPanel({
                       target.profile,
                     );
                     const createdLabel = formatBackupListTimestamp(entry.created_at ?? entry.backup_id);
+                    const createdDetail = formatBackupInspectorTimestamp(
+                      entry.created_at ?? entry.backup_id,
+                    );
                     const reasonLabel = backupReasonLabel(entry);
 
                     return (
@@ -276,7 +315,7 @@ export function BackupsPanel({
                           }
                         }}
                       >
-                        <span>{createdLabel}</span>
+                        <span title={createdDetail}>{createdLabel}</span>
                         <span>
                           <ToolBrand tool={target.tool} className="tool-brand-compact" logoSize={16} shortName />
                         </span>
@@ -600,7 +639,7 @@ function formatBackupInspectorTimestamp(value: string) {
 function formatBackupListTimestamp(value: string) {
   const date = backupDate(value);
   if (!date) {
-    return "Date unavailable";
+    return "Date Unavailable";
   }
 
   const now = new Date();

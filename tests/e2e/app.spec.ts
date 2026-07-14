@@ -2110,7 +2110,7 @@ test("lists backups newest first, copies backup ids, and opens matching profile 
     page.getByLabel("Profile filters").getByRole("button", { name: "Claude", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("heading", { name: "Work" })).toBeVisible();
-  await expect(page.getByText("Hide Storage Details")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Storage Details" })).toBeVisible();
 });
 
 test("uses a compact one-pane backup detail flow on narrow widths", async ({ page }) => {
