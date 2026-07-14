@@ -969,7 +969,7 @@ test("switches one tool directly from overview and refreshes the active profile 
 
   const codexInspector = page.locator(".overview-inspector-pane");
   await codexInspector.getByLabel("Switch codex profile").selectOption("work");
-  await codexInspector.getByRole("button", { name: "Switch" }).click();
+  await codexInspector.getByRole("button", { name: "Activate Profile" }).click();
 
   await expect(codexInspector.getByText("Active profile: Work")).toBeVisible();
   await expect(codexInspector.getByText("Last result: Switched Codex to Work.")).toBeVisible();
@@ -995,12 +995,15 @@ test("activates a local profile set from overview quick switch", async ({ page }
 
   await page.goto("/");
 
-  const overview = page.locator(".section-card").filter({ hasText: "Control Center" });
-  await overview.getByRole("combobox").first().selectOption("set:client-acme");
-  await overview.getByRole("button", { name: "Switch all" }).click();
+  await page.getByRole("button", { name: "Quick Switch" }).click();
+  const palette = page.getByRole("dialog", { name: "Quick Switch" });
+  await expect(palette).toBeVisible();
+  await palette.getByRole("option", { name: /Client Acme/ }).click();
 
-  await expect(page.getByText("Last bulk result: Activated profile set Client Acme.")).toBeVisible();
-  await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "Work" })).toBeVisible();
+  await expect(page.getByText("Current set").locator("..").getByText("Client Acme")).toBeVisible();
+  await expect(palette).toHaveCount(0);
+  await page.getByRole("button", { name: "Inspect Codex" }).click();
+  await expect(page.locator(".overview-inspector-pane").getByText("Active profile: Work")).toBeVisible();
 });
 
 test("opens the quick switch palette from the keyboard shortcut", async ({ page }) => {

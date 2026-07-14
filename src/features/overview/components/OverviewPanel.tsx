@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
@@ -36,6 +36,17 @@ type OverviewHealthState =
   | "not_verified";
 
 const OVERVIEW_COMPACT_BREAKPOINT = 800;
+
+function measuredPaneWidth(element: HTMLDivElement | null) {
+  if (!element) {
+    return typeof window !== "undefined" ? window.innerWidth : OVERVIEW_COMPACT_BREAKPOINT;
+  }
+  const width = element.getBoundingClientRect().width;
+  if (width > 0) {
+    return width;
+  }
+  return typeof window !== "undefined" ? window.innerWidth : OVERVIEW_COMPACT_BREAKPOINT;
+}
 
 export function OverviewPanel({
   snapshot,
@@ -79,10 +90,9 @@ export function OverviewPanel({
   const currentWorkspaceDisplay = contextDisplayLabel(settings, workspaceStatus.currentContext);
   const currentSetLabel = activeSetLabel(settings, snapshot);
   const currentSetDisplay = currentSetLabel ?? "None";
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const [selectedTool, setSelectedTool] = useState(snapshot.statuses[0]?.tool ?? "");
-  const [compactLayout, setCompactLayout] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth < OVERVIEW_COMPACT_BREAKPOINT : false,
-  );
+  const [compactLayout, setCompactLayout] = useState(false);
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const selectedStatus =
     snapshot.statuses.find((status) => status.tool === selectedTool) ?? snapshot.statuses[0] ?? null;
@@ -121,12 +131,30 @@ export function OverviewPanel({
     if (typeof window === "undefined") {
       return;
     }
+    const rootElement = rootRef.current;
     const updateLayout = () => {
-      setCompactLayout(window.innerWidth < OVERVIEW_COMPACT_BREAKPOINT);
+      setCompactLayout(measuredPaneWidth(rootRef.current) < OVERVIEW_COMPACT_BREAKPOINT);
     };
     updateLayout();
     window.addEventListener("resize", updateLayout);
-    return () => window.removeEventListener("resize", updateLayout);
+    const observer =
+      typeof ResizeObserver !== "undefined" && rootElement
+        ? new ResizeObserver(() => updateLayout())
+        : null;
+    if (observer && rootElement) {
+      observer.observe(rootElement);
+    }
+    return () => {
+      window.removeEventListener("resize", updateLayout);
+      observer?.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!rootRef.current) {
+      return;
+    }
+    setCompactLayout(measuredPaneWidth(rootRef.current) < OVERVIEW_COMPACT_BREAKPOINT);
   }, []);
 
   useEffect(() => {
@@ -172,7 +200,7 @@ export function OverviewPanel({
   const selectedToolName = selectedStatus ? toolDisplayName(selectedStatus.tool) : "Tool";
 
   return (
-    <div className="overview-screen screen-content">
+    <div ref={rootRef} className="overview-screen screen-content">
       <div className={`overview-status-strip overview-status-strip-${overallState}`}>
         <div className="overview-status-summary">
           <span className={`overview-status-symbol overview-status-symbol-${overallState}`} aria-hidden="true">

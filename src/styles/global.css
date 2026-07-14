@@ -3988,7 +3988,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   line-height: 1.3;
 }
 
-@media (max-width: 1120px) {
+@container (max-width: 1120px) {
   .overview-master-detail {
     grid-template-columns: minmax(0, 1fr) 304px;
   }
@@ -3998,7 +3998,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   }
 }
 
-@media (max-width: 800px) {
+@container (max-width: 800px) {
   .overview-master-detail {
     grid-template-columns: minmax(0, 1fr);
   }
