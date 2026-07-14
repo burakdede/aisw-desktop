@@ -6188,10 +6188,6 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .profile-row-actions-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 6px;
-  z-index: 40;
   display: grid;
   min-width: 168px;
   padding: 6px;
@@ -6201,6 +6197,11 @@ html[data-appearance="dark"] .tool-logo-codex {
   box-shadow:
     0 14px 28px rgba(0, 0, 0, 0.16),
     var(--shadow-panel);
+}
+
+.anchored-menu-surface {
+  position: fixed;
+  z-index: 2000;
 }
 
 .profile-row-actions-menu button {
@@ -6227,11 +6228,6 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .profile-row-actions-danger {
   color: #b42318;
-}
-
-.profiles-inspector .profile-row-actions-menu {
-  left: 0;
-  right: auto;
 }
 
 .backup-list-row {

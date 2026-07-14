@@ -1,9 +1,10 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { ToolBrand } from "../../../components/ToolBrand";
 import { useQuery } from "@tanstack/react-query";
+import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SplitView } from "../../../components/SplitView";
+import { ToolBrand } from "../../../components/ToolBrand";
 import { getProjectBindings, getWorkspaceStatus } from "../../../lib/client";
 import {
   contextDisplayLabel,
@@ -93,6 +94,8 @@ export function SetsPanel({
   const [ruleEditorOpen, setRuleEditorOpen] = useState(false);
   const [setMenuOpen, setSetMenuOpen] = useState(false);
   const [rulesMenuOpen, setRulesMenuOpen] = useState(false);
+  const setMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
+  const rulesMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
   const [compactLayout, setCompactLayout] = useState(false);
   const [compactSetInspectorOpen, setCompactSetInspectorOpen] = useState(false);
   const [compactRuleInspectorOpen, setCompactRuleInspectorOpen] = useState(false);
@@ -699,6 +702,7 @@ export function SetsPanel({
                       </button>
                       <div className="profile-row-actions" data-profile-row-actions>
                         <button
+                          ref={setMenuAnchorRef}
                           className="ghost-button profile-row-actions-trigger"
                           type="button"
                           aria-label={`More actions for ${profileSetDisplayLabel(selectedSet)}`}
@@ -708,7 +712,14 @@ export function SetsPanel({
                           •••
                         </button>
                         {setMenuOpen ? (
-                          <div className="profile-row-actions-menu" role="menu" aria-label="Set actions">
+                          <AnchoredMenu
+                            anchorRef={setMenuAnchorRef}
+                            className="profile-row-actions-menu"
+                            align="start"
+                            boundaryAttribute="data-profile-row-actions"
+                            role="menu"
+                            aria-label="Set actions"
+                          >
                             <button
                               type="button"
                               role="menuitem"
@@ -742,7 +753,7 @@ export function SetsPanel({
                             >
                               Remove…
                             </button>
-                          </div>
+                          </AnchoredMenu>
                         ) : null}
                       </div>
                     </div>
@@ -855,6 +866,7 @@ export function SetsPanel({
                     </button>
                     <div className="profile-row-actions" data-profile-row-actions>
                       <button
+                        ref={rulesMenuAnchorRef}
                         className="ghost-button profile-row-actions-trigger profile-row-actions-trigger-visible"
                         type="button"
                         aria-label="Project rules actions"
@@ -864,7 +876,13 @@ export function SetsPanel({
                         •••
                       </button>
                       {rulesMenuOpen ? (
-                        <div className="profile-row-actions-menu" role="menu" aria-label="Project rules actions">
+                        <AnchoredMenu
+                          anchorRef={rulesMenuAnchorRef}
+                          className="profile-row-actions-menu"
+                          boundaryAttribute="data-profile-row-actions"
+                          role="menu"
+                          aria-label="Project rules actions"
+                        >
                           <button
                             type="button"
                             role="menuitem"
@@ -875,7 +893,7 @@ export function SetsPanel({
                           >
                             Open Sets
                           </button>
-                        </div>
+                        </AnchoredMenu>
                       ) : null}
                     </div>
                   </div>

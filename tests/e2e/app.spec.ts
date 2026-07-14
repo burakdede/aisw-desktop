@@ -1085,6 +1085,31 @@ test("keeps the profile actions menu inside the visible inspector pane", async (
   }
 });
 
+test("keeps the backup actions menu inside the visible inspector pane", async ({ page }) => {
+  await installDesktopMock(page, "backupCatalog");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Backups" }).click();
+  await page.locator(".backups-table-row").nth(1).click();
+
+  const inspector = page.locator(".backups-inspector-surface");
+  await page.getByRole("button", { name: "Backup actions" }).click();
+
+  const menu = page.getByRole("menu", { name: "Backup actions" });
+  await expect(menu).toBeVisible();
+
+  const inspectorBox = await inspector.boundingBox();
+  const menuBox = await menu.boundingBox();
+
+  expect(inspectorBox).not.toBeNull();
+  expect(menuBox).not.toBeNull();
+
+  if (inspectorBox && menuBox) {
+    expect(menuBox.x).toBeGreaterThanOrEqual(inspectorBox.x - 1);
+    expect(menuBox.x + menuBox.width).toBeLessThanOrEqual(inspectorBox.x + inspectorBox.width + 1);
+  }
+});
+
 test("saves and deletes a local profile set from sets", async ({ page }) => {
   await installDesktopMock(page, "switching");
 

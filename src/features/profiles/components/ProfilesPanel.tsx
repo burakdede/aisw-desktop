@@ -1,5 +1,6 @@
 import { FormEvent, KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { SearchField } from "../../../components/SearchField";
@@ -126,6 +127,7 @@ export function ProfilesPanel({
   const apiKeyInputRef = useRef<HTMLInputElement | null>(null);
   const renameInputRef = useRef<HTMLInputElement | null>(null);
   const editLabelInputRef = useRef<HTMLInputElement | null>(null);
+  const inspectorMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
   const inventoryRowRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [compactLayout, setCompactLayout] = useState(false);
@@ -781,6 +783,7 @@ export function ProfilesPanel({
                     )}
                     <div className="profile-row-actions" data-profile-row-actions>
                       <button
+                        ref={inspectorMenuAnchorRef}
                         className="ghost-button profile-row-actions-trigger"
                         type="button"
                         aria-label="More profile actions"
@@ -804,7 +807,14 @@ export function ProfilesPanel({
                       {openRowActions?.tool === tool &&
                       openRowActions?.name === selectedProfileEntry.name &&
                       openRowActions.scope === "inspector" ? (
-                        <div className="profile-row-actions-menu" role="menu" aria-label="Profile actions">
+                        <AnchoredMenu
+                          anchorRef={inspectorMenuAnchorRef}
+                          className="profile-row-actions-menu"
+                          align="start"
+                          boundaryAttribute="data-profile-row-actions"
+                          role="menu"
+                          aria-label="Profile actions"
+                        >
                           <button
                             type="button"
                             role="menuitem"
@@ -844,7 +854,7 @@ export function ProfilesPanel({
                           >
                             Remove…
                           </button>
-                        </div>
+                        </AnchoredMenu>
                       ) : null}
                     </div>
                   </div>

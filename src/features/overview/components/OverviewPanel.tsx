@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
+import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import {
@@ -404,6 +405,7 @@ function ToolInspector({
   const [stateMode, setStateMode] = useState(status.state_mode ?? stateModes[0] ?? "");
   const [selectedProfile, setSelectedProfile] = useState(status.active_profile ?? profiles[0]?.name ?? "");
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
+  const actionsMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
   const activeProfileLabel = status.active_profile
     ? toolProfileDisplayLabel(settings, snapshot, status.tool, status.active_profile)
     : null;
@@ -611,6 +613,7 @@ function ToolInspector({
           {(status.active_profile || supportsLiveImport || workspaceMismatch || !status.binary_found) ? (
             <div className="overview-actions-menu-wrap" data-overview-actions>
               <button
+                ref={actionsMenuAnchorRef}
                 className="ghost-button icon-button"
                 type="button"
                 aria-haspopup="menu"
@@ -621,7 +624,14 @@ function ToolInspector({
                 <SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />
               </button>
               {actionsMenuOpen ? (
-                <div className="profile-row-actions-menu" role="menu" aria-label="Overview actions">
+                <AnchoredMenu
+                  anchorRef={actionsMenuAnchorRef}
+                  className="profile-row-actions-menu"
+                  align="start"
+                  boundaryAttribute="data-overview-actions"
+                  role="menu"
+                  aria-label="Overview actions"
+                >
                   {status.active_profile ? (
                     <button
                       className="ghost-button"
@@ -697,7 +707,7 @@ function ToolInspector({
                       Refresh
                     </button>
                   ) : null}
-                </div>
+                </AnchoredMenu>
               ) : null}
             </div>
           ) : null}

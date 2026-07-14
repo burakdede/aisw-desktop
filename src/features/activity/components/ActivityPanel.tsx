@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
+import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { SearchField } from "../../../components/SearchField";
@@ -46,6 +47,7 @@ export function ActivityPanel({
   const [logMessage, setLogMessage] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [pendingClear, setPendingClear] = useState(false);
+  const menuAnchorRef = useRef<HTMLButtonElement | null>(null);
 
   const entries = useMemo<ActivityEntry[]>(
     () =>
@@ -177,6 +179,7 @@ export function ActivityPanel({
         />
         <div className="activity-toolbar-menu-wrap">
           <button
+            ref={menuAnchorRef}
             className="ghost-button icon-button"
             type="button"
             aria-haspopup="menu"
@@ -187,7 +190,12 @@ export function ActivityPanel({
             <SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />
           </button>
           {menuOpen ? (
-            <div className="profile-row-actions-menu" role="menu" aria-label="Activity actions">
+            <AnchoredMenu
+              anchorRef={menuAnchorRef}
+              className="profile-row-actions-menu"
+              role="menu"
+              aria-label="Activity actions"
+            >
               <button className="ghost-button" role="menuitem" type="button" onClick={refreshActivity}>
                 Refresh
               </button>
@@ -228,7 +236,7 @@ export function ActivityPanel({
               >
                 Clear Activity History…
               </button>
-            </div>
+            </AnchoredMenu>
           ) : null}
         </div>
       </div>

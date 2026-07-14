@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
+import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { SearchField } from "../../../components/SearchField";
@@ -55,6 +56,8 @@ export function BackupsPanel({
   const [copyMessage, setCopyMessage] = useState("");
   const [toolbarMenuOpen, setToolbarMenuOpen] = useState(false);
   const [inspectorMenuOpen, setInspectorMenuOpen] = useState(false);
+  const toolbarMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
+  const inspectorMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
   const [compactLayout, setCompactLayout] = useState(false);
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const [pendingRestore, setPendingRestore] = useState<{
@@ -238,6 +241,7 @@ export function BackupsPanel({
         />
         <div className="backups-toolbar-menu-wrap">
           <button
+            ref={toolbarMenuAnchorRef}
             className="ghost-button icon-button"
             type="button"
             aria-haspopup="menu"
@@ -248,7 +252,12 @@ export function BackupsPanel({
             <SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />
           </button>
           {toolbarMenuOpen ? (
-            <div className="profile-row-actions-menu" role="menu" aria-label="Backups actions">
+            <AnchoredMenu
+              anchorRef={toolbarMenuAnchorRef}
+              className="profile-row-actions-menu"
+              role="menu"
+              aria-label="Backups actions"
+            >
               <button
                 className="ghost-button"
                 role="menuitem"
@@ -260,7 +269,7 @@ export function BackupsPanel({
               >
                 Refresh
               </button>
-            </div>
+            </AnchoredMenu>
           ) : null}
         </div>
       </div>
@@ -372,6 +381,7 @@ export function BackupsPanel({
                     </button>
                     <div className="backups-toolbar-menu-wrap">
                       <button
+                        ref={inspectorMenuAnchorRef}
                         className="ghost-button icon-button"
                         type="button"
                         aria-haspopup="menu"
@@ -382,7 +392,13 @@ export function BackupsPanel({
                         <SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />
                       </button>
                       {inspectorMenuOpen ? (
-                        <div className="profile-row-actions-menu" role="menu" aria-label="Backup actions">
+                        <AnchoredMenu
+                          anchorRef={inspectorMenuAnchorRef}
+                          className="profile-row-actions-menu"
+                          align="start"
+                          role="menu"
+                          aria-label="Backup actions"
+                        >
                           <button
                             className="ghost-button"
                             role="menuitem"
@@ -431,7 +447,7 @@ export function BackupsPanel({
                           >
                             Reveal Backup Folder
                           </button>
-                        </div>
+                        </AnchoredMenu>
                       ) : null}
                     </div>
                   </div>

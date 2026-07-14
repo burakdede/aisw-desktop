@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { SplitView } from "../../../components/SplitView";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
@@ -91,6 +92,8 @@ export function DiagnosticsPanel({
   const [selectedSafeFixes, setSelectedSafeFixes] = useState<string[]>([]);
   const [toolbarMenuOpen, setToolbarMenuOpen] = useState(false);
   const [inspectorMenuOpen, setInspectorMenuOpen] = useState(false);
+  const toolbarMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
+  const inspectorMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
   const [compactLayout, setCompactLayout] = useState(false);
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -328,6 +331,7 @@ export function DiagnosticsPanel({
           </button>
           <div className="diagnostics-toolbar-menu-wrap">
             <button
+              ref={toolbarMenuAnchorRef}
               className="ghost-button"
               type="button"
               aria-haspopup="menu"
@@ -338,7 +342,12 @@ export function DiagnosticsPanel({
               •••
             </button>
             {toolbarMenuOpen ? (
-              <div className="profile-row-actions-menu" role="menu" aria-label="Diagnostics actions">
+              <AnchoredMenu
+                anchorRef={toolbarMenuAnchorRef}
+                className="profile-row-actions-menu"
+                role="menu"
+                aria-label="Diagnostics actions"
+              >
                 <button
                   className="ghost-button"
                   role="menuitem"
@@ -351,7 +360,7 @@ export function DiagnosticsPanel({
                 >
                   {exportBundle.isPending ? "Exporting Report…" : "Export Report"}
                 </button>
-              </div>
+              </AnchoredMenu>
             ) : null}
           </div>
         </div>
@@ -560,6 +569,7 @@ export function DiagnosticsPanel({
                     {inspectorOverflowActions.length ? (
                       <div className="profile-row-actions" data-profile-row-actions>
                         <button
+                          ref={inspectorMenuAnchorRef}
                           className="ghost-button profile-row-actions-trigger profile-row-actions-trigger-visible"
                           type="button"
                           aria-label="More finding actions"
@@ -569,7 +579,14 @@ export function DiagnosticsPanel({
                           •••
                         </button>
                         {inspectorMenuOpen ? (
-                          <div className="profile-row-actions-menu" role="menu" aria-label="Finding actions">
+                          <AnchoredMenu
+                            anchorRef={inspectorMenuAnchorRef}
+                            className="profile-row-actions-menu"
+                            align="start"
+                            boundaryAttribute="data-profile-row-actions"
+                            role="menu"
+                            aria-label="Finding actions"
+                          >
                             {inspectorOverflowActions.map((action) => (
                               <button
                                 key={action.key}
@@ -584,7 +601,7 @@ export function DiagnosticsPanel({
                                 {action.label}
                               </button>
                             ))}
-                          </div>
+                          </AnchoredMenu>
                         ) : null}
                       </div>
                     ) : null}
