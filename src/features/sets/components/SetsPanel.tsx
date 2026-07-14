@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { useQuery } from "@tanstack/react-query";
 import { DialogSurface } from "../../../components/DialogSurface";
@@ -24,6 +24,18 @@ import { parseWorkspaceBindings, parseWorkspaceStatus } from "../../workspaces/w
 import type { WorkspaceUnbindInput } from "../../../lib/client";
 
 const TOOLS = ["claude", "codex", "gemini"] as const;
+const SETS_COMPACT_BREAKPOINT = 900;
+
+function measuredPaneWidth(element: HTMLDivElement | null) {
+  if (!element) {
+    return typeof window !== "undefined" ? window.innerWidth : SETS_COMPACT_BREAKPOINT;
+  }
+  const width = element.getBoundingClientRect().width;
+  if (width > 0) {
+    return width;
+  }
+  return typeof window !== "undefined" ? window.innerWidth : SETS_COMPACT_BREAKPOINT;
+}
 
 type EditableProfileSet = {
   sourceName: string | null;
@@ -81,6 +93,9 @@ export function SetsPanel({
   const [ruleEditorOpen, setRuleEditorOpen] = useState(false);
   const [setMenuOpen, setSetMenuOpen] = useState(false);
   const [rulesMenuOpen, setRulesMenuOpen] = useState(false);
+  const [compactLayout, setCompactLayout] = useState(false);
+  const [compactSetInspectorOpen, setCompactSetInspectorOpen] = useState(false);
+  const [compactRuleInspectorOpen, setCompactRuleInspectorOpen] = useState(false);
   const [workspaceOverrideDismissed, setWorkspaceOverrideDismissed] = useState(false);
   const [scope, setScope] = useState<BindScope>("default");
   const [context, setContext] = useState("");
@@ -99,6 +114,7 @@ export function SetsPanel({
     profiles: Object.fromEntries(TOOLS.map((tool) => [tool, ""])),
   });
   const [lastSetAction, setLastSetAction] = useState("");
+  const rootRef = useRef<HTMLDivElement | null>(null);
 
   const localSets = settings.profile_sets ?? [];
   const importedContexts = snapshot.contexts;
@@ -219,6 +235,43 @@ export function SetsPanel({
   useEffect(() => {
     setRulesMenuOpen(false);
   }, [mode, selectedBindingKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const rootElement = rootRef.current;
+    const updateLayout = () => {
+      setCompactLayout(measuredPaneWidth(rootRef.current) < SETS_COMPACT_BREAKPOINT);
+    };
+    updateLayout();
+    window.addEventListener("resize", updateLayout);
+    const observer =
+      typeof ResizeObserver !== "undefined" && rootElement
+        ? new ResizeObserver(() => updateLayout())
+        : null;
+    if (observer && rootElement) {
+      observer.observe(rootElement);
+    }
+    return () => {
+      window.removeEventListener("resize", updateLayout);
+      observer?.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!rootRef.current) {
+      return;
+    }
+    setCompactLayout(measuredPaneWidth(rootRef.current) < SETS_COMPACT_BREAKPOINT);
+  }, []);
+
+  useEffect(() => {
+    if (!compactLayout) {
+      setCompactSetInspectorOpen(false);
+      setCompactRuleInspectorOpen(false);
+    }
+  }, [compactLayout]);
 
   function resetSetDraft() {
     setSetDraft({
@@ -475,7 +528,12 @@ export function SetsPanel({
         className={`list-row sets-library-row ${selected ? "sets-library-row-selected" : ""} ${active ? "sets-library-row-active" : ""}`}
         aria-pressed={selected}
         aria-label={`Inspect set ${profileSetDisplayLabel(set)}`}
-        onClick={() => setSelectedSetName(set.name)}
+        onClick={() => {
+          setSelectedSetName(set.name);
+          if (compactLayout) {
+            setCompactSetInspectorOpen(true);
+          }
+        }}
       >
         <div className="sets-library-row-main">
           <div className="sets-library-row-title">
@@ -500,8 +558,13 @@ export function SetsPanel({
     );
   });
 
+  const showSetLibrary = !compactLayout || !compactSetInspectorOpen;
+  const showSetInspector = !compactLayout || compactSetInspectorOpen;
+  const showRuleTable = !compactLayout || !compactRuleInspectorOpen;
+  const showRuleInspector = !compactLayout || compactRuleInspectorOpen;
+
   return (
-    <div className="sets-screen screen-content">
+    <div ref={rootRef} className="sets-screen screen-content">
       <div className="sets-toolbar-row">
         <SegmentedControl
           ariaLabel="Sets mode"
@@ -528,7 +591,7 @@ export function SetsPanel({
             className="sets-library-layout"
             primaryClassName="sets-library-pane"
             secondaryClassName="sets-inspector-pane"
-            primary={
+            primary={showSetLibrary ? (
               <section className="sets-pane sets-library-list-pane" aria-label="Set Library">
                 <div className="sets-library-list">{setRows}</div>
                 {importedContexts.length ? (
@@ -594,13 +657,22 @@ export function SetsPanel({
                   {lastSetAction ? <p className="inline-note">{lastSetAction}</p> : null}
                 </div>
               </section>
-            }
-            secondary={
+            ) : null}
+            secondary={showSetInspector ? (
               <aside className="sets-pane sets-inspector">
                 {selectedSet ? (
                   <>
                     <header className="sets-inspector-header">
                       <div>
+                        {compactLayout ? (
+                          <button
+                            className="ghost-button sets-inspector-back"
+                            type="button"
+                            onClick={() => setCompactSetInspectorOpen(false)}
+                          >
+                            Back
+                          </button>
+                        ) : null}
                         <h3>{profileSetDisplayLabel(selectedSet)}</h3>
                         <p className="inline-note sets-inspector-subtitle">
                           {selectedSetSelectionCount} profile{selectedSetSelectionCount === 1 ? "" : "s"} mapped
@@ -712,7 +784,7 @@ export function SetsPanel({
                   </div>
                 )}
               </aside>
-            }
+            ) : null}
           />
         ) : (
           <section className="sets-empty-pane" aria-label="Set Library">
@@ -768,7 +840,7 @@ export function SetsPanel({
             className="sets-rules-layout"
             primaryClassName="sets-rules-list-pane"
             secondaryClassName="sets-rules-inspector-pane"
-            primary={
+            primary={showRuleTable ? (
               <section className="sets-pane sets-rules-list-panel" aria-label="Project Rules">
                 <header className="sets-pane-header sets-rules-pane-header">
                   <div>
@@ -826,7 +898,12 @@ export function SetsPanel({
                           } ${matchedBindingKey === binding.key ? "sets-rule-table-row-active" : ""}`}
                           aria-pressed={selectedRule?.key === binding.key}
                           aria-label={`Inspect rule for ${contextDisplayLabel(settings, binding.context)}`}
-                          onClick={() => setSelectedBindingKey(binding.key)}
+                          onClick={() => {
+                            setSelectedBindingKey(binding.key);
+                            if (compactLayout) {
+                              setCompactRuleInspectorOpen(true);
+                            }
+                          }}
                         >
                           <span>{formatRuleScopeLabel(binding.scope)}</span>
                           <span>{formatRuleTarget(binding.scope, binding.target)}</span>
@@ -855,13 +932,22 @@ export function SetsPanel({
                   ) : null}
                 </div>
               </section>
-            }
-            secondary={
+            ) : null}
+            secondary={showRuleInspector ? (
               <aside className="sets-pane sets-rules-inspector">
                 {selectedRule ? (
                   <>
                     <header className="sets-inspector-header">
                       <div>
+                        {compactLayout ? (
+                          <button
+                            className="ghost-button sets-inspector-back"
+                            type="button"
+                            onClick={() => setCompactRuleInspectorOpen(false)}
+                          >
+                            Back
+                          </button>
+                        ) : null}
                         <h3>{selectedRuleContextLabel}</h3>
                         <p className="inline-note sets-inspector-subtitle">
                           {selectedRuleMatched ? "This rule currently matches" : "Saved project rule"}
@@ -919,7 +1005,7 @@ export function SetsPanel({
                   </div>
                 )}
               </aside>
-            }
+            ) : null}
           />
         </div>
       )}

@@ -1250,6 +1250,81 @@ describe("App", () => {
     }
   });
 
+  it("uses a compact one-pane detail flow for sets on narrow widths", async () => {
+    const originalInnerWidth = window.innerWidth;
+    const settingsWithSet: DesktopSettings = {
+      ...bootstrap.settings,
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    };
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      writable: true,
+      value: 860,
+    });
+
+    try {
+      window.__AISW_DESKTOP_MOCK__ = async (command) =>
+        (
+          {
+            get_bootstrap: {
+              ...bootstrap,
+              settings: settingsWithSet,
+            },
+            get_snapshot: bootstrap.snapshot,
+            run_init: { result: { live_accounts: [] } },
+            run_doctor: { summary: { status: "pass" } },
+            run_verify: { summary: { status: "pass" } },
+            run_repair: { result: { mode: "dry_run" } },
+            get_workspace_status: { result: { status: "match" } },
+            get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+            list_backups: [],
+            get_settings: settingsWithSet,
+          } as Record<string, unknown>
+        )[command];
+
+      await renderApp();
+      await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
+
+      await act(async () => {
+        window.dispatchEvent(new Event("resize"));
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Show sidebar" }));
+      fireEvent.click(screen.getByRole("button", { name: "Sets" }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("Set Library")).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Inspect set Client Acme" }));
+
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
+        expect(screen.queryByLabelText("Set Library")).not.toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Back" }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("Set Library")).toBeInTheDocument();
+      });
+    } finally {
+      window.__AISW_DESKTOP_MOCK__ = undefined;
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        writable: true,
+        value: originalInnerWidth,
+      });
+      window.dispatchEvent(new Event("resize"));
+    }
+  });
+
   it("clears routed profile details when reopening profiles from the sidebar", async () => {
     const codexStatus = {
       tool: "codex",

@@ -402,6 +402,25 @@ test("uses a compact one-pane profile detail flow on narrow widths", async ({ pa
   await expect(page.getByLabel("Profile table")).toBeVisible();
 });
 
+test("uses a compact one-pane set detail flow on narrow widths", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.setViewportSize({ width: 860, height: 920 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Show sidebar" }).click();
+  await page.getByRole("button", { name: "Sets" }).click();
+
+  await expect(page.getByLabel("Set Library")).toBeVisible();
+  await page.getByRole("button", { name: "Inspect set Client Acme" }).click();
+
+  await expect(page.getByRole("button", { name: "Back", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Set Library")).toHaveCount(0);
+  await expect(page.locator(".sets-inspector").getByRole("heading", { name: "Client Acme" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(page.getByLabel("Set Library")).toBeVisible();
+});
+
 test("uses a compact overlay sidebar on narrow widths", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
