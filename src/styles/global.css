@@ -4509,6 +4509,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .diagnostics-screen {
+  container-type: inline-size;
   display: grid;
   min-height: 0;
   gap: 12px;
@@ -4730,6 +4731,10 @@ html[data-appearance="dark"] .tool-logo-codex {
   background: var(--pane-bg);
 }
 
+.diagnostics-inspector-back {
+  justify-self: start;
+}
+
 .diagnostics-inspector-section {
   display: grid;
   gap: 6px;
@@ -4811,6 +4816,28 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .diagnostics-safe-fix-row input {
   margin-top: 2px;
+}
+
+@container (max-width: 900px) {
+  .diagnostics-toolbar-row,
+  .diagnostics-summary-strip,
+  .diagnostics-inline-notice {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .diagnostics-summary-meta {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .diagnostics-master-detail {
+    display: block;
+  }
+
+  .diagnostics-inspector-surface {
+    border-left: 0;
+  }
 }
 
 .diagnostics-sheet-empty {
@@ -6214,8 +6241,8 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .profiles-inspector .profile-row-actions-menu {
-  left: 0;
-  right: auto;
+  left: auto;
+  right: 0;
 }
 
 .backup-list-row {
