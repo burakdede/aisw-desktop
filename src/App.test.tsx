@@ -1325,6 +1325,79 @@ describe("App", () => {
     }
   });
 
+  it("uses a compact one-pane detail flow for diagnostics on narrow widths", async () => {
+    const originalInnerWidth = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      writable: true,
+      value: 860,
+    });
+
+    try {
+      window.__AISW_DESKTOP_MOCK__ = async (command) =>
+        (
+          {
+            get_bootstrap: bootstrap,
+            get_snapshot: bootstrap.snapshot,
+            run_init: { result: { live_accounts: [] } },
+            run_doctor: {
+              checks: [
+                {
+                  name: "codex-live-match",
+                  status: "fail",
+                  summary: "Codex active profile does not match live credentials.",
+                  remediation: ["Re-apply Personal2."],
+                },
+              ],
+            },
+            run_verify: {
+              checks: [],
+            },
+            run_repair: { result: { mode: "dry_run", summary: { actions_planned: 0 }, actions: [] } },
+            get_workspace_status: { result: { status: "match" } },
+            get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+            list_backups: [],
+            get_settings: bootstrap.settings,
+          } as Record<string, unknown>
+        )[command];
+
+      await renderApp();
+      await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());
+
+      await act(async () => {
+        window.dispatchEvent(new Event("resize"));
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Show sidebar" }));
+      fireEvent.click(screen.getByRole("button", { name: "Diagnostics" }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("Diagnostics findings")).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: /Inspect codex-live-match/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
+        expect(screen.queryByLabelText("Diagnostics findings")).not.toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Back" }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("Diagnostics findings")).toBeInTheDocument();
+      });
+    } finally {
+      window.__AISW_DESKTOP_MOCK__ = undefined;
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        writable: true,
+        value: originalInnerWidth,
+      });
+      window.dispatchEvent(new Event("resize"));
+    }
+  });
+
   it("clears routed profile details when reopening profiles from the sidebar", async () => {
     const codexStatus = {
       tool: "codex",
@@ -6375,7 +6448,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("dialog", { name: "Quick Switch" })).toBeInTheDocument();
-      expect(screen.getByLabelText("Search Quick Switch")).toBeInTheDocument();
+      expect(screen.getByLabelText("Search Quick Switch")).toHaveFocus();
     });
   });
 

@@ -89,7 +89,16 @@ export function QuickSwitchPalette({
     }
     setQuery("");
     setSelectedIndex(0);
-    window.setTimeout(() => inputRef.current?.focus(), 0);
+    const focusSearchField = () => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    };
+    const frame = window.requestAnimationFrame(focusSearchField);
+    const timeout = window.setTimeout(focusSearchField, 40);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timeout);
+    };
   }, [open]);
 
   useEffect(() => {

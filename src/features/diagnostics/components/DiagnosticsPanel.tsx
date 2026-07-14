@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { SplitView } from "../../../components/SplitView";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
@@ -33,6 +33,18 @@ import { titleCase } from "../../../lib/utils";
 import type { SettingsSection } from "../../settings/components/SettingsPanel";
 
 const SUPPORTED_TOOLS = new Set(["claude", "codex", "gemini"]);
+const DIAGNOSTICS_COMPACT_BREAKPOINT = 900;
+
+function measuredPaneWidth(element: HTMLDivElement | null) {
+  if (!element) {
+    return typeof window !== "undefined" ? window.innerWidth : DIAGNOSTICS_COMPACT_BREAKPOINT;
+  }
+  const width = element.getBoundingClientRect().width;
+  if (width > 0) {
+    return width;
+  }
+  return typeof window !== "undefined" ? window.innerWidth : DIAGNOSTICS_COMPACT_BREAKPOINT;
+}
 
 export function DiagnosticsPanel({
   settings,
@@ -79,6 +91,9 @@ export function DiagnosticsPanel({
   const [selectedSafeFixes, setSelectedSafeFixes] = useState<string[]>([]);
   const [toolbarMenuOpen, setToolbarMenuOpen] = useState(false);
   const [inspectorMenuOpen, setInspectorMenuOpen] = useState(false);
+  const [compactLayout, setCompactLayout] = useState(false);
+  const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const applyRepair = useMutation({
     mutationFn: (fixes: string[]) => runRepair({ apply: true, fixes }),
     onSuccess: async () => {
@@ -250,8 +265,47 @@ export function DiagnosticsPanel({
     setInspectorMenuOpen(false);
   }, [selectedFindingKey]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const rootElement = rootRef.current;
+    const updateLayout = () => {
+      setCompactLayout(measuredPaneWidth(rootRef.current) < DIAGNOSTICS_COMPACT_BREAKPOINT);
+    };
+    updateLayout();
+    window.addEventListener("resize", updateLayout);
+    const observer =
+      typeof ResizeObserver !== "undefined" && rootElement
+        ? new ResizeObserver(() => updateLayout())
+        : null;
+    if (observer && rootElement) {
+      observer.observe(rootElement);
+    }
+    return () => {
+      window.removeEventListener("resize", updateLayout);
+      observer?.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!rootRef.current) {
+      return;
+    }
+    setCompactLayout(measuredPaneWidth(rootRef.current) < DIAGNOSTICS_COMPACT_BREAKPOINT);
+  }, []);
+
+  useEffect(() => {
+    if (!compactLayout) {
+      setCompactInspectorOpen(false);
+    }
+  }, [compactLayout]);
+
+  const showFindings = !compactLayout || !compactInspectorOpen;
+  const showInspector = !compactLayout || compactInspectorOpen;
+
   return (
-    <div className="diagnostics-screen screen-content">
+    <div ref={rootRef} className="diagnostics-screen screen-content">
       <div className="diagnostics-toolbar-row">
         <div className="button-row">
           <button
@@ -359,7 +413,7 @@ export function DiagnosticsPanel({
         className="diagnostics-master-detail"
         primaryClassName="diagnostics-findings-pane"
         secondaryClassName="diagnostics-inspector-pane"
-        primary={
+        primary={showFindings ? (
           <section className="diagnostics-pane">
             {findings.length ? (
               <div className="diagnostics-findings-list" aria-label="Diagnostics findings">
@@ -380,7 +434,12 @@ export function DiagnosticsPanel({
                             className={`list-row diagnostic-finding-row ${
                               selectedFinding?.key === finding.key ? "diagnostic-finding-row-selected" : ""
                             }`}
-                            onClick={() => setSelectedFindingKey(finding.key)}
+                            onClick={() => {
+                              setSelectedFindingKey(finding.key);
+                              if (compactLayout) {
+                                setCompactInspectorOpen(true);
+                              }
+                            }}
                           >
                             <div className="diagnostic-finding-main">
                               <div className="diagnostic-finding-title">
@@ -434,13 +493,22 @@ export function DiagnosticsPanel({
               </div>
             )}
           </section>
-        }
-        secondary={
+        ) : null}
+        secondary={showInspector ? (
           <aside className="diagnostics-pane diagnostics-inspector-surface">
             {selectedFinding ? (
               <>
                 <header className="diagnostics-pane-header diagnostics-inspector-header">
                   <div>
+                    {compactLayout ? (
+                      <button
+                        className="ghost-button diagnostics-inspector-back"
+                        type="button"
+                        onClick={() => setCompactInspectorOpen(false)}
+                      >
+                        Back
+                      </button>
+                    ) : null}
                     <h3>{selectedFinding.title}</h3>
                     <p className={`diagnostics-inspector-status diagnostics-inspector-status-${selectedFinding.status}`}>
                       <span aria-hidden="true">{selectedFinding.status === "fail" ? "⨯" : "▲"}</span>
@@ -559,7 +627,7 @@ ${primaryFindingFix?.label ? `# ${primaryFindingFix.label}` : "# Review the expl
               </div>
             )}
           </aside>
-        }
+        ) : null}
       />
       {repairPlanOpen ? (
         <DialogSurface

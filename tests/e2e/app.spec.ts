@@ -421,6 +421,25 @@ test("uses a compact one-pane set detail flow on narrow widths", async ({ page }
   await expect(page.getByLabel("Set Library")).toBeVisible();
 });
 
+test("uses a compact one-pane diagnostics detail flow on narrow widths", async ({ page }) => {
+  await installDesktopMock(page, "diagnosticsRepair");
+
+  await page.setViewportSize({ width: 860, height: 920 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Show sidebar" }).click();
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+
+  await expect(page.getByLabel("Diagnostics findings")).toBeVisible();
+  await page.getByRole("button", { name: /Inspect Keyring unavailable/i }).click();
+
+  await expect(page.getByRole("button", { name: "Back", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Diagnostics findings")).toHaveCount(0);
+  await expect(page.locator(".diagnostics-inspector-surface").getByRole("heading", { name: "Keyring unavailable" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(page.getByLabel("Diagnostics findings")).toBeVisible();
+});
+
 test("uses a compact overlay sidebar on narrow widths", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -1033,10 +1052,37 @@ test("opens the quick switch palette from the keyboard shortcut", async ({ page 
 
   const palette = page.getByRole("dialog", { name: "Quick Switch" });
   await expect(palette).toBeVisible();
-  await palette.getByRole("button", { name: /Client Acme/ }).click();
+  await expect(palette.getByLabel("Search Quick Switch")).toBeFocused();
+  await expect(palette.getByRole("option", { name: /Client Acme/ })).toHaveAttribute("aria-selected", "true");
+  await page.keyboard.press("Enter");
 
-  await expect(page.getByText("Last bulk result: Activated profile set Client Acme.")).toBeVisible();
-  await expect(page.locator(".tool-card").filter({ hasText: "Codex" }).getByRole("heading", { name: "Work" })).toBeVisible();
+  await expect(palette).toHaveCount(0);
+  await expect(page.getByText("Current set").locator("..").getByText("Client Acme")).toBeVisible();
+});
+
+test("keeps the profile actions menu inside the visible inspector pane", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+  await page.getByRole("option", { name: "Inspect Claude Code Personal" }).click();
+
+  const inspector = page.locator(".profiles-inspector");
+  await page.getByRole("button", { name: "More profile actions" }).click();
+
+  const menu = page.getByRole("menu", { name: "Profile actions" });
+  await expect(menu).toBeVisible();
+
+  const inspectorBox = await inspector.boundingBox();
+  const menuBox = await menu.boundingBox();
+
+  expect(inspectorBox).not.toBeNull();
+  expect(menuBox).not.toBeNull();
+
+  if (inspectorBox && menuBox) {
+    expect(menuBox.x).toBeGreaterThanOrEqual(inspectorBox.x - 1);
+    expect(menuBox.x + menuBox.width).toBeLessThanOrEqual(inspectorBox.x + inspectorBox.width + 1);
+  }
 });
 
 test("saves and deletes a local profile set from sets", async ({ page }) => {

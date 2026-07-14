@@ -19,6 +19,7 @@ use tauri::Manager;
 
 fn main() {
     tracing_subscriber::fmt().with_target(false).init();
+    set_app_process_name();
 
     let app_state = AppState::new(SettingsStore::new(resolve_settings_dir()));
     tauri::Builder::default()
@@ -74,6 +75,18 @@ fn main() {
         .run(tauri::generate_context!())
         .expect("failed to run AI Switch");
 }
+
+#[cfg(target_os = "macos")]
+fn set_app_process_name() {
+    use objc2_foundation::{NSProcessInfo, NSString};
+
+    let info = NSProcessInfo::processInfo();
+    let name = NSString::from_str("AI Switcher");
+    info.setProcessName(&name);
+}
+
+#[cfg(not(target_os = "macos"))]
+fn set_app_process_name() {}
 
 fn resolve_settings_dir() -> std::path::PathBuf {
     std::env::var_os("AI_SWITCH_DESKTOP_CONFIG_DIR")

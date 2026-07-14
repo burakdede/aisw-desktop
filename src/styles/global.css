@@ -699,7 +699,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   display: grid;
   gap: 8px;
   flex: none;
-  padding: 16px 14px 14px;
+  padding: 16px 14px 18px;
 }
 
 .sidebar-status-card {
@@ -1226,6 +1226,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .toolbar-action-row button {
+  display: inline-flex;
   gap: 8px;
   align-items: center;
 }
@@ -2223,29 +2224,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 .profiles-search-field {
   flex: 1 1 260px;
   min-width: 220px;
-  min-height: 28px;
-  padding: 0 7px;
-  border-radius: 6px;
-}
-
-.profiles-search {
-  min-height: 28px;
-}
-
-.profiles-search-field .search-field-icon,
-.profiles-search-field .search-field-clear {
-  width: 16px;
-  height: 16px;
-}
-
-.profiles-search-field .search-field-icon svg,
-.profiles-search-field .search-field-clear svg {
-  width: 14px;
-  height: 14px;
-}
-
-.profiles-search-field .search-field-input {
-  min-height: 28px;
+  min-height: 40px;
 }
 
 .tool-grid,
@@ -2282,7 +2261,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   gap: 0;
   border: 0;
   border-radius: 0;
-  overflow: hidden;
+  overflow: visible;
   background: transparent;
 }
 
@@ -2403,10 +2382,13 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .profiles-inspector {
   min-height: 0;
-  overflow: auto;
+  overflow-x: visible;
+  overflow-y: auto;
   gap: 12px;
   padding: 14px 16px 16px;
   border-left: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
+  position: relative;
+  z-index: 1;
 }
 
 .profiles-inspector-header {
@@ -4525,6 +4507,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .diagnostics-toolbar-menu-wrap {
   position: relative;
+  z-index: 6;
 }
 
 .diagnostics-inline-notice {
@@ -4590,7 +4573,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   min-height: 0;
   border: 0;
   border-radius: 0;
-  overflow: hidden;
+  overflow: visible;
   background: transparent;
 }
 
@@ -4620,7 +4603,8 @@ html[data-appearance="dark"] .tool-logo-codex {
 .diagnostics-findings-list,
 .diagnostics-inspector-surface {
   min-height: 0;
-  overflow: auto;
+  overflow-x: visible;
+  overflow-y: auto;
 }
 
 .diagnostics-finding-group {
@@ -4874,6 +4858,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .backups-toolbar-menu-wrap {
   position: relative;
+  z-index: 6;
 }
 
 .backups-master-detail {
@@ -4882,7 +4867,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   min-height: 0;
   border: 0;
   border-radius: 0;
-  overflow: hidden;
+  overflow: visible;
   background: transparent;
 }
 
@@ -4912,7 +4897,8 @@ html[data-appearance="dark"] .tool-logo-codex {
 .backups-table-wrap,
 .backups-inspector-surface {
   min-height: 0;
-  overflow: auto;
+  overflow-x: visible;
+  overflow-y: auto;
 }
 
 .backups-table-header {
@@ -5116,13 +5102,14 @@ html[data-appearance="dark"] .tool-logo-codex {
 .activity-toolbar-menu-wrap {
   position: relative;
   flex: none;
+  z-index: 6;
 }
 
 .activity-master-detail {
   min-height: 0;
   border: 0;
   border-radius: 0;
-  overflow: hidden;
+  overflow: visible;
   background: transparent;
 }
 
@@ -5257,7 +5244,8 @@ html[data-appearance="dark"] .tool-logo-codex {
   min-height: 0;
   padding: 0;
   border-left: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
-  overflow: auto;
+  overflow-x: visible;
+  overflow-y: auto;
 }
 
 .activity-inspector-content {
@@ -6178,6 +6166,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   align-items: center;
   justify-content: center;
   padding: 0 10px 0 6px;
+  z-index: 6;
 }
 
 .profiles-table-row .profile-row-actions-trigger {
@@ -6202,7 +6191,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   position: absolute;
   top: calc(100% + 6px);
   right: 6px;
-  z-index: 12;
+  z-index: 40;
   display: grid;
   min-width: 168px;
   padding: 6px;
@@ -6241,8 +6230,8 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .profiles-inspector .profile-row-actions-menu {
-  left: auto;
-  right: 0;
+  left: 0;
+  right: auto;
 }
 
 .backup-list-row {
