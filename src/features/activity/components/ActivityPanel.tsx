@@ -4,6 +4,7 @@ import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
 import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
+import { measuredPaneWidth } from "../../../components/measuredPaneWidth";
 import { SearchField } from "../../../components/SearchField";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SplitView } from "../../../components/SplitView";
@@ -17,19 +18,6 @@ import {
 
 type ActivityFilter = "all" | "success" | "error";
 const ACTIVITY_COMPACT_BREAKPOINT = 800;
-
-function measuredPaneWidth(element: HTMLDivElement | null) {
-  if (!element) {
-    return typeof window !== "undefined" ? window.innerWidth : ACTIVITY_COMPACT_BREAKPOINT;
-  }
-
-  const width = element.getBoundingClientRect().width;
-  if (width > 0) {
-    return width;
-  }
-
-  return typeof window !== "undefined" ? window.innerWidth : ACTIVITY_COMPACT_BREAKPOINT;
-}
 
 type ActivityEntry = {
   key: string;
@@ -112,7 +100,10 @@ export function ActivityPanel({
     }
 
     const updateLayout = () => {
-      setCompactLayout(measuredPaneWidth(rootRef.current) < ACTIVITY_COMPACT_BREAKPOINT);
+      setCompactLayout(
+        measuredPaneWidth(rootRef.current, ACTIVITY_COMPACT_BREAKPOINT) <
+          ACTIVITY_COMPACT_BREAKPOINT,
+      );
     };
 
     updateLayout();
@@ -139,7 +130,9 @@ export function ActivityPanel({
       return;
     }
 
-    setCompactLayout(measuredPaneWidth(rootRef.current) < ACTIVITY_COMPACT_BREAKPOINT);
+    setCompactLayout(
+      measuredPaneWidth(rootRef.current, ACTIVITY_COMPACT_BREAKPOINT) < ACTIVITY_COMPACT_BREAKPOINT,
+    );
   });
 
   useEffect(() => {

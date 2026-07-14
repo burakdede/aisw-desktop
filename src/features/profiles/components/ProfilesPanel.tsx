@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
+import { measuredPaneWidth } from "../../../components/measuredPaneWidth";
 import { SearchField } from "../../../components/SearchField";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SplitView } from "../../../components/SplitView";
@@ -35,17 +36,6 @@ import { StateModeField } from "../../shared/components/StateModeField";
 const TOOLS = ["claude", "codex", "gemini"] as const;
 const INVENTORY_FILTERS = ["all", ...TOOLS] as const;
 const PROFILES_COMPACT_BREAKPOINT = 800;
-
-function measuredPaneWidth(element: HTMLDivElement | null) {
-  if (!element) {
-    return typeof window !== "undefined" ? window.innerWidth : PROFILES_COMPACT_BREAKPOINT;
-  }
-  const width = element.getBoundingClientRect().width;
-  if (width > 0) {
-    return width;
-  }
-  return typeof window !== "undefined" ? window.innerWidth : PROFILES_COMPACT_BREAKPOINT;
-}
 
 type InventoryFilter = (typeof INVENTORY_FILTERS)[number];
 type InventoryEntry = {
@@ -357,7 +347,9 @@ export function ProfilesPanel({
     const rootElement = rootRef.current;
 
     const updateLayout = () => {
-      setCompactLayout(measuredPaneWidth(rootRef.current) < PROFILES_COMPACT_BREAKPOINT);
+      setCompactLayout(
+        measuredPaneWidth(rootRef.current, PROFILES_COMPACT_BREAKPOINT) < PROFILES_COMPACT_BREAKPOINT,
+      );
     };
 
     updateLayout();
@@ -379,7 +371,9 @@ export function ProfilesPanel({
     if (!rootRef.current) {
       return;
     }
-    setCompactLayout(measuredPaneWidth(rootRef.current) < PROFILES_COMPACT_BREAKPOINT);
+    setCompactLayout(
+      measuredPaneWidth(rootRef.current, PROFILES_COMPACT_BREAKPOINT) < PROFILES_COMPACT_BREAKPOINT,
+    );
   }, []);
 
   useEffect(() => {

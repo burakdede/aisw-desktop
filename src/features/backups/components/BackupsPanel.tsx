@@ -4,6 +4,7 @@ import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
 import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
+import { measuredPaneWidth } from "../../../components/measuredPaneWidth";
 import { SearchField } from "../../../components/SearchField";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
@@ -20,19 +21,6 @@ import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 type ToolFilter = "all" | "claude" | "codex" | "gemini";
 type DateFilter = "newest" | "oldest";
 const BACKUPS_COMPACT_BREAKPOINT = 800;
-
-function measuredPaneWidth(element: HTMLDivElement | null) {
-  if (!element) {
-    return typeof window !== "undefined" ? window.innerWidth : BACKUPS_COMPACT_BREAKPOINT;
-  }
-
-  const width = element.getBoundingClientRect().width;
-  if (width > 0) {
-    return width;
-  }
-
-  return typeof window !== "undefined" ? window.innerWidth : BACKUPS_COMPACT_BREAKPOINT;
-}
 
 export function BackupsPanel({
   snapshot,
@@ -87,7 +75,9 @@ export function BackupsPanel({
     }
 
     const updateLayout = () => {
-      setCompactLayout(measuredPaneWidth(rootRef.current) < BACKUPS_COMPACT_BREAKPOINT);
+      setCompactLayout(
+        measuredPaneWidth(rootRef.current, BACKUPS_COMPACT_BREAKPOINT) < BACKUPS_COMPACT_BREAKPOINT,
+      );
     };
 
     updateLayout();
@@ -114,7 +104,9 @@ export function BackupsPanel({
       return;
     }
 
-    setCompactLayout(measuredPaneWidth(rootRef.current) < BACKUPS_COMPACT_BREAKPOINT);
+    setCompactLayout(
+      measuredPaneWidth(rootRef.current, BACKUPS_COMPACT_BREAKPOINT) < BACKUPS_COMPACT_BREAKPOINT,
+    );
   });
 
   useEffect(() => {

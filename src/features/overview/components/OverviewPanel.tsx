@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
 import { AnchoredMenu } from "../../../components/AnchoredMenu";
+import { measuredPaneWidth } from "../../../components/measuredPaneWidth";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import {
@@ -34,17 +35,6 @@ type OverviewHealthState =
   | "not_verified";
 
 const OVERVIEW_COMPACT_BREAKPOINT = 800;
-
-function measuredPaneWidth(element: HTMLDivElement | null) {
-  if (!element) {
-    return typeof window !== "undefined" ? window.innerWidth : OVERVIEW_COMPACT_BREAKPOINT;
-  }
-  const width = element.getBoundingClientRect().width;
-  if (width > 0) {
-    return width;
-  }
-  return typeof window !== "undefined" ? window.innerWidth : OVERVIEW_COMPACT_BREAKPOINT;
-}
 
 export function OverviewPanel({
   snapshot,
@@ -131,7 +121,9 @@ export function OverviewPanel({
     }
     const rootElement = rootRef.current;
     const updateLayout = () => {
-      setCompactLayout(measuredPaneWidth(rootRef.current) < OVERVIEW_COMPACT_BREAKPOINT);
+      setCompactLayout(
+        measuredPaneWidth(rootRef.current, OVERVIEW_COMPACT_BREAKPOINT) < OVERVIEW_COMPACT_BREAKPOINT,
+      );
     };
     updateLayout();
     window.addEventListener("resize", updateLayout);
@@ -152,7 +144,9 @@ export function OverviewPanel({
     if (!rootRef.current) {
       return;
     }
-    setCompactLayout(measuredPaneWidth(rootRef.current) < OVERVIEW_COMPACT_BREAKPOINT);
+    setCompactLayout(
+      measuredPaneWidth(rootRef.current, OVERVIEW_COMPACT_BREAKPOINT) < OVERVIEW_COMPACT_BREAKPOINT,
+    );
   }, []);
 
   useEffect(() => {

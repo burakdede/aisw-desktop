@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
+import { measuredPaneWidth } from "../../../components/measuredPaneWidth";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
@@ -26,17 +27,6 @@ import type { WorkspaceUnbindInput } from "../../../lib/client";
 
 const TOOLS = ["claude", "codex", "gemini"] as const;
 const SETS_COMPACT_BREAKPOINT = 900;
-
-function measuredPaneWidth(element: HTMLDivElement | null) {
-  if (!element) {
-    return typeof window !== "undefined" ? window.innerWidth : SETS_COMPACT_BREAKPOINT;
-  }
-  const width = element.getBoundingClientRect().width;
-  if (width > 0) {
-    return width;
-  }
-  return typeof window !== "undefined" ? window.innerWidth : SETS_COMPACT_BREAKPOINT;
-}
 
 type EditableProfileSet = {
   sourceName: string | null;
@@ -245,7 +235,9 @@ export function SetsPanel({
     }
     const rootElement = rootRef.current;
     const updateLayout = () => {
-      setCompactLayout(measuredPaneWidth(rootRef.current) < SETS_COMPACT_BREAKPOINT);
+      setCompactLayout(
+        measuredPaneWidth(rootRef.current, SETS_COMPACT_BREAKPOINT) < SETS_COMPACT_BREAKPOINT,
+      );
     };
     updateLayout();
     window.addEventListener("resize", updateLayout);
@@ -266,7 +258,9 @@ export function SetsPanel({
     if (!rootRef.current) {
       return;
     }
-    setCompactLayout(measuredPaneWidth(rootRef.current) < SETS_COMPACT_BREAKPOINT);
+    setCompactLayout(
+      measuredPaneWidth(rootRef.current, SETS_COMPACT_BREAKPOINT) < SETS_COMPACT_BREAKPOINT,
+    );
   }, []);
 
   useEffect(() => {

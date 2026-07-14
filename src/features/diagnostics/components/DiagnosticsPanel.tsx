@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
+import { measuredPaneWidth } from "../../../components/measuredPaneWidth";
 import { SplitView } from "../../../components/SplitView";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import { exportDiagnosticBundle, runDoctor, runRepair, runVerify } from "../../../lib/client";
@@ -35,17 +36,6 @@ import type { SettingsSection } from "../../settings/components/SettingsPanel";
 
 const SUPPORTED_TOOLS = new Set(["claude", "codex", "gemini"]);
 const DIAGNOSTICS_COMPACT_BREAKPOINT = 900;
-
-function measuredPaneWidth(element: HTMLDivElement | null) {
-  if (!element) {
-    return typeof window !== "undefined" ? window.innerWidth : DIAGNOSTICS_COMPACT_BREAKPOINT;
-  }
-  const width = element.getBoundingClientRect().width;
-  if (width > 0) {
-    return width;
-  }
-  return typeof window !== "undefined" ? window.innerWidth : DIAGNOSTICS_COMPACT_BREAKPOINT;
-}
 
 export function DiagnosticsPanel({
   settings,
@@ -284,7 +274,10 @@ export function DiagnosticsPanel({
     }
     const rootElement = rootRef.current;
     const updateLayout = () => {
-      setCompactLayout(measuredPaneWidth(rootRef.current) < DIAGNOSTICS_COMPACT_BREAKPOINT);
+      setCompactLayout(
+        measuredPaneWidth(rootRef.current, DIAGNOSTICS_COMPACT_BREAKPOINT) <
+          DIAGNOSTICS_COMPACT_BREAKPOINT,
+      );
     };
     updateLayout();
     window.addEventListener("resize", updateLayout);
@@ -305,7 +298,10 @@ export function DiagnosticsPanel({
     if (!rootRef.current) {
       return;
     }
-    setCompactLayout(measuredPaneWidth(rootRef.current) < DIAGNOSTICS_COMPACT_BREAKPOINT);
+    setCompactLayout(
+      measuredPaneWidth(rootRef.current, DIAGNOSTICS_COMPACT_BREAKPOINT) <
+        DIAGNOSTICS_COMPACT_BREAKPOINT,
+    );
   }, []);
 
   useEffect(() => {
