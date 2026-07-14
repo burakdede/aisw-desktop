@@ -92,6 +92,7 @@ jobs:
       - name: Verify frontend
         run: |
           npm test
+          npm run test:coverage
           npx playwright install chromium
           npm run test:e2e
           npm run build

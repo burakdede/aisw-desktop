@@ -49,6 +49,7 @@ jobs:
       - name: Verify frontend
         run: |
           npm test
+          npm run test:coverage
           npm run test:e2e
           npm run build
           npm run verify:release

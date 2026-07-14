@@ -45,6 +45,7 @@ Frontend:
 
 ```sh
 npm test
+npm run test:coverage
 npm run build
 npm run test:e2e
 npm run verify:release

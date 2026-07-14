@@ -31,6 +31,7 @@ function createReleaseFixture(overrides = {}) {
           "tauri:bundle-local": "node ./scripts/build-local-bundle.mjs",
           "prepare:sidecar": "node ./scripts/prepare-sidecar.mjs",
           "prepare:updater": "node ./scripts/prepare-updater.mjs",
+          "test:coverage": "vitest run --coverage",
           "tauri:build": "tauri build",
         },
       },
@@ -105,6 +106,7 @@ function createReleaseFixture(overrides = {}) {
       `
 run: |
   npm test
+  npm run test:coverage
   npm run test:e2e
   npm run build
   npm run verify:release
@@ -128,6 +130,7 @@ Download aisw sidecar
 npm run prepare:sidecar -- --target \${{ matrix.target }} "\${{ runner.temp }}/aisw"
 npm run prepare:updater
 npm test
+npm run test:coverage
 npm run test:e2e
 npm run build
 npm run verify:release
@@ -187,6 +190,7 @@ npm run tauri:bundle-local
 npm run prepare:updater
 npm run tauri:build
 npm test
+npm run test:coverage
 npm run build
 npm run test:e2e
 npm run verify:release
@@ -246,6 +250,7 @@ npm run prepare:sidecar -- /absolute/path/to/aisw
 npm run tauri:bundle-local
 npm run tauri:build
 npm test
+npm run test:coverage
 npm run build
 npm run test:e2e
 npm run verify:release

@@ -27,6 +27,7 @@ Run the same checks expected by CI before opening a pull request:
 
 ```sh
 npm test
+npm run test:coverage
 npm run build
 npm run test:e2e
 npm run verify:release

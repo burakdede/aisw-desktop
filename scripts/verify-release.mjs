@@ -81,6 +81,10 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       ok: packageJson.scripts?.["tauri:build"] === "tauri build",
     },
     {
+      label: "package.json exposes frontend coverage verification",
+      ok: packageJson.scripts?.["test:coverage"] === "vitest run --coverage",
+    },
+    {
       label: "package.json exposes local unsigned bundle smoke build",
       ok: packageJson.scripts?.["tauri:bundle-local"] === "node ./scripts/build-local-bundle.mjs",
     },
@@ -180,6 +184,7 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       label: "runbook captures verification matrix",
       ok:
         runbook.includes("npm test") &&
+        runbook.includes("npm run test:coverage") &&
         runbook.includes("npm run build") &&
         runbook.includes("npm run test:e2e") &&
         runbook.includes("npm run verify:release") &&
@@ -209,6 +214,7 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       label: "CI workflow enforces frontend verification matrix",
       ok:
         ciWorkflow.includes("npm test") &&
+        ciWorkflow.includes("npm run test:coverage") &&
         ciWorkflow.includes("npm run test:e2e") &&
         ciWorkflow.includes("npm run build") &&
         ciWorkflow.includes("npm run verify:release"),
@@ -255,6 +261,7 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       label: "publish workflow enforces verification matrix",
       ok:
         publishWorkflow.includes("npm test") &&
+        publishWorkflow.includes("npm run test:coverage") &&
         publishWorkflow.includes("npm run test:e2e") &&
         publishWorkflow.includes("npm run build") &&
         publishWorkflow.includes("npm run verify:release") &&
