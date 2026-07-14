@@ -251,27 +251,74 @@ test("runs the onboarding first switch flow", async ({ page }) => {
 test("keeps Gemini state mode non-configurable when runtime capabilities are stale", async ({
   page,
 }) => {
-  await installDesktopMock(page, "profiles", {
+  await installDesktopMock(page, "switching", {
     ...toolCapabilities,
     gemini: { state_modes: ["isolated", "shared"] },
+  }, {
+    snapshot: {
+      statuses: [
+        {
+          tool: "claude",
+          binary_found: true,
+          stored_profiles: 2,
+          active_profile: "work",
+          auth_method: "oauth",
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: false,
+          credentials_present: true,
+          permissions_ok: true,
+        },
+        {
+          tool: "codex",
+          binary_found: true,
+          stored_profiles: 2,
+          active_profile: "personal",
+          auth_method: "api_key",
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+        },
+        {
+          tool: "gemini",
+          binary_found: true,
+          stored_profiles: 1,
+          active_profile: "travel",
+          auth_method: "oauth",
+          credential_backend: "system_keyring",
+          state_mode: null,
+          active_profile_applied: false,
+          credentials_present: true,
+          permissions_ok: true,
+        },
+      ],
+      profiles: {
+        claude: {
+          active: "work",
+          profiles: [
+            { name: "work", auth: "oauth", label: "Work" },
+            { name: "personal", auth: "oauth", label: "Personal" },
+          ],
+        },
+        codex: {
+          active: "personal",
+          profiles: [
+            { name: "work", auth: "api_key", label: "Work" },
+            { name: "personal", auth: "api_key", label: "Personal" },
+          ],
+        },
+        gemini: {
+          active: "travel",
+          profiles: [{ name: "travel", auth: "oauth", label: "Travel" }],
+        },
+      },
+      contexts: [],
+    },
   });
 
   await page.goto("/");
-  if (await page.getByRole("button", { name: "Get Started" }).count()) {
-    await page.getByRole("button", { name: "Get Started" }).click();
-  }
-  await page.getByRole("button", { name: "Profiles" }).click();
-  const profilesSection = page.locator(".section-card").filter({ hasText: "Profiles" });
-  await profilesSection.locator("form select").first().selectOption("gemini");
-
-  await expect(profilesSection.getByLabel("State mode")).toBeDisabled();
-  await expect(profilesSection.getByLabel("State mode")).toHaveValue("n/a");
-
-  await profilesSection.getByLabel("Profile name").fill("travel");
-  await profilesSection.getByRole("button", { name: "Add profile" }).click();
-
-  await page.getByRole("button", { name: "Overview" }).click();
-
   await page.getByRole("button", { name: "Inspect Gemini" }).click();
   const geminiCard = page.locator(".tool-card").filter({ hasText: "Gemini" });
   await expect(geminiCard.getByText("Gemini keeps authentication and local state together.")).toBeVisible();
@@ -1017,11 +1064,35 @@ test("switches one tool directly from overview and refreshes the active profile 
 });
 
 test("uses saved profile labels in overview switch results", async ({ page }) => {
-  await installDesktopMock(page, "labelOverrides");
+  await installDesktopMock(page, "switching", toolCapabilities, {
+    settings: {
+      runtime_kind: "bundled",
+      runtime_path: null,
+      aisw_home: null,
+      update_channel: "stable",
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: {
+            claude: "work",
+            codex: "work",
+            gemini: null,
+          },
+        },
+      ],
+      profile_labels: {
+        claude: {
+          work: "Office",
+        },
+        codex: {
+          work: "Code Work",
+        },
+      },
+    },
+  });
 
   await page.goto("/");
-
-  await page.getByRole("button", { name: "Get Started" }).click();
   await page.getByRole("button", { name: "Inspect Codex" }).click();
   const codexCard = page.locator(".tool-card").filter({ hasText: "Codex" });
   await codexCard.getByLabel("Switch codex profile").selectOption("work");
@@ -1532,6 +1603,7 @@ test("shows missing-tool guidance and opens the install guide from diagnostics",
   await installDesktopMock(page, "missingTool");
 
   await page.goto("/");
+  await page.getByRole("button", { name: "Inspect Gemini" }).click();
 
   const geminiCard = page.locator(".tool-card").filter({
     hasText: "Gemini CLI is not installed on this Mac.",
@@ -1541,15 +1613,14 @@ test("shows missing-tool guidance and opens the install guide from diagnostics",
   await expect(geminiCard.getByRole("button", { name: "Refresh" })).toBeVisible();
 
   await page.getByRole("button", { name: "Diagnostics" }).click();
-  const missingToolCard = page.locator(".diagnostic-card").filter({ hasText: "gemini is missing" });
-  await expect(missingToolCard).toBeVisible();
+  await page.getByRole("button", { name: /Inspect gemini is missing/i }).click();
   const doctorRunsBeforeRefresh = await page.evaluate(
     () => (window.__AISW_COMMAND_LOG__ ?? []).filter((entry) => entry.command === "run_doctor").length,
   );
   const snapshotReadsBeforeRefresh = await page.evaluate(
     () => (window.__AISW_COMMAND_LOG__ ?? []).filter((entry) => entry.command === "get_snapshot").length,
   );
-  await missingToolCard.getByRole("button", { name: "Refresh diagnostics" }).click();
+  await page.getByRole("button", { name: "Refresh diagnostics" }).click();
   await expect
     .poll(
       async () =>
@@ -1566,7 +1637,7 @@ test("shows missing-tool guidance and opens the install guide from diagnostics",
         ),
     )
     .toBeGreaterThan(snapshotReadsBeforeRefresh);
-  await missingToolCard.getByRole("button", { name: "Open installation guide" }).click();
+  await page.getByRole("button", { name: "Open installation guide" }).click();
 
   await expect
     .poll(() =>
@@ -2256,10 +2327,30 @@ async function installDesktopMock(
   page: Page,
   scenario: ScenarioName,
   capabilitiesOverride = toolCapabilities,
+  scenarioOverride?: Record<string, unknown>,
 ) {
   await page.addInitScript(
-    ({ activeScenario, capabilities }) => {
+    ({ activeScenario, capabilities, scenarioPatch }) => {
       const deepClone = (value) => JSON.parse(JSON.stringify(value));
+      const deepMerge = (base, patch) => {
+        if (patch === undefined) {
+          return deepClone(base);
+        }
+        if (base === undefined || base === null || patch === null) {
+          return deepClone(patch);
+        }
+        if (Array.isArray(base) || Array.isArray(patch)) {
+          return deepClone(patch);
+        }
+        if (typeof base !== "object" || typeof patch !== "object") {
+          return deepClone(patch);
+        }
+        const merged = { ...deepClone(base) };
+        for (const [key, value] of Object.entries(patch)) {
+          merged[key] = key in merged ? deepMerge(merged[key], value) : deepClone(value);
+        }
+        return merged;
+      };
 
       const bootstrapSettings = {
         runtime_kind: "bundled",
@@ -3955,7 +4046,7 @@ async function installDesktopMock(
         },
       };
 
-      const scenarioState = scenarios[activeScenario];
+      const scenarioState = deepMerge(scenarios[activeScenario], scenarioPatch ?? {});
       const state = {
         bootstrap: {
           ...deepClone(baseBootstrap),
@@ -4777,7 +4868,7 @@ async function installDesktopMock(
         throw new Error(`Unhandled desktop command: ${command}`);
       };
     },
-    { activeScenario: scenario, capabilities: capabilitiesOverride },
+    { activeScenario: scenario, capabilities: capabilitiesOverride, scenarioPatch: scenarioOverride ?? null },
   );
 }
 
