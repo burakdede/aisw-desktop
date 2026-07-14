@@ -2300,7 +2300,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 .profiles-table-header {
   display: grid;
-  grid-template-columns: minmax(180px, 1.45fr) 100px 105px 100px 95px 110px 56px;
+  grid-template-columns: minmax(180px, 1.45fr) 100px 105px 100px 95px 110px;
   gap: 12px;
   align-items: center;
   padding: 9px 14px 9px 12px;
@@ -2317,10 +2317,6 @@ html[data-appearance="dark"] .tool-logo-codex {
 }
 
 .profiles-table-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 56px;
-  gap: 0;
-  align-items: stretch;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 7%, transparent);
   background: transparent;
 }
@@ -2510,7 +2506,7 @@ html[data-appearance="dark"] .tool-logo-codex {
 
 @container (max-width: 1039px) {
   .profiles-table-header {
-    grid-template-columns: minmax(0, 1fr) 96px 110px 96px 56px;
+    grid-template-columns: minmax(0, 1fr) 96px 110px 96px;
   }
 
   .profiles-table-row-button {
@@ -2542,11 +2538,7 @@ html[data-appearance="dark"] .tool-logo-codex {
   }
 
   .profiles-table-header {
-    grid-template-columns: minmax(0, 1fr) 48px;
-  }
-
-  .profiles-table-row {
-    grid-template-columns: minmax(0, 1fr) 48px;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .profiles-table-row-button {

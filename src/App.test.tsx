@@ -212,10 +212,6 @@ function openSelectedProfileMenu() {
   fireEvent.click(screen.getByRole("button", { name: "More profile actions" }));
 }
 
-function openProfileRowMenu(tool: string, label: string) {
-  fireEvent.click(screen.getByRole("button", { name: `Open actions for ${tool} ${label}` }));
-}
-
 function getLastOpenMenu() {
   const menus = screen.getAllByRole("menu");
   return within(menus[menus.length - 1]!);
@@ -3661,15 +3657,16 @@ describe("App", () => {
     });
   });
 
-  it("opens profile row actions and routes remove through the confirmation sheet", async () => {
+  it("opens profile inspector actions and routes remove through the confirmation sheet", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
 
-    openProfileRowMenu("Claude", "Work");
+    selectProfileInventory("Claude", "Work");
+    openSelectedProfileMenu();
 
     await waitFor(() => {
-      expect(screen.getByRole("menu", { name: "Profile row actions" })).toBeInTheDocument();
+      expect(screen.getByRole("menu", { name: "Profile actions" })).toBeInTheDocument();
     });
 
     fireEvent.click(getLastOpenMenu().getByRole("menuitem", { name: "Remove…" }));
@@ -3681,12 +3678,13 @@ describe("App", () => {
     });
   });
 
-  it("focuses the rename field when rename is chosen from a profile row menu", async () => {
+  it("focuses the rename field when rename is chosen from the profile inspector menu", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByText("Profiles")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Profiles"));
 
-    openProfileRowMenu("Claude", "Work");
+    selectProfileInventory("Claude", "Work");
+    openSelectedProfileMenu();
 
     await waitFor(() => {
       expect(getLastOpenMenu().getByRole("menuitem", { name: "Rename…" })).toBeInTheDocument();

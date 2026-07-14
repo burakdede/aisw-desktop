@@ -121,7 +121,7 @@ export function ProfilesPanel({
   const [openRowActions, setOpenRowActions] = useState<{
     tool: (typeof TOOLS)[number];
     name: string;
-    scope: "row" | "inspector";
+    scope: "inspector";
   } | null>(null);
   const apiKeyInputRef = useRef<HTMLInputElement | null>(null);
   const renameInputRef = useRef<HTMLInputElement | null>(null);
@@ -665,11 +665,6 @@ export function ProfilesPanel({
                     onContextMenu={(event) => {
                       event.preventDefault();
                       selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
-                      setOpenRowActions({
-                        tool: inventoryEntry.tool,
-                        name: inventoryEntry.name,
-                        scope: "row",
-                      });
                     }}
                   >
                     <button
@@ -715,95 +710,6 @@ export function ProfilesPanel({
                       <span className="profiles-table-column profiles-table-column-low">{inventoryEntry.backend}</span>
                       <span className="profiles-table-column profiles-table-column-low">{inventoryEntry.lastChecked}</span>
                     </button>
-                    <div className="profile-row-actions" data-profile-row-actions>
-                      <button
-                        className="ghost-button profile-row-actions-trigger"
-                        type="button"
-                        aria-label={`Open actions for ${titleCase(inventoryEntry.tool)} ${inventoryEntry.label}`}
-                        aria-expanded={
-                          openRowActions?.tool === inventoryEntry.tool &&
-                          openRowActions?.name === inventoryEntry.name &&
-                          openRowActions.scope === "row"
-                        }
-                        onClick={() => {
-                          selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
-                          setOpenRowActions((current) =>
-                            current?.tool === inventoryEntry.tool &&
-                            current?.name === inventoryEntry.name &&
-                            current.scope === "row"
-                              ? null
-                              : {
-                                  tool: inventoryEntry.tool,
-                                  name: inventoryEntry.name,
-                                  scope: "row",
-                                },
-                          );
-                        }}
-                      >
-                        •••
-                      </button>
-                      {openRowActions?.tool === inventoryEntry.tool &&
-                      openRowActions?.name === inventoryEntry.name &&
-                      openRowActions.scope === "row" ? (
-                        <div className="profile-row-actions-menu" role="menu" aria-label="Profile row actions">
-                          {(!inventoryEntry.active || inventoryEntry.state === "Needs Attention") ? (
-                            <button
-                              type="button"
-                              role="menuitem"
-                              disabled={mutationLock.isBusy}
-                              onClick={() => {
-                                setOpenRowActions(null);
-                                activateInventoryEntry(inventoryEntry);
-                              }}
-                            >
-                              {inventoryEntry.active ? "Reapply Active Profile" : "Activate"}
-                            </button>
-                          ) : null}
-                          <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() => {
-                              selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
-                              setPendingEdit({ name: inventoryEntry.name, focus: "name" });
-                              setOpenRowActions(null);
-                            }}
-                          >
-                            Rename…
-                          </button>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() => {
-                              selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
-                              setPendingEdit({ name: inventoryEntry.name, focus: "label" });
-                              setOpenRowActions(null);
-                            }}
-                          >
-                            Change Label…
-                          </button>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            disabled={!inventoryEntry.hasBackup}
-                            onClick={() => openBackupsForProfile(inventoryEntry.tool, inventoryEntry.name)}
-                          >
-                            View Backups
-                          </button>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            className="profile-row-actions-danger"
-                            onClick={() => {
-                              selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name);
-                              setOpenRowActions(null);
-                              setPendingRemoval(inventoryEntry.name);
-                            }}
-                          >
-                            Remove…
-                          </button>
-                        </div>
-                      ) : null}
-                    </div>
                   </div>
                 );
               })}
