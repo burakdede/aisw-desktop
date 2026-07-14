@@ -558,6 +558,7 @@ export function DiagnosticsPanel({
                             className="profile-row-actions-menu"
                             align="start"
                             boundaryAttribute="data-profile-row-actions"
+                            containmentSelector=".diagnostics-inspector-surface"
                             role="menu"
                             aria-label="Finding actions"
                           >

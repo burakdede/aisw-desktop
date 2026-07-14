@@ -17,6 +17,7 @@ export function AnchoredMenu({
   align = "end",
   offset = 6,
   boundaryAttribute,
+  containmentSelector,
   ...rest
 }: {
   anchorRef: RefObject<HTMLElement | null>;
@@ -25,6 +26,7 @@ export function AnchoredMenu({
   align?: "start" | "end";
   offset?: number;
   boundaryAttribute?: string;
+  containmentSelector?: string;
 } & HTMLAttributes<HTMLDivElement>) {
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [style, setStyle] = useState<CSSProperties>({ opacity: 0 });
@@ -45,23 +47,27 @@ export function AnchoredMenu({
 
       const anchorRect = anchor.getBoundingClientRect();
       const menuRect = menu.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
+      const containmentElement = containmentSelector ? anchor.closest(containmentSelector) : null;
+      const containmentRect = containmentElement?.getBoundingClientRect();
+      const minLeft = (containmentRect?.left ?? 0) + 8;
+      const maxRight = (containmentRect?.right ?? window.innerWidth) - 8;
+      const minTop = (containmentRect?.top ?? 0) + 8;
+      const maxBottom = (containmentRect?.bottom ?? window.innerHeight) - 8;
       const margin = 8;
 
       let left = align === "start" ? anchorRect.left : anchorRect.right - menuRect.width;
-      left = Math.max(margin, Math.min(left, viewportWidth - menuRect.width - margin));
+      left = Math.max(minLeft, Math.min(left, maxRight - menuRect.width));
 
       const belowTop = anchorRect.bottom + offset;
       const aboveTop = anchorRect.top - menuRect.height - offset;
       const top =
-        belowTop + menuRect.height <= viewportHeight - margin || aboveTop < margin
+        belowTop + menuRect.height <= maxBottom || aboveTop < minTop
           ? belowTop
           : aboveTop;
 
       setStyle({
         left,
-        top: Math.max(margin, Math.min(top, viewportHeight - menuRect.height - margin)),
+        top: Math.max(minTop, Math.min(top, maxBottom - menuRect.height)),
         opacity: 1,
       });
     };
@@ -80,7 +86,7 @@ export function AnchoredMenu({
       window.removeEventListener("resize", queueUpdate);
       window.removeEventListener("scroll", queueUpdate, true);
     };
-  }, [align, anchorRef, offset]);
+  }, [align, anchorRef, containmentSelector, offset]);
 
   if (typeof document === "undefined") {
     return null;

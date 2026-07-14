@@ -673,6 +673,7 @@ function ToolInspector({
                   className="profile-row-actions-menu"
                   align="start"
                   boundaryAttribute="data-overview-actions"
+                  containmentSelector=".overview-inspector-pane"
                   role="menu"
                   aria-label="Overview actions"
                 >

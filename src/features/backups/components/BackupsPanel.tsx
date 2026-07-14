@@ -396,6 +396,7 @@ export function BackupsPanel({
                           anchorRef={inspectorMenuAnchorRef}
                           className="profile-row-actions-menu"
                           align="start"
+                          containmentSelector=".backups-inspector-surface"
                           role="menu"
                           aria-label="Backup actions"
                         >

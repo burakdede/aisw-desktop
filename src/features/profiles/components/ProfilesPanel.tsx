@@ -931,6 +931,7 @@ export function ProfilesPanel({
                           className="profile-row-actions-menu"
                           align="start"
                           boundaryAttribute="data-profile-row-actions"
+                          containmentSelector=".profiles-inspector"
                           role="menu"
                           aria-label="Profile actions"
                         >

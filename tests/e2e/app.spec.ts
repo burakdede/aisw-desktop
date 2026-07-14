@@ -1204,6 +1204,17 @@ test("opens the quick switch palette from the keyboard shortcut", async ({ page 
   await expect(page.getByText("Current set").locator("..").getByText("Client Acme")).toBeVisible();
 });
 
+test("focuses the quick switch search field when opened from the toolbar", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Quick Switch" }).click();
+
+  const palette = page.getByRole("dialog", { name: "Quick Switch" });
+  await expect(palette).toBeVisible();
+  await expect(palette.getByLabel("Search Quick Switch")).toBeFocused();
+});
+
 test("keeps the profile actions menu inside the visible inspector pane", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
