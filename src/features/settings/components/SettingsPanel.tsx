@@ -559,7 +559,11 @@ export function SettingsPanel({
                   />
                 </SettingsGroup>
                 {updateSettingsMutation.error ? (
-                  <MutationErrorCard title="Settings could not be saved" error={updateSettingsMutation.error} />
+                  <SettingsFeedback
+                    tone="error"
+                    title="Settings could not be saved"
+                    details={formatMutationError(updateSettingsMutation.error)}
+                  />
                 ) : null}
                 {advancedMessage ? <p className="inline-note">{advancedMessage}</p> : null}
               </div>
@@ -752,13 +756,25 @@ export function SettingsPanel({
                   </div>
                 ) : null}
                 {updateSettingsMutation.error ? (
-                  <MutationErrorCard title="Settings could not be saved" error={updateSettingsMutation.error} />
+                  <SettingsFeedback
+                    tone="error"
+                    title="Settings could not be saved"
+                    details={formatMutationError(updateSettingsMutation.error)}
+                  />
                 ) : null}
                 {checkForUpdatesMutation.error ? (
-                  <MutationErrorCard title="Update check failed" error={checkForUpdatesMutation.error} />
+                  <SettingsFeedback
+                    tone="error"
+                    title="Update check failed"
+                    details={formatMutationError(checkForUpdatesMutation.error)}
+                  />
                 ) : null}
                 {installUpdateMutation.error ? (
-                  <MutationErrorCard title="Update install failed" error={installUpdateMutation.error} />
+                  <SettingsFeedback
+                    tone="error"
+                    title="Update install failed"
+                    details={formatMutationError(installUpdateMutation.error)}
+                  />
                 ) : null}
               </div>
             ) : null}
@@ -832,7 +848,11 @@ export function SettingsPanel({
                 {advancedMessage ? <p className="inline-note settings-feedback-note">{advancedMessage}</p> : null}
                 {securityMessage ? <p className="inline-note settings-feedback-note">{securityMessage}</p> : null}
                 {updateSettingsMutation.error ? (
-                  <MutationErrorCard title="Settings could not be saved" error={updateSettingsMutation.error} />
+                  <SettingsFeedback
+                    tone="error"
+                    title="Settings could not be saved"
+                    details={formatMutationError(updateSettingsMutation.error)}
+                  />
                 ) : null}
               </div>
             ) : null}
@@ -922,15 +942,21 @@ function ToggleRow({
   );
 }
 
-function MutationErrorCard({ title, error }: { title: string; error: unknown }) {
-  const resolved = formatMutationError(error);
-
+function SettingsFeedback({
+  title,
+  details,
+  tone = "neutral",
+}: {
+  title: string;
+  details: { message: string; remediation?: string };
+  tone?: "neutral" | "error";
+}) {
   return (
-    <article className="diagnostic-card diagnostic-fail">
-      <h3>{title}</h3>
-      <p className="inline-note">{resolved.message}</p>
-      {resolved.remediation ? <p className="inline-note">{resolved.remediation}</p> : null}
-    </article>
+    <div className={`settings-feedback settings-feedback-${tone}`} role={tone === "error" ? "alert" : undefined}>
+      <p className="settings-feedback-title">{title}</p>
+      <p className="inline-note">{details.message}</p>
+      {details.remediation ? <p className="inline-note">{details.remediation}</p> : null}
+    </div>
   );
 }
 

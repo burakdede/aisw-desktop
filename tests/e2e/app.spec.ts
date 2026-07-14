@@ -1821,7 +1821,7 @@ test("shows remediation when the updater configuration is invalid", async ({ pag
   await page.getByRole("button", { name: "Updates" }).click();
   await page.getByRole("button", { name: "Check for Updates" }).click();
 
-  await expect(page.getByRole("heading", { name: "Update check failed" })).toBeVisible();
+  await expect(page.getByText("Update check failed", { exact: true })).toBeVisible();
   await expect(page.getByText("Desktop update failed: invalid endpoint")).toBeVisible();
   await expect(
     page.getByText(
@@ -1884,6 +1884,30 @@ test("shows runtime detection and shell guidance in settings", async ({ page }) 
   await expect(
     page.getByRole("switch", { name: "Restore previous window size and position" }),
   ).toHaveAttribute("aria-checked", "true");
+});
+
+test("uses the compact settings section picker without horizontal scrolling", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.setViewportSize({ width: 760, height: 700 });
+
+  const content = page.locator(".settings-form-scroll");
+  const compactPicker = page.locator(".settings-mobile-picker");
+  await expect(compactPicker).toBeVisible();
+  await expect(page.locator(".settings-category-pane")).toBeHidden();
+
+  await compactPicker.locator("select").selectOption("updates", { force: true });
+  await expect(
+    page.locator(".settings-section-header").getByRole("heading", { name: "Updates" }),
+  ).toBeVisible();
+
+  const metrics = await content.evaluate((node) => ({
+    clientWidth: node.clientWidth,
+    scrollWidth: node.scrollWidth,
+  }));
+  expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1);
 });
 
 test("saves custom runtime and AISW home settings", async ({ page }) => {
