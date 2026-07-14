@@ -829,6 +829,77 @@ test("shows the redesigned activity timeline with concise rows and an inspector"
   ).toBeVisible();
 });
 
+test("keeps activity technical details collapsed until opened", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+
+  await page.evaluate(() => {
+    const handlers = (
+      window as typeof window & {
+        __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+      }
+    ).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    handlers?.["tray-command-result"]?.({
+      scope: "tool",
+      tool: "codex",
+      label: "Switch profile",
+      status: "success",
+      message: "Switched codex to Personal2.",
+      resultSummary: "{\"status\":\"ok\"}",
+    });
+  });
+
+  await page.getByRole("button", { name: "Activity", exact: true }).click();
+  await page.locator(".activity-event-row").first().click();
+
+  const commandDisclosure = page.locator(".activity-disclosure").filter({ hasText: "Recorded Command" }).first();
+  const resultDisclosure = page.locator(".activity-disclosure").filter({ hasText: "Redacted Result" }).first();
+
+  await expect(commandDisclosure).not.toHaveAttribute("open", "");
+  await expect(resultDisclosure).not.toHaveAttribute("open", "");
+
+  await commandDisclosure.getByText("Recorded Command").click();
+  await expect(commandDisclosure).toHaveAttribute("open", "");
+});
+
+test("uses a compact one-pane activity detail flow on narrow widths", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.setViewportSize({ width: 760, height: 920 });
+  await page.goto("/");
+
+  await page.evaluate(() => {
+    const handlers = (
+      window as typeof window & {
+        __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+      }
+    ).__AISW_DESKTOP_EVENT_HANDLERS__;
+
+    handlers?.["tray-command-result"]?.({
+      scope: "tool",
+      tool: "codex",
+      label: "Switch profile",
+      status: "success",
+      message: "Switched codex to Personal2.",
+    });
+  });
+
+  await page.getByRole("button", { name: "Show sidebar" }).click();
+  await page.getByRole("button", { name: "Activity", exact: true }).click();
+
+  await expect(page.getByLabel("Activity timeline")).toBeVisible();
+  await page.locator(".activity-event-row").first().click();
+
+  await expect(page.getByRole("button", { name: "Back", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Activity timeline")).toHaveCount(0);
+  await expect(page.locator(".activity-inspector-surface").getByRole("heading", { name: "Switch profile" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(page.getByLabel("Activity timeline")).toBeVisible();
+});
+
 test("records tray context failures and keeps the remediation visible in overview", async ({ page }) => {
   await installDesktopMock(page, "switching");
 

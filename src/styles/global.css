@@ -5271,6 +5271,11 @@ html[data-appearance="dark"] .tool-logo-codex {
   padding: 16px;
 }
 
+.activity-inspector-back {
+  justify-self: start;
+  margin-bottom: 6px;
+}
+
 .activity-inspector-header h3 {
   margin: 0;
   font-family: var(--font-display);
@@ -5368,6 +5373,16 @@ html[data-appearance="dark"] .tool-logo-codex {
 
   .activity-event-tail {
     display: none;
+  }
+}
+
+@container (max-width: 799px) {
+  .activity-master-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .activity-inspector-surface {
+    border-left: 0;
   }
 }
 

@@ -16,6 +16,20 @@ import {
 } from "../../shared/lastCommandResult";
 
 type ActivityFilter = "all" | "success" | "error";
+const ACTIVITY_COMPACT_BREAKPOINT = 800;
+
+function measuredPaneWidth(element: HTMLDivElement | null) {
+  if (!element) {
+    return typeof window !== "undefined" ? window.innerWidth : ACTIVITY_COMPACT_BREAKPOINT;
+  }
+
+  const width = element.getBoundingClientRect().width;
+  if (width > 0) {
+    return width;
+  }
+
+  return typeof window !== "undefined" ? window.innerWidth : ACTIVITY_COMPACT_BREAKPOINT;
+}
 
 type ActivityEntry = {
   key: string;
@@ -38,6 +52,7 @@ export function ActivityPanel({
   externalClearSignal?: number;
   externalOpenLogSignal?: number;
 }) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const queryClient = useQueryClient();
   const lastCommandResults = useLastCommandResults();
   const [search, setSearch] = useState("");
@@ -47,6 +62,8 @@ export function ActivityPanel({
   const [logMessage, setLogMessage] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [pendingClear, setPendingClear] = useState(false);
+  const [compactLayout, setCompactLayout] = useState(false);
+  const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const menuAnchorRef = useRef<HTMLButtonElement | null>(null);
 
   const entries = useMemo<ActivityEntry[]>(
@@ -79,6 +96,8 @@ export function ActivityPanel({
     filteredEntries.find((entry) => entry.key === selectedEntryKey) ?? filteredEntries[0] ?? null;
   const hasEntries = entries.length > 0;
   const footerMessage = clearMessage || logMessage;
+  const showList = !compactLayout || !compactInspectorOpen;
+  const showInspector = !compactLayout || compactInspectorOpen;
 
   useEffect(() => {
     if (selectedEntryKey && filteredEntries.some((entry) => entry.key === selectedEntryKey)) {
@@ -86,6 +105,48 @@ export function ActivityPanel({
     }
     setSelectedEntryKey(filteredEntries[0]?.key ?? null);
   }, [filteredEntries, selectedEntryKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const updateLayout = () => {
+      setCompactLayout(measuredPaneWidth(rootRef.current) < ACTIVITY_COMPACT_BREAKPOINT);
+    };
+
+    updateLayout();
+    const observer =
+      typeof ResizeObserver === "function"
+        ? new ResizeObserver(() => {
+            updateLayout();
+          })
+        : null;
+
+    if (rootRef.current) {
+      observer?.observe(rootRef.current);
+    }
+    window.addEventListener("resize", updateLayout);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", updateLayout);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!rootRef.current) {
+      return;
+    }
+
+    setCompactLayout(measuredPaneWidth(rootRef.current) < ACTIVITY_COMPACT_BREAKPOINT);
+  });
+
+  useEffect(() => {
+    if (!compactLayout) {
+      setCompactInspectorOpen(false);
+    }
+  }, [compactLayout]);
 
   useEffect(() => {
     if (externalClearSignal < 1) {
@@ -157,7 +218,7 @@ export function ActivityPanel({
   }
 
   return (
-    <div className="activity-screen screen-content">
+    <div ref={rootRef} className="activity-screen screen-content">
       <div className="activity-toolbar-row">
         <SearchField
           className="search-field activity-search-field"
@@ -245,7 +306,7 @@ export function ActivityPanel({
         className="activity-master-detail"
         primaryClassName="activity-list-pane"
         secondaryClassName="activity-inspector-pane"
-        primary={
+        primary={showList ? (
           <section className="activity-pane">
             <div className="activity-list-body" aria-label="Activity timeline">
               {groupedEntries.length ? (
@@ -266,6 +327,9 @@ export function ActivityPanel({
                             setSelectedEntryKey(entry.key);
                             setClearMessage("");
                             setLogMessage("");
+                            if (compactLayout) {
+                              setCompactInspectorOpen(true);
+                            }
                           }}
                         >
                           <div className="activity-event-time">{formatTimestamp(entry.at)}</div>
@@ -296,13 +360,22 @@ export function ActivityPanel({
               )}
             </div>
           </section>
-        }
-        secondary={
+        ) : null}
+        secondary={showInspector ? (
           <aside className="activity-pane activity-inspector-surface">
             {selectedEntry ? (
               <div className="activity-inspector-content">
                 <header className="activity-inspector-header">
                   <div>
+                    {compactLayout ? (
+                      <button
+                        className="ghost-button activity-inspector-back"
+                        type="button"
+                        onClick={() => setCompactInspectorOpen(false)}
+                      >
+                        Back
+                      </button>
+                    ) : null}
                     <h3>{selectedEntry.label}</h3>
                     <p className={`activity-inspector-status activity-inspector-status-${selectedEntry.status}`}>
                       <span aria-hidden="true">{selectedEntry.status === "success" ? "●" : "▲"}</span>
@@ -373,7 +446,7 @@ export function ActivityPanel({
               </div>
             )}
           </aside>
-        }
+        ) : null}
       />
 
       <div className="activity-footer-line">
