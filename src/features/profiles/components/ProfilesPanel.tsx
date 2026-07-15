@@ -14,13 +14,9 @@ import {
   DesktopSettings,
   type OAuthProgressEvent,
 } from "../../../lib/schemas";
-import { compareBackupsNewestFirst } from "../../../lib/backups";
 import { credentialBackendLabel as formatCredentialBackendLabel } from "../../../lib/credential-backends";
 import { formatDateTimeWithZone } from "../../../lib/date-format";
-import {
-  BACKEND_UNAVAILABLE_LABEL,
-  DEFAULT_ACTION_FAILURE_MESSAGE,
-} from "../../../lib/display-copy";
+import { BACKEND_UNAVAILABLE_LABEL } from "../../../lib/display-copy";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import {
   AVAILABLE_AFTER_ACTIVATION_LABEL,
@@ -45,18 +41,17 @@ import {
   resolveProfileSwitchState,
   type ProfileSwitchState,
 } from "../../../lib/status-display";
-import { DesktopCommandError } from "../../../lib/tauri";
 import { listenDesktopEvent } from "../../../lib/tauri";
 import { listBackups, parseOAuthProgressEvent } from "../../../lib/client";
 import {
   SUPPORTED_TOOLS,
+  isSupportedTool,
   toolApiKeyEnvVar,
   toolShortName,
   type SupportedTool,
 } from "../../../lib/tool-registry";
 import { toolDisplayName } from "../../../lib/tool-display";
 import { titleCase } from "../../../lib/utils";
-import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import {
   resolveCredentialBackendRequest,
   supportedCredentialBackends,
@@ -76,6 +71,13 @@ import {
   profileImportModeLabel,
   profileImportModeNotes,
 } from "../profile-sheet-display";
+import {
+  buildOauthWizardSteps,
+  formatDesktopError,
+  isDuplicateProfileName,
+  latestBackupForProfile,
+  profileMutationError,
+} from "../profiles-panel-display";
 
 const TOOLS = SUPPORTED_TOOLS;
 const INVENTORY_FILTERS = ["all", ...TOOLS] as const;
@@ -124,11 +126,13 @@ export function ProfilesPanel({
     apiKeyProfileAction,
     mutationLock,
   } = useDesktopActions();
+  const resolvedInitialTool =
+    initialTool && isSupportedTool(initialTool) ? initialTool : null;
   const [tool, setTool] = useState<SupportedTool>(
-    isSupportedTool(initialTool) ? initialTool : "claude",
+    resolvedInitialTool ?? "claude",
   );
   const [inventoryFilter, setInventoryFilter] = useState<InventoryFilter>(
-    isSupportedTool(initialTool) ? initialTool : "all",
+    resolvedInitialTool ?? "all",
   );
   const [search, setSearch] = useState("");
   const [profile, setProfile] = useState("");
@@ -321,12 +325,12 @@ export function ProfilesPanel({
   }, [availableStateModes, stateMode]);
 
   useEffect(() => {
-    if (!isSupportedTool(initialTool)) {
+    if (!resolvedInitialTool) {
       return;
     }
-    setTool(initialTool);
-    setInventoryFilter(initialTool);
-  }, [initialTool]);
+    setTool(resolvedInitialTool);
+    setInventoryFilter(resolvedInitialTool);
+  }, [resolvedInitialTool]);
 
   useEffect(() => {
     if (!initialMode) {
@@ -362,14 +366,14 @@ export function ProfilesPanel({
   useEffect(() => {
     if (
       initialExpandedProfile == null &&
-      (isSupportedTool(initialTool) ||
+      (Boolean(resolvedInitialTool) ||
         Boolean(initialMode) ||
         Boolean(initialCredentialBackend) ||
         openToken != null)
     ) {
       setProfileSheetOpen(true);
     }
-  }, [initialCredentialBackend, initialExpandedProfile, initialMode, initialTool, openToken]);
+  }, [initialCredentialBackend, initialExpandedProfile, initialMode, openToken, resolvedInitialTool]);
 
   useEffect(() => {
     if (inventoryFilter === "all") {
@@ -749,7 +753,7 @@ export function ProfilesPanel({
                         aria-expanded={
                           openRowActions?.tool === inventoryEntry.tool &&
                           openRowActions?.name === inventoryEntry.name &&
-                          openRowActions.scope === "table"
+                          openRowActions?.scope === "table"
                         }
                         onClick={() => openProfileActions(inventoryEntry.tool, inventoryEntry.name, "table")}
                       >
@@ -757,7 +761,7 @@ export function ProfilesPanel({
                       </button>
                       {openRowActions?.tool === inventoryEntry.tool &&
                       openRowActions?.name === inventoryEntry.name &&
-                      openRowActions.scope === "table" ? (
+                      openRowActions?.scope === "table" ? (
                         <AnchoredMenu
                           anchorRef={rowActionAnchorRef}
                           className="profile-row-actions-menu"
@@ -911,7 +915,7 @@ export function ProfilesPanel({
                         aria-expanded={
                           openRowActions?.tool === tool &&
                           openRowActions?.name === selectedProfileEntry.name &&
-                          openRowActions.scope === "inspector"
+                          openRowActions?.scope === "inspector"
                         }
                         onClick={() =>
                           setOpenRowActions((current) =>
@@ -927,7 +931,7 @@ export function ProfilesPanel({
                       </button>
                       {openRowActions?.tool === tool &&
                       openRowActions?.name === selectedProfileEntry.name &&
-                      openRowActions.scope === "inspector" ? (
+                      openRowActions?.scope === "inspector" ? (
                         <AnchoredMenu
                           anchorRef={inspectorMenuAnchorRef}
                           className="profile-row-actions-menu"
@@ -1461,179 +1465,5 @@ export function ProfilesPanel({
         </DialogSurface>
       ) : null}
     </div>
-  );
-}
-
-function isSupportedTool(tool: string | undefined): tool is (typeof TOOLS)[number] {
-  return Boolean(tool && TOOLS.includes(tool as (typeof TOOLS)[number]));
-}
-
-function latestBackupForProfile(
-  tool: string,
-  profile: string,
-  backups: Array<{ backup_id: string; tool: string; profile: string; created_at?: string | null }> | undefined,
-) {
-  return [...(backups ?? [])]
-    .filter(
-      (entry) =>
-        entry.tool === tool &&
-        (entry.profile === profile || entry.profile === `${tool}/${profile}`),
-    )
-    .sort(compareBackupsNewestFirst)[0];
-}
-
-type OAuthWizardStep = {
-  id: "start" | "browser" | "login" | "capture" | "saved";
-  label: string;
-  detail: string;
-  status: "pending" | "warn" | "pass" | "fail";
-};
-
-function buildOauthWizardSteps(
-  tool: string,
-  events: OAuthProgressEvent[],
-  oauthError: string,
-): OAuthWizardStep[] {
-  const definitions = [
-    {
-      id: "start" as const,
-      label: `1. Starting ${titleCase(tool)} login`,
-      fallback: "Preparing the native login flow.",
-    },
-    {
-      id: "browser" as const,
-      label: "2. Browser opens",
-      fallback: "AI Switch launches the provider login flow.",
-    },
-    {
-      id: "login" as const,
-      label: "3. Complete login in browser",
-      fallback: "Finish the provider sign-in flow in the browser or terminal window.",
-    },
-    {
-      id: "capture" as const,
-      label: "4. Waiting for credential capture",
-      fallback: "AI Switch waits for the upstream tool to persist the captured credentials.",
-    },
-    {
-      id: "saved" as const,
-      label: "5. Profile saved",
-      fallback: "AI Switch stores the captured profile and refreshes app state.",
-    },
-  ];
-
-  const stageIndex = new Map<OAuthWizardStep["id"], number>(
-    definitions.map((definition, index) => [definition.id, index]),
-  );
-  const seen = new Map<
-    OAuthWizardStep["id"],
-    { detail: string; failed: boolean }
-  >();
-  let highestReached = -1;
-  let terminalFailure = false;
-
-  for (const event of events) {
-    const stage = oauthEventStage(event);
-    if (!stage) continue;
-    const index = stageIndex.get(stage) ?? -1;
-    if (index > highestReached) {
-      highestReached = index;
-    }
-    const detail = event.message?.trim() || definitions[index].fallback;
-    const failed = stage === "saved" && event.ok === false;
-    if (failed) {
-      terminalFailure = true;
-    }
-    seen.set(stage, { detail, failed });
-  }
-
-  if (oauthError) {
-    highestReached = Math.max(highestReached, definitions.length - 1);
-    terminalFailure = true;
-  }
-
-  return definitions.map((definition, index) => {
-    const explicit = seen.get(definition.id);
-    const isFinal = index === definitions.length - 1;
-    let status: OAuthWizardStep["status"] = "pending";
-
-    if (terminalFailure && isFinal) {
-      status = "fail";
-    } else if (highestReached >= index) {
-      status = highestReached === index && !isFinal ? "warn" : "pass";
-    }
-
-    if (highestReached === definitions.length - 1 && !terminalFailure) {
-      status = "pass";
-    }
-
-    return {
-      id: definition.id,
-      label: terminalFailure && isFinal ? "5. OAuth failed" : definition.label,
-      detail:
-        explicit?.detail ??
-        (isFinal && oauthError ? oauthError : definition.fallback),
-      status,
-    };
-  });
-}
-
-function oauthEventStage(event: OAuthProgressEvent): OAuthWizardStep["id"] | null {
-  const phase = (event.phase ?? event.type ?? "").toLowerCase();
-  switch (phase) {
-    case "started":
-      return "start";
-    case "starting_upstream_auth":
-    case "browser_launch":
-      return "browser";
-    case "waiting_for_user":
-    case "waiting_for_login":
-      return "login";
-    case "applying_changes":
-      return "capture";
-    case "profile_saved":
-    case "result":
-      return "saved";
-    default:
-      return null;
-  }
-}
-
-function profileMutationError(...errors: Array<unknown>) {
-  for (const error of errors) {
-    if (!error) continue;
-    return formatDesktopError(error);
-  }
-  return "";
-}
-
-function formatDesktopError(error: unknown) {
-  if (error instanceof DesktopCommandError) {
-    return error.remediation
-      ? `${normalizeRuntimeLanguage(error.message)} Remediation: ${normalizeRuntimeLanguage(error.remediation)}`
-      : normalizeRuntimeLanguage(error.message);
-  }
-  if (error instanceof Error) {
-    return normalizeRuntimeLanguage(error.message);
-  }
-  if (typeof error === "object" && error && "message" in error && typeof error.message === "string") {
-    const remediation =
-      "remediation" in error && typeof error.remediation === "string" ? error.remediation : undefined;
-    return remediation
-      ? `${normalizeRuntimeLanguage(error.message)} Remediation: ${normalizeRuntimeLanguage(remediation)}`
-      : normalizeRuntimeLanguage(error.message);
-  }
-  return DEFAULT_ACTION_FAILURE_MESSAGE;
-}
-
-function isDuplicateProfileName(
-  profiles: AppSnapshot["profiles"][string]["profiles"],
-  currentName: string,
-  nextName: string,
-) {
-  const normalizedCurrent = currentName.trim().toLowerCase();
-  const normalizedNext = nextName.trim().toLowerCase();
-  return profiles.some(
-    (entry) => entry.name.trim().toLowerCase() === normalizedNext && entry.name.trim().toLowerCase() !== normalizedCurrent,
   );
 }
