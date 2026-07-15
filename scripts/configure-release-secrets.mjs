@@ -1,7 +1,13 @@
-import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import {
+  createEnvironment,
+  resolveRepository,
+  resolveSecretValue,
+  setEnvironmentSecret,
+} from "./github-secret-utils.mjs";
+export { resolveSecretValue } from "./github-secret-utils.mjs";
 
 export const DEFAULT_ENVIRONMENT = "production";
 
@@ -24,10 +30,6 @@ export const optionalReleaseSecrets = [
   "APPLE_PASSWORD",
   "APPLE_TEAM_ID",
 ];
-
-function stripSingleTrailingNewline(value) {
-  return value.replace(/\r?\n$/, "");
-}
 
 export function parseArgs(argv) {
   const options = {
@@ -62,25 +64,6 @@ export function parseArgs(argv) {
   return options;
 }
 
-export function resolveSecretValue(secretName, env = process.env) {
-  const directValue = env[secretName];
-  const fileValue = env[`${secretName}_FILE`];
-
-  if (directValue && fileValue) {
-    throw new Error(`Set either ${secretName} or ${secretName}_FILE, not both.`);
-  }
-
-  if (typeof directValue === "string" && directValue.length > 0) {
-    return directValue;
-  }
-
-  if (typeof fileValue === "string" && fileValue.length > 0) {
-    return stripSingleTrailingNewline(readFileSync(fileValue, "utf8"));
-  }
-
-  return null;
-}
-
 export function collectReleaseSecrets(env = process.env) {
   const required = [];
   const optional = [];
@@ -103,52 +86,6 @@ export function collectReleaseSecrets(env = process.env) {
   }
 
   return { required, optional, missing };
-}
-
-export function resolveRepository(env = process.env, runner = spawnSync) {
-  if (typeof env.GITHUB_REPOSITORY === "string" && env.GITHUB_REPOSITORY.length > 0) {
-    return env.GITHUB_REPOSITORY;
-  }
-
-  const result = runner("gh", ["repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"], {
-    encoding: "utf8",
-  });
-
-  if (result.status !== 0) {
-    throw new Error("Unable to resolve the GitHub repository. Pass --repo owner/name or export GITHUB_REPOSITORY.");
-  }
-
-  return result.stdout.trim();
-}
-
-function runGhCommand(args, runner = spawnSync, stdin = "") {
-  const result = runner("gh", args, {
-    encoding: "utf8",
-    input: stdin,
-  });
-
-  if (result.status !== 0) {
-    const errorOutput = [result.stdout, result.stderr].filter(Boolean).join("\n").trim();
-    throw new Error(errorOutput || `gh ${args.join(" ")} failed`);
-  }
-}
-
-export function createEnvironment({ environment, repo }, runner = spawnSync) {
-  runGhCommand(
-    [
-      "api",
-      "--method",
-      "PUT",
-      "-H",
-      "Accept: application/vnd.github+json",
-      `repos/${repo}/environments/${environment}`,
-    ],
-    runner,
-  );
-}
-
-export function setEnvironmentSecret({ environment, repo, name, value }, runner = spawnSync) {
-  runGhCommand(["secret", "set", name, "--repo", repo, "--env", environment], runner, value);
 }
 
 export function configureReleaseSecrets(
