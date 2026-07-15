@@ -31,7 +31,7 @@ import {
   type OverviewHealthState,
 } from "../../../lib/status-display";
 import { toolDisplayName } from "../../../lib/tool-display";
-import { titleCase } from "../../../lib/utils";
+import { countLabel, pluralChoice, titleCase } from "../../../lib/utils";
 import {
   preferredProfileImportMode,
   supportsProfileImportMode,
@@ -127,19 +127,19 @@ export function OverviewPanel({
 
   const overviewHeadline = useMemo(() => {
     if (blockedCount) {
-      return `${blockedCount} tool${blockedCount === 1 ? "" : "s"} blocked`;
+      return `${countLabel(blockedCount, "tool")} blocked`;
     }
     if (attentionCount) {
-      return `${attentionCount} tool${attentionCount === 1 ? "" : "s"} need attention`;
+      return `${countLabel(attentionCount, "tool")} ${pluralChoice(attentionCount, "needs", "need")} attention`;
     }
     if (notConfiguredCount === snapshot.statuses.length) {
       return "No tools configured yet";
     }
     if (notVerifiedCount) {
-      return `${notVerifiedCount} tool${notVerifiedCount === 1 ? "" : "s"} still need verification`;
+      return `${countLabel(notVerifiedCount, "tool")} ${pluralChoice(notVerifiedCount, "still needs", "still need")} verification`;
     }
     if (readyCount) {
-      return `${readyCount} tool${readyCount === 1 ? "" : "s"} ready`;
+      return `${countLabel(readyCount, "tool")} ready`;
     }
     return "Review tool readiness";
   }, [attentionCount, blockedCount, notConfiguredCount, notVerifiedCount, readyCount, snapshot.statuses.length]);

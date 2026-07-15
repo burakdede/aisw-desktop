@@ -13,7 +13,7 @@ import {
 import { AppBootstrap, AppSnapshot, InitReport } from "../../../lib/schemas";
 import { toolSupportsEditableStateModes } from "../../../lib/tool-registry";
 import { toolDisplayName } from "../../../lib/tool-display";
-import { titleCase } from "../../../lib/utils";
+import { countLabel, titleCase } from "../../../lib/utils";
 import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import { normalizeTerminalIntegrationText } from "../../shared/terminal-integration-language";
 import {
@@ -341,7 +341,7 @@ export function SetupPanel({
                 badge={
                   <span className={`pill ${needsAttentionCount ? "pill-soft" : "pill-ok"}`}>
                     {needsAttentionCount
-                      ? `${needsAttentionCount} action${needsAttentionCount === 1 ? "" : "s"}`
+                      ? countLabel(needsAttentionCount, "action")
                       : "Ready"}
                   </span>
                 }
@@ -566,7 +566,7 @@ export function SetupPanel({
                               <h4>Choose one tool</h4>
                             </div>
                             <span className="pill pill-soft">
-                              {accountItems.length} item{accountItems.length === 1 ? "" : "s"}
+                              {countLabel(accountItems.length, "item")}
                             </span>
                           </div>
                           <div className="desktop-source-list" aria-label="Detected tools">
@@ -887,7 +887,7 @@ export function SetupPanel({
                         : status.active_profile
                           ? status.active_profile
                           : profileCount > 0
-                            ? `${profileCount} saved profile${profileCount === 1 ? "" : "s"}`
+                            ? countLabel(profileCount, "saved profile")
                             : "Not configured";
                     return (
                       <div key={status.tool} className="onboarding-complete-cell">

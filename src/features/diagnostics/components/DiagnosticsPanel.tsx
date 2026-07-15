@@ -33,7 +33,7 @@ import { resolveWorkspaceActivationTarget } from "../../workspaces/workspace-act
 import { contextDisplayLabel, toolProfileDisplayLabel } from "../../../lib/profile-display";
 import { toolDisplayName } from "../../../lib/tool-display";
 import { isSupportedTool, toolSupportsEditableStateModes } from "../../../lib/tool-registry";
-import { titleCase } from "../../../lib/utils";
+import { countLabel, pluralChoice, titleCase } from "../../../lib/utils";
 import type { SettingsSection } from "../../settings/components/SettingsPanel";
 
 export function DiagnosticsPanel({
@@ -169,12 +169,14 @@ export function DiagnosticsPanel({
   );
   const verifiedLabel = formatRelativeVerifiedTime(verifiedAt);
   const summaryTitle = totalIssues
-    ? `${totalIssues} issue${totalIssues === 1 ? "" : "s"} need attention`
+    ? `${countLabel(totalIssues, "issue")} ${pluralChoice(totalIssues, "needs", "need")} attention`
     : "Everything looks good";
+  const remainingIssues = Math.max(totalIssues - repairActions.length, 0);
   const summaryDetail = totalIssues
-    ? `${repairActions.length} ${repairActions.length === 1 ? "repair can" : "repairs can"} be applied safely. ${
-        Math.max(totalIssues - repairActions.length, 0)
-      } ${Math.max(totalIssues - repairActions.length, 0) === 1 ? "requires" : "require"} a decision.`
+    ? `${countLabel(repairActions.length, "repair")} can be applied safely. ${countLabel(
+        remainingIssues,
+        "issue",
+      )} ${pluralChoice(remainingIssues, "requires", "require")} a decision.`
     : "All configured tools match their active AISW profiles and local storage checks passed.";
   const lastAppliedCount = Number(
     ((applyRepair.data?.result as {
@@ -190,7 +192,7 @@ export function DiagnosticsPanel({
         : "Support report export failed."
       : "")
     || (applyRepair.data
-      ? `Applied ${lastAppliedCount} ${lastAppliedCount === 1 ? "safe fix" : "safe fixes"}.`
+      ? `Applied ${countLabel(lastAppliedCount, "safe fix", "safe fixes")}.`
       : "");
 
   useEffect(() => {
@@ -657,7 +659,7 @@ ${primaryFindingFix?.label ? `# ${primaryFindingFix.label}` : "# Review the expl
                 >
                   {applyRepair.isPending
                     ? "Applying Repairs…"
-                    : `Apply ${selectedSafeFixes.length} ${selectedSafeFixes.length === 1 ? "Fix" : "Fixes"}`}
+                    : `Apply ${countLabel(selectedSafeFixes.length, "Fix", "Fixes")}`}
                 </button>
               </div>
             </footer>
@@ -732,7 +734,7 @@ function buildDiagnosticFindings(
     remediation: card.remediation,
     status: card.status === "fail" ? "fail" : "warn",
     scopeLabel: "Check",
-    countLabel: `${card.issues.length} detail${card.issues.length === 1 ? "" : "s"}`,
+    countLabel: countLabel(card.issues.length, "detail"),
     profileTarget: snapshot ? resolveIssueProfileTarget(card, snapshot) ?? undefined : undefined,
   }));
 
@@ -1407,7 +1409,7 @@ function formatRelativeVerifiedTime(timestamp: number) {
     return `${diffHours} hr ago`;
   }
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
+  return `${countLabel(diffDays, "day")} ago`;
 }
 
 async function refreshDiagnostics(

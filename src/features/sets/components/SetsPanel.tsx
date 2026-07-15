@@ -19,6 +19,7 @@ import {
 import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { SUPPORTED_TOOLS, toolShortName } from "../../../lib/tool-registry";
+import { countLabel } from "../../../lib/utils";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import { resolveGlobalStateMode } from "../../shared/state-modes";
@@ -514,7 +515,7 @@ export function SetsPanel({
           ) : null}
         </div>
         <div className="sets-library-row-meta">
-          {usageCount ? <span>{usageCount} rule{usageCount === 1 ? "" : "s"}</span> : null}
+          {usageCount ? <span>{countLabel(usageCount, "rule")}</span> : null}
           {active ? <span>Current</span> : null}
         </div>
       </button>

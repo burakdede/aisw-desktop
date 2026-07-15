@@ -7,3 +7,15 @@ export function titleCase(value: string) {
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (match) => match.toUpperCase());
 }
+
+export function pluralSuffix(count: number) {
+  return count === 1 ? "" : "s";
+}
+
+export function pluralChoice<T>(count: number, singular: T, plural: T) {
+  return count === 1 ? singular : plural;
+}
+
+export function countLabel(count: number, singular: string, plural = `${singular}s`) {
+  return `${count} ${pluralChoice(count, singular, plural)}`;
+}
