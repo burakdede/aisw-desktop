@@ -72,6 +72,8 @@ import {
   profileImportModeNotes,
 } from "../profile-sheet-display";
 import {
+  buildProfileActionMenu,
+  buildSelectedProfileInspectorState,
   buildOauthWizardSteps,
   formatDesktopError,
   isDuplicateProfileName,
@@ -273,25 +275,12 @@ export function ProfilesPanel({
         : undefined,
     [backups.data, selectedProfileEntry, tool],
   );
-  const selectedHasCustomLabel = Boolean(
-    selectedProfileEntry &&
-      selectedProfileDisplay &&
-      selectedProfileDisplay !== titleCase(selectedProfileEntry.name),
-  );
-  const selectedIsActive = Boolean(
-    selectedProfileEntry && snapshot.profiles[tool]?.active === selectedProfileEntry.name,
-  );
-  const selectedProfileState = selectedProfileEntry
-    ? resolveProfileSwitchState({
-        activeProfile: snapshot.profiles[tool]?.active,
-        profileName: selectedProfileEntry.name,
-        activeProfileApplied: toolStatus?.active_profile_applied,
-      })
-    : "stored";
-  const selectedProfileCanActivate = Boolean(selectedProfileEntry && !selectedIsActive);
-  const selectedProfileNeedsReapply = Boolean(
-    selectedProfileEntry && selectedIsActive && toolStatus?.active_profile_applied === false,
-  );
+  const selectedProfileInspectorState = buildSelectedProfileInspectorState({
+    activeProfileApplied: toolStatus?.active_profile_applied,
+    activeProfileName: snapshot.profiles[tool]?.active,
+    selectedProfileDisplay,
+    selectedProfileName: selectedProfileEntry?.name ?? null,
+  });
   const editSheetProfile = pendingEdit
     ? profiles.find((entry) => entry.name === pendingEdit.name) ?? null
     : null;
@@ -686,7 +675,12 @@ export function ProfilesPanel({
               {filteredInventoryProfiles.map((inventoryEntry, index) => {
                 const rowSelected = expandedDetails === inventoryEntry.name && tool === inventoryEntry.tool;
                 const menuKey = `${inventoryEntry.tool}:${inventoryEntry.name}`;
-                const rowNeedsReapply = inventoryEntry.state === "live_mismatch";
+                const rowActions = buildProfileActionMenu({
+                  active: inventoryEntry.active,
+                  hasBackup: inventoryEntry.hasBackup,
+                  scope: "table",
+                  state: inventoryEntry.state,
+                });
                 const rowActionAnchorRef = {
                   current: rowActionAnchorRefs.current[menuKey] ?? null,
                 };
@@ -770,71 +764,42 @@ export function ProfilesPanel({
                           role="menu"
                           aria-label="Profile actions"
                         >
-                          {!inventoryEntry.active ? (
+                          {rowActions.map((action) => (
                             <button
+                              key={action.kind}
                               type="button"
                               role="menuitem"
-                              disabled={mutationLock.isBusy}
+                              disabled={
+                                action.kind === "view_backups"
+                                  ? action.disabled
+                                  : mutationLock.isBusy
+                              }
+                              className={action.danger ? "profile-row-actions-danger" : undefined}
                               onClick={() => {
-                                activateInventoryEntry(inventoryEntry);
+                                switch (action.kind) {
+                                  case "activate":
+                                  case "reapply":
+                                    activateInventoryEntry(inventoryEntry);
+                                    break;
+                                  case "rename":
+                                    setPendingEdit({ name: inventoryEntry.name, focus: "name" });
+                                    break;
+                                  case "change_label":
+                                    setPendingEdit({ name: inventoryEntry.name, focus: "label" });
+                                    break;
+                                  case "view_backups":
+                                    openBackupsForProfile(inventoryEntry.tool, inventoryEntry.name);
+                                    break;
+                                  case "remove":
+                                    setPendingRemoval(inventoryEntry.name);
+                                    break;
+                                }
                                 setOpenRowActions(null);
                               }}
                             >
-                              Activate
+                              {action.label}
                             </button>
-                          ) : null}
-                          {rowNeedsReapply ? (
-                            <button
-                              type="button"
-                              role="menuitem"
-                              disabled={mutationLock.isBusy}
-                              onClick={() => {
-                                activateInventoryEntry(inventoryEntry);
-                                setOpenRowActions(null);
-                              }}
-                            >
-                              Reapply Active Profile
-                            </button>
-                          ) : null}
-                          <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() => {
-                              setPendingEdit({ name: inventoryEntry.name, focus: "name" });
-                              setOpenRowActions(null);
-                            }}
-                          >
-                            Rename…
-                          </button>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() => {
-                              setPendingEdit({ name: inventoryEntry.name, focus: "label" });
-                              setOpenRowActions(null);
-                            }}
-                          >
-                            Change Label…
-                          </button>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            disabled={!inventoryEntry.hasBackup}
-                            onClick={() => openBackupsForProfile(inventoryEntry.tool, inventoryEntry.name)}
-                          >
-                            View Backups
-                          </button>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            className="profile-row-actions-danger"
-                            onClick={() => {
-                              setPendingRemoval(inventoryEntry.name);
-                              setOpenRowActions(null);
-                            }}
-                          >
-                            Remove…
-                          </button>
+                          ))}
                         </AnchoredMenu>
                       ) : null}
                     </div>
@@ -872,20 +837,20 @@ export function ProfilesPanel({
                       <span>{selectedProfileDisplay}</span>
                     </h3>
                     <p className="inline-note">{toolDisplayName(tool)}</p>
-                    {selectedHasCustomLabel ? (
+                    {selectedProfileInspectorState.hasCustomLabel ? (
                       <p className="inline-note">Saved as {selectedProfileEntry.name}</p>
                     ) : null}
                     <div
                       className={`profiles-inspector-status profiles-inspector-status-${profileSwitchTone(
-                        selectedProfileState,
+                        selectedProfileInspectorState.state,
                       )}`}
                     >
-                      <span aria-hidden="true">{profileSwitchSymbol(selectedProfileState)}</span>
-                      <span>{profileSwitchLabel(selectedProfileState)}</span>
+                      <span aria-hidden="true">{profileSwitchSymbol(selectedProfileInspectorState.state)}</span>
+                      <span>{profileSwitchLabel(selectedProfileInspectorState.state)}</span>
                     </div>
                   </div>
                   <div className="button-row profiles-inspector-action-row">
-                    {selectedProfileCanActivate || selectedProfileNeedsReapply ? (
+                    {selectedProfileInspectorState.primaryActionLabel ? (
                       <button
                         className="primary-button"
                         type="button"
@@ -899,9 +864,7 @@ export function ProfilesPanel({
                           })
                         }
                       >
-                        {selectedProfileNeedsReapply
-                          ? `Reapply ${selectedProfileDisplay}`
-                          : "Activate Profile"}
+                        {selectedProfileInspectorState.primaryActionLabel}
                       </button>
                     ) : (
                       <span className="profiles-passive-badge">Active</span>
@@ -941,45 +904,41 @@ export function ProfilesPanel({
                           role="menu"
                           aria-label="Profile actions"
                         >
-                          <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() => {
-                              setPendingEdit({ name: selectedProfileEntry.name, focus: "name" });
-                              setOpenRowActions(null);
-                            }}
-                          >
-                            Rename…
-                          </button>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() => {
-                              setPendingEdit({ name: selectedProfileEntry.name, focus: "label" });
-                              setOpenRowActions(null);
-                            }}
-                          >
-                            Change Label…
-                          </button>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            disabled={!selectedLatestBackup}
-                            onClick={() => openBackupsForProfile(tool, selectedProfileEntry.name)}
-                          >
-                            View Backups
-                          </button>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            className="profile-row-actions-danger"
-                            onClick={() => {
-                              setPendingRemoval(selectedProfileEntry.name);
-                              setOpenRowActions(null);
-                            }}
-                          >
-                            Remove…
-                          </button>
+                          {buildProfileActionMenu({
+                            active: selectedProfileInspectorState.isActive,
+                            hasBackup: Boolean(selectedLatestBackup),
+                            scope: "inspector",
+                            state: selectedProfileInspectorState.state,
+                          }).map((action) => (
+                            <button
+                              key={action.kind}
+                              type="button"
+                              role="menuitem"
+                              disabled={action.kind === "view_backups" ? action.disabled : false}
+                              className={action.danger ? "profile-row-actions-danger" : undefined}
+                              onClick={() => {
+                                switch (action.kind) {
+                                  case "rename":
+                                    setPendingEdit({ name: selectedProfileEntry.name, focus: "name" });
+                                    break;
+                                  case "change_label":
+                                    setPendingEdit({ name: selectedProfileEntry.name, focus: "label" });
+                                    break;
+                                  case "view_backups":
+                                    openBackupsForProfile(tool, selectedProfileEntry.name);
+                                    break;
+                                  case "remove":
+                                    setPendingRemoval(selectedProfileEntry.name);
+                                    break;
+                                  default:
+                                    break;
+                                }
+                                setOpenRowActions(null);
+                              }}
+                            >
+                              {action.label}
+                            </button>
+                          ))}
                         </AnchoredMenu>
                       ) : null}
                     </div>
@@ -990,7 +949,7 @@ export function ProfilesPanel({
                   rows={[
                     {
                       label: "Live match",
-                      value: profileLiveMatchLabel(selectedProfileState),
+                      value: profileLiveMatchLabel(selectedProfileInspectorState.state),
                     },
                     { label: "Authentication", value: profileAuthMethodLabel(selectedProfileEntry.auth) },
                     {
@@ -1012,13 +971,13 @@ export function ProfilesPanel({
                     },
                     {
                       label: "Last checked",
-                      value: selectedInventoryEntry?.lastChecked ?? profileLastCheckedLabel(null, selectedIsActive),
+                      value: selectedInventoryEntry?.lastChecked ?? profileLastCheckedLabel(null, selectedProfileInspectorState.isActive),
                     },
                     ...(!availableStateModes.length
                       ? [
                           {
                             label: "State mode",
-                            value: selectedIsActive
+                            value: selectedProfileInspectorState.isActive
                               ? profileStateModeLabel(toolStatus?.state_mode)
                               : AVAILABLE_AFTER_ACTIVATION_LABEL,
                           },
@@ -1058,7 +1017,7 @@ export function ProfilesPanel({
                 </div>
                 {openStorageDetails === selectedProfileEntry.name ? (
                   <div className="profiles-inspector-details">
-                    {selectedIsActive ? (
+                    {selectedProfileInspectorState.isActive ? (
                       <>
                         <p className="inline-note">
                           Credentials present: {profileStorageBooleanLabel(toolStatus?.credentials_present)}

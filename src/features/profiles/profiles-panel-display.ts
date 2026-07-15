@@ -3,6 +3,7 @@ import { compareBackupsNewestFirst } from "../../lib/backups";
 import { DEFAULT_ACTION_FAILURE_MESSAGE } from "../../lib/display-copy";
 import { DesktopCommandError } from "../../lib/tauri";
 import { titleCase } from "../../lib/utils";
+import type { ProfileSwitchState } from "../../lib/status-display";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 
 export type OAuthWizardStep = {
@@ -15,6 +16,85 @@ export type OAuthWizardStep = {
 type ProfileEntry = {
   name: string;
 };
+
+export type ProfileActionMenuItem = {
+  kind: "activate" | "reapply" | "rename" | "change_label" | "view_backups" | "remove";
+  label: string;
+  disabled?: boolean;
+  danger?: boolean;
+};
+
+export function buildProfileActionMenu(input: {
+  active: boolean;
+  hasBackup: boolean;
+  scope: "table" | "inspector";
+  state: ProfileSwitchState;
+}) {
+  const actions: ProfileActionMenuItem[] = [];
+
+  if (input.scope === "table" && !input.active) {
+    actions.push({ kind: "activate", label: "Activate" });
+  }
+  if (input.scope === "table" && input.state === "live_mismatch") {
+    actions.push({ kind: "reapply", label: "Reapply Active Profile" });
+  }
+
+  actions.push({ kind: "rename", label: "Rename…" });
+  actions.push({ kind: "change_label", label: "Change Label…" });
+  actions.push({
+    kind: "view_backups",
+    label: "View Backups",
+    disabled: !input.hasBackup,
+  });
+  actions.push({
+    kind: "remove",
+    label: "Remove…",
+    danger: true,
+  });
+
+  return actions;
+}
+
+export function buildSelectedProfileInspectorState(input: {
+  activeProfileApplied: boolean | null | undefined;
+  activeProfileName: string | null | undefined;
+  selectedProfileDisplay: string | null;
+  selectedProfileName: string | null;
+}) {
+  const selectedName = input.selectedProfileName;
+  const isActive = Boolean(
+    selectedName && input.activeProfileName === selectedName,
+  );
+  const state: ProfileSwitchState = selectedName
+    ? resolveSelectedProfileSwitchState({
+        activeProfile: input.activeProfileName,
+        activeProfileApplied: input.activeProfileApplied,
+        profileName: selectedName,
+      })
+    : "stored";
+  const hasCustomLabel = Boolean(
+    selectedName &&
+      input.selectedProfileDisplay &&
+      input.selectedProfileDisplay !== titleCase(selectedName),
+  );
+  const canActivate = Boolean(selectedName && !isActive);
+  const needsReapply = Boolean(
+    selectedName && isActive && input.activeProfileApplied === false,
+  );
+
+  return {
+    canActivate,
+    hasCustomLabel,
+    isActive,
+    needsReapply,
+    primaryActionLabel: canActivate
+      ? "Activate Profile"
+      : needsReapply
+        ? `Reapply ${input.selectedProfileDisplay}`
+        : null,
+    state,
+  };
+}
 
 export function latestBackupForProfile(
   tool: string,
@@ -181,4 +261,21 @@ export function isDuplicateProfileName(
       entry.name.trim().toLowerCase() === normalizedNext &&
       entry.name.trim().toLowerCase() !== normalizedCurrent,
   );
+}
+
+function resolveSelectedProfileSwitchState(input: {
+  activeProfile: string | null | undefined;
+  profileName: string;
+  activeProfileApplied: boolean | null | undefined;
+}): ProfileSwitchState {
+  if (input.activeProfile !== input.profileName) {
+    return "stored";
+  }
+  if (input.activeProfileApplied === false) {
+    return "live_mismatch";
+  }
+  if (input.activeProfileApplied === null || input.activeProfileApplied === undefined) {
+    return "not_verified";
+  }
+  return "active";
 }

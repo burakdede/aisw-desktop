@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { BackupEntry, OAuthProgressEvent } from "../../lib/schemas";
 import { DesktopCommandError } from "../../lib/tauri";
 import {
+  buildProfileActionMenu,
+  buildSelectedProfileInspectorState,
   buildOauthWizardSteps,
   formatDesktopError,
   isDuplicateProfileName,
@@ -135,5 +137,101 @@ describe("profiles-panel-display", () => {
     expect(isDuplicateProfileName(profiles, "Work", "work")).toBe(false);
     expect(isDuplicateProfileName(profiles, "Work", "PERSONAL")).toBe(true);
     expect(isDuplicateProfileName(profiles, "Work", "Travel")).toBe(false);
+  });
+
+  it("builds profile action menus for table and inspector scopes", () => {
+    expect(
+      buildProfileActionMenu({
+        active: false,
+        hasBackup: true,
+        scope: "table",
+        state: "stored",
+      }),
+    ).toEqual([
+      { kind: "activate", label: "Activate" },
+      { kind: "rename", label: "Rename…" },
+      { kind: "change_label", label: "Change Label…" },
+      { kind: "view_backups", label: "View Backups", disabled: false },
+      { kind: "remove", label: "Remove…", danger: true },
+    ]);
+
+    expect(
+      buildProfileActionMenu({
+        active: true,
+        hasBackup: false,
+        scope: "table",
+        state: "live_mismatch",
+      }),
+    ).toEqual([
+      { kind: "reapply", label: "Reapply Active Profile" },
+      { kind: "rename", label: "Rename…" },
+      { kind: "change_label", label: "Change Label…" },
+      { kind: "view_backups", label: "View Backups", disabled: true },
+      { kind: "remove", label: "Remove…", danger: true },
+    ]);
+
+    expect(
+      buildProfileActionMenu({
+        active: true,
+        hasBackup: true,
+        scope: "inspector",
+        state: "active",
+      }),
+    ).toEqual([
+      { kind: "rename", label: "Rename…" },
+      { kind: "change_label", label: "Change Label…" },
+      { kind: "view_backups", label: "View Backups", disabled: false },
+      { kind: "remove", label: "Remove…", danger: true },
+    ]);
+  });
+
+  it("builds selected-profile inspector state consistently", () => {
+    expect(
+      buildSelectedProfileInspectorState({
+        activeProfileApplied: true,
+        activeProfileName: "work",
+        selectedProfileDisplay: "Work Laptop",
+        selectedProfileName: "work",
+      }),
+    ).toEqual({
+      canActivate: false,
+      hasCustomLabel: true,
+      isActive: true,
+      needsReapply: false,
+      primaryActionLabel: null,
+      state: "active",
+    });
+
+    expect(
+      buildSelectedProfileInspectorState({
+        activeProfileApplied: false,
+        activeProfileName: "work",
+        selectedProfileDisplay: "Work",
+        selectedProfileName: "work",
+      }),
+    ).toEqual({
+      canActivate: false,
+      hasCustomLabel: false,
+      isActive: true,
+      needsReapply: true,
+      primaryActionLabel: "Reapply Work",
+      state: "live_mismatch",
+    });
+
+    expect(
+      buildSelectedProfileInspectorState({
+        activeProfileApplied: true,
+        activeProfileName: "work",
+        selectedProfileDisplay: "Personal",
+        selectedProfileName: "personal",
+      }),
+    ).toEqual({
+      canActivate: true,
+      hasCustomLabel: false,
+      isActive: false,
+      needsReapply: false,
+      primaryActionLabel: "Activate Profile",
+      state: "stored",
+    });
   });
 });
