@@ -17,6 +17,13 @@ import {
   contextDisplayLabel,
   toolProfileDisplayLabel,
 } from "../../../lib/profile-display";
+import {
+  overviewHealthLabel,
+  overviewHealthSymbol,
+  overviewHealthText,
+  resolveOverviewHealthState,
+  type OverviewHealthState,
+} from "../../../lib/status-display";
 import { toolDisplayName } from "../../../lib/tool-display";
 import { titleCase } from "../../../lib/utils";
 import {
@@ -26,13 +33,6 @@ import {
 } from "../../shared/profile-capabilities";
 import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 import { resolveWorkspaceActivationTarget } from "../../workspaces/workspace-activation";
-
-type OverviewHealthState =
-  | "ready"
-  | "needs_attention"
-  | "blocked"
-  | "not_configured"
-  | "not_verified";
 
 const OVERVIEW_COMPACT_BREAKPOINT = 800;
 
@@ -84,7 +84,7 @@ export function OverviewPanel({
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const selectedStatus =
     snapshot.statuses.find((status) => status.tool === selectedTool) ?? snapshot.statuses[0] ?? null;
-  const overviewStates = snapshot.statuses.map(resolveOverviewState);
+  const overviewStates = snapshot.statuses.map(resolveOverviewHealthState);
   const readyCount = overviewStates.filter((state) => state === "ready").length;
   const attentionCount = overviewStates.filter((state) => state === "needs_attention").length;
   const notConfiguredCount = overviewStates.filter((state) => state === "not_configured").length;
@@ -172,7 +172,7 @@ export function OverviewPanel({
       <div className={`overview-status-strip overview-status-strip-${overallState}`}>
         <div className="overview-status-summary">
           <span className={`overview-status-symbol overview-status-symbol-${overallState}`} aria-hidden="true">
-            {overviewStatusSymbol(overallState)}
+            {overviewHealthSymbol(overallState)}
           </span>
           <strong>{overviewHeadline}</strong>
         </div>
@@ -210,7 +210,7 @@ export function OverviewPanel({
           {snapshot.statuses.length ? (
             <div className="overview-tool-list" role="list" aria-label="Tools">
               {snapshot.statuses.map((status) => {
-                const state = resolveOverviewState(status);
+                const state = resolveOverviewHealthState(status);
                 const activeProfileLabel = status.active_profile
                   ? toolProfileDisplayLabel(settings, snapshot, status.tool, status.active_profile)
                   : toolListEmptyLabel(status);
@@ -232,7 +232,7 @@ export function OverviewPanel({
                   >
                     <div className="overview-tool-list-cell overview-tool-list-cell-status">
                       <span className={`overview-status-symbol overview-status-symbol-${state}`} aria-hidden="true">
-                        {overviewStatusSymbol(state)}
+                        {overviewHealthSymbol(state)}
                       </span>
                     </div>
                     <div className="overview-tool-list-cell overview-tool-list-cell-main">
@@ -384,8 +384,8 @@ function ToolInspector({
     ? toolProfileDisplayLabel(settings, snapshot, status.tool, selectedProfile)
     : null;
   const supportsLiveImport = supportsProfileImportMode(status.tool, toolCapabilities, "from_live");
-  const state = resolveOverviewState(status);
-  const statusLabel = overviewStatusLabel(state);
+  const state = resolveOverviewHealthState(status);
+  const statusLabel = overviewHealthLabel(state);
   const healthText = overviewHealthText(status, state);
   const hasAlternateSelection = Boolean(selectedProfile && selectedProfile !== status.active_profile);
   const canSwitch = Boolean(hasAlternateSelection && selectedProfile);
@@ -496,7 +496,7 @@ function ToolInspector({
         </div>
         <div className={`overview-inspector-status overview-inspector-status-${state}`}>
           <span className={`overview-status-symbol overview-status-symbol-${state}`} aria-hidden="true">
-            {overviewStatusSymbol(state)}
+            {overviewHealthSymbol(state)}
           </span>
           <span>{statusLabel}</span>
         </div>
@@ -833,76 +833,6 @@ function overviewInspectorEmptyLabel(status: ToolStatus) {
     return "No saved profile yet";
   }
   return "Not verified yet";
-}
-
-function resolveOverviewState(status: ToolStatus): OverviewHealthState {
-  if (!status.binary_found) {
-    return "blocked";
-  }
-  if (!status.active_profile) {
-    return "not_configured";
-  }
-  if (status.active_profile_applied === false || status.token_warning || status.warnings.length) {
-    return "needs_attention";
-  }
-  if (status.active_profile_applied === null || status.active_profile_applied === undefined) {
-    return "not_verified";
-  }
-  return "ready";
-}
-
-function overviewStatusLabel(state: OverviewHealthState) {
-  switch (state) {
-    case "ready":
-      return "Ready";
-    case "needs_attention":
-      return "Needs Attention";
-    case "blocked":
-      return "Blocked";
-    case "not_configured":
-      return "Not Configured";
-    case "not_verified":
-      return "Not Verified";
-  }
-}
-
-function overviewHealthText(status: ToolStatus, state: OverviewHealthState) {
-  if (!status.binary_found) {
-    return "Not installed";
-  }
-  if (!status.active_profile) {
-    return "Not configured";
-  }
-  if (status.active_profile_applied === false) {
-    return "Live mismatch";
-  }
-  switch (state) {
-    case "ready":
-      return "Ready";
-    case "needs_attention":
-      return "Needs attention";
-    case "blocked":
-      return "Blocked";
-    case "not_configured":
-      return "Not configured";
-    case "not_verified":
-      return "Not verified";
-  }
-}
-
-function overviewStatusSymbol(state: OverviewHealthState) {
-  switch (state) {
-    case "ready":
-      return "●";
-    case "needs_attention":
-      return "▲";
-    case "blocked":
-      return "⨯";
-    case "not_configured":
-      return "○";
-    case "not_verified":
-      return "?";
-  }
 }
 
 function formatTokenWarning(status: ToolStatus) {

@@ -16,6 +16,14 @@ import {
 } from "../../../lib/schemas";
 import { compareBackupsNewestFirst } from "../../../lib/backups";
 import { DATE_UNAVAILABLE_LABEL, formatDateTimeWithZone } from "../../../lib/date-format";
+import {
+  profileLiveMatchLabel,
+  profileSwitchLabel,
+  profileSwitchSymbol,
+  profileSwitchTone,
+  resolveProfileSwitchState,
+  type ProfileSwitchState,
+} from "../../../lib/status-display";
 import { DesktopCommandError } from "../../../lib/tauri";
 import { listenDesktopEvent } from "../../../lib/tauri";
 import { listBackups, parseOAuthProgressEvent } from "../../../lib/client";
@@ -47,7 +55,7 @@ type InventoryEntry = {
   label: string;
   active: boolean;
   backend: string;
-  state: string;
+  state: ProfileSwitchState;
   lastChecked: string;
   hasBackup: boolean;
 };
@@ -144,14 +152,11 @@ export function ProfilesPanel({
           label: effectiveLabel(entryTool, entry.name, entry.label, settings) ?? titleCase(entry.name),
           active: snapshot.profiles[entryTool]?.active === entry.name,
           backend: status?.credential_backend ? formatBackendLabel(status.credential_backend) : "Backend Unavailable",
-          state:
-            snapshot.profiles[entryTool]?.active === entry.name
-              ? status?.active_profile_applied === false
-                ? "Needs Attention"
-                : status?.active_profile_applied == null
-                  ? "Not Verified"
-                  : "Active"
-              : "Stored",
+          state: resolveProfileSwitchState({
+            activeProfile: snapshot.profiles[entryTool]?.active,
+            profileName: entry.name,
+            activeProfileApplied: status?.active_profile_applied,
+          }),
           lastChecked: latestBackup
             ? formatBackupTimestamp(latestBackup.created_at ?? latestBackup.backup_id)
             : snapshot.profiles[entryTool]?.active === entry.name
@@ -235,8 +240,12 @@ export function ProfilesPanel({
     selectedProfileEntry && snapshot.profiles[tool]?.active === selectedProfileEntry.name,
   );
   const selectedProfileState = selectedProfileEntry
-    ? profileStatusSummary(snapshot, tool, selectedProfileEntry.name, toolStatus)
-    : "Stored";
+    ? resolveProfileSwitchState({
+        activeProfile: snapshot.profiles[tool]?.active,
+        profileName: selectedProfileEntry.name,
+        activeProfileApplied: toolStatus?.active_profile_applied,
+      })
+    : "stored";
   const selectedProfileCanActivate = Boolean(selectedProfileEntry && !selectedIsActive);
   const selectedProfileNeedsReapply = Boolean(
     selectedProfileEntry && selectedIsActive && toolStatus?.active_profile_applied === false,
@@ -636,9 +645,7 @@ export function ProfilesPanel({
               {filteredInventoryProfiles.map((inventoryEntry, index) => {
                 const rowSelected = expandedDetails === inventoryEntry.name && tool === inventoryEntry.tool;
                 const menuKey = `${inventoryEntry.tool}:${inventoryEntry.name}`;
-                const rowNeedsReapply =
-                  inventoryEntry.active &&
-                  snapshot.statuses.find((entry) => entry.tool === inventoryEntry.tool)?.active_profile_applied === false;
+                const rowNeedsReapply = inventoryEntry.state === "live_mismatch";
                 const rowActionAnchorRef = {
                   current: rowActionAnchorRefs.current[menuKey] ?? null,
                 };
@@ -682,11 +689,10 @@ export function ProfilesPanel({
                       </span>
                       <span
                         className={`profiles-table-status profiles-table-status-${profileStatusTone(
-                          inventoryEntry.active,
                           inventoryEntry.state,
                         )}`}
                       >
-                        {profileStatusLabel(inventoryEntry.active, inventoryEntry.state)}
+                        {profileStatusLabel(inventoryEntry.state)}
                       </span>
                       <span className="profiles-table-column profiles-table-column-auth">
                         {authDisplayLabel(inventoryEntry.auth)}
@@ -830,12 +836,11 @@ export function ProfilesPanel({
                     ) : null}
                     <div
                       className={`profiles-inspector-status profiles-inspector-status-${profileStatusTone(
-                        selectedIsActive,
                         selectedProfileState,
                       )}`}
                     >
-                      <span aria-hidden="true">{profileStatusSymbol(selectedIsActive, selectedProfileState)}</span>
-                      <span>{profileStatusLabel(selectedIsActive, selectedProfileState)}</span>
+                      <span aria-hidden="true">{profileStatusSymbol(selectedProfileState)}</span>
+                      <span>{profileStatusLabel(selectedProfileState)}</span>
                     </div>
                   </div>
                   <div className="button-row profiles-inspector-action-row">
@@ -944,7 +949,7 @@ export function ProfilesPanel({
                   rows={[
                     {
                       label: "Live match",
-                      value: profileLiveMatchValue(snapshot, tool, selectedProfileEntry.name, toolStatus),
+                      value: profileLiveMatchValue(selectedProfileState),
                     },
                     { label: "Authentication", value: authDisplayLabel(selectedProfileEntry.auth) },
                     {
@@ -1486,7 +1491,7 @@ function formatBackendLabel(backend: string) {
 }
 
 function profileCompactSummary(entry: InventoryEntry) {
-  return `${toolDisplayName(entry.tool)} · ${profileStatusLabel(entry.active, entry.state)}`;
+  return `${toolDisplayName(entry.tool)} · ${profileStatusLabel(entry.state)}`;
 }
 
 function effectiveLabel(
@@ -1728,58 +1733,20 @@ function stateModeDisplay(mode: string | null | undefined) {
   return titleCase(mode);
 }
 
-function profileStatusTone(active: boolean, state: string) {
-  if (!active && state !== "Needs Attention" && state !== "Not Verified") {
-    return "stored";
-  }
-  if (state === "Needs Attention" || state === "Live mismatch") {
-    return "warn";
-  }
-  if (state === "Not Verified") {
-    return "stored";
-  }
-  return "ok";
+function profileStatusTone(state: ProfileSwitchState) {
+  return profileSwitchTone(state);
 }
 
-function profileStatusLabel(active: boolean, state: string) {
-  if (!active && state !== "Needs Attention" && state !== "Not Verified") {
-    return "Stored";
-  }
-  if (state === "Needs Attention" || state === "Live mismatch") {
-    return "Needs Attention";
-  }
-  if (state === "Not Verified") {
-    return "Not Verified";
-  }
-  return "Active";
+function profileStatusLabel(state: ProfileSwitchState) {
+  return profileSwitchLabel(state);
 }
 
-function profileStatusSymbol(active: boolean, state: string) {
-  if (!active && state !== "Needs Attention" && state !== "Not Verified") {
-    return "○";
-  }
-  if (state === "Needs Attention" || state === "Live mismatch") {
-    return "▲";
-  }
-  if (state === "Not Verified") {
-    return "?";
-  }
-  return "●";
+function profileStatusSymbol(state: ProfileSwitchState) {
+  return profileSwitchSymbol(state);
 }
 
-function profileLiveMatchValue(
-  snapshot: AppSnapshot,
-  tool: string,
-  profileName: string,
-  toolStatus: AppSnapshot["statuses"][number] | undefined,
-) {
-  if (snapshot.profiles[tool]?.active !== profileName) {
-    return "Available after activation";
-  }
-  if (toolStatus?.active_profile_applied === undefined || toolStatus?.active_profile_applied === null) {
-    return "Not Verified";
-  }
-  return toolStatus.active_profile_applied ? "Ready" : "Needs Attention";
+function profileLiveMatchValue(state: ProfileSwitchState) {
+  return profileLiveMatchLabel(state);
 }
 
 function booleanLabel(value: boolean | null | undefined) {
@@ -1787,24 +1754,6 @@ function booleanLabel(value: boolean | null | undefined) {
     return "Verification Required";
   }
   return value ? "Yes" : "No";
-}
-
-function profileStatusSummary(
-  snapshot: AppSnapshot,
-  tool: string,
-  profileName: string,
-  toolStatus: AppSnapshot["statuses"][number] | undefined,
-) {
-  if (snapshot.profiles[tool]?.active !== profileName) {
-    return "Stored";
-  }
-  if (toolStatus?.active_profile_applied === false) {
-    return "Live mismatch";
-  }
-  if (toolStatus?.active_profile_applied == null) {
-    return "Not Verified";
-  }
-  return "Active";
 }
 
 function formatBackupTimestamp(value: string) {
