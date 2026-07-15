@@ -2,7 +2,7 @@ import {
   DEFAULT_DESKTOP_PREFERENCES,
   type DesktopPreferences,
 } from "../../lib/desktop-preferences";
-import type { AppBootstrap, DesktopSettings } from "../../lib/schemas";
+import type { AppBootstrap, DesktopSettings, ShellHookGuidance } from "../../lib/schemas";
 import { DEFAULT_ACTION_FAILURE_MESSAGE, NOT_FOUND_LABEL, NOT_SET_LABEL } from "../../lib/display-copy";
 import { DesktopCommandError } from "../../lib/tauri";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
@@ -21,6 +21,7 @@ export const SETTINGS_SECTIONS = [
 ] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 export const DEFAULT_SETTINGS_SECTION: SettingsSection = SETTINGS_SECTIONS[0];
+export type SettingsSectionDirection = "next" | "previous" | "first" | "last";
 
 const SETTINGS_SECTION_LABELS: Record<SettingsSection, string> = {
   general: "General",
@@ -30,6 +31,13 @@ const SETTINGS_SECTION_LABELS: Record<SettingsSection, string> = {
   updates: "Updates",
   advanced: "Advanced",
 };
+
+function findShellGuidanceVariants(
+  shellGuidance: ShellHookGuidance | undefined,
+) {
+  const variants = shellGuidance?.variants;
+  return Array.isArray(variants) && variants.length ? variants : undefined;
+}
 
 export function formatSettingsMutationError(error: unknown) {
   if (error instanceof DesktopCommandError) {
@@ -81,7 +89,7 @@ export function sectionLabel(section: SettingsSection) {
 
 export function nextSettingsSection(
   currentSection: SettingsSection,
-  direction: "next" | "previous" | "first" | "last",
+  direction: SettingsSectionDirection,
 ) {
   const currentIndex = SETTINGS_SECTIONS.indexOf(currentSection);
   if (currentIndex === -1) {
@@ -98,6 +106,88 @@ export function nextSettingsSection(
           : Math.max(currentIndex - 1, 0);
 
   return SETTINGS_SECTIONS[targetIndex] ?? currentSection;
+}
+
+export function settingsSectionDirectionForKey(key: string): SettingsSectionDirection | null {
+  switch (key) {
+    case "ArrowDown":
+    case "ArrowRight":
+      return "next";
+    case "ArrowUp":
+    case "ArrowLeft":
+      return "previous";
+    case "Home":
+      return "first";
+    case "End":
+      return "last";
+    default:
+      return null;
+  }
+}
+
+export function resolveSelectedShellVariant(
+  shellGuidance: ShellHookGuidance | undefined,
+  selectedShell: string,
+) {
+  const variants = findShellGuidanceVariants(shellGuidance);
+  if (!variants) {
+    return undefined;
+  }
+  return variants.find((variant) => variant.shell === selectedShell) ?? variants[0];
+}
+
+export function resolveSelectedShell(
+  shellGuidance: ShellHookGuidance | undefined,
+  currentShell: string,
+) {
+  if (currentShell) {
+    return currentShell;
+  }
+
+  const variants = findShellGuidanceVariants(shellGuidance);
+  if (!variants) {
+    return "";
+  }
+
+  const preferred = shellGuidance?.detected_shell ?? "";
+  return variants.find((variant) => variant.shell === preferred)?.shell ?? variants[0].shell;
+}
+
+export function clipboardUnavailableMessage(label: string) {
+  return `Clipboard access is unavailable. Copy the ${label} step manually.`;
+}
+
+export function clipboardSuccessMessage(label: string) {
+  return `Copied ${label} step.`;
+}
+
+export function exportedDiagnosticMessage(filename: string) {
+  return `Saved ${filename}.`;
+}
+
+export function openedAppDataFolderMessage(path: string) {
+  return `Opened ${path}.`;
+}
+
+export function launchAtLoginErrorMessage(error: unknown) {
+  return error instanceof Error
+    ? error.message
+    : "AI Switch could not update launch at login.";
+}
+
+export function appDataFolderErrorMessage(error: unknown) {
+  return error instanceof Error
+    ? error.message
+    : "AI Switch could not open the app data folder.";
+}
+
+export function launchAtLoginDescription(
+  supported: boolean,
+  detail: string | null | undefined,
+) {
+  return supported
+    ? undefined
+    : detail ?? "Launch at login is not available in this environment.";
 }
 
 export function buildSettingsRequest(input: {

@@ -39,15 +39,25 @@ import {
   buildDesktopPreferencesUpdate,
   buildResetOnboardingPreferences,
   buildSettingsRequest,
+  clipboardSuccessMessage,
+  clipboardUnavailableMessage,
   DEFAULT_SETTINGS_SECTION,
   effectiveRuntimePath,
+  exportedDiagnosticMessage,
   findShellHookCheck,
   formatSettingsMutationError,
+  launchAtLoginDescription,
+  launchAtLoginErrorMessage,
   LAUNCH_AT_LOGIN_DISABLED_MESSAGE,
   LAUNCH_AT_LOGIN_ENABLED_MESSAGE,
   nextSettingsSection,
+  openedAppDataFolderMessage,
+  appDataFolderErrorMessage,
+  resolveSelectedShell,
+  resolveSelectedShellVariant,
   sectionLabel,
   selectedRuntimePath,
+  settingsSectionDirectionForKey,
   SETTINGS_SECTIONS,
   type SettingsSection,
   WINDOW_LAYOUT_RESET_MESSAGE,
@@ -128,14 +138,13 @@ export function SettingsPanel({
       );
     },
     onError: (error) => {
-      setLaunchMessage(error instanceof Error ? error.message : "AI Switch could not update launch at login.");
+      setLaunchMessage(launchAtLoginErrorMessage(error));
     },
   });
-  const selectedVariant = useMemo(() => {
-    const variants = shellGuidance.data?.variants ?? [];
-    if (!variants.length) return undefined;
-    return variants.find((variant) => variant.shell === selectedShell) ?? variants[0];
-  }, [selectedShell, shellGuidance.data]);
+  const selectedVariant = useMemo(
+    () => resolveSelectedShellVariant(shellGuidance.data, selectedShell),
+    [selectedShell, shellGuidance.data],
+  );
   const launchAtLoginSupported = launchAtLogin.data?.supported ?? false;
   const launchAtLoginEnabled = launchAtLogin.data?.enabled ?? false;
   const launchAtLoginDetail = launchAtLogin.data?.detail;
@@ -149,12 +158,12 @@ export function SettingsPanel({
   );
 
   useEffect(() => {
-    if (!shellGuidance.data?.variants.length) return;
-    const preferred = shellGuidance.data.detected_shell;
-    const next = shellGuidance.data.variants.find((variant) => variant.shell === preferred)?.shell
-      ?? shellGuidance.data.variants[0].shell;
-    setSelectedShell((current) => current || next);
-  }, [shellGuidance.data]);
+    const next = resolveSelectedShell(shellGuidance.data, selectedShell);
+    if (!next || next === selectedShell) {
+      return;
+    }
+    setSelectedShell(next);
+  }, [selectedShell, shellGuidance.data]);
 
   useEffect(() => {
     setRuntimeKind(settings.runtime_kind);
@@ -199,18 +208,18 @@ export function SettingsPanel({
 
   async function copyText(value: string, label: string) {
     if (!navigator.clipboard?.writeText) {
-      setCopyMessage(`Clipboard access is unavailable. Copy the ${label} step manually.`);
+      setCopyMessage(clipboardUnavailableMessage(label));
       return;
     }
     await navigator.clipboard.writeText(value);
-    setCopyMessage(`Copied ${label} step.`);
+    setCopyMessage(clipboardSuccessMessage(label));
   }
 
   async function exportReport() {
     setSecurityMessage("");
     try {
       const result = await exportDiagnosticBundle();
-      const message = `Saved ${result.filename}.`;
+      const message = exportedDiagnosticMessage(result.filename);
       setSecurityMessage(message);
       void notifyDesktop({
         title: "Diagnostic report exported",
@@ -227,14 +236,13 @@ export function SettingsPanel({
     setAdvancedMessage("");
     try {
       const path = await openAppDataFolder();
-      setAdvancedMessage(`Opened ${path}.`);
+      setAdvancedMessage(openedAppDataFolderMessage(path));
       void notifyDesktop({
         title: "App data folder opened",
         body: path,
       });
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "AI Switch could not open the app data folder.";
+      const message = appDataFolderErrorMessage(error);
       setAdvancedMessage(message);
     }
   }
@@ -305,28 +313,12 @@ export function SettingsPanel({
       return;
     }
 
-    switch (event.key) {
-      case "ArrowDown":
-      case "ArrowRight":
-        event.preventDefault();
-        moveSectionSelection(section, "next");
-        break;
-      case "ArrowUp":
-      case "ArrowLeft":
-        event.preventDefault();
-        moveSectionSelection(section, "previous");
-        break;
-      case "Home":
-        event.preventDefault();
-        moveSectionSelection(section, "first");
-        break;
-      case "End":
-        event.preventDefault();
-        moveSectionSelection(section, "last");
-        break;
-      default:
-        break;
+    const direction = settingsSectionDirectionForKey(event.key);
+    if (!direction) {
+      return;
     }
+    event.preventDefault();
+    moveSectionSelection(section, direction);
   }
 
   return (
@@ -398,7 +390,7 @@ export function SettingsPanel({
                 <SettingsGroup title="Startup">
                   <ToggleRow
                     label="Launch at login"
-                    description={launchAtLoginSupported ? undefined : launchAtLoginDetail ?? "Launch at login is not available in this environment."}
+                    description={launchAtLoginDescription(launchAtLoginSupported, launchAtLoginDetail)}
                     control={
                       <button
                         type="button"

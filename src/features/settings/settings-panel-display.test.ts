@@ -3,18 +3,28 @@ import type { DesktopPreferences } from "../../lib/desktop-preferences";
 import { DesktopCommandError } from "../../lib/tauri";
 import type { AppBootstrap, DesktopSettings } from "../../lib/schemas";
 import {
+  appDataFolderErrorMessage,
   buildDesktopPreferencesUpdate,
   buildResetOnboardingPreferences,
   buildSettingsRequest,
+  clipboardSuccessMessage,
+  clipboardUnavailableMessage,
   DEFAULT_SETTINGS_SECTION,
   effectiveRuntimePath,
+  exportedDiagnosticMessage,
   findShellHookCheck,
   formatSettingsMutationError,
+  launchAtLoginDescription,
+  launchAtLoginErrorMessage,
   LAUNCH_AT_LOGIN_DISABLED_MESSAGE,
   LAUNCH_AT_LOGIN_ENABLED_MESSAGE,
   nextSettingsSection,
+  openedAppDataFolderMessage,
+  resolveSelectedShell,
+  resolveSelectedShellVariant,
   sectionLabel,
   selectedRuntimePath,
+  settingsSectionDirectionForKey,
   SETTINGS_SECTIONS,
   WINDOW_LAYOUT_RESET_MESSAGE,
 } from "./settings-panel-display";
@@ -62,6 +72,37 @@ function makeDesktopPreferences(
   };
 }
 
+function makeShellGuidance() {
+  return {
+    note: "Use the detected shell",
+    capabilities: ["install", "verify"],
+    manual_apply_examples: ["source ~/.zshrc"],
+    detected_shell: "zsh",
+    variants: [
+      {
+        title: "Zsh",
+        shell: "zsh",
+        config_path: "~/.zshrc",
+        alternate_config_path: null,
+        install_command: "source ~/.zshrc",
+        reload_command: "exec zsh",
+        verify_command: "aisw doctor",
+        verify_expected: "ok",
+      },
+      {
+        title: "Bash",
+        shell: "bash",
+        config_path: "~/.bashrc",
+        alternate_config_path: null,
+        install_command: "source ~/.bashrc",
+        reload_command: "exec bash",
+        verify_command: "aisw doctor",
+        verify_expected: "ok",
+      },
+    ],
+  };
+}
+
 describe("settings-panel-display", () => {
   it("shares stable settings feedback copy", () => {
     expect(LAUNCH_AT_LOGIN_ENABLED_MESSAGE).toBe("Launch at login enabled.");
@@ -101,6 +142,46 @@ describe("settings-panel-display", () => {
       detail: "Terminal integration guidance remains informational.",
     });
     expect(findShellHookCheck(undefined)).toBeNull();
+  });
+
+  it("shares shell selection, keyboard navigation, and action copy", () => {
+    expect(resolveSelectedShellVariant(makeShellGuidance(), "bash")).toEqual(
+      makeShellGuidance().variants[1],
+    );
+    expect(resolveSelectedShellVariant(makeShellGuidance(), "fish")).toEqual(
+      makeShellGuidance().variants[0],
+    );
+    expect(resolveSelectedShell(makeShellGuidance(), "")).toBe("zsh");
+    expect(resolveSelectedShell(makeShellGuidance(), "bash")).toBe("bash");
+    expect(resolveSelectedShell(undefined, "")).toBe("");
+
+    expect(settingsSectionDirectionForKey("ArrowDown")).toBe("next");
+    expect(settingsSectionDirectionForKey("ArrowLeft")).toBe("previous");
+    expect(settingsSectionDirectionForKey("Home")).toBe("first");
+    expect(settingsSectionDirectionForKey("End")).toBe("last");
+    expect(settingsSectionDirectionForKey("Enter")).toBeNull();
+
+    expect(clipboardUnavailableMessage("setup")).toBe(
+      "Clipboard access is unavailable. Copy the setup step manually.",
+    );
+    expect(clipboardSuccessMessage("verify")).toBe("Copied verify step.");
+    expect(exportedDiagnosticMessage("support.zip")).toBe("Saved support.zip.");
+    expect(openedAppDataFolderMessage("/tmp/aisw")).toBe("Opened /tmp/aisw.");
+    expect(launchAtLoginErrorMessage(new Error("Nope"))).toBe("Nope");
+    expect(launchAtLoginErrorMessage(null)).toBe(
+      "AI Switch could not update launch at login.",
+    );
+    expect(appDataFolderErrorMessage(new Error("Missing"))).toBe("Missing");
+    expect(appDataFolderErrorMessage(null)).toBe(
+      "AI Switch could not open the app data folder.",
+    );
+    expect(launchAtLoginDescription(true, "ignored")).toBeUndefined();
+    expect(launchAtLoginDescription(false, "Managed externally")).toBe(
+      "Managed externally",
+    );
+    expect(launchAtLoginDescription(false, null)).toBe(
+      "Launch at login is not available in this environment.",
+    );
   });
 
   it("shares effective and resolved runtime paths", () => {
