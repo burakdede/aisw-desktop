@@ -37,6 +37,8 @@ import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import {
   buildDesktopPreferencesUpdate,
+  createDesktopPreferencesDraft,
+  createSettingsDraft,
   buildResetOnboardingPreferences,
   buildSettingsRequest,
   clipboardSuccessMessage,
@@ -51,6 +53,7 @@ import {
   LAUNCH_AT_LOGIN_DISABLED_MESSAGE,
   LAUNCH_AT_LOGIN_ENABLED_MESSAGE,
   nextSettingsSection,
+  nextRuntimeSourceSelection,
   openedAppDataFolderMessage,
   appDataFolderErrorMessage,
   resolveSelectedShell,
@@ -90,10 +93,12 @@ export function SettingsPanel({
   );
   const { updateSettingsMutation, checkForUpdatesMutation, installUpdateMutation, mutationLock } =
     useDesktopActions();
-  const [runtimeKind, setRuntimeKind] = useState(settings.runtime_kind);
-  const [runtimePath, setRuntimePath] = useState(settings.runtime_path ?? "");
-  const [aiswHome, setAiswHome] = useState(settings.aisw_home ?? "");
-  const [updateChannel, setUpdateChannel] = useState(settings.update_channel);
+  const initialSettingsDraft = createSettingsDraft(settings);
+  const initialDesktopPreferencesDraft = createDesktopPreferencesDraft(desktopPreferences);
+  const [runtimeKind, setRuntimeKind] = useState(initialSettingsDraft.runtimeKind);
+  const [runtimePath, setRuntimePath] = useState(initialSettingsDraft.runtimePath);
+  const [aiswHome, setAiswHome] = useState(initialSettingsDraft.aiswHome);
+  const [updateChannel, setUpdateChannel] = useState(initialSettingsDraft.updateChannel);
   const [selectedSection, setSelectedSection] = useState<SettingsSection>(initialSection ?? DEFAULT_SETTINGS_SECTION);
   const [selectedShell, setSelectedShell] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
@@ -101,16 +106,16 @@ export function SettingsPanel({
   const [advancedMessage, setAdvancedMessage] = useState("");
   const [launchMessage, setLaunchMessage] = useState("");
   const [appearance, setAppearance] = useState<DesktopPreferences["appearance"]>(
-    desktopPreferences?.appearance ?? "system",
+    initialDesktopPreferencesDraft.appearance,
   );
   const [defaultSection, setDefaultSection] = useState<DesktopPreferences["defaultSection"]>(
-    desktopPreferences?.defaultSection ?? "overview",
+    initialDesktopPreferencesDraft.defaultSection,
   );
   const [showMenuBarIcon, setShowMenuBarIcon] = useState(
-    desktopPreferences?.showMenuBarIcon ?? true,
+    initialDesktopPreferencesDraft.showMenuBarIcon,
   );
   const [restoreWindowState, setRestoreWindowState] = useState(
-    desktopPreferences?.restoreWindowState ?? true,
+    initialDesktopPreferencesDraft.restoreWindowState,
   );
   const readEnabled = useMutationAwareQueryEnabled();
   const shellGuidance = useQuery({
@@ -166,10 +171,11 @@ export function SettingsPanel({
   }, [selectedShell, shellGuidance.data]);
 
   useEffect(() => {
-    setRuntimeKind(settings.runtime_kind);
-    setRuntimePath(settings.runtime_path ?? "");
-    setAiswHome(settings.aisw_home ?? "");
-    setUpdateChannel(settings.update_channel);
+    const nextDraft = createSettingsDraft(settings);
+    setRuntimeKind(nextDraft.runtimeKind);
+    setRuntimePath(nextDraft.runtimePath);
+    setAiswHome(nextDraft.aiswHome);
+    setUpdateChannel(nextDraft.updateChannel);
   }, [
     settings.runtime_kind,
     settings.runtime_path,
@@ -199,10 +205,11 @@ export function SettingsPanel({
   }, [initialSection]);
 
   useEffect(() => {
-    setAppearance(desktopPreferences?.appearance ?? "system");
-    setDefaultSection(desktopPreferences?.defaultSection ?? "overview");
-    setShowMenuBarIcon(desktopPreferences?.showMenuBarIcon ?? true);
-    setRestoreWindowState(desktopPreferences?.restoreWindowState ?? true);
+    const nextDraft = createDesktopPreferencesDraft(desktopPreferences);
+    setAppearance(nextDraft.appearance);
+    setDefaultSection(nextDraft.defaultSection);
+    setShowMenuBarIcon(nextDraft.showMenuBarIcon);
+    setRestoreWindowState(nextDraft.restoreWindowState);
     setLaunchMessage("");
   }, [desktopPreferences]);
 
@@ -485,10 +492,12 @@ export function SettingsPanel({
                       value={runtimeKind}
                       onChange={(event) => {
                         const nextRuntimeKind = event.target.value as typeof runtimeKind;
-                        const nextRuntimePath =
-                          nextRuntimeKind === "custom" ? runtimePath : "";
-                        setRuntimeKind(nextRuntimeKind);
-                        setRuntimePath(nextRuntimePath);
+                        const nextSelection = nextRuntimeSourceSelection(
+                          nextRuntimeKind,
+                          runtimePath,
+                        );
+                        setRuntimeKind(nextSelection.runtimeKind);
+                        setRuntimePath(nextSelection.runtimePath);
                         updateSettingsMutation.mutate(
                           buildSettingsRequest({
                             settings,
@@ -497,8 +506,8 @@ export function SettingsPanel({
                             aiswHome,
                             updateChannel,
                             next: {
-                              runtimeKind: nextRuntimeKind,
-                              runtimePath: nextRuntimePath,
+                              runtimeKind: nextSelection.runtimeKind,
+                              runtimePath: nextSelection.runtimePath,
                             },
                           }),
                         );

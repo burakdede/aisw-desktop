@@ -22,6 +22,16 @@ export const SETTINGS_SECTIONS = [
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 export const DEFAULT_SETTINGS_SECTION: SettingsSection = SETTINGS_SECTIONS[0];
 export type SettingsSectionDirection = "next" | "previous" | "first" | "last";
+export type SettingsDraft = {
+  runtimeKind: DesktopSettings["runtime_kind"];
+  runtimePath: string;
+  aiswHome: string;
+  updateChannel: string;
+};
+export type DesktopPreferencesDraft = Pick<
+  DesktopPreferences,
+  "appearance" | "defaultSection" | "showMenuBarIcon" | "restoreWindowState"
+>;
 
 const SETTINGS_SECTION_LABELS: Record<SettingsSection, string> = {
   general: "General",
@@ -188,6 +198,37 @@ export function launchAtLoginDescription(
   return supported
     ? undefined
     : detail ?? "Launch at login is not available in this environment.";
+}
+
+export function createSettingsDraft(settings: DesktopSettings): SettingsDraft {
+  return {
+    runtimeKind: settings.runtime_kind,
+    runtimePath: settings.runtime_path ?? "",
+    aiswHome: settings.aisw_home ?? "",
+    updateChannel: settings.update_channel,
+  };
+}
+
+export function createDesktopPreferencesDraft(
+  desktopPreferences?: DesktopPreferences,
+): DesktopPreferencesDraft {
+  const preferences = desktopPreferences ?? DEFAULT_DESKTOP_PREFERENCES;
+  return {
+    appearance: preferences.appearance,
+    defaultSection: preferences.defaultSection,
+    showMenuBarIcon: preferences.showMenuBarIcon,
+    restoreWindowState: preferences.restoreWindowState,
+  };
+}
+
+export function nextRuntimeSourceSelection(
+  nextRuntimeKind: DesktopSettings["runtime_kind"],
+  currentRuntimePath: string,
+) {
+  return {
+    runtimeKind: nextRuntimeKind,
+    runtimePath: nextRuntimeKind === "custom" ? currentRuntimePath : "",
+  } satisfies Pick<SettingsDraft, "runtimeKind" | "runtimePath">;
 }
 
 export function buildSettingsRequest(input: {

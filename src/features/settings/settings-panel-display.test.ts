@@ -9,6 +9,8 @@ import {
   buildSettingsRequest,
   clipboardSuccessMessage,
   clipboardUnavailableMessage,
+  createDesktopPreferencesDraft,
+  createSettingsDraft,
   DEFAULT_SETTINGS_SECTION,
   effectiveRuntimePath,
   exportedDiagnosticMessage,
@@ -19,6 +21,7 @@ import {
   LAUNCH_AT_LOGIN_DISABLED_MESSAGE,
   LAUNCH_AT_LOGIN_ENABLED_MESSAGE,
   nextSettingsSection,
+  nextRuntimeSourceSelection,
   openedAppDataFolderMessage,
   resolveSelectedShell,
   resolveSelectedShellVariant,
@@ -221,6 +224,31 @@ describe("settings-panel-display", () => {
   });
 
   it("builds settings requests and desktop preference updates", () => {
+    expect(createSettingsDraft(makeSettings())).toEqual({
+      runtimeKind: "bundled",
+      runtimePath: "",
+      aiswHome: "",
+      updateChannel: "stable",
+    });
+    expect(
+      createDesktopPreferencesDraft(
+        makeDesktopPreferences({ appearance: "dark", showMenuBarIcon: false }),
+      ),
+    ).toEqual({
+      appearance: "dark",
+      defaultSection: "overview",
+      showMenuBarIcon: false,
+      restoreWindowState: true,
+    });
+    expect(nextRuntimeSourceSelection("system", "/tmp/aisw")).toEqual({
+      runtimeKind: "system",
+      runtimePath: "",
+    });
+    expect(nextRuntimeSourceSelection("custom", "/tmp/aisw")).toEqual({
+      runtimeKind: "custom",
+      runtimePath: "/tmp/aisw",
+    });
+
     expect(
       buildSettingsRequest({
         settings: makeSettings({
