@@ -168,7 +168,7 @@ Optional signing secrets:
 The helper reads each secret from either `$SECRET_NAME` or `$SECRET_NAME_FILE`.
 That makes it safe to keep multiline values such as `TAURI_SIGNING_PRIVATE_KEY` and `APPLE_CERTIFICATE` in local files instead of shell history.
 
-To upload the macOS signing and notarization secrets in one step, run:
+To upload the macOS signing and notarization secrets in one step with direct CLI flags, run:
 
 ```sh
 npm run configure:macos-signing -- \
@@ -182,3 +182,14 @@ npm run configure:macos-signing -- \
 ```
 
 This helper base64-encodes the `.p12` locally and uploads all six Apple secrets to the target GitHub environment.
+
+To avoid leaving secrets in shell history, copy `.env.macos-signing.example` to `.env.macos-signing`, point the `*_FILE` entries at local secret files, then run:
+
+```sh
+npm run configure:macos-signing -- \
+  --repo burakdede/aisw-desktop \
+  --env-file .env.macos-signing
+```
+
+Supported env-file keys match the helper inputs:
+`APPLE_CERTIFICATE_PATH`, `APPLE_CERTIFICATE_P12`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_CERTIFICATE_PASSWORD_FILE`, `APPLE_SIGNING_IDENTITY`, `APPLE_SIGNING_IDENTITY_FILE`, `APPLE_ID`, `APPLE_ID_FILE`, `APPLE_PASSWORD`, `APPLE_PASSWORD_FILE`, `APPLE_TEAM_ID`, and `APPLE_TEAM_ID_FILE`.

@@ -22,6 +22,40 @@ function base64Encode(bytes) {
   return Buffer.from(bytes).toString("base64");
 }
 
+function parseEnvFileContents(contents) {
+  const values = {};
+
+  for (const rawLine of contents.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) {
+      continue;
+    }
+
+    const separatorIndex = line.indexOf("=");
+    if (separatorIndex <= 0) {
+      throw new Error(`Invalid env file line: ${rawLine}`);
+    }
+
+    const key = line.slice(0, separatorIndex).trim();
+    let value = line.slice(separatorIndex + 1).trim();
+
+    if (
+      (value.startsWith("\"") && value.endsWith("\"")) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    values[key] = value;
+  }
+
+  return values;
+}
+
+export function loadEnvFile(path) {
+  return parseEnvFileContents(readFileSync(path, "utf8"));
+}
+
 function resolveValue({ direct, file, label }) {
   if (direct && file) {
     throw new Error(`Set either ${label} or ${label}_FILE, not both.`);
@@ -46,6 +80,7 @@ function parseArgs(argv) {
     certPassword: "",
     dryRun: false,
     environment: DEFAULT_ENVIRONMENT,
+    envFile: "",
     repo: "",
     signingIdentity: "",
     teamId: "",
@@ -60,6 +95,11 @@ function parseArgs(argv) {
     }
     if (argument === "--env") {
       options.environment = argv[index + 1] ?? "";
+      index += 1;
+      continue;
+    }
+    if (argument === "--env-file") {
+      options.envFile = argv[index + 1] ?? "";
       index += 1;
       continue;
     }
@@ -211,9 +251,10 @@ export function configureMacosSigningSecrets(
   options = {},
   { env = process.env, runner = spawnSync, stdout = process.stdout } = {},
 ) {
+  const mergedEnv = options.envFile ? { ...env, ...loadEnvFile(options.envFile) } : env;
   const environment = options.environment || DEFAULT_ENVIRONMENT;
-  const repo = options.repo || resolveRepository(env, runner);
-  const entries = collectMacosSigningSecrets(options, env);
+  const repo = options.repo || resolveRepository(mergedEnv, runner);
+  const entries = collectMacosSigningSecrets(options, mergedEnv);
 
   stdout.write(`Using ${repo} / ${environment}\n`);
   stdout.write(`Uploading ${entries.length} macOS signing secrets.\n`);

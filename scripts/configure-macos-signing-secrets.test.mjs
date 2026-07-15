@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   collectMacosSigningSecrets,
   configureMacosSigningSecrets,
+  loadEnvFile,
 } from "./configure-macos-signing-secrets.mjs";
 
 const tempDirs = [];
@@ -69,6 +70,53 @@ describe("configure-macos-signing-secrets", () => {
       name: "APPLE_CERTIFICATE_PASSWORD",
       value: "password-from-file",
     });
+  });
+
+  it("loads macOS signing values from an env file", () => {
+    const certPath = makeTempFile("certificate.p12", "p12");
+    const envFilePath = makeTempFile(
+      ".env.macos-signing",
+      [
+        "# macOS signing",
+        `APPLE_CERTIFICATE_PATH=${certPath}`,
+        "APPLE_CERTIFICATE_PASSWORD=certificate-password",
+        "APPLE_SIGNING_IDENTITY='Developer ID Application: Example, Inc. (TEAMID1234)'",
+        "APPLE_ID=ship@example.com",
+        "APPLE_PASSWORD=app-specific-password",
+        "APPLE_TEAM_ID=TEAMID1234",
+      ].join("\n"),
+    );
+
+    expect(loadEnvFile(envFilePath)).toEqual({
+      APPLE_CERTIFICATE_PATH: certPath,
+      APPLE_CERTIFICATE_PASSWORD: "certificate-password",
+      APPLE_SIGNING_IDENTITY: "Developer ID Application: Example, Inc. (TEAMID1234)",
+      APPLE_ID: "ship@example.com",
+      APPLE_PASSWORD: "app-specific-password",
+      APPLE_TEAM_ID: "TEAMID1234",
+    });
+
+    const runner = vi.fn(() => {
+      throw new Error("runner should not be used");
+    });
+    const stdout = { write: vi.fn() };
+
+    const result = configureMacosSigningSecrets(
+      {
+        dryRun: true,
+        envFile: envFilePath,
+        repo: "burakdede/aisw-desktop",
+      },
+      {
+        env: {},
+        runner,
+        stdout,
+      },
+    );
+
+    expect(result.dryRun).toBe(true);
+    expect(result.secretCount).toBe(6);
+    expect(runner).not.toHaveBeenCalled();
   });
 
   it("fails when a required value is missing", () => {

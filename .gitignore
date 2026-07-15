@@ -13,5 +13,8 @@ docs/aisw-desktop-product-spec.md
 ai-switch-desktop-uiux-spec.md
 aisw-redesign-screens.md
 tmp-backups-mock.png
+.env.macos-signing
+.env.macos-signing.local
+secrets/
 !src/lib/
 !src/lib/**
