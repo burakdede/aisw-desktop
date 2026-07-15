@@ -12,7 +12,6 @@ import {
 } from "../../../lib/tool-guidance";
 import { supportedStateModes } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
-import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import {
   activeSetLabel,
   contextDisplayLabel,
@@ -20,6 +19,17 @@ import {
 } from "../../../lib/profile-display";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { BACKEND_UNAVAILABLE_LABEL } from "../../../lib/display-copy";
+import {
+  overviewAuthMethodLabel,
+  overviewDiagnosticWarning,
+  overviewHeadline,
+  overviewMetaLabel,
+  overviewRecentSummary,
+  overviewStateModeCopy,
+  overviewTokenWarning,
+  overviewWorkspaceActionLabel,
+  resolveOverallOverviewState,
+} from "../../../lib/overview-display";
 import {
   overviewHealthLabel,
   overviewHealthSymbol,
@@ -31,7 +41,7 @@ import {
   type OverviewHealthState,
 } from "../../../lib/status-display";
 import { toolDisplayName } from "../../../lib/tool-display";
-import { countLabel, pluralChoice, titleCase } from "../../../lib/utils";
+import { titleCase } from "../../../lib/utils";
 import {
   preferredProfileImportMode,
   supportsProfileImportMode,
@@ -89,20 +99,7 @@ export function OverviewPanel({
   const selectedStatus =
     snapshot.statuses.find((status) => status.tool === selectedTool) ?? snapshot.statuses[0] ?? null;
   const overviewStates = snapshot.statuses.map(resolveOverviewHealthState);
-  const readyCount = overviewStates.filter((state) => state === "ready").length;
-  const attentionCount = overviewStates.filter((state) => state === "needs_attention").length;
-  const notConfiguredCount = overviewStates.filter((state) => state === "not_configured").length;
-  const notVerifiedCount = overviewStates.filter((state) => state === "not_verified").length;
-  const blockedCount = overviewStates.filter((state) => state === "blocked").length;
-  const overallState: OverviewHealthState = blockedCount
-    ? "blocked"
-    : attentionCount
-      ? "needs_attention"
-      : !snapshot.statuses.length || readyCount === 0
-        ? "not_configured"
-        : readyCount === snapshot.statuses.length
-          ? "ready"
-          : "not_verified";
+  const overallState: OverviewHealthState = resolveOverallOverviewState(overviewStates);
   const workspaceResult = lastCommandResults.global.workspace;
   const contextResult = lastCommandResults.global.context;
   const bulkResult = lastCommandResults.global["profile-set"] ?? lastCommandResults.global["switch-all"];
@@ -125,41 +122,10 @@ export function OverviewPanel({
     }
   }, [compactLayout]);
 
-  const overviewHeadline = useMemo(() => {
-    if (blockedCount) {
-      return `${countLabel(blockedCount, "tool")} blocked`;
-    }
-    if (attentionCount) {
-      return `${countLabel(attentionCount, "tool")} ${pluralChoice(attentionCount, "needs", "need")} attention`;
-    }
-    if (notConfiguredCount === snapshot.statuses.length) {
-      return "No tools configured yet";
-    }
-    if (notVerifiedCount) {
-      return `${countLabel(notVerifiedCount, "tool")} ${pluralChoice(notVerifiedCount, "still needs", "still need")} verification`;
-    }
-    if (readyCount) {
-      return `${countLabel(readyCount, "tool")} ready`;
-    }
-    return "Review tool readiness";
-  }, [attentionCount, blockedCount, notConfiguredCount, notVerifiedCount, readyCount, snapshot.statuses.length]);
-  const overviewMetaLabel = useMemo(() => {
-    if (blockedCount) {
-      return "Fix blocked tools first";
-    }
-    if (attentionCount) {
-      return "Review mismatches before coding";
-    }
-    if (notVerifiedCount) {
-      return "Verification pending";
-    }
-    if (readyCount) {
-      return "Ready to switch";
-    }
-    return "No profiles configured";
-  }, [attentionCount, blockedCount, notVerifiedCount, readyCount]);
+  const headline = useMemo(() => overviewHeadline(overviewStates), [overviewStates]);
+  const metaLabel = useMemo(() => overviewMetaLabel(overviewStates), [overviewStates]);
 
-  const recentSummary = latestOverviewSummary({
+  const recentSummary = overviewRecentSummary({
     bulkResult,
     workspaceResult,
     contextResult,
@@ -178,10 +144,10 @@ export function OverviewPanel({
           <span className={`overview-status-symbol overview-status-symbol-${overallState}`} aria-hidden="true">
             {overviewHealthSymbol(overallState)}
           </span>
-          <strong>{overviewHeadline}</strong>
+          <strong>{headline}</strong>
         </div>
         <p className="overview-status-meta">
-          {hasWorkspaceMismatch ? `Expected set: ${expectedWorkspaceDisplay}` : overviewMetaLabel}
+          {hasWorkspaceMismatch ? `Expected set: ${expectedWorkspaceDisplay}` : metaLabel}
         </p>
       </div>
 
@@ -428,7 +394,7 @@ function ToolInspector({
           }
         : workspaceMismatch
           ? {
-              label: workspaceMismatch.canResolveDirectly ? "Use Expected Set" : "Open Sets",
+              label: overviewWorkspaceActionLabel(workspaceMismatch.canResolveDirectly),
               onClick: workspaceMismatch.onResolve,
             }
           : null;
@@ -580,18 +546,14 @@ function ToolInspector({
             ))}
           </div>
           <p className="inline-note">
-            {stateModes.includes("shared")
-              ? stateMode === "shared"
-                ? "Keep the normal tool config and history while switching credentials only."
-                : "Separate configuration, history, and extensions for this profile."
-              : "This tool keeps authentication and local state together."}
+            {overviewStateModeCopy(stateModes, stateMode, status.tool)}
           </p>
         </div>
       ) : hasProfiles && status.binary_found ? (
         <div className="overview-inspector-control">
           <span className="overview-inspector-control-label">State mode</span>
           <strong className="overview-static-value">Isolated</strong>
-          <p className="inline-note">Gemini keeps authentication and local state together.</p>
+          <p className="inline-note">{overviewStateModeCopy([], "isolated", status.tool)}</p>
         </div>
       ) : null}
 
@@ -700,7 +662,7 @@ function ToolInspector({
                         workspaceMismatch.onResolve();
                       }}
                     >
-                      {workspaceMismatch.canResolveDirectly ? "Use Expected Set" : "Open Sets"}
+                      {overviewWorkspaceActionLabel(workspaceMismatch.canResolveDirectly)}
                     </button>
                   ) : null}
                   {!status.binary_found ? (
@@ -737,7 +699,7 @@ function ToolInspector({
         </div>
         <div>
           <dt>Authentication</dt>
-          <dd>{status.auth_method ? titleCase(status.auth_method.replace(/_/g, " ")) : "Not configured"}</dd>
+          <dd>{overviewAuthMethodLabel(status.auth_method)}</dd>
         </div>
         <div>
           <dt>Backend</dt>
@@ -754,7 +716,7 @@ function ToolInspector({
         <div className="overview-inline-notice overview-inline-notice-warn">
           <div className="overview-inline-notice-copy">
             <span className="overview-inline-notice-symbol" aria-hidden="true">▲</span>
-            <p>{formatTokenWarning(status)}</p>
+            <p>{overviewTokenWarning(status)}</p>
           </div>
         </div>
       ) : null}
@@ -763,7 +725,7 @@ function ToolInspector({
         <div className="overview-inline-notice overview-inline-notice-warn">
           <div className="overview-inline-notice-copy">
             <span className="overview-inline-notice-symbol" aria-hidden="true">▲</span>
-            <p>{formatDiagnosticWarning(status.warnings[0])}</p>
+            <p>{overviewDiagnosticWarning(status.warnings[0])}</p>
           </div>
         </div>
       ) : null}
@@ -784,59 +746,6 @@ function ToolInspector({
 
     </aside>
   );
-}
-
-function latestOverviewSummary({
-  bulkResult,
-  workspaceResult,
-  contextResult,
-}: {
-  bulkResult?: {
-    status: "success" | "error";
-    message: string;
-    remediation?: string;
-  };
-  workspaceResult?: {
-    status: "success" | "error";
-    message: string;
-    remediation?: string;
-  };
-  contextResult?: {
-    status: "success" | "error";
-    message: string;
-    remediation?: string;
-  };
-}) {
-  if (bulkResult) {
-    return `Last set result: ${bulkResult.message}${bulkResult.remediation ? ` Remediation: ${bulkResult.remediation}` : ""}`;
-  }
-  if (workspaceResult) {
-    return `Last project result: ${workspaceResult.message}${workspaceResult.remediation ? ` Remediation: ${workspaceResult.remediation}` : ""}`;
-  }
-  if (contextResult) {
-    return `Last set result: ${normalizeRuntimeLanguage(contextResult.message)}${contextResult.remediation ? ` Remediation: ${normalizeRuntimeLanguage(contextResult.remediation)}` : ""}`;
-  }
-  return "No recent set or workspace changes are recorded in this session.";
-}
-
-function formatTokenWarning(status: ToolStatus) {
-  const warning = status.token_warning;
-  if (!warning) {
-    return "Token state needs attention.";
-  }
-
-  const detail = warning.summary ?? warning.message ?? warning.code ?? "Token state needs attention.";
-  const suffix = warning.expires_at
-    ? ` Expires at ${warning.expires_at}.`
-    : typeof warning.expires_in_days === "number"
-      ? ` Expires in ${warning.expires_in_days} days.`
-      : "";
-  return `Token warning: ${detail}${suffix}`;
-}
-
-function formatDiagnosticWarning(warning: ToolStatus["warnings"][number]) {
-  const detail = warning.message ?? warning.code ?? "Warning reported by the runtime.";
-  return warning.remediation ? `Warning: ${detail} Remediation: ${warning.remediation}` : `Warning: ${detail}`;
 }
 
 const overviewCredentialBackendLabel = (backend: string | null | undefined) =>

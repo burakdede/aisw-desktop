@@ -1,7 +1,12 @@
 import { AppBootstrap, AppSnapshot } from "../../lib/schemas";
+import { toolDisplayName } from "../../lib/tool-display";
 import { toolSupportsEditableStateModes } from "../../lib/tool-registry";
 
 const EDITABLE_STATE_MODES = new Set(["isolated", "shared"]);
+const STATE_MODE_COPY: Record<string, string> = {
+  isolated: "Separate config, history, and extensions for this profile.",
+  shared: "Keep the normal tool config and history while switching credentials only.",
+};
 
 export function supportedStateModes(
   tool: string,
@@ -46,4 +51,12 @@ export function resolveGlobalStateMode(snapshot: AppSnapshot) {
   return editableStatuses.every((status) => status.state_mode === "shared")
     ? "shared"
     : "isolated";
+}
+
+export function stateModeDescription(mode: string) {
+  return STATE_MODE_COPY[mode] ?? "Use the runtime-supported state handling for this profile.";
+}
+
+export function fixedStateModeDescription(tool: string) {
+  return `${toolDisplayName(tool)} keeps authentication and local state together.`;
 }

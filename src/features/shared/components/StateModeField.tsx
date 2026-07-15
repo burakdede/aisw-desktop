@@ -1,10 +1,6 @@
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { titleCase } from "../../../lib/utils";
-
-const STATE_MODE_COPY: Record<string, string> = {
-  isolated: "Separate config, history, and extensions for this profile.",
-  shared: "Keep the normal tool config and history while switching credentials only.",
-};
+import { stateModeDescription } from "../state-modes";
 
 export function StateModeField({
   name,
@@ -21,9 +17,7 @@ export function StateModeField({
 }) {
   if (variant === "compact") {
     const selectedOption = options.find((option) => option === value) ?? options[0];
-    const copy =
-      STATE_MODE_COPY[selectedOption] ??
-      "Use the runtime-supported state handling for this profile.";
+    const copy = stateModeDescription(selectedOption);
     return (
       <fieldset className="state-mode-field state-mode-field-compact">
         <legend>State mode</legend>
@@ -43,10 +37,10 @@ export function StateModeField({
 
   return (
     <fieldset className="state-mode-field">
-      <legend>State mode</legend>
-      <div className="state-mode-options">
-        {options.map((option) => {
-          const copy = STATE_MODE_COPY[option] ?? "Use the runtime-supported state handling for this profile.";
+        <legend>State mode</legend>
+        <div className="state-mode-options">
+          {options.map((option) => {
+          const copy = stateModeDescription(option);
           const descriptionId = `${name}-${option}-description`;
           return (
             <div
