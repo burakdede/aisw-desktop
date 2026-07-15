@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, renderHook, screen, waitFor, within } from "@testing-library/react";
 import type { ReactNode } from "react";
+import packageJson from "../package.json";
 import { App } from "./App";
 import { SetupPanel } from "./features/onboarding/components/SetupPanel";
 import {
@@ -15,6 +16,8 @@ import { SettingsPanel } from "./features/settings/components/SettingsPanel";
 import { loadDesktopPreferences } from "./lib/desktop-preferences";
 import { desktopSettingsSchema } from "./lib/schemas";
 import type { AppBootstrap, AppSnapshot, DesktopSettings, InitReport } from "./lib/schemas";
+
+const CURRENT_APP_VERSION = packageJson.version;
 
 Object.assign(navigator, {
   clipboard: {
@@ -8098,11 +8101,11 @@ describe("App", () => {
         return {
           configured: true,
           channel: "stable",
-          current_version: "0.1.0",
+          current_version: CURRENT_APP_VERSION,
           endpoint: "https://updates.example.com/stable.json",
           update: {
             version: "0.2.0",
-            current_version: "0.1.0",
+            current_version: CURRENT_APP_VERSION,
             target: "darwin-aarch64",
             notes: "Faster switching and signed updater artifacts.",
           },
@@ -8113,7 +8116,7 @@ describe("App", () => {
         return {
           configured: true,
           channel: "stable",
-          current_version: "0.1.0",
+          current_version: CURRENT_APP_VERSION,
           installed_version: "0.2.0",
           restart_requested: true,
           message: "Update installed. Restart has been requested.",
@@ -8163,7 +8166,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Current version")).toBeInTheDocument();
-      expect(screen.getByText("0.1.0")).toBeInTheDocument();
+      expect(screen.getByText(CURRENT_APP_VERSION)).toBeInTheDocument();
       expect(screen.getByText("Bundled AISW Engine")).toBeInTheDocument();
       expect(screen.getByText("0.3.7")).toBeInTheDocument();
     });
@@ -8216,11 +8219,11 @@ describe("App", () => {
         return {
           configured: true,
           channel: "stable",
-          current_version: "0.1.0",
+          current_version: CURRENT_APP_VERSION,
           endpoint: "https://updates.example.com/stable.json",
           update: {
             version: "0.2.0",
-            current_version: "0.1.0",
+            current_version: CURRENT_APP_VERSION,
             target: "darwin-aarch64",
             notes: "Faster switching and signed updater artifacts.",
           },
@@ -8988,7 +8991,7 @@ describe("App", () => {
         return {
           configured: true,
           channel: currentSettings.update_channel,
-          current_version: "0.1.0",
+          current_version: CURRENT_APP_VERSION,
           endpoint: `https://updates.example.com/${currentSettings.update_channel}.json`,
           update: null,
           message: "No update is currently available.",
@@ -9052,11 +9055,11 @@ describe("App", () => {
         return {
           configured: true,
           channel: currentSettings.update_channel,
-          current_version: "0.1.0",
+          current_version: CURRENT_APP_VERSION,
           endpoint: `https://updates.example.com/${currentSettings.update_channel}.json`,
           update: {
             version: currentSettings.update_channel === "beta" ? "0.3.0-beta.1" : "0.2.0",
-            current_version: "0.1.0",
+            current_version: CURRENT_APP_VERSION,
             target: "darwin-aarch64",
             notes:
               currentSettings.update_channel === "beta"

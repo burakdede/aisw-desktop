@@ -46,7 +46,9 @@ describe("prepare-sidecar", () => {
     const sidecarPath = join(workspace, "src-tauri/binaries/aisw-x86_64-apple-darwin");
     expect(realpathSync(output)).toBe(realpathSync(sidecarPath));
     expect(readFileSync(sidecarPath)).toEqual(fixtureBinary("macho"));
-    expect(statSync(sidecarPath).mode & 0o777).toBe(0o755);
+    if (process.platform !== "win32") {
+      expect(statSync(sidecarPath).mode & 0o777).toBe(0o755);
+    }
   });
 
   it("preserves the windows executable extension", () => {

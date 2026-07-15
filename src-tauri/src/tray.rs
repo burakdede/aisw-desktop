@@ -758,8 +758,7 @@ fn combined_set_entries(
             enabled: true,
         })
         .collect::<Vec<_>>();
-    context_entries
-        .sort_by(|left, right| left.label.to_lowercase().cmp(&right.label.to_lowercase()));
+    context_entries.sort_by_key(|left| left.label.to_lowercase());
 
     let mut entries = Vec::with_capacity(
         shared_entries.len()

@@ -1,5 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
+const CURRENT_APP_VERSION = process.env.npm_package_version ?? "0.1.1";
+
 type ScenarioName =
   | "onboarding"
   | "onboardingMissingTool"
@@ -2286,12 +2288,12 @@ export async function installDesktopMock(
           return {
             configured: true,
             channel: state.settings.update_channel,
-            current_version: "0.1.0",
+            current_version: CURRENT_APP_VERSION,
             endpoint: `https://updates.example.com/${state.settings.update_channel}.json`,
             update: {
               version:
                 state.settings.update_channel === "beta" ? "0.3.0-beta.1" : "0.2.0",
-              current_version: "0.1.0",
+              current_version: CURRENT_APP_VERSION,
               target: "darwin-aarch64",
               notes:
                 state.settings.update_channel === "beta"
@@ -2312,7 +2314,7 @@ export async function installDesktopMock(
           return {
             configured: true,
             channel: state.settings.update_channel,
-            current_version: "0.1.0",
+            current_version: CURRENT_APP_VERSION,
             installed_version: "0.2.0",
             restart_requested: true,
             message: "Update installed. Restart has been requested.",
