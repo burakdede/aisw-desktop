@@ -279,6 +279,12 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         publishWorkflow.includes("cargo check --manifest-path src-tauri/Cargo.toml"),
     },
     {
+      label: "publish workflow requires the protected production environment",
+      ok:
+        publishWorkflow.includes("environment:") &&
+        publishWorkflow.includes("name: production"),
+    },
+    {
       label: "publish workflow pins the documented Node runtime",
       ok: publishWorkflow.includes("node-version: 20.19.0"),
     },

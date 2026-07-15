@@ -129,6 +129,8 @@ node-version: 20.19.0
     ".github/workflows/publish.yml",
     overrides.publishWorkflow ??
       `
+environment:
+  name: production
 Download aisw sidecar
 npm run prepare:sidecar -- --target \${{ matrix.target }} "\${{ runner.temp }}/aisw"
 npm run prepare:updater
@@ -228,6 +230,10 @@ describe("verify-release", () => {
       ok: true,
       checks: expect.arrayContaining([
         expect.objectContaining({ ok: true, label: "publish workflow enforces verification matrix" }),
+        expect.objectContaining({
+          ok: true,
+          label: "publish workflow requires the protected production environment",
+        }),
         expect.objectContaining({ ok: true, label: "publish workflow covers every supported release target" }),
         expect.objectContaining({
           ok: true,
@@ -284,6 +290,12 @@ Complete platform signing checks
     expect(result.checks).toContainEqual(
       expect.objectContaining({
         label: "publish workflow enforces verification matrix",
+        ok: false,
+      }),
+    );
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        label: "publish workflow requires the protected production environment",
         ok: false,
       }),
     );
