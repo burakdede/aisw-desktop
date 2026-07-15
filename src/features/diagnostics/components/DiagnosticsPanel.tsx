@@ -28,7 +28,7 @@ import {
 } from "../diagnostic-parsers";
 import { diagnosticCheckRows, type DiagnosticCheckRow } from "../../../lib/diagnostic-display";
 import { countLabel, pluralChoice } from "../../../lib/utils";
-import type { SettingsSection } from "../../settings/components/SettingsPanel";
+import type { SettingsSection } from "../../settings/settings-panel-display";
 import {
   buildDiagnosticQuickFixModels,
   buildDiagnosticInspectorActions,

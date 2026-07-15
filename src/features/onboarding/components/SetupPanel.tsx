@@ -49,7 +49,7 @@ import {
   type OnboardingHealthItem as HealthItem,
   type SetupStep,
 } from "../onboarding-display";
-import type { SettingsSection } from "../../settings/components/SettingsPanel";
+import type { SettingsSection } from "../../settings/settings-panel-display";
 import type { ProfileImportMode } from "../../shared/profile-capabilities";
 
 export function SetupPanel({

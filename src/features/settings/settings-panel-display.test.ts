@@ -1,13 +1,21 @@
 import { describe, expect, it } from "vitest";
+import type { DesktopPreferences } from "../../lib/desktop-preferences";
 import { DesktopCommandError } from "../../lib/tauri";
 import type { AppBootstrap, DesktopSettings } from "../../lib/schemas";
 import {
+  buildDesktopPreferencesUpdate,
+  buildResetOnboardingPreferences,
+  buildSettingsRequest,
+  DEFAULT_SETTINGS_SECTION,
   effectiveRuntimePath,
   findShellHookCheck,
   formatSettingsMutationError,
   LAUNCH_AT_LOGIN_DISABLED_MESSAGE,
   LAUNCH_AT_LOGIN_ENABLED_MESSAGE,
+  nextSettingsSection,
+  sectionLabel,
   selectedRuntimePath,
+  SETTINGS_SECTIONS,
   WINDOW_LAYOUT_RESET_MESSAGE,
 } from "./settings-panel-display";
 
@@ -37,6 +45,19 @@ function makeRuntimeStatus(
     },
     compatible: true,
     issues: [],
+    ...overrides,
+  };
+}
+
+function makeDesktopPreferences(
+  overrides: Partial<DesktopPreferences> = {},
+): DesktopPreferences {
+  return {
+    appearance: "system",
+    defaultSection: "overview",
+    showMenuBarIcon: true,
+    restoreWindowState: true,
+    reopenSetupAssistant: false,
     ...overrides,
   };
 }
@@ -98,5 +119,81 @@ describe("settings-panel-display", () => {
         makeRuntimeStatus(),
       ),
     ).toBe("/Users/test/bin/aisw");
+  });
+
+  it("shares section metadata and navigation order", () => {
+    expect(SETTINGS_SECTIONS).toEqual([
+      "general",
+      "runtime",
+      "shell",
+      "keyring",
+      "updates",
+      "advanced",
+    ]);
+    expect(DEFAULT_SETTINGS_SECTION).toBe("general");
+    expect(sectionLabel("runtime")).toBe("Engine");
+    expect(nextSettingsSection("runtime", "next")).toBe("shell");
+    expect(nextSettingsSection("runtime", "previous")).toBe("general");
+    expect(nextSettingsSection("runtime", "first")).toBe("general");
+    expect(nextSettingsSection("runtime", "last")).toBe("advanced");
+    expect(nextSettingsSection("advanced", "next")).toBe("advanced");
+  });
+
+  it("builds settings requests and desktop preference updates", () => {
+    expect(
+      buildSettingsRequest({
+        settings: makeSettings({
+          profile_sets: [{ name: "work", label: null, profiles: {} }],
+        }),
+        runtimeKind: "bundled",
+        runtimePath: "/tmp/ignored",
+        aiswHome: "",
+        updateChannel: "stable",
+        next: {
+          runtimeKind: "custom",
+          runtimePath: "/Users/test/bin/aisw",
+          aiswHome: "/Users/test/.aisw",
+          updateChannel: "beta",
+        },
+      }),
+    ).toEqual({
+      runtime_kind: "custom",
+      runtime_path: "/Users/test/bin/aisw",
+      aisw_home: "/Users/test/.aisw",
+      update_channel: "beta",
+      profile_labels: {},
+      profile_sets: [{ name: "work", label: null, profiles: {} }],
+    });
+
+    expect(
+      buildDesktopPreferencesUpdate({
+        desktopPreferences: makeDesktopPreferences({ reopenSetupAssistant: true }),
+        appearance: "system",
+        defaultSection: "overview",
+        showMenuBarIcon: true,
+        restoreWindowState: true,
+        next: { appearance: "dark", showMenuBarIcon: false },
+      }),
+    ).toEqual({
+      appearance: "dark",
+      defaultSection: "overview",
+      showMenuBarIcon: false,
+      restoreWindowState: true,
+      reopenSetupAssistant: true,
+    });
+
+    expect(
+      buildResetOnboardingPreferences({
+        appearance: "light",
+        showMenuBarIcon: false,
+        restoreWindowState: false,
+      }),
+    ).toEqual({
+      appearance: "light",
+      defaultSection: "overview",
+      showMenuBarIcon: false,
+      restoreWindowState: false,
+      reopenSetupAssistant: true,
+    });
   });
 });

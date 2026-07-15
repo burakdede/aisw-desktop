@@ -20,10 +20,8 @@ import { ProfilesPanel } from "./features/profiles/components/ProfilesPanel";
 import { ActivityPanel } from "./features/activity/components/ActivityPanel";
 import { SetsPanel } from "./features/sets/components/SetsPanel";
 import { invalidatePostMutationQueries } from "./features/shared/postMutationRefresh";
-import {
-  SettingsPanel,
-  type SettingsSection,
-} from "./features/settings/components/SettingsPanel";
+import { SettingsPanel } from "./features/settings/components/SettingsPanel";
+import type { SettingsSection } from "./features/settings/settings-panel-display";
 import { useDesktop } from "./features/shared/useDesktop";
 import { notifyDesktop } from "./lib/notifications";
 import { DEFAULT_ACTION_FAILURE_MESSAGE } from "./lib/display-copy";

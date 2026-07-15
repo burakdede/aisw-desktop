@@ -9,7 +9,6 @@ import {
   setLaunchAtLogin,
 } from "../../../lib/client";
 import {
-  DEFAULT_DESKTOP_PREFERENCES,
   DEFAULT_SECTIONS,
   DESKTOP_APPEARANCES,
   type DesktopPreferences,
@@ -37,40 +36,23 @@ import { clearPersistedWindowState } from "../../../lib/window-state";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import {
+  buildDesktopPreferencesUpdate,
+  buildResetOnboardingPreferences,
+  buildSettingsRequest,
+  DEFAULT_SETTINGS_SECTION,
   effectiveRuntimePath,
   findShellHookCheck,
   formatSettingsMutationError,
   LAUNCH_AT_LOGIN_DISABLED_MESSAGE,
   LAUNCH_AT_LOGIN_ENABLED_MESSAGE,
+  nextSettingsSection,
+  sectionLabel,
   selectedRuntimePath,
+  SETTINGS_SECTIONS,
+  type SettingsSection,
   WINDOW_LAYOUT_RESET_MESSAGE,
 } from "../settings-panel-display";
 import packageJson from "../../../../package.json";
-
-export const SETTINGS_SECTIONS = [
-  "general",
-  "runtime",
-  "shell",
-  "keyring",
-  "updates",
-  "advanced",
-] as const;
-export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
-
-const DEFAULT_SETTINGS_SECTION: SettingsSection = SETTINGS_SECTIONS[0];
-const SETTINGS_SECTION_META: Record<
-  SettingsSection,
-  {
-    label: string;
-  }
-> = {
-  general: { label: "General" },
-  runtime: { label: "Engine" },
-  shell: { label: "Terminal Integration" },
-  keyring: { label: "Security" },
-  updates: { label: "Updates" },
-  advanced: { label: "Advanced" },
-};
 
 export function SettingsPanel({
   settings,
@@ -215,27 +197,6 @@ export function SettingsPanel({
     setLaunchMessage("");
   }, [desktopPreferences]);
 
-  function buildSettingsRequest(next?: {
-    runtimeKind?: DesktopSettings["runtime_kind"];
-    runtimePath?: string;
-    aiswHome?: string;
-    updateChannel?: string;
-  }): DesktopSettings {
-    const nextRuntimeKind = next?.runtimeKind ?? runtimeKind;
-    const nextRuntimePath = next?.runtimePath ?? runtimePath;
-    const nextAiswHome = next?.aiswHome ?? aiswHome;
-    const nextUpdateChannel = next?.updateChannel ?? updateChannel;
-
-    return {
-      runtime_kind: nextRuntimeKind,
-      runtime_path: effectiveRuntimePath(nextRuntimeKind, nextRuntimePath) || null,
-      aisw_home: nextAiswHome || null,
-      update_channel: nextUpdateChannel,
-      profile_labels: settings.profile_labels ?? {},
-      profile_sets: settings.profile_sets,
-    };
-  }
-
   async function copyText(value: string, label: string) {
     if (!navigator.clipboard?.writeText) {
       setCopyMessage(`Clipboard access is unavailable. Copy the ${label} step manually.`);
@@ -286,13 +247,14 @@ export function SettingsPanel({
       >
     >,
   ) {
-    const nextPreferences: DesktopPreferences = {
-      appearance: next.appearance ?? appearance,
-      defaultSection: next.defaultSection ?? defaultSection,
-      showMenuBarIcon: next.showMenuBarIcon ?? showMenuBarIcon,
-      restoreWindowState: next.restoreWindowState ?? restoreWindowState,
-      reopenSetupAssistant: desktopPreferences?.reopenSetupAssistant ?? false,
-    };
+    const nextPreferences = buildDesktopPreferencesUpdate({
+      desktopPreferences,
+      appearance,
+      defaultSection,
+      showMenuBarIcon,
+      restoreWindowState,
+      next,
+    });
     setAppearance(nextPreferences.appearance);
     setDefaultSection(nextPreferences.defaultSection);
     setShowMenuBarIcon(nextPreferences.showMenuBarIcon);
@@ -301,13 +263,11 @@ export function SettingsPanel({
   }
 
   function resetOnboarding() {
-    const nextPreferences: DesktopPreferences = {
+    const nextPreferences = buildResetOnboardingPreferences({
       appearance,
-      defaultSection: DEFAULT_DESKTOP_PREFERENCES.defaultSection,
       showMenuBarIcon,
       restoreWindowState,
-      reopenSetupAssistant: true,
-    };
+    });
     onUpdateDesktopPreferences?.(nextPreferences);
     onResetOnboarding?.();
     setSelectedSection("general");
@@ -328,21 +288,8 @@ export function SettingsPanel({
     currentSection: SettingsSection,
     direction: "next" | "previous" | "first" | "last",
   ) {
-    const currentIndex = SETTINGS_SECTIONS.indexOf(currentSection);
-    if (currentIndex === -1) {
-      return;
-    }
-
-    const targetIndex =
-      direction === "first"
-        ? 0
-        : direction === "last"
-          ? SETTINGS_SECTIONS.length - 1
-          : direction === "next"
-            ? Math.min(currentIndex + 1, SETTINGS_SECTIONS.length - 1)
-            : Math.max(currentIndex - 1, 0);
-    const targetSection = SETTINGS_SECTIONS[targetIndex];
-    if (!targetSection || targetSection === currentSection) {
+    const targetSection = nextSettingsSection(currentSection, direction);
+    if (targetSection === currentSection) {
       return;
     }
 
@@ -552,8 +499,15 @@ export function SettingsPanel({
                         setRuntimePath(nextRuntimePath);
                         updateSettingsMutation.mutate(
                           buildSettingsRequest({
-                            runtimeKind: nextRuntimeKind,
-                            runtimePath: nextRuntimePath,
+                            settings,
+                            runtimeKind,
+                            runtimePath,
+                            aiswHome,
+                            updateChannel,
+                            next: {
+                              runtimeKind: nextRuntimeKind,
+                              runtimePath: nextRuntimePath,
+                            },
                           }),
                         );
                       }}
@@ -578,7 +532,14 @@ export function SettingsPanel({
                         if (runtimeKind !== "custom") return;
                         updateSettingsMutation.mutate(
                           buildSettingsRequest({
+                            settings,
+                            runtimeKind,
                             runtimePath,
+                            aiswHome,
+                            updateChannel,
+                            next: {
+                              runtimePath,
+                            },
                           }),
                         );
                       }}
@@ -708,7 +669,14 @@ export function SettingsPanel({
                         setUpdateChannel(nextUpdateChannel);
                         updateSettingsMutation.mutate(
                           buildSettingsRequest({
-                            updateChannel: nextUpdateChannel,
+                            settings,
+                            runtimeKind,
+                            runtimePath,
+                            aiswHome,
+                            updateChannel,
+                            next: {
+                              updateChannel: nextUpdateChannel,
+                            },
                           }),
                         );
                       }}
@@ -865,7 +833,14 @@ export function SettingsPanel({
                       onBlur={() =>
                         updateSettingsMutation.mutate(
                           buildSettingsRequest({
+                            settings,
+                            runtimeKind,
+                            runtimePath,
                             aiswHome,
+                            updateChannel,
+                            next: {
+                              aiswHome,
+                            },
                           }),
                         )
                       }
@@ -985,8 +960,4 @@ function SettingsFeedback({
       {details.remediation ? <p className="inline-note">{details.remediation}</p> : null}
     </div>
   );
-}
-
-function sectionLabel(section: SettingsSection) {
-  return SETTINGS_SECTION_META[section].label;
 }
