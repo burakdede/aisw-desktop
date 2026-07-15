@@ -1,8 +1,40 @@
 import { normalizeRuntimeLanguage } from "../features/shared/runtime-language";
 import { fixedStateModeDescription, stateModeDescription } from "../features/shared/state-modes";
-import type { ToolStatus } from "./schemas";
-import type { OverviewHealthState } from "./status-display";
+import { toolInspectorEmptyLabel, overviewHealthLabel, overviewHealthText, resolveOverviewHealthState, type OverviewHealthState } from "./status-display";
+import { toolProfileDisplayLabel } from "./profile-display";
+import type { AppSnapshot, DesktopSettings, ToolStatus } from "./schemas";
 import { countLabel, pluralChoice, titleCase } from "./utils";
+
+export type OverviewInspectorActionKind =
+  | "switch"
+  | "reapply"
+  | "import_current"
+  | "open_account_setup"
+  | "open_profile"
+  | "resolve_workspace"
+  | "refresh";
+
+export type OverviewInspectorAction = {
+  kind: OverviewInspectorActionKind;
+  label: string;
+  ariaLabel?: string;
+};
+
+export type OverviewInspectorPresentation = {
+  activeProfileLabel: string | null;
+  currentSelectionLabel: string;
+  hasProfiles: boolean;
+  healthText: string;
+  menuActions: OverviewInspectorAction[];
+  primaryAction: OverviewInspectorAction | null;
+  secondaryAction: OverviewInspectorAction | null;
+  selectedProfileLabel: string | null;
+  showActionArea: boolean;
+  showActionsMenu: boolean;
+  state: OverviewHealthState;
+  statusLabel: string;
+  summaryLabel: string;
+};
 
 export function resolveOverallOverviewState(
   states: OverviewHealthState[],
@@ -144,4 +176,130 @@ export function overviewDiagnosticWarning(warning: ToolStatus["warnings"][number
 
 export function overviewAuthMethodLabel(authMethod: string | null | undefined) {
   return authMethod ? titleCase(authMethod.replace(/_/g, " ")) : "Not configured";
+}
+
+export function buildOverviewInspectorPresentation(input: {
+  profiles: AppSnapshot["profiles"][string]["profiles"];
+  selectedProfile: string;
+  settings: DesktopSettings;
+  snapshot: AppSnapshot;
+  stateModes: string[];
+  status: ToolStatus;
+  supportsLiveImport: boolean;
+  workspaceMismatchCanResolveDirectly: boolean;
+  workspaceMismatchPresent: boolean;
+}): OverviewInspectorPresentation {
+  const {
+    profiles,
+    selectedProfile,
+    settings,
+    snapshot,
+    stateModes,
+    status,
+    supportsLiveImport,
+    workspaceMismatchCanResolveDirectly,
+    workspaceMismatchPresent,
+  } = input;
+  const activeProfileLabel = status.active_profile
+    ? toolProfileDisplayLabel(settings, snapshot, status.tool, status.active_profile)
+    : null;
+  const selectedProfileLabel = selectedProfile
+    ? toolProfileDisplayLabel(settings, snapshot, status.tool, selectedProfile)
+    : null;
+  const hasProfiles = profiles.length > 0;
+  const state = resolveOverviewHealthState(status);
+  const statusLabel = overviewHealthLabel(state);
+  const healthText = overviewHealthText(status, state);
+  const hasAlternateSelection = Boolean(selectedProfile && selectedProfile !== status.active_profile);
+  const canSwitch = Boolean(hasAlternateSelection && selectedProfile);
+  const canReapplyActiveProfile = Boolean(status.active_profile && status.active_profile_applied === false);
+  const currentSelectionLabel = selectedProfileLabel ?? activeProfileLabel ?? "profile";
+
+  const primaryAction: OverviewInspectorAction | null = !hasProfiles
+    ? null
+    : canReapplyActiveProfile
+      ? {
+          kind: "reapply",
+          label: `Re-apply ${currentSelectionLabel}`,
+          ariaLabel: `Re-apply ${currentSelectionLabel}`,
+        }
+      : canSwitch
+        ? {
+            kind: "switch",
+            label: "Switch",
+            ariaLabel: `Switch to ${currentSelectionLabel}`,
+          }
+        : null;
+  const secondaryAction: OverviewInspectorAction | null = !hasProfiles
+    ? null
+    : canReapplyActiveProfile
+      ? supportsLiveImport
+        ? {
+            kind: "import_current",
+            label: "Import Current…",
+          }
+        : {
+            kind: "open_account_setup",
+            label: "Open Account Setup",
+          }
+      : status.active_profile
+        ? {
+            kind: "open_profile",
+            label: "Open Profile",
+          }
+        : workspaceMismatchPresent
+          ? {
+              kind: "resolve_workspace",
+              label: overviewWorkspaceActionLabel(workspaceMismatchCanResolveDirectly),
+            }
+          : null;
+
+  const menuActions = [
+    canReapplyActiveProfile
+      ? {
+          kind: "reapply",
+          label: `Re-apply ${activeProfileLabel ?? status.active_profile}`,
+        }
+      : null,
+    status.active_profile
+      ? {
+          kind: "open_profile",
+          label: "Open Profile",
+        }
+      : null,
+    supportsLiveImport
+      ? {
+          kind: "import_current",
+          label: "Import Current…",
+        }
+      : null,
+    workspaceMismatchPresent
+      ? {
+          kind: "resolve_workspace",
+          label: overviewWorkspaceActionLabel(workspaceMismatchCanResolveDirectly),
+        }
+      : null,
+    !status.binary_found
+      ? {
+          kind: "refresh",
+          label: "Refresh",
+        }
+      : null,
+  ].filter((action): action is OverviewInspectorAction => Boolean(action));
+
+  return {
+    activeProfileLabel,
+    currentSelectionLabel,
+    hasProfiles,
+    healthText,
+    menuActions,
+    primaryAction,
+    secondaryAction,
+    selectedProfileLabel,
+    showActionArea: hasProfiles || !status.binary_found,
+    showActionsMenu: menuActions.length > 0,
+    state,
+    statusLabel,
+    summaryLabel: activeProfileLabel ? `Active profile: ${activeProfileLabel}` : toolInspectorEmptyLabel(status),
+  };
 }

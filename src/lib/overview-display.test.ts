@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { ToolStatus } from "./schemas";
+import type { AppSnapshot, DesktopSettings, ToolStatus } from "./schemas";
 import {
+  buildOverviewInspectorPresentation,
   overviewAuthMethodLabel,
   overviewDiagnosticWarning,
   overviewHeadline,
@@ -24,6 +25,37 @@ function makeStatus(overrides: Partial<ToolStatus> = {}): ToolStatus {
     credential_backend: "file",
     warnings: [],
     token_warning: null,
+    ...overrides,
+  };
+}
+
+function makeSnapshot(overrides: Partial<AppSnapshot> = {}): AppSnapshot {
+  return {
+    statuses: [makeStatus()],
+    profiles: {
+      claude: {
+        active: "personal",
+        profiles: [
+          { name: "personal", auth: "oauth", label: "Personal" },
+          { name: "work", auth: "oauth", label: "Work" },
+        ],
+      },
+    },
+    contexts: [],
+    workspace_status: null,
+    project_bindings: null,
+    ...overrides,
+  };
+}
+
+function makeSettings(overrides: Partial<DesktopSettings> = {}): DesktopSettings {
+  return {
+    runtime_kind: "bundled",
+    runtime_path: null,
+    aisw_home: null,
+    update_channel: "stable",
+    profile_labels: {},
+    profile_sets: [],
     ...overrides,
   };
 }
@@ -103,5 +135,108 @@ describe("overview-display", () => {
     ).toBe("Warning: Workspace mismatch Remediation: Open Sets");
     expect(overviewAuthMethodLabel("api_key")).toBe("Api Key");
     expect(overviewAuthMethodLabel(null)).toBe("Not configured");
+  });
+
+  it("builds overview inspector actions for alternate profile switching", () => {
+    const snapshot = makeSnapshot();
+    const presentation = buildOverviewInspectorPresentation({
+      profiles: snapshot.profiles.claude.profiles,
+      selectedProfile: "work",
+      settings: makeSettings(),
+      snapshot,
+      stateModes: ["isolated", "shared"],
+      status: makeStatus(),
+      supportsLiveImport: true,
+      workspaceMismatchCanResolveDirectly: false,
+      workspaceMismatchPresent: false,
+    });
+
+    expect(presentation.activeProfileLabel).toBe("Personal");
+    expect(presentation.selectedProfileLabel).toBe("Work");
+    expect(presentation.primaryAction).toEqual({
+      kind: "switch",
+      label: "Switch",
+      ariaLabel: "Switch to Work",
+    });
+    expect(presentation.secondaryAction).toEqual({
+      kind: "open_profile",
+      label: "Open Profile",
+    });
+    expect(presentation.menuActions.map((action) => action.kind)).toEqual([
+      "open_profile",
+      "import_current",
+    ]);
+    expect(presentation.summaryLabel).toBe("Active profile: Personal");
+  });
+
+  it("prefers reapply and workspace recovery actions when attention is required", () => {
+    const snapshot = makeSnapshot({
+      statuses: [
+        makeStatus({
+          active_profile_applied: false,
+          warnings: [{ message: "Mismatch" }],
+        }),
+      ],
+    });
+    const presentation = buildOverviewInspectorPresentation({
+      profiles: snapshot.profiles.claude.profiles,
+      selectedProfile: "work",
+      settings: makeSettings(),
+      snapshot,
+      stateModes: ["isolated"],
+      status: snapshot.statuses[0],
+      supportsLiveImport: false,
+      workspaceMismatchCanResolveDirectly: true,
+      workspaceMismatchPresent: true,
+    });
+
+    expect(presentation.state).toBe("needs_attention");
+    expect(presentation.primaryAction).toEqual({
+      kind: "reapply",
+      label: "Re-apply Work",
+      ariaLabel: "Re-apply Work",
+    });
+    expect(presentation.secondaryAction).toEqual({
+      kind: "open_account_setup",
+      label: "Open Account Setup",
+    });
+    expect(presentation.menuActions.map((action) => action.kind)).toEqual([
+      "reapply",
+      "open_profile",
+      "resolve_workspace",
+    ]);
+  });
+
+  it("keeps missing binaries on the refresh path", () => {
+    const status = makeStatus({
+      binary_found: false,
+      active_profile: null,
+      active_profile_applied: null,
+    });
+    const snapshot = makeSnapshot({
+      statuses: [status],
+      profiles: {
+        claude: {
+          active: null,
+          profiles: [],
+        },
+      },
+    });
+    const presentation = buildOverviewInspectorPresentation({
+      profiles: [],
+      selectedProfile: "",
+      settings: makeSettings(),
+      snapshot,
+      stateModes: [],
+      status,
+      supportsLiveImport: false,
+      workspaceMismatchCanResolveDirectly: false,
+      workspaceMismatchPresent: false,
+    });
+
+    expect(presentation.showActionArea).toBe(true);
+    expect(presentation.showActionsMenu).toBe(true);
+    expect(presentation.menuActions).toEqual([{ kind: "refresh", label: "Refresh" }]);
+    expect(presentation.summaryLabel).toBe("Tool not installed");
   });
 });

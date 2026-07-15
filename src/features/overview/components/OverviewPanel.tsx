@@ -20,6 +20,7 @@ import {
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { BACKEND_UNAVAILABLE_LABEL } from "../../../lib/display-copy";
 import {
+  buildOverviewInspectorPresentation,
   overviewAuthMethodLabel,
   overviewDiagnosticWarning,
   overviewHeadline,
@@ -34,7 +35,6 @@ import {
   overviewHealthLabel,
   overviewHealthSymbol,
   overviewHealthText,
-  toolInspectorEmptyLabel,
   toolListEmptyLabel,
   toolVerificationLabel,
   resolveOverviewHealthState,
@@ -347,57 +347,20 @@ function ToolInspector({
   const [selectedProfile, setSelectedProfile] = useState(status.active_profile ?? profiles[0]?.name ?? "");
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
   const actionsMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
-  const activeProfileLabel = status.active_profile
-    ? toolProfileDisplayLabel(settings, snapshot, status.tool, status.active_profile)
-    : null;
-  const selectedProfileLabel = selectedProfile
-    ? toolProfileDisplayLabel(settings, snapshot, status.tool, selectedProfile)
-    : null;
   const supportsLiveImport = supportsProfileImportMode(status.tool, toolCapabilities, "from_live");
-  const state = resolveOverviewHealthState(status);
-  const statusLabel = overviewHealthLabel(state);
-  const healthText = overviewHealthText(status, state);
-  const hasAlternateSelection = Boolean(selectedProfile && selectedProfile !== status.active_profile);
-  const canSwitch = Boolean(hasAlternateSelection && selectedProfile);
-  const canReapplyActiveProfile = Boolean(status.active_profile && status.active_profile_applied === false);
-  const currentSelectionLabel = selectedProfileLabel ?? activeProfileLabel ?? "profile";
-  const hasProfiles = profiles.length > 0;
-  const primaryAction = !hasProfiles
-    ? null
-    : canReapplyActiveProfile && currentSelectionLabel
-      ? {
-          label: `Re-apply ${currentSelectionLabel}`,
-          ariaLabel: `Re-apply ${currentSelectionLabel}`,
-        }
-      : canSwitch
-        ? {
-            label: "Switch",
-            ariaLabel: `Switch to ${currentSelectionLabel}`,
-          }
-        : null;
-  const secondaryAction = !hasProfiles
-    ? null
-    : canReapplyActiveProfile
-      ? supportsLiveImport
-        ? {
-            label: "Import Current…",
-            onClick: () => onImport(status.tool),
-          }
-        : {
-            label: "Open Account Setup",
-            onClick: () => onAddProfile(status.tool),
-          }
-      : status.active_profile
-        ? {
-            label: "Open Profile",
-            onClick: () => onOpenDetails(status.tool, status.active_profile),
-          }
-        : workspaceMismatch
-          ? {
-              label: overviewWorkspaceActionLabel(workspaceMismatch.canResolveDirectly),
-              onClick: workspaceMismatch.onResolve,
-            }
-          : null;
+  const inspector = buildOverviewInspectorPresentation({
+    profiles,
+    selectedProfile,
+    settings,
+    snapshot,
+    stateModes,
+    status,
+    supportsLiveImport,
+    workspaceMismatchCanResolveDirectly: workspaceMismatch?.canResolveDirectly ?? false,
+    workspaceMismatchPresent: Boolean(workspaceMismatch),
+  });
+  const primaryAction = inspector.primaryAction;
+  const secondaryAction = inspector.secondaryAction;
 
   useEffect(() => {
     if (!stateModes.length) {
@@ -450,6 +413,33 @@ function ToolInspector({
     onUse(status.tool, selectedProfile, stateModes.length ? stateMode : null);
   }
 
+  function runInspectorAction(kind: ReturnType<typeof buildOverviewInspectorPresentation>["menuActions"][number]["kind"]) {
+    switch (kind) {
+      case "switch":
+      case "reapply":
+        if (!selectedProfile) {
+          return;
+        }
+        onUse(status.tool, selectedProfile, stateModes.length ? stateMode : null);
+        return;
+      case "import_current":
+        onImport(status.tool);
+        return;
+      case "open_account_setup":
+        onAddProfile(status.tool);
+        return;
+      case "open_profile":
+        onOpenDetails(status.tool, status.active_profile);
+        return;
+      case "resolve_workspace":
+        workspaceMismatch?.onResolve();
+        return;
+      case "refresh":
+        onRefresh();
+        return;
+    }
+  }
+
   return (
     <aside className="overview-pane overview-inspector-pane tool-card">
       <header className="overview-inspector-header">
@@ -462,13 +452,13 @@ function ToolInspector({
           <h3>
             <ToolBrand tool={status.tool} className="tool-brand-heading" logoSize={20} />
           </h3>
-          <p className="inline-note">{activeProfileLabel ? `Active profile: ${activeProfileLabel}` : toolInspectorEmptyLabel(status)}</p>
+          <p className="inline-note">{inspector.summaryLabel}</p>
         </div>
-        <div className={`overview-inspector-status overview-inspector-status-${state}`}>
-          <span className={`overview-status-symbol overview-status-symbol-${state}`} aria-hidden="true">
-            {overviewHealthSymbol(state)}
+        <div className={`overview-inspector-status overview-inspector-status-${inspector.state}`}>
+          <span className={`overview-status-symbol overview-status-symbol-${inspector.state}`} aria-hidden="true">
+            {overviewHealthSymbol(inspector.state)}
           </span>
-          <span>{statusLabel}</span>
+          <span>{inspector.statusLabel}</span>
         </div>
       </header>
 
@@ -478,7 +468,7 @@ function ToolInspector({
             <span className="overview-inline-notice-symbol" aria-hidden="true">▲</span>
             <div className="overview-inline-notice-body">
               <p>
-                Live credentials do not match <strong>{activeProfileLabel ?? "the saved profile"}</strong>.
+                Live credentials do not match <strong>{inspector.activeProfileLabel ?? "the saved profile"}</strong>.
               </p>
               <p>{toolDisplayName(status.tool)} appears to have been signed into outside AI Switch.</p>
             </div>
@@ -500,7 +490,7 @@ function ToolInspector({
         </div>
       ) : null}
 
-      {status.binary_found && !hasProfiles ? (
+      {status.binary_found && !inspector.hasProfiles ? (
         <div className="overview-empty-state overview-empty-state-inline">
           <h3>No profile configured</h3>
           <p className="inline-note">Add a saved profile before switching this tool from Overview.</p>
@@ -512,7 +502,7 @@ function ToolInspector({
         </div>
       ) : null}
 
-      {hasProfiles ? (
+      {inspector.hasProfiles ? (
         <label className="stacked-form overview-inspector-control">
           <span>Active profile</span>
           <select
@@ -549,7 +539,7 @@ function ToolInspector({
             {overviewStateModeCopy(stateModes, stateMode, status.tool)}
           </p>
         </div>
-      ) : hasProfiles && status.binary_found ? (
+      ) : inspector.hasProfiles && status.binary_found ? (
         <div className="overview-inspector-control">
           <span className="overview-inspector-control-label">State mode</span>
           <strong className="overview-static-value">Isolated</strong>
@@ -557,7 +547,7 @@ function ToolInspector({
         </div>
       ) : null}
 
-      {hasProfiles || !status.binary_found ? (
+      {inspector.showActionArea ? (
       <div className="overview-inspector-actions">
         <div className="button-row">
           {primaryAction ? (
@@ -575,13 +565,13 @@ function ToolInspector({
             <button
               className="ghost-button"
               type="button"
-              disabled={mutationLocked && secondaryAction.label !== "Open Profile"}
-              onClick={secondaryAction.onClick}
+              disabled={mutationLocked && secondaryAction.kind !== "open_profile"}
+              onClick={() => runInspectorAction(secondaryAction.kind)}
             >
               {secondaryAction.label}
             </button>
           ) : null}
-          {(status.active_profile || supportsLiveImport || workspaceMismatch || !status.binary_found) ? (
+          {inspector.showActionsMenu ? (
             <div className="overview-actions-menu-wrap" data-overview-actions>
               <button
                 ref={actionsMenuAnchorRef}
@@ -604,81 +594,27 @@ function ToolInspector({
                   role="menu"
                   aria-label="Overview actions"
                 >
-                  {canReapplyActiveProfile ? (
+                  {inspector.menuActions.map((action) => (
                     <button
+                      key={action.kind}
                       className="ghost-button"
                       role="menuitem"
                       type="button"
-                      disabled={mutationLocked}
-                      onClick={() => {
-                        if (!status.active_profile) {
-                          return;
-                        }
-                        setActionsMenuOpen(false);
-                        onUse(
-                          status.tool,
-                          status.active_profile,
-                          stateModes.length ? stateMode : null,
-                        );
-                      }}
-                    >
-                      Re-apply {activeProfileLabel ?? status.active_profile}
-                    </button>
-                  ) : null}
-                  {status.active_profile ? (
-                    <button
-                      className="ghost-button"
-                      role="menuitem"
-                      type="button"
+                      disabled={
+                        (action.kind === "open_profile"
+                          ? false
+                          : action.kind === "refresh"
+                            ? refreshLocked
+                            : mutationLocked)
+                      }
                       onClick={() => {
                         setActionsMenuOpen(false);
-                        onOpenDetails(status.tool, status.active_profile);
+                        runInspectorAction(action.kind);
                       }}
                     >
-                      Open Profile
+                      {action.label}
                     </button>
-                  ) : null}
-                  {supportsLiveImport ? (
-                    <button
-                      className="ghost-button"
-                      role="menuitem"
-                      type="button"
-                      onClick={() => {
-                        setActionsMenuOpen(false);
-                        onImport(status.tool);
-                      }}
-                    >
-                      Import Current…
-                    </button>
-                  ) : null}
-                  {workspaceMismatch ? (
-                    <button
-                      className="ghost-button"
-                      role="menuitem"
-                      type="button"
-                      disabled={mutationLocked}
-                      onClick={() => {
-                        setActionsMenuOpen(false);
-                        workspaceMismatch.onResolve();
-                      }}
-                    >
-                      {overviewWorkspaceActionLabel(workspaceMismatch.canResolveDirectly)}
-                    </button>
-                  ) : null}
-                  {!status.binary_found ? (
-                    <button
-                      className="ghost-button"
-                      role="menuitem"
-                      type="button"
-                      disabled={refreshLocked}
-                      onClick={() => {
-                        setActionsMenuOpen(false);
-                        onRefresh();
-                      }}
-                    >
-                      Refresh
-                    </button>
-                  ) : null}
+                  ))}
                 </AnchoredMenu>
               ) : null}
             </div>
@@ -687,15 +623,15 @@ function ToolInspector({
       </div>
       ) : null}
 
-      {hasProfiles && status.binary_found ? (
+      {inspector.hasProfiles && status.binary_found ? (
       <dl className="overview-inspector-facts">
         <div>
           <dt>Active profile</dt>
-          <dd>{activeProfileLabel ?? "None"}</dd>
+          <dd>{inspector.activeProfileLabel ?? "None"}</dd>
         </div>
         <div>
           <dt>Live state</dt>
-          <dd>{healthText}</dd>
+          <dd>{inspector.healthText}</dd>
         </div>
         <div>
           <dt>Authentication</dt>
@@ -712,7 +648,7 @@ function ToolInspector({
       </dl>
       ) : null}
 
-      {hasProfiles && status.token_warning ? (
+      {inspector.hasProfiles && status.token_warning ? (
         <div className="overview-inline-notice overview-inline-notice-warn">
           <div className="overview-inline-notice-copy">
             <span className="overview-inline-notice-symbol" aria-hidden="true">▲</span>
@@ -721,7 +657,7 @@ function ToolInspector({
         </div>
       ) : null}
 
-      {hasProfiles && status.warnings.length ? (
+      {inspector.hasProfiles && status.warnings.length ? (
         <div className="overview-inline-notice overview-inline-notice-warn">
           <div className="overview-inline-notice-copy">
             <span className="overview-inline-notice-symbol" aria-hidden="true">▲</span>
@@ -730,7 +666,7 @@ function ToolInspector({
         </div>
       ) : null}
 
-      {hasProfiles && lastResult ? (
+      {inspector.hasProfiles && lastResult ? (
         <div className={`overview-inline-notice overview-inline-notice-${lastResult.status === "error" ? "warn" : "ok"}`}>
           <div className="overview-inline-notice-copy">
             <span className="overview-inline-notice-symbol" aria-hidden="true">
