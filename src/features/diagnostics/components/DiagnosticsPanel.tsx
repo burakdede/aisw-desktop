@@ -27,18 +27,24 @@ import {
   type SummaryCardData,
 } from "../diagnostic-parsers";
 import { diagnosticCheckRows, type DiagnosticCheckRow } from "../../../lib/diagnostic-display";
-import { countLabel, pluralChoice } from "../../../lib/utils";
+import { countLabel } from "../../../lib/utils";
 import type { SettingsSection } from "../../settings/settings-panel-display";
 import {
   buildDiagnosticQuickFixModels,
   buildDiagnosticInspectorActions,
   buildDiagnosticFindings,
+  buildDiagnosticsStatusMessage,
+  buildDiagnosticsSummary,
+  buildSelectedRepairFixes,
   buildRecentFailureCards,
+  diagnosticBundlePathCopyMessage,
   diagnosticQuickFixKey,
+  diagnosticRepairActionKey,
   formatRelativeVerifiedTime,
   groupDiagnosticFindings,
   impactTextForFinding,
   matchesQuickFixToFinding,
+  resolveSelectedFindingKey,
   type DiagnosticFinding,
   type DiagnosticQuickFixModel,
   type DiagnosticQuickFixInput,
@@ -143,10 +149,10 @@ export function DiagnosticsPanel({
     [snapshot, summaryCards],
   );
   useEffect(() => {
-    if (selectedFindingKey && findings.some((finding) => finding.key === selectedFindingKey)) {
-      return;
+    const nextFindingKey = resolveSelectedFindingKey(selectedFindingKey, findings);
+    if (nextFindingKey !== selectedFindingKey) {
+      setSelectedFindingKey(nextFindingKey);
     }
-    setSelectedFindingKey(findings[0]?.key ?? null);
   }, [findings, selectedFindingKey]);
   const selectedFinding =
     findings.find((finding) => finding.key === selectedFindingKey) ?? findings[0] ?? null;
@@ -156,7 +162,7 @@ export function DiagnosticsPanel({
     [checkRows],
   );
   const safeFixIds = useMemo(
-    () => repairActions.map((action) => repairActionKey(action)),
+    () => repairActions.map((action) => diagnosticRepairActionKey(action)),
     [repairActions],
   );
   const selectedFindingQuickFixes = useMemo(
@@ -172,32 +178,23 @@ export function DiagnosticsPanel({
     repair.dataUpdatedAt || 0,
   );
   const verifiedLabel = formatRelativeVerifiedTime(verifiedAt);
-  const summaryTitle = totalIssues
-    ? `${countLabel(totalIssues, "issue")} ${pluralChoice(totalIssues, "needs", "need")} attention`
-    : "Everything looks good";
-  const remainingIssues = Math.max(totalIssues - repairActions.length, 0);
-  const summaryDetail = totalIssues
-    ? `${countLabel(repairActions.length, "repair")} can be applied safely. ${countLabel(
-        remainingIssues,
-        "issue",
-      )} ${pluralChoice(remainingIssues, "requires", "require")} a decision.`
-    : "All configured tools match their active AISW profiles and local storage checks passed.";
+  const diagnosticsSummary = buildDiagnosticsSummary(totalIssues, repairActions.length);
   const lastAppliedCount = Number(
     ((applyRepair.data?.result as {
       summary?: { actions_applied?: number };
     } | undefined)?.summary?.actions_applied ?? 0),
   );
   const exportedBundle = exportBundle.data;
-  const diagnosticsStatusMessage = bundleCopyMessage
-    || (exportedBundle ? `Support report ready: ${exportedBundle.filename}. ${exportedBundle.path}` : "")
-    || (exportBundle.error
+  const diagnosticsStatusMessage = buildDiagnosticsStatusMessage({
+    bundleCopyMessage,
+    exportedBundle,
+    exportErrorMessage: exportBundle.error
       ? exportBundle.error instanceof Error
         ? exportBundle.error.message
         : "Support report export failed."
-      : "")
-    || (applyRepair.data
-      ? `Applied ${countLabel(lastAppliedCount, "safe fix", "safe fixes")}.`
-      : "");
+      : undefined,
+    appliedFixCount: applyRepair.data ? lastAppliedCount : undefined,
+  });
 
   useEffect(() => {
     setSelectedSafeFixes(safeFixIds);
@@ -334,9 +331,9 @@ export function DiagnosticsPanel({
             <span className="diagnostics-summary-symbol" aria-hidden="true">
               {totalIssues ? "▲" : "✓"}
             </span>
-            <strong>{summaryTitle}</strong>
+            <strong>{diagnosticsSummary.title}</strong>
           </div>
-          <p className="inline-note">{summaryDetail}</p>
+          <p className="inline-note">{diagnosticsSummary.detail}</p>
         </div>
         <div className="diagnostics-summary-meta">
           <span className="overview-current-set-cell-label">Verified</span>
@@ -598,12 +595,14 @@ ${primaryFindingFix?.label ? `# ${primaryFindingFix.label}` : "# Review the expl
                   <label key={`sheet-${action.title}-${action.detail}`} className="diagnostics-safe-fix-row">
                     <input
                       type="checkbox"
-                      checked={selectedSafeFixes.includes(repairActionKey(action))}
+                      checked={selectedSafeFixes.includes(diagnosticRepairActionKey(action))}
                       onChange={(event) =>
                         setSelectedSafeFixes((current) =>
                           event.target.checked
-                            ? [...current, repairActionKey(action)]
-                            : current.filter((item) => item !== repairActionKey(action)),
+                            ? [...current, diagnosticRepairActionKey(action)]
+                            : current.filter(
+                                (item) => item !== diagnosticRepairActionKey(action),
+                              ),
                         )
                       }
                     />
@@ -638,14 +637,7 @@ ${primaryFindingFix?.label ? `# ${primaryFindingFix.label}` : "# Review the expl
                   type="button"
                   disabled={!selectedSafeFixes.length || applyRepair.isPending}
                   onClick={() =>
-                    applyRepair.mutate(
-                      selectedSafeFixes
-                        .map((id) =>
-                          repairActions.find((action) => repairActionKey(action) === id),
-                        )
-                        .filter((action): action is NonNullable<typeof action> => Boolean(action))
-                        .map((action) => repairFixFromAction(action)),
-                    )
+                    applyRepair.mutate(buildSelectedRepairFixes(selectedSafeFixes, repairActions))
                   }
                 >
                   {applyRepair.isPending
@@ -769,16 +761,6 @@ function buildQuickFixes(
       : undefined,
   }));
 }
-function repairActionKey(action: { title: string; detail: string }) {
-  return `${action.title}:${action.detail}`;
-}
-
-function repairFixFromAction(action: { title: string; fix?: string }) {
-  if (action.fix && action.fix.length) {
-    return action.fix;
-  }
-  return action.title.trim().toLowerCase().replace(/\s+/g, "_");
-}
 
 function runQuickFixAction(
   fix: DiagnosticQuickFixModel,
@@ -868,9 +850,9 @@ async function copyBundlePath(
   setMessage: (message: string) => void,
 ) {
   if (!navigator.clipboard?.writeText) {
-    setMessage(`Clipboard access is unavailable. Copy the bundle path manually: ${path}`);
+    setMessage(diagnosticBundlePathCopyMessage(path, false));
     return;
   }
   await navigator.clipboard.writeText(path);
-  setMessage(`Copied bundle path ${path}.`);
+  setMessage(diagnosticBundlePathCopyMessage(path, true));
 }

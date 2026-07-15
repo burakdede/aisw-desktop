@@ -4,13 +4,20 @@ import {
   buildDiagnosticQuickFixModels,
   buildDiagnosticInspectorActions,
   buildDiagnosticFindings,
+  buildDiagnosticsStatusMessage,
+  buildDiagnosticsSummary,
+  buildSelectedRepairFixes,
   buildRecentFailureCards,
+  diagnosticBundlePathCopyMessage,
   diagnosticQuickFixKey,
+  diagnosticRepairActionKey,
+  diagnosticRepairFixFromAction,
   formatRelativeVerifiedTime,
   groupDiagnosticFindings,
   impactTextForFinding,
   matchesQuickFixToFinding,
   recentFailureTitle,
+  resolveSelectedFindingKey,
   type DiagnosticFinding,
 } from "./diagnostics-panel-display";
 import type { IssueCardData } from "./diagnostic-parsers";
@@ -221,6 +228,81 @@ describe("diagnostics-panel-display", () => {
     expect(diagnosticQuickFixKey({ title: "Repair permissions", label: "Apply" })).toBe(
       "Repair permissions:Apply",
     );
+    expect(
+      diagnosticRepairActionKey({ title: "Repair permissions", detail: "Fix filesystem access." }),
+    ).toBe("Repair permissions:Fix filesystem access.");
+    expect(
+      diagnosticRepairFixFromAction({ title: "Repair permissions", detail: "Fix filesystem access." }),
+    ).toBe("repair_permissions");
+    expect(
+      diagnosticRepairFixFromAction({
+        title: "Repair permissions",
+        detail: "Fix filesystem access.",
+        fix: "permissions",
+      }),
+    ).toBe("permissions");
+    expect(diagnosticBundlePathCopyMessage("/tmp/report.zip", false)).toContain("manually");
+    expect(diagnosticBundlePathCopyMessage("/tmp/report.zip", true)).toBe(
+      "Copied bundle path /tmp/report.zip.",
+    );
+  });
+
+  it("builds summary, footer status, selected repairs, and selected finding fallbacks", () => {
+    expect(buildDiagnosticsSummary(2, 1)).toEqual({
+      title: "2 issues need attention",
+      detail: "1 repair can be applied safely. 1 issue requires a decision.",
+    });
+    expect(buildDiagnosticsSummary(0, 0)).toEqual({
+      title: "Everything looks good",
+      detail: "All configured tools match their active AISW profiles and local storage checks passed.",
+    });
+
+    expect(
+      buildDiagnosticsStatusMessage({
+        bundleCopyMessage: "Copied bundle path /tmp/report.zip.",
+        exportedBundle: { filename: "report.zip", path: "/tmp/report.zip" },
+        exportErrorMessage: "Support report export failed.",
+        appliedFixCount: 2,
+      }),
+    ).toBe("Copied bundle path /tmp/report.zip.");
+    expect(
+      buildDiagnosticsStatusMessage({
+        bundleCopyMessage: "",
+        exportedBundle: { filename: "report.zip", path: "/tmp/report.zip" },
+      }),
+    ).toBe("Support report ready: report.zip. /tmp/report.zip");
+    expect(
+      buildDiagnosticsStatusMessage({
+        bundleCopyMessage: "",
+        exportErrorMessage: "Support report export failed.",
+      }),
+    ).toBe("Support report export failed.");
+    expect(
+      buildDiagnosticsStatusMessage({
+        bundleCopyMessage: "",
+        appliedFixCount: 2,
+      }),
+    ).toBe("Applied 2 safe fixes.");
+    expect(
+      buildDiagnosticsStatusMessage({
+        bundleCopyMessage: "",
+      }),
+    ).toBe("");
+
+    expect(
+      buildSelectedRepairFixes(["permissions:Permissions need review."], [
+        { title: "permissions", detail: "Permissions need review.", fix: "permissions" },
+        { title: "keyring", detail: "Keyring access failed.", fix: "keyring" },
+      ]),
+    ).toEqual(["permissions"]);
+
+    expect(
+      resolveSelectedFindingKey("finding-1", [{ key: "finding-1" } as DiagnosticFinding]),
+    ).toBe("finding-1");
+    expect(resolveSelectedFindingKey("missing", [{ key: "finding-2" } as DiagnosticFinding])).toBe(
+      "finding-2",
+    );
+    expect(resolveSelectedFindingKey(null, [])).toBeNull();
   });
 
   it("builds diagnostics inspector actions with stable precedence", () => {

@@ -97,6 +97,17 @@ export type DiagnosticQuickFixModel = DiagnosticQuickFixInput & {
   primary?: boolean;
 };
 
+type DiagnosticRepairAction = {
+  title: string;
+  detail: string;
+  fix?: string;
+};
+
+type DiagnosticBundleResult = {
+  filename: string;
+  path: string;
+};
+
 type LastCommandResultsInput = {
   tool: Record<string, LastCommandResult | undefined>;
   global: Record<string, LastCommandResult | undefined>;
@@ -154,6 +165,17 @@ export function buildDiagnosticFindings(
   });
 
   return findings;
+}
+
+export function resolveSelectedFindingKey(
+  currentFindingKey: string | null,
+  findings: DiagnosticFinding[],
+) {
+  if (currentFindingKey && findings.some((finding) => finding.key === currentFindingKey)) {
+    return currentFindingKey;
+  }
+
+  return findings[0]?.key ?? null;
 }
 
 export function buildRecentFailureCards(
@@ -331,6 +353,21 @@ export function impactTextForFinding(finding: DiagnosticFinding) {
   return "This state needs review before you rely on the current desktop switching state.";
 }
 
+export function buildDiagnosticsSummary(totalIssues: number, repairCount: number) {
+  const remainingIssues = Math.max(totalIssues - repairCount, 0);
+  return {
+    title: totalIssues
+      ? `${countLabel(totalIssues, "issue")} ${pluralNeeds(totalIssues)} attention`
+      : "Everything looks good",
+    detail: totalIssues
+      ? `${countLabel(repairCount, "repair")} can be applied safely. ${countLabel(
+          remainingIssues,
+          "issue",
+        )} ${pluralRequires(remainingIssues)} a decision.`
+      : "All configured tools match their active AISW profiles and local storage checks passed.",
+  };
+}
+
 export function formatRelativeVerifiedTime(timestamp: number, nowMs = Date.now()) {
   if (!timestamp) {
     return "Unavailable";
@@ -358,6 +395,63 @@ export function formatRelativeVerifiedTime(timestamp: number, nowMs = Date.now()
 
 export function diagnosticQuickFixKey(fix: Pick<DiagnosticQuickFixInput, "title" | "label">) {
   return `${fix.title}:${fix.label}`;
+}
+
+export function diagnosticRepairActionKey(action: Pick<DiagnosticRepairAction, "title" | "detail">) {
+  return `${action.title}:${action.detail}`;
+}
+
+export function diagnosticRepairFixFromAction(action: DiagnosticRepairAction) {
+  if (action.fix && action.fix.length) {
+    return action.fix;
+  }
+
+  return action.title.trim().toLowerCase().replace(/\s+/g, "_");
+}
+
+export function buildSelectedRepairFixes(
+  selectedActionKeys: string[],
+  repairActions: DiagnosticRepairAction[],
+) {
+  return selectedActionKeys
+    .map((id) =>
+      repairActions.find((action) => diagnosticRepairActionKey(action) === id),
+    )
+    .filter((action): action is DiagnosticRepairAction => Boolean(action))
+    .map((action) => diagnosticRepairFixFromAction(action));
+}
+
+export function buildDiagnosticsStatusMessage(input: {
+  bundleCopyMessage: string;
+  exportedBundle?: DiagnosticBundleResult | null;
+  exportErrorMessage?: string;
+  appliedFixCount?: number;
+}) {
+  if (input.bundleCopyMessage) {
+    return input.bundleCopyMessage;
+  }
+
+  if (input.exportedBundle) {
+    return `Support report ready: ${input.exportedBundle.filename}. ${input.exportedBundle.path}`;
+  }
+
+  if (input.exportErrorMessage) {
+    return input.exportErrorMessage;
+  }
+
+  if (typeof input.appliedFixCount === "number") {
+    return `Applied ${countLabel(input.appliedFixCount, "safe fix", "safe fixes")}.`;
+  }
+
+  return "";
+}
+
+export function diagnosticBundlePathCopyMessage(path: string, clipboardAvailable: boolean) {
+  if (!clipboardAvailable) {
+    return `Clipboard access is unavailable. Copy the bundle path manually: ${path}`;
+  }
+
+  return `Copied bundle path ${path}.`;
 }
 
 export function buildDiagnosticInspectorActions(input: {
@@ -543,6 +637,14 @@ function buildRepairFixMap(repair: Record<string, unknown> | undefined) {
       }
       return map;
     }, new Map<string, string>());
+}
+
+function pluralNeeds(count: number) {
+  return count === 1 ? "needs" : "need";
+}
+
+function pluralRequires(count: number) {
+  return count === 1 ? "requires" : "require";
 }
 
 function repairableDoctorIssues(
