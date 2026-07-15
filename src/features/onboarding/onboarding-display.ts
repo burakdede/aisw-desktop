@@ -30,6 +30,11 @@ export type OnboardingAccountBadge = {
   tone: "ok" | "soft";
 };
 
+export type SetupStepOption = {
+  value: SetupStep;
+  label: string;
+};
+
 export type SecureStorageStatus = {
   available: boolean;
   label: string;
@@ -37,6 +42,30 @@ export type SecureStorageStatus = {
 };
 
 type RuntimeToolCapabilities = NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
+
+export const ONBOARDING_SETUP_STEPS: readonly SetupStepOption[] = [
+  { value: "runtime", label: "Welcome" },
+  { value: "accounts", label: "Accounts" },
+  { value: "switch", label: "First switch" },
+  { value: "terminal", label: "Terminal" },
+  { value: "done", label: "Done" },
+];
+
+export const ONBOARDING_TRUST_ROWS = [
+  "Credentials stay on this computer",
+  "No telemetry",
+  "No prompt or API traffic proxy",
+  "Built-in desktop engine ready",
+] as const;
+
+export type OnboardingInventory = {
+  liveAccounts: LiveAccount[];
+  installedToolsNeedingProfile: ToolStatus[];
+  missingTools: ToolStatus[];
+  accountItems: OnboardingAccountItem[];
+  installedNow: string[];
+  needsAttentionCount: number;
+};
 
 export function setupStepSummary(step: SetupStep) {
   switch (step) {
@@ -103,6 +132,50 @@ export function readLiveAccounts(initReport: InitReport | undefined): LiveAccoun
   return Array.isArray(accounts) ? (accounts as LiveAccount[]) : [];
 }
 
+export function buildOnboardingInventory(
+  snapshot: AppSnapshot,
+  initReport: InitReport | undefined,
+): OnboardingInventory {
+  const liveAccounts = readLiveAccounts(initReport);
+  const liveAccountTools = new Set(liveAccounts.map((account) => account.tool));
+  const installedToolsNeedingProfile = snapshot.statuses.filter(
+    (status) =>
+      status.binary_found &&
+      !liveAccountTools.has(status.tool) &&
+      (snapshot.profiles[status.tool]?.profiles.length ?? 0) === 0,
+  );
+  const missingTools = snapshot.statuses.filter((status) => !status.binary_found);
+  const accountItems: OnboardingAccountItem[] = [
+    ...liveAccounts.map((account) => ({
+      key: `live:${account.tool}`,
+      kind: "live" as const,
+      account,
+    })),
+    ...installedToolsNeedingProfile.map((status) => ({
+      key: `needs-profile:${status.tool}`,
+      kind: "needs-profile" as const,
+      status,
+    })),
+    ...missingTools.map((status) => ({
+      key: `missing:${status.tool}`,
+      kind: "missing" as const,
+      status,
+    })),
+  ];
+
+  return {
+    liveAccounts,
+    installedToolsNeedingProfile,
+    missingTools,
+    accountItems,
+    installedNow: snapshot.statuses
+      .filter((status) => status.binary_found)
+      .map((status) => status.tool),
+    needsAttentionCount:
+      liveAccounts.length + installedToolsNeedingProfile.length + missingTools.length,
+  };
+}
+
 export function shouldShowSetupFlow(
   snapshot: AppSnapshot,
   initReport: InitReport | undefined,
@@ -112,20 +185,13 @@ export function shouldShowSetupFlow(
     (sum, entry) => sum + entry.profiles.length,
     0,
   );
-  const liveAccounts = readLiveAccounts(initReport);
-  const liveAccountTools = new Set(liveAccounts.map((account) => account.tool));
-  const installedToolsNeedingProfile = snapshot.statuses.filter(
-    (status) =>
-      status.binary_found &&
-      !liveAccountTools.has(status.tool) &&
-      (snapshot.profiles[status.tool]?.profiles.length ?? 0) === 0,
-  );
+  const onboardingInventory = buildOnboardingInventory(snapshot, initReport);
 
   return (
     forceOpen ||
     totalProfiles === 0 ||
-    liveAccounts.length > 0 ||
-    installedToolsNeedingProfile.length > 0
+    onboardingInventory.liveAccounts.length > 0 ||
+    onboardingInventory.installedToolsNeedingProfile.length > 0
   );
 }
 
@@ -168,21 +234,51 @@ export function defaultSetupStep(
   snapshot: AppSnapshot,
   initReport: InitReport | undefined,
 ): SetupStep {
-  const liveAccounts = readLiveAccounts(initReport);
-  const liveAccountTools = new Set(liveAccounts.map((account) => account.tool));
-  const missingTools = snapshot.statuses.filter((status) => !status.binary_found);
-  const installedToolsNeedingProfile = snapshot.statuses.filter(
-    (status) =>
-      status.binary_found &&
-      !liveAccountTools.has(status.tool) &&
-      (snapshot.profiles[status.tool]?.profiles.length ?? 0) === 0,
-  );
+  const onboardingInventory = buildOnboardingInventory(snapshot, initReport);
 
-  if (liveAccounts.length || installedToolsNeedingProfile.length || missingTools.length) {
+  if (
+    onboardingInventory.liveAccounts.length ||
+    onboardingInventory.installedToolsNeedingProfile.length ||
+    onboardingInventory.missingTools.length
+  ) {
     return "accounts";
   }
 
   return "runtime";
+}
+
+export function onboardingPrimaryActionLabel(
+  initPending: boolean,
+  initReport: InitReport | undefined,
+) {
+  if (initPending) {
+    return "Checking This Computer…";
+  }
+  return initReport ? "Refresh Setup" : "Get Started";
+}
+
+export function resolveOnboardingStepState(activeStep: SetupStep) {
+  const activeStepIndex = ONBOARDING_SETUP_STEPS.findIndex(
+    (step) => step.value === activeStep,
+  );
+  return {
+    steps: ONBOARDING_SETUP_STEPS,
+    activeStepIndex,
+    previousStep: activeStepIndex > 0 ? ONBOARDING_SETUP_STEPS[activeStepIndex - 1] : null,
+    nextStep:
+      activeStepIndex >= 0 && activeStepIndex < ONBOARDING_SETUP_STEPS.length - 1
+        ? ONBOARDING_SETUP_STEPS[activeStepIndex + 1]
+        : null,
+  };
+}
+
+export function resolveSelectedOnboardingAccountItem(
+  items: OnboardingAccountItem[],
+  selectedKey: string | null,
+) {
+  return (
+    items.find((item) => item.key === selectedKey) ?? selectDefaultAccountItem(items) ?? null
+  );
 }
 
 export function buildOnboardingHealthItems(

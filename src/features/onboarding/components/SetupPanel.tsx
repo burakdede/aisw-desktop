@@ -30,15 +30,19 @@ import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { invalidatePostMutationQueries } from "../../shared/postMutationRefresh";
 import {
+  ONBOARDING_TRUST_ROWS,
   accountItemTool,
+  buildOnboardingInventory,
   buildOnboardingHealthItems,
   buildOnboardingRuntimeRows,
   defaultSetupStep,
+  onboardingPrimaryActionLabel,
   onboardingAccountBadge,
   onboardingAccountSummary,
   onboardingSecureStorageStatus,
   onboardingSwitchReadinessStatus,
-  readLiveAccounts,
+  resolveOnboardingStepState,
+  resolveSelectedOnboardingAccountItem,
   selectDefaultAccountItem,
   setupStepFooterNote,
   setupStepFooterTitle,
@@ -85,26 +89,18 @@ export function SetupPanel({
   const [profileLabels, setProfileLabels] = useState<Record<string, string>>({});
   const [firstSwitchProfile, setFirstSwitchProfile] = useState("");
   const [pendingLiveImport, setPendingLiveImport] = useState<LiveAccount | null>(null);
-  const liveAccounts = readLiveAccounts(initReport);
-  const liveAccountTools = useMemo(() => new Set(liveAccounts.map((account) => account.tool)), [liveAccounts]);
-  const undetectedInstalledTools = useMemo(
-    () =>
-      snapshot.statuses.filter(
-        (status) => status.binary_found && !liveAccountTools.has(status.tool),
-      ),
-    [liveAccountTools, snapshot.statuses],
+  const onboardingInventory = useMemo(
+    () => buildOnboardingInventory(snapshot, initReport),
+    [initReport, snapshot],
   );
-  const installedToolsNeedingProfile = useMemo(
-    () =>
-      undetectedInstalledTools.filter(
-        (status) => (snapshot.profiles[status.tool]?.profiles.length ?? 0) === 0,
-      ),
-    [snapshot.profiles, undetectedInstalledTools],
-  );
-  const missingTools = useMemo(
-    () => snapshot.statuses.filter((status) => !status.binary_found),
-    [snapshot.statuses],
-  );
+  const {
+    liveAccounts,
+    installedToolsNeedingProfile,
+    missingTools,
+    accountItems,
+    installedNow,
+    needsAttentionCount,
+  } = onboardingInventory;
   const healthItems = useMemo(
     () => buildOnboardingHealthItems(bootstrap, snapshot, doctor.data),
     [bootstrap, snapshot, doctor.data],
@@ -133,11 +129,10 @@ export function SetupPanel({
   });
   const pendingProfileName = pendingLiveImport ? profileNames[pendingLiveImport.tool] ?? "" : "";
   const pendingProfileLabel = pendingLiveImport ? profileLabels[pendingLiveImport.tool] ?? "" : "";
-  const setupPrimaryActionLabel = initMutation.isPending
-    ? "Checking This Computer…"
-    : initReport
-      ? "Refresh Setup"
-      : "Get Started";
+  const setupPrimaryActionLabel = onboardingPrimaryActionLabel(
+    initMutation.isPending,
+    initReport,
+  );
 
   useEffect(() => {
     if (!pendingLiveImport) {
@@ -206,53 +201,13 @@ export function SetupPanel({
     return null;
   }
 
-  const setupSteps = [
-    { value: "runtime", label: "Welcome" },
-    { value: "accounts", label: "Accounts" },
-    { value: "switch", label: "First switch" },
-    { value: "terminal", label: "Terminal" },
-    { value: "done", label: "Done" },
-  ] satisfies Array<{ value: SetupStep; label: string }>;
-  const activeStepIndex = setupSteps.findIndex((step) => step.value === activeStep);
-  const previousStep = activeStepIndex > 0 ? setupSteps[activeStepIndex - 1] : null;
-  const nextStep =
-    activeStepIndex >= 0 && activeStepIndex < setupSteps.length - 1
-      ? setupSteps[activeStepIndex + 1]
-      : null;
-  const needsAttentionCount =
-    liveAccounts.length + installedToolsNeedingProfile.length + missingTools.length;
+  const { steps: setupSteps, activeStepIndex, previousStep, nextStep } =
+    resolveOnboardingStepState(activeStep);
   const switchReady = switchableProfiles.length > 0;
   const switchReadiness = onboardingSwitchReadinessStatus(switchReady);
   const secureStorage = onboardingSecureStorageStatus(snapshot, toolCapabilities);
   const currentRuntimeSummary = runtimeSummary(settings.runtime_kind);
   const runtimeRows = buildOnboardingRuntimeRows(bootstrap, snapshot, toolCapabilities);
-  const trustRows = [
-    "Credentials stay on this computer",
-    "No telemetry",
-    "No prompt or API traffic proxy",
-    "Built-in desktop engine ready",
-  ];
-  const installedNow = snapshot.statuses.filter((status) => status.binary_found).map((status) => status.tool);
-  const accountItems = useMemo<OnboardingAccountItem[]>(
-    () => [
-      ...liveAccounts.map((account) => ({
-        key: `live:${account.tool}`,
-        kind: "live" as const,
-        account,
-      })),
-      ...installedToolsNeedingProfile.map((status) => ({
-        key: `needs-profile:${status.tool}`,
-        kind: "needs-profile" as const,
-        status,
-      })),
-      ...missingTools.map((status) => ({
-        key: `missing:${status.tool}`,
-        kind: "missing" as const,
-        status,
-      })),
-    ],
-    [installedToolsNeedingProfile, liveAccounts, missingTools],
-  );
   const [selectedAccountKey, setSelectedAccountKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -262,10 +217,10 @@ export function SetupPanel({
     setSelectedAccountKey(selectDefaultAccountItem(accountItems)?.key ?? null);
   }, [accountItems, selectedAccountKey]);
 
-  const selectedAccountItem =
-    accountItems.find((item) => item.key === selectedAccountKey) ??
-    selectDefaultAccountItem(accountItems) ??
-    null;
+  const selectedAccountItem = resolveSelectedOnboardingAccountItem(
+    accountItems,
+    selectedAccountKey,
+  );
 
   return (
     <div className="setup-screen screen-content">
@@ -315,7 +270,7 @@ export function SetupPanel({
                 meta={
                   <div className="onboarding-welcome-stack">
                     <ul className="onboarding-trust-list" aria-label="Why AI Switch is safe to use">
-                      {trustRows.map((item) => (
+                      {ONBOARDING_TRUST_ROWS.map((item) => (
                         <li key={item}>{item}</li>
                       ))}
                     </ul>

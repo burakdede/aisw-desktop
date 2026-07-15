@@ -1,15 +1,21 @@
 import { describe, expect, it } from "vitest";
 import type { AppBootstrap, AppSnapshot, InitReport } from "../../lib/schemas";
 import {
+  ONBOARDING_SETUP_STEPS,
+  ONBOARDING_TRUST_ROWS,
   accountItemTool,
+  buildOnboardingInventory,
   buildOnboardingHealthItems,
   buildOnboardingRuntimeRows,
   defaultSetupStep,
+  onboardingPrimaryActionLabel,
   onboardingAccountBadge,
   onboardingAccountSummary,
   onboardingSecureStorageStatus,
   onboardingSwitchReadinessStatus,
   readLiveAccounts,
+  resolveOnboardingStepState,
+  resolveSelectedOnboardingAccountItem,
   selectDefaultAccountItem,
   setupStepFooterNote,
   setupStepFooterTitle,
@@ -92,6 +98,19 @@ function makeSnapshot(overrides: Partial<AppSnapshot> = {}): AppSnapshot {
 
 describe("onboarding-display", () => {
   it("shares setup step copy", () => {
+    expect(ONBOARDING_SETUP_STEPS.map((step) => step.value)).toEqual([
+      "runtime",
+      "accounts",
+      "switch",
+      "terminal",
+      "done",
+    ]);
+    expect(ONBOARDING_TRUST_ROWS).toEqual([
+      "Credentials stay on this computer",
+      "No telemetry",
+      "No prompt or API traffic proxy",
+      "Built-in desktop engine ready",
+    ]);
     expect(setupStepSummary("runtime")).toBe(
       "Confirm the included desktop engine, data folder, and secure storage.",
     );
@@ -163,6 +182,72 @@ describe("onboarding-display", () => {
     expect(accountItemTool(needsProfileItem)).toBe("codex");
   });
 
+  it("builds onboarding inventory and resolves the selected account item", () => {
+    const snapshot = makeSnapshot({
+      statuses: [
+        ...makeSnapshot().statuses,
+        {
+          ...makeSnapshot().statuses[0],
+          tool: "codex",
+          binary_found: true,
+          active_profile: null,
+          stored_profiles: 0,
+        },
+        {
+          ...makeSnapshot().statuses[0],
+          tool: "gemini",
+          binary_found: false,
+          active_profile: null,
+          stored_profiles: 0,
+        },
+      ],
+      profiles: {
+        ...makeSnapshot().profiles,
+        codex: {
+          active: null,
+          profiles: [],
+        },
+        gemini: {
+          active: null,
+          profiles: [],
+        },
+      },
+    });
+    const initReport: InitReport = {
+      result: {
+        live_accounts: [
+          {
+            tool: "claude",
+            outcome: "detected",
+            auth_method: "oauth",
+            matched_profile: "personal",
+          },
+        ],
+      },
+    } as const;
+
+    const inventory = buildOnboardingInventory(snapshot, initReport);
+
+    expect(inventory.liveAccounts).toHaveLength(1);
+    expect(inventory.installedToolsNeedingProfile.map((status) => status.tool)).toEqual([
+      "codex",
+    ]);
+    expect(inventory.missingTools.map((status) => status.tool)).toEqual(["gemini"]);
+    expect(inventory.installedNow).toEqual(["claude", "codex"]);
+    expect(inventory.needsAttentionCount).toBe(3);
+    expect(inventory.accountItems.map((item) => item.key)).toEqual([
+      "live:claude",
+      "needs-profile:codex",
+      "missing:gemini",
+    ]);
+    expect(resolveSelectedOnboardingAccountItem(inventory.accountItems, "missing:gemini")).toEqual(
+      inventory.accountItems[2],
+    );
+    expect(resolveSelectedOnboardingAccountItem(inventory.accountItems, "missing:unknown")).toEqual(
+      inventory.accountItems[0],
+    );
+  });
+
   it("derives live accounts and setup flow visibility from init data", () => {
     const initReport: InitReport = {
       result: {
@@ -206,6 +291,26 @@ describe("onboarding-display", () => {
         undefined,
       ),
     ).toBe("runtime");
+  });
+
+  it("shares step navigation and primary action labels", () => {
+    expect(onboardingPrimaryActionLabel(true, undefined)).toBe("Checking This Computer…");
+    expect(onboardingPrimaryActionLabel(false, { result: {} } as InitReport)).toBe(
+      "Refresh Setup",
+    );
+    expect(onboardingPrimaryActionLabel(false, undefined)).toBe("Get Started");
+    expect(resolveOnboardingStepState("runtime")).toEqual({
+      steps: ONBOARDING_SETUP_STEPS,
+      activeStepIndex: 0,
+      previousStep: null,
+      nextStep: ONBOARDING_SETUP_STEPS[1],
+    });
+    expect(resolveOnboardingStepState("done")).toEqual({
+      steps: ONBOARDING_SETUP_STEPS,
+      activeStepIndex: 4,
+      previousStep: ONBOARDING_SETUP_STEPS[3],
+      nextStep: null,
+    });
   });
 
   it("builds onboarding health rows with normalized doctor labels", () => {
