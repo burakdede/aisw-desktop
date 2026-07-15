@@ -17,6 +17,7 @@ import {
   toolProfileDisplayLabel,
 } from "../../../lib/profile-display";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
+import { SUPPORTED_TOOLS } from "../../../lib/tool-registry";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import { resolveGlobalStateMode } from "../../shared/state-modes";
@@ -25,7 +26,7 @@ import { resolveWorkspaceActivationTarget, workspaceBindingOptions } from "../..
 import { parseWorkspaceBindings, parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 import type { WorkspaceUnbindInput } from "../../../lib/client";
 
-const TOOLS = ["claude", "codex", "gemini"] as const;
+const TOOLS = SUPPORTED_TOOLS;
 const SETS_COMPACT_BREAKPOINT = 900;
 
 type EditableProfileSet = {

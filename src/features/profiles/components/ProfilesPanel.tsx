@@ -18,6 +18,7 @@ import { compareBackupsNewestFirst } from "../../../lib/backups";
 import { DesktopCommandError } from "../../../lib/tauri";
 import { listenDesktopEvent } from "../../../lib/tauri";
 import { listBackups, parseOAuthProgressEvent } from "../../../lib/client";
+import { SUPPORTED_TOOLS, type SupportedTool } from "../../../lib/tool-registry";
 import { toolDisplayName } from "../../../lib/tool-display";
 import { titleCase } from "../../../lib/utils";
 import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
@@ -33,13 +34,13 @@ import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { StateModeField } from "../../shared/components/StateModeField";
 
-const TOOLS = ["claude", "codex", "gemini"] as const;
+const TOOLS = SUPPORTED_TOOLS;
 const INVENTORY_FILTERS = ["all", ...TOOLS] as const;
 const PROFILES_COMPACT_BREAKPOINT = 800;
 
 type InventoryFilter = (typeof INVENTORY_FILTERS)[number];
 type InventoryEntry = {
-  tool: (typeof TOOLS)[number];
+  tool: SupportedTool;
   name: string;
   auth: string;
   label: string;
@@ -81,7 +82,7 @@ export function ProfilesPanel({
     apiKeyProfileAction,
     mutationLock,
   } = useDesktopActions();
-  const [tool, setTool] = useState<(typeof TOOLS)[number]>(
+  const [tool, setTool] = useState<SupportedTool>(
     isSupportedTool(initialTool) ? initialTool : "claude",
   );
   const [inventoryFilter, setInventoryFilter] = useState<InventoryFilter>(
@@ -110,7 +111,7 @@ export function ProfilesPanel({
   const [openStorageDetails, setOpenStorageDetails] = useState<string | null>(null);
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
   const [openRowActions, setOpenRowActions] = useState<{
-    tool: (typeof TOOLS)[number];
+    tool: SupportedTool;
     name: string;
     scope: "inspector" | "table";
   } | null>(null);

@@ -1,4 +1,5 @@
 import { AppBootstrap, AppSnapshot } from "../../lib/schemas";
+import { toolSupportsEditableStateModes } from "../../lib/tool-registry";
 
 const EDITABLE_STATE_MODES = new Set(["isolated", "shared"]);
 
@@ -6,7 +7,7 @@ export function supportedStateModes(
   tool: string,
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"],
 ) {
-  if (tool === "gemini") {
+  if (!toolSupportsEditableStateModes(tool)) {
     return [];
   }
 
@@ -38,7 +39,7 @@ export function resolveStateModeRequest(
 }
 
 export function resolveGlobalStateMode(snapshot: AppSnapshot) {
-  const editableStatuses = snapshot.statuses.filter((status) => status.tool !== "gemini");
+  const editableStatuses = snapshot.statuses.filter((status) => toolSupportsEditableStateModes(status.tool));
   if (!editableStatuses.length) {
     return "isolated";
   }

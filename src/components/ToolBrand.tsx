@@ -1,7 +1,10 @@
 import { useId } from "react";
-import { toolDisplayName } from "../lib/tool-display";
-
-type SupportedTool = "claude" | "codex" | "gemini";
+import {
+  isSupportedTool,
+  toolDisplayName,
+  toolShortName,
+  type SupportedTool,
+} from "../lib/tool-registry";
 
 export function ToolBrand({
   tool,
@@ -107,26 +110,8 @@ function BrandGlyph({ tool }: { tool: SupportedTool }) {
   );
 }
 
-function isSupportedTool(tool: string): tool is SupportedTool {
-  return tool === "claude" || tool === "codex" || tool === "gemini";
-}
-
 function formatToolBrandName(tool: string, shortName: boolean) {
-  if (!shortName) {
-    return toolDisplayName(tool);
-  }
-
-  if (tool === "claude") {
-    return "Claude";
-  }
-  if (tool === "codex") {
-    return "Codex";
-  }
-  if (tool === "gemini") {
-    return "Gemini";
-  }
-
-  return toolDisplayName(tool);
+  return shortName ? toolShortName(tool) : toolDisplayName(tool);
 }
 
 function joinClasses(...values: Array<string | undefined>) {

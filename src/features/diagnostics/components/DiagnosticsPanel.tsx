@@ -31,10 +31,10 @@ import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 import { resolveWorkspaceActivationTarget } from "../../workspaces/workspace-activation";
 import { contextDisplayLabel, toolProfileDisplayLabel } from "../../../lib/profile-display";
 import { toolDisplayName } from "../../../lib/tool-display";
+import { isSupportedTool, toolSupportsEditableStateModes } from "../../../lib/tool-registry";
 import { titleCase } from "../../../lib/utils";
 import type { SettingsSection } from "../../settings/components/SettingsPanel";
 
-const SUPPORTED_TOOLS = new Set(["claude", "codex", "gemini"]);
 const DIAGNOSTICS_COMPACT_BREAKPOINT = 900;
 
 export function DiagnosticsPanel({
@@ -1165,7 +1165,7 @@ function asStringValue(value: unknown) {
 }
 
 function resolveStateMode(status: ToolStatus) {
-  if (status.tool === "gemini") {
+  if (!toolSupportsEditableStateModes(status.tool)) {
     return null;
   }
   return status.state_mode ?? "isolated";
@@ -1188,7 +1188,7 @@ function resolveIssueProfileTarget(card: IssueCardData, snapshot: AppSnapshot) {
 function resolveDiagnosticTool(title: string) {
   const normalized = title.trim().toLowerCase();
   const candidate = normalized.startsWith("tool/") ? normalized.slice("tool/".length) : normalized;
-  return SUPPORTED_TOOLS.has(candidate) ? candidate : null;
+  return isSupportedTool(candidate) ? candidate : null;
 }
 
 function buildRecentFailureCards(

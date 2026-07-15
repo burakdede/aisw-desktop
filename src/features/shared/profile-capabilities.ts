@@ -1,4 +1,5 @@
 import { AppBootstrap } from "../../lib/schemas";
+import { toolSupportsSystemKeyringCredentials } from "../../lib/tool-registry";
 
 const PROFILE_IMPORT_MODES = ["from_live", "from_env", "api_key", "oauth"] as const;
 const PROFILE_CREDENTIAL_BACKENDS = ["auto", "system-keyring", "file"] as const;
@@ -65,7 +66,7 @@ export function supportedCredentialBackends(
     return ["auto", ...normalized];
   }
 
-  if (tool === "gemini") {
+  if (!toolSupportsSystemKeyringCredentials(tool)) {
     return ["file"];
   }
 

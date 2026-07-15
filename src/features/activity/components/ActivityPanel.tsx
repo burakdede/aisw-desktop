@@ -11,6 +11,7 @@ import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { exportActivityLog } from "../../../lib/client";
 import { notifyDesktop } from "../../../lib/notifications";
+import { toolDisplayName } from "../../../lib/tool-display";
 import {
   clearLastCommandResults,
   useLastCommandResults,
@@ -544,13 +545,7 @@ function isGenericActivityResult(value: string) {
 }
 
 function formatToolScope(tool: string) {
-  return tool === "claude"
-    ? "Claude Code"
-    : tool === "codex"
-      ? "Codex CLI"
-      : tool === "gemini"
-        ? "Gemini CLI"
-        : tool;
+  return toolDisplayName(tool);
 }
 
 function formatGlobalScope(id: string) {

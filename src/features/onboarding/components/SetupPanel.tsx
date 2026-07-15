@@ -7,6 +7,7 @@ import { ToolBrand } from "../../../components/ToolBrand";
 import { getShellGuidance, runDoctor, updateSettings } from "../../../lib/client";
 import { sharedProfileEntries } from "../../../lib/profile-display";
 import { AppBootstrap, AppSnapshot, InitReport } from "../../../lib/schemas";
+import { toolSupportsEditableStateModes } from "../../../lib/tool-registry";
 import { toolDisplayName } from "../../../lib/tool-display";
 import { titleCase } from "../../../lib/utils";
 import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
@@ -211,7 +212,7 @@ export function SetupPanel({
       tool,
       profile: value,
       label: profileLabels[tool]?.trim() || `${titleCase(value)} account`,
-      stateMode: tool === "gemini" ? null : "isolated",
+      stateMode: toolSupportsEditableStateModes(tool) ? "isolated" : null,
       importMode: { kind: "from_live" },
     });
   }
