@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { AppSnapshot } from "../../lib/schemas";
+import type { AppBootstrap, AppSnapshot, DesktopSettings } from "../../lib/schemas";
 import {
+  buildDiagnosticQuickFixModels,
   buildDiagnosticInspectorActions,
   buildDiagnosticFindings,
   buildRecentFailureCards,
@@ -65,6 +66,35 @@ function makeIssue(title: string, overrides: Partial<IssueCardData> = {}): Issue
     issues: ["AISW cannot update permissions."],
     remediation: ["Repair permissions"],
     ...overrides,
+  };
+}
+
+function makeSettings(overrides: Partial<DesktopSettings> = {}): DesktopSettings {
+  return {
+    runtime_kind: "bundled",
+    runtime_path: null,
+    aisw_home: null,
+    update_channel: "stable",
+    profile_labels: {},
+    profile_sets: [],
+    ...overrides,
+  };
+}
+
+function makeToolCapabilities(): NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"] {
+  return {
+    claude: {
+      auth_methods: ["from_live", "oauth"],
+      state_modes: ["isolated", "shared"],
+      credential_backends: ["file", "system_keyring"],
+      fail_closed_keyring_identity: false,
+    },
+    codex: {
+      auth_methods: ["from_live", "oauth"],
+      state_modes: ["isolated", "shared"],
+      credential_backends: ["file", "system_keyring"],
+      fail_closed_keyring_identity: false,
+    },
   };
 }
 
@@ -321,6 +351,93 @@ describe("diagnostics-panel-display", () => {
       label: "Open Account Setup",
       importTarget: { tool: "claude", stateMode: "isolated" },
       importFallbackMode: undefined,
+    });
+  });
+
+  it("builds diagnostic quick-fix models from doctor, snapshot, and workspace state", () => {
+    const snapshot = makeSnapshot();
+    snapshot.contexts = [{ name: "expected", profiles: { claude: "work" } }];
+    snapshot.workspace_status = {
+      result: {
+        status: "mismatch",
+        current_context: "current",
+        expected_context: "expected",
+        matched_binding: {
+          scope: "path",
+          path: "/tmp/project",
+          context: "expected",
+        },
+      },
+    };
+
+    const models = buildDiagnosticQuickFixModels({
+      snapshot,
+      doctor: {
+        checks: [
+          { name: "keyring", detail: "Keyring access failed.", status: "fail" },
+          { name: "shell hook", detail: "Shell hook is not active in the current shell session.", status: "warn" },
+          { name: "permission", detail: "Permissions need review.", status: "warn" },
+        ],
+      },
+      repair: {
+        result: {
+          actions: [
+            { fix: "permissions" },
+            { fix: "keyring" },
+          ],
+        },
+      },
+      settings: makeSettings(),
+      toolCapabilities: makeToolCapabilities(),
+    });
+
+    expect(models.map((model) => model.kind)).toEqual([
+      "repair_doctor_issue",
+      "repair_doctor_issue",
+      "open_settings",
+      "open_profile_setup",
+      "open_settings",
+      "reapply_profile",
+      "open_installation_guide",
+      "resolve_workspace",
+    ]);
+    expect(models[0]).toMatchObject({
+      title: "Keyring unavailable",
+      label: "Apply keyring repair",
+      repairFix: "keyring",
+      status: "fail",
+    });
+    expect(models[2]).toMatchObject({
+      title: "Terminal integration not active",
+      detail: "Terminal integration is not active in the current shell session.",
+      settingsSection: "shell",
+    });
+    expect(models[5]).toMatchObject({
+      title: "claude live mismatch",
+      label: "Re-apply Work",
+      profileTarget: { tool: "claude", profile: "work" },
+      importTarget: { tool: "claude", stateMode: "isolated" },
+      importFallbackMode: "from_live",
+      primary: true,
+    });
+    expect(models[6]).toMatchObject({
+      title: "codex is missing",
+      label: "Open installation guide",
+      toolTarget: "codex",
+      secondaryAction: {
+        kind: "refresh_diagnostics",
+        label: "Refresh diagnostics",
+      },
+    });
+    expect(models[7]).toMatchObject({
+      title: "Project set mismatch",
+      label: "Use expected set now",
+      matchedWorkspaceTarget: "/tmp/project",
+      workspaceActivationTarget: {
+        kind: "context",
+        name: "expected",
+        stateMode: "isolated",
+      },
     });
   });
 });

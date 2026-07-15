@@ -1,10 +1,22 @@
-import type { AppSnapshot } from "../../lib/schemas";
+import type { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../lib/schemas";
+import { contextDisplayLabel, toolProfileDisplayLabel } from "../../lib/profile-display";
 import { isSupportedTool } from "../../lib/tool-registry";
 import { countLabel, titleCase } from "../../lib/utils";
+import { toolSupportsEditableStateModes } from "../../lib/tool-registry";
 import type { LastCommandResult } from "../shared/lastCommandResult";
+import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
+import {
+  preferredProfileImportMode,
+  type ProfileImportMode,
+} from "../shared/profile-capabilities";
 import type { IssueCardData } from "./diagnostic-parsers";
 import { diagnosticFindingTitle } from "../../lib/diagnostic-display";
+import { parseWorkspaceStatus } from "../workspaces/workspace-parsers";
+import {
+  resolveWorkspaceActivationTarget,
+  type WorkspaceActivationTarget,
+} from "../workspaces/workspace-activation";
 
 export type DiagnosticQuickFixInput = {
   title: string;
@@ -59,6 +71,30 @@ export type DiagnosticInspectorAction = {
   importTarget?: { tool: string; stateMode: string | null };
   importFallbackMode?: string;
   profileTarget?: { tool: string; profile: string | null };
+};
+
+export type DiagnosticQuickFixModel = DiagnosticQuickFixInput & {
+  kind:
+    | "repair_doctor_issue"
+    | "open_settings"
+    | "open_profile_setup"
+    | "open_installation_guide"
+    | "reapply_profile"
+    | "resolve_workspace";
+  repairFix?: string;
+  settingsSection?: "shell" | "keyring";
+  setupMode?: ProfileImportMode;
+  credentialBackend?: "file" | "system-keyring" | null;
+  toolTarget?: string;
+  importTarget?: { tool: string; stateMode: string | null };
+  importFallbackMode?: ProfileImportMode;
+  workspaceActivationTarget?: WorkspaceActivationTarget | null;
+  matchedWorkspaceTarget?: string;
+  secondaryAction?: {
+    kind: "refresh_diagnostics";
+    label: string;
+  };
+  primary?: boolean;
 };
 
 type LastCommandResultsInput = {
@@ -364,6 +400,278 @@ export function buildDiagnosticInspectorActions(input: {
     secondaryInspectorAction,
     overflowActions,
   };
+}
+
+export function buildDiagnosticQuickFixModels(input: {
+  snapshot: AppSnapshot | undefined;
+  doctor: Record<string, unknown> | undefined;
+  repair: Record<string, unknown> | undefined;
+  settings: DesktopSettings;
+  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
+}) {
+  const { snapshot, doctor, repair, settings, toolCapabilities } = input;
+  const fixes: DiagnosticQuickFixModel[] = [];
+  const repairFixMap = buildRepairFixMap(repair);
+
+  for (const issue of repairableDoctorIssues(doctor, repairFixMap)) {
+    fixes.push({
+      kind: "repair_doctor_issue",
+      title: issue.title,
+      detail: issue.detail,
+      label: issue.label,
+      status: issue.status,
+      repairFix: issue.fix,
+      primary: issue.primary,
+    });
+  }
+
+  const shellHookIssue = shellHookDoctorIssue(doctor);
+  if (shellHookIssue) {
+    fixes.push({
+      kind: "open_settings",
+      title: "Terminal integration not active",
+      detail: shellHookIssue.detail,
+      label: "Open terminal setup",
+      status: shellHookIssue.status,
+      settingsSection: "shell",
+    });
+  }
+
+  const keyringIssue = keyringDoctorIssue(doctor);
+  if (keyringIssue) {
+    fixes.push({
+      kind: "open_profile_setup",
+      title: "Use file-backed storage",
+      detail: "Open account setup with file-backed credential storage preselected for the next import or add flow.",
+      label: "Use file-backed storage",
+      status: keyringIssue.status,
+      setupMode: "from_live",
+      credentialBackend: "file",
+    });
+    fixes.push({
+      kind: "open_settings",
+      title: "Keyring setup instructions",
+      detail: "Review the supported local keyring services for macOS, Windows, and Linux.",
+      label: "Show keyring setup",
+      status: keyringIssue.status,
+      settingsSection: "keyring",
+    });
+  }
+
+  if (!snapshot) {
+    return fixes;
+  }
+
+  snapshot.statuses.forEach((status) => {
+    if (!status.binary_found) {
+      fixes.push({
+        kind: "open_installation_guide",
+        title: `${status.tool} is missing`,
+        detail: `Open the install guide for ${status.tool} and then refresh diagnostics.`,
+        label: "Open installation guide",
+        status: "warn",
+        toolTarget: status.tool,
+        secondaryAction: {
+          kind: "refresh_diagnostics",
+          label: "Refresh diagnostics",
+        },
+      });
+    }
+
+    if (status.active_profile && status.active_profile_applied === false) {
+      const profileLabel = toolProfileDisplayLabel(settings, snapshot, status.tool, status.active_profile);
+      fixes.push({
+        kind: "reapply_profile",
+        title: `${status.tool} live mismatch`,
+        detail: `Re-apply ${profileLabel} so the live credentials match the saved profile again.`,
+        label: `Re-apply ${profileLabel}`,
+        status: "fail",
+        profileTarget: {
+          tool: status.tool,
+          profile: status.active_profile,
+        },
+        importTarget: {
+          tool: status.tool,
+          stateMode: resolveStateMode(status),
+        },
+        importFallbackMode: preferredProfileImportMode(
+          status.tool,
+          toolCapabilities,
+          "from_live",
+        ),
+        primary: true,
+      });
+    }
+  });
+
+  const workspace = parseWorkspaceStatus(snapshot.workspace_status ?? undefined);
+  const hasWorkspaceMismatch =
+    workspace.status === "mismatch" &&
+    workspace.expectedContext !== "none" &&
+    workspace.expectedContext !== workspace.currentContext;
+
+  if (hasWorkspaceMismatch) {
+    const expectedContextLabel = contextDisplayLabel(settings, workspace.expectedContext);
+    const currentContextLabel = contextDisplayLabel(settings, workspace.currentContext);
+    const target = resolveWorkspaceActivationTarget(workspace.expectedContext, settings, snapshot);
+    fixes.push({
+      kind: "resolve_workspace",
+      title: "Project set mismatch",
+      detail: target
+        ? `This folder wants ${expectedContextLabel}, but ${currentContextLabel} is currently active.`
+        : `This folder wants ${expectedContextLabel}, but no matching detected set or ready saved set is currently available.`,
+      label: target ? "Use expected set now" : "Open Sets",
+      status: "warn",
+      primary: true,
+      workspaceActivationTarget: target,
+      matchedWorkspaceTarget: workspace.target,
+    });
+  }
+
+  return fixes;
+}
+
+function buildRepairFixMap(repair: Record<string, unknown> | undefined) {
+  const result = asObject(repair?.result);
+  return asArray(result?.actions)
+    .map((action) => asObject(action))
+    .filter((action): action is Record<string, unknown> => Boolean(action))
+    .reduce((map, action) => {
+      const fix = asStringValue(action.fix);
+      if (fix) {
+        map.set(fix.toLowerCase(), fix);
+      }
+      return map;
+    }, new Map<string, string>());
+}
+
+function repairableDoctorIssues(
+  doctor: Record<string, unknown> | undefined,
+  repairFixMap: Map<string, string>,
+): Array<{
+  title: string;
+  detail: string;
+  label: string;
+  fix: string;
+  status: "warn" | "fail";
+  primary?: boolean;
+}> {
+  return asArray(doctor?.checks)
+    .map((check) => asObject(check))
+    .filter((check): check is Record<string, unknown> => Boolean(check))
+    .flatMap((check) => {
+      const name = asStringValue(check.name)?.toLowerCase() ?? "";
+      const detail = asStringValue(check.detail) ?? "AI Switch reported an issue.";
+      const status = (asStringValue(check.status) as "warn" | "fail" | undefined) ?? "warn";
+
+      if (name.includes("keyring")) {
+        return [doctorRepairFixCard(
+          "Keyring unavailable",
+          detail,
+          "Apply keyring repair",
+          status,
+          repairFixMap.get("keyring") ?? "keyring",
+        )];
+      }
+      if (name.includes("permission")) {
+        return [doctorRepairFixCard(
+          "Permission issue",
+          detail,
+          "Repair permissions",
+          status,
+          repairFixMap.get("permissions") ?? "permissions",
+        )];
+      }
+      if (name.includes("oauth")) {
+        return [doctorRepairFixCard(
+          "OAuth failure",
+          detail,
+          "Retry OAuth repair",
+          status,
+          repairFixMap.get("oauth") ?? "oauth",
+        )];
+      }
+      return [];
+    });
+}
+
+function doctorRepairFixCard(
+  title: string,
+  detail: string,
+  label: string,
+  status: "warn" | "fail",
+  fix: string,
+) {
+  return {
+    title,
+    detail,
+    label,
+    status,
+    fix,
+    primary: true,
+  };
+}
+
+function shellHookDoctorIssue(doctor: Record<string, unknown> | undefined) {
+  const checks = asArray(doctor?.checks)
+    .map((check) => asObject(check))
+    .filter((check): check is Record<string, unknown> => Boolean(check));
+
+  for (const check of checks) {
+    const name = asStringValue(check.name)?.toLowerCase() ?? "";
+    const detail = normalizeTerminalIntegrationText(
+      asStringValue(check.detail) ?? "Terminal integration guidance needs attention.",
+    );
+    const status = (asStringValue(check.status) as "warn" | "fail" | undefined) ?? "warn";
+    const detailText = detail.toLowerCase();
+    if (
+      (name.includes("shell") && name.includes("hook")) ||
+      detailText.includes("shell hook") || detailText.includes("terminal integration")
+    ) {
+      return { detail, status };
+    }
+  }
+
+  return null;
+}
+
+function keyringDoctorIssue(doctor: Record<string, unknown> | undefined) {
+  const checks = asArray(doctor?.checks)
+    .map((check) => asObject(check))
+    .filter((check): check is Record<string, unknown> => Boolean(check));
+
+  for (const check of checks) {
+    const name = asStringValue(check.name)?.toLowerCase() ?? "";
+    const detail = asStringValue(check.detail) ?? "Keyring access needs attention.";
+    const status = (asStringValue(check.status) as "warn" | "fail" | undefined) ?? "warn";
+    const detailText = detail.toLowerCase();
+    if (name.includes("keyring") || detailText.includes("keyring")) {
+      return { detail, status };
+    }
+  }
+
+  return null;
+}
+
+function asObject(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+function asArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function asStringValue(value: unknown) {
+  return typeof value === "string" ? value : undefined;
+}
+
+function resolveStateMode(status: ToolStatus) {
+  if (!toolSupportsEditableStateModes(status.tool)) {
+    return null;
+  }
+  return status.state_mode ?? "isolated";
 }
 
 function resolveIssueProfileTarget(title: string, snapshot: AppSnapshot) {
