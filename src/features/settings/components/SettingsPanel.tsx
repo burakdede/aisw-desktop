@@ -35,6 +35,21 @@ export const SETTINGS_SECTIONS = [
 ] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
+const DEFAULT_SETTINGS_SECTION: SettingsSection = SETTINGS_SECTIONS[0];
+const SETTINGS_SECTION_META: Record<
+  SettingsSection,
+  {
+    label: string;
+  }
+> = {
+  general: { label: "General" },
+  runtime: { label: "Engine" },
+  shell: { label: "Terminal Integration" },
+  keyring: { label: "Security" },
+  updates: { label: "Updates" },
+  advanced: { label: "Advanced" },
+};
+
 export function SettingsPanel({
   settings,
   runtimeStatus,
@@ -53,21 +68,19 @@ export function SettingsPanel({
   onResetOnboarding?: () => void;
 }) {
   const queryClient = useQueryClient();
-  const sectionButtonRefs = useRef<Record<SettingsSection, HTMLButtonElement | null>>({
-    general: null,
-    runtime: null,
-    shell: null,
-    keyring: null,
-    updates: null,
-    advanced: null,
-  });
+  const sectionButtonRefs = useRef<Record<SettingsSection, HTMLButtonElement | null>>(
+    Object.fromEntries(SETTINGS_SECTIONS.map((section) => [section, null])) as Record<
+      SettingsSection,
+      HTMLButtonElement | null
+    >,
+  );
   const { updateSettingsMutation, checkForUpdatesMutation, installUpdateMutation, mutationLock } =
     useDesktopActions();
   const [runtimeKind, setRuntimeKind] = useState(settings.runtime_kind);
   const [runtimePath, setRuntimePath] = useState(settings.runtime_path ?? "");
   const [aiswHome, setAiswHome] = useState(settings.aisw_home ?? "");
   const [updateChannel, setUpdateChannel] = useState(settings.update_channel);
-  const [selectedSection, setSelectedSection] = useState<SettingsSection>(initialSection ?? "general");
+  const [selectedSection, setSelectedSection] = useState<SettingsSection>(initialSection ?? DEFAULT_SETTINGS_SECTION);
   const [selectedShell, setSelectedShell] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
   const [securityMessage, setSecurityMessage] = useState("");
@@ -165,7 +178,7 @@ export function SettingsPanel({
   ]);
 
   useEffect(() => {
-    setSelectedSection(initialSection ?? "general");
+    setSelectedSection(initialSection ?? DEFAULT_SETTINGS_SECTION);
   }, [initialSection]);
 
   useEffect(() => {
@@ -1003,37 +1016,11 @@ function effectiveRuntimePath(runtimeKind: DesktopSettings["runtime_kind"], runt
 }
 
 function sectionLabel(section: SettingsSection) {
-  switch (section) {
-    case "general":
-      return "General";
-    case "runtime":
-      return "Engine";
-    case "updates":
-      return "Updates";
-    case "shell":
-      return "Terminal Integration";
-    case "keyring":
-      return "Security";
-    case "advanced":
-      return "Advanced";
-  }
+  return SETTINGS_SECTION_META[section].label;
 }
 
 function sectionHeading(section: SettingsSection) {
-  switch (section) {
-    case "general":
-      return "General";
-    case "runtime":
-      return "Engine";
-    case "shell":
-      return "Terminal Integration";
-    case "keyring":
-      return "Security";
-    case "updates":
-      return "Updates";
-    case "advanced":
-      return "Advanced";
-  }
+  return SETTINGS_SECTION_META[section].label;
 }
 
 function selectedRuntimePath(
