@@ -22,12 +22,19 @@ import {
 } from "../../../lib/display-copy";
 import { notifyDesktop } from "../../../lib/notifications";
 import {
+  detectedShellLabel,
+  SHELL_COMPLETION_AVAILABLE_LABEL,
+  shellConfigPathLabel,
+  shellGuidanceFallbackLabel,
+  shellHookStatusLabel,
+} from "../../../lib/settings-display";
+import {
   runtimeCompatibilityLabel,
   runtimeReadinessLabel,
 } from "../../../lib/runtime-display";
 import { type AppBootstrap, type DesktopSettings } from "../../../lib/schemas";
-import { DesktopCommandError } from "../../../lib/tauri";
 import { titleCase } from "../../../lib/utils";
+import { DesktopCommandError } from "../../../lib/tauri";
 import { clearPersistedWindowState } from "../../../lib/window-state";
 import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import { normalizeTerminalIntegrationText } from "../../shared/terminal-integration-language";
@@ -597,27 +604,17 @@ export function SettingsPanel({
                 <SettingsGroup title="Terminal Integration">
                   <SettingsStaticRow
                     label="Detected shell"
-                    value={
-                      shellGuidance.data?.detected_shell
-                        ? titleCase(shellGuidance.data.detected_shell)
-                        : "Unavailable"
-                    }
+                    value={detectedShellLabel(shellGuidance.data?.detected_shell)}
                   />
                   <SettingsStaticRow
                     label="Shell hook"
-                    value={
-                      shellCheck?.status === "pass"
-                        ? "Installed"
-                        : shellCheck?.status === "warn"
-                          ? "Not installed"
-                          : "Unavailable"
-                    }
+                    value={shellHookStatusLabel(shellCheck?.status)}
                   />
                   <SettingsStaticRow
                     label="Config file"
-                    value={<code className="settings-path-value">{selectedVariant?.config_path ?? "Unavailable"}</code>}
+                    value={<code className="settings-path-value">{shellConfigPathLabel(selectedVariant)}</code>}
                   />
-                  <SettingsStaticRow label="Completion scripts" value="Available in this build" />
+                  <SettingsStaticRow label="Completion scripts" value={SHELL_COMPLETION_AVAILABLE_LABEL} />
                   {selectedVariant ? (
                     <SettingsActionRow
                       label="Shell hook actions"
@@ -642,9 +639,7 @@ export function SettingsPanel({
                     />
                   ) : (
                     <p className="inline-note">
-                      {shellGuidance.isLoading
-                        ? "Loading shell guidance…"
-                        : "Terminal setup guidance is unavailable."}
+                      {shellGuidanceFallbackLabel(shellGuidance.isLoading)}
                     </p>
                   )}
                 </SettingsGroup>
