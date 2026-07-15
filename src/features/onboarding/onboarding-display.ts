@@ -1,6 +1,6 @@
 import type { AppBootstrap, AppSnapshot, InitReport, ToolStatus } from "../../lib/schemas";
-import { runtimeSummary } from "../../lib/runtime-display";
 import { toolDisplayName } from "../../lib/tool-display";
+import { runtimeSummary } from "../../lib/runtime-display";
 import { titleCase } from "../../lib/utils";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
@@ -38,6 +38,11 @@ export type SetupStepOption = {
 export type SecureStorageStatus = {
   available: boolean;
   label: string;
+  detail: string;
+};
+
+export type OnboardingCompletionState = {
+  state: string;
   detail: string;
 };
 
@@ -257,6 +262,24 @@ export function onboardingPrimaryActionLabel(
   return initReport ? "Refresh Setup" : "Get Started";
 }
 
+export function onboardingImportedProfileLabel(name: string) {
+  return `${titleCase(name)} account`;
+}
+
+export function onboardingImportSubmitLabel(isPending: boolean) {
+  return isPending ? "Importing…" : "Import";
+}
+
+export function restoreIncludedEngineActionLabel(isPending: boolean) {
+  return isPending ? "Switching to Included Engine…" : "Use Included Engine";
+}
+
+export function restoreIncludedEngineErrorMessage(error: unknown) {
+  return error instanceof Error
+    ? error.message
+    : "Could not switch back to the included desktop engine.";
+}
+
 export function resolveOnboardingStepState(activeStep: SetupStep) {
   const activeStepIndex = ONBOARDING_SETUP_STEPS.findIndex(
     (step) => step.value === activeStep,
@@ -359,6 +382,37 @@ export function buildOnboardingRuntimeRows(
       detail: secureStorage.detail,
     },
   ];
+}
+
+export function onboardingCompletionState(
+  status: ToolStatus,
+  profileCount: number,
+): OnboardingCompletionState {
+  if (!status.binary_found) {
+    return {
+      state: "Not installed",
+      detail: "Optional for now.",
+    };
+  }
+
+  if (status.active_profile) {
+    return {
+      state: status.active_profile,
+      detail: "Active on this computer.",
+    };
+  }
+
+  if (profileCount > 0) {
+    return {
+      state: `${profileCount} saved profile${profileCount === 1 ? "" : "s"}`,
+      detail: "Saved locally and ready when needed.",
+    };
+  }
+
+  return {
+    state: "Not configured",
+    detail: `Add a ${toolDisplayName(status.tool)} profile later from Profiles.`,
+  };
 }
 
 export function onboardingSecureStorageStatus(

@@ -4,16 +4,21 @@ import {
   ONBOARDING_SETUP_STEPS,
   ONBOARDING_TRUST_ROWS,
   accountItemTool,
+  onboardingCompletionState,
   buildOnboardingInventory,
   buildOnboardingHealthItems,
   buildOnboardingRuntimeRows,
   defaultSetupStep,
+  onboardingImportedProfileLabel,
+  onboardingImportSubmitLabel,
   onboardingPrimaryActionLabel,
   onboardingAccountBadge,
   onboardingAccountSummary,
   onboardingSecureStorageStatus,
   onboardingSwitchReadinessStatus,
   readLiveAccounts,
+  restoreIncludedEngineActionLabel,
+  restoreIncludedEngineErrorMessage,
   resolveOnboardingStepState,
   resolveSelectedOnboardingAccountItem,
   selectDefaultAccountItem,
@@ -299,6 +304,17 @@ describe("onboarding-display", () => {
       "Refresh Setup",
     );
     expect(onboardingPrimaryActionLabel(false, undefined)).toBe("Get Started");
+    expect(onboardingImportedProfileLabel("work laptop")).toBe("Work Laptop account");
+    expect(onboardingImportSubmitLabel(true)).toBe("Importing…");
+    expect(onboardingImportSubmitLabel(false)).toBe("Import");
+    expect(restoreIncludedEngineActionLabel(true)).toBe("Switching to Included Engine…");
+    expect(restoreIncludedEngineActionLabel(false)).toBe("Use Included Engine");
+    expect(restoreIncludedEngineErrorMessage(new Error("No bundled engine found."))).toBe(
+      "No bundled engine found.",
+    );
+    expect(restoreIncludedEngineErrorMessage(null)).toBe(
+      "Could not switch back to the included desktop engine.",
+    );
     expect(resolveOnboardingStepState("runtime")).toEqual({
       steps: ONBOARDING_SETUP_STEPS,
       activeStepIndex: 0,
@@ -433,5 +449,52 @@ describe("onboarding-display", () => {
         detail: "System keyring available for local credential storage.",
       },
     ]);
+  });
+
+  it("shares onboarding completion-state copy", () => {
+    const activeStatus = makeSnapshot().statuses[0];
+
+    expect(onboardingCompletionState(activeStatus, 1)).toEqual({
+      state: "personal",
+      detail: "Active on this computer.",
+    });
+    expect(
+      onboardingCompletionState(
+        {
+          ...activeStatus,
+          active_profile: null,
+        },
+        2,
+      ),
+    ).toEqual({
+      state: "2 saved profiles",
+      detail: "Saved locally and ready when needed.",
+    });
+    expect(
+      onboardingCompletionState(
+        {
+          ...activeStatus,
+          active_profile: null,
+        },
+        0,
+      ),
+    ).toEqual({
+      state: "Not configured",
+      detail: "Add a Claude Code profile later from Profiles.",
+    });
+    expect(
+      onboardingCompletionState(
+        {
+          ...activeStatus,
+          tool: "gemini",
+          binary_found: false,
+          active_profile: null,
+        },
+        0,
+      ),
+    ).toEqual({
+      state: "Not installed",
+      detail: "Optional for now.",
+    });
   });
 });

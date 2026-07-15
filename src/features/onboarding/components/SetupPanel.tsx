@@ -15,8 +15,6 @@ import { toolSupportsEditableStateModes } from "../../../lib/tool-registry";
 import { toolDisplayName } from "../../../lib/tool-display";
 import { countLabel, titleCase } from "../../../lib/utils";
 import {
-  commandForCurrentPlatform,
-  installCommandForTool,
   installGuideUrlForTool,
   openExternalGuide,
   toolBinaryName,
@@ -33,14 +31,19 @@ import {
   ONBOARDING_TRUST_ROWS,
   accountItemTool,
   buildOnboardingInventory,
+  onboardingCompletionState,
   buildOnboardingHealthItems,
   buildOnboardingRuntimeRows,
   defaultSetupStep,
+  onboardingImportedProfileLabel,
+  onboardingImportSubmitLabel,
   onboardingPrimaryActionLabel,
   onboardingAccountBadge,
   onboardingAccountSummary,
   onboardingSecureStorageStatus,
   onboardingSwitchReadinessStatus,
+  restoreIncludedEngineActionLabel,
+  restoreIncludedEngineErrorMessage,
   resolveOnboardingStepState,
   resolveSelectedOnboardingAccountItem,
   selectDefaultAccountItem,
@@ -49,8 +52,6 @@ import {
   setupStepSummary,
   shouldShowSetupFlow,
   type LiveAccount,
-  type OnboardingAccountItem,
-  type OnboardingHealthItem as HealthItem,
   type SetupStep,
 } from "../onboarding-display";
 import type { SettingsSection } from "../../settings/settings-panel-display";
@@ -133,6 +134,9 @@ export function SetupPanel({
     initMutation.isPending,
     initReport,
   );
+  const [selectedAccountKey, setSelectedAccountKey] = useState<string | null>(() =>
+    selectDefaultAccountItem(accountItems)?.key ?? null,
+  );
 
   useEffect(() => {
     if (!pendingLiveImport) {
@@ -151,7 +155,7 @@ export function SetupPanel({
 
     setProfileLabels((current) => ({
       ...current,
-      [pendingLiveImport.tool]: `${titleCase(name)} account`,
+      [pendingLiveImport.tool]: onboardingImportedProfileLabel(name),
     }));
   }, [pendingLiveImport, profileLabels, profileNames]);
 
@@ -175,7 +179,7 @@ export function SetupPanel({
     addProfileMutation.mutate({
       tool,
       profile: value,
-      label: profileLabels[tool]?.trim() || `${titleCase(value)} account`,
+      label: profileLabels[tool]?.trim() || onboardingImportedProfileLabel(value),
       stateMode: toolSupportsEditableStateModes(tool) ? "isolated" : null,
       importMode: { kind: "from_live" },
     });
@@ -197,6 +201,16 @@ export function SetupPanel({
     setPendingLiveImport(null);
   }
 
+  useEffect(() => {
+    if (!selectedAccountKey && !accountItems.length) {
+      return;
+    }
+    if (selectedAccountKey && accountItems.some((item) => item.key === selectedAccountKey)) {
+      return;
+    }
+    setSelectedAccountKey(selectDefaultAccountItem(accountItems)?.key ?? null);
+  }, [accountItems, selectedAccountKey]);
+
   if (!shouldShowSetup) {
     return null;
   }
@@ -208,14 +222,6 @@ export function SetupPanel({
   const secureStorage = onboardingSecureStorageStatus(snapshot, toolCapabilities);
   const currentRuntimeSummary = runtimeSummary(settings.runtime_kind);
   const runtimeRows = buildOnboardingRuntimeRows(bootstrap, snapshot, toolCapabilities);
-  const [selectedAccountKey, setSelectedAccountKey] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (selectedAccountKey && accountItems.some((item) => item.key === selectedAccountKey)) {
-      return;
-    }
-    setSelectedAccountKey(selectDefaultAccountItem(accountItems)?.key ?? null);
-  }, [accountItems, selectedAccountKey]);
 
   const selectedAccountItem = resolveSelectedOnboardingAccountItem(
     accountItems,
@@ -393,9 +399,9 @@ export function SetupPanel({
                         disabled={restoreBundledRuntimeMutation.isPending}
                         onClick={() => restoreBundledRuntimeMutation.mutate()}
                       >
-                        {restoreBundledRuntimeMutation.isPending
-                          ? "Switching to Included Engine…"
-                          : "Use Included Engine"}
+                        {restoreIncludedEngineActionLabel(
+                          restoreBundledRuntimeMutation.isPending,
+                        )}
                       </button>
                     ) : null}
                     <button className="ghost-button" type="button" onClick={() => onOpenSettings("runtime")}>
@@ -404,9 +410,9 @@ export function SetupPanel({
                   </div>
                   {restoreBundledRuntimeMutation.error ? (
                     <p className="inline-note">
-                      {restoreBundledRuntimeMutation.error instanceof Error
-                        ? restoreBundledRuntimeMutation.error.message
-                        : "Could not switch back to the included desktop engine."}
+                      {restoreIncludedEngineErrorMessage(
+                        restoreBundledRuntimeMutation.error,
+                      )}
                     </p>
                   ) : null}
                 </article>
@@ -798,29 +804,14 @@ export function SetupPanel({
                 <div className="onboarding-complete-grid" aria-label="Setup completion status">
                   {snapshot.statuses.map((status) => {
                     const profileCount = snapshot.profiles[status.tool]?.profiles.length ?? 0;
-                    const state =
-                      !status.binary_found
-                        ? "Not installed"
-                        : status.active_profile
-                          ? status.active_profile
-                          : profileCount > 0
-                            ? countLabel(profileCount, "saved profile")
-                            : "Not configured";
+                    const completion = onboardingCompletionState(status, profileCount);
                     return (
                       <div key={status.tool} className="onboarding-complete-cell">
                         <span className="overview-current-set-cell-label">
                           <ToolBrand tool={status.tool} className="tool-brand-inline" logoSize={15} />
                         </span>
-                        <strong>{state}</strong>
-                        <p className="inline-note">
-                          {!status.binary_found
-                            ? "Optional for now."
-                            : status.active_profile
-                              ? "Active on this computer."
-                              : profileCount > 0
-                                ? "Saved locally and ready when needed."
-                                : "Add a profile later from Profiles."}
-                        </p>
+                        <strong>{completion.state}</strong>
+                        <p className="inline-note">{completion.detail}</p>
                       </div>
                     );
                   })}
@@ -924,7 +915,7 @@ export function SetupPanel({
                   type="submit"
                   disabled={mutationLock.isBusy || addProfileMutation.isPending || !pendingProfileName.trim()}
                 >
-                  {addProfileMutation.isPending ? "Importing…" : "Import"}
+                  {onboardingImportSubmitLabel(addProfileMutation.isPending)}
                 </button>
               </div>
               {addProfileMutation.error ? (
