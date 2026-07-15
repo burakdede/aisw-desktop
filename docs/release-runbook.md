@@ -167,3 +167,18 @@ Optional signing secrets:
 
 The helper reads each secret from either `$SECRET_NAME` or `$SECRET_NAME_FILE`.
 That makes it safe to keep multiline values such as `TAURI_SIGNING_PRIVATE_KEY` and `APPLE_CERTIFICATE` in local files instead of shell history.
+
+To upload the macOS signing and notarization secrets in one step, run:
+
+```sh
+npm run configure:macos-signing -- \
+  --repo burakdede/aisw-desktop \
+  --cert /absolute/path/to/DeveloperID.p12 \
+  --cert-password 'certificate-password' \
+  --signing-identity 'Developer ID Application: Example, Inc. (TEAMID1234)' \
+  --apple-id 'ship@example.com' \
+  --apple-password 'app-specific-password' \
+  --team-id 'TEAMID1234'
+```
+
+This helper base64-encodes the `.p12` locally and uploads all six Apple secrets to the target GitHub environment.

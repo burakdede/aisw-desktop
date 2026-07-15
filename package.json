@@ -16,6 +16,7 @@
     "prepare:sidecar": "node ./scripts/prepare-sidecar.mjs",
     "prepare:updater": "node ./scripts/prepare-updater.mjs",
     "configure:release-secrets": "node ./scripts/configure-release-secrets.mjs",
+    "configure:macos-signing": "node ./scripts/configure-macos-signing-secrets.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
