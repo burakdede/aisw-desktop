@@ -44,23 +44,20 @@ import { useDesktopActions } from "../../shared/useDesktopActions";
 import { resolveWorkspaceActivationTarget, workspaceBindingOptions } from "../../workspaces/workspace-activation";
 import { parseWorkspaceBindings, parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 import type { WorkspaceUnbindInput } from "../../../lib/client";
+import {
+  createEditableProfileSetDraft,
+  createEditableRuleDraft,
+  createEmptyEditableProfileSet,
+  createEmptyRuleDraft,
+  duplicateEditableProfileSetDraft,
+  type BindScope,
+  type EditableProfileSet,
+  type EditableRule,
+  unbindTargetForBinding,
+} from "../sets-panel-display";
 
 const TOOLS = SUPPORTED_TOOLS;
-type EditableProfileSet = {
-  sourceName: string | null;
-  name: string;
-  label: string;
-  profiles: Record<string, string>;
-};
-
-type BindScope = "default" | "path" | "git_remote";
 type SetMode = "sets" | "rules";
-type EditableRule = {
-  source: WorkspaceUnbindInput | null;
-  scope: BindScope;
-  context: string;
-  targetValue: string;
-};
 
 export function SetsPanel({
   snapshot,
@@ -113,17 +110,11 @@ export function SetsPanel({
   const [context, setContext] = useState("");
   const [targetValue, setTargetValue] = useState("");
   const [ruleDraft, setRuleDraft] = useState<EditableRule>({
-    source: null,
-    scope: "default",
-    context: "",
-    targetValue: "",
+    ...createEmptyRuleDraft(),
   });
   const [selectedBindingKey, setSelectedBindingKey] = useState<string | null>(null);
   const [setDraft, setSetDraft] = useState<EditableProfileSet>({
-    sourceName: null,
-    name: "",
-    label: "",
-    profiles: Object.fromEntries(TOOLS.map((tool) => [tool, ""])),
+    ...createEmptyEditableProfileSet(TOOLS),
   });
   const [lastSetAction, setLastSetAction] = useState("");
 
@@ -251,12 +242,7 @@ export function SetsPanel({
   }, [compactLayout]);
 
   function resetSetDraft() {
-    setSetDraft({
-      sourceName: null,
-      name: "",
-      label: "",
-      profiles: Object.fromEntries(TOOLS.map((tool) => [tool, ""])),
-    });
+    setSetDraft(createEmptyEditableProfileSet(TOOLS));
   }
 
   function openNewSetEditor() {
@@ -267,31 +253,14 @@ export function SetsPanel({
   function openEditSetEditor(set: NonNullable<DesktopSettings["profile_sets"]>[number]) {
     setSetMenuOpen(false);
     setSelectedSetName(set.name);
-    setSetDraft({
-      sourceName: set.name,
-      name: set.name,
-      label: set.label ?? "",
-      profiles: Object.fromEntries(TOOLS.map((tool) => [tool, set.profiles[tool] ?? ""])),
-    });
+    setSetDraft(createEditableProfileSetDraft(set, TOOLS));
     setSetEditorOpen(true);
   }
 
   function duplicateSet(existingSet: NonNullable<DesktopSettings["profile_sets"]>[number]) {
     setSetMenuOpen(false);
     setSelectedSetName(existingSet.name);
-    const baseName = `${existingSet.name}-copy`;
-    let nextName = baseName;
-    let suffix = 2;
-    while (localSets.some((entry) => entry.name === nextName)) {
-      nextName = `${baseName}-${suffix}`;
-      suffix += 1;
-    }
-    setSetDraft({
-      sourceName: null,
-      name: nextName,
-      label: existingSet.label ? `${existingSet.label} Copy` : `${profileSetDisplayLabel(existingSet)} Copy`,
-      profiles: Object.fromEntries(TOOLS.map((tool) => [tool, existingSet.profiles[tool] ?? ""])),
-    });
+    setSetDraft(duplicateEditableProfileSetDraft(existingSet, localSets, TOOLS));
     setSetEditorOpen(true);
   }
 
@@ -398,12 +367,7 @@ export function SetsPanel({
   }
 
   function resetRuleDraft() {
-    setRuleDraft({
-      source: null,
-      scope: "default",
-      context: bindingOptions[0]?.value ?? "",
-      targetValue: "",
-    });
+    setRuleDraft(createEmptyRuleDraft(bindingOptions[0]?.value ?? ""));
   }
 
   function openRuleEditor() {
@@ -412,12 +376,7 @@ export function SetsPanel({
   }
 
   function openEditRuleEditor(binding: (typeof ruleEntries)[number]) {
-    setRuleDraft({
-      source: unbindTargetForBinding(binding.scope, binding.target),
-      scope: binding.scope === "path" || binding.scope === "git_remote" ? binding.scope : "default",
-      context: binding.context,
-      targetValue: binding.scope === "default" ? "" : binding.target,
-    });
+    setRuleDraft(createEditableRuleDraft(binding));
     setRuleEditorOpen(true);
   }
 
@@ -1170,14 +1129,4 @@ export function SetsPanel({
       ) : null}
     </div>
   );
-}
-
-function unbindTargetForBinding(scope: string, target: string): WorkspaceUnbindInput {
-  if (scope === "path") {
-    return { scope: "path", path: target };
-  }
-  if (scope === "git_remote") {
-    return { scope: "git_remote", pattern: target };
-  }
-  return { scope: "default" };
 }
