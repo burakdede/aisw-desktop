@@ -1,3 +1,5 @@
+import { parseStoredDate } from "./date-format";
+
 export type BackupLike = {
   backup_id: string;
   created_at?: string | null;
@@ -10,9 +12,9 @@ export function compareBackupsNewestFirst(left: BackupLike, right: BackupLike) {
 }
 
 function backupSortKey(value: string) {
-  const isoDate = Date.parse(value);
-  if (!Number.isNaN(isoDate)) {
-    return new Date(isoDate).toISOString();
+  const date = parseStoredDate(value);
+  if (date) {
+    return date.toISOString();
   }
   return value;
 }

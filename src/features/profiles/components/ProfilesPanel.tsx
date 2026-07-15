@@ -15,6 +15,7 @@ import {
   type OAuthProgressEvent,
 } from "../../../lib/schemas";
 import { compareBackupsNewestFirst } from "../../../lib/backups";
+import { DATE_UNAVAILABLE_LABEL, formatDateTimeWithZone } from "../../../lib/date-format";
 import { DesktopCommandError } from "../../../lib/tauri";
 import { listenDesktopEvent } from "../../../lib/tauri";
 import { listBackups, parseOAuthProgressEvent } from "../../../lib/client";
@@ -155,7 +156,7 @@ export function ProfilesPanel({
             ? formatBackupTimestamp(latestBackup.created_at ?? latestBackup.backup_id)
             : snapshot.profiles[entryTool]?.active === entry.name
               ? "Not Verified"
-              : "Date Unavailable",
+              : DATE_UNAVAILABLE_LABEL,
           hasBackup: Boolean(latestBackup),
         };
       }),
@@ -1807,37 +1808,7 @@ function profileStatusSummary(
 }
 
 function formatBackupTimestamp(value: string) {
-  const isoDate = Date.parse(value);
-  if (!Number.isNaN(isoDate)) {
-    return new Intl.DateTimeFormat(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZoneName: "short",
-    }).format(new Date(isoDate));
-  }
-
-  const match = value.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/);
-  if (!match) {
-    return "Date Unavailable";
-  }
-
-  const [, year, month, day, hour, minute, second] = match;
-  const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
-  if (Number.isNaN(date.getTime())) {
-    return "Date Unavailable";
-  }
-
-  return new Intl.DateTimeFormat(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZoneName: "short",
-  }).format(date);
+  return formatDateTimeWithZone(value);
 }
 
 function authDisplayLabel(auth: string) {

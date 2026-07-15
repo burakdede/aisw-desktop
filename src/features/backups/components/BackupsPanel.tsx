@@ -10,6 +10,7 @@ import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { listBackups, openAppDataFolder } from "../../../lib/client";
 import { compareBackupsNewestFirst, type BackupLike } from "../../../lib/backups";
+import { DATE_UNAVAILABLE_LABEL, parseStoredDate } from "../../../lib/date-format";
 import { toolProfileDisplayLabel } from "../../../lib/profile-display";
 import { AppBootstrap, AppSnapshot, DesktopSettings, type BackupEntry } from "../../../lib/schemas";
 import { toolDisplayName } from "../../../lib/tool-display";
@@ -595,7 +596,7 @@ function backupContainsLabel(entry: BackupEntry) {
 function formatBackupInspectorTimestamp(value: string) {
   const date = backupDate(value);
   if (!date) {
-    return "Date Unavailable";
+    return DATE_UNAVAILABLE_LABEL;
   }
   return formatFriendlyInspectorDate(date);
 }
@@ -603,7 +604,7 @@ function formatBackupInspectorTimestamp(value: string) {
 function formatBackupListTimestamp(value: string) {
   const date = backupDate(value);
   if (!date) {
-    return "Date Unavailable";
+    return DATE_UNAVAILABLE_LABEL;
   }
 
   const now = new Date();
@@ -635,22 +636,7 @@ function formatBackupListTimestamp(value: string) {
 }
 
 function backupDate(value: string) {
-  const isoDate = Date.parse(value);
-  if (!Number.isNaN(isoDate)) {
-    return new Date(isoDate);
-  }
-
-  const compactMatch = value.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/);
-  if (!compactMatch) {
-    return null;
-  }
-
-  const [, year, month, day, hour, minute, second] = compactMatch;
-  const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-  return date;
+  return parseStoredDate(value);
 }
 
 function formatFriendlyInspectorDate(date: Date) {
