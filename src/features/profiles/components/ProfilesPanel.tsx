@@ -20,10 +20,19 @@ import { DATE_UNAVAILABLE_LABEL, formatDateTimeWithZone } from "../../../lib/dat
 import {
   BACKEND_UNAVAILABLE_LABEL,
   DEFAULT_ACTION_FAILURE_MESSAGE,
-  NOT_AVAILABLE_LABEL,
-  VERIFICATION_REQUIRED_LABEL,
 } from "../../../lib/display-copy";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
+import {
+  AVAILABLE_AFTER_ACTIVATION_LABEL,
+  profileAddedLabel,
+  profileAuthMethodLabel,
+  profileLastCheckedLabel,
+  profileStateModeLabel,
+  profileStorageBooleanLabel,
+  profileStorageDetailsToggleLabel,
+  profileTokenWarningLabel,
+  profileWarningLabel,
+} from "../../../lib/profile-detail-display";
 import {
   profileLiveMatchLabel,
   profileSwitchLabel,
@@ -169,11 +178,12 @@ export function ProfilesPanel({
             profileName: entry.name,
             activeProfileApplied: status?.active_profile_applied,
           }),
-          lastChecked: latestBackup
-            ? formatBackupTimestamp(latestBackup.created_at ?? latestBackup.backup_id)
-            : snapshot.profiles[entryTool]?.active === entry.name
-              ? "Not Verified"
-              : DATE_UNAVAILABLE_LABEL,
+          lastChecked: profileLastCheckedLabel(
+            latestBackup
+              ? formatBackupTimestamp(latestBackup.created_at ?? latestBackup.backup_id)
+              : null,
+            snapshot.profiles[entryTool]?.active === entry.name,
+          ),
           hasBackup: Boolean(latestBackup),
         };
       }),
@@ -707,7 +717,7 @@ export function ProfilesPanel({
                         {profileStatusLabel(inventoryEntry.state)}
                       </span>
                       <span className="profiles-table-column profiles-table-column-auth">
-                        {authDisplayLabel(inventoryEntry.auth)}
+                        {profileAuthMethodLabel(inventoryEntry.auth)}
                       </span>
                       <span className="profiles-table-column profiles-table-column-low">{inventoryEntry.backend}</span>
                       <span className="profiles-table-column profiles-table-column-low">{inventoryEntry.lastChecked}</span>
@@ -963,7 +973,7 @@ export function ProfilesPanel({
                       label: "Live match",
                       value: profileLiveMatchValue(selectedProfileState),
                     },
-                    { label: "Authentication", value: authDisplayLabel(selectedProfileEntry.auth) },
+                    { label: "Authentication", value: profileAuthMethodLabel(selectedProfileEntry.auth) },
                     {
                       label: "Credential storage",
                       value:
@@ -973,21 +983,23 @@ export function ProfilesPanel({
                     },
                     {
                       label: "Added",
-                      value: selectedLatestBackup
-                        ? formatBackupTimestamp(selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id)
-                        : "Date Unavailable",
+                      value: profileAddedLabel(
+                        selectedLatestBackup
+                          ? formatBackupTimestamp(selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id)
+                          : null,
+                      ),
                     },
                     {
                       label: "Last checked",
-                      value: selectedInventoryEntry?.lastChecked ?? "Not Verified",
+                      value: selectedInventoryEntry?.lastChecked ?? profileLastCheckedLabel(null, selectedIsActive),
                     },
                     ...(!availableStateModes.length
                       ? [
                           {
                             label: "State mode",
                             value: selectedIsActive
-                              ? stateModeDisplay(toolStatus?.state_mode)
-                              : "Available after activation",
+                              ? profileStateModeLabel(toolStatus?.state_mode)
+                              : AVAILABLE_AFTER_ACTIVATION_LABEL,
                           },
                         ]
                       : []),
@@ -1020,7 +1032,7 @@ export function ProfilesPanel({
                       )
                     }
                   >
-                    {openStorageDetails === selectedProfileEntry.name ? "Hide Storage Details" : "Storage Details"}
+                    {profileStorageDetailsToggleLabel(openStorageDetails === selectedProfileEntry.name)}
                   </button>
                 </div>
                 {openStorageDetails === selectedProfileEntry.name ? (
@@ -1028,13 +1040,13 @@ export function ProfilesPanel({
                     {selectedIsActive ? (
                       <>
                         <p className="inline-note">
-                          Credentials present: {booleanLabel(toolStatus?.credentials_present)}
+                          Credentials present: {profileStorageBooleanLabel(toolStatus?.credentials_present)}
                         </p>
                         <p className="inline-note">
-                          Local permissions: {booleanLabel(toolStatus?.permissions_ok)}
+                          Local permissions: {profileStorageBooleanLabel(toolStatus?.permissions_ok)}
                         </p>
                         {toolStatus?.token_warning ? (
-                          <p className="inline-note">Token warning: {formatProfileTokenWarning(toolStatus)}</p>
+                          <p className="inline-note">Token warning: {profileTokenWarningLabel(toolStatus)}</p>
                         ) : null}
                         {toolStatus?.warnings.length ? (
                           <div className="stack-list">
@@ -1043,7 +1055,7 @@ export function ProfilesPanel({
                                 key={`${warning.code ?? warning.message ?? "warning"}-${index}`}
                                 className="inline-note"
                               >
-                                Warning: {formatProfileWarning(warning)}
+                                Warning: {profileWarningLabel(warning)}
                               </p>
                             ))}
                           </div>
@@ -1677,38 +1689,8 @@ function formatDesktopError(error: unknown) {
   return DEFAULT_ACTION_FAILURE_MESSAGE;
 }
 
-function formatProfileTokenWarning(
-  status: NonNullable<AppSnapshot["statuses"][number]>,
-) {
-  const warning = status.token_warning;
-  if (!warning) {
-    return "Token state needs attention.";
-  }
-  const detail = warning.summary ?? warning.message ?? warning.code ?? "Token state needs attention.";
-  const suffix = warning.expires_at
-    ? ` Expires at ${warning.expires_at}.`
-    : typeof warning.expires_in_days === "number"
-      ? ` Expires in ${warning.expires_in_days} days.`
-      : "";
-  return `${detail}${suffix}`;
-}
-
-function formatProfileWarning(
-  warning: NonNullable<AppSnapshot["statuses"][number]["warnings"]>[number],
-) {
-  const detail = warning.message ?? warning.code ?? "Warning reported by AI Switch.";
-  return warning.remediation ? `${detail} Remediation: ${warning.remediation}` : detail;
-}
-
 function credentialBackendDisplay(backend: string | null | undefined) {
   return formatCredentialBackendLabel(backend, "inventory");
-}
-
-function stateModeDisplay(mode: string | null | undefined) {
-  if (!mode) {
-    return NOT_AVAILABLE_LABEL;
-  }
-  return titleCase(mode);
 }
 
 function profileStatusTone(state: ProfileSwitchState) {
@@ -1727,25 +1709,8 @@ function profileLiveMatchValue(state: ProfileSwitchState) {
   return profileLiveMatchLabel(state);
 }
 
-function booleanLabel(value: boolean | null | undefined) {
-  if (value === undefined || value === null) {
-    return VERIFICATION_REQUIRED_LABEL;
-  }
-  return value ? "Yes" : "No";
-}
-
 function formatBackupTimestamp(value: string) {
   return formatDateTimeWithZone(value);
-}
-
-function authDisplayLabel(auth: string) {
-  if (auth === "oauth") {
-    return "OAuth";
-  }
-  if (auth === "api_key") {
-    return "API Key";
-  }
-  return titleCase(auth.split("_").join(" "));
 }
 
 function duplicateWarning(tool: string, profile: string) {
