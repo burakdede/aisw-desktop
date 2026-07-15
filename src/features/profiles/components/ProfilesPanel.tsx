@@ -51,7 +51,6 @@ import {
   type SupportedTool,
 } from "../../../lib/tool-registry";
 import { toolDisplayName } from "../../../lib/tool-display";
-import { titleCase } from "../../../lib/utils";
 import {
   resolveCredentialBackendRequest,
   supportedCredentialBackends,
@@ -72,30 +71,22 @@ import {
   profileImportModeNotes,
 } from "../profile-sheet-display";
 import {
+  buildInventoryProfiles,
   buildProfileActionMenu,
   buildSelectedProfileInspectorState,
   buildOauthWizardSteps,
+  filterInventoryProfiles,
   formatDesktopError,
+  findSelectedInventoryEntry,
+  INVENTORY_FILTERS,
   isDuplicateProfileName,
   latestBackupForProfile,
   profileMutationError,
+  type InventoryEntry,
+  type InventoryFilter,
 } from "../profiles-panel-display";
 
 const TOOLS = SUPPORTED_TOOLS;
-const INVENTORY_FILTERS = ["all", ...TOOLS] as const;
-
-type InventoryFilter = (typeof INVENTORY_FILTERS)[number];
-type InventoryEntry = {
-  tool: SupportedTool;
-  name: string;
-  auth: string;
-  label: string;
-  active: boolean;
-  backend: string;
-  state: ProfileSwitchState;
-  lastChecked: string;
-  hasBackup: boolean;
-};
 
 export function ProfilesPanel({
   snapshot,
@@ -176,49 +167,20 @@ export function ProfilesPanel({
   const profiles = useMemo(() => snapshot.profiles[tool]?.profiles ?? [], [snapshot, tool]);
   const readEnabled = useMutationAwareQueryEnabled();
   const backups = useQuery({ queryKey: ["backups"], queryFn: listBackups, enabled: readEnabled });
-  const inventoryProfiles = useMemo(() => {
-    const toolEntries =
-      inventoryFilter === "all" ? TOOLS : [inventoryFilter];
-
-    return toolEntries.flatMap((entryTool) =>
-      (snapshot.profiles[entryTool]?.profiles ?? []).map<InventoryEntry>((entry) => {
-        const status = snapshot.statuses.find((candidate) => candidate.tool === entryTool);
-        const latestBackup = latestBackupForProfile(entryTool, entry.name, backups.data);
-        return {
-          tool: entryTool,
-          name: entry.name,
-          auth: entry.auth,
-          label: effectiveToolProfileLabel(settings, entryTool, entry.name, entry.label),
-          active: snapshot.profiles[entryTool]?.active === entry.name,
-          backend: formatCredentialBackendLabel(status?.credential_backend, "inventory"),
-          state: resolveProfileSwitchState({
-            activeProfile: snapshot.profiles[entryTool]?.active,
-            profileName: entry.name,
-            activeProfileApplied: status?.active_profile_applied,
-          }),
-          lastChecked: profileLastCheckedLabel(
-            latestBackup
-              ? formatDateTimeWithZone(latestBackup.created_at ?? latestBackup.backup_id)
-              : null,
-            snapshot.profiles[entryTool]?.active === entry.name,
-          ),
-          hasBackup: Boolean(latestBackup),
-        };
+  const inventoryProfiles = useMemo(
+    () =>
+      buildInventoryProfiles({
+        backups: backups.data,
+        inventoryFilter,
+        settings,
+        snapshot,
       }),
-    );
-  }, [backups.data, inventoryFilter, settings, snapshot]);
-  const filteredInventoryProfiles = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) {
-      return inventoryProfiles;
-    }
-    return inventoryProfiles.filter((entry) =>
-      [entry.label, entry.name, titleCase(entry.tool), entry.auth, entry.backend, entry.state]
-        .join(" ")
-        .toLowerCase()
-        .includes(query),
-    );
-  }, [inventoryProfiles, search]);
+    [backups.data, inventoryFilter, settings, snapshot],
+  );
+  const filteredInventoryProfiles = useMemo(
+    () => filterInventoryProfiles(inventoryProfiles, search),
+    [inventoryProfiles, search],
+  );
   const normalizedProfileNames = useMemo(
     () => new Set(profiles.map((entry) => entry.name.trim().toLowerCase())),
     [profiles],
@@ -246,12 +208,10 @@ export function ProfilesPanel({
     () => buildOauthWizardSteps(tool, oauthEvents, oauthError),
     [tool, oauthEvents, oauthError],
   );
-  const selectedInventoryEntry = useMemo(() => {
-    if (!expandedDetails) {
-      return null;
-    }
-    return inventoryProfiles.find((entry) => entry.tool === tool && entry.name === expandedDetails) ?? null;
-  }, [expandedDetails, inventoryProfiles, tool]);
+  const selectedInventoryEntry = useMemo(
+    () => findSelectedInventoryEntry(inventoryProfiles, tool, expandedDetails),
+    [expandedDetails, inventoryProfiles, tool],
+  );
   const selectedProfileEntry = useMemo(
     () => profiles.find((entry) => entry.name === expandedDetails) ?? null,
     [expandedDetails, profiles],

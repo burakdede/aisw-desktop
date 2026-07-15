@@ -1,9 +1,22 @@
-import type { BackupEntry, OAuthProgressEvent } from "../../lib/schemas";
+import type {
+  AppSnapshot,
+  BackupEntry,
+  DesktopSettings,
+  OAuthProgressEvent,
+} from "../../lib/schemas";
 import { compareBackupsNewestFirst } from "../../lib/backups";
+import { credentialBackendLabel as formatCredentialBackendLabel } from "../../lib/credential-backends";
 import { DEFAULT_ACTION_FAILURE_MESSAGE } from "../../lib/display-copy";
+import { formatDateTimeWithZone } from "../../lib/date-format";
+import { profileLastCheckedLabel } from "../../lib/profile-detail-display";
+import { effectiveToolProfileLabel } from "../../lib/profile-display";
 import { DesktopCommandError } from "../../lib/tauri";
 import { titleCase } from "../../lib/utils";
-import type { ProfileSwitchState } from "../../lib/status-display";
+import {
+  resolveProfileSwitchState,
+  type ProfileSwitchState,
+} from "../../lib/status-display";
+import { SUPPORTED_TOOLS, type SupportedTool } from "../../lib/tool-registry";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 
 export type OAuthWizardStep = {
@@ -23,6 +36,86 @@ export type ProfileActionMenuItem = {
   disabled?: boolean;
   danger?: boolean;
 };
+
+export const INVENTORY_FILTERS = ["all", ...SUPPORTED_TOOLS] as const;
+
+export type InventoryFilter = (typeof INVENTORY_FILTERS)[number];
+
+export type InventoryEntry = {
+  tool: SupportedTool;
+  name: string;
+  auth: string;
+  label: string;
+  active: boolean;
+  backend: string;
+  state: ProfileSwitchState;
+  lastChecked: string;
+  hasBackup: boolean;
+};
+
+export function buildInventoryProfiles(input: {
+  backups: BackupEntry[] | undefined;
+  inventoryFilter: InventoryFilter;
+  settings: DesktopSettings;
+  snapshot: AppSnapshot;
+}) {
+  const toolEntries = input.inventoryFilter === "all" ? SUPPORTED_TOOLS : [input.inventoryFilter];
+
+  return toolEntries.flatMap((entryTool) =>
+    (input.snapshot.profiles[entryTool]?.profiles ?? []).map<InventoryEntry>((entry) => {
+      const status = input.snapshot.statuses.find((candidate) => candidate.tool === entryTool);
+      const latestBackup = latestBackupForProfile(entryTool, entry.name, input.backups);
+      const isActive = input.snapshot.profiles[entryTool]?.active === entry.name;
+
+      return {
+        tool: entryTool,
+        name: entry.name,
+        auth: entry.auth,
+        label: effectiveToolProfileLabel(input.settings, entryTool, entry.name, entry.label),
+        active: isActive,
+        backend: formatCredentialBackendLabel(status?.credential_backend, "inventory"),
+        state: resolveProfileSwitchState({
+          activeProfile: input.snapshot.profiles[entryTool]?.active,
+          profileName: entry.name,
+          activeProfileApplied: status?.active_profile_applied,
+        }),
+        lastChecked: profileLastCheckedLabel(
+          latestBackup
+            ? formatDateTimeWithZone(latestBackup.created_at ?? latestBackup.backup_id)
+            : null,
+          isActive,
+        ),
+        hasBackup: Boolean(latestBackup),
+      };
+    }),
+  );
+}
+
+export function filterInventoryProfiles(entries: InventoryEntry[], search: string) {
+  const query = search.trim().toLowerCase();
+  if (!query) {
+    return entries;
+  }
+
+  return entries.filter((entry) =>
+    [entry.label, entry.name, titleCase(entry.tool), entry.auth, entry.backend, entry.state]
+      .join(" ")
+      .toLowerCase()
+      .includes(query),
+  );
+}
+
+export function findSelectedInventoryEntry(
+  entries: InventoryEntry[],
+  tool: SupportedTool,
+  expandedDetails: string | null,
+) {
+  if (!expandedDetails) {
+    return null;
+  }
+
+  return entries.find((entry) => entry.tool === tool && entry.name === expandedDetails) ?? null;
+}
 
 export function buildProfileActionMenu(input: {
   active: boolean;

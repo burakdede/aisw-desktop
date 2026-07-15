@@ -1,11 +1,20 @@
 import { describe, expect, it } from "vitest";
-import type { BackupEntry, OAuthProgressEvent } from "../../lib/schemas";
+import type {
+  AppSnapshot,
+  BackupEntry,
+  DesktopSettings,
+  OAuthProgressEvent,
+} from "../../lib/schemas";
 import { DesktopCommandError } from "../../lib/tauri";
 import {
+  buildInventoryProfiles,
   buildProfileActionMenu,
   buildSelectedProfileInspectorState,
   buildOauthWizardSteps,
+  filterInventoryProfiles,
   formatDesktopError,
+  findSelectedInventoryEntry,
+  INVENTORY_FILTERS,
   isDuplicateProfileName,
   latestBackupForProfile,
   oauthEventStage,
@@ -39,7 +48,125 @@ function makeOauthEvent(overrides: Partial<OAuthProgressEvent> = {}): OAuthProgr
   };
 }
 
+function makeSettings(overrides: Partial<DesktopSettings> = {}): DesktopSettings {
+  return {
+    runtime_kind: "bundled",
+    runtime_path: null,
+    aisw_home: null,
+    update_channel: "stable",
+    profile_labels: {
+      claude: {
+        work: "Work Laptop",
+      },
+    },
+    profile_sets: [],
+    ...overrides,
+  };
+}
+
+function makeSnapshot(overrides: Partial<AppSnapshot> = {}): AppSnapshot {
+  return {
+    statuses: [
+      {
+        tool: "claude",
+        binary_found: true,
+        stored_profiles: 1,
+        active_profile: "work",
+        auth_method: "oauth",
+        credential_backend: "system-keyring",
+        state_mode: "isolated",
+        active_profile_applied: true,
+        credentials_present: true,
+        permissions_ok: true,
+        token_warning: null,
+        warnings: [],
+      },
+      {
+        tool: "codex",
+        binary_found: true,
+        stored_profiles: 1,
+        active_profile: null,
+        auth_method: "oauth",
+        credential_backend: "file",
+        state_mode: "isolated",
+        active_profile_applied: null,
+        credentials_present: null,
+        permissions_ok: null,
+        token_warning: null,
+        warnings: [],
+      },
+    ],
+    profiles: {
+      claude: {
+        active: "work",
+        profiles: [{ name: "work", auth: "oauth", label: "" }],
+      },
+      codex: {
+        active: null,
+        profiles: [{ name: "personal", auth: "oauth", label: "" }],
+      },
+    },
+    contexts: [],
+    ...overrides,
+  };
+}
+
 describe("profiles-panel-display", () => {
+  it("builds, filters, and selects inventory entries", () => {
+    expect(INVENTORY_FILTERS).toEqual(["all", "claude", "codex", "gemini"]);
+
+    const snapshot = makeSnapshot();
+    const settings = makeSettings();
+    const backups = [
+      makeBackup(),
+      makeBackup({
+        tool: "codex",
+        profile: "personal",
+        backup_id: "20260324T114502Z-codex-personal",
+        created_at: "2026-03-24T11:45:02Z",
+      }),
+    ];
+
+    const inventory = buildInventoryProfiles({
+      backups,
+      inventoryFilter: "all",
+      settings,
+      snapshot,
+    });
+
+    expect(inventory).toHaveLength(2);
+    expect(inventory[0]).toMatchObject({
+      tool: "claude",
+      name: "work",
+      auth: "oauth",
+      label: "Work Laptop",
+      active: true,
+      backend: "Keychain",
+      state: "active",
+      hasBackup: true,
+    });
+    expect(inventory[0].lastChecked).toContain("2026");
+    expect(inventory[1]).toMatchObject({
+      tool: "codex",
+      name: "personal",
+      auth: "oauth",
+      label: "",
+      active: false,
+      backend: "File",
+      state: "stored",
+      hasBackup: true,
+    });
+    expect(inventory[1].lastChecked).toContain("2026");
+    expect(inventory[1].lastChecked).not.toContain("Active now");
+
+    expect(filterInventoryProfiles(inventory, "work laptop")).toEqual([inventory[0]]);
+    expect(filterInventoryProfiles(inventory, "personal codex oauth file stored")).toEqual([
+      inventory[1],
+    ]);
+    expect(findSelectedInventoryEntry(inventory, "claude", "work")).toEqual(inventory[0]);
+    expect(findSelectedInventoryEntry(inventory, "claude", "missing")).toBeNull();
+  });
+
   it("finds the newest backup for a profile and supports tool-prefixed profile ids", () => {
     const backup = latestBackupForProfile("claude", "work", [
       makeBackup(),
