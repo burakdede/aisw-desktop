@@ -1,4 +1,5 @@
-export const DATE_UNAVAILABLE_LABEL = "Date Unavailable";
+import { DATE_UNAVAILABLE_LABEL } from "./display-copy";
+export { DATE_UNAVAILABLE_LABEL } from "./display-copy";
 
 export function parseStoredDate(value: string) {
   const isoDate = Date.parse(value);

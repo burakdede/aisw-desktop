@@ -17,6 +17,12 @@ import {
 import { compareBackupsNewestFirst } from "../../../lib/backups";
 import { DATE_UNAVAILABLE_LABEL, formatDateTimeWithZone } from "../../../lib/date-format";
 import {
+  BACKEND_UNAVAILABLE_LABEL,
+  DEFAULT_ACTION_FAILURE_MESSAGE,
+  NOT_AVAILABLE_LABEL,
+  VERIFICATION_REQUIRED_LABEL,
+} from "../../../lib/display-copy";
+import {
   profileLiveMatchLabel,
   profileSwitchLabel,
   profileSwitchSymbol,
@@ -151,7 +157,7 @@ export function ProfilesPanel({
           auth: entry.auth,
           label: effectiveLabel(entryTool, entry.name, entry.label, settings) ?? titleCase(entry.name),
           active: snapshot.profiles[entryTool]?.active === entry.name,
-          backend: status?.credential_backend ? formatBackendLabel(status.credential_backend) : "Backend Unavailable",
+          backend: status?.credential_backend ? formatBackendLabel(status.credential_backend) : BACKEND_UNAVAILABLE_LABEL,
           state: resolveProfileSwitchState({
             activeProfile: snapshot.profiles[entryTool]?.active,
             profileName: entry.name,
@@ -957,7 +963,7 @@ export function ProfilesPanel({
                       value:
                         snapshot.profiles[tool]?.active === selectedProfileEntry.name
                           ? credentialBackendDisplay(toolStatus?.credential_backend)
-                          : selectedInventoryEntry?.backend ?? "Backend Unavailable",
+                          : selectedInventoryEntry?.backend ?? BACKEND_UNAVAILABLE_LABEL,
                     },
                     {
                       label: "Added",
@@ -1693,7 +1699,7 @@ function formatDesktopError(error: unknown) {
       ? `${normalizeRuntimeLanguage(error.message)} Remediation: ${normalizeRuntimeLanguage(remediation)}`
       : normalizeRuntimeLanguage(error.message);
   }
-  return "AI Switch could not complete that action.";
+  return DEFAULT_ACTION_FAILURE_MESSAGE;
 }
 
 function formatProfileTokenWarning(
@@ -1721,14 +1727,14 @@ function formatProfileWarning(
 
 function credentialBackendDisplay(backend: string | null | undefined) {
   if (!backend) {
-    return "Backend Unavailable";
+    return BACKEND_UNAVAILABLE_LABEL;
   }
   return formatBackendLabel(backend);
 }
 
 function stateModeDisplay(mode: string | null | undefined) {
   if (!mode) {
-    return "Not Available";
+    return NOT_AVAILABLE_LABEL;
   }
   return titleCase(mode);
 }
@@ -1751,7 +1757,7 @@ function profileLiveMatchValue(state: ProfileSwitchState) {
 
 function booleanLabel(value: boolean | null | undefined) {
   if (value === undefined || value === null) {
-    return "Verification Required";
+    return VERIFICATION_REQUIRED_LABEL;
   }
   return value ? "Yes" : "No";
 }

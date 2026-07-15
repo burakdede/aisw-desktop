@@ -17,6 +17,7 @@ import {
   contextDisplayLabel,
   toolProfileDisplayLabel,
 } from "../../../lib/profile-display";
+import { BACKEND_UNAVAILABLE_LABEL } from "../../../lib/display-copy";
 import {
   overviewHealthLabel,
   overviewHealthSymbol,
@@ -878,6 +879,6 @@ function credentialBackendLabel(backend: string | null | undefined) {
     case "auto":
       return "Automatic";
     default:
-      return backend ?? "Backend Unavailable";
+      return backend ?? BACKEND_UNAVAILABLE_LABEL;
   }
 }

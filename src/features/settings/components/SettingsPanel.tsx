@@ -14,6 +14,12 @@ import {
   DESKTOP_APPEARANCES,
   type DesktopPreferences,
 } from "../../../lib/desktop-preferences";
+import {
+  DATE_UNAVAILABLE_LABEL,
+  DEFAULT_ACTION_FAILURE_MESSAGE,
+  NOT_FOUND_LABEL,
+  NOT_SET_LABEL,
+} from "../../../lib/display-copy";
 import { notifyDesktop } from "../../../lib/notifications";
 import { type AppBootstrap, type DesktopSettings } from "../../../lib/schemas";
 import { DesktopCommandError } from "../../../lib/tauri";
@@ -231,7 +237,7 @@ export function SettingsPanel({
       });
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "AI Switch could not complete that action.";
+        error instanceof Error ? error.message : DEFAULT_ACTION_FAILURE_MESSAGE;
       setSecurityMessage(message);
     }
   }
@@ -505,7 +511,7 @@ export function SettingsPanel({
             {selectedSection === "runtime" ? (
               <div className="settings-section-stack">
                 <SettingsGroup title="AISW Runtime">
-                  <SettingsStaticRow label="Bundled runtime" value={runtimeStatus.version?.version ?? "Date Unavailable"} />
+                  <SettingsStaticRow label="Bundled runtime" value={runtimeStatus.version?.version ?? DATE_UNAVAILABLE_LABEL} />
                   <SettingsStaticRow
                     label="Status"
                     value={runtimeStatus.compatible ? "Ready" : "Needs Attention"}
@@ -539,7 +545,7 @@ export function SettingsPanel({
                   </SettingsRow>
                   <SettingsStaticRow
                     label="System runtime"
-                    value={<code className="settings-path-value">{runtimeStatus.inventory.system_path ?? "Not found"}</code>}
+                    value={<code className="settings-path-value">{runtimeStatus.inventory.system_path ?? NOT_FOUND_LABEL}</code>}
                   />
                   <SettingsRow label="Custom runtime">
                     <input
@@ -734,7 +740,7 @@ export function SettingsPanel({
                 </SettingsGroup>
 
                 <SettingsGroup title="Bundled AISW Engine">
-                  <SettingsStaticRow label="Version" value={runtimeStatus.version?.version ?? "Date Unavailable"} />
+                  <SettingsStaticRow label="Version" value={runtimeStatus.version?.version ?? DATE_UNAVAILABLE_LABEL} />
                   <SettingsStaticRow
                     label="Compatibility"
                     value={runtimeStatus.compatible ? "Supported" : "Needs Attention"}
@@ -987,7 +993,7 @@ function formatMutationError(error: unknown) {
     };
   }
   return {
-    message: "AI Switch could not complete that action.",
+    message: DEFAULT_ACTION_FAILURE_MESSAGE,
     remediation: undefined,
   };
 }
@@ -1028,10 +1034,10 @@ function selectedRuntimePath(
   runtimeStatus: AppBootstrap["runtime_status"],
 ) {
   if (settings.runtime_kind === "custom") {
-    return settings.runtime_path ?? "Not set";
+    return settings.runtime_path ?? NOT_SET_LABEL;
   }
   if (settings.runtime_kind === "system") {
-    return runtimeStatus.inventory?.system_path ?? "Not found";
+    return runtimeStatus.inventory?.system_path ?? NOT_FOUND_LABEL;
   }
-  return runtimeStatus.inventory?.bundled_path ?? "Not found";
+  return runtimeStatus.inventory?.bundled_path ?? NOT_FOUND_LABEL;
 }

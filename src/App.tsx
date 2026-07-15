@@ -28,6 +28,7 @@ import {
 } from "./features/settings/components/SettingsPanel";
 import { useDesktop } from "./features/shared/useDesktop";
 import { notifyDesktop } from "./lib/notifications";
+import { DEFAULT_ACTION_FAILURE_MESSAGE } from "./lib/display-copy";
 import { activeSetLabel } from "./lib/profile-display";
 import {
   profileDisplayLabel,
@@ -250,7 +251,7 @@ export function App() {
     onError: async (error) => {
       await notifyDesktop({
         title: "Support report export failed",
-        body: error instanceof Error ? error.message : "AI Switch could not complete that action.",
+        body: error instanceof Error ? error.message : DEFAULT_ACTION_FAILURE_MESSAGE,
       });
     },
   });
@@ -343,7 +344,7 @@ export function App() {
       await invalidatePostMutationQueries(queryClient);
     },
     onError: async (error) => {
-      const message = error instanceof Error ? error.message : "AI Switch could not complete that action.";
+      const message = error instanceof Error ? error.message : DEFAULT_ACTION_FAILURE_MESSAGE;
       recordCommandResult(
         { type: "global", id: "profile-set" },
         {
@@ -437,7 +438,7 @@ export function App() {
             .catch((error) =>
               notifyDesktop({
                 title: "Diagnostic export failed",
-                body: error instanceof Error ? error.message : "AI Switch could not complete that action.",
+                body: error instanceof Error ? error.message : DEFAULT_ACTION_FAILURE_MESSAGE,
               }),
             );
         },
