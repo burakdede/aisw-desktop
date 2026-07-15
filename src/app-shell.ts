@@ -1,7 +1,16 @@
 import { DesktopCommandError } from "./lib/tauri";
-import type { AppBootstrap } from "./lib/schemas";
+import type { AppBootstrap, AppSnapshot, DesktopSettings } from "./lib/schemas";
 import type { ProfileImportMode } from "./features/shared/profile-capabilities";
 import type { SettingsSection } from "./features/settings/settings-panel-display";
+import {
+  profileDisplayLabel,
+  profileSetDisplayLabel,
+  profileSetIsActive,
+  sharedProfileEntries,
+  toolProfileDisplayLabel,
+} from "./lib/profile-display";
+import { resolveGlobalStateMode, resolveStateModeRequest } from "./features/shared/state-modes";
+import { titleCase } from "./lib/utils";
 export {
   runtimeSelectionLabel,
   runtimeSourceLabel,
@@ -46,6 +55,37 @@ export type SidebarStatusRow = {
   label: string;
   value: string;
 };
+
+export type ReapplyActiveProfileAction =
+  | {
+      scope: { type: "global"; id: "profile-set" };
+      resultLabel: "Re-apply active profile";
+      message: string;
+      action: { kind: "set"; name: string; label: string };
+    }
+  | {
+      scope: { type: "global"; id: "switch-all" };
+      resultLabel: "Re-apply active profile";
+      message: string;
+      action: {
+        kind: "shared-profile";
+        profile: string;
+        label: string;
+        stateMode: ReturnType<typeof resolveGlobalStateMode>;
+      };
+    }
+  | {
+      scope: { type: "tool"; tool: string };
+      resultLabel: "Re-apply active profile";
+      message: string;
+      action: {
+        kind: "tool-profile";
+        tool: string;
+        profile: string;
+        label: string;
+        stateMode: ReturnType<typeof resolveStateModeRequest>;
+      };
+    };
 
 const NAV_SHORTCUTS: Record<string, AppNavId> = {
   "1": "overview",
@@ -289,6 +329,87 @@ export function describeRuntimeBlocker(runtimeStatus: {
     nextStep:
       "Use the included desktop engine, or choose a working engine source in Engine Settings.",
   };
+}
+
+export function resolveActiveReapplyAction(input: {
+  snapshot: AppSnapshot | null;
+  settings: DesktopSettings | null;
+  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
+  runtimeBlocked: boolean;
+}): ReapplyActiveProfileAction {
+  if (!input.snapshot || !input.settings || input.runtimeBlocked) {
+    throw new Error("No active desktop snapshot is available yet.");
+  }
+
+  const { snapshot, settings, toolCapabilities } = input;
+  const activeSet = [...(settings.profile_sets ?? [])]
+    .sort((left, right) => left.name.localeCompare(right.name))
+    .find((set) => profileSetIsActive(snapshot, set));
+
+  if (activeSet) {
+    const label = profileSetDisplayLabel(activeSet);
+    return {
+      scope: { type: "global", id: "profile-set" },
+      resultLabel: "Re-apply active profile",
+      message: `Re-applied current set ${label}.`,
+      action: {
+        kind: "set",
+        name: activeSet.name,
+        label,
+      },
+    };
+  }
+
+  const activeProfiles = snapshot.statuses
+    .map((status) => status.active_profile?.trim())
+    .filter((profile): profile is string => Boolean(profile));
+  const uniqueProfiles = [...new Set(activeProfiles)].sort((left, right) =>
+    left.localeCompare(right),
+  );
+
+  if (
+    uniqueProfiles.length === 1 &&
+    sharedProfileEntries(settings, snapshot).some((entry) => entry.name === uniqueProfiles[0])
+  ) {
+    const profile = uniqueProfiles[0];
+    const label = profileDisplayLabel(settings, snapshot, profile);
+    return {
+      scope: { type: "global", id: "switch-all" },
+      resultLabel: "Re-apply active profile",
+      message: `Re-applied shared profile ${label}.`,
+      action: {
+        kind: "shared-profile",
+        profile,
+        label,
+        stateMode: resolveGlobalStateMode(snapshot),
+      },
+    };
+  }
+
+  const activeStatuses = snapshot.statuses.filter(
+    (status): status is (typeof snapshot.statuses)[number] & { active_profile: string } =>
+      Boolean(status.active_profile?.trim()),
+  );
+
+  if (activeStatuses.length === 1) {
+    const status = activeStatuses[0];
+    const profile = status.active_profile.trim();
+    const label = toolProfileDisplayLabel(settings, snapshot, status.tool, profile);
+    return {
+      scope: { type: "tool", tool: status.tool },
+      resultLabel: "Re-apply active profile",
+      message: `Re-applied ${titleCase(status.tool)} profile ${label}.`,
+      action: {
+        kind: "tool-profile",
+        tool: status.tool,
+        profile,
+        label,
+        stateMode: resolveStateModeRequest(status.tool, toolCapabilities, status.state_mode),
+      },
+    };
+  }
+
+  throw new Error("AI Switch could not determine a single active profile to re-apply.");
 }
 
 export function sectionTitle(section: string, setupFocused = false) {

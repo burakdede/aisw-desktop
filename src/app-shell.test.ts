@@ -12,12 +12,82 @@ import {
   describeRuntimeBlocker,
   deriveAppShellState,
   navShortcutLabel,
+  resolveActiveReapplyAction,
   runtimeSelectionLabel,
   runtimeSourceLabel,
   sectionTitle,
   settingsForRecovery,
 } from "./app-shell";
+import type { AppSnapshot, DesktopSettings } from "./lib/schemas";
 import { DesktopCommandError } from "./lib/tauri";
+
+function makeSettings(
+  overrides: Partial<DesktopSettings> = {},
+): DesktopSettings {
+  return {
+    runtime_kind: "bundled",
+    runtime_path: null,
+    aisw_home: null,
+    update_channel: "stable",
+    profile_labels: {
+      claude: { work: "Work Claude" },
+      codex: { work: "Work Codex" },
+    },
+    profile_sets: [],
+    ...overrides,
+  };
+}
+
+function makeSnapshot(
+  overrides: Partial<AppSnapshot> = {},
+): AppSnapshot {
+  return {
+    statuses: [
+      {
+        tool: "claude",
+        binary_found: true,
+        stored_profiles: 1,
+        active_profile: "work",
+        auth_method: "oauth",
+        credential_backend: "system-keyring",
+        state_mode: "isolated",
+        active_profile_applied: true,
+        credentials_present: true,
+        permissions_ok: true,
+        token_warning: null,
+        warnings: [],
+      },
+      {
+        tool: "codex",
+        binary_found: true,
+        stored_profiles: 1,
+        active_profile: "work",
+        auth_method: "oauth",
+        credential_backend: "system-keyring",
+        state_mode: "shared",
+        active_profile_applied: true,
+        credentials_present: true,
+        permissions_ok: true,
+        token_warning: null,
+        warnings: [],
+      },
+    ],
+    profiles: {
+      claude: {
+        active: "work",
+        profiles: [{ name: "work", auth: "oauth", label: "" }],
+      },
+      codex: {
+        active: "work",
+        profiles: [{ name: "work", auth: "oauth", label: "" }],
+      },
+    },
+    contexts: [],
+    workspace_status: null,
+    project_bindings: null,
+    ...overrides,
+  };
+}
 
 describe("app-shell helpers", () => {
   it("returns the default recovery settings when bootstrap settings are missing", () => {
@@ -234,5 +304,174 @@ describe("app-shell helpers", () => {
     expect(runtimeSelectionLabel("system")).toBe("System engine");
     expect(runtimeSourceLabel("bundled")).toBe("Included");
     expect(runtimeSourceLabel("custom")).toBe("Custom override");
+  });
+
+  it("resolves active profile reapply actions for sets, shared profiles, and tool profiles", () => {
+    expect(
+      resolveActiveReapplyAction({
+        snapshot: makeSnapshot(),
+        settings: makeSettings({
+          profile_sets: [
+            {
+              name: "work",
+              label: "Work",
+              profiles: { claude: "work", codex: "work" },
+            },
+          ],
+        }),
+        toolCapabilities: {
+          claude: {
+            auth_methods: ["oauth"],
+            state_modes: ["isolated", "shared"],
+            credential_backends: ["system-keyring"],
+            fail_closed_keyring_identity: false,
+          },
+          codex: {
+            auth_methods: ["oauth"],
+            state_modes: ["isolated", "shared"],
+            credential_backends: ["system-keyring"],
+            fail_closed_keyring_identity: false,
+          },
+        },
+        runtimeBlocked: false,
+      }),
+    ).toEqual({
+      scope: { type: "global", id: "profile-set" },
+      resultLabel: "Re-apply active profile",
+      message: "Re-applied current set Work.",
+      action: {
+        kind: "set",
+        name: "work",
+        label: "Work",
+      },
+    });
+
+    expect(
+      resolveActiveReapplyAction({
+        snapshot: makeSnapshot(),
+        settings: makeSettings(),
+        toolCapabilities: {
+          claude: {
+            auth_methods: ["oauth"],
+            state_modes: ["isolated", "shared"],
+            credential_backends: ["system-keyring"],
+            fail_closed_keyring_identity: false,
+          },
+          codex: {
+            auth_methods: ["oauth"],
+            state_modes: ["isolated", "shared"],
+            credential_backends: ["system-keyring"],
+            fail_closed_keyring_identity: false,
+          },
+        },
+        runtimeBlocked: false,
+      }),
+    ).toEqual({
+      scope: { type: "global", id: "switch-all" },
+      resultLabel: "Re-apply active profile",
+      message: "Re-applied shared profile Work Claude.",
+      action: {
+        kind: "shared-profile",
+        profile: "work",
+        label: "Work Claude",
+        stateMode: "isolated",
+      },
+    });
+
+    expect(
+      resolveActiveReapplyAction({
+        snapshot: makeSnapshot({
+          statuses: [
+            { ...makeSnapshot().statuses[0] },
+            { ...makeSnapshot().statuses[1], active_profile: null },
+          ],
+          profiles: {
+            claude: {
+              active: "work",
+              profiles: [{ name: "work", auth: "oauth", label: "" }],
+            },
+            codex: {
+              active: null,
+              profiles: [{ name: "personal", auth: "oauth", label: "" }],
+            },
+          },
+        }),
+        settings: makeSettings(),
+        toolCapabilities: {
+          claude: {
+            auth_methods: ["oauth"],
+            state_modes: ["isolated", "shared"],
+            credential_backends: ["system-keyring"],
+            fail_closed_keyring_identity: false,
+          },
+          codex: {
+            auth_methods: ["oauth"],
+            state_modes: ["isolated", "shared"],
+            credential_backends: ["system-keyring"],
+            fail_closed_keyring_identity: false,
+          },
+        },
+        runtimeBlocked: false,
+      }),
+    ).toEqual({
+      scope: { type: "tool", tool: "claude" },
+      resultLabel: "Re-apply active profile",
+      message: "Re-applied Claude profile Work Claude.",
+      action: {
+        kind: "tool-profile",
+        tool: "claude",
+        profile: "work",
+        label: "Work Claude",
+        stateMode: "isolated",
+      },
+    });
+  });
+
+  it("rejects active reapply when no usable active target exists", () => {
+    expect(() =>
+      resolveActiveReapplyAction({
+        snapshot: null,
+        settings: makeSettings(),
+        toolCapabilities: {},
+        runtimeBlocked: false,
+      }),
+    ).toThrow("No active desktop snapshot is available yet.");
+
+    expect(() =>
+      resolveActiveReapplyAction({
+        snapshot: makeSnapshot({
+          statuses: [
+            { ...makeSnapshot().statuses[0], active_profile: "work" },
+            { ...makeSnapshot().statuses[1], active_profile: "personal" },
+          ],
+          profiles: {
+            claude: {
+              active: "work",
+              profiles: [{ name: "work", auth: "oauth", label: "" }],
+            },
+            codex: {
+              active: "personal",
+              profiles: [{ name: "personal", auth: "oauth", label: "" }],
+            },
+          },
+        }),
+        settings: makeSettings(),
+        toolCapabilities: {
+          claude: {
+            auth_methods: ["oauth"],
+            state_modes: ["isolated", "shared"],
+            credential_backends: ["system-keyring"],
+            fail_closed_keyring_identity: false,
+          },
+          codex: {
+            auth_methods: ["oauth"],
+            state_modes: ["isolated", "shared"],
+            credential_backends: ["system-keyring"],
+            fail_closed_keyring_identity: false,
+          },
+        },
+        runtimeBlocked: false,
+      }),
+    ).toThrow("AI Switch could not determine a single active profile to re-apply.");
   });
 });

@@ -26,13 +26,6 @@ import { useDesktop } from "./features/shared/useDesktop";
 import { notifyDesktop } from "./lib/notifications";
 import { DEFAULT_ACTION_FAILURE_MESSAGE } from "./lib/display-copy";
 import { activeSetLabel } from "./lib/profile-display";
-import {
-  profileDisplayLabel,
-  profileSetDisplayLabel,
-  profileSetIsActive,
-  sharedProfileEntries,
-  toolProfileDisplayLabel,
-} from "./lib/profile-display";
 import { DesktopCommandError } from "./lib/tauri";
 import { listenDesktopEvent, type TrayCommandResultEvent } from "./lib/tauri";
 import { subscribeDesktopEvents, type DesktopEventHandler } from "./lib/desktop-events";
@@ -57,8 +50,6 @@ import {
   INCLUDED_DESKTOP_ENGINE_LABEL,
 } from "./lib/runtime-display";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "./lib/schemas";
-import { resolveGlobalStateMode, resolveStateModeRequest } from "./features/shared/state-modes";
-import { titleCase } from "./lib/utils";
 import {
   appNavFromShortcut,
   buildSidebarStatusRows,
@@ -71,6 +62,7 @@ import {
   describeBootstrapError,
   describeRuntimeBlocker,
   deriveAppShellState,
+  resolveActiveReapplyAction,
   type AppNavId,
   type ToolbarAction,
   type ProfilesRouteState,
@@ -240,74 +232,37 @@ export function App() {
       message: string;
       resultLabel: string;
     }> => {
-      const context = reapplyContextRef.current;
-      if (!context.snapshot || !context.settings || context.runtimeBlocked) {
-        throw new Error("No active desktop snapshot is available yet.");
-      }
-      const resolvedSnapshot = context.snapshot;
-      const settings = context.settings;
-      const toolCapabilities = context.toolCapabilities;
+      const resolution = resolveActiveReapplyAction(reapplyContextRef.current);
 
-      const activeSet = [...(settings.profile_sets ?? [])]
-        .sort((left, right) => left.name.localeCompare(right.name))
-        .find((set) => profileSetIsActive(resolvedSnapshot, set));
-      if (activeSet) {
-        await activateProfileSet({ name: activeSet.name, label: profileSetDisplayLabel(activeSet) });
-        return {
-          scope: { type: "global", id: "profile-set" },
-          resultLabel: "Re-apply active profile",
-          message: `Re-applied current set ${profileSetDisplayLabel(activeSet)}.`,
-        };
-      }
-
-      const activeProfiles = resolvedSnapshot.statuses
-        .map((status) => status.active_profile?.trim())
-        .filter((profile): profile is string => Boolean(profile));
-      const uniqueProfiles = [...new Set(activeProfiles)].sort((left, right) =>
-        left.localeCompare(right),
-      );
-      if (
-        uniqueProfiles.length === 1 &&
-        sharedProfileEntries(settings, resolvedSnapshot).some(
-          (entry) => entry.name === uniqueProfiles[0],
-        )
-      ) {
-        const profile = uniqueProfiles[0];
-        const profileLabel = profileDisplayLabel(settings, resolvedSnapshot, profile);
-        await useAllProfiles({
-          profile,
-          stateMode: resolveGlobalStateMode(resolvedSnapshot),
-          label: profileLabel,
-        });
-        return {
-          scope: { type: "global", id: "switch-all" },
-          resultLabel: "Re-apply active profile",
-          message: `Re-applied shared profile ${profileLabel}.`,
-        };
+      switch (resolution.action.kind) {
+        case "set":
+          await activateProfileSet({
+            name: resolution.action.name,
+            label: resolution.action.label,
+          });
+          break;
+        case "shared-profile":
+          await useAllProfiles({
+            profile: resolution.action.profile,
+            stateMode: resolution.action.stateMode,
+            label: resolution.action.label,
+          });
+          break;
+        case "tool-profile":
+          await useProfile({
+            tool: resolution.action.tool,
+            profile: resolution.action.profile,
+            stateMode: resolution.action.stateMode,
+            label: resolution.action.label,
+          });
+          break;
       }
 
-      const activeStatuses = resolvedSnapshot.statuses.filter(
-        (status): status is (typeof resolvedSnapshot.statuses)[number] & { active_profile: string } =>
-          Boolean(status.active_profile?.trim()),
-      );
-      if (activeStatuses.length === 1) {
-        const status = activeStatuses[0];
-        const profile = status.active_profile.trim();
-        const profileLabel = toolProfileDisplayLabel(settings, resolvedSnapshot, status.tool, profile);
-        await useProfile({
-          tool: status.tool,
-          profile,
-          stateMode: resolveStateModeRequest(status.tool, toolCapabilities, status.state_mode),
-          label: profileLabel,
-        });
-        return {
-          scope: { type: "tool", tool: status.tool },
-          resultLabel: "Re-apply active profile",
-          message: `Re-applied ${titleCase(status.tool)} profile ${profileLabel}.`,
-        };
-      }
-
-      throw new Error("AI Switch could not determine a single active profile to re-apply.");
+      return {
+        scope: resolution.scope,
+        resultLabel: resolution.resultLabel,
+        message: resolution.message,
+      };
     },
     onSuccess: async ({ scope, resultLabel, message }) => {
       recordCommandResult(scope, {
