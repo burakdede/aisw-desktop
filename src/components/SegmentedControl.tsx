@@ -16,7 +16,7 @@ export function SegmentedControl<T extends string>({
   kind = "buttons",
 }: {
   ariaLabel: string;
-  options: Array<SegmentedOption<T>>;
+  options: ReadonlyArray<SegmentedOption<T>>;
   value: T;
   onChange: (value: T) => void;
   className?: string;

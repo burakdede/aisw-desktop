@@ -1,7 +1,17 @@
 import { DATE_UNAVAILABLE_LABEL } from "../../lib/display-copy";
 import { toolDisplayName } from "../../lib/tool-display";
+import type { ActivityTimelineEntry } from "../shared/lastCommandResult";
 
 export type ActivityFilter = "all" | "success" | "error";
+
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+const GENERIC_ACTIVITY_RESULT = "snapshot updated successfully.";
+
+export const ACTIVITY_FILTER_OPTIONS = [
+  { value: "all", label: "All" },
+  { value: "success", label: "Success" },
+  { value: "error", label: "Failed" },
+] as const;
 
 export type ActivityEntry = {
   key: string;
@@ -16,6 +26,48 @@ export type ActivityEntry = {
   resultSummary?: string;
   at: number;
 };
+
+export function buildActivityEntries(timeline: ActivityTimelineEntry[]): ActivityEntry[] {
+  return timeline.map((entry) => ({
+    key: entry.key,
+    scopeLabel: activityScopeLabel(entry.scope),
+    scopeType: entry.scope.type,
+    scopeTool: entry.scope.type === "tool" ? entry.scope.tool : undefined,
+    label: entry.label,
+    status: entry.status,
+    message: entry.message,
+    remediation: entry.remediation,
+    command: entry.command,
+    resultSummary: entry.resultSummary,
+    at: entry.at,
+  }));
+}
+
+export function buildActivityExportBody(entries: ActivityEntry[]) {
+  return JSON.stringify(
+    entries.map((entry) => ({
+      ...entry,
+      recordedAt: new Date(entry.at).toISOString(),
+    })),
+    null,
+    2,
+  );
+}
+
+export function buildActivityExportMessage(filename: string) {
+  return `Opened ${filename}.`;
+}
+
+export function resolveSelectedActivityEntryKey(
+  currentEntryKey: string | null,
+  entries: ActivityEntry[],
+) {
+  if (currentEntryKey && entries.some((entry) => entry.key === currentEntryKey)) {
+    return currentEntryKey;
+  }
+
+  return entries[0]?.key ?? null;
+}
 
 export function activityScopeLabel(scope: { type: "tool"; tool: string } | { type: "global"; id: string }) {
   return scope.type === "tool" ? toolDisplayName(scope.tool) : activityGlobalScopeLabel(scope.id);
@@ -83,7 +135,7 @@ export function filterActivity(entries: ActivityEntry[], search: string, filter:
 
 export function groupActivityEntries(entries: ActivityEntry[], now = new Date()) {
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
+  const yesterdayStart = todayStart - DAY_IN_MS;
 
   const groups = [
     { label: "Today", entries: [] as ActivityEntry[] },
@@ -143,7 +195,7 @@ export function formatFullActivityTimestamp(timestamp: number, now = new Date())
   }
 
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
+  const yesterdayStart = todayStart - DAY_IN_MS;
   const value = date.getTime();
   const time = formatActivityTimestamp(value);
 
@@ -188,5 +240,5 @@ function parseActivityTargetSummary(entry: ActivityEntry) {
 }
 
 function isGenericActivityResult(value: string) {
-  return value.trim().toLowerCase() === "snapshot updated successfully.";
+  return value.trim().toLowerCase() === GENERIC_ACTIVITY_RESULT;
 }

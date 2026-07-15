@@ -17,15 +17,19 @@ import {
   useLastCommandResults,
 } from "../../shared/lastCommandResult";
 import {
-  activityScopeLabel,
+  ACTIVITY_FILTER_OPTIONS,
   activitySecondaryLine,
   activityStatusLabel,
   activityStatusSymbol,
+  buildActivityEntries,
+  buildActivityExportBody,
+  buildActivityExportMessage,
   activityTrailingLine,
   filterActivity,
   formatActivityTimestamp,
   formatFullActivityTimestamp,
   groupActivityEntries,
+  resolveSelectedActivityEntryKey,
   type ActivityEntry,
   type ActivityFilter,
 } from "../activity-display";
@@ -52,20 +56,7 @@ export function ActivityPanel({
   const menuAnchorRef = useRef<HTMLButtonElement | null>(null);
 
   const entries = useMemo<ActivityEntry[]>(
-    () =>
-      lastCommandResults.timeline.map((entry) => ({
-        key: entry.key,
-        scopeLabel: activityScopeLabel(entry.scope),
-        scopeType: entry.scope.type,
-        scopeTool: entry.scope.type === "tool" ? entry.scope.tool : undefined,
-        label: entry.label,
-        status: entry.status,
-        message: entry.message,
-        remediation: entry.remediation,
-        command: entry.command,
-        resultSummary: entry.resultSummary,
-        at: entry.at,
-      })),
+    () => buildActivityEntries(lastCommandResults.timeline),
     [lastCommandResults.timeline],
   );
 
@@ -85,10 +76,10 @@ export function ActivityPanel({
   const showInspector = !compactLayout || compactInspectorOpen;
 
   useEffect(() => {
-    if (selectedEntryKey && filteredEntries.some((entry) => entry.key === selectedEntryKey)) {
-      return;
+    const nextEntryKey = resolveSelectedActivityEntryKey(selectedEntryKey, filteredEntries);
+    if (nextEntryKey !== selectedEntryKey) {
+      setSelectedEntryKey(nextEntryKey);
     }
-    setSelectedEntryKey(filteredEntries[0]?.key ?? null);
   }, [filteredEntries, selectedEntryKey]);
 
   useEffect(() => {
@@ -112,39 +103,24 @@ export function ActivityPanel({
   }, [entries.length, externalOpenLogSignal]);
 
   async function openActivityLog() {
-    if (!entries.length) {
-      return;
-    }
-
-    const payload = entries.map((entry) => ({
-      ...entry,
-      recordedAt: new Date(entry.at).toISOString(),
-    }));
-    const result = await exportActivityLog(JSON.stringify(payload, null, 2));
-    const message = `Opened ${result.filename}.`;
-    setClearMessage("");
-    setLogMessage(message);
-    await notifyDesktop({
-      title: "Activity log opened",
-      body: message,
-    });
+    await exportActivity("Activity log opened");
   }
 
   async function exportRedactedActivity() {
+    await exportActivity("Redacted activity exported");
+  }
+
+  async function exportActivity(notificationTitle: string) {
     if (!entries.length) {
       return;
     }
 
-    const payload = entries.map((entry) => ({
-      ...entry,
-      recordedAt: new Date(entry.at).toISOString(),
-    }));
-    const result = await exportActivityLog(JSON.stringify(payload, null, 2));
-    const message = `Opened ${result.filename}.`;
+    const result = await exportActivityLog(buildActivityExportBody(entries));
+    const message = buildActivityExportMessage(result.filename);
     setClearMessage("");
     setLogMessage(message);
     await notifyDesktop({
-      title: "Redacted activity exported",
+      title: notificationTitle,
       body: message,
     });
   }
@@ -179,11 +155,7 @@ export function ActivityPanel({
         />
         <SegmentedControl
           ariaLabel="Activity filters"
-          options={[
-            { value: "all", label: "All" },
-            { value: "success", label: "Success" },
-            { value: "error", label: "Failed" },
-          ]}
+          options={ACTIVITY_FILTER_OPTIONS}
           value={filter}
           onChange={(value) => setFilter(value as ActivityFilter)}
         />
