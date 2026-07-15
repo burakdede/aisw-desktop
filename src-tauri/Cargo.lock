@@ -19,7 +19,7 @@ dependencies = [
 
 [[package]]
 name = "aisw-desktop"
-version = "0.1.7"
+version = "0.1.10"
 dependencies = [
  "anyhow",
  "async-trait",
