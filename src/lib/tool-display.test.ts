@@ -2,6 +2,7 @@ import { toolDisplayName } from "./tool-display";
 import {
   SUPPORTED_TOOLS,
   isSupportedTool,
+  toolApiKeyEnvVar,
   toolShortName,
   toolSupportsEditableStateModes,
   toolSupportsSystemKeyringCredentials,
@@ -22,6 +23,8 @@ describe("toolDisplayName", () => {
     expect(SUPPORTED_TOOLS).toEqual(["claude", "codex", "gemini"]);
     expect(isSupportedTool("claude")).toBe(true);
     expect(isSupportedTool("custom")).toBe(false);
+    expect(toolApiKeyEnvVar("claude")).toBe("ANTHROPIC_API_KEY");
+    expect(toolApiKeyEnvVar("custom")).toBe("API_KEY");
     expect(toolShortName("gemini")).toBe("Gemini");
     expect(toolSupportsEditableStateModes("gemini")).toBe(false);
     expect(toolSupportsEditableStateModes("claude")).toBe(true);

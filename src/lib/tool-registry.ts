@@ -8,6 +8,7 @@ const SUPPORTED_TOOL_SET = new Set<string>(SUPPORTED_TOOLS);
 const TOOL_METADATA: Record<
   SupportedTool,
   {
+    apiKeyEnvVar: string;
     binaryName: string;
     displayName: string;
     installCommand: string;
@@ -18,6 +19,7 @@ const TOOL_METADATA: Record<
   }
 > = {
   claude: {
+    apiKeyEnvVar: "ANTHROPIC_API_KEY",
     binaryName: "claude",
     displayName: "Claude Code",
     installCommand: "npm install -g @anthropic-ai/claude-code",
@@ -27,6 +29,7 @@ const TOOL_METADATA: Record<
     supportsSystemKeyringCredentials: true,
   },
   codex: {
+    apiKeyEnvVar: "OPENAI_API_KEY",
     binaryName: "codex",
     displayName: "Codex CLI",
     installCommand: "npm install -g @openai/codex",
@@ -36,6 +39,7 @@ const TOOL_METADATA: Record<
     supportsSystemKeyringCredentials: true,
   },
   gemini: {
+    apiKeyEnvVar: "GEMINI_API_KEY",
     binaryName: "gemini",
     displayName: "Gemini CLI",
     installCommand: "npm install -g @google/gemini-cli",
@@ -60,6 +64,10 @@ export function toolShortName(tool: string) {
 
 export function toolBinaryName(tool: string) {
   return isSupportedTool(tool) ? TOOL_METADATA[tool].binaryName : tool;
+}
+
+export function toolApiKeyEnvVar(tool: string) {
+  return isSupportedTool(tool) ? TOOL_METADATA[tool].apiKeyEnvVar : "API_KEY";
 }
 
 export function installCommandForTool(tool: string) {

@@ -17,7 +17,7 @@ import {
   toolProfileDisplayLabel,
 } from "../../../lib/profile-display";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
-import { SUPPORTED_TOOLS } from "../../../lib/tool-registry";
+import { SUPPORTED_TOOLS, toolShortName } from "../../../lib/tool-registry";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import { resolveGlobalStateMode } from "../../shared/state-modes";
@@ -472,7 +472,7 @@ export function SetsPanel({
     const missing = missingProfileSetSelections(snapshot, set);
     const summary = TOOLS.map((tool) => {
       const profile = set.profiles[tool];
-      const toolLabel = toolDisplayLabel(tool);
+      const toolLabel = toolShortName(tool);
       const label = profile
         ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
         : "—";
@@ -589,7 +589,7 @@ export function SetsPanel({
                                   const label = profile
                                     ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
                                     : "—";
-                                  return `${toolDisplayLabel(tool)}: ${label}`;
+                                  return `${toolShortName(tool)}: ${label}`;
                                 })
                                 .join(" · ")}
                             </p>
@@ -1202,19 +1202,6 @@ function formatRuleTarget(scope: string, target: string) {
     return "No target";
   }
   return target;
-}
-
-function toolDisplayLabel(tool: string) {
-  switch (tool) {
-    case "claude":
-      return "Claude";
-    case "codex":
-      return "Codex";
-    case "gemini":
-      return "Gemini";
-    default:
-      return tool;
-  }
 }
 
 function formatGuardModeLabel(mode: string) {

@@ -33,7 +33,12 @@ import {
 import { DesktopCommandError } from "../../../lib/tauri";
 import { listenDesktopEvent } from "../../../lib/tauri";
 import { listBackups, parseOAuthProgressEvent } from "../../../lib/client";
-import { SUPPORTED_TOOLS, type SupportedTool } from "../../../lib/tool-registry";
+import {
+  SUPPORTED_TOOLS,
+  toolApiKeyEnvVar,
+  toolShortName,
+  type SupportedTool,
+} from "../../../lib/tool-registry";
 import { toolDisplayName } from "../../../lib/tool-display";
 import { titleCase } from "../../../lib/utils";
 import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
@@ -1286,7 +1291,7 @@ export function ProfilesPanel({
               </label>
               {availableCredentialBackends.length === 1 && availableCredentialBackends[0] === "file" ? (
                 <p className="inline-note">
-                  {titleCase(tool)} profiles are always stored with file-backed credentials.
+                  {toolShortName(tool)} profiles are always stored with file-backed credentials.
                 </p>
               ) : null}
               {mode === "api_key" ? (
@@ -1306,7 +1311,7 @@ export function ProfilesPanel({
               ) : null}
               {mode === "from_env" ? (
                 <p className="inline-note">
-                  Expected environment variable: <code>{expectedEnvVar(tool)}</code>
+                  Expected environment variable: <code>{toolApiKeyEnvVar(tool)}</code>
                 </p>
               ) : null}
               {mode === "oauth" ? (
@@ -1461,7 +1466,7 @@ function profileImportModeNotes(tool: string, mode: ProfileImportMode) {
       ];
     case "from_env":
       return [
-        `Read ${expectedEnvVar(tool)} from the current environment when you save this profile.`,
+        `Read ${toolApiKeyEnvVar(tool)} from the current environment when you save this profile.`,
       ];
     case "api_key":
       return [
@@ -1543,19 +1548,6 @@ function latestBackupForProfile(
         (entry.profile === profile || entry.profile === `${tool}/${profile}`),
     )
     .sort(compareBackupsNewestFirst)[0];
-}
-
-function expectedEnvVar(tool: string) {
-  switch (tool) {
-    case "claude":
-      return "ANTHROPIC_API_KEY";
-    case "codex":
-      return "OPENAI_API_KEY";
-    case "gemini":
-      return "GEMINI_API_KEY";
-    default:
-      return "API_KEY";
-  }
 }
 
 type OAuthWizardStep = {
