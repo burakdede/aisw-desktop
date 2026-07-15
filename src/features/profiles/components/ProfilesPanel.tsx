@@ -15,6 +15,7 @@ import {
   type OAuthProgressEvent,
 } from "../../../lib/schemas";
 import { compareBackupsNewestFirst } from "../../../lib/backups";
+import { credentialBackendLabel as formatCredentialBackendLabel } from "../../../lib/credential-backends";
 import { DATE_UNAVAILABLE_LABEL, formatDateTimeWithZone } from "../../../lib/date-format";
 import {
   BACKEND_UNAVAILABLE_LABEL,
@@ -162,7 +163,7 @@ export function ProfilesPanel({
           auth: entry.auth,
           label: effectiveLabel(entryTool, entry.name, entry.label, settings) ?? titleCase(entry.name),
           active: snapshot.profiles[entryTool]?.active === entry.name,
-          backend: status?.credential_backend ? formatBackendLabel(status.credential_backend) : BACKEND_UNAVAILABLE_LABEL,
+          backend: formatCredentialBackendLabel(status?.credential_backend, "inventory"),
           state: resolveProfileSwitchState({
             activeProfile: snapshot.profiles[entryTool]?.active,
             profileName: entry.name,
@@ -1480,25 +1481,7 @@ function profileImportModeNotes(tool: string, mode: ProfileImportMode) {
 }
 
 function profileCredentialBackendLabel(backend: ProfileCredentialBackend) {
-  switch (backend) {
-    case "auto":
-      return "Automatic";
-    case "system-keyring":
-      return "System keyring";
-    case "file":
-      return "File-backed";
-  }
-}
-
-function formatBackendLabel(backend: string) {
-  switch (backend) {
-    case "system_keyring":
-      return "Keychain";
-    case "file":
-      return "File";
-    default:
-      return titleCase(backend.split("_").join(" "));
-  }
+  return formatCredentialBackendLabel(backend);
 }
 
 function profileCompactSummary(entry: InventoryEntry) {
@@ -1718,10 +1701,7 @@ function formatProfileWarning(
 }
 
 function credentialBackendDisplay(backend: string | null | undefined) {
-  if (!backend) {
-    return BACKEND_UNAVAILABLE_LABEL;
-  }
-  return formatBackendLabel(backend);
+  return formatCredentialBackendLabel(backend, "inventory");
 }
 
 function stateModeDisplay(mode: string | null | undefined) {

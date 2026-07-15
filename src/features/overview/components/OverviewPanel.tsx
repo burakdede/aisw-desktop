@@ -5,6 +5,7 @@ import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
+import { credentialBackendLabel as formatCredentialBackendLabel } from "../../../lib/credential-backends";
 import {
   installGuideUrlForTool,
   openExternalGuide,
@@ -737,7 +738,7 @@ function ToolInspector({
         </div>
         <div>
           <dt>Backend</dt>
-          <dd>{credentialBackendLabel(status.credential_backend)}</dd>
+          <dd>{overviewCredentialBackendLabel(status.credential_backend)}</dd>
         </div>
         <div>
           <dt>Last verified</dt>
@@ -868,16 +869,5 @@ function overviewVerifiedLabel(status: ToolStatus) {
   return "Not verified yet";
 }
 
-function credentialBackendLabel(backend: string | null | undefined) {
-  switch (backend) {
-    case "system_keyring":
-    case "system-keyring":
-      return "macOS Keychain";
-    case "file":
-      return "File-backed";
-    case "auto":
-      return "Automatic";
-    default:
-      return backend ?? BACKEND_UNAVAILABLE_LABEL;
-  }
-}
+const overviewCredentialBackendLabel = (backend: string | null | undefined) =>
+  formatCredentialBackendLabel(backend, "overview");
