@@ -10,9 +10,7 @@ import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { listBackups, openAppDataFolder } from "../../../lib/client";
 import {
-  backupContainsLabel,
   backupReasonLabel,
-  compareBackupsNewestFirst,
   formatBackupInspectorTimestamp,
   formatBackupListTimestamp,
   resolveBackupTarget,
@@ -24,9 +22,17 @@ import { toolDisplayName } from "../../../lib/tool-display";
 import { resolveStateModeRequest } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
-
-type ToolFilter = "all" | "claude" | "codex" | "gemini";
-type DateFilter = "newest" | "oldest";
+import {
+  backupIdCopyMessage,
+  buildBackupInspectorState,
+  buildRestoreSheetState,
+  filterBackups,
+  resolveSelectedBackupId,
+  sortBackups,
+  type DateFilter,
+  type PendingRestoreMode,
+  type ToolFilter,
+} from "../backups-panel-display";
 
 export function BackupsPanel({
   snapshot,
@@ -56,7 +62,7 @@ export function BackupsPanel({
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const [pendingRestore, setPendingRestore] = useState<{
     backupId: string;
-    mode: "files" | "activate";
+    mode: PendingRestoreMode;
   } | null>(null);
 
   const sortedBackups = useMemo(
@@ -69,10 +75,10 @@ export function BackupsPanel({
   );
 
   useEffect(() => {
-    if (selectedBackupId && filteredBackups.some((entry) => entry.backup_id === selectedBackupId)) {
-      return;
+    const nextBackupId = resolveSelectedBackupId(selectedBackupId, filteredBackups);
+    if (nextBackupId !== selectedBackupId) {
+      setSelectedBackupId(nextBackupId);
     }
-    setSelectedBackupId(filteredBackups[0]?.backup_id ?? null);
   }, [filteredBackups, selectedBackupId]);
 
   useEffect(() => {
@@ -81,54 +87,30 @@ export function BackupsPanel({
     }
   }, [compactLayout]);
 
-  const selectedBackup =
-    filteredBackups.find((entry) => entry.backup_id === selectedBackupId) ?? filteredBackups[0] ?? null;
-  const selectedTarget = selectedBackup
-    ? resolveBackupTarget(selectedBackup.tool, selectedBackup.profile)
-    : null;
-  const selectedProfileLabel =
-    selectedBackup && selectedTarget
-      ? toolProfileDisplayLabel(settings, snapshot, selectedTarget.tool, selectedTarget.profile)
-      : null;
-  const selectedReason = selectedBackup ? backupReasonLabel(selectedBackup) : null;
-  const selectedContains = selectedBackup ? backupContainsLabel(selectedBackup) : null;
-  const selectedCreated = selectedBackup
-    ? formatBackupInspectorTimestamp(selectedBackup.created_at ?? selectedBackup.backup_id)
-    : null;
-  const selectedToolLabel = selectedTarget ? toolDisplayName(selectedTarget.tool) : null;
-  const selectedTitle = selectedProfileLabel ?? "No backup selected";
-  const selectedSubtitle = selectedToolLabel ? `${selectedToolLabel} backup` : "";
+  const selectedInspector = buildBackupInspectorState(
+    selectedBackupId,
+    filteredBackups,
+    settings,
+    snapshot,
+  );
   const showInspector = !compactLayout || compactInspectorOpen;
   const showTable = !compactLayout || !compactInspectorOpen;
 
-  const restoreSheetEntry = pendingRestore
-    ? filteredBackups.find((entry) => entry.backup_id === pendingRestore.backupId) ??
-      sortedBackups.find((entry) => entry.backup_id === pendingRestore.backupId) ??
-      null
-    : null;
-  const restoreSheetTarget = restoreSheetEntry
-    ? resolveBackupTarget(restoreSheetEntry.tool, restoreSheetEntry.profile)
-    : null;
-  const restoreSheetLabel =
-    restoreSheetEntry && restoreSheetTarget
-      ? toolProfileDisplayLabel(
-          settings,
-          snapshot,
-          restoreSheetTarget.tool,
-          restoreSheetTarget.profile,
-        )
-      : null;
-  const restoreSheetToolLabel = restoreSheetTarget
-    ? toolDisplayName(restoreSheetTarget.tool)
-    : null;
+  const restoreSheet = buildRestoreSheetState(
+    pendingRestore?.backupId ?? null,
+    filteredBackups,
+    sortedBackups,
+    settings,
+    snapshot,
+  );
 
   async function copyBackupId(backupId: string) {
     if (!navigator.clipboard?.writeText) {
-      setCopyMessage(`Clipboard access is unavailable. Copy backup id ${backupId} manually.`);
+      setCopyMessage(backupIdCopyMessage(false, backupId));
       return;
     }
     await navigator.clipboard.writeText(backupId);
-    setCopyMessage(`Copied backup ID.`);
+    setCopyMessage(backupIdCopyMessage(true, backupId));
   }
 
   async function revealBackupFolder() {
@@ -267,12 +249,12 @@ export function BackupsPanel({
                         type="button"
                         role="listitem"
                         className={`backups-table-row ${
-                          selectedBackup?.backup_id === entry.backup_id
+                          selectedInspector?.entry.backup_id === entry.backup_id
                             ? "backups-table-row-selected"
                             : ""
                         }`}
                         aria-label={`Inspect backup for ${toolDisplayName(target.tool)} ${profileLabel}`}
-                        aria-pressed={selectedBackup?.backup_id === entry.backup_id}
+                        aria-pressed={selectedInspector?.entry.backup_id === entry.backup_id}
                         onClick={() => {
                           setSelectedBackupId(entry.backup_id);
                           setCopyMessage("");
@@ -307,7 +289,7 @@ export function BackupsPanel({
         ) : null}
         secondary={showInspector ? (
           <aside className="backups-pane backups-inspector-surface">
-            {selectedBackup && selectedTarget && selectedProfileLabel && selectedCreated && selectedContains ? (
+            {selectedInspector ? (
               <>
                 <header className="backups-pane-header backups-inspector-header">
                   <div>
@@ -320,8 +302,8 @@ export function BackupsPanel({
                         Back
                       </button>
                     ) : null}
-                    <h3>{selectedTitle}</h3>
-                    <p className="inline-note">{selectedSubtitle}</p>
+                    <h3>{selectedInspector.title}</h3>
+                    <p className="inline-note">{selectedInspector.subtitle}</p>
                   </div>
                   <div className="backups-inspector-header-actions">
                     <button
@@ -330,7 +312,7 @@ export function BackupsPanel({
                       disabled={mutationLock.isBusy}
                       onClick={() =>
                         setPendingRestore({
-                          backupId: selectedBackup.backup_id,
+                          backupId: selectedInspector.entry.backup_id,
                           mode: "files",
                         })
                       }
@@ -366,7 +348,7 @@ export function BackupsPanel({
                             onClick={() => {
                               setInspectorMenuOpen(false);
                               setPendingRestore({
-                                backupId: selectedBackup.backup_id,
+                                backupId: selectedInspector.entry.backup_id,
                                 mode: "activate",
                               });
                             }}
@@ -379,7 +361,10 @@ export function BackupsPanel({
                             type="button"
                             onClick={() => {
                               setInspectorMenuOpen(false);
-                              onOpenProfiles(selectedTarget.tool, selectedTarget.profile);
+                              onOpenProfiles(
+                                selectedInspector.target.tool,
+                                selectedInspector.target.profile,
+                              );
                             }}
                           >
                             Open Profile
@@ -390,7 +375,7 @@ export function BackupsPanel({
                             type="button"
                             onClick={() => {
                               setInspectorMenuOpen(false);
-                              void copyBackupId(selectedBackup.backup_id);
+                              void copyBackupId(selectedInspector.entry.backup_id);
                             }}
                           >
                             Copy Backup ID
@@ -416,19 +401,22 @@ export function BackupsPanel({
                   <KeyValueGrid
                     variant="plain"
                     rows={[
-                      { label: "Created", value: selectedCreated },
-                      { label: "Reason", value: selectedReason ?? "Created restore point" },
-                      { label: "Contains", value: selectedContains },
+                      { label: "Created", value: selectedInspector.created },
+                      {
+                        label: "Reason",
+                        value: selectedInspector.reason ?? "Created restore point",
+                      },
+                      { label: "Contains", value: selectedInspector.contains ?? "Profile files" },
                     ]}
                   />
                   <section className="backups-inspector-section">
                     <p className="overview-current-set-cell-label">Backup ID</p>
                     <div className="backups-id-row">
-                      <code>{selectedBackup.backup_id}</code>
+                      <code>{selectedInspector.entry.backup_id}</code>
                       <button
                         className="ghost-button"
                         type="button"
-                        onClick={() => void copyBackupId(selectedBackup.backup_id)}
+                        onClick={() => void copyBackupId(selectedInspector.entry.backup_id)}
                       >
                         Copy
                       </button>
@@ -449,7 +437,7 @@ export function BackupsPanel({
         ) : null}
       />
 
-      {restoreSheetEntry && restoreSheetTarget && restoreSheetLabel && restoreSheetToolLabel ? (
+      {restoreSheet ? (
         <DialogSurface
           ariaLabel="Restore Backup"
           className="quick-switch-palette profile-sheet"
@@ -461,34 +449,40 @@ export function BackupsPanel({
               <p className="card-kicker">Restore point</p>
               <h3>
                 {pendingRestore?.mode === "files"
-                  ? `Restore “${restoreSheetLabel}”?`
-                  : `Restore and Activate “${restoreSheetLabel}”?`}
+                  ? `Restore “${restoreSheet.profileLabel}”?`
+                  : `Restore and Activate “${restoreSheet.profileLabel}”?`}
               </h3>
               <p className="inline-note">
                 {pendingRestore?.mode === "files"
-                  ? `This replaces the stored ${restoreSheetToolLabel} profile files with the selected restore point.`
-                  : `AI Switch will restore the stored files and then activate ${restoreSheetLabel} for ${restoreSheetToolLabel}.`}
+                  ? `This replaces the stored ${restoreSheet.toolLabel} profile files with the selected restore point.`
+                  : `AI Switch will restore the stored files and then activate ${restoreSheet.profileLabel} for ${restoreSheet.toolLabel}.`}
               </p>
             </div>
           </div>
           <KeyValueGrid
             rows={[
-              { label: "Profile", value: restoreSheetLabel },
+              { label: "Profile", value: restoreSheet.profileLabel },
               {
                 label: "Tool",
-                value: <ToolBrand tool={restoreSheetTarget.tool} className="tool-brand-inline" logoSize={16} />,
+                value: (
+                  <ToolBrand
+                    tool={restoreSheet.target.tool}
+                    className="tool-brand-inline"
+                    logoSize={16}
+                  />
+                ),
               },
               {
                 label: "Created",
                 value: formatBackupInspectorTimestamp(
-                  restoreSheetEntry.created_at ?? restoreSheetEntry.backup_id,
+                  restoreSheet.entry.created_at ?? restoreSheet.entry.backup_id,
                 ),
               },
             ]}
           />
           <p className="inline-note">
             {pendingRestore?.mode === "files"
-              ? `The active ${restoreSheetToolLabel} account will not change until you activate the profile.`
+              ? `The active ${restoreSheet.toolLabel} account will not change until you activate the profile.`
               : `This restores the files first and only then switches the live profile.`}
           </p>
           <footer className="quick-switch-footer">
@@ -504,7 +498,7 @@ export function BackupsPanel({
                 disabled={mutationLock.isBusy}
                 onClick={() =>
                   confirmRestore(
-                    restoreSheetEntry,
+                    restoreSheet.entry,
                     pendingRestore?.mode === "activate" ? "activate" : "files",
                   )
                 }
@@ -519,46 +513,4 @@ export function BackupsPanel({
       ) : null}
     </div>
   );
-}
-
-function filterBackups(
-  backups: BackupEntry[],
-  toolFilter: ToolFilter,
-  search: string,
-  settings: DesktopSettings,
-  snapshot: AppSnapshot,
-) {
-  const normalizedQuery = search.trim().toLowerCase();
-
-  return backups.filter((entry) => {
-    const target = resolveBackupTarget(entry.tool, entry.profile);
-    if (toolFilter !== "all" && target.tool !== toolFilter) {
-      return false;
-    }
-    if (!normalizedQuery) {
-      return true;
-    }
-    const profileLabel = toolProfileDisplayLabel(
-      settings,
-      snapshot,
-      target.tool,
-      target.profile,
-    );
-    return [
-      entry.backup_id,
-      toolDisplayName(target.tool),
-      target.profile,
-      profileLabel,
-      backupReasonLabel(entry),
-    ]
-      .join(" ")
-      .toLowerCase()
-      .includes(normalizedQuery);
-  });
-}
-
-function sortBackups(left: BackupEntry, right: BackupEntry, mode: DateFilter) {
-  return mode === "newest"
-    ? compareBackupsNewestFirst(left, right)
-    : compareBackupsNewestFirst(right, left);
 }
