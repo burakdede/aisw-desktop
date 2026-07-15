@@ -1,7 +1,9 @@
 import {
   appNavFromShortcut,
   APP_NAV,
+  buildReapplyActiveProfileError,
   buildSidebarStatusRows,
+  buildTrayCommandFeedback,
   buildToolbarActions,
   buildAppNavItems,
   createAddProfileRouteState,
@@ -12,6 +14,7 @@ import {
   describeRuntimeBlocker,
   deriveAppShellState,
   navShortcutLabel,
+  REAPPLY_ACTIVE_PROFILE_LABEL,
   resolveActiveReapplyAction,
   runtimeSelectionLabel,
   runtimeSourceLabel,
@@ -304,6 +307,71 @@ describe("app-shell helpers", () => {
     expect(runtimeSelectionLabel("system")).toBe("System engine");
     expect(runtimeSourceLabel("bundled")).toBe("Included");
     expect(runtimeSourceLabel("custom")).toBe("Custom override");
+  });
+
+  it("normalizes tray command feedback and reapply failures", () => {
+    expect(
+      buildTrayCommandFeedback({
+        scope: "global",
+        id: "context",
+        status: "error",
+        label: "Use context",
+        message: "AISW cannot switch.",
+        remediation: "Run aisw verify.",
+      }),
+    ).toEqual({
+      scope: { type: "global", id: "context" },
+      result: {
+        label: "Use set",
+        status: "error",
+        message: "AI Switch cannot switch.",
+        kind: undefined,
+        remediation: "Run AI Switch verify.",
+      },
+      notification: {
+        title: "Use set",
+        body: "AI Switch cannot switch. Run AI Switch verify.",
+      },
+    });
+
+    expect(
+      buildTrayCommandFeedback({
+        scope: "tool",
+        tool: "claude",
+        status: "success",
+        label: "Use profile",
+        message: "AISW switched successfully.",
+        remediation: undefined,
+      }),
+    ).toEqual({
+      scope: { type: "tool", tool: "claude" },
+      result: {
+        label: "Use profile",
+        status: "success",
+        message: "AI Switch switched successfully.",
+        kind: undefined,
+        remediation: "",
+      },
+      notification: {
+        title: "Use profile",
+        body: "AI Switch switched successfully.",
+      },
+    });
+
+    const desktopError = new DesktopCommandError("Broken", {
+      remediation: "Repair it",
+      kind: "ProfileMissing",
+    });
+    expect(buildReapplyActiveProfileError(desktopError)).toEqual({
+      notificationBody: "Broken Repair it",
+      result: {
+        label: REAPPLY_ACTIVE_PROFILE_LABEL,
+        status: "error",
+        message: "Broken",
+        kind: "ProfileMissing",
+        remediation: "Repair it",
+      },
+    });
   });
 
   it("resolves active profile reapply actions for sets, shared profiles, and tool profiles", () => {

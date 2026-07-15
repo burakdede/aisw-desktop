@@ -1,7 +1,12 @@
-import { DesktopCommandError } from "./lib/tauri";
+import { DesktopCommandError, type TrayCommandResultEvent } from "./lib/tauri";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "./lib/schemas";
 import type { ProfileImportMode } from "./features/shared/profile-capabilities";
 import type { SettingsSection } from "./features/settings/settings-panel-display";
+import type {
+  CommandResultScope,
+  LastCommandResult,
+} from "./features/shared/lastCommandResult";
+import { normalizeRuntimeLanguage } from "./features/shared/runtime-language";
 import {
   profileDisplayLabel,
   profileSetDisplayLabel,
@@ -86,6 +91,8 @@ export type ReapplyActiveProfileAction =
         stateMode: ReturnType<typeof resolveStateModeRequest>;
       };
     };
+
+export const REAPPLY_ACTIVE_PROFILE_LABEL = "Re-apply active profile";
 
 const NAV_SHORTCUTS: Record<string, AppNavId> = {
   "1": "overview",
@@ -331,6 +338,56 @@ export function describeRuntimeBlocker(runtimeStatus: {
   };
 }
 
+export function buildReapplyActiveProfileError(error: unknown) {
+  const message =
+    error instanceof Error ? error.message : "AI Switch could not complete that action.";
+  const remediation =
+    error instanceof DesktopCommandError ? error.remediation : undefined;
+
+  return {
+    notificationBody: remediation ? `${message} ${remediation}` : message,
+    result: {
+      label: REAPPLY_ACTIVE_PROFILE_LABEL,
+      status: "error" as const,
+      message,
+      kind: error instanceof DesktopCommandError ? error.kind : undefined,
+      remediation,
+    } satisfies Pick<LastCommandResult, "kind" | "label" | "message" | "remediation" | "status">,
+  };
+}
+
+export function buildTrayCommandFeedback(input: unknown) {
+  const event = asTrayCommandResultEvent(input);
+  const message = normalizeRuntimeLanguage(event.message);
+  const remediation = normalizeRuntimeLanguage(event.remediation);
+  const label =
+    event.scope === "global" && event.id === "context"
+      ? "Use set"
+      : normalizeRuntimeLanguage(event.label);
+  const scope: CommandResultScope =
+    event.scope === "tool"
+      ? { type: "tool", tool: event.tool }
+      : { type: "global", id: event.id };
+
+  return {
+    notification: {
+      title: label,
+      body:
+        event.status === "success"
+          ? message
+          : [message, remediation].filter(Boolean).join(" "),
+    },
+    result: {
+      label,
+      status: event.status,
+      message,
+      kind: "kind" in event && typeof event.kind === "string" ? event.kind : undefined,
+      remediation,
+    } satisfies Pick<LastCommandResult, "kind" | "label" | "message" | "remediation" | "status">,
+    scope,
+  };
+}
+
 export function resolveActiveReapplyAction(input: {
   snapshot: AppSnapshot | null;
   settings: DesktopSettings | null;
@@ -350,7 +407,7 @@ export function resolveActiveReapplyAction(input: {
     const label = profileSetDisplayLabel(activeSet);
     return {
       scope: { type: "global", id: "profile-set" },
-      resultLabel: "Re-apply active profile",
+      resultLabel: REAPPLY_ACTIVE_PROFILE_LABEL,
       message: `Re-applied current set ${label}.`,
       action: {
         kind: "set",
@@ -375,7 +432,7 @@ export function resolveActiveReapplyAction(input: {
     const label = profileDisplayLabel(settings, snapshot, profile);
     return {
       scope: { type: "global", id: "switch-all" },
-      resultLabel: "Re-apply active profile",
+      resultLabel: REAPPLY_ACTIVE_PROFILE_LABEL,
       message: `Re-applied shared profile ${label}.`,
       action: {
         kind: "shared-profile",
@@ -397,7 +454,7 @@ export function resolveActiveReapplyAction(input: {
     const label = toolProfileDisplayLabel(settings, snapshot, status.tool, profile);
     return {
       scope: { type: "tool", tool: status.tool },
-      resultLabel: "Re-apply active profile",
+      resultLabel: REAPPLY_ACTIVE_PROFILE_LABEL,
       message: `Re-applied ${titleCase(status.tool)} profile ${label}.`,
       action: {
         kind: "tool-profile",
@@ -446,4 +503,30 @@ export function sectionDetail(section: string, setupFocused = false) {
     default:
       return "";
   }
+}
+
+function asTrayCommandResultEvent(value: unknown): TrayCommandResultEvent {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Invalid tray command result payload.");
+  }
+
+  const candidate = value as Partial<TrayCommandResultEvent>;
+  if (
+    typeof candidate.label !== "string" ||
+    typeof candidate.message !== "string" ||
+    (candidate.status !== "success" && candidate.status !== "error") ||
+    (candidate.scope !== "tool" && candidate.scope !== "global")
+  ) {
+    throw new Error("Invalid tray command result payload.");
+  }
+
+  if (candidate.scope === "tool" && typeof candidate.tool === "string") {
+    return candidate as TrayCommandResultEvent;
+  }
+
+  if (candidate.scope === "global" && typeof candidate.id === "string") {
+    return candidate as TrayCommandResultEvent;
+  }
+
+  throw new Error("Invalid tray command result payload.");
 }

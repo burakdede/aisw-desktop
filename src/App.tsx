@@ -26,8 +26,7 @@ import { useDesktop } from "./features/shared/useDesktop";
 import { notifyDesktop } from "./lib/notifications";
 import { DEFAULT_ACTION_FAILURE_MESSAGE } from "./lib/display-copy";
 import { activeSetLabel } from "./lib/profile-display";
-import { DesktopCommandError } from "./lib/tauri";
-import { listenDesktopEvent, type TrayCommandResultEvent } from "./lib/tauri";
+import { listenDesktopEvent } from "./lib/tauri";
 import { subscribeDesktopEvents, type DesktopEventHandler } from "./lib/desktop-events";
 import { syncWindowState } from "./lib/window-state";
 import {
@@ -52,7 +51,9 @@ import {
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "./lib/schemas";
 import {
   appNavFromShortcut,
+  buildReapplyActiveProfileError,
   buildSidebarStatusRows,
+  buildTrayCommandFeedback,
   buildToolbarActions,
   buildAppNavItems,
   createAddProfileRouteState,
@@ -62,6 +63,7 @@ import {
   describeBootstrapError,
   describeRuntimeBlocker,
   deriveAppShellState,
+  REAPPLY_ACTIVE_PROFILE_LABEL,
   resolveActiveReapplyAction,
   type AppNavId,
   type ToolbarAction,
@@ -271,29 +273,20 @@ export function App() {
         message,
       });
       await notifyDesktop({
-        title: "Re-apply active profile",
+        title: REAPPLY_ACTIVE_PROFILE_LABEL,
         body: message,
       });
       await invalidatePostMutationQueries(queryClient);
     },
     onError: async (error) => {
-      const message = error instanceof Error ? error.message : DEFAULT_ACTION_FAILURE_MESSAGE;
+      const reapplyError = buildReapplyActiveProfileError(error);
       recordCommandResult(
         { type: "global", id: "profile-set" },
-        {
-          label: "Re-apply active profile",
-          status: "error",
-          message,
-          kind: error instanceof DesktopCommandError ? error.kind : undefined,
-          remediation: error instanceof DesktopCommandError ? error.remediation : undefined,
-        },
+        reapplyError.result,
       );
       await notifyDesktop({
-        title: "Re-apply active profile",
-        body:
-          error instanceof DesktopCommandError && error.remediation
-            ? `${error.message} ${error.remediation}`
-            : message,
+        title: REAPPLY_ACTIVE_PROFILE_LABEL,
+        body: reapplyError.notificationBody,
       });
     },
   });
@@ -402,45 +395,9 @@ export function App() {
       {
         event: "tray-command-result",
         handler: (payload) => {
-          const event = payload as TrayCommandResultEvent;
-          const normalizedMessage = normalizeRuntimeLanguage(event.message);
-          const normalizedRemediation = normalizeRuntimeLanguage(event.remediation);
-          const normalizedLabel =
-            event.scope === "global" && event.id === "context"
-              ? "Use set"
-              : normalizeRuntimeLanguage(event.label);
-
-          if (event.scope === "tool") {
-            recordCommandResult(
-              { type: "tool", tool: event.tool },
-              {
-                label: normalizedLabel,
-                status: event.status,
-                message: normalizedMessage,
-                kind: "kind" in event && typeof event.kind === "string" ? event.kind : undefined,
-                remediation: normalizedRemediation,
-              },
-            );
-          } else {
-            recordCommandResult(
-              { type: "global", id: event.id },
-              {
-                label: normalizedLabel,
-                status: event.status,
-                message: normalizedMessage,
-                kind: "kind" in event && typeof event.kind === "string" ? event.kind : undefined,
-                remediation: normalizedRemediation,
-              },
-            );
-          }
-
-          void notifyDesktop({
-            title: normalizedLabel,
-            body:
-              event.status === "success"
-                ? normalizedMessage
-                : [normalizedMessage, normalizedRemediation].filter(Boolean).join(" "),
-          });
+          const feedback = buildTrayCommandFeedback(payload);
+          recordCommandResult(feedback.scope, feedback.result);
+          void notifyDesktop(feedback.notification);
           void invalidatePostMutationQueries(queryClient);
         },
       },
