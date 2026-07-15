@@ -14,6 +14,17 @@ export type DiagnosticQuickFixInput = {
   profileTarget?: { tool: string; profile: string | null };
 };
 
+export type DiagnosticInspectorQuickFix = Pick<
+  DiagnosticQuickFixInput,
+  "title" | "label"
+> & {
+  importTarget?: { tool: string; stateMode: string | null };
+  importFallbackMode?: string;
+  secondaryAction?: {
+    label: string;
+  };
+};
+
 export type DiagnosticFinding = {
   key: string;
   title: string;
@@ -33,6 +44,20 @@ export type RecentFailureCard = {
   kind?: string;
   remediation?: string;
   at: number;
+  profileTarget?: { tool: string; profile: string | null };
+};
+
+export type DiagnosticInspectorAction = {
+  key: string;
+  kind:
+    | "quick_fix"
+    | "quick_fix_secondary"
+    | "import_current"
+    | "open_profile_details";
+  label: string;
+  quickFixKey?: string;
+  importTarget?: { tool: string; stateMode: string | null };
+  importFallbackMode?: string;
   profileTarget?: { tool: string; profile: string | null };
 };
 
@@ -299,6 +324,48 @@ export function diagnosticQuickFixKey(fix: Pick<DiagnosticQuickFixInput, "title"
   return `${fix.title}:${fix.label}`;
 }
 
+export function buildDiagnosticInspectorActions(input: {
+  selectedFinding: Pick<DiagnosticFinding, "key" | "profileTarget"> | null;
+  primaryFindingFix: DiagnosticInspectorQuickFix | null;
+  secondaryFindingFixes: DiagnosticInspectorQuickFix[];
+  importCurrentLabel: string | null;
+}) {
+  const importCurrentAction = buildImportCurrentAction(
+    input.primaryFindingFix,
+    input.importCurrentLabel,
+  );
+  const secondaryInspectorAction =
+    buildPrimarySecondaryAction(input.primaryFindingFix)
+    ?? buildQuickFixAction(input.secondaryFindingFixes[0])
+    ?? buildOpenProfileDetailsAction(input.selectedFinding)
+    ?? importCurrentAction;
+  const overflowActions: DiagnosticInspectorAction[] = [
+    ...(importCurrentAction && secondaryInspectorAction?.key !== importCurrentAction.key
+      ? [importCurrentAction]
+      : []),
+    ...(buildPrimarySecondaryAction(input.primaryFindingFix)
+      && secondaryInspectorAction?.key
+        !== buildPrimarySecondaryAction(input.primaryFindingFix)?.key
+      ? [buildPrimarySecondaryAction(input.primaryFindingFix)!]
+      : []),
+    ...input.secondaryFindingFixes
+      .slice(secondaryInspectorAction?.kind === "quick_fix" ? 1 : 0)
+      .map((fix) => buildQuickFixAction(fix))
+      .filter((action): action is DiagnosticInspectorAction => Boolean(action)),
+    ...(buildOpenProfileDetailsAction(input.selectedFinding)
+      && secondaryInspectorAction?.key
+        !== buildOpenProfileDetailsAction(input.selectedFinding)?.key
+      ? [buildOpenProfileDetailsAction(input.selectedFinding)!]
+      : []),
+  ];
+
+  return {
+    importCurrentAction,
+    secondaryInspectorAction,
+    overflowActions,
+  };
+}
+
 function resolveIssueProfileTarget(title: string, snapshot: AppSnapshot) {
   const tool = resolveDiagnosticTool(title);
   if (!tool) {
@@ -317,4 +384,62 @@ function resolveDiagnosticTool(title: string) {
   const normalized = title.trim().toLowerCase();
   const candidate = normalized.startsWith("tool/") ? normalized.slice("tool/".length) : normalized;
   return isSupportedTool(candidate) ? candidate : null;
+}
+
+function buildQuickFixAction(
+  fix: DiagnosticInspectorQuickFix | null | undefined,
+): DiagnosticInspectorAction | null {
+  if (!fix) {
+    return null;
+  }
+  return {
+    key: `fix-${diagnosticQuickFixKey(fix)}`,
+    kind: "quick_fix",
+    label: fix.label,
+    quickFixKey: diagnosticQuickFixKey(fix),
+  };
+}
+
+function buildPrimarySecondaryAction(
+  fix: DiagnosticInspectorQuickFix | null,
+): DiagnosticInspectorAction | null {
+  if (!fix?.secondaryAction) {
+    return null;
+  }
+  return {
+    key: `secondary-${diagnosticQuickFixKey(fix)}`,
+    kind: "quick_fix_secondary",
+    label: fix.secondaryAction.label,
+    quickFixKey: diagnosticQuickFixKey(fix),
+  };
+}
+
+function buildImportCurrentAction(
+  fix: DiagnosticInspectorQuickFix | null,
+  label: string | null,
+): DiagnosticInspectorAction | null {
+  if (!fix?.importTarget || !label) {
+    return null;
+  }
+  return {
+    key: `import-${diagnosticQuickFixKey(fix)}`,
+    kind: "import_current",
+    label,
+    importTarget: fix.importTarget,
+    importFallbackMode: fix.importFallbackMode,
+  };
+}
+
+function buildOpenProfileDetailsAction(
+  finding: Pick<DiagnosticFinding, "key" | "profileTarget"> | null,
+): DiagnosticInspectorAction | null {
+  if (!finding?.profileTarget) {
+    return null;
+  }
+  return {
+    key: `profile-${finding.key}`,
+    kind: "open_profile_details",
+    label: "Open Profile Details",
+    profileTarget: finding.profileTarget,
+  };
 }

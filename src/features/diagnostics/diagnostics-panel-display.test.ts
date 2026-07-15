@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AppSnapshot } from "../../lib/schemas";
 import {
+  buildDiagnosticInspectorActions,
   buildDiagnosticFindings,
   buildRecentFailureCards,
   diagnosticQuickFixKey,
@@ -190,5 +191,136 @@ describe("diagnostics-panel-display", () => {
     expect(diagnosticQuickFixKey({ title: "Repair permissions", label: "Apply" })).toBe(
       "Repair permissions:Apply",
     );
+  });
+
+  it("builds diagnostics inspector actions with stable precedence", () => {
+    const selectedFinding: DiagnosticFinding = {
+      key: "finding-1",
+      title: "Claude live mismatch",
+      preview: "Mismatch",
+      lines: [],
+      remediation: [],
+      status: "fail",
+      scopeLabel: "Check",
+      countLabel: "1 detail",
+      profileTarget: { tool: "claude", profile: "work" },
+    };
+
+    const primaryFindingFix = {
+      title: "Claude live mismatch",
+      label: "Re-apply Work",
+      importTarget: { tool: "claude", stateMode: "isolated" },
+      importFallbackMode: "from_live",
+      secondaryAction: { label: "Open Settings" },
+    };
+    const secondaryFindingFixes = [
+      {
+        title: "Permission issue",
+        label: "Repair permissions",
+      },
+      {
+        title: "Terminal integration not active",
+        label: "Open terminal setup",
+      },
+    ];
+
+    const actions = buildDiagnosticInspectorActions({
+      selectedFinding,
+      primaryFindingFix,
+      secondaryFindingFixes,
+      importCurrentLabel: "Import Current…",
+    });
+
+    expect(actions.secondaryInspectorAction).toEqual({
+      key: "secondary-Claude live mismatch:Re-apply Work",
+      kind: "quick_fix_secondary",
+      label: "Open Settings",
+      quickFixKey: "Claude live mismatch:Re-apply Work",
+    });
+    expect(actions.overflowActions).toEqual([
+      {
+        key: "import-Claude live mismatch:Re-apply Work",
+        kind: "import_current",
+        label: "Import Current…",
+        importTarget: { tool: "claude", stateMode: "isolated" },
+        importFallbackMode: "from_live",
+      },
+      {
+        key: "fix-Permission issue:Repair permissions",
+        kind: "quick_fix",
+        label: "Repair permissions",
+        quickFixKey: "Permission issue:Repair permissions",
+      },
+      {
+        key: "fix-Terminal integration not active:Open terminal setup",
+        kind: "quick_fix",
+        label: "Open terminal setup",
+        quickFixKey: "Terminal integration not active:Open terminal setup",
+      },
+      {
+        key: "profile-finding-1",
+        kind: "open_profile_details",
+        label: "Open Profile Details",
+        profileTarget: { tool: "claude", profile: "work" },
+      },
+    ]);
+  });
+
+  it("falls back from secondary actions to quick fixes, profile details, and import", () => {
+    const selectedFinding: DiagnosticFinding = {
+      key: "finding-2",
+      title: "OAuth failure",
+      preview: "OAuth",
+      lines: [],
+      remediation: [],
+      status: "warn",
+      scopeLabel: "Check",
+      countLabel: "1 detail",
+      profileTarget: { tool: "claude", profile: "work" },
+    };
+
+    const quickFixFirst = buildDiagnosticInspectorActions({
+      selectedFinding,
+      primaryFindingFix: null,
+      secondaryFindingFixes: [{ title: "Permission issue", label: "Repair permissions" }],
+      importCurrentLabel: null,
+    });
+    expect(quickFixFirst.secondaryInspectorAction).toEqual({
+      key: "fix-Permission issue:Repair permissions",
+      kind: "quick_fix",
+      label: "Repair permissions",
+      quickFixKey: "Permission issue:Repair permissions",
+    });
+
+    const profileFallback = buildDiagnosticInspectorActions({
+      selectedFinding,
+      primaryFindingFix: null,
+      secondaryFindingFixes: [],
+      importCurrentLabel: null,
+    });
+    expect(profileFallback.secondaryInspectorAction).toEqual({
+      key: "profile-finding-2",
+      kind: "open_profile_details",
+      label: "Open Profile Details",
+      profileTarget: { tool: "claude", profile: "work" },
+    });
+
+    const importFallback = buildDiagnosticInspectorActions({
+      selectedFinding: null,
+      primaryFindingFix: {
+        title: "Claude live mismatch",
+        label: "Re-apply Work",
+        importTarget: { tool: "claude", stateMode: "isolated" },
+      },
+      secondaryFindingFixes: [],
+      importCurrentLabel: "Open Account Setup",
+    });
+    expect(importFallback.secondaryInspectorAction).toEqual({
+      key: "import-Claude live mismatch:Re-apply Work",
+      kind: "import_current",
+      label: "Open Account Setup",
+      importTarget: { tool: "claude", stateMode: "isolated" },
+      importFallbackMode: undefined,
+    });
   });
 });

@@ -37,6 +37,7 @@ import { toolSupportsEditableStateModes } from "../../../lib/tool-registry";
 import { countLabel, pluralChoice } from "../../../lib/utils";
 import type { SettingsSection } from "../../settings/components/SettingsPanel";
 import {
+  buildDiagnosticInspectorActions,
   buildDiagnosticFindings,
   buildRecentFailureCards,
   diagnosticQuickFixKey,
@@ -211,72 +212,20 @@ export function DiagnosticsPanel({
     setSelectedSafeFixes(safeFixIds);
   }, [safeFixIds.join("|")]);
 
-  const importCurrentAction =
-    primaryFindingFix?.importTarget
-      ? {
-          key: `import-${diagnosticQuickFixKey(primaryFindingFix)}`,
-          label: supportsProfileImportMode(primaryFindingFix.importTarget.tool, toolCapabilities, "from_live")
-            ? "Import Current…"
-            : "Open Account Setup",
-          action: () =>
-            onOpenProfileSetup({
-              tool: primaryFindingFix.importTarget?.tool,
-              mode:
-                primaryFindingFix.importFallbackMode ??
-                preferredProfileImportMode(primaryFindingFix.importTarget!.tool, toolCapabilities, "from_live"),
-            }),
-        }
-      : null;
-  const secondaryInspectorAction =
-    (primaryFindingFix?.secondaryAction
-      ? {
-          key: `secondary-${diagnosticQuickFixKey(primaryFindingFix)}`,
-          label: primaryFindingFix.secondaryAction.label,
-          action: () => void primaryFindingFix.secondaryAction?.action(),
-        }
-      : null) ??
-    (secondaryFindingFixes[0]
-      ? {
-          key: `fix-${diagnosticQuickFixKey(secondaryFindingFixes[0])}`,
-          label: secondaryFindingFixes[0].label,
-          action: secondaryFindingFixes[0].action,
-        }
-      : null) ??
-    (selectedFinding?.profileTarget
-      ? {
-          key: `profile-${selectedFinding.key}`,
-          label: "Open Profile Details",
-          action: () => onOpenProfiles(selectedFinding.profileTarget!.tool, selectedFinding.profileTarget!.profile),
-        }
-      : null) ??
-    importCurrentAction;
-  const inspectorOverflowActions = [
-    ...(importCurrentAction && secondaryInspectorAction?.key !== importCurrentAction.key ? [importCurrentAction] : []),
-    ...(primaryFindingFix?.secondaryAction &&
-    secondaryInspectorAction?.key !== `secondary-${diagnosticQuickFixKey(primaryFindingFix)}`
-      ? [
-          {
-            key: `secondary-${diagnosticQuickFixKey(primaryFindingFix)}`,
-            label: primaryFindingFix.secondaryAction.label,
-            action: () => void primaryFindingFix.secondaryAction?.action(),
-          },
-        ]
-      : []),
-    ...secondaryFindingFixes.slice(secondaryInspectorAction?.key?.startsWith("fix-") ? 1 : 0).map((fix) => ({
-      key: `fix-${diagnosticQuickFixKey(fix)}`,
-      label: fix.label,
-      action: fix.action,
-    })),
-    ...(selectedFinding?.profileTarget && secondaryInspectorAction?.key !== `profile-${selectedFinding.key}`
-      ? [
-          {
-            key: `profile-${selectedFinding.key}`,
-            label: "Open Profile Details",
-            action: () => onOpenProfiles(selectedFinding.profileTarget!.tool, selectedFinding.profileTarget!.profile),
-          },
-        ]
-      : []),
-  ];
+  const importCurrentLabel = primaryFindingFix?.importTarget
+    ? supportsProfileImportMode(primaryFindingFix.importTarget.tool, toolCapabilities, "from_live")
+      ? "Import Current…"
+      : "Open Account Setup"
+    : null;
+  const {
+    secondaryInspectorAction,
+    overflowActions: inspectorOverflowActions,
+  } = buildDiagnosticInspectorActions({
+    selectedFinding,
+    primaryFindingFix,
+    secondaryFindingFixes,
+    importCurrentLabel,
+  });
 
   useEffect(() => {
     setInspectorMenuOpen(false);
@@ -290,6 +239,46 @@ export function DiagnosticsPanel({
 
   const showFindings = !compactLayout || !compactInspectorOpen;
   const showInspector = !compactLayout || compactInspectorOpen;
+
+  function runInspectorAction(action: NonNullable<typeof secondaryInspectorAction>) {
+    switch (action.kind) {
+      case "quick_fix": {
+        const fix = [primaryFindingFix, ...secondaryFindingFixes]
+          .filter((candidate): candidate is NonNullable<typeof candidate> => Boolean(candidate))
+          .find((candidate) => diagnosticQuickFixKey(candidate) === action.quickFixKey);
+        if (fix) {
+          void fix.action();
+        }
+        return;
+      }
+      case "quick_fix_secondary":
+        if (
+          primaryFindingFix
+          && primaryFindingFix.secondaryAction
+          && diagnosticQuickFixKey(primaryFindingFix) === action.quickFixKey
+        ) {
+          void primaryFindingFix.secondaryAction.action();
+        }
+        return;
+      case "import_current":
+        if (!action.importTarget) {
+          return;
+        }
+        onOpenProfileSetup({
+          tool: action.importTarget.tool,
+          mode:
+            action.importFallbackMode as ProfileImportMode | undefined
+            ?? preferredProfileImportMode(action.importTarget.tool, toolCapabilities, "from_live"),
+        });
+        return;
+      case "open_profile_details":
+        if (!action.profileTarget) {
+          return;
+        }
+        onOpenProfiles(action.profileTarget.tool, action.profileTarget.profile);
+        return;
+    }
+  }
 
   return (
     <div ref={rootRef} className="diagnostics-screen screen-content">
@@ -509,7 +498,7 @@ export function DiagnosticsPanel({
                         className="ghost-button"
                         type="button"
                         disabled={mutationLock.isBusy}
-                        onClick={() => void secondaryInspectorAction.action()}
+                        onClick={() => runInspectorAction(secondaryInspectorAction)}
                       >
                         {secondaryInspectorAction.label}
                       </button>
@@ -544,7 +533,7 @@ export function DiagnosticsPanel({
                                 disabled={mutationLock.isBusy}
                                 onClick={() => {
                                   setInspectorMenuOpen(false);
-                                  void action.action();
+                                  runInspectorAction(action);
                                 }}
                               >
                                 {action.label}
