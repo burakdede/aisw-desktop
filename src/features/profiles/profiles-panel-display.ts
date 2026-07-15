@@ -53,6 +53,19 @@ export type InventoryEntry = {
   hasBackup: boolean;
 };
 
+export type ProfileActionScope = "inspector" | "table";
+
+export type OpenProfileActionMenu = {
+  tool: SupportedTool;
+  name: string;
+  scope: ProfileActionScope;
+} | null;
+
+export type InventoryKeyAction =
+  | { kind: "move"; direction: "next" | "previous" | "first" | "last" }
+  | { kind: "activate" }
+  | null;
+
 export function buildInventoryProfiles(input: {
   backups: BackupEntry[] | undefined;
   inventoryFilter: InventoryFilter;
@@ -115,6 +128,121 @@ export function findSelectedInventoryEntry(
   }
 
   return entries.find((entry) => entry.tool === tool && entry.name === expandedDetails) ?? null;
+}
+
+export function resolveAvailableSelection<T extends string>(
+  currentValue: T,
+  availableValues: readonly T[],
+  fallbackValue: T,
+) {
+  if (availableValues.includes(currentValue)) {
+    return currentValue;
+  }
+  return availableValues[0] ?? fallbackValue;
+}
+
+export function defaultExpandedProfileName(input: {
+  expandedDetails: string | null;
+  activeProfile: string | null | undefined;
+  profiles: ProfileEntry[];
+}) {
+  if (
+    input.expandedDetails &&
+    input.profiles.some((entry) => entry.name === input.expandedDetails)
+  ) {
+    return input.expandedDetails;
+  }
+
+  return input.activeProfile ?? input.profiles[0]?.name ?? null;
+}
+
+export function shouldAutoOpenProfileSheet(input: {
+  initialExpandedProfile: string | null | undefined;
+  resolvedInitialTool: SupportedTool | null;
+  initialMode: string | undefined;
+  initialCredentialBackend: string | null | undefined;
+  openToken: number | undefined;
+}) {
+  return (
+    input.initialExpandedProfile == null &&
+    (Boolean(input.resolvedInitialTool) ||
+      Boolean(input.initialMode) ||
+      Boolean(input.initialCredentialBackend) ||
+      input.openToken != null)
+  );
+}
+
+export function toggleProfileActionMenu(
+  current: OpenProfileActionMenu,
+  next: Exclude<OpenProfileActionMenu, null>,
+) {
+  return current?.tool === next.tool &&
+    current?.name === next.name &&
+    current.scope === next.scope
+    ? null
+    : next;
+}
+
+export function inventoryKeyActionForEvent(key: string, metaKey: boolean, altKey: boolean) {
+  if (altKey) {
+    return null;
+  }
+
+  switch (key) {
+    case "ArrowDown":
+    case "ArrowRight":
+      return { kind: "move", direction: "next" } satisfies InventoryKeyAction;
+    case "ArrowUp":
+    case "ArrowLeft":
+      return { kind: "move", direction: "previous" } satisfies InventoryKeyAction;
+    case "Home":
+      return { kind: "move", direction: "first" } satisfies InventoryKeyAction;
+    case "End":
+      return { kind: "move", direction: "last" } satisfies InventoryKeyAction;
+    case "Enter":
+      return metaKey ? ({ kind: "activate" } satisfies InventoryKeyAction) : null;
+    default:
+      return null;
+  }
+}
+
+export function nextInventorySelectionIndex(
+  currentIndex: number,
+  totalEntries: number,
+  direction: "next" | "previous" | "first" | "last",
+) {
+  if (totalEntries <= 0) {
+    return null;
+  }
+
+  switch (direction) {
+    case "first":
+      return 0;
+    case "last":
+      return totalEntries - 1;
+    case "next":
+      return Math.max(0, Math.min(currentIndex + 1, totalEntries - 1));
+    case "previous":
+      return Math.max(0, Math.min(currentIndex - 1, totalEntries - 1));
+  }
+}
+
+export function buildProfileSheetSubmitLabel(input: {
+  mode: "oauth" | "api_key" | "from_env" | "from_live";
+  addProfilePending: boolean;
+  addProfileOAuthPending: boolean;
+  apiKeyPending: boolean;
+}) {
+  if (input.mode === "oauth") {
+    return input.addProfileOAuthPending ? "Waiting for sign-in…" : "Start Sign In";
+  }
+  if (input.mode === "api_key") {
+    return input.apiKeyPending ? "Saving…" : "Save Profile";
+  }
+  if (input.mode === "from_env") {
+    return input.addProfilePending ? "Saving…" : "Save Profile";
+  }
+  return input.addProfilePending ? "Importing…" : "Import";
 }
 
 export function buildProfileActionMenu(input: {

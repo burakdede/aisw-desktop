@@ -73,15 +73,22 @@ import {
 import {
   buildInventoryProfiles,
   buildProfileActionMenu,
+  buildProfileSheetSubmitLabel,
   buildSelectedProfileInspectorState,
   buildOauthWizardSteps,
+  defaultExpandedProfileName,
   filterInventoryProfiles,
   formatDesktopError,
   findSelectedInventoryEntry,
   INVENTORY_FILTERS,
+  inventoryKeyActionForEvent,
   isDuplicateProfileName,
   latestBackupForProfile,
+  nextInventorySelectionIndex,
   profileMutationError,
+  resolveAvailableSelection,
+  shouldAutoOpenProfileSheet,
+  toggleProfileActionMenu,
   type InventoryEntry,
   type InventoryFilter,
 } from "../profiles-panel-display";
@@ -265,11 +272,9 @@ export function ProfilesPanel({
     : null;
 
   useEffect(() => {
-    if (!availableStateModes.length) {
-      return;
-    }
-    if (!availableStateModes.includes(stateMode)) {
-      setStateMode(availableStateModes[0]);
+    const nextStateMode = resolveAvailableSelection(stateMode, availableStateModes, "isolated");
+    if (nextStateMode !== stateMode) {
+      setStateMode(nextStateMode);
     }
   }, [availableStateModes, stateMode]);
 
@@ -289,10 +294,10 @@ export function ProfilesPanel({
   }, [initialMode]);
 
   useEffect(() => {
-    if (availableImportModes.includes(mode)) {
-      return;
+    const nextMode = resolveAvailableSelection(mode, availableImportModes, "from_live");
+    if (nextMode !== mode) {
+      setMode(nextMode);
     }
-    setMode(availableImportModes[0] ?? "from_live");
   }, [availableImportModes, mode]);
 
   useEffect(() => {
@@ -301,10 +306,14 @@ export function ProfilesPanel({
   }, [initialCredentialBackend]);
 
   useEffect(() => {
-    if (availableCredentialBackends.includes(credentialBackend)) {
-      return;
+    const nextCredentialBackend = resolveAvailableSelection(
+      credentialBackend,
+      availableCredentialBackends,
+      "auto",
+    );
+    if (nextCredentialBackend !== credentialBackend) {
+      setCredentialBackend(nextCredentialBackend);
     }
-    setCredentialBackend(availableCredentialBackends[0] ?? "auto");
   }, [availableCredentialBackends, credentialBackend]);
 
   useEffect(() => {
@@ -314,11 +323,13 @@ export function ProfilesPanel({
 
   useEffect(() => {
     if (
-      initialExpandedProfile == null &&
-      (Boolean(resolvedInitialTool) ||
-        Boolean(initialMode) ||
-        Boolean(initialCredentialBackend) ||
-        openToken != null)
+      shouldAutoOpenProfileSheet({
+        initialExpandedProfile,
+        resolvedInitialTool,
+        initialMode,
+        initialCredentialBackend,
+        openToken,
+      })
     ) {
       setProfileSheetOpen(true);
     }
@@ -332,10 +343,11 @@ export function ProfilesPanel({
   }, [inventoryFilter]);
 
   useEffect(() => {
-    if (expandedDetails && profiles.some((entry) => entry.name === expandedDetails)) {
-      return;
-    }
-    const nextDefault = snapshot.profiles[tool]?.active ?? profiles[0]?.name ?? null;
+    const nextDefault = defaultExpandedProfileName({
+      expandedDetails,
+      activeProfile: snapshot.profiles[tool]?.active,
+      profiles,
+    });
     if (nextDefault !== expandedDetails) {
       setExpandedDetails(nextDefault);
     }
@@ -511,9 +523,7 @@ export function ProfilesPanel({
     setTool(entryTool);
     setExpandedDetails(name);
     setOpenRowActions((current) =>
-      current?.tool === entryTool && current?.name === name && current.scope === scope
-        ? null
-        : { tool: entryTool, name, scope },
+      toggleProfileActionMenu(current, { tool: entryTool, name, scope }),
     );
   }
 
@@ -535,7 +545,10 @@ export function ProfilesPanel({
   }
 
   function moveInventorySelection(currentIndex: number, nextIndex: number) {
-    const boundedIndex = Math.max(0, Math.min(nextIndex, filteredInventoryProfiles.length - 1));
+    const boundedIndex = Math.max(
+      0,
+      Math.min(nextIndex, filteredInventoryProfiles.length - 1),
+    );
     const target = filteredInventoryProfiles[boundedIndex];
     if (!target) {
       return;
@@ -550,37 +563,22 @@ export function ProfilesPanel({
     index: number,
     entry: InventoryEntry,
   ) {
-    if (event.altKey) {
+    const action = inventoryKeyActionForEvent(event.key, event.metaKey, event.altKey);
+    if (!action) {
       return;
     }
-
-    switch (event.key) {
-      case "ArrowDown":
-      case "ArrowRight":
-        event.preventDefault();
-        moveInventorySelection(index, index + 1);
-        break;
-      case "ArrowUp":
-      case "ArrowLeft":
-        event.preventDefault();
-        moveInventorySelection(index, index - 1);
-        break;
-      case "Home":
-        event.preventDefault();
-        moveInventorySelection(index, 0);
-        break;
-      case "End":
-        event.preventDefault();
-        moveInventorySelection(index, filteredInventoryProfiles.length - 1);
-        break;
-      case "Enter":
-        if (event.metaKey) {
-          event.preventDefault();
-          activateInventoryEntry(entry);
-        }
-        break;
-      default:
-        break;
+    event.preventDefault();
+    if (action.kind === "activate") {
+      activateInventoryEntry(entry);
+      return;
+    }
+    const nextIndex = nextInventorySelectionIndex(
+      index,
+      filteredInventoryProfiles.length,
+      action.direction,
+    );
+    if (nextIndex != null) {
+      moveInventorySelection(index, nextIndex);
     }
   }
 
@@ -842,11 +840,11 @@ export function ProfilesPanel({
                         }
                         onClick={() =>
                           setOpenRowActions((current) =>
-                            current?.tool === tool &&
-                            current?.name === selectedProfileEntry.name &&
-                            current.scope === "inspector"
-                              ? null
-                              : { tool, name: selectedProfileEntry.name, scope: "inspector" },
+                            toggleProfileActionMenu(current, {
+                              tool,
+                              name: selectedProfileEntry.name,
+                              scope: "inspector",
+                            }),
                           )
                         }
                       >
@@ -1344,21 +1342,12 @@ export function ProfilesPanel({
                     hasDuplicateProfileName
                   }
                 >
-                  {mode === "oauth"
-                    ? addProfileOAuthMutation.isPending
-                      ? "Waiting for sign-in…"
-                      : "Start Sign In"
-                    : mode === "api_key"
-                      ? apiKeyProfileAction.isPending
-                        ? "Saving…"
-                        : "Save Profile"
-                      : mode === "from_env"
-                        ? addProfileMutation.isPending
-                          ? "Saving…"
-                          : "Save Profile"
-                        : addProfileMutation.isPending
-                          ? "Importing…"
-                          : "Import"}
+                  {buildProfileSheetSubmitLabel({
+                    mode,
+                    addProfilePending: addProfileMutation.isPending,
+                    addProfileOAuthPending: addProfileOAuthMutation.isPending,
+                    apiKeyPending: apiKeyProfileAction.isPending,
+                  })}
                 </button>
               </div>
               {profileMutationError(

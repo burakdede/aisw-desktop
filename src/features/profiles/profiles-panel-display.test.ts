@@ -9,16 +9,23 @@ import { DesktopCommandError } from "../../lib/tauri";
 import {
   buildInventoryProfiles,
   buildProfileActionMenu,
+  buildProfileSheetSubmitLabel,
   buildSelectedProfileInspectorState,
   buildOauthWizardSteps,
+  defaultExpandedProfileName,
   filterInventoryProfiles,
   formatDesktopError,
   findSelectedInventoryEntry,
   INVENTORY_FILTERS,
+  inventoryKeyActionForEvent,
   isDuplicateProfileName,
   latestBackupForProfile,
+  nextInventorySelectionIndex,
   oauthEventStage,
   profileMutationError,
+  resolveAvailableSelection,
+  shouldAutoOpenProfileSheet,
+  toggleProfileActionMenu,
 } from "./profiles-panel-display";
 
 function makeBackup(overrides: Partial<BackupEntry> = {}): BackupEntry {
@@ -165,6 +172,117 @@ describe("profiles-panel-display", () => {
     ]);
     expect(findSelectedInventoryEntry(inventory, "claude", "work")).toEqual(inventory[0]);
     expect(findSelectedInventoryEntry(inventory, "claude", "missing")).toBeNull();
+  });
+
+  it("shares profile panel selection, routing, keyboard, and submit-label policy", () => {
+    expect(resolveAvailableSelection("oauth", ["oauth", "from_live"], "from_live")).toBe(
+      "oauth",
+    );
+    expect(resolveAvailableSelection("api_key", ["oauth", "from_live"], "from_live")).toBe(
+      "oauth",
+    );
+
+    expect(
+      defaultExpandedProfileName({
+        expandedDetails: "work",
+        activeProfile: "personal",
+        profiles: [{ name: "work" }, { name: "personal" }],
+      }),
+    ).toBe("work");
+    expect(
+      defaultExpandedProfileName({
+        expandedDetails: "missing",
+        activeProfile: "personal",
+        profiles: [{ name: "work" }, { name: "personal" }],
+      }),
+    ).toBe("personal");
+    expect(
+      defaultExpandedProfileName({
+        expandedDetails: null,
+        activeProfile: null,
+        profiles: [{ name: "work" }],
+      }),
+    ).toBe("work");
+
+    expect(
+      shouldAutoOpenProfileSheet({
+        initialExpandedProfile: null,
+        resolvedInitialTool: "claude",
+        initialMode: undefined,
+        initialCredentialBackend: null,
+        openToken: undefined,
+      }),
+    ).toBe(true);
+    expect(
+      shouldAutoOpenProfileSheet({
+        initialExpandedProfile: "work",
+        resolvedInitialTool: "claude",
+        initialMode: "from_live",
+        initialCredentialBackend: "file",
+        openToken: 1,
+      }),
+    ).toBe(false);
+
+    expect(toggleProfileActionMenu(null, { tool: "claude", name: "work", scope: "table" })).toEqual({
+      tool: "claude",
+      name: "work",
+      scope: "table",
+    });
+    expect(
+      toggleProfileActionMenu(
+        { tool: "claude", name: "work", scope: "table" },
+        { tool: "claude", name: "work", scope: "table" },
+      ),
+    ).toBeNull();
+
+    expect(inventoryKeyActionForEvent("ArrowDown", false, false)).toEqual({
+      kind: "move",
+      direction: "next",
+    });
+    expect(inventoryKeyActionForEvent("Enter", true, false)).toEqual({
+      kind: "activate",
+    });
+    expect(inventoryKeyActionForEvent("Enter", false, false)).toBeNull();
+    expect(inventoryKeyActionForEvent("ArrowDown", false, true)).toBeNull();
+    expect(nextInventorySelectionIndex(1, 4, "next")).toBe(2);
+    expect(nextInventorySelectionIndex(3, 4, "next")).toBe(3);
+    expect(nextInventorySelectionIndex(1, 4, "previous")).toBe(0);
+    expect(nextInventorySelectionIndex(1, 4, "first")).toBe(0);
+    expect(nextInventorySelectionIndex(1, 4, "last")).toBe(3);
+    expect(nextInventorySelectionIndex(1, 0, "last")).toBeNull();
+
+    expect(
+      buildProfileSheetSubmitLabel({
+        mode: "oauth",
+        addProfilePending: false,
+        addProfileOAuthPending: true,
+        apiKeyPending: false,
+      }),
+    ).toBe("Waiting for sign-in…");
+    expect(
+      buildProfileSheetSubmitLabel({
+        mode: "api_key",
+        addProfilePending: false,
+        addProfileOAuthPending: false,
+        apiKeyPending: false,
+      }),
+    ).toBe("Save Profile");
+    expect(
+      buildProfileSheetSubmitLabel({
+        mode: "from_env",
+        addProfilePending: true,
+        addProfileOAuthPending: false,
+        apiKeyPending: false,
+      }),
+    ).toBe("Saving…");
+    expect(
+      buildProfileSheetSubmitLabel({
+        mode: "from_live",
+        addProfilePending: false,
+        addProfileOAuthPending: false,
+        apiKeyPending: false,
+      }),
+    ).toBe("Import");
   });
 
   it("finds the newest backup for a profile and supports tool-prefixed profile ids", () => {
