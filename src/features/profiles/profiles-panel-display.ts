@@ -18,6 +18,7 @@ import {
 } from "../../lib/status-display";
 import { SUPPORTED_TOOLS, type SupportedTool } from "../../lib/tool-registry";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
+import type { ProfileCredentialBackend, ProfileImportMode } from "../shared/profile-capabilities";
 
 export type OAuthWizardStep = {
   id: "start" | "browser" | "login" | "capture" | "saved";
@@ -28,7 +29,13 @@ export type OAuthWizardStep = {
 
 type ProfileEntry = {
   name: string;
+  label?: string | null;
 };
+
+type PendingEditState = {
+  name: string;
+  focus: "name" | "label";
+} | null;
 
 export type ProfileActionMenuItem = {
   kind: "activate" | "reapply" | "rename" | "change_label" | "view_backups" | "remove";
@@ -65,6 +72,17 @@ export type InventoryKeyAction =
   | { kind: "move"; direction: "next" | "previous" | "first" | "last" }
   | { kind: "activate" }
   | null;
+
+export function buildProfileSheetDraftReset(
+  initialCredentialBackend: ProfileCredentialBackend | null | undefined,
+) {
+  return {
+    credentialBackend: initialCredentialBackend ?? "auto",
+    label: "",
+    mode: "from_live" as ProfileImportMode,
+    profile: "",
+  };
+}
 
 export function buildInventoryProfiles(input: {
   backups: BackupEntry[] | undefined;
@@ -314,6 +332,86 @@ export function buildSelectedProfileInspectorState(input: {
         ? `Reapply ${input.selectedProfileDisplay}`
         : null,
     state,
+  };
+}
+
+export function buildProfileEditSheetState(input: {
+  pendingEdit: PendingEditState;
+  profiles: ProfileEntry[];
+  settings: DesktopSettings;
+  tool: SupportedTool;
+  renameDrafts: Record<string, string>;
+  labelDrafts: Record<string, string>;
+}) {
+  const profile = input.pendingEdit
+    ? input.profiles.find((entry) => entry.name === input.pendingEdit?.name) ?? null
+    : null;
+
+  if (!profile) {
+    return null;
+  }
+
+  const display = effectiveToolProfileLabel(
+    input.settings,
+    input.tool,
+    profile.name,
+    profile.label,
+  );
+  const renameDraft = input.renameDrafts[profile.name] ?? profile.name;
+  const labelDraft =
+    input.labelDrafts[profile.name] ??
+    effectiveToolProfileLabel(input.settings, input.tool, profile.name, profile.label) ??
+    "";
+  const renameDuplicate =
+    renameDraft.trim().length > 0 &&
+    isDuplicateProfileName(input.profiles, profile.name, renameDraft);
+
+  return {
+    display,
+    labelDraft,
+    profile,
+    renameDraft,
+    renameDuplicate,
+  };
+}
+
+export function buildProfileRemovalSheetState(input: {
+  pendingRemoval: string | null;
+  profiles: ProfileEntry[];
+  settings: DesktopSettings;
+  tool: SupportedTool;
+}) {
+  const profile = input.pendingRemoval
+    ? input.profiles.find((entry) => entry.name === input.pendingRemoval) ?? null
+    : null;
+
+  if (!profile) {
+    return null;
+  }
+
+  return {
+    display: effectiveToolProfileLabel(
+      input.settings,
+      input.tool,
+      profile.name,
+      profile.label,
+    ),
+    profile,
+  };
+}
+
+export function buildProfileActivationRequest(input: {
+  tool: SupportedTool;
+  profileName: string;
+  profileLabel: string;
+  selectedStateMode: string;
+  availableStateModes: readonly string[];
+}) {
+  return {
+    tool: input.tool,
+    profile: input.profileName,
+    stateMode: input.availableStateModes.length ? input.selectedStateMode : null,
+    label: input.profileLabel,
   };
 }
 

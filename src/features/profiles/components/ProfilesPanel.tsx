@@ -71,8 +71,12 @@ import {
   profileImportModeNotes,
 } from "../profile-sheet-display";
 import {
+  buildProfileActivationRequest,
   buildInventoryProfiles,
   buildProfileActionMenu,
+  buildProfileEditSheetState,
+  buildProfileRemovalSheetState,
+  buildProfileSheetDraftReset,
   buildProfileSheetSubmitLabel,
   buildSelectedProfileInspectorState,
   buildOauthWizardSteps,
@@ -248,28 +252,20 @@ export function ProfilesPanel({
     selectedProfileDisplay,
     selectedProfileName: selectedProfileEntry?.name ?? null,
   });
-  const editSheetProfile = pendingEdit
-    ? profiles.find((entry) => entry.name === pendingEdit.name) ?? null
-    : null;
-  const editSheetDisplay = editSheetProfile
-    ? effectiveToolProfileLabel(settings, tool, editSheetProfile.name, editSheetProfile.label)
-    : null;
-  const editSheetRenameDraft = editSheetProfile ? renameDrafts[editSheetProfile.name] ?? editSheetProfile.name : "";
-  const editSheetLabelDraft = editSheetProfile
-    ? labelDrafts[editSheetProfile.name] ??
-      effectiveToolProfileLabel(settings, tool, editSheetProfile.name, editSheetProfile.label) ??
-      ""
-    : "";
-  const editSheetRenameDuplicate =
-    editSheetProfile &&
-    editSheetRenameDraft.trim().length > 0 &&
-    isDuplicateProfileName(profiles, editSheetProfile.name, editSheetRenameDraft);
-  const removalSheetProfile = pendingRemoval
-    ? profiles.find((entry) => entry.name === pendingRemoval) ?? null
-    : null;
-  const removalSheetDisplay = removalSheetProfile
-    ? effectiveToolProfileLabel(settings, tool, removalSheetProfile.name, removalSheetProfile.label)
-    : null;
+  const editSheetState = buildProfileEditSheetState({
+    pendingEdit,
+    profiles,
+    settings,
+    tool,
+    renameDrafts,
+    labelDrafts,
+  });
+  const removalSheetState = buildProfileRemovalSheetState({
+    pendingRemoval,
+    profiles,
+    settings,
+    tool,
+  });
 
   useEffect(() => {
     const nextStateMode = resolveAvailableSelection(stateMode, availableStateModes, "isolated");
@@ -501,12 +497,15 @@ export function ProfilesPanel({
   }
 
   function activateInventoryEntry(entry: InventoryEntry) {
-    useProfileMutation.mutate({
-      tool: entry.tool,
-      profile: entry.name,
-      stateMode: supportedStateModes(entry.tool, toolCapabilities).length ? stateMode : null,
-      label: entry.label,
-    });
+    useProfileMutation.mutate(
+      buildProfileActivationRequest({
+        tool: entry.tool,
+        profileName: entry.name,
+        profileLabel: entry.label,
+        selectedStateMode: stateMode,
+        availableStateModes: supportedStateModes(entry.tool, toolCapabilities),
+      }),
+    );
   }
 
   function openBackupsForProfile(entryTool: (typeof TOOLS)[number], name: string) {
@@ -531,10 +530,11 @@ export function ProfilesPanel({
     setOpenRowActions(null);
     setOauthEvents([]);
     setOauthError("");
-    setProfile("");
-    setLabel("");
-    setMode("from_live");
-    setCredentialBackend(initialCredentialBackend ?? "auto");
+    const resetDrafts = buildProfileSheetDraftReset(initialCredentialBackend);
+    setProfile(resetDrafts.profile);
+    setLabel(resetDrafts.label);
+    setMode(resetDrafts.mode);
+    setCredentialBackend(resetDrafts.credentialBackend);
     setProfileSheetOpen(true);
   }
 
@@ -814,12 +814,16 @@ export function ProfilesPanel({
                         type="button"
                         disabled={mutationLock.isBusy}
                         onClick={() =>
-                          useProfileMutation.mutate({
-                            tool,
-                            profile: selectedProfileEntry.name,
-                            stateMode: availableStateModes.length ? stateMode : null,
-                            label: selectedProfileDisplay ?? selectedProfileEntry.name,
-                          })
+                          useProfileMutation.mutate(
+                            buildProfileActivationRequest({
+                              tool,
+                              profileName: selectedProfileEntry.name,
+                              profileLabel:
+                                selectedProfileDisplay ?? selectedProfileEntry.name,
+                              selectedStateMode: stateMode,
+                              availableStateModes,
+                            }),
+                          )
                         }
                       >
                         {selectedProfileInspectorState.primaryActionLabel}
@@ -1018,7 +1022,7 @@ export function ProfilesPanel({
           </aside>
         ) : null}
       />
-      {editSheetProfile && editSheetDisplay ? (
+      {editSheetState ? (
         <DialogSurface
           ariaLabel="Edit Profile"
           className="quick-switch-palette profile-sheet"
@@ -1035,16 +1039,16 @@ export function ProfilesPanel({
             className="stacked-form"
             onSubmit={(event) => {
               event.preventDefault();
-              const nextName = editSheetRenameDraft.trim();
-              const nextLabel = editSheetLabelDraft.trim();
-              if (editSheetRenameDuplicate) {
+              const nextName = editSheetState.renameDraft.trim();
+              const nextLabel = editSheetState.labelDraft.trim();
+              if (editSheetState.renameDuplicate) {
                 return;
               }
 
-              if (nextName && nextName !== editSheetProfile.name) {
+              if (nextName && nextName !== editSheetState.profile.name) {
                 renameProfileMutation.mutate({
                   tool,
-                  oldName: editSheetProfile.name,
+                  oldName: editSheetState.profile.name,
                   newName: nextName,
                 });
               }
@@ -1052,8 +1056,8 @@ export function ProfilesPanel({
               const currentLabel = effectiveToolProfileLabel(
                 settings,
                 tool,
-                editSheetProfile.name,
-                editSheetProfile.label,
+                editSheetState.profile.name,
+                editSheetState.profile.label,
               );
               if (nextLabel !== currentLabel) {
                 updateSettingsMutation.mutate({
@@ -1065,7 +1069,7 @@ export function ProfilesPanel({
                   profile_labels: mergeProfileLabel(
                     settings,
                     tool,
-                    editSheetProfile.name,
+                    editSheetState.profile.name,
                     nextLabel || null,
                   ),
                 });
@@ -1076,37 +1080,37 @@ export function ProfilesPanel({
           >
             <label>
               Current name
-              <input value={editSheetProfile.name} disabled />
+              <input value={editSheetState.profile.name} disabled />
             </label>
             <label>
               New name
               <input
                 ref={renameInputRef}
-                aria-label={`rename ${editSheetProfile.name}`}
-                value={editSheetRenameDraft}
+                aria-label={`rename ${editSheetState.profile.name}`}
+                value={editSheetState.renameDraft}
                 onChange={(event) =>
                   setRenameDrafts((current) => ({
                     ...current,
-                    [editSheetProfile.name]: event.target.value,
+                    [editSheetState.profile.name]: event.target.value,
                   }))
                 }
               />
             </label>
-            {editSheetRenameDuplicate ? (
+            {editSheetState.renameDuplicate ? (
               <p className="inline-note">
-                {duplicateProfileNameWarning(tool, editSheetRenameDraft.trim())}
+                {duplicateProfileNameWarning(tool, editSheetState.renameDraft.trim())}
               </p>
             ) : null}
             <label>
               Display label
               <input
                 ref={editLabelInputRef}
-                aria-label={`label ${editSheetProfile.name}`}
-                value={editSheetLabelDraft}
+                aria-label={`label ${editSheetState.profile.name}`}
+                value={editSheetState.labelDraft}
                 onChange={(event) =>
                   setLabelDrafts((current) => ({
                     ...current,
-                    [editSheetProfile.name]: event.target.value,
+                    [editSheetState.profile.name]: event.target.value,
                   }))
                 }
               />
@@ -1118,7 +1122,7 @@ export function ProfilesPanel({
               <button
                 className="primary-button"
                 type="submit"
-                disabled={mutationLock.isBusy || Boolean(editSheetRenameDuplicate)}
+                disabled={mutationLock.isBusy || Boolean(editSheetState.renameDuplicate)}
               >
                 Save
               </button>
@@ -1126,7 +1130,7 @@ export function ProfilesPanel({
           </form>
         </DialogSurface>
       ) : null}
-      {removalSheetProfile && removalSheetDisplay ? (
+      {removalSheetState ? (
         <DialogSurface
           ariaLabel="Remove Profile"
           className="quick-switch-palette profile-sheet"
@@ -1136,7 +1140,7 @@ export function ProfilesPanel({
             <div className="quick-switch-header">
               <div>
                 <p className="card-kicker">Removal</p>
-                <h3>Remove “{removalSheetDisplay}”?</h3>
+                <h3>Remove “{removalSheetState.display}”?</h3>
               </div>
             </div>
             <p className="inline-note">
@@ -1155,8 +1159,8 @@ export function ProfilesPanel({
                     setPendingRemoval(null);
                     removeProfileMutation.mutate({
                       tool,
-                      profile: removalSheetProfile.name,
-                      force: snapshot.profiles[tool]?.active === removalSheetProfile.name,
+                      profile: removalSheetState.profile.name,
+                      force: snapshot.profiles[tool]?.active === removalSheetState.profile.name,
                     });
                   }}
                 >

@@ -7,8 +7,12 @@ import type {
 } from "../../lib/schemas";
 import { DesktopCommandError } from "../../lib/tauri";
 import {
+  buildProfileActivationRequest,
   buildInventoryProfiles,
   buildProfileActionMenu,
+  buildProfileEditSheetState,
+  buildProfileRemovalSheetState,
+  buildProfileSheetDraftReset,
   buildProfileSheetSubmitLabel,
   buildSelectedProfileInspectorState,
   buildOauthWizardSteps,
@@ -175,6 +179,19 @@ describe("profiles-panel-display", () => {
   });
 
   it("shares profile panel selection, routing, keyboard, and submit-label policy", () => {
+    expect(buildProfileSheetDraftReset(null)).toEqual({
+      credentialBackend: "auto",
+      label: "",
+      mode: "from_live",
+      profile: "",
+    });
+    expect(buildProfileSheetDraftReset("file")).toEqual({
+      credentialBackend: "file",
+      label: "",
+      mode: "from_live",
+      profile: "",
+    });
+
     expect(resolveAvailableSelection("oauth", ["oauth", "from_live"], "from_live")).toBe(
       "oauth",
     );
@@ -283,6 +300,93 @@ describe("profiles-panel-display", () => {
         apiKeyPending: false,
       }),
     ).toBe("Import");
+  });
+
+  it("builds edit/removal sheet state and profile activation requests", () => {
+    const settings = makeSettings();
+    const profiles = [
+      { name: "work", auth: "oauth", label: "Work Laptop" },
+      { name: "personal", auth: "oauth", label: "" },
+    ];
+
+    expect(
+      buildProfileEditSheetState({
+        pendingEdit: { name: "work", focus: "name" },
+        profiles,
+        settings,
+        tool: "claude",
+        renameDrafts: { work: "PERSONAL" },
+        labelDrafts: {},
+      }),
+    ).toEqual({
+      display: "Work Laptop",
+      labelDraft: "Work Laptop",
+      profile: profiles[0],
+      renameDraft: "PERSONAL",
+      renameDuplicate: true,
+    });
+
+    expect(
+      buildProfileEditSheetState({
+        pendingEdit: null,
+        profiles,
+        settings,
+        tool: "claude",
+        renameDrafts: {},
+        labelDrafts: {},
+      }),
+    ).toBeNull();
+
+    expect(
+      buildProfileRemovalSheetState({
+        pendingRemoval: "work",
+        profiles,
+        settings,
+        tool: "claude",
+      }),
+    ).toEqual({
+      display: "Work Laptop",
+      profile: profiles[0],
+    });
+
+    expect(
+      buildProfileRemovalSheetState({
+        pendingRemoval: "missing",
+        profiles,
+        settings,
+        tool: "claude",
+      }),
+    ).toBeNull();
+
+    expect(
+      buildProfileActivationRequest({
+        tool: "claude",
+        profileName: "work",
+        profileLabel: "Work Laptop",
+        selectedStateMode: "shared",
+        availableStateModes: ["isolated", "shared"],
+      }),
+    ).toEqual({
+      tool: "claude",
+      profile: "work",
+      stateMode: "shared",
+      label: "Work Laptop",
+    });
+
+    expect(
+      buildProfileActivationRequest({
+        tool: "gemini",
+        profileName: "work",
+        profileLabel: "Work Laptop",
+        selectedStateMode: "shared",
+        availableStateModes: [],
+      }),
+    ).toEqual({
+      tool: "gemini",
+      profile: "work",
+      stateMode: null,
+      label: "Work Laptop",
+    });
   });
 
   it("finds the newest backup for a profile and supports tool-prefixed profile ids", () => {
