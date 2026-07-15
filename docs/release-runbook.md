@@ -148,13 +148,13 @@ The repository workflow expects these required secrets:
 - `AISW_SIDECAR_URL_LINUX_X64`
 - `AISW_SIDECAR_URL_WINDOWS_X64`
 - `AISW_DESKTOP_UPDATER_ENDPOINT_STABLE`
-- `AISW_DESKTOP_UPDATER_ENDPOINT_BETA`
 - `TAURI_SIGNING_PUBLIC_KEY`
 - `TAURI_SIGNING_PRIVATE_KEY`
 - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
 
 The private key must match the public key staged into `src-tauri/tauri.conf.json` by `npm run prepare:updater`.
 Release channel endpoints and updater public key are staged into `plugins.updater` in `src-tauri/tauri.conf.json`.
+`AISW_DESKTOP_UPDATER_ENDPOINT_BETA` is optional until a separate beta feed exists.
 
 Optional signing secrets:
 

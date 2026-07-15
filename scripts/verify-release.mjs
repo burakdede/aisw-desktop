@@ -265,7 +265,6 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       ok:
         publishWorkflow.includes("npm run prepare:updater") &&
         publishWorkflow.includes("AISW_DESKTOP_UPDATER_ENDPOINT_STABLE") &&
-        publishWorkflow.includes("AISW_DESKTOP_UPDATER_ENDPOINT_BETA") &&
         publishWorkflow.includes("TAURI_SIGNING_PUBLIC_KEY"),
     },
     {

@@ -34,7 +34,6 @@ function makeRequiredEnv(overrides = {}) {
     AISW_SIDECAR_URL_LINUX_X64: "https://example.com/aisw-linux",
     AISW_SIDECAR_URL_WINDOWS_X64: "https://example.com/aisw-win.exe",
     AISW_DESKTOP_UPDATER_ENDPOINT_STABLE: "https://updates.example.com/stable.json",
-    AISW_DESKTOP_UPDATER_ENDPOINT_BETA: "https://updates.example.com/beta.json",
     TAURI_SIGNING_PUBLIC_KEY: "public-key",
     TAURI_SIGNING_PRIVATE_KEY: "private-key",
     TAURI_SIGNING_PRIVATE_KEY_PASSWORD: "secret-password",
