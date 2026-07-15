@@ -3,15 +3,15 @@ import { DialogSurface } from "./DialogSurface";
 import { SearchField } from "./SearchField";
 import { ToolBrand } from "./ToolBrand";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "../lib/schemas";
-import {
-  profileSetDisplayLabel,
-  profileSetHasUsableSelections,
-  sharedProfileEntries,
-  toolProfileDisplayLabel,
-} from "../lib/profile-display";
-import { toolDisplayName } from "../lib/tool-display";
 import { resolveGlobalStateMode, supportedStateModes } from "../features/shared/state-modes";
 import { useDesktopActions } from "../features/shared/useDesktopActions";
+import {
+  buildQuickSwitchItems,
+  quickSwitchNoMatchesDescription,
+  quickSwitchResultCountLabel,
+  quickSwitchStatusCopy,
+  type QuickSwitchItem,
+} from "./quick-switch-display";
 
 type QuickSwitchPaletteProps = {
   open: boolean;
@@ -20,42 +20,6 @@ type QuickSwitchPaletteProps = {
   snapshot: AppSnapshot;
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
 };
-
-type QuickSwitchItem =
-  | {
-      id: string;
-      kind: "profile_set";
-      group: "Sets";
-      title: string;
-      subtitle: string;
-      searchText: string;
-      active: boolean;
-      name: string;
-      label?: string;
-    }
-  | {
-      id: string;
-      kind: "shared_profile";
-      group: "Matching profiles";
-      title: string;
-      subtitle: string;
-      searchText: string;
-      active: boolean;
-      profile: string;
-      label: string;
-    }
-  | {
-      id: string;
-      kind: "tool_profile";
-      group: string;
-      title: string;
-      subtitle: string;
-      searchText: string;
-      active: boolean;
-      tool: string;
-      profile: string;
-      label: string;
-    };
 
 export function QuickSwitchPalette({
   open,
@@ -228,7 +192,7 @@ export function QuickSwitchPalette({
     return acc;
   }, {});
   const selectedItem = filteredItems[selectedIndex] ?? null;
-  const shortcutSummary = selectedItem?.kind === "profile_set" ? "Enter switches set" : "⌘Enter matches tools";
+  const statusCopy = quickSwitchStatusCopy(selectedItem);
 
   return (
     <DialogSurface
@@ -259,24 +223,24 @@ export function QuickSwitchPalette({
             onChange={setQuery}
           />
           <span className="quick-switch-count" aria-live="polite">
-            {filteredItems.length} result{filteredItems.length === 1 ? "" : "s"}
+            {quickSwitchResultCountLabel(filteredItems.length)}
           </span>
         </div>
         <div className="quick-switch-status-strip" aria-live="polite">
           {selectedItem ? (
             <>
-              <span className="quick-switch-hint-label">{selectedItem.group}</span>
-              <strong>{selectedItem.title}</strong>
+              <span className="quick-switch-hint-label">{statusCopy.label}</span>
+              <strong>{statusCopy.title}</strong>
               <span className="quick-switch-hint-copy">
-                {selectedItem.active ? "Current selection" : selectedItem.subtitle}
+                {statusCopy.subtitle}
               </span>
-              <span className="quick-switch-status-shortcut">{shortcutSummary}</span>
+              <span className="quick-switch-status-shortcut">{statusCopy.shortcut}</span>
             </>
           ) : (
             <>
-              <span className="quick-switch-hint-label">Selection</span>
-              <strong>No matches</strong>
-              <span className="quick-switch-hint-copy">Search by set name, tool, profile name, or saved label.</span>
+              <span className="quick-switch-hint-label">{statusCopy.label}</span>
+              <strong>{statusCopy.title}</strong>
+              <span className="quick-switch-hint-copy">{statusCopy.subtitle}</span>
             </>
           )}
         </div>
@@ -350,7 +314,7 @@ export function QuickSwitchPalette({
             <article className="diagnostic-card">
               <h3>No matches</h3>
               <p className="inline-note">
-                Search by set name, tool, profile name, or saved label.
+                {quickSwitchNoMatchesDescription()}
               </p>
             </article>
           )}
@@ -377,86 +341,4 @@ export function QuickSwitchPalette({
         </footer>
     </DialogSurface>
   );
-}
-
-function buildQuickSwitchItems(settings: DesktopSettings, snapshot: AppSnapshot): QuickSwitchItem[] {
-  const items: QuickSwitchItem[] = [];
-
-  for (const set of [...(settings.profile_sets ?? [])].sort((left, right) => left.name.localeCompare(right.name))) {
-    if (!profileSetHasUsableSelections(snapshot, set)) {
-      continue;
-    }
-    const active = Object.entries(set.profiles)
-      .filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0)
-      .every(([tool, profile]) => snapshot.profiles[tool]?.active === profile);
-    items.push({
-      id: `set:${set.name}`,
-      kind: "profile_set",
-      group: "Sets",
-      title: profileSetDisplayLabel(set),
-      subtitle: buildSetSubtitle(set),
-      searchText: `${set.name} ${set.label ?? ""} ${buildSetSubtitle(set)}`.toLowerCase(),
-      active,
-      name: set.name,
-      label: set.label ?? undefined,
-    });
-  }
-
-  for (const profile of sharedProfileEntries(settings, snapshot)) {
-    const active = snapshot.statuses
-      .filter((status) => status.active_profile)
-      .every((status) => status.active_profile === profile.name);
-    const matchingTools = sharedProfileTools(snapshot, profile.name);
-    items.push({
-      id: `shared:${profile.name}`,
-      kind: "shared_profile",
-      group: "Matching profiles",
-      title: profile.label,
-      subtitle: `Across ${matchingTools.join(", ")}`,
-      searchText: `${profile.name} ${profile.label} ${matchingTools.join(" ")}`.toLowerCase(),
-      active,
-      profile: profile.name,
-      label: profile.label,
-    });
-  }
-
-  for (const tool of Object.keys(snapshot.profiles).sort((left, right) => left.localeCompare(right))) {
-    const profiles = snapshot.profiles[tool]?.profiles ?? [];
-    for (const profile of profiles) {
-      const label = toolProfileDisplayLabel(settings, snapshot, tool, profile.name);
-      items.push({
-        id: `tool:${tool}:${profile.name}`,
-        kind: "tool_profile",
-        group: quickSwitchToolLabel(tool),
-        title: label,
-        subtitle: `${quickSwitchToolLabel(tool)} · ${profile.name} · ${profile.auth}`,
-        searchText: `${tool} ${profile.name} ${profile.auth} ${label}`.toLowerCase(),
-        active: snapshot.profiles[tool]?.active === profile.name,
-        tool,
-        profile: profile.name,
-        label,
-      });
-    }
-  }
-
-  return items;
-}
-
-function buildSetSubtitle(set: NonNullable<DesktopSettings["profile_sets"]>[number]) {
-  return Object.entries(set.profiles)
-    .filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0)
-    .map(([tool, profile]) => `${quickSwitchToolLabel(tool)}: ${profile}`)
-    .join("  ");
-}
-
-function sharedProfileTools(snapshot: AppSnapshot, profileName: string) {
-  return Object.keys(snapshot.profiles)
-    .filter((tool) =>
-      snapshot.profiles[tool]?.profiles.some((profile) => profile.name === profileName),
-    )
-    .map((tool) => quickSwitchToolLabel(tool));
-}
-
-function quickSwitchToolLabel(tool: string) {
-  return toolDisplayName(tool);
 }
