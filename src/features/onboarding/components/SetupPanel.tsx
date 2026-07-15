@@ -14,8 +14,6 @@ import { AppBootstrap, AppSnapshot, InitReport } from "../../../lib/schemas";
 import { toolSupportsEditableStateModes } from "../../../lib/tool-registry";
 import { toolDisplayName } from "../../../lib/tool-display";
 import { countLabel, titleCase } from "../../../lib/utils";
-import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
-import { normalizeTerminalIntegrationText } from "../../shared/terminal-integration-language";
 import {
   commandForCurrentPlatform,
   installCommandForTool,
@@ -31,35 +29,23 @@ import { resolveGlobalStateMode } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { invalidatePostMutationQueries } from "../../shared/postMutationRefresh";
+import {
+  buildOnboardingHealthItems,
+  buildOnboardingRuntimeRows,
+  onboardingAccountBadge,
+  onboardingAccountSummary,
+  onboardingSecureStorageStatus,
+  onboardingSwitchReadinessStatus,
+  setupStepFooterNote,
+  setupStepFooterTitle,
+  setupStepSummary,
+  type LiveAccount,
+  type OnboardingAccountItem,
+  type OnboardingHealthItem as HealthItem,
+  type SetupStep,
+} from "../onboarding-display";
 import type { SettingsSection } from "../../settings/components/SettingsPanel";
 import type { ProfileImportMode } from "../../shared/profile-capabilities";
-
-type LiveAccount = {
-  tool: string;
-  outcome?: string;
-  auth_method?: string;
-  matched_profile?: string | null;
-};
-
-type HealthItem = {
-  label: string;
-  status: "pass" | "warn" | "fail";
-  detail: string;
-};
-
-type SetupStep = "accounts" | "runtime" | "switch" | "terminal" | "done";
-type OnboardingAccountItem =
-  | { key: string; kind: "live"; account: LiveAccount }
-  | {
-      key: string;
-      kind: "needs-profile";
-      status: AppSnapshot["statuses"][number];
-    }
-  | {
-      key: string;
-      kind: "missing";
-      status: AppSnapshot["statuses"][number];
-    };
 
 export function shouldShowSetupFlow(
   snapshot: AppSnapshot,
@@ -141,7 +127,7 @@ export function SetupPanel({
     [snapshot.statuses],
   );
   const healthItems = useMemo(
-    () => buildHealthItems(bootstrap, snapshot, doctor.data),
+    () => buildOnboardingHealthItems(bootstrap, snapshot, doctor.data),
     [bootstrap, snapshot, doctor.data],
   );
   const switchableProfiles = useMemo(
@@ -257,9 +243,10 @@ export function SetupPanel({
   const needsAttentionCount =
     liveAccounts.length + installedToolsNeedingProfile.length + missingTools.length;
   const switchReady = switchableProfiles.length > 0;
-  const secureStorage = describeSecureStorage(snapshot, toolCapabilities);
+  const switchReadiness = onboardingSwitchReadinessStatus(switchReady);
+  const secureStorage = onboardingSecureStorageStatus(snapshot, toolCapabilities);
   const currentRuntimeSummary = runtimeSummary(settings.runtime_kind);
-  const runtimeRows = buildRuntimeRows(bootstrap, snapshot, toolCapabilities);
+  const runtimeRows = buildOnboardingRuntimeRows(bootstrap, snapshot, toolCapabilities);
   const trustRows = [
     "Credentials stay on this computer",
     "No telemetry",
@@ -383,12 +370,8 @@ export function SetupPanel({
                       </div>
                       <div>
                         <span className="overview-current-set-cell-label">Ready to switch</span>
-                        <strong>{switchReady ? "Yes" : "Not yet"}</strong>
-                        <p className="inline-note">
-                          {switchReady
-                            ? "At least one reusable profile is ready for a first switch."
-                            : "Save one profile first, then try the first shared switch."}
-                        </p>
+                        <strong>{switchReadiness.label}</strong>
+                        <p className="inline-note">{switchReadiness.detail}</p>
                       </div>
                       <div>
                         <span className="overview-current-set-cell-label">Desktop engine</span>
@@ -397,8 +380,8 @@ export function SetupPanel({
                       </div>
                       <div>
                         <span className="overview-current-set-cell-label">Secure storage</span>
-                        <strong>{secureStorage.startsWith("Secure storage has not") ? "Not confirmed" : "Available"}</strong>
-                        <p className="inline-note">{secureStorage}</p>
+                        <strong>{secureStorage.label}</strong>
+                        <p className="inline-note">{secureStorage.detail}</p>
                       </div>
                     </div>
                   </div>
@@ -573,8 +556,8 @@ export function SetupPanel({
                             {accountItems.map((item) => {
                               const tool = accountItemTool(item);
                               const title = toolDisplayName(tool);
-                              const badge = accountItemBadge(item);
-                              const summary = accountItemSummary(item);
+                              const badge = onboardingAccountBadge(item);
+                              const summary = onboardingAccountSummary(item);
 
                               return (
                                 <button
@@ -596,7 +579,7 @@ export function SetupPanel({
                                     <p className="inline-note">{summary}</p>
                                   </div>
                                   <div className="settings-nav-row-meta">
-                                    <span className={`pill ${badge.className}`}>{badge.label}</span>
+                                    <span className={`pill pill-${badge.tone}`}>{badge.label}</span>
                                     <span className="desktop-source-chevron" aria-hidden="true">
                                       ›
                                     </span>
@@ -623,8 +606,8 @@ export function SetupPanel({
                                       <ToolBrand tool={selectedAccountItem.account.tool} className="tool-brand-heading" logoSize={18} />
                                     </h3>
                                   </div>
-                                  <span className={`pill ${accountItemBadge(selectedAccountItem).className}`}>
-                                    {accountItemBadge(selectedAccountItem).label}
+                                  <span className={`pill pill-${onboardingAccountBadge(selectedAccountItem).tone}`}>
+                                    {onboardingAccountBadge(selectedAccountItem).label}
                                   </span>
                                 </div>
                                 <div className="onboarding-account-summary">
@@ -689,8 +672,8 @@ export function SetupPanel({
                                       <ToolBrand tool={selectedAccountItem.status.tool} className="tool-brand-heading" logoSize={18} />
                                     </h3>
                                   </div>
-                                  <span className={`pill ${accountItemBadge(selectedAccountItem).className}`}>
-                                    {accountItemBadge(selectedAccountItem).label}
+                                  <span className={`pill pill-${onboardingAccountBadge(selectedAccountItem).tone}`}>
+                                    {onboardingAccountBadge(selectedAccountItem).label}
                                   </span>
                                 </div>
                                 <div className="onboarding-account-summary">
@@ -727,8 +710,8 @@ export function SetupPanel({
                                     <p className="card-kicker">Optional tool</p>
                                     <h3>{toolDisplayName(selectedAccountItem.status.tool)} is not installed</h3>
                                   </div>
-                                  <span className={`pill ${accountItemBadge(selectedAccountItem).className}`}>
-                                    {accountItemBadge(selectedAccountItem).label}
+                                  <span className={`pill pill-${onboardingAccountBadge(selectedAccountItem).tone}`}>
+                                    {onboardingAccountBadge(selectedAccountItem).label}
                                   </span>
                                 </div>
                                 <p className="inline-note">
@@ -1038,103 +1021,10 @@ function defaultSetupStep(snapshot: AppSnapshot, initReport: InitReport | undefi
   return "runtime";
 }
 
-function setupStepSummary(step: SetupStep) {
-  switch (step) {
-    case "runtime":
-      return "Confirm the included desktop engine, data folder, and secure storage.";
-    case "accounts":
-      return "Import current logins or add the first saved profiles you need.";
-    case "switch":
-      return "Run one safe set switch before you start coding.";
-    case "terminal":
-      return "Optional setup for already-open terminal sessions.";
-    case "done":
-      return "Review what is ready now and what can wait until later.";
-  }
-}
-
-function setupStepFooterTitle(step: SetupStep) {
-  switch (step) {
-    case "runtime":
-      return "Confirm the included desktop engine";
-    case "accounts":
-      return "Save at least one reusable account";
-    case "switch":
-      return "Run a safe first switch";
-    case "terminal":
-      return "Leave terminal integration for later unless you need it";
-    case "done":
-      return "Review the local setup summary";
-  }
-}
-
-function setupStepFooterNote(step: SetupStep, switchReady: boolean) {
-  switch (step) {
-    case "runtime":
-      return "Use the included desktop engine unless you intentionally want AI Switch to point at another managed engine.";
-    case "accounts":
-      return "Imported current logins and saved profiles are what make safe switching possible later.";
-    case "switch":
-      return switchReady
-        ? "Re-apply one saved set once so you know switching works before you start coding."
-        : "You can continue, but you will need one saved set name before the first switch can succeed.";
-    case "terminal":
-      return "The app already updates local credential files directly. Shell integration is only for already-open terminal sessions.";
-    case "done":
-      return "You can reopen setup later from Settings if you want to finish optional tools or terminal integration.";
-  }
-}
-
 function readLiveAccounts(initReport: InitReport | undefined): LiveAccount[] {
   const result = initReport?.result as { live_accounts?: unknown } | undefined;
   const accounts = result?.live_accounts;
   return Array.isArray(accounts) ? (accounts as LiveAccount[]) : [];
-}
-
-function buildHealthItems(
-  bootstrap: AppBootstrap,
-  snapshot: AppSnapshot,
-  doctorReport: Record<string, unknown> | undefined,
-): HealthItem[] {
-  const doctorChecks = Array.isArray(doctorReport?.checks)
-    ? doctorReport.checks
-    : [];
-  const items: HealthItem[] = [
-    {
-      label: "Desktop engine",
-      status: bootstrap.runtime_status.compatible ? "pass" : "fail",
-      detail: bootstrap.runtime_status.compatible
-        ? bootstrap.settings.runtime_kind === "bundled"
-          ? "Included desktop engine is compatible with this app."
-          : "Selected engine override is compatible with this app."
-        : normalizeRuntimeLanguage(bootstrap.runtime_status.issues.join(" · ")) || "Compatibility checks failed.",
-    },
-  ];
-
-  doctorChecks.forEach((entry) => {
-    const check = entry as { name?: string; status?: string; detail?: string };
-    const status =
-      check.status === "pass" || check.status === "warn" || check.status === "fail"
-        ? check.status
-        : "warn";
-    items.push({
-      label: normalizeSetupHealthLabel(check.name),
-      status,
-      detail: normalizeSetupHealthDetail(check.detail),
-    });
-  });
-
-  snapshot.statuses.forEach((status) => {
-    items.push({
-      label: `${toolDisplayName(status.tool)} availability`,
-      status: status.binary_found ? "pass" : "fail",
-      detail: status.binary_found
-        ? `${toolDisplayName(status.tool)} detected${status.active_profile ? ` · active ${status.active_profile}` : ""}.`
-        : `${toolDisplayName(status.tool)} binary was not detected on PATH or in live state.`,
-    });
-  });
-
-  return items;
 }
 
 function selectDefaultAccountItem(items: OnboardingAccountItem[]) {
@@ -1148,116 +1038,4 @@ function selectDefaultAccountItem(items: OnboardingAccountItem[]) {
 
 function accountItemTool(item: OnboardingAccountItem) {
   return item.kind === "live" ? item.account.tool : item.status.tool;
-}
-
-function accountItemBadge(item: OnboardingAccountItem) {
-  if (item.kind === "live") {
-    return { className: "pill-ok", label: "Ready to import" };
-  }
-  if (item.kind === "needs-profile") {
-    return { className: "pill-soft", label: "Needs profile" };
-  }
-  return { className: "pill-soft", label: "Not installed" };
-}
-
-function accountItemSummary(item: OnboardingAccountItem) {
-  if (item.kind === "live") {
-    return `${item.account.outcome ?? "unknown"} · ${item.account.auth_method ?? "unknown"}${
-      item.account.matched_profile ? ` · matches ${item.account.matched_profile}` : ""
-    }`;
-  }
-  if (item.kind === "needs-profile") {
-    return "No saved profile yet";
-  }
-  return "Not installed yet";
-}
-
-function buildRuntimeRows(
-  bootstrap: AppBootstrap,
-  snapshot: AppSnapshot,
-  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"],
-): HealthItem[] {
-  return [
-    {
-      label: "Desktop engine",
-      status: bootstrap.runtime_status.compatible ? "pass" : "warn",
-      detail: bootstrap.settings.runtime_kind === "bundled"
-        ? `Ready. Version ${bootstrap.runtime_status.version?.version ?? "unknown"}.`
-        : `Available, but AI Switch is currently using ${runtimeSummary(bootstrap.settings.runtime_kind).source.toLowerCase()}.`,
-    },
-    {
-      label: "Data folder",
-      status: "pass",
-      detail: bootstrap.settings.aisw_home
-        ? `Custom data folder set to ${bootstrap.settings.aisw_home}.`
-        : "Managed automatically inside the standard AI Switch data location.",
-    },
-    {
-      label: "Secure storage",
-      status: supportsSecureStorage(snapshot, toolCapabilities) ? "pass" : "warn",
-      detail: describeSecureStorage(snapshot, toolCapabilities),
-    },
-  ];
-}
-
-function normalizeSetupHealthLabel(value: string | undefined) {
-  const normalized = value?.trim().toLowerCase().replace(/[_-]+/g, " ");
-  if (!normalized) {
-    return "Setup check";
-  }
-  if (normalized.includes("shell")) {
-    return "Terminal integration";
-  }
-  if (normalized.includes("keyring")) {
-    return "Secure storage";
-  }
-  if (normalized.includes("permission")) {
-    return "Local permissions";
-  }
-  if (normalized.includes("oauth")) {
-    return "Sign-in flow";
-  }
-  if (normalized.includes("backup")) {
-    return "Backups";
-  }
-  if (normalized.includes("runtime") || normalized.includes("engine")) {
-    return "Desktop engine";
-  }
-  return titleCase(normalized);
-}
-
-function normalizeSetupHealthDetail(value: string | undefined) {
-  return normalizeTerminalIntegrationText(normalizeRuntimeLanguage(value ?? "No detail provided."));
-}
-
-function supportsSecureStorage(
-  snapshot: AppSnapshot,
-  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"],
-) {
-  return (
-    snapshot.statuses.some((status) =>
-      status.credential_backend === "system_keyring" || status.credential_backend === "system-keyring",
-    ) ||
-    Object.values(toolCapabilities).some((capability) =>
-      capability.credential_backends.includes("system-keyring"),
-    )
-  );
-}
-
-function describeSecureStorage(
-  snapshot: AppSnapshot,
-  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"],
-) {
-  if (!supportsSecureStorage(snapshot, toolCapabilities)) {
-    return "Secure storage has not been confirmed yet. You can still continue with local file-based profiles.";
-  }
-
-  const platform = typeof navigator === "undefined" ? "" : navigator.platform.toLowerCase();
-  if (platform.includes("mac")) {
-    return "Login Keychain available for local credential storage.";
-  }
-  if (platform.includes("win")) {
-    return "Windows Credential Manager available for local credential storage.";
-  }
-  return "System keyring available for local credential storage.";
 }
