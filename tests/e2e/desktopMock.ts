@@ -1,6 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 
-const CURRENT_APP_VERSION = process.env.npm_package_version ?? "0.1.1";
+const CURRENT_APP_VERSION = process.env.npm_package_version ?? "0.1.2";
 
 type ScenarioName =
   | "onboarding"
