@@ -12,27 +12,23 @@ import { useCompactLayout } from "../../../components/useCompactLayout";
 import { exportActivityLog } from "../../../lib/client";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { notifyDesktop } from "../../../lib/notifications";
-import { toolDisplayName } from "../../../lib/tool-display";
 import {
   clearLastCommandResults,
   useLastCommandResults,
 } from "../../shared/lastCommandResult";
-
-type ActivityFilter = "all" | "success" | "error";
-
-type ActivityEntry = {
-  key: string;
-  scopeLabel: string;
-  scopeType: "tool" | "global";
-  scopeTool?: string;
-  label: string;
-  status: "success" | "error";
-  message: string;
-  remediation?: string;
-  command?: string;
-  resultSummary?: string;
-  at: number;
-};
+import {
+  activityScopeLabel,
+  activitySecondaryLine,
+  activityStatusLabel,
+  activityStatusSymbol,
+  activityTrailingLine,
+  filterActivity,
+  formatActivityTimestamp,
+  formatFullActivityTimestamp,
+  groupActivityEntries,
+  type ActivityEntry,
+  type ActivityFilter,
+} from "../activity-display";
 
 export function ActivityPanel({
   externalClearSignal = 0,
@@ -59,10 +55,7 @@ export function ActivityPanel({
     () =>
       lastCommandResults.timeline.map((entry) => ({
         key: entry.key,
-        scopeLabel:
-          entry.scope.type === "tool"
-            ? formatToolScope(entry.scope.tool)
-            : formatGlobalScope(entry.scope.id),
+        scopeLabel: activityScopeLabel(entry.scope),
         scopeType: entry.scope.type,
         scopeTool: entry.scope.type === "tool" ? entry.scope.tool : undefined,
         label: entry.label,
@@ -80,7 +73,10 @@ export function ActivityPanel({
     () => filterActivity(entries, search, filter),
     [entries, filter, search],
   );
-  const groupedEntries = useMemo(() => groupEntries(filteredEntries), [filteredEntries]);
+  const groupedEntries = useMemo(
+    () => groupActivityEntries(filteredEntries),
+    [filteredEntries],
+  );
   const selectedEntry =
     filteredEntries.find((entry) => entry.key === selectedEntryKey) ?? filteredEntries[0] ?? null;
   const hasEntries = entries.length > 0;
@@ -285,11 +281,11 @@ export function ActivityPanel({
                             }
                           }}
                         >
-                          <div className="activity-event-time">{formatTimestamp(entry.at)}</div>
+                          <div className="activity-event-time">{formatActivityTimestamp(entry.at)}</div>
                           <div className="activity-event-main">
                             <div className="activity-event-title-row">
                               <span className={`activity-event-status activity-event-status-${entry.status}`}>
-                                <span aria-hidden="true">{entry.status === "success" ? "✓" : "▲"}</span>
+                                <span aria-hidden="true">{activityStatusSymbol(entry.status, "row")}</span>
                                 <strong>{entry.label}</strong>
                               </span>
                             </div>
@@ -331,8 +327,8 @@ export function ActivityPanel({
                     ) : null}
                     <h3>{selectedEntry.label}</h3>
                     <p className={`activity-inspector-status activity-inspector-status-${selectedEntry.status}`}>
-                      <span aria-hidden="true">{selectedEntry.status === "success" ? "●" : "▲"}</span>
-                      <span>{selectedEntry.status === "success" ? "Success" : "Failed"}</span>
+                      <span aria-hidden="true">{activityStatusSymbol(selectedEntry.status, "inspector")}</span>
+                      <span>{activityStatusLabel(selectedEntry.status)}</span>
                     </p>
                   </div>
                 </header>
@@ -342,7 +338,7 @@ export function ActivityPanel({
                   rows={[
                     {
                       label: "Recorded",
-                      value: formatFullTimestamp(selectedEntry.at),
+                      value: formatFullActivityTimestamp(selectedEntry.at),
                     },
                     {
                       label: "Scope",
@@ -439,171 +435,4 @@ export function ActivityPanel({
       ) : null}
     </div>
   );
-}
-
-function filterActivity(entries: ActivityEntry[], search: string, filter: ActivityFilter) {
-  const query = search.trim().toLowerCase();
-
-  return entries.filter((entry) => {
-    if (filter !== "all" && entry.status !== filter) {
-      return false;
-    }
-
-    if (!query) {
-      return true;
-    }
-
-    return [
-      entry.label,
-      entry.message,
-      entry.remediation ?? "",
-      entry.scopeLabel,
-      activityPreview(entry),
-    ]
-      .join(" ")
-      .toLowerCase()
-      .includes(query);
-  });
-}
-
-function groupEntries(entries: ActivityEntry[]) {
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
-
-  const groups = [
-    { label: "Today", entries: [] as ActivityEntry[] },
-    { label: "Yesterday", entries: [] as ActivityEntry[] },
-    { label: "Earlier", entries: [] as ActivityEntry[] },
-  ];
-
-  for (const entry of entries) {
-    if (entry.at >= todayStart) {
-      groups[0].entries.push(entry);
-    } else if (entry.at >= yesterdayStart) {
-      groups[1].entries.push(entry);
-    } else {
-      groups[2].entries.push(entry);
-    }
-  }
-
-  return groups.filter((group) => group.entries.length > 0);
-}
-
-function activityPreview(entry: ActivityEntry) {
-  if (entry.scopeType === "tool" && entry.scopeTool) {
-    return entry.message;
-  }
-  return entry.message;
-}
-
-function activitySecondaryLine(entry: ActivityEntry) {
-  const targetSummary = parseActivityTargetSummary(entry);
-  if (targetSummary) {
-    return targetSummary;
-  }
-
-  if (entry.resultSummary && !isGenericActivityResult(entry.resultSummary)) {
-    return entry.resultSummary;
-  }
-
-  return entry.scopeLabel;
-}
-
-function activityTrailingLine(entry: ActivityEntry) {
-  if (entry.resultSummary && !isGenericActivityResult(entry.resultSummary)) {
-    return entry.resultSummary;
-  }
-
-  if (entry.remediation) {
-    return "Recovery available";
-  }
-
-  return entry.status === "success" ? "Success" : "Failed";
-}
-
-function parseActivityTargetSummary(entry: ActivityEntry) {
-  if (entry.scopeType === "tool" && entry.scopeTool) {
-    const switchedMatch = entry.message.match(/\b(?:switched|re-applied)\b.*?\bto\s+([^.;]+)/i);
-    if (switchedMatch?.[1]) {
-      return `${formatToolScope(entry.scopeTool)} → ${switchedMatch[1].trim()}`;
-    }
-
-    const profileMatch = entry.message.match(/\bprofile\s+([^.;]+)/i);
-    if (profileMatch?.[1]) {
-      return `${formatToolScope(entry.scopeTool)} · ${profileMatch[1].trim()}`;
-    }
-
-    return formatToolScope(entry.scopeTool);
-  }
-
-  return null;
-}
-
-function isGenericActivityResult(value: string) {
-  return value.trim().toLowerCase() === "snapshot updated successfully.";
-}
-
-function formatToolScope(tool: string) {
-  return toolDisplayName(tool);
-}
-
-function formatGlobalScope(id: string) {
-  switch (id) {
-    case "switch-all":
-      return "Quick Switch";
-    case "profile-set":
-      return "Saved set";
-    case "context":
-      return "Sets";
-    case "workspace":
-      return "Project rules";
-    case "backup":
-      return "Backups";
-    case "settings":
-      return "Settings";
-    case "setup":
-      return "Setup";
-    default:
-      return "App";
-  }
-}
-
-function formatTimestamp(timestamp: number) {
-  return new Intl.DateTimeFormat(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(timestamp);
-}
-
-function formatFullTimestamp(timestamp: number) {
-  const date = new Date(timestamp);
-  if (Number.isNaN(date.getTime())) {
-    return "Date unavailable";
-  }
-
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
-  const value = date.getTime();
-  const time = new Intl.DateTimeFormat(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
-
-  if (value >= todayStart) {
-    return `Today at ${time}`;
-  }
-
-  if (value >= yesterdayStart) {
-    return `Yesterday at ${time}`;
-  }
-
-  return new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
 }
