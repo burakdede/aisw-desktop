@@ -9,13 +9,18 @@ import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { listBackups, openAppDataFolder } from "../../../lib/client";
-import { compareBackupsNewestFirst, type BackupLike } from "../../../lib/backups";
-import { DATE_UNAVAILABLE_LABEL, parseStoredDate } from "../../../lib/date-format";
+import {
+  backupContainsLabel,
+  backupReasonLabel,
+  compareBackupsNewestFirst,
+  formatBackupInspectorTimestamp,
+  formatBackupListTimestamp,
+  resolveBackupTarget,
+} from "../../../lib/backups";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { toolProfileDisplayLabel } from "../../../lib/profile-display";
 import { AppBootstrap, AppSnapshot, DesktopSettings, type BackupEntry } from "../../../lib/schemas";
 import { toolDisplayName } from "../../../lib/tool-display";
-import { titleCase } from "../../../lib/utils";
 import { resolveStateModeRequest } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
@@ -516,16 +521,6 @@ export function BackupsPanel({
   );
 }
 
-function resolveBackupTarget(tool: string, profile: string) {
-  if (profile.includes("/")) {
-    const [resolvedTool, resolvedProfile] = profile.split("/", 2);
-    if (resolvedTool && resolvedProfile) {
-      return { tool: resolvedTool, profile: resolvedProfile };
-    }
-  }
-  return { tool, profile };
-}
-
 function filterBackups(
   backups: BackupEntry[],
   toolFilter: ToolFilter,
@@ -566,109 +561,4 @@ function sortBackups(left: BackupEntry, right: BackupEntry, mode: DateFilter) {
   return mode === "newest"
     ? compareBackupsNewestFirst(left, right)
     : compareBackupsNewestFirst(right, left);
-}
-
-function backupReasonLabel(entry: BackupEntry) {
-  const normalized = entry.backup_id.toLowerCase();
-  if (normalized.includes("before-switch")) {
-    return "Before profile switch";
-  }
-  if (normalized.includes("switch")) {
-    return "Before profile switch";
-  }
-  if (normalized.includes("remove")) {
-    return "Before removal";
-  }
-  if (normalized.includes("rename")) {
-    return "Before rename";
-  }
-  return "Created restore point";
-}
-
-function backupContainsLabel(entry: BackupEntry) {
-  const target = resolveBackupTarget(entry.tool, entry.profile);
-  if (target.tool === "gemini") {
-    return "Profile data snapshot";
-  }
-  return "Profile files and config snapshot";
-}
-
-function formatBackupInspectorTimestamp(value: string) {
-  const date = backupDate(value);
-  if (!date) {
-    return DATE_UNAVAILABLE_LABEL;
-  }
-  return formatFriendlyInspectorDate(date);
-}
-
-function formatBackupListTimestamp(value: string) {
-  const date = backupDate(value);
-  if (!date) {
-    return DATE_UNAVAILABLE_LABEL;
-  }
-
-  const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfEntry = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const diffDays = Math.round(
-    (startOfToday.getTime() - startOfEntry.getTime()) / (1000 * 60 * 60 * 24),
-  );
-
-  if (diffDays === 0) {
-    return `Today, ${new Intl.DateTimeFormat(undefined, {
-      hour: "numeric",
-      minute: "2-digit",
-    }).format(date)}`;
-  }
-
-  if (diffDays === 1) {
-    return `Yesterday, ${new Intl.DateTimeFormat(undefined, {
-      hour: "numeric",
-      minute: "2-digit",
-    }).format(date)}`;
-  }
-
-  return `${new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-    year: now.getFullYear() === date.getFullYear() ? undefined : "numeric",
-  }).format(date)}`;
-}
-
-function backupDate(value: string) {
-  return parseStoredDate(value);
-}
-
-function formatFriendlyInspectorDate(date: Date) {
-  const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfEntry = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const diffDays = Math.round(
-    (startOfToday.getTime() - startOfEntry.getTime()) / (1000 * 60 * 60 * 24),
-  );
-
-  const timeLabel = new Intl.DateTimeFormat(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
-
-  if (diffDays === 0) {
-    return `Today at ${timeLabel}`;
-  }
-
-  if (diffDays === 1) {
-    return `Yesterday at ${timeLabel}`;
-  }
-
-  return new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
-}
-
-function sortKey(entry: BackupLike) {
-  return entry.created_at ?? entry.backup_id;
 }
