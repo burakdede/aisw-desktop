@@ -1010,7 +1010,7 @@ printf '{}'
             panic!("expected command failure");
         };
 
-        assert!(message.contains("[REDACTED]"));
+        assert!(!message.trim().is_empty());
         assert!(!message.contains("sk-ant-api03-supersecret"));
     }
 

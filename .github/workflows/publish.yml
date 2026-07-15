@@ -39,6 +39,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
     env:
       SIDE_CAR_URL: ${{ secrets[matrix.sidecar_url_secret] }}
+      MACOS_RUNNER_SIDECAR_URL: ${{ secrets.AISW_SIDECAR_URL_MACOS_ARM64 }}
       AISW_DESKTOP_UPDATER_ENDPOINT_STABLE: ${{ secrets.AISW_DESKTOP_UPDATER_ENDPOINT_STABLE }}
       TAURI_SIGNING_PUBLIC_KEY: ${{ secrets.TAURI_SIGNING_PUBLIC_KEY }}
     steps:
@@ -87,6 +88,21 @@ jobs:
       - name: Stage aisw sidecar
         run: npm run prepare:sidecar -- --target ${{ matrix.target }} "${{ runner.temp }}/aisw${{ matrix.sidecar_ext }}"
 
+      - name: Download runner macOS sidecar
+        if: matrix.target == 'x86_64-apple-darwin'
+        shell: bash
+        run: |
+          if [ -z "${MACOS_RUNNER_SIDECAR_URL}" ]; then
+            echo "Missing arm64 macOS sidecar for runner validation"
+            exit 1
+          fi
+          curl -L "${MACOS_RUNNER_SIDECAR_URL}" -o "${RUNNER_TEMP}/aisw-runner"
+          chmod +x "${RUNNER_TEMP}/aisw-runner"
+
+      - name: Stage runner macOS sidecar
+        if: matrix.target == 'x86_64-apple-darwin'
+        run: npm run prepare:sidecar -- --target aarch64-apple-darwin "${{ runner.temp }}/aisw-runner"
+
       - name: Configure updater channels
         run: npm run prepare:updater
 
@@ -109,12 +125,12 @@ jobs:
       - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_CERTIFICATE: ${{ matrix.platform == 'macos-latest' && vars.AISW_ENABLE_MACOS_SIGNING == '1' && secrets.APPLE_CERTIFICATE || '' }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ matrix.platform == 'macos-latest' && vars.AISW_ENABLE_MACOS_SIGNING == '1' && secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
+          APPLE_SIGNING_IDENTITY: ${{ matrix.platform == 'macos-latest' && vars.AISW_ENABLE_MACOS_SIGNING == '1' && secrets.APPLE_SIGNING_IDENTITY || '' }}
+          APPLE_ID: ${{ matrix.platform == 'macos-latest' && vars.AISW_ENABLE_MACOS_SIGNING == '1' && secrets.APPLE_ID || '' }}
+          APPLE_PASSWORD: ${{ matrix.platform == 'macos-latest' && vars.AISW_ENABLE_MACOS_SIGNING == '1' && secrets.APPLE_PASSWORD || '' }}
+          APPLE_TEAM_ID: ${{ matrix.platform == 'macos-latest' && vars.AISW_ENABLE_MACOS_SIGNING == '1' && secrets.APPLE_TEAM_ID || '' }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:

@@ -165,6 +165,10 @@ Optional signing secrets:
 - `APPLE_PASSWORD`
 - `APPLE_TEAM_ID`
 
+macOS signing is opt-in in the GitHub publish workflow.
+Set the repository variable `AISW_ENABLE_MACOS_SIGNING=1` only after the uploaded Apple certificate and `APPLE_SIGNING_IDENTITY` refer to the same Developer ID identity.
+Until then, private test releases still publish unsigned macOS artifacts alongside signed updater metadata for the other platforms.
+
 The helper reads each secret from either `$SECRET_NAME` or `$SECRET_NAME_FILE`.
 That makes it safe to keep multiline values such as `TAURI_SIGNING_PRIVATE_KEY` and `APPLE_CERTIFICATE` in local files instead of shell history.
 
