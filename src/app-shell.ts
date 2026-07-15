@@ -1,5 +1,9 @@
 import { DesktopCommandError } from "./lib/tauri";
 import type { AppBootstrap } from "./lib/schemas";
+export {
+  runtimeSelectionLabel,
+  runtimeSourceLabel,
+} from "./lib/runtime-display";
 
 export function settingsForRecovery(settings: AppBootstrap["settings"] | undefined) {
   return (
@@ -96,19 +100,6 @@ export function describeRuntimeBlocker(runtimeStatus: {
   };
 }
 
-export function runtimeSelectionLabel(runtimeKind: AppBootstrap["settings"]["runtime_kind"]) {
-  switch (runtimeKind) {
-    case "bundled":
-      return "Included desktop engine";
-    case "system":
-      return "System engine";
-    case "custom":
-      return "Custom engine";
-    default:
-      return "Engine Unavailable";
-  }
-}
-
 export function sectionTitle(section: string, setupFocused = false) {
   if (setupFocused) {
     return "Get started";
@@ -142,18 +133,5 @@ export function sectionDetail(section: string, setupFocused = false) {
   switch (section) {
     default:
       return "";
-  }
-}
-
-export function runtimeSourceLabel(runtimeKind: "bundled" | "system" | "custom") {
-  switch (runtimeKind) {
-    case "bundled":
-      return "Included";
-    case "system":
-      return "System override";
-    case "custom":
-      return "Custom override";
-    default:
-      return "Included";
   }
 }

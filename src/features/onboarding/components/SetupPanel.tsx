@@ -6,6 +6,10 @@ import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { getShellGuidance, runDoctor, updateSettings } from "../../../lib/client";
 import { sharedProfileEntries } from "../../../lib/profile-display";
+import {
+  runtimeReadinessLabel,
+  runtimeSummary,
+} from "../../../lib/runtime-display";
 import { AppBootstrap, AppSnapshot, InitReport } from "../../../lib/schemas";
 import { toolSupportsEditableStateModes } from "../../../lib/tool-registry";
 import { toolDisplayName } from "../../../lib/tool-display";
@@ -254,7 +258,7 @@ export function SetupPanel({
     liveAccounts.length + installedToolsNeedingProfile.length + missingTools.length;
   const switchReady = switchableProfiles.length > 0;
   const secureStorage = describeSecureStorage(snapshot, toolCapabilities);
-  const runtimeSummary = summarizeRuntime(settings.runtime_kind);
+  const currentRuntimeSummary = runtimeSummary(settings.runtime_kind);
   const runtimeRows = buildRuntimeRows(bootstrap, snapshot, toolCapabilities);
   const trustRows = [
     "Credentials stay on this computer",
@@ -388,7 +392,7 @@ export function SetupPanel({
                       </div>
                       <div>
                         <span className="overview-current-set-cell-label">Desktop engine</span>
-                        <strong>{bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}</strong>
+                        <strong>{runtimeReadinessLabel(bootstrap.runtime_status.compatible, "sentence")}</strong>
                         <p className="inline-note">Version {bootstrap.runtime_status.version?.version ?? "unknown"}</p>
                       </div>
                       <div>
@@ -442,14 +446,14 @@ export function SetupPanel({
                       <h3>Desktop engine</h3>
                     </div>
                     <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
-                      {bootstrap.runtime_status.compatible ? "Ready" : "Needs attention"}
+                      {runtimeReadinessLabel(bootstrap.runtime_status.compatible, "sentence")}
                     </span>
                   </div>
                   <p className="inline-note">
                     AI Switch already includes the desktop engine it needs. You do not need
                     a separate command-line install to finish setup.
                   </p>
-                  <p className="inline-note">{runtimeSummary.description}</p>
+                  <p className="inline-note">{currentRuntimeSummary.description}</p>
                   <p className="inline-note">
                     If you already use a command-line switching tool, you can keep it installed.
                     AI Switch Desktop stays on its included engine unless you deliberately override it.
@@ -1142,27 +1146,6 @@ function buildHealthItems(
   return items;
 }
 
-function summarizeRuntime(runtimeKind: AppBootstrap["settings"]["runtime_kind"]) {
-  if (runtimeKind === "bundled") {
-    return {
-      source: "Included with this app",
-      description: "AI Switch is already set to use the desktop engine bundled with this app.",
-    };
-  }
-  if (runtimeKind === "system") {
-    return {
-      source: "System override",
-      description:
-        "AI Switch is currently pointing at a system-installed engine instead of the included one.",
-    };
-  }
-  return {
-    source: "Custom override",
-    description:
-      "AI Switch is currently pointing at a custom engine path instead of the included one.",
-  };
-}
-
 function selectDefaultAccountItem(items: OnboardingAccountItem[]) {
   return (
     items.find((item) => item.kind === "live") ??
@@ -1183,7 +1166,7 @@ function buildRuntimeRows(
       status: bootstrap.runtime_status.compatible ? "pass" : "warn",
       detail: bootstrap.settings.runtime_kind === "bundled"
         ? `Ready. Version ${bootstrap.runtime_status.version?.version ?? "unknown"}.`
-        : `Available, but AI Switch is currently using ${summarizeRuntime(bootstrap.settings.runtime_kind).source.toLowerCase()}.`,
+        : `Available, but AI Switch is currently using ${runtimeSummary(bootstrap.settings.runtime_kind).source.toLowerCase()}.`,
     },
     {
       label: "Data folder",

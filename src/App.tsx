@@ -58,6 +58,10 @@ import {
   saveDesktopPreferences,
   type DesktopPreferences,
 } from "./lib/desktop-preferences";
+import {
+  INCLUDED_DESKTOP_ENGINE_LABEL,
+  runtimeReadinessLabel,
+} from "./lib/runtime-display";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "./lib/schemas";
 import { resolveGlobalStateMode, resolveStateModeRequest } from "./features/shared/state-modes";
 import { titleCase } from "./lib/utils";
@@ -722,7 +726,7 @@ export function App() {
             </div>
             <div className="sidebar-status-row">
               <span className="sidebar-status-label">Switching</span>
-              <p>{runtimeStatus.compatible ? "Ready" : "Needs attention"}</p>
+              <p>{runtimeReadinessLabel(runtimeStatus.compatible, "sentence")}</p>
             </div>
             <div className="sidebar-status-row">
               <span className="sidebar-status-label">Engine source</span>
@@ -750,7 +754,7 @@ export function App() {
               </div>
               <div>
                 <span className="overview-current-set-cell-label">Desktop app needs</span>
-                <strong>Included desktop engine</strong>
+                <strong>{INCLUDED_DESKTOP_ENGINE_LABEL}</strong>
               </div>
               <div>
                 <span className="overview-current-set-cell-label">Next step</span>

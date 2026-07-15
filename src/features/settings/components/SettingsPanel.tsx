@@ -21,6 +21,10 @@ import {
   NOT_SET_LABEL,
 } from "../../../lib/display-copy";
 import { notifyDesktop } from "../../../lib/notifications";
+import {
+  runtimeCompatibilityLabel,
+  runtimeReadinessLabel,
+} from "../../../lib/runtime-display";
 import { type AppBootstrap, type DesktopSettings } from "../../../lib/schemas";
 import { DesktopCommandError } from "../../../lib/tauri";
 import { titleCase } from "../../../lib/utils";
@@ -514,7 +518,7 @@ export function SettingsPanel({
                   <SettingsStaticRow label="Bundled runtime" value={runtimeStatus.version?.version ?? DATE_UNAVAILABLE_LABEL} />
                   <SettingsStaticRow
                     label="Status"
-                    value={runtimeStatus.compatible ? "Ready" : "Needs Attention"}
+                    value={runtimeReadinessLabel(runtimeStatus.compatible)}
                   />
                   <SettingsStaticRow
                     label="Current path"
@@ -743,7 +747,7 @@ export function SettingsPanel({
                   <SettingsStaticRow label="Version" value={runtimeStatus.version?.version ?? DATE_UNAVAILABLE_LABEL} />
                   <SettingsStaticRow
                     label="Compatibility"
-                    value={runtimeStatus.compatible ? "Supported" : "Needs Attention"}
+                    value={runtimeCompatibilityLabel(runtimeStatus.compatible)}
                   />
                 </SettingsGroup>
 
