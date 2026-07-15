@@ -571,25 +571,10 @@ export function SetupPanel({
                           </div>
                           <div className="desktop-source-list" aria-label="Detected tools">
                             {accountItems.map((item) => {
-                              const tool =
-                                item.kind === "live" ? item.account.tool : item.status.tool;
+                              const tool = accountItemTool(item);
                               const title = toolDisplayName(tool);
-                              const summary =
-                                item.kind === "live"
-                                  ? `${item.account.outcome ?? "unknown"} · ${item.account.auth_method ?? "unknown"}${item.account.matched_profile ? ` · matches ${item.account.matched_profile}` : ""}`
-                                  : item.kind === "needs-profile"
-                                    ? "No saved profile yet"
-                                    : "Not installed yet";
-                              const badgeClass =
-                                item.kind === "live"
-                                  ? "pill-ok"
-                                  : "pill-soft";
-                              const badgeLabel =
-                                item.kind === "live"
-                                  ? "Ready to import"
-                                  : item.kind === "needs-profile"
-                                    ? "Needs profile"
-                                    : "Not installed";
+                              const badge = accountItemBadge(item);
+                              const summary = accountItemSummary(item);
 
                               return (
                                 <button
@@ -611,7 +596,7 @@ export function SetupPanel({
                                     <p className="inline-note">{summary}</p>
                                   </div>
                                   <div className="settings-nav-row-meta">
-                                    <span className={`pill ${badgeClass}`}>{badgeLabel}</span>
+                                    <span className={`pill ${badge.className}`}>{badge.label}</span>
                                     <span className="desktop-source-chevron" aria-hidden="true">
                                       ›
                                     </span>
@@ -638,7 +623,9 @@ export function SetupPanel({
                                       <ToolBrand tool={selectedAccountItem.account.tool} className="tool-brand-heading" logoSize={18} />
                                     </h3>
                                   </div>
-                                  <span className="pill pill-ok">Ready to import</span>
+                                  <span className={`pill ${accountItemBadge(selectedAccountItem).className}`}>
+                                    {accountItemBadge(selectedAccountItem).label}
+                                  </span>
                                 </div>
                                 <div className="onboarding-account-summary">
                                   <div>
@@ -702,7 +689,9 @@ export function SetupPanel({
                                       <ToolBrand tool={selectedAccountItem.status.tool} className="tool-brand-heading" logoSize={18} />
                                     </h3>
                                   </div>
-                                  <span className="pill pill-soft">Needs profile</span>
+                                  <span className={`pill ${accountItemBadge(selectedAccountItem).className}`}>
+                                    {accountItemBadge(selectedAccountItem).label}
+                                  </span>
                                 </div>
                                 <div className="onboarding-account-summary">
                                   <div>
@@ -738,7 +727,9 @@ export function SetupPanel({
                                     <p className="card-kicker">Optional tool</p>
                                     <h3>{toolDisplayName(selectedAccountItem.status.tool)} is not installed</h3>
                                   </div>
-                                  <span className="pill pill-soft">Not installed</span>
+                                  <span className={`pill ${accountItemBadge(selectedAccountItem).className}`}>
+                                    {accountItemBadge(selectedAccountItem).label}
+                                  </span>
                                 </div>
                                 <p className="inline-note">
                                   <ToolBrand tool={selectedAccountItem.status.tool} className="tool-brand-inline" logoSize={16} />
@@ -1153,6 +1144,32 @@ function selectDefaultAccountItem(items: OnboardingAccountItem[]) {
     items.find((item) => item.kind === "needs-profile") ??
     null
   );
+}
+
+function accountItemTool(item: OnboardingAccountItem) {
+  return item.kind === "live" ? item.account.tool : item.status.tool;
+}
+
+function accountItemBadge(item: OnboardingAccountItem) {
+  if (item.kind === "live") {
+    return { className: "pill-ok", label: "Ready to import" };
+  }
+  if (item.kind === "needs-profile") {
+    return { className: "pill-soft", label: "Needs profile" };
+  }
+  return { className: "pill-soft", label: "Not installed" };
+}
+
+function accountItemSummary(item: OnboardingAccountItem) {
+  if (item.kind === "live") {
+    return `${item.account.outcome ?? "unknown"} · ${item.account.auth_method ?? "unknown"}${
+      item.account.matched_profile ? ` · matches ${item.account.matched_profile}` : ""
+    }`;
+  }
+  if (item.kind === "needs-profile") {
+    return "No saved profile yet";
+  }
+  return "Not installed yet";
 }
 
 function buildRuntimeRows(
