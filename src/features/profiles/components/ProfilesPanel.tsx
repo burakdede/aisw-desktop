@@ -16,7 +16,7 @@ import {
 } from "../../../lib/schemas";
 import { compareBackupsNewestFirst } from "../../../lib/backups";
 import { credentialBackendLabel as formatCredentialBackendLabel } from "../../../lib/credential-backends";
-import { DATE_UNAVAILABLE_LABEL, formatDateTimeWithZone } from "../../../lib/date-format";
+import { formatDateTimeWithZone } from "../../../lib/date-format";
 import {
   BACKEND_UNAVAILABLE_LABEL,
   DEFAULT_ACTION_FAILURE_MESSAGE,
@@ -33,6 +33,10 @@ import {
   profileTokenWarningLabel,
   profileWarningLabel,
 } from "../../../lib/profile-detail-display";
+import {
+  effectiveToolProfileLabel,
+  mergeProfileLabel,
+} from "../../../lib/profile-display";
 import {
   profileLiveMatchLabel,
   profileSwitchLabel,
@@ -64,6 +68,14 @@ import { supportedStateModes } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { StateModeField } from "../../shared/components/StateModeField";
+import {
+  duplicateProfileNameWarning,
+  profileCompactSummary,
+  profileCredentialBackendLabel,
+  profileImportModeHeading,
+  profileImportModeLabel,
+  profileImportModeNotes,
+} from "../profile-sheet-display";
 
 const TOOLS = SUPPORTED_TOOLS;
 const INVENTORY_FILTERS = ["all", ...TOOLS] as const;
@@ -170,7 +182,7 @@ export function ProfilesPanel({
           tool: entryTool,
           name: entry.name,
           auth: entry.auth,
-          label: effectiveLabel(entryTool, entry.name, entry.label, settings) ?? titleCase(entry.name),
+          label: effectiveToolProfileLabel(settings, entryTool, entry.name, entry.label),
           active: snapshot.profiles[entryTool]?.active === entry.name,
           backend: formatCredentialBackendLabel(status?.credential_backend, "inventory"),
           state: resolveProfileSwitchState({
@@ -180,7 +192,7 @@ export function ProfilesPanel({
           }),
           lastChecked: profileLastCheckedLabel(
             latestBackup
-              ? formatBackupTimestamp(latestBackup.created_at ?? latestBackup.backup_id)
+              ? formatDateTimeWithZone(latestBackup.created_at ?? latestBackup.backup_id)
               : null,
             snapshot.profiles[entryTool]?.active === entry.name,
           ),
@@ -241,8 +253,12 @@ export function ProfilesPanel({
   const selectedProfileDisplay = useMemo(
     () =>
       selectedProfileEntry
-        ? effectiveLabel(tool, selectedProfileEntry.name, selectedProfileEntry.label, settings) ??
-          titleCase(selectedProfileEntry.name)
+        ? effectiveToolProfileLabel(
+            settings,
+            tool,
+            selectedProfileEntry.name,
+            selectedProfileEntry.label,
+          )
         : null,
     [selectedProfileEntry, settings, tool],
   );
@@ -276,12 +292,12 @@ export function ProfilesPanel({
     ? profiles.find((entry) => entry.name === pendingEdit.name) ?? null
     : null;
   const editSheetDisplay = editSheetProfile
-    ? effectiveLabel(tool, editSheetProfile.name, editSheetProfile.label, settings) ?? titleCase(editSheetProfile.name)
+    ? effectiveToolProfileLabel(settings, tool, editSheetProfile.name, editSheetProfile.label)
     : null;
   const editSheetRenameDraft = editSheetProfile ? renameDrafts[editSheetProfile.name] ?? editSheetProfile.name : "";
   const editSheetLabelDraft = editSheetProfile
     ? labelDrafts[editSheetProfile.name] ??
-      effectiveLabel(tool, editSheetProfile.name, editSheetProfile.label, settings) ??
+      effectiveToolProfileLabel(settings, tool, editSheetProfile.name, editSheetProfile.label) ??
       ""
     : "";
   const editSheetRenameDuplicate =
@@ -292,8 +308,7 @@ export function ProfilesPanel({
     ? profiles.find((entry) => entry.name === pendingRemoval) ?? null
     : null;
   const removalSheetDisplay = removalSheetProfile
-    ? effectiveLabel(tool, removalSheetProfile.name, removalSheetProfile.label, settings) ??
-      titleCase(removalSheetProfile.name)
+    ? effectiveToolProfileLabel(settings, tool, removalSheetProfile.name, removalSheetProfile.label)
     : null;
 
   useEffect(() => {
@@ -710,11 +725,11 @@ export function ProfilesPanel({
                         />
                       </span>
                       <span
-                        className={`profiles-table-status profiles-table-status-${profileStatusTone(
+                        className={`profiles-table-status profiles-table-status-${profileSwitchTone(
                           inventoryEntry.state,
                         )}`}
                       >
-                        {profileStatusLabel(inventoryEntry.state)}
+                        {profileSwitchLabel(inventoryEntry.state)}
                       </span>
                       <span className="profiles-table-column profiles-table-column-auth">
                         {profileAuthMethodLabel(inventoryEntry.auth)}
@@ -857,12 +872,12 @@ export function ProfilesPanel({
                       <p className="inline-note">Saved as {selectedProfileEntry.name}</p>
                     ) : null}
                     <div
-                      className={`profiles-inspector-status profiles-inspector-status-${profileStatusTone(
+                      className={`profiles-inspector-status profiles-inspector-status-${profileSwitchTone(
                         selectedProfileState,
                       )}`}
                     >
-                      <span aria-hidden="true">{profileStatusSymbol(selectedProfileState)}</span>
-                      <span>{profileStatusLabel(selectedProfileState)}</span>
+                      <span aria-hidden="true">{profileSwitchSymbol(selectedProfileState)}</span>
+                      <span>{profileSwitchLabel(selectedProfileState)}</span>
                     </div>
                   </div>
                   <div className="button-row profiles-inspector-action-row">
@@ -971,21 +986,23 @@ export function ProfilesPanel({
                   rows={[
                     {
                       label: "Live match",
-                      value: profileLiveMatchValue(selectedProfileState),
+                      value: profileLiveMatchLabel(selectedProfileState),
                     },
                     { label: "Authentication", value: profileAuthMethodLabel(selectedProfileEntry.auth) },
                     {
                       label: "Credential storage",
                       value:
                         snapshot.profiles[tool]?.active === selectedProfileEntry.name
-                          ? credentialBackendDisplay(toolStatus?.credential_backend)
+                          ? formatCredentialBackendLabel(toolStatus?.credential_backend, "inventory")
                           : selectedInventoryEntry?.backend ?? BACKEND_UNAVAILABLE_LABEL,
                     },
                     {
                       label: "Added",
                       value: profileAddedLabel(
                         selectedLatestBackup
-                          ? formatBackupTimestamp(selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id)
+                          ? formatDateTimeWithZone(
+                              selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id,
+                            )
                           : null,
                       ),
                     },
@@ -1111,8 +1128,12 @@ export function ProfilesPanel({
                 });
               }
 
-              const currentLabel =
-                effectiveLabel(tool, editSheetProfile.name, editSheetProfile.label, settings) ?? "";
+              const currentLabel = effectiveToolProfileLabel(
+                settings,
+                tool,
+                editSheetProfile.name,
+                editSheetProfile.label,
+              );
               if (nextLabel !== currentLabel) {
                 updateSettingsMutation.mutate({
                   runtime_kind: settings.runtime_kind,
@@ -1151,7 +1172,9 @@ export function ProfilesPanel({
               />
             </label>
             {editSheetRenameDuplicate ? (
-              <p className="inline-note">{duplicateWarning(tool, editSheetRenameDraft.trim())}</p>
+              <p className="inline-note">
+                {duplicateProfileNameWarning(tool, editSheetRenameDraft.trim())}
+              </p>
             ) : null}
             <label>
               Display label
@@ -1257,7 +1280,9 @@ export function ProfilesPanel({
                 <input value={profile} onChange={(event) => setProfile(event.target.value)} />
               </label>
               {hasDuplicateProfileName ? (
-                <p className="inline-note">{duplicateWarning(tool, duplicateDraftName)}</p>
+                <p className="inline-note">
+                  {duplicateProfileNameWarning(tool, duplicateDraftName)}
+                </p>
               ) : null}
               <label>
                 Display label
@@ -1443,94 +1468,6 @@ function isSupportedTool(tool: string | undefined): tool is (typeof TOOLS)[numbe
   return Boolean(tool && TOOLS.includes(tool as (typeof TOOLS)[number]));
 }
 
-function profileImportModeLabel(mode: ProfileImportMode) {
-  switch (mode) {
-    case "from_live":
-      return "Import current login";
-    case "from_env":
-      return "Read from environment";
-    case "api_key":
-      return "Paste API key";
-    case "oauth":
-      return "Sign in with OAuth";
-  }
-}
-
-function profileImportModeHeading(tool: string, mode: ProfileImportMode) {
-  const toolName = toolDisplayName(tool);
-  switch (mode) {
-    case "from_live":
-      return `Import current ${toolName} login`;
-    case "from_env":
-      return "Read from environment";
-    case "api_key":
-      return "Paste API key";
-    case "oauth":
-      return `Sign in to ${toolName}`;
-  }
-}
-
-function profileImportModeNotes(tool: string, mode: ProfileImportMode) {
-  const toolName = toolDisplayName(tool);
-  switch (mode) {
-    case "from_live":
-      return [
-        `Capture the ${toolName} credentials already active on this Mac.`,
-      ];
-    case "from_env":
-      return [
-        `Read ${toolApiKeyEnvVar(tool)} from the current environment when you save this profile.`,
-      ];
-    case "api_key":
-      return [
-        "Paste the provider key once. AI Switch sends it to the desktop engine without storing it in the form state.",
-      ];
-    case "oauth":
-      return [
-        `Open the normal ${toolName} sign-in flow and keep this sheet open until it finishes.`,
-      ];
-  }
-}
-
-function profileCredentialBackendLabel(backend: ProfileCredentialBackend) {
-  return formatCredentialBackendLabel(backend);
-}
-
-function profileCompactSummary(entry: InventoryEntry) {
-  return `${toolDisplayName(entry.tool)} · ${profileStatusLabel(entry.state)}`;
-}
-
-function effectiveLabel(
-  tool: string,
-  profile: string,
-  currentLabel: string | null | undefined,
-  settings: DesktopSettings,
-) {
-  const override = settings.profile_labels?.[tool]?.[profile];
-  return override ?? currentLabel ?? null;
-}
-
-function mergeProfileLabel(
-  settings: DesktopSettings,
-  tool: string,
-  profile: string,
-  label: string | null,
-) {
-  const next = {
-    ...(settings.profile_labels ?? {}),
-    [tool]: {
-      ...(settings.profile_labels?.[tool] ?? {}),
-      [profile]: label,
-    },
-  };
-
-  if (label === null && Object.values(next[tool]).every((value) => value == null)) {
-    delete next[tool];
-  }
-
-  return next;
-}
-
 function latestBackupForProfile(
   tool: string,
   profile: string,
@@ -1687,34 +1624,6 @@ function formatDesktopError(error: unknown) {
       : normalizeRuntimeLanguage(error.message);
   }
   return DEFAULT_ACTION_FAILURE_MESSAGE;
-}
-
-function credentialBackendDisplay(backend: string | null | undefined) {
-  return formatCredentialBackendLabel(backend, "inventory");
-}
-
-function profileStatusTone(state: ProfileSwitchState) {
-  return profileSwitchTone(state);
-}
-
-function profileStatusLabel(state: ProfileSwitchState) {
-  return profileSwitchLabel(state);
-}
-
-function profileStatusSymbol(state: ProfileSwitchState) {
-  return profileSwitchSymbol(state);
-}
-
-function profileLiveMatchValue(state: ProfileSwitchState) {
-  return profileLiveMatchLabel(state);
-}
-
-function formatBackupTimestamp(value: string) {
-  return formatDateTimeWithZone(value);
-}
-
-function duplicateWarning(tool: string, profile: string) {
-  return `${titleCase(tool)} already has a profile named ${profile}. Choose a different name or rename the existing profile first.`;
 }
 
 function isDuplicateProfileName(
