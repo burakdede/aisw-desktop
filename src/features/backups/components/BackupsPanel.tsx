@@ -11,6 +11,7 @@ import { useCompactLayout } from "../../../components/useCompactLayout";
 import { listBackups, openAppDataFolder } from "../../../lib/client";
 import { compareBackupsNewestFirst, type BackupLike } from "../../../lib/backups";
 import { DATE_UNAVAILABLE_LABEL, parseStoredDate } from "../../../lib/date-format";
+import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { toolProfileDisplayLabel } from "../../../lib/profile-display";
 import { AppBootstrap, AppSnapshot, DesktopSettings, type BackupEntry } from "../../../lib/schemas";
 import { toolDisplayName } from "../../../lib/tool-display";
@@ -21,7 +22,6 @@ import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 
 type ToolFilter = "all" | "claude" | "codex" | "gemini";
 type DateFilter = "newest" | "oldest";
-const BACKUPS_COMPACT_BREAKPOINT = 800;
 
 export function BackupsPanel({
   snapshot,
@@ -47,7 +47,7 @@ export function BackupsPanel({
   const [inspectorMenuOpen, setInspectorMenuOpen] = useState(false);
   const toolbarMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
   const inspectorMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
-  const compactLayout = useCompactLayout(rootRef, BACKUPS_COMPACT_BREAKPOINT);
+  const compactLayout = useCompactLayout(rootRef, PANEL_COMPACT_BREAKPOINT);
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const [pendingRestore, setPendingRestore] = useState<{
     backupId: string;

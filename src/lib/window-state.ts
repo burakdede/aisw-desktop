@@ -1,3 +1,5 @@
+import { MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH } from "./layout";
+
 type PersistedWindowState = {
   width: number;
   height: number;
@@ -24,8 +26,6 @@ type WindowModule = {
 };
 
 const WINDOW_STATE_KEY = "ai-switch.desktop.window-state";
-const MIN_WIDTH = 1120;
-const MIN_HEIGHT = 720;
 
 declare global {
   interface Window {
@@ -104,8 +104,8 @@ async function persistWindowState(appWindow: WindowGeometryHandle) {
     ]);
 
     const nextState: PersistedWindowState = {
-      width: Math.max(Math.round(size.width), MIN_WIDTH),
-      height: Math.max(Math.round(size.height), MIN_HEIGHT),
+      width: Math.max(Math.round(size.width), MIN_WINDOW_WIDTH),
+      height: Math.max(Math.round(size.height), MIN_WINDOW_HEIGHT),
       x: Math.round(position.x),
       y: Math.round(position.y),
     };
@@ -138,8 +138,8 @@ function loadWindowState(): PersistedWindowState | null {
     }
 
     return {
-      width: Math.max(parsed.width, MIN_WIDTH),
-      height: Math.max(parsed.height, MIN_HEIGHT),
+      width: Math.max(parsed.width, MIN_WINDOW_WIDTH),
+      height: Math.max(parsed.height, MIN_WINDOW_HEIGHT),
       x: parsed.x,
       y: parsed.y,
     };

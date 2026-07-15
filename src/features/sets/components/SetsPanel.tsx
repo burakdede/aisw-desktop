@@ -16,6 +16,7 @@ import {
   profileSetIsActive,
   toolProfileDisplayLabel,
 } from "../../../lib/profile-display";
+import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { SUPPORTED_TOOLS, toolShortName } from "../../../lib/tool-registry";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
@@ -27,8 +28,6 @@ import { parseWorkspaceBindings, parseWorkspaceStatus } from "../../workspaces/w
 import type { WorkspaceUnbindInput } from "../../../lib/client";
 
 const TOOLS = SUPPORTED_TOOLS;
-const SETS_COMPACT_BREAKPOINT = 900;
-
 type EditableProfileSet = {
   sourceName: string | null;
   name: string;
@@ -88,7 +87,7 @@ export function SetsPanel({
   const setMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
   const rulesMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const compactLayout = useCompactLayout(rootRef, SETS_COMPACT_BREAKPOINT);
+  const compactLayout = useCompactLayout(rootRef, WIDE_PANEL_COMPACT_BREAKPOINT);
   const [compactSetInspectorOpen, setCompactSetInspectorOpen] = useState(false);
   const [compactRuleInspectorOpen, setCompactRuleInspectorOpen] = useState(false);
   const [workspaceOverrideDismissed, setWorkspaceOverrideDismissed] = useState(false);

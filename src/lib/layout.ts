@@ -1,0 +1,5 @@
+export const PANEL_COMPACT_BREAKPOINT = 800;
+export const WIDE_PANEL_COMPACT_BREAKPOINT = 900;
+
+export const MIN_WINDOW_WIDTH = 1120;
+export const MIN_WINDOW_HEIGHT = 720;

@@ -1,5 +1,6 @@
 import { createRef } from "react";
 import { act, renderHook } from "@testing-library/react";
+import { PANEL_COMPACT_BREAKPOINT } from "../lib/layout";
 import { useCompactLayout } from "./useCompactLayout";
 
 describe("useCompactLayout", () => {
@@ -30,7 +31,7 @@ describe("useCompactLayout", () => {
     });
     ref.current = element;
 
-    const { result } = renderHook(() => useCompactLayout(ref, 800));
+    const { result } = renderHook(() => useCompactLayout(ref, PANEL_COMPACT_BREAKPOINT));
 
     expect(result.current).toBe(true);
   });
@@ -61,7 +62,7 @@ describe("useCompactLayout", () => {
       disconnect = disconnect;
     } as unknown as typeof ResizeObserver;
 
-    const { result, unmount } = renderHook(() => useCompactLayout(ref, 800));
+    const { result, unmount } = renderHook(() => useCompactLayout(ref, PANEL_COMPACT_BREAKPOINT));
     expect(result.current).toBe(false);
 
     act(() => {

@@ -6,6 +6,7 @@ import { SplitView } from "../../../components/SplitView";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import { exportDiagnosticBundle, runDoctor, runRepair, runVerify } from "../../../lib/client";
+import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { openExternalGuide, installGuideUrlForTool } from "../../../lib/tool-guidance";
 import { useLastCommandResults } from "../../shared/lastCommandResult";
 import { useDesktopActions } from "../../shared/useDesktopActions";
@@ -34,8 +35,6 @@ import { toolDisplayName } from "../../../lib/tool-display";
 import { isSupportedTool, toolSupportsEditableStateModes } from "../../../lib/tool-registry";
 import { titleCase } from "../../../lib/utils";
 import type { SettingsSection } from "../../settings/components/SettingsPanel";
-
-const DIAGNOSTICS_COMPACT_BREAKPOINT = 900;
 
 export function DiagnosticsPanel({
   settings,
@@ -85,7 +84,7 @@ export function DiagnosticsPanel({
   const toolbarMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
   const inspectorMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const compactLayout = useCompactLayout(rootRef, DIAGNOSTICS_COMPACT_BREAKPOINT);
+  const compactLayout = useCompactLayout(rootRef, WIDE_PANEL_COMPACT_BREAKPOINT);
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const applyRepair = useMutation({
     mutationFn: (fixes: string[]) => runRepair({ apply: true, fixes }),

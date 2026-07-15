@@ -17,6 +17,7 @@ import {
   contextDisplayLabel,
   toolProfileDisplayLabel,
 } from "../../../lib/profile-display";
+import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { BACKEND_UNAVAILABLE_LABEL } from "../../../lib/display-copy";
 import {
   overviewHealthLabel,
@@ -34,8 +35,6 @@ import {
 } from "../../shared/profile-capabilities";
 import { parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 import { resolveWorkspaceActivationTarget } from "../../workspaces/workspace-activation";
-
-const OVERVIEW_COMPACT_BREAKPOINT = 800;
 
 export function OverviewPanel({
   snapshot,
@@ -81,7 +80,7 @@ export function OverviewPanel({
   const currentSetDisplay = currentSetLabel ?? "None";
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [selectedTool, setSelectedTool] = useState(snapshot.statuses[0]?.tool ?? "");
-  const compactLayout = useCompactLayout(rootRef, OVERVIEW_COMPACT_BREAKPOINT);
+  const compactLayout = useCompactLayout(rootRef, PANEL_COMPACT_BREAKPOINT);
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const selectedStatus =
     snapshot.statuses.find((status) => status.tool === selectedTool) ?? snapshot.statuses[0] ?? null;

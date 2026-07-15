@@ -22,6 +22,7 @@ import {
   NOT_AVAILABLE_LABEL,
   VERIFICATION_REQUIRED_LABEL,
 } from "../../../lib/display-copy";
+import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import {
   profileLiveMatchLabel,
   profileSwitchLabel,
@@ -56,7 +57,6 @@ import { StateModeField } from "../../shared/components/StateModeField";
 
 const TOOLS = SUPPORTED_TOOLS;
 const INVENTORY_FILTERS = ["all", ...TOOLS] as const;
-const PROFILES_COMPACT_BREAKPOINT = 800;
 
 type InventoryFilter = (typeof INVENTORY_FILTERS)[number];
 type InventoryEntry = {
@@ -142,7 +142,7 @@ export function ProfilesPanel({
   const inventoryRowRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const rowActionAnchorRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const compactLayout = useCompactLayout(rootRef, PROFILES_COMPACT_BREAKPOINT);
+  const compactLayout = useCompactLayout(rootRef, PANEL_COMPACT_BREAKPOINT);
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
 
   const profiles = useMemo(() => snapshot.profiles[tool]?.profiles ?? [], [snapshot, tool]);

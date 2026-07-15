@@ -10,6 +10,7 @@ import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { exportActivityLog } from "../../../lib/client";
+import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { notifyDesktop } from "../../../lib/notifications";
 import { toolDisplayName } from "../../../lib/tool-display";
 import {
@@ -18,7 +19,6 @@ import {
 } from "../../shared/lastCommandResult";
 
 type ActivityFilter = "all" | "success" | "error";
-const ACTIVITY_COMPACT_BREAKPOINT = 800;
 
 type ActivityEntry = {
   key: string;
@@ -51,7 +51,7 @@ export function ActivityPanel({
   const [logMessage, setLogMessage] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [pendingClear, setPendingClear] = useState(false);
-  const compactLayout = useCompactLayout(rootRef, ACTIVITY_COMPACT_BREAKPOINT);
+  const compactLayout = useCompactLayout(rootRef, PANEL_COMPACT_BREAKPOINT);
   const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
   const menuAnchorRef = useRef<HTMLButtonElement | null>(null);
 
