@@ -9,9 +9,7 @@ import { useCompactLayout } from "../../../components/useCompactLayout";
 import { getProjectBindings, getWorkspaceStatus } from "../../../lib/client";
 import {
   contextDisplayLabel,
-  missingProfileSetSelections,
   profileSetDisplayLabel,
-  profileSetHasSelections,
   profileSetHasUsableSelections,
   profileSetIsActive,
   toolProfileDisplayLabel,
@@ -23,7 +21,6 @@ import {
   explicitRuleTargetWarning,
   importedContextActionLabel,
   importedContextStatus,
-  profileSetStatus,
   ruleScopeLabel,
   ruleTargetLabel,
   savedRuleStatusLabel,
@@ -31,7 +28,6 @@ import {
   selectedRulePriorityLabel,
   selectedRuleSubtitle,
   setCommandResultLabel,
-  setSelectionCountLabel,
   workspaceSetActionLabel,
 } from "../../../lib/sets-display";
 import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
@@ -45,6 +41,9 @@ import { resolveWorkspaceActivationTarget, workspaceBindingOptions } from "../..
 import { parseWorkspaceBindings, parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 import type { WorkspaceUnbindInput } from "../../../lib/client";
 import {
+  buildSavedSetRows,
+  buildSelectedSetInspectorState,
+  countRuleUsageByContext,
   createEditableProfileSetDraft,
   createEditableRuleDraft,
   createEmptyEditableProfileSet,
@@ -136,10 +135,6 @@ export function SetsPanel({
 
   const selectedSet =
     localSets.find((entry) => entry.name === selectedSetName) ?? localSets[0] ?? null;
-  const selectedSetMissingMappings = selectedSet ? missingProfileSetSelections(snapshot, selectedSet) : [];
-  const selectedSetSelectionCount = selectedSet
-    ? Object.values(selectedSet.profiles).filter((profile) => typeof profile === "string" && profile.trim().length > 0).length
-    : 0;
   const usableSetCount = localSets.filter((entry) => profileSetHasUsableSelections(snapshot, entry)).length;
   const activeSetCount = localSets.filter((entry) => profileSetIsActive(snapshot, entry)).length;
   const profileOptions = useMemo(
@@ -432,36 +427,34 @@ export function SetsPanel({
     workspaceUnbindMutation.mutate(target);
   }
 
-  const ruleUsageCountByContext = new Map<string, number>();
-  for (const entry of ruleEntries) {
-    ruleUsageCountByContext.set(entry.context, (ruleUsageCountByContext.get(entry.context) ?? 0) + 1);
-  }
+  const ruleUsageCountByContext = countRuleUsageByContext(ruleEntries);
+  const setRowModels = buildSavedSetRows({
+    localSets,
+    ruleUsageCountByContext,
+    selectedSetName: selectedSet?.name ?? null,
+    settings,
+    snapshot,
+    tools: TOOLS,
+  });
+  const selectedSetInspector = selectedSet
+    ? buildSelectedSetInspectorState({
+        selectedSet,
+        ruleUsageCountByContext,
+        settings,
+        snapshot,
+        tools: TOOLS,
+      })
+    : null;
 
-  const setRows = localSets.map((set) => {
-    const selected = selectedSet?.name === set.name;
-    const active = profileSetIsActive(snapshot, set);
-    const ready = profileSetHasUsableSelections(snapshot, set);
-    const status = profileSetStatus(active, ready);
-    const missing = missingProfileSetSelections(snapshot, set);
-    const summary = TOOLS.map((tool) => {
-      const profile = set.profiles[tool];
-      const toolLabel = toolShortName(tool);
-      const label = profile
-        ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
-        : "—";
-      return `${toolLabel}: ${label}`;
-    }).join(" · ");
-    const usageCount = ruleUsageCountByContext.get(set.name) ?? 0;
-
-    return (
+  const setRows = setRowModels.map((row) => (
       <button
-        key={set.name}
+        key={row.name}
         type="button"
-        className={`list-row sets-library-row ${selected ? "sets-library-row-selected" : ""} ${active ? "sets-library-row-active" : ""}`}
-        aria-pressed={selected}
-        aria-label={`Inspect set ${profileSetDisplayLabel(set)}`}
+        className={`list-row sets-library-row ${row.selected ? "sets-library-row-selected" : ""} ${row.active ? "sets-library-row-active" : ""}`}
+        aria-pressed={row.selected}
+        aria-label={`Inspect set ${row.displayLabel}`}
         onClick={() => {
-          setSelectedSetName(set.name);
+          setSelectedSetName(row.name);
           if (compactLayout) {
             setCompactSetInspectorOpen(true);
           }
@@ -469,26 +462,25 @@ export function SetsPanel({
       >
         <div className="sets-library-row-main">
           <div className="sets-library-row-title">
-            <strong>{profileSetDisplayLabel(set)}</strong>
-            <span className={`sets-library-row-state sets-library-row-state-${status.tone}`}>
-              <span aria-hidden="true">{status.symbol}</span>
-              <span>{status.label}</span>
+            <strong>{row.displayLabel}</strong>
+            <span className={`sets-library-row-state sets-library-row-state-${row.status.tone}`}>
+              <span aria-hidden="true">{row.status.symbol}</span>
+              <span>{row.status.label}</span>
             </span>
           </div>
-          <p className="sets-library-row-summary">{summary}</p>
-          {missing.length ? (
+          <p className="sets-library-row-summary">{row.summary}</p>
+          {row.missingSummary ? (
             <p className="inline-note sets-library-row-note">
-              Missing: {missing.map(([tool, profile]) => `${tool}: ${profile}`).join(" · ")}
+              Missing: {row.missingSummary}
             </p>
           ) : null}
         </div>
         <div className="sets-library-row-meta">
-          {usageCount ? <span>{countLabel(usageCount, "rule")}</span> : null}
-          {active ? <span>Current</span> : null}
+          {row.usageCount ? <span>{countLabel(row.usageCount, "rule")}</span> : null}
+          {row.active ? <span>Current</span> : null}
         </div>
       </button>
-    );
-  });
+    ));
 
   const showSetLibrary = !compactLayout || !compactSetInspectorOpen;
   const showSetInspector = !compactLayout || compactSetInspectorOpen;
@@ -606,9 +598,9 @@ export function SetsPanel({
                             Back
                           </button>
                         ) : null}
-                        <h3>{profileSetDisplayLabel(selectedSet)}</h3>
+                        <h3>{selectedSetInspector?.displayLabel}</h3>
                         <p className="inline-note sets-inspector-subtitle">
-                          {setSelectionCountLabel(selectedSetSelectionCount)}
+                          {selectedSetInspector?.selectionCountLabel}
                         </p>
                       </div>
                     </header>
@@ -618,14 +610,11 @@ export function SetsPanel({
                         type="button"
                         disabled={
                           mutationLock.isBusy ||
-                          profileSetIsActive(snapshot, selectedSet) ||
-                          !profileSetHasUsableSelections(snapshot, selectedSet)
+                          !selectedSetInspector?.canActivate
                         }
                         onClick={() => activateSavedSet(selectedSet)}
                       >
-                        {profileSetIsActive(snapshot, selectedSet)
-                          ? "Current"
-                          : `Switch to ${profileSetDisplayLabel(selectedSet)}`}
+                        {selectedSetInspector?.activateLabel}
                       </button>
                       <button className="ghost-button" type="button" onClick={() => openEditSetEditor(selectedSet)}>
                         Edit…
@@ -689,32 +678,25 @@ export function SetsPanel({
                       </div>
                     </div>
                     <section className="sets-detail-list" aria-label="Set mappings">
-                      {TOOLS.map((tool) => (
-                        <div key={tool} className="sets-detail-row">
+                      {selectedSetInspector?.mappedProfiles.map((profile) => (
+                        <div key={profile.tool} className="sets-detail-row">
                           <span className="sets-detail-key">
-                            <ToolBrand tool={tool} className="tool-brand-inline" logoSize={16} />
+                            <ToolBrand tool={profile.tool} className="tool-brand-inline" logoSize={16} />
                           </span>
                           <strong className="sets-detail-value">
-                            {selectedSet.profiles[tool]
-                              ? toolProfileDisplayLabel(settings, snapshot, tool, selectedSet.profiles[tool] as string)
-                              : "Not included"}
+                            {profile.value}
                           </strong>
                         </div>
                       ))}
                       <div className="sets-detail-row">
                         <span className="sets-detail-key">Project rules</span>
                         <strong className="sets-detail-value">
-                          {ruleUsageCountByContext.get(selectedSet.name) ?? 0} active
+                          {selectedSetInspector?.projectRuleCount ?? 0} active
                         </strong>
                       </div>
                     </section>
-                    {!profileSetHasSelections(selectedSet) ? (
-                      <p className="inline-note">This saved set is empty and cannot be activated yet.</p>
-                    ) : selectedSetMissingMappings.length ? (
-                      <p className="inline-note">
-                        Missing mapped profiles:{" "}
-                        {selectedSetMissingMappings.map(([tool, profile]) => `${tool}: ${profile}`).join(" · ")}
-                      </p>
+                    {selectedSetInspector?.warning ? (
+                      <p className="inline-note">{selectedSetInspector.warning}</p>
                     ) : null}
                   </>
                 ) : (

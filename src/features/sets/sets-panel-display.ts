@@ -1,6 +1,15 @@
 import type { WorkspaceUnbindInput } from "../../lib/client";
-import { profileSetDisplayLabel } from "../../lib/profile-display";
-import type { DesktopSettings } from "../../lib/schemas";
+import {
+  missingProfileSetSelections,
+  profileSetDisplayLabel,
+  profileSetHasSelections,
+  profileSetHasUsableSelections,
+  profileSetIsActive,
+  toolProfileDisplayLabel,
+} from "../../lib/profile-display";
+import type { AppSnapshot, DesktopSettings } from "../../lib/schemas";
+import { profileSetStatus, setSelectionCountLabel } from "../../lib/sets-display";
+import { toolShortName } from "../../lib/tool-registry";
 
 export type EditableProfileSet = {
   sourceName: string | null;
@@ -16,6 +25,28 @@ export type EditableRule = {
   scope: BindScope;
   context: string;
   targetValue: string;
+};
+
+export type SavedSetRowModel = {
+  name: string;
+  displayLabel: string;
+  selected: boolean;
+  active: boolean;
+  status: ReturnType<typeof profileSetStatus>;
+  summary: string;
+  missingSummary: string | null;
+  usageCount: number;
+};
+
+export type SelectedSetInspectorState = {
+  displayLabel: string;
+  isCurrent: boolean;
+  canActivate: boolean;
+  activateLabel: string;
+  selectionCountLabel: string;
+  mappedProfiles: Array<{ tool: string; value: string }>;
+  projectRuleCount: number;
+  warning: string | null;
 };
 
 export function createEmptyEditableProfileSet(tools: readonly string[]): EditableProfileSet {
@@ -95,4 +126,99 @@ export function unbindTargetForBinding(scope: string, target: string): Workspace
     return { scope: "git_remote", pattern: target };
   }
   return { scope: "default" };
+}
+
+export function countRuleUsageByContext(
+  bindings: Array<{ context: string }>,
+) {
+  const usageByContext = new Map<string, number>();
+  for (const entry of bindings) {
+    usageByContext.set(entry.context, (usageByContext.get(entry.context) ?? 0) + 1);
+  }
+  return usageByContext;
+}
+
+export function buildSavedSetRows(input: {
+  localSets: NonNullable<DesktopSettings["profile_sets"]>;
+  ruleUsageCountByContext: Map<string, number>;
+  selectedSetName: string | null;
+  settings: DesktopSettings;
+  snapshot: AppSnapshot;
+  tools: readonly string[];
+}) {
+  return input.localSets.map((set) => {
+    const selected = input.selectedSetName === set.name;
+    const active = profileSetIsActive(input.snapshot, set);
+    const ready = profileSetHasUsableSelections(input.snapshot, set);
+    const missing = missingProfileSetSelections(input.snapshot, set);
+
+    return {
+      name: set.name,
+      displayLabel: profileSetDisplayLabel(set),
+      selected,
+      active,
+      status: profileSetStatus(active, ready),
+      summary: input.tools
+        .map((tool) => {
+          const profile = set.profiles[tool];
+          const label = profile
+            ? toolProfileDisplayLabel(input.settings, input.snapshot, tool, profile)
+            : "—";
+          return `${toolShortName(tool)}: ${label}`;
+        })
+        .join(" · "),
+      missingSummary: missing.length
+        ? missing.map(([tool, profile]) => `${tool}: ${profile}`).join(" · ")
+        : null,
+      usageCount: input.ruleUsageCountByContext.get(set.name) ?? 0,
+    };
+  });
+}
+
+export function buildSelectedSetInspectorState(input: {
+  selectedSet: NonNullable<DesktopSettings["profile_sets"]>[number];
+  ruleUsageCountByContext: Map<string, number>;
+  settings: DesktopSettings;
+  snapshot: AppSnapshot;
+  tools: readonly string[];
+}): SelectedSetInspectorState {
+  const selectedCount = Object.values(input.selectedSet.profiles).filter(
+    (profile) => typeof profile === "string" && profile.trim().length > 0,
+  ).length;
+  const missing = missingProfileSetSelections(input.snapshot, input.selectedSet);
+  const isCurrent = profileSetIsActive(input.snapshot, input.selectedSet);
+  const canActivate =
+    !isCurrent && profileSetHasUsableSelections(input.snapshot, input.selectedSet);
+
+  let warning: string | null = null;
+  if (!profileSetHasSelections(input.selectedSet)) {
+    warning = "This saved set is empty and cannot be activated yet.";
+  } else if (missing.length) {
+    warning = `Missing mapped profiles: ${missing
+      .map(([tool, profile]) => `${tool}: ${profile}`)
+      .join(" · ")}`;
+  }
+
+  return {
+    displayLabel: profileSetDisplayLabel(input.selectedSet),
+    isCurrent,
+    canActivate,
+    activateLabel: isCurrent
+      ? "Current"
+      : `Switch to ${profileSetDisplayLabel(input.selectedSet)}`,
+    selectionCountLabel: setSelectionCountLabel(selectedCount),
+    mappedProfiles: input.tools.map((tool) => ({
+      tool,
+      value: input.selectedSet.profiles[tool]
+        ? toolProfileDisplayLabel(
+            input.settings,
+            input.snapshot,
+            tool,
+            input.selectedSet.profiles[tool] as string,
+          )
+        : "Not included",
+    })),
+    projectRuleCount: input.ruleUsageCountByContext.get(input.selectedSet.name) ?? 0,
+    warning,
+  };
 }
