@@ -1,6 +1,8 @@
 import {
   appNavFromShortcut,
   APP_NAV,
+  buildSidebarStatusRows,
+  buildToolbarActions,
   buildAppNavItems,
   createAddProfileRouteState,
   createImportCurrentLoginRouteState,
@@ -8,6 +10,7 @@ import {
   createSettingsRouteState,
   describeBootstrapError,
   describeRuntimeBlocker,
+  deriveAppShellState,
   navShortcutLabel,
   runtimeSelectionLabel,
   runtimeSourceLabel,
@@ -50,6 +53,104 @@ describe("app-shell helpers", () => {
     expect(buildAppNavItems(true).find((item) => item.id === "profiles")).toEqual(
       expect.objectContaining({ disabled: true, shortcut: "⌘2" }),
     );
+  });
+
+  it("derives shell state, toolbar actions, and sidebar status rows", () => {
+    expect(
+      deriveAppShellState({
+        activeNav: "overview",
+        runtimeBlocked: true,
+        runtimeRecoveryOpen: false,
+        setupRequired: true,
+      }),
+    ).toEqual({
+      activeSection: "overview",
+      runtimeRecoveryFocused: true,
+      setupFocused: true,
+      showSetupWindow: true,
+    });
+
+    expect(
+      deriveAppShellState({
+        activeNav: "profiles",
+        runtimeBlocked: false,
+        runtimeRecoveryOpen: false,
+        setupRequired: false,
+      }),
+    ).toEqual({
+      activeSection: "profiles",
+      runtimeRecoveryFocused: false,
+      setupFocused: false,
+      showSetupWindow: false,
+    });
+
+    expect(
+      buildToolbarActions({
+        activeSection: "overview",
+        runtimeBlocked: false,
+        showSetupWindow: false,
+      }),
+    ).toEqual([
+      {
+        kind: "quick-switch",
+        label: "Quick Switch",
+        shortcut: "⌘K",
+        tone: "primary",
+        disabled: false,
+      },
+      {
+        kind: "verify",
+        label: "Verify",
+        tone: "ghost",
+      },
+    ]);
+
+    expect(
+      buildToolbarActions({
+        activeSection: "diagnostics",
+        runtimeBlocked: true,
+        showSetupWindow: false,
+      }),
+    ).toEqual([
+      {
+        kind: "quick-switch",
+        label: "Quick Switch",
+        shortcut: "⌘K",
+        tone: "ghost",
+        disabled: true,
+      },
+      {
+        kind: "verify",
+        label: "Verify",
+        tone: "ghost",
+      },
+      {
+        kind: "add-profile",
+        label: "Add Profile",
+        tone: "primary",
+        disabled: true,
+      },
+    ]);
+
+    expect(
+      buildToolbarActions({
+        activeSection: "profiles",
+        runtimeBlocked: false,
+        showSetupWindow: false,
+      }),
+    ).toEqual([]);
+
+    expect(
+      buildSidebarStatusRows({
+        currentActiveSet: null,
+        runtimeCompatible: true,
+        runtimeKind: "custom",
+      }),
+    ).toEqual([
+      { label: "Active set", value: "None" },
+      { label: "Switching", value: "Ready" },
+      { label: "Engine source", value: "Custom override" },
+    ]);
   });
 
   it("builds shared route state for profiles and settings", () => {

@@ -55,13 +55,14 @@ import {
 } from "./lib/desktop-preferences";
 import {
   INCLUDED_DESKTOP_ENGINE_LABEL,
-  runtimeReadinessLabel,
 } from "./lib/runtime-display";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "./lib/schemas";
 import { resolveGlobalStateMode, resolveStateModeRequest } from "./features/shared/state-modes";
 import { titleCase } from "./lib/utils";
 import {
   appNavFromShortcut,
+  buildSidebarStatusRows,
+  buildToolbarActions,
   buildAppNavItems,
   createAddProfileRouteState,
   createImportCurrentLoginRouteState,
@@ -69,10 +70,11 @@ import {
   createSettingsRouteState,
   describeBootstrapError,
   describeRuntimeBlocker,
+  deriveAppShellState,
   type AppNavId,
+  type ToolbarAction,
   type ProfilesRouteState,
   runtimeSelectionLabel,
-  runtimeSourceLabel,
   sectionDetail,
   sectionTitle,
   settingsForRecovery,
@@ -527,16 +529,25 @@ export function App() {
     ? shouldShowSetupFlow(resolvedSnapshot, init.data, setupForced)
     : false;
   const runtimeBlocked = !runtimeStatus.compatible;
-  const runtimeRecoveryFocused = runtimeBlocked && !runtimeRecoveryOpen;
-  const activeSection = runtimeBlocked
-    ? runtimeRecoveryFocused
-      ? "overview"
-      : "settings"
-    : activeNav;
-  const setupFocused = setupRequired && activeSection === "overview";
+  const { activeSection, runtimeRecoveryFocused, setupFocused, showSetupWindow } =
+    deriveAppShellState({
+      activeNav,
+      runtimeBlocked,
+      runtimeRecoveryOpen,
+      setupRequired,
+    });
   const navItems = buildAppNavItems(runtimeBlocked);
   const runtimeBlocker = describeRuntimeBlocker(runtimeStatus);
-  const showSetupWindow = setupFocused || runtimeRecoveryFocused;
+  const sidebarStatusRows = buildSidebarStatusRows({
+    currentActiveSet,
+    runtimeCompatible: runtimeStatus.compatible,
+    runtimeKind: settings.runtime_kind,
+  });
+  const toolbarActions = buildToolbarActions({
+    activeSection,
+    runtimeBlocked,
+    showSetupWindow,
+  });
   const hasActivityEntries =
     Object.values(lastCommandResults.global).some(Boolean) ||
     Object.values(lastCommandResults.tool).some(Boolean);
@@ -593,68 +604,39 @@ export function App() {
     }));
   }
 
+  function runToolbarAction(action: ToolbarAction) {
+    switch (action.kind) {
+      case "quick-switch":
+        setQuickSwitchOpen(true);
+        break;
+      case "verify":
+        runVerifyFlow();
+        break;
+      case "add-profile":
+        openAddProfile();
+        break;
+    }
+  }
+
   function renderToolbar() {
-    if (showSetupWindow) {
+    if (!toolbarActions.length) {
       return undefined;
-    }
-
-    if (activeSection === "backups") {
-      return undefined;
-    }
-
-    if (activeSection === "activity") {
-      return undefined;
-    }
-
-    if (activeSection === "settings") {
-      return undefined;
-    }
-
-    if (activeSection === "profiles") {
-      return undefined;
-    }
-
-    if (activeSection === "overview") {
-      return (
-        <div className="button-row toolbar-action-row">
-          <button
-            className="primary-button"
-            type="button"
-            disabled={runtimeBlocked}
-            onClick={() => setQuickSwitchOpen(true)}
-          >
-            <span>Quick Switch</span>
-            <kbd aria-hidden="true">⌘K</kbd>
-          </button>
-          <button className="ghost-button" type="button" onClick={runVerifyFlow}>
-            <span>Verify</span>
-          </button>
-        </div>
-      );
     }
 
     return (
       <div className="button-row toolbar-action-row">
-        <button
-          className="ghost-button"
-          type="button"
-          disabled={runtimeBlocked}
-          onClick={() => setQuickSwitchOpen(true)}
-        >
-          <span>Quick Switch</span>
-          <kbd aria-hidden="true">⌘K</kbd>
-        </button>
-        <button className="ghost-button" type="button" onClick={runVerifyFlow}>
-          <span>Verify</span>
-        </button>
-        <button
-          className="primary-button"
-          type="button"
-          disabled={runtimeBlocked}
-          onClick={openAddProfile}
-        >
-          <span>Add Profile</span>
-        </button>
+        {toolbarActions.map((action) => (
+          <button
+            key={action.kind}
+            className={action.tone === "primary" ? "primary-button" : "ghost-button"}
+            type="button"
+            disabled={action.disabled}
+            onClick={() => runToolbarAction(action)}
+          >
+            <span>{action.label}</span>
+            {action.shortcut ? <kbd aria-hidden="true">{action.shortcut}</kbd> : null}
+          </button>
+        ))}
       </div>
     );
   }
@@ -682,18 +664,12 @@ export function App() {
             <span className="sidebar-status-kicker">Current state</span>
           </div>
           <div className="sidebar-status-grid">
-            <div className="sidebar-status-row">
-              <span className="sidebar-status-label">Active set</span>
-              <strong>{currentActiveSet ?? "None"}</strong>
-            </div>
-            <div className="sidebar-status-row">
-              <span className="sidebar-status-label">Switching</span>
-              <p>{runtimeReadinessLabel(runtimeStatus.compatible, "sentence")}</p>
-            </div>
-            <div className="sidebar-status-row">
-              <span className="sidebar-status-label">Engine source</span>
-              <p>{runtimeSourceLabel(settings.runtime_kind)}</p>
-            </div>
+            {sidebarStatusRows.map((row) => (
+              <div key={row.label} className="sidebar-status-row">
+                <span className="sidebar-status-label">{row.label}</span>
+                {row.label === "Active set" ? <strong>{row.value}</strong> : <p>{row.value}</p>}
+              </div>
+            ))}
           </div>
         </div>
       )}

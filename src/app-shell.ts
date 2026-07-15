@@ -6,6 +6,7 @@ export {
   runtimeSelectionLabel,
   runtimeSourceLabel,
 } from "./lib/runtime-display";
+import { runtimeReadinessLabel, runtimeSourceLabel } from "./lib/runtime-display";
 
 export const APP_NAV = [
   { id: "overview", label: "Overview", group: "Main" },
@@ -29,6 +30,21 @@ export type ProfilesRouteState = {
 
 export type SettingsRouteState = {
   section?: SettingsSection;
+};
+
+export type AppSectionId = AppNavId | "waiting";
+
+export type ToolbarAction = {
+  kind: "quick-switch" | "verify" | "add-profile";
+  label: string;
+  shortcut?: string;
+  tone: "primary" | "ghost";
+  disabled?: boolean;
+};
+
+export type SidebarStatusRow = {
+  label: string;
+  value: string;
 };
 
 const NAV_SHORTCUTS: Record<string, AppNavId> = {
@@ -114,6 +130,104 @@ export function createSettingsRouteState(
   section?: SettingsSection,
 ): SettingsRouteState {
   return { section };
+}
+
+export function deriveAppShellState(input: {
+  activeNav: AppNavId;
+  runtimeBlocked: boolean;
+  runtimeRecoveryOpen: boolean;
+  setupRequired: boolean;
+}) {
+  const runtimeRecoveryFocused = input.runtimeBlocked && !input.runtimeRecoveryOpen;
+  const activeSection = input.runtimeBlocked
+    ? runtimeRecoveryFocused
+      ? "overview"
+      : "settings"
+    : input.activeNav;
+  const setupFocused = input.setupRequired && activeSection === "overview";
+  const showSetupWindow = setupFocused || runtimeRecoveryFocused;
+
+  return {
+    activeSection,
+    runtimeRecoveryFocused,
+    setupFocused,
+    showSetupWindow,
+  };
+}
+
+export function buildToolbarActions(input: {
+  activeSection: AppSectionId;
+  runtimeBlocked: boolean;
+  showSetupWindow: boolean;
+}) {
+  if (
+    input.showSetupWindow ||
+    input.activeSection === "backups" ||
+    input.activeSection === "activity" ||
+    input.activeSection === "settings" ||
+    input.activeSection === "profiles"
+  ) {
+    return [];
+  }
+
+  if (input.activeSection === "overview") {
+    return [
+      {
+        kind: "quick-switch",
+        label: "Quick Switch",
+        shortcut: "⌘K",
+        tone: "primary",
+        disabled: input.runtimeBlocked,
+      },
+      {
+        kind: "verify",
+        label: "Verify",
+        tone: "ghost",
+      },
+    ] satisfies ToolbarAction[];
+  }
+
+  return [
+    {
+      kind: "quick-switch",
+      label: "Quick Switch",
+      shortcut: "⌘K",
+      tone: "ghost",
+      disabled: input.runtimeBlocked,
+    },
+    {
+      kind: "verify",
+      label: "Verify",
+      tone: "ghost",
+    },
+    {
+      kind: "add-profile",
+      label: "Add Profile",
+      tone: "primary",
+      disabled: input.runtimeBlocked,
+    },
+  ] satisfies ToolbarAction[];
+}
+
+export function buildSidebarStatusRows(input: {
+  currentActiveSet: string | null;
+  runtimeCompatible: boolean;
+  runtimeKind: AppBootstrap["settings"]["runtime_kind"];
+}) {
+  return [
+    {
+      label: "Active set",
+      value: input.currentActiveSet ?? "None",
+    },
+    {
+      label: "Switching",
+      value: runtimeReadinessLabel(input.runtimeCompatible, "sentence"),
+    },
+    {
+      label: "Engine source",
+      value: runtimeSourceLabel(input.runtimeKind),
+    },
+  ] satisfies SidebarStatusRow[];
 }
 
 export function describeBootstrapError(error: unknown) {
