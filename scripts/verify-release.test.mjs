@@ -31,6 +31,7 @@ function createReleaseFixture(overrides = {}) {
           "tauri:bundle-local": "node ./scripts/build-local-bundle.mjs",
           "prepare:sidecar": "node ./scripts/prepare-sidecar.mjs",
           "prepare:updater": "node ./scripts/prepare-updater.mjs",
+          "configure:release-secrets": "node ./scripts/configure-release-secrets.mjs",
           "test:coverage": "vitest run --coverage",
           "tauri:build": "tauri build",
         },
@@ -196,6 +197,7 @@ npm run prepare:sidecar -- /absolute/path/to/aisw
 prepare:sidecar validates the binary format against the requested target triple
 npm run tauri:bundle-local
 npm run prepare:updater
+npm run configure:release-secrets
 npm run tauri:build
 npm test
 npm run test:coverage
@@ -212,6 +214,7 @@ plugins.updater.channels
 Confirm notarization completed
 Verify the generated installer is code signed
 Validate the generated \`.deb\`, \`.rpm\`, and AppImage artifacts
+Use the \`production\` GitHub environment with gh secret set.
 ## Release checklist
 Run \`npm run tauri:bundle-local\` to smoke-test an unsigned local bundle
 Launch the packaged app in \`Bundled\` mode
@@ -234,6 +237,10 @@ describe("verify-release", () => {
           ok: true,
           label: "publish workflow requires the protected production environment",
         }),
+        expect.objectContaining({
+          ok: true,
+          label: "package.json exposes release secret provisioning",
+        }),
         expect.objectContaining({ ok: true, label: "publish workflow covers every supported release target" }),
         expect.objectContaining({
           ok: true,
@@ -246,6 +253,10 @@ describe("verify-release", () => {
         expect.objectContaining({
           ok: true,
           label: "acceptance matrix tracks architecture, security, and verification evidence",
+        }),
+        expect.objectContaining({
+          ok: true,
+          label: "runbook documents protected environment secret provisioning",
         }),
       ]),
     });
@@ -583,6 +594,69 @@ Complete platform signing checks
     expect(result.checks).toContainEqual(
       expect.objectContaining({
         label: "package.json exposes local unsigned bundle smoke build",
+        ok: false,
+      }),
+    );
+  });
+
+  it("fails when the repo drops release secret provisioning or environment runbook guidance", () => {
+    const root = createReleaseFixture({
+      runbook: `
+npm run prepare:sidecar -- /absolute/path/to/aisw
+npm run tauri:bundle-local
+npm run prepare:updater
+npm run tauri:build
+npm test
+npm run test:coverage
+npm run build
+npm run test:e2e
+npm run verify:release
+cargo fmt --manifest-path src-tauri/Cargo.toml --check
+cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+cargo test --manifest-path src-tauri/Cargo.toml
+cargo check --manifest-path src-tauri/Cargo.toml
+## Platform signing flow
+APPLE_SIGNING_IDENTITY
+plugins.updater.channels
+Confirm notarization completed
+Verify the generated installer is code signed
+Validate the generated \`.deb\`, \`.rpm\`, and AppImage artifacts
+## Release checklist
+Run \`npm run tauri:bundle-local\` to smoke-test an unsigned local bundle
+Launch the packaged app in \`Bundled\` mode
+Switch a profile in the packaged app
+Complete platform signing checks
+`,
+    });
+    writeFixture(
+      root,
+      "package.json",
+      JSON.stringify(
+        {
+          scripts: {
+            "tauri:bundle-local": "node ./scripts/build-local-bundle.mjs",
+            "prepare:sidecar": "node ./scripts/prepare-sidecar.mjs",
+            "prepare:updater": "node ./scripts/prepare-updater.mjs",
+            "test:coverage": "vitest run --coverage",
+            "tauri:build": "tauri build",
+          },
+        },
+        null,
+        2,
+      ),
+    );
+
+    const result = verifyReleaseContract(root);
+    expect(result.ok).toBe(false);
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        label: "package.json exposes release secret provisioning",
+        ok: false,
+      }),
+    );
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        label: "runbook documents protected environment secret provisioning",
         ok: false,
       }),
     );

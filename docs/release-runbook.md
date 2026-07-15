@@ -131,7 +131,17 @@ npm run tauri:build
 
 ## CI release workflow inputs
 
-The repository workflow at `.github/workflows/publish.yml` expects these secrets:
+The repository workflow at `.github/workflows/publish.yml` publishes through the protected `production` GitHub environment.
+
+Create or refresh that environment with:
+
+```sh
+npm run configure:release-secrets -- --repo burakdede/aisw-desktop
+```
+
+This helper ensures the `production` GitHub environment exists and then uploads every locally available release secret with `gh secret set --env production`.
+
+The repository workflow expects these required secrets:
 
 - `AISW_SIDECAR_URL_MACOS_ARM64`
 - `AISW_SIDECAR_URL_MACOS_X64`
@@ -154,3 +164,6 @@ Optional signing secrets:
 - `APPLE_ID`
 - `APPLE_PASSWORD`
 - `APPLE_TEAM_ID`
+
+The helper reads each secret from either `$SECRET_NAME` or `$SECRET_NAME_FILE`.
+That makes it safe to keep multiline values such as `TAURI_SIGNING_PRIVATE_KEY` and `APPLE_CERTIFICATE` in local files instead of shell history.

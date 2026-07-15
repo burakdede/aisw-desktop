@@ -97,6 +97,10 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       ok: packageJson.scripts?.["prepare:updater"] === "node ./scripts/prepare-updater.mjs",
     },
     {
+      label: "package.json exposes release secret provisioning",
+      ok: packageJson.scripts?.["configure:release-secrets"] === "node ./scripts/configure-release-secrets.mjs",
+    },
+    {
       label: "tauri bundles aisw via externalBin",
       ok: Array.isArray(tauriConfig.bundle?.externalBin) && tauriConfig.bundle.externalBin.includes("binaries/aisw"),
     },
@@ -211,6 +215,13 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         runbook.includes("Confirm notarization completed") &&
         runbook.includes("Verify the generated installer is code signed") &&
         runbook.includes("Validate the generated `.deb`, `.rpm`, and AppImage artifacts"),
+    },
+    {
+      label: "runbook documents protected environment secret provisioning",
+      ok:
+        runbook.includes("`production` GitHub environment") &&
+        runbook.includes("npm run configure:release-secrets") &&
+        runbook.includes("gh secret set"),
     },
     {
       label: "CI workflow enforces frontend verification matrix",
