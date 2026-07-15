@@ -5,8 +5,17 @@ use tauri::{AppHandle, Runtime};
 use tauri_plugin_updater::UpdaterExt;
 use url::Url;
 
+const UPDATER_COMMAND: &str = "desktop_updater";
 const GENERIC_ENDPOINT_ENV: &str = "AISW_DESKTOP_UPDATER_ENDPOINT";
 const PUBKEY_ENV: &str = "AISW_DESKTOP_UPDATER_PUBKEY";
+const UPDATES_NOT_CONFIGURED_MESSAGE: &str =
+    "Updates are not configured for this desktop build yet.";
+const NO_UPDATE_AVAILABLE_MESSAGE: &str = "No update is currently available.";
+const UPDATE_INSTALLED_MESSAGE: &str = "Update installed. Restart has been requested.";
+const INVALID_ENDPOINT_REMEDIATION: &str =
+    "Configure this desktop build with a valid HTTPS update feed before checking for updates.";
+const UPDATER_FAILURE_REMEDIATION: &str =
+    "Check the signed update channel, signing key, and release artifacts for this desktop build.";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct UpdaterConfig {
@@ -21,14 +30,7 @@ pub async fn check_for_updates<R: Runtime>(
 ) -> Result<UpdateCheckReport, DesktopError> {
     let current_version = app.package_info().version.to_string();
     let Some(config) = resolve_updater_config(app, channel)? else {
-        return Ok(UpdateCheckReport {
-            configured: false,
-            channel: channel.to_owned(),
-            current_version,
-            endpoint: None,
-            update: None,
-            message: Some("Updates are not configured for this desktop build yet.".to_owned()),
-        });
+        return Ok(not_configured_update_check_report(channel, current_version));
     };
 
     let updater = build_updater(app, &config)?;
@@ -55,14 +57,10 @@ pub async fn install_update<R: Runtime>(
 ) -> Result<InstallUpdateReport, DesktopError> {
     let current_version = app.package_info().version.to_string();
     let Some(config) = resolve_updater_config(app, channel)? else {
-        return Ok(InstallUpdateReport {
-            configured: false,
-            channel: channel.to_owned(),
+        return Ok(not_configured_install_update_report(
+            channel,
             current_version,
-            installed_version: None,
-            restart_requested: false,
-            message: Some("Updates are not configured for this desktop build yet.".to_owned()),
-        });
+        ));
     };
 
     let updater = build_updater(app, &config)?;
@@ -75,7 +73,7 @@ pub async fn install_update<R: Runtime>(
             current_version,
             installed_version: None,
             restart_requested: false,
-            message: Some("No update is currently available.".to_owned()),
+            message: Some(NO_UPDATE_AVAILABLE_MESSAGE.to_owned()),
         });
     };
 
@@ -92,7 +90,7 @@ pub async fn install_update<R: Runtime>(
         current_version,
         installed_version: Some(installed_version),
         restart_requested: true,
-        message: Some("Update installed. Restart has been requested.".to_owned()),
+        message: Some(UPDATE_INSTALLED_MESSAGE.to_owned()),
     })
 }
 
@@ -135,26 +133,20 @@ where
     };
 
     let endpoint = Url::parse(&endpoint_raw).map_err(|error| DesktopError::CommandFailed {
-        command: "desktop_updater".to_owned(),
+        command: UPDATER_COMMAND.to_owned(),
         kind: GuiErrorKind::Unknown,
         message: format!("Updater endpoint is invalid: {error}"),
-        remediation: Some(
-            "Configure this desktop build with a valid HTTPS update feed before checking for updates."
-                .to_owned(),
-        ),
+        remediation: Some(INVALID_ENDPOINT_REMEDIATION.to_owned()),
     })?;
     if endpoint.scheme() != "https" {
         return Err(DesktopError::CommandFailed {
-            command: "desktop_updater".to_owned(),
+            command: UPDATER_COMMAND.to_owned(),
             kind: GuiErrorKind::Unknown,
             message: format!(
                 "Updater endpoint is invalid: expected https:// URL, got {}://",
                 endpoint.scheme()
             ),
-            remediation: Some(
-                "Configure this desktop build with a valid HTTPS update feed before checking for updates."
-                    .to_owned(),
-            ),
+            remediation: Some(INVALID_ENDPOINT_REMEDIATION.to_owned()),
         });
     }
 
@@ -169,10 +161,7 @@ fn resolve_endpoint<F>(channel: &str, get_var: &F, plugin_config: Option<&Value>
 where
     F: Fn(&str) -> Option<String>,
 {
-    let endpoint_var = format!(
-        "AISW_DESKTOP_UPDATER_ENDPOINT_{}",
-        channel.to_ascii_uppercase()
-    );
+    let endpoint_var = channel_endpoint_env_key(channel);
     if let Some(endpoint) = get_var(&endpoint_var) {
         return Some(endpoint);
     }
@@ -199,19 +188,50 @@ where
 
 fn map_updater_error(error: tauri_plugin_updater::Error) -> DesktopError {
     DesktopError::CommandFailed {
-        command: "desktop_updater".to_owned(),
+        command: UPDATER_COMMAND.to_owned(),
         kind: GuiErrorKind::Unknown,
         message: format!("Desktop update failed: {error}"),
-        remediation: Some(
-            "Check the signed update channel, signing key, and release artifacts for this desktop build."
-                .to_owned(),
-        ),
+        remediation: Some(UPDATER_FAILURE_REMEDIATION.to_owned()),
+    }
+}
+
+fn channel_endpoint_env_key(channel: &str) -> String {
+    format!(
+        "AISW_DESKTOP_UPDATER_ENDPOINT_{}",
+        channel.to_ascii_uppercase()
+    )
+}
+
+fn not_configured_update_check_report(channel: &str, current_version: String) -> UpdateCheckReport {
+    UpdateCheckReport {
+        configured: false,
+        channel: channel.to_owned(),
+        current_version,
+        endpoint: None,
+        update: None,
+        message: Some(UPDATES_NOT_CONFIGURED_MESSAGE.to_owned()),
+    }
+}
+
+fn not_configured_install_update_report(
+    channel: &str,
+    current_version: String,
+) -> InstallUpdateReport {
+    InstallUpdateReport {
+        configured: false,
+        channel: channel.to_owned(),
+        current_version,
+        installed_version: None,
+        restart_requested: false,
+        message: Some(UPDATES_NOT_CONFIGURED_MESSAGE.to_owned()),
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{resolve_updater_config_from, GENERIC_ENDPOINT_ENV, PUBKEY_ENV};
+    use super::{
+        channel_endpoint_env_key, resolve_updater_config_from, GENERIC_ENDPOINT_ENV, PUBKEY_ENV,
+    };
     use crate::errors::DesktopError;
     use serde_json::json;
     use std::collections::HashMap;
@@ -222,6 +242,18 @@ mod tests {
         let config =
             resolve_updater_config_from("stable", |key| env.get(key).cloned(), None).unwrap();
         assert!(config.is_none());
+    }
+
+    #[test]
+    fn builds_channel_specific_endpoint_env_keys() {
+        assert_eq!(
+            channel_endpoint_env_key("stable"),
+            "AISW_DESKTOP_UPDATER_ENDPOINT_STABLE"
+        );
+        assert_eq!(
+            channel_endpoint_env_key("beta"),
+            "AISW_DESKTOP_UPDATER_ENDPOINT_BETA"
+        );
     }
 
     #[test]
