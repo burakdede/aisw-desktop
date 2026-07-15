@@ -1,15 +1,20 @@
 import { describe, expect, it } from "vitest";
-import type { AppBootstrap, AppSnapshot } from "../../lib/schemas";
+import type { AppBootstrap, AppSnapshot, InitReport } from "../../lib/schemas";
 import {
+  accountItemTool,
   buildOnboardingHealthItems,
   buildOnboardingRuntimeRows,
+  defaultSetupStep,
   onboardingAccountBadge,
   onboardingAccountSummary,
   onboardingSecureStorageStatus,
   onboardingSwitchReadinessStatus,
+  readLiveAccounts,
+  selectDefaultAccountItem,
   setupStepFooterNote,
   setupStepFooterTitle,
   setupStepSummary,
+  shouldShowSetupFlow,
   supportsSecureStorage,
   type OnboardingAccountItem,
 } from "./onboarding-display";
@@ -152,6 +157,55 @@ describe("onboarding-display", () => {
     expect(onboardingAccountSummary(liveItem)).toBe("detected · oauth · matches personal");
     expect(onboardingAccountSummary(needsProfileItem)).toBe("No saved profile yet");
     expect(onboardingAccountSummary(missingItem)).toBe("Not installed yet");
+    expect(selectDefaultAccountItem([needsProfileItem, missingItem, liveItem])).toBe(liveItem);
+    expect(selectDefaultAccountItem([needsProfileItem, missingItem])).toBe(missingItem);
+    expect(accountItemTool(liveItem)).toBe("claude");
+    expect(accountItemTool(needsProfileItem)).toBe("codex");
+  });
+
+  it("derives live accounts and setup flow visibility from init data", () => {
+    const initReport: InitReport = {
+      result: {
+        live_accounts: [
+          {
+            tool: "claude",
+            outcome: "detected",
+            auth_method: "oauth",
+            matched_profile: "personal",
+          },
+        ],
+      },
+    } as const;
+
+    expect(readLiveAccounts(initReport)).toEqual([
+      {
+        tool: "claude",
+        outcome: "detected",
+        auth_method: "oauth",
+        matched_profile: "personal",
+      },
+    ]);
+
+    expect(shouldShowSetupFlow(makeSnapshot(), initReport, false)).toBe(true);
+    expect(defaultSetupStep(makeSnapshot(), initReport)).toBe("accounts");
+    expect(shouldShowSetupFlow(makeSnapshot(), undefined, true)).toBe(true);
+    expect(
+      shouldShowSetupFlow(
+        makeSnapshot({
+          statuses: [{ ...makeSnapshot().statuses[0], binary_found: true }],
+        }),
+        undefined,
+        false,
+      ),
+    ).toBe(false);
+    expect(
+      defaultSetupStep(
+        makeSnapshot({
+          statuses: [{ ...makeSnapshot().statuses[0], binary_found: true }],
+        }),
+        undefined,
+      ),
+    ).toBe("runtime");
   });
 
   it("builds onboarding health rows with normalized doctor labels", () => {

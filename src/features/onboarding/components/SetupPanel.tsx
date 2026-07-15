@@ -30,15 +30,20 @@ import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { invalidatePostMutationQueries } from "../../shared/postMutationRefresh";
 import {
+  accountItemTool,
   buildOnboardingHealthItems,
   buildOnboardingRuntimeRows,
+  defaultSetupStep,
   onboardingAccountBadge,
   onboardingAccountSummary,
   onboardingSecureStorageStatus,
   onboardingSwitchReadinessStatus,
+  readLiveAccounts,
+  selectDefaultAccountItem,
   setupStepFooterNote,
   setupStepFooterTitle,
   setupStepSummary,
+  shouldShowSetupFlow,
   type LiveAccount,
   type OnboardingAccountItem,
   type OnboardingHealthItem as HealthItem,
@@ -46,32 +51,6 @@ import {
 } from "../onboarding-display";
 import type { SettingsSection } from "../../settings/components/SettingsPanel";
 import type { ProfileImportMode } from "../../shared/profile-capabilities";
-
-export function shouldShowSetupFlow(
-  snapshot: AppSnapshot,
-  initReport: InitReport | undefined,
-  forceOpen = false,
-) {
-  const totalProfiles = Object.values(snapshot.profiles).reduce(
-    (sum, entry) => sum + entry.profiles.length,
-    0,
-  );
-  const liveAccounts = readLiveAccounts(initReport);
-  const liveAccountTools = new Set(liveAccounts.map((account) => account.tool));
-  const undetectedInstalledTools = snapshot.statuses.filter(
-    (status) => status.binary_found && !liveAccountTools.has(status.tool),
-  );
-  const installedToolsNeedingProfile = undetectedInstalledTools.filter(
-    (status) => (snapshot.profiles[status.tool]?.profiles.length ?? 0) === 0,
-  );
-
-  return (
-    forceOpen ||
-    totalProfiles === 0 ||
-    liveAccounts.length > 0 ||
-    installedToolsNeedingProfile.length > 0
-  );
-}
 
 export function SetupPanel({
   bootstrap,
@@ -1001,41 +980,4 @@ export function SetupPanel({
       ) : null}
     </div>
   );
-}
-
-function defaultSetupStep(snapshot: AppSnapshot, initReport: InitReport | undefined): SetupStep {
-  const liveAccounts = readLiveAccounts(initReport);
-  const liveAccountTools = new Set(liveAccounts.map((account) => account.tool));
-  const missingTools = snapshot.statuses.filter((status) => !status.binary_found);
-  const installedToolsNeedingProfile = snapshot.statuses.filter(
-    (status) =>
-      status.binary_found &&
-      !liveAccountTools.has(status.tool) &&
-      (snapshot.profiles[status.tool]?.profiles.length ?? 0) === 0,
-  );
-
-  if (liveAccounts.length || installedToolsNeedingProfile.length || missingTools.length) {
-    return "accounts";
-  }
-
-  return "runtime";
-}
-
-function readLiveAccounts(initReport: InitReport | undefined): LiveAccount[] {
-  const result = initReport?.result as { live_accounts?: unknown } | undefined;
-  const accounts = result?.live_accounts;
-  return Array.isArray(accounts) ? (accounts as LiveAccount[]) : [];
-}
-
-function selectDefaultAccountItem(items: OnboardingAccountItem[]) {
-  return (
-    items.find((item) => item.kind === "live") ??
-    items.find((item) => item.kind === "missing") ??
-    items.find((item) => item.kind === "needs-profile") ??
-    null
-  );
-}
-
-function accountItemTool(item: OnboardingAccountItem) {
-  return item.kind === "live" ? item.account.tool : item.status.tool;
 }

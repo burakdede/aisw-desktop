@@ -13,10 +13,8 @@ import {
 import { normalizeRuntimeLanguage } from "./features/shared/runtime-language";
 import { BackupsPanel } from "./features/backups/components/BackupsPanel";
 import { DiagnosticsPanel } from "./features/diagnostics/components/DiagnosticsPanel";
-import {
-  SetupPanel,
-  shouldShowSetupFlow,
-} from "./features/onboarding/components/SetupPanel";
+import { SetupPanel } from "./features/onboarding/components/SetupPanel";
+import { shouldShowSetupFlow } from "./features/onboarding/onboarding-display";
 import { OverviewPanel } from "./features/overview/components/OverviewPanel";
 import { ProfilesPanel } from "./features/profiles/components/ProfilesPanel";
 import { ActivityPanel } from "./features/activity/components/ActivityPanel";

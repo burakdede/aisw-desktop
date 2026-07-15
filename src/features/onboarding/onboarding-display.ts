@@ -1,4 +1,4 @@
-import type { AppBootstrap, AppSnapshot, ToolStatus } from "../../lib/schemas";
+import type { AppBootstrap, AppSnapshot, InitReport, ToolStatus } from "../../lib/schemas";
 import { runtimeSummary } from "../../lib/runtime-display";
 import { toolDisplayName } from "../../lib/tool-display";
 import { titleCase } from "../../lib/utils";
@@ -97,6 +97,38 @@ export function onboardingSwitchReadinessStatus(switchReady: boolean) {
       };
 }
 
+export function readLiveAccounts(initReport: InitReport | undefined): LiveAccount[] {
+  const result = initReport?.result as { live_accounts?: unknown } | undefined;
+  const accounts = result?.live_accounts;
+  return Array.isArray(accounts) ? (accounts as LiveAccount[]) : [];
+}
+
+export function shouldShowSetupFlow(
+  snapshot: AppSnapshot,
+  initReport: InitReport | undefined,
+  forceOpen = false,
+) {
+  const totalProfiles = Object.values(snapshot.profiles).reduce(
+    (sum, entry) => sum + entry.profiles.length,
+    0,
+  );
+  const liveAccounts = readLiveAccounts(initReport);
+  const liveAccountTools = new Set(liveAccounts.map((account) => account.tool));
+  const installedToolsNeedingProfile = snapshot.statuses.filter(
+    (status) =>
+      status.binary_found &&
+      !liveAccountTools.has(status.tool) &&
+      (snapshot.profiles[status.tool]?.profiles.length ?? 0) === 0,
+  );
+
+  return (
+    forceOpen ||
+    totalProfiles === 0 ||
+    liveAccounts.length > 0 ||
+    installedToolsNeedingProfile.length > 0
+  );
+}
+
 export function onboardingAccountBadge(item: OnboardingAccountItem): OnboardingAccountBadge {
   if (item.kind === "live") {
     return { tone: "ok", label: "Ready to import" };
@@ -117,6 +149,40 @@ export function onboardingAccountSummary(item: OnboardingAccountItem) {
     return "No saved profile yet";
   }
   return "Not installed yet";
+}
+
+export function selectDefaultAccountItem(items: OnboardingAccountItem[]) {
+  return (
+    items.find((item) => item.kind === "live") ??
+    items.find((item) => item.kind === "missing") ??
+    items.find((item) => item.kind === "needs-profile") ??
+    null
+  );
+}
+
+export function accountItemTool(item: OnboardingAccountItem) {
+  return item.kind === "live" ? item.account.tool : item.status.tool;
+}
+
+export function defaultSetupStep(
+  snapshot: AppSnapshot,
+  initReport: InitReport | undefined,
+): SetupStep {
+  const liveAccounts = readLiveAccounts(initReport);
+  const liveAccountTools = new Set(liveAccounts.map((account) => account.tool));
+  const missingTools = snapshot.statuses.filter((status) => !status.binary_found);
+  const installedToolsNeedingProfile = snapshot.statuses.filter(
+    (status) =>
+      status.binary_found &&
+      !liveAccountTools.has(status.tool) &&
+      (snapshot.profiles[status.tool]?.profiles.length ?? 0) === 0,
+  );
+
+  if (liveAccounts.length || installedToolsNeedingProfile.length || missingTools.length) {
+    return "accounts";
+  }
+
+  return "runtime";
 }
 
 export function buildOnboardingHealthItems(
