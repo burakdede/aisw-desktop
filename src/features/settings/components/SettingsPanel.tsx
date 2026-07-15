@@ -18,7 +18,6 @@ import {
   DATE_UNAVAILABLE_LABEL,
   DEFAULT_ACTION_FAILURE_MESSAGE,
   NOT_FOUND_LABEL,
-  NOT_SET_LABEL,
 } from "../../../lib/display-copy";
 import { notifyDesktop } from "../../../lib/notifications";
 import {
@@ -34,12 +33,18 @@ import {
 } from "../../../lib/runtime-display";
 import { type AppBootstrap, type DesktopSettings } from "../../../lib/schemas";
 import { titleCase } from "../../../lib/utils";
-import { DesktopCommandError } from "../../../lib/tauri";
 import { clearPersistedWindowState } from "../../../lib/window-state";
-import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
-import { normalizeTerminalIntegrationText } from "../../shared/terminal-integration-language";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
+import {
+  effectiveRuntimePath,
+  findShellHookCheck,
+  formatSettingsMutationError,
+  LAUNCH_AT_LOGIN_DISABLED_MESSAGE,
+  LAUNCH_AT_LOGIN_ENABLED_MESSAGE,
+  selectedRuntimePath,
+  WINDOW_LAYOUT_RESET_MESSAGE,
+} from "../settings-panel-display";
 import packageJson from "../../../../package.json";
 
 export const SETTINGS_SECTIONS = [
@@ -134,7 +139,11 @@ export function SettingsPanel({
     mutationFn: setLaunchAtLogin,
     onSuccess: (status) => {
       queryClient.setQueryData(["launch-at-login"], status);
-      setLaunchMessage(status.enabled ? "Launch at login enabled." : "Launch at login disabled.");
+      setLaunchMessage(
+        status.enabled
+          ? LAUNCH_AT_LOGIN_ENABLED_MESSAGE
+          : LAUNCH_AT_LOGIN_DISABLED_MESSAGE,
+      );
     },
     onError: (error) => {
       setLaunchMessage(error instanceof Error ? error.message : "AI Switch could not update launch at login.");
@@ -306,7 +315,7 @@ export function SettingsPanel({
 
   function resetWindowLayout() {
     clearPersistedWindowState();
-    setAdvancedMessage("Cleared the saved window size and position.");
+    setAdvancedMessage(WINDOW_LAYOUT_RESET_MESSAGE);
   }
 
   function focusSection(section: SettingsSection) {
@@ -414,7 +423,7 @@ export function SettingsPanel({
         <section className="settings-form-pane">
           <div className="settings-form-scroll">
             <header className="settings-section-header">
-              <h3>{sectionHeading(selectedSection)}</h3>
+              <h3>{sectionLabel(selectedSection)}</h3>
             </header>
 
             {selectedSection === "general" ? (
@@ -592,7 +601,7 @@ export function SettingsPanel({
                   <SettingsFeedback
                     tone="error"
                     title="Settings could not be saved"
-                    details={formatMutationError(updateSettingsMutation.error)}
+                    details={formatSettingsMutationError(updateSettingsMutation.error)}
                   />
                 ) : null}
                 {advancedMessage ? <p className="inline-note">{advancedMessage}</p> : null}
@@ -777,21 +786,21 @@ export function SettingsPanel({
                   <SettingsFeedback
                     tone="error"
                     title="Settings could not be saved"
-                    details={formatMutationError(updateSettingsMutation.error)}
+                    details={formatSettingsMutationError(updateSettingsMutation.error)}
                   />
                 ) : null}
                 {checkForUpdatesMutation.error ? (
                   <SettingsFeedback
                     tone="error"
                     title="Update check failed"
-                    details={formatMutationError(checkForUpdatesMutation.error)}
+                    details={formatSettingsMutationError(checkForUpdatesMutation.error)}
                   />
                 ) : null}
                 {installUpdateMutation.error ? (
                   <SettingsFeedback
                     tone="error"
                     title="Update install failed"
-                    details={formatMutationError(installUpdateMutation.error)}
+                    details={formatSettingsMutationError(installUpdateMutation.error)}
                   />
                 ) : null}
               </div>
@@ -869,7 +878,7 @@ export function SettingsPanel({
                   <SettingsFeedback
                     tone="error"
                     title="Settings could not be saved"
-                    details={formatMutationError(updateSettingsMutation.error)}
+                    details={formatSettingsMutationError(updateSettingsMutation.error)}
                   />
                 ) : null}
               </div>
@@ -978,65 +987,6 @@ function SettingsFeedback({
   );
 }
 
-function formatMutationError(error: unknown) {
-  if (error instanceof DesktopCommandError) {
-    return {
-      message: normalizeRuntimeLanguage(error.message),
-      remediation: normalizeRuntimeLanguage(error.remediation),
-    };
-  }
-  if (error instanceof Error) {
-    return {
-      message: normalizeRuntimeLanguage(error.message),
-      remediation: undefined,
-    };
-  }
-  return {
-    message: DEFAULT_ACTION_FAILURE_MESSAGE,
-    remediation: undefined,
-  };
-}
-
-function findShellHookCheck(report: Record<string, unknown> | undefined) {
-  const checks = Array.isArray(report?.checks) ? report.checks : [];
-  for (const entry of checks) {
-    const check = entry as { name?: string; status?: string; detail?: string };
-    if (!check.name?.toLowerCase().includes("shell")) continue;
-    return {
-      status:
-        check.status === "pass" || check.status === "warn" || check.status === "fail"
-          ? check.status
-          : "warn",
-      detail: normalizeTerminalIntegrationText(check.detail ?? ""),
-    };
-  }
-  return null;
-}
-
-function effectiveRuntimePath(runtimeKind: DesktopSettings["runtime_kind"], runtimePath: string) {
-  if (runtimeKind !== "custom") {
-    return "";
-  }
-  return runtimePath;
-}
-
 function sectionLabel(section: SettingsSection) {
   return SETTINGS_SECTION_META[section].label;
-}
-
-function sectionHeading(section: SettingsSection) {
-  return SETTINGS_SECTION_META[section].label;
-}
-
-function selectedRuntimePath(
-  settings: DesktopSettings,
-  runtimeStatus: AppBootstrap["runtime_status"],
-) {
-  if (settings.runtime_kind === "custom") {
-    return settings.runtime_path ?? NOT_SET_LABEL;
-  }
-  if (settings.runtime_kind === "system") {
-    return runtimeStatus.inventory?.system_path ?? NOT_FOUND_LABEL;
-  }
-  return runtimeStatus.inventory?.bundled_path ?? NOT_FOUND_LABEL;
 }
