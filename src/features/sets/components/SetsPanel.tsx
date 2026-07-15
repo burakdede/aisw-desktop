@@ -42,13 +42,18 @@ import { parseWorkspaceBindings, parseWorkspaceStatus } from "../../workspaces/w
 import type { WorkspaceUnbindInput } from "../../../lib/client";
 import {
   buildSavedSetRows,
+  buildSavedSetCollection,
+  buildSetSettingsUpdate,
   buildSelectedSetInspectorState,
   countRuleUsageByContext,
   createEditableProfileSetDraft,
   createEditableRuleDraft,
   createEmptyEditableProfileSet,
   createEmptyRuleDraft,
+  deletedSetActionLabel,
   duplicateEditableProfileSetDraft,
+  hasDuplicateSetName,
+  savedSetActionLabel,
   type BindScope,
   type EditableProfileSet,
   type EditableRule,
@@ -129,9 +134,11 @@ export function SetsPanel({
   const trimmedDraftName = setDraft.name.trim();
   const isEditingSet = setDraft.sourceName !== null;
   const draftHasSelections = Object.values(setDraft.profiles).some((profile) => profile.trim().length > 0);
-  const duplicateSetName =
-    trimmedDraftName.length > 0 &&
-    localSets.some((entry) => entry.name === trimmedDraftName && entry.name !== setDraft.sourceName);
+  const duplicateSetName = hasDuplicateSetName(
+    localSets,
+    trimmedDraftName,
+    setDraft.sourceName,
+  );
 
   const selectedSet =
     localSets.find((entry) => entry.name === selectedSetName) ?? localSets[0] ?? null;
@@ -270,33 +277,14 @@ export function SetsPanel({
       return;
     }
 
-    const nextSets = [
-      ...localSets.filter((entry) => entry.name !== (setDraft.sourceName ?? trimmedDraftName)),
-      {
-        name: trimmedDraftName,
-        label: setDraft.label.trim() || null,
-        profiles: Object.fromEntries(
-          Object.entries(setDraft.profiles).map(([tool, profile]) => [tool, profile || null]),
-        ),
-      },
-    ].sort((left, right) => left.name.localeCompare(right.name));
+    const nextSets = buildSavedSetCollection(localSets, setDraft, trimmedDraftName);
 
     updateSettingsMutation.mutate(
-      {
-        runtime_kind: settings.runtime_kind,
-        runtime_path: settings.runtime_path ?? null,
-        aisw_home: settings.aisw_home ?? null,
-        update_channel: settings.update_channel,
-        profile_labels: settings.profile_labels ?? {},
-        profile_sets: nextSets,
-      },
+      buildSetSettingsUpdate(settings, nextSets),
       {
         onSuccess: () => {
-          const displayLabel = setDraft.label.trim() || trimmedDraftName;
           setSelectedSetName(trimmedDraftName);
-          setLastSetAction(
-            `${isEditingSet ? "Updated" : "Saved"} set ${displayLabel}.`,
-          );
+          setLastSetAction(savedSetActionLabel(trimmedDraftName, setDraft.label, isEditingSet));
           closeSetEditor();
         },
       },
@@ -305,27 +293,18 @@ export function SetsPanel({
 
   function deleteSet(name: string) {
     setSetMenuOpen(false);
-    const displayLabel = profileSetDisplayLabel(
-      localSets.find((entry) => entry.name === name) ?? { name, label: null, profiles: {} },
-    );
+    const nextSets = localSets.filter((entry) => entry.name !== name);
     updateSettingsMutation.mutate(
-      {
-        runtime_kind: settings.runtime_kind,
-        runtime_path: settings.runtime_path ?? null,
-        aisw_home: settings.aisw_home ?? null,
-        update_channel: settings.update_channel,
-        profile_labels: settings.profile_labels ?? {},
-        profile_sets: localSets.filter((entry) => entry.name !== name),
-      },
+      buildSetSettingsUpdate(settings, nextSets),
       {
         onSuccess: () => {
           if (setDraft.sourceName === name) {
             closeSetEditor();
           }
           if (selectedSetName === name) {
-            setSelectedSetName(localSets.filter((entry) => entry.name !== name)[0]?.name ?? null);
+            setSelectedSetName(nextSets[0]?.name ?? null);
           }
-          setLastSetAction(`Deleted set ${displayLabel}.`);
+          setLastSetAction(deletedSetActionLabel(localSets, name));
         },
       },
     );

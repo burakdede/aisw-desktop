@@ -49,6 +49,16 @@ export type SelectedSetInspectorState = {
   warning: string | null;
 };
 
+export type SetSettingsUpdate = Pick<
+  DesktopSettings,
+  | "runtime_kind"
+  | "runtime_path"
+  | "aisw_home"
+  | "update_channel"
+  | "profile_labels"
+  | "profile_sets"
+>;
+
 export function createEmptyEditableProfileSet(tools: readonly string[]): EditableProfileSet {
   return {
     sourceName: null,
@@ -91,6 +101,67 @@ export function duplicateEditableProfileSetDraft(
       : `${profileSetDisplayLabel(existingSet)} Copy`,
     profiles: Object.fromEntries(tools.map((tool) => [tool, existingSet.profiles[tool] ?? ""])),
   };
+}
+
+export function hasDuplicateSetName(
+  localSets: NonNullable<DesktopSettings["profile_sets"]>,
+  draftName: string,
+  sourceName: string | null,
+) {
+  return (
+    draftName.length > 0 &&
+    localSets.some((entry) => entry.name === draftName && entry.name !== sourceName)
+  );
+}
+
+export function buildSetSettingsUpdate(
+  settings: DesktopSettings,
+  profileSets: NonNullable<DesktopSettings["profile_sets"]>,
+): SetSettingsUpdate {
+  return {
+    runtime_kind: settings.runtime_kind,
+    runtime_path: settings.runtime_path ?? null,
+    aisw_home: settings.aisw_home ?? null,
+    update_channel: settings.update_channel,
+    profile_labels: settings.profile_labels ?? {},
+    profile_sets: profileSets,
+  };
+}
+
+export function buildSavedSetCollection(
+  localSets: NonNullable<DesktopSettings["profile_sets"]>,
+  draft: EditableProfileSet,
+  draftName: string,
+) {
+  return [
+    ...localSets.filter((entry) => entry.name !== (draft.sourceName ?? draftName)),
+    {
+      name: draftName,
+      label: draft.label.trim() || null,
+      profiles: Object.fromEntries(
+        Object.entries(draft.profiles).map(([tool, profile]) => [tool, profile || null]),
+      ),
+    },
+  ].sort((left, right) => left.name.localeCompare(right.name));
+}
+
+export function savedSetActionLabel(
+  draftName: string,
+  draftLabel: string,
+  isEditingSet: boolean,
+) {
+  const displayLabel = draftLabel.trim() || draftName;
+  return `${isEditingSet ? "Updated" : "Saved"} set ${displayLabel}.`;
+}
+
+export function deletedSetActionLabel(
+  localSets: NonNullable<DesktopSettings["profile_sets"]>,
+  name: string,
+) {
+  const displayLabel = profileSetDisplayLabel(
+    localSets.find((entry) => entry.name === name) ?? { name, label: null, profiles: {} },
+  );
+  return `Deleted set ${displayLabel}.`;
 }
 
 export function createEmptyRuleDraft(defaultContext = ""): EditableRule {

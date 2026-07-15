@@ -2,13 +2,18 @@ import { describe, expect, it } from "vitest";
 import type { AppSnapshot, DesktopSettings } from "../../lib/schemas";
 import {
   buildSavedSetRows,
+  buildSavedSetCollection,
+  buildSetSettingsUpdate,
   buildSelectedSetInspectorState,
   countRuleUsageByContext,
   createEditableProfileSetDraft,
   createEditableRuleDraft,
   createEmptyEditableProfileSet,
   createEmptyRuleDraft,
+  deletedSetActionLabel,
   duplicateEditableProfileSetDraft,
+  hasDuplicateSetName,
+  savedSetActionLabel,
   unbindTargetForBinding,
 } from "./sets-panel-display";
 
@@ -162,6 +167,56 @@ describe("sets-panel-display", () => {
         name: "client-acme-copy",
         label: "client-acme Copy",
       }),
+    );
+
+    expect(hasDuplicateSetName(localSets, "client-acme-copy", null)).toBe(true);
+    expect(hasDuplicateSetName(localSets, "client-acme-copy", "client-acme-copy")).toBe(false);
+    expect(hasDuplicateSetName(localSets, "fresh-name", null)).toBe(false);
+  });
+
+  it("shares settings update payloads and set action copy", () => {
+    const settings = makeSettings();
+    const localSets = settings.profile_sets;
+    const draft = {
+      sourceName: "client-acme",
+      name: "client-beta",
+      label: "Client Beta",
+      profiles: {
+        claude: "work",
+        codex: "",
+        gemini: "",
+      },
+    };
+
+    expect(buildSetSettingsUpdate(settings, [makeSet({ name: "client-beta" })])).toEqual({
+      runtime_kind: "bundled",
+      runtime_path: null,
+      aisw_home: null,
+      update_channel: "stable",
+      profile_labels: {},
+      profile_sets: [makeSet({ name: "client-beta" })],
+    });
+
+    expect(buildSavedSetCollection(localSets, draft, "client-beta")).toEqual([
+      {
+        name: "client-beta",
+        label: "Client Beta",
+        profiles: {
+          claude: "work",
+          codex: null,
+          gemini: null,
+        },
+      },
+    ]);
+
+    expect(savedSetActionLabel("client-beta", "Client Beta", false)).toBe(
+      "Saved set Client Beta.",
+    );
+    expect(savedSetActionLabel("client-beta", "", true)).toBe(
+      "Updated set client-beta.",
+    );
+    expect(deletedSetActionLabel(localSets, "client-acme")).toBe(
+      "Deleted set Client Acme.",
     );
   });
 
