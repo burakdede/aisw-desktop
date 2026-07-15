@@ -1,9 +1,44 @@
 import { DesktopCommandError } from "./lib/tauri";
 import type { AppBootstrap } from "./lib/schemas";
+import type { ProfileImportMode } from "./features/shared/profile-capabilities";
+import type { SettingsSection } from "./features/settings/settings-panel-display";
 export {
   runtimeSelectionLabel,
   runtimeSourceLabel,
 } from "./lib/runtime-display";
+
+export const APP_NAV = [
+  { id: "overview", label: "Overview", group: "Main" },
+  { id: "profiles", label: "Profiles", group: "Main" },
+  { id: "sets", label: "Sets", group: "Main" },
+  { id: "diagnostics", label: "Diagnostics", group: "Health" },
+  { id: "backups", label: "Backups", group: "Health" },
+  { id: "activity", label: "Activity", group: "Health" },
+  { id: "settings", label: "Settings", group: "App" },
+] as const;
+
+export type AppNavId = (typeof APP_NAV)[number]["id"];
+
+export type ProfilesRouteState = {
+  tool?: string;
+  expandedProfile?: string | null;
+  mode?: ProfileImportMode;
+  credentialBackend?: "file" | "system-keyring" | null;
+  openToken?: number;
+};
+
+export type SettingsRouteState = {
+  section?: SettingsSection;
+};
+
+const NAV_SHORTCUTS: Record<string, AppNavId> = {
+  "1": "overview",
+  "2": "profiles",
+  "3": "sets",
+  "4": "diagnostics",
+  "5": "backups",
+  "6": "activity",
+};
 
 export function settingsForRecovery(settings: AppBootstrap["settings"] | undefined) {
   return (
@@ -18,7 +53,7 @@ export function settingsForRecovery(settings: AppBootstrap["settings"] | undefin
   );
 }
 
-export function navShortcutLabel(id: string) {
+export function navShortcutLabel(id: AppNavId | string) {
   switch (id) {
     case "overview":
       return "⌘1";
@@ -37,6 +72,48 @@ export function navShortcutLabel(id: string) {
     default:
       return undefined;
   }
+}
+
+export function appNavFromShortcut(key: string) {
+  return NAV_SHORTCUTS[key];
+}
+
+export function buildAppNavItems(runtimeBlocked: boolean) {
+  return APP_NAV.map(({ id, label, group }) => ({
+    id,
+    label,
+    group,
+    disabled: runtimeBlocked && id !== "settings",
+    shortcut: navShortcutLabel(id),
+  }));
+}
+
+export function createProfilesRouteState(
+  input: ProfilesRouteState = {},
+): ProfilesRouteState {
+  return { ...input };
+}
+
+export function createAddProfileRouteState(current: ProfilesRouteState) {
+  return {
+    tool: "claude",
+    expandedProfile: null,
+    openToken: (current.openToken ?? 0) + 1,
+  } satisfies ProfilesRouteState;
+}
+
+export function createImportCurrentLoginRouteState() {
+  return {
+    tool: "claude",
+    expandedProfile: null,
+    mode: "from_live",
+  } satisfies ProfilesRouteState;
+}
+
+export function createSettingsRouteState(
+  section?: SettingsSection,
+): SettingsRouteState {
+  return { section };
 }
 
 export function describeBootstrapError(error: unknown) {

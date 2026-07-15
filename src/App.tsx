@@ -47,7 +47,6 @@ import {
   useProfile,
   setTrayVisibility,
 } from "./lib/client";
-import type { ProfileImportMode } from "./features/shared/profile-capabilities";
 import {
   applyAppearancePreference,
   loadDesktopPreferences,
@@ -62,25 +61,23 @@ import type { AppBootstrap, AppSnapshot, DesktopSettings } from "./lib/schemas";
 import { resolveGlobalStateMode, resolveStateModeRequest } from "./features/shared/state-modes";
 import { titleCase } from "./lib/utils";
 import {
+  appNavFromShortcut,
+  buildAppNavItems,
+  createAddProfileRouteState,
+  createImportCurrentLoginRouteState,
+  createProfilesRouteState,
+  createSettingsRouteState,
   describeBootstrapError,
   describeRuntimeBlocker,
-  navShortcutLabel,
+  type AppNavId,
+  type ProfilesRouteState,
   runtimeSelectionLabel,
   runtimeSourceLabel,
   sectionDetail,
   sectionTitle,
   settingsForRecovery,
+  type SettingsRouteState,
 } from "./app-shell";
-
-const NAV = [
-  { id: "overview", label: "Overview", group: "Main" },
-  { id: "profiles", label: "Profiles", group: "Main" },
-  { id: "sets", label: "Sets", group: "Main" },
-  { id: "diagnostics", label: "Diagnostics", group: "Health" },
-  { id: "backups", label: "Backups", group: "Health" },
-  { id: "activity", label: "Activity", group: "Health" },
-  { id: "settings", label: "Settings", group: "App" },
-] as const;
 
 const DIAGNOSTICS_QUERY_KEYS = [
   ["doctor"],
@@ -90,34 +87,13 @@ const DIAGNOSTICS_QUERY_KEYS = [
   ["bootstrap"],
 ] as const;
 
-const NAV_SHORTCUTS: Record<string, (typeof NAV)[number]["id"]> = {
-  "1": "overview",
-  "2": "profiles",
-  "3": "sets",
-  "4": "diagnostics",
-  "5": "backups",
-  "6": "activity",
-};
-
-type ProfilesRouteState = {
-  tool?: string;
-  expandedProfile?: string | null;
-  mode?: ProfileImportMode;
-  credentialBackend?: "file" | "system-keyring" | null;
-  openToken?: number;
-};
-
-type SettingsRouteState = {
-  section?: SettingsSection;
-};
-
 export function App() {
   const queryClient = useQueryClient();
   const lastCommandResults = useLastCommandResults();
   const [desktopPreferences, setDesktopPreferences] = useState<DesktopPreferences>(() =>
     loadDesktopPreferences(),
   );
-  const [activeNav, setActiveNav] = useState<(typeof NAV)[number]["id"]>(
+  const [activeNav, setActiveNav] = useState<AppNavId>(
     () => loadDesktopPreferences().defaultSection,
   );
   const [quickSwitchOpen, setQuickSwitchOpen] = useState(false);
@@ -141,7 +117,7 @@ export function App() {
   });
 
   function openSettings(section?: SettingsSection) {
-    setSettingsRouteState({ section });
+    setSettingsRouteState(createSettingsRouteState(section));
     setRuntimeRecoveryOpen(true);
     setActiveNav("settings");
   }
@@ -152,13 +128,13 @@ export function App() {
 
   function selectNav(id: string) {
     if (id === "profiles") {
-      setProfilesRouteState({});
+      setProfilesRouteState(createProfilesRouteState());
     }
     if (id === "settings") {
-      setSettingsRouteState({});
+      setSettingsRouteState(createSettingsRouteState());
       setRuntimeRecoveryOpen(true);
     }
-    setActiveNav(id as (typeof NAV)[number]["id"]);
+    setActiveNav(id as AppNavId);
   }
 
   useEffect(() => {
@@ -213,7 +189,7 @@ export function App() {
         return;
       }
 
-      const navShortcut = NAV_SHORTCUTS[key];
+      const navShortcut = appNavFromShortcut(key);
       if (!navShortcut) {
         return;
       }
@@ -386,21 +362,21 @@ export function App() {
       {
         event: "menu-open-profiles",
         handler: () => {
-          setProfilesRouteState({});
+          setProfilesRouteState(createProfilesRouteState());
           setActiveNav("profiles");
         },
       },
       {
         event: "menu-open-add-profile",
         handler: () => {
-          setProfilesRouteState({ tool: "claude", expandedProfile: null });
+          setProfilesRouteState(createProfilesRouteState({ tool: "claude", expandedProfile: null }));
           setActiveNav("profiles");
         },
       },
       {
         event: "menu-open-import-current-login",
         handler: () => {
-          setProfilesRouteState({ tool: "claude", expandedProfile: null, mode: "from_live" });
+          setProfilesRouteState(createImportCurrentLoginRouteState());
           setActiveNav("profiles");
         },
       },
@@ -558,13 +534,7 @@ export function App() {
       : "settings"
     : activeNav;
   const setupFocused = setupRequired && activeSection === "overview";
-  const navItems = NAV.map(({ id, label, group }) => ({
-    id,
-    label,
-    group,
-    disabled: runtimeBlocked && id !== "settings",
-    shortcut: navShortcutLabel(id),
-  }));
+  const navItems = buildAppNavItems(runtimeBlocked);
   const runtimeBlocker = describeRuntimeBlocker(runtimeStatus);
   const showSetupWindow = setupFocused || runtimeRecoveryFocused;
   const hasActivityEntries =
@@ -589,11 +559,7 @@ export function App() {
   }
 
   function openAddProfile() {
-    setProfilesRouteState((current) => ({
-      tool: "claude",
-      expandedProfile: null,
-      openToken: (current.openToken ?? 0) + 1,
-    }));
+    setProfilesRouteState((current) => createAddProfileRouteState(current));
     setActiveNav("profiles");
   }
 
@@ -607,8 +573,8 @@ export function App() {
 
   function resetOnboarding() {
     clearLastCommandResults();
-    setProfilesRouteState({});
-    setSettingsRouteState({});
+    setProfilesRouteState(createProfilesRouteState());
+    setSettingsRouteState(createSettingsRouteState());
     setQuickSwitchOpen(false);
     setHelpOpen(false);
     setRuntimeRecoveryOpen(false);
@@ -821,7 +787,9 @@ export function App() {
               forcedOpen={setupForced}
               onCloseSetup={closeSetupAssistant}
               onOpenProfiles={(tool, options) => {
-                setProfilesRouteState({ tool, expandedProfile: null, mode: options?.mode });
+                setProfilesRouteState(
+                  createProfilesRouteState({ tool, expandedProfile: null, mode: options?.mode }),
+                );
                 setActiveNav("profiles");
               }}
               onOpenSettings={openSettings}
@@ -836,7 +804,9 @@ export function App() {
               onOpenQuickSwitch={() => setQuickSwitchOpen(true)}
               onOpenActivity={() => setActiveNav("activity")}
               onOpenProfiles={(tool, expandedProfile, options) => {
-                setProfilesRouteState({ tool, expandedProfile, mode: options?.mode });
+                setProfilesRouteState(
+                  createProfilesRouteState({ tool, expandedProfile, mode: options?.mode }),
+                );
                 setActiveNav("profiles");
               }}
             />
@@ -871,16 +841,18 @@ export function App() {
               onOpenSettings={openSettings}
               onOpenContexts={openContexts}
               onOpenProfiles={(tool, expandedProfile) => {
-                setProfilesRouteState({ tool, expandedProfile });
+                setProfilesRouteState(createProfilesRouteState({ tool, expandedProfile }));
                 setActiveNav("profiles");
               }}
               onOpenProfileSetup={(options) => {
-                setProfilesRouteState({
-                  tool: options?.tool,
-                  expandedProfile: null,
-                  mode: options?.mode,
-                  credentialBackend: options?.credentialBackend ?? null,
-                });
+                setProfilesRouteState(
+                  createProfilesRouteState({
+                    tool: options?.tool,
+                    expandedProfile: null,
+                    mode: options?.mode,
+                    credentialBackend: options?.credentialBackend ?? null,
+                  }),
+                );
                 setActiveNav("profiles");
               }}
             />
@@ -891,7 +863,7 @@ export function App() {
               settings={settings}
               toolCapabilities={toolCapabilities}
               onOpenProfiles={(tool, expandedProfile) => {
-                setProfilesRouteState({ tool, expandedProfile });
+                setProfilesRouteState(createProfilesRouteState({ tool, expandedProfile }));
                 setActiveNav("profiles");
               }}
             />
@@ -933,7 +905,7 @@ export function App() {
       open={helpOpen}
       onClose={() => setHelpOpen(false)}
       onOpenProfiles={() => {
-        setProfilesRouteState({});
+        setProfilesRouteState(createProfilesRouteState());
         setActiveNav("profiles");
       }}
       onOpenDiagnostics={() => {

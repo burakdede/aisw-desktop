@@ -1,4 +1,11 @@
 import {
+  appNavFromShortcut,
+  APP_NAV,
+  buildAppNavItems,
+  createAddProfileRouteState,
+  createImportCurrentLoginRouteState,
+  createProfilesRouteState,
+  createSettingsRouteState,
   describeBootstrapError,
   describeRuntimeBlocker,
   navShortcutLabel,
@@ -22,11 +29,53 @@ describe("app-shell helpers", () => {
   });
 
   it("maps section shortcuts and labels", () => {
+    expect(APP_NAV.map((item) => item.id)).toEqual([
+      "overview",
+      "profiles",
+      "sets",
+      "diagnostics",
+      "backups",
+      "activity",
+      "settings",
+    ]);
     expect(navShortcutLabel("overview")).toBe("⌘1");
     expect(navShortcutLabel("settings")).toBe("⌘,");
     expect(navShortcutLabel("unknown")).toBeUndefined();
+    expect(appNavFromShortcut("3")).toBe("sets");
     expect(sectionTitle("profiles")).toBe("Profiles");
     expect(sectionTitle("overview", true)).toBe("Get started");
+    expect(buildAppNavItems(true).find((item) => item.id === "settings")).toEqual(
+      expect.objectContaining({ disabled: false, shortcut: "⌘," }),
+    );
+    expect(buildAppNavItems(true).find((item) => item.id === "profiles")).toEqual(
+      expect.objectContaining({ disabled: true, shortcut: "⌘2" }),
+    );
+  });
+
+  it("builds shared route state for profiles and settings", () => {
+    expect(
+      createProfilesRouteState({
+        tool: "codex",
+        expandedProfile: "work",
+      }),
+    ).toEqual({
+      tool: "codex",
+      expandedProfile: "work",
+    });
+
+    expect(createAddProfileRouteState({ openToken: 4 })).toEqual({
+      tool: "claude",
+      expandedProfile: null,
+      openToken: 5,
+    });
+
+    expect(createImportCurrentLoginRouteState()).toEqual({
+      tool: "claude",
+      expandedProfile: null,
+      mode: "from_live",
+    });
+
+    expect(createSettingsRouteState("updates")).toEqual({ section: "updates" });
   });
 
   it("formats bootstrap and runtime errors for the shell", () => {
