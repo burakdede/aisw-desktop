@@ -151,3 +151,36 @@ export function profileLiveMatchLabel(state: ProfileSwitchState) {
       return "Ready";
   }
 }
+
+export function toolListEmptyLabel(status: ToolStatus) {
+  if (!status.binary_found) {
+    return "Not installed";
+  }
+  if (!status.active_profile) {
+    return "No profile";
+  }
+  return "Verification pending";
+}
+
+export function toolInspectorEmptyLabel(status: ToolStatus) {
+  if (!status.binary_found) {
+    return "Tool not installed";
+  }
+  if (!status.active_profile) {
+    return "No saved profile yet";
+  }
+  return "Not verified yet";
+}
+
+export function toolVerificationLabel(status: ToolStatus) {
+  if (!status.binary_found || !status.active_profile) {
+    return "Unavailable";
+  }
+  if (status.active_profile_applied === true) {
+    return "Verified in this session";
+  }
+  if (status.active_profile_applied === false) {
+    return "Needs re-apply";
+  }
+  return "Not verified yet";
+}

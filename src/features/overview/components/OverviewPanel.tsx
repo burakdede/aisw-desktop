@@ -24,6 +24,9 @@ import {
   overviewHealthLabel,
   overviewHealthSymbol,
   overviewHealthText,
+  toolInspectorEmptyLabel,
+  toolListEmptyLabel,
+  toolVerificationLabel,
   resolveOverviewHealthState,
   type OverviewHealthState,
 } from "../../../lib/status-display";
@@ -493,7 +496,7 @@ function ToolInspector({
           <h3>
             <ToolBrand tool={status.tool} className="tool-brand-heading" logoSize={20} />
           </h3>
-          <p className="inline-note">{activeProfileLabel ? `Active profile: ${activeProfileLabel}` : overviewInspectorEmptyLabel(status)}</p>
+          <p className="inline-note">{activeProfileLabel ? `Active profile: ${activeProfileLabel}` : toolInspectorEmptyLabel(status)}</p>
         </div>
         <div className={`overview-inspector-status overview-inspector-status-${state}`}>
           <span className={`overview-status-symbol overview-status-symbol-${state}`} aria-hidden="true">
@@ -742,7 +745,7 @@ function ToolInspector({
         </div>
         <div>
           <dt>Last verified</dt>
-          <dd>{overviewVerifiedLabel(status)}</dd>
+          <dd>{toolVerificationLabel(status)}</dd>
         </div>
       </dl>
       ) : null}
@@ -816,26 +819,6 @@ function latestOverviewSummary({
   return "No recent set or workspace changes are recorded in this session.";
 }
 
-function toolListEmptyLabel(status: ToolStatus) {
-  if (!status.binary_found) {
-    return "Not installed";
-  }
-  if (!status.active_profile) {
-    return "No profile";
-  }
-  return "Verification pending";
-}
-
-function overviewInspectorEmptyLabel(status: ToolStatus) {
-  if (!status.binary_found) {
-    return "Tool not installed";
-  }
-  if (!status.active_profile) {
-    return "No saved profile yet";
-  }
-  return "Not verified yet";
-}
-
 function formatTokenWarning(status: ToolStatus) {
   const warning = status.token_warning;
   if (!warning) {
@@ -854,19 +837,6 @@ function formatTokenWarning(status: ToolStatus) {
 function formatDiagnosticWarning(warning: ToolStatus["warnings"][number]) {
   const detail = warning.message ?? warning.code ?? "Warning reported by the runtime.";
   return warning.remediation ? `Warning: ${detail} Remediation: ${warning.remediation}` : `Warning: ${detail}`;
-}
-
-function overviewVerifiedLabel(status: ToolStatus) {
-  if (!status.binary_found || !status.active_profile) {
-    return "Unavailable";
-  }
-  if (status.active_profile_applied === true) {
-    return "Verified in this session";
-  }
-  if (status.active_profile_applied === false) {
-    return "Needs re-apply";
-  }
-  return "Not verified yet";
 }
 
 const overviewCredentialBackendLabel = (backend: string | null | undefined) =>

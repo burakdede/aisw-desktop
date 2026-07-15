@@ -10,6 +10,9 @@ import {
   profileSwitchTone,
   resolveOverviewHealthState,
   resolveProfileSwitchState,
+  toolInspectorEmptyLabel,
+  toolListEmptyLabel,
+  toolVerificationLabel,
 } from "./status-display";
 
 function makeStatus(overrides: Partial<ToolStatus> = {}): ToolStatus {
@@ -75,5 +78,29 @@ describe("status-display", () => {
     expect(profileSwitchSymbol(pendingState)).toBe("?");
     expect(profileLiveMatchLabel(storedState)).toBe("Available after activation");
     expect(profileLiveMatchLabel(activeState)).toBe("Ready");
+  });
+
+  it("shares overview empty-state and verification labels", () => {
+    expect(toolListEmptyLabel(makeStatus({ binary_found: false }))).toBe("Not installed");
+    expect(toolListEmptyLabel(makeStatus({ active_profile: null }))).toBe("No profile");
+    expect(toolListEmptyLabel(makeStatus({ active_profile_applied: null }))).toBe(
+      "Verification pending",
+    );
+
+    expect(toolInspectorEmptyLabel(makeStatus({ binary_found: false }))).toBe(
+      "Tool not installed",
+    );
+    expect(toolInspectorEmptyLabel(makeStatus({ active_profile: null }))).toBe(
+      "No saved profile yet",
+    );
+    expect(toolVerificationLabel(makeStatus({ active_profile_applied: true }))).toBe(
+      "Verified in this session",
+    );
+    expect(toolVerificationLabel(makeStatus({ active_profile_applied: false }))).toBe(
+      "Needs re-apply",
+    );
+    expect(toolVerificationLabel(makeStatus({ active_profile_applied: null }))).toBe(
+      "Not verified yet",
+    );
   });
 });
