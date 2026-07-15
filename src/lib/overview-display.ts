@@ -36,6 +36,54 @@ export type OverviewInspectorPresentation = {
   summaryLabel: string;
 };
 
+export function resolveOverviewSelectedTool(
+  currentTool: string,
+  statuses: ToolStatus[],
+) {
+  if (!statuses.length) {
+    return "";
+  }
+  if (currentTool && statuses.some((status) => status.tool === currentTool)) {
+    return currentTool;
+  }
+  return statuses[0]?.tool ?? "";
+}
+
+export function resolveOverviewStateMode(
+  currentMode: string,
+  stateModes: string[],
+) {
+  if (!stateModes.length) {
+    return currentMode;
+  }
+  if (stateModes.includes(currentMode)) {
+    return currentMode;
+  }
+  return stateModes[0] ?? currentMode;
+}
+
+export function resolveOverviewSelectedProfile(
+  currentProfile: string,
+  profiles: AppSnapshot["profiles"][string]["profiles"],
+  activeProfile: string | null | undefined,
+) {
+  const availableProfiles = profiles.map((profile) => profile.name);
+  if (currentProfile && availableProfiles.includes(currentProfile)) {
+    return currentProfile;
+  }
+  return activeProfile ?? availableProfiles[0] ?? "";
+}
+
+export function overviewToolListProfileLabel(
+  status: ToolStatus,
+  settings: DesktopSettings,
+  snapshot: AppSnapshot,
+) {
+  return status.active_profile
+    ? toolProfileDisplayLabel(settings, snapshot, status.tool, status.active_profile)
+    : toolInspectorEmptyLabel(status);
+}
+
 export function resolveOverallOverviewState(
   states: OverviewHealthState[],
 ): OverviewHealthState {

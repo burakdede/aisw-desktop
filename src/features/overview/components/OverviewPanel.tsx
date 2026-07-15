@@ -26,16 +26,19 @@ import {
   overviewHeadline,
   overviewMetaLabel,
   overviewRecentSummary,
+  overviewToolListProfileLabel,
   overviewStateModeCopy,
   overviewTokenWarning,
   overviewWorkspaceActionLabel,
+  resolveOverviewSelectedProfile,
+  resolveOverviewSelectedTool,
+  resolveOverviewStateMode,
   resolveOverallOverviewState,
 } from "../../../lib/overview-display";
 import {
   overviewHealthLabel,
   overviewHealthSymbol,
   overviewHealthText,
-  toolListEmptyLabel,
   toolVerificationLabel,
   resolveOverviewHealthState,
   type OverviewHealthState,
@@ -105,14 +108,9 @@ export function OverviewPanel({
   const bulkResult = lastCommandResults.global["profile-set"] ?? lastCommandResults.global["switch-all"];
 
   useEffect(() => {
-    if (!snapshot.statuses.length) {
-      if (selectedTool) {
-        setSelectedTool("");
-      }
-      return;
-    }
-    if (!snapshot.statuses.some((status) => status.tool === selectedTool)) {
-      setSelectedTool(snapshot.statuses[0].tool);
+    const nextTool = resolveOverviewSelectedTool(selectedTool, snapshot.statuses);
+    if (nextTool !== selectedTool) {
+      setSelectedTool(nextTool);
     }
   }, [selectedTool, snapshot.statuses]);
 
@@ -181,9 +179,11 @@ export function OverviewPanel({
             <div className="overview-tool-list" role="list" aria-label="Tools">
               {snapshot.statuses.map((status) => {
                 const state = resolveOverviewHealthState(status);
-                const activeProfileLabel = status.active_profile
-                  ? toolProfileDisplayLabel(settings, snapshot, status.tool, status.active_profile)
-                  : toolListEmptyLabel(status);
+                const activeProfileLabel = overviewToolListProfileLabel(
+                  status,
+                  settings,
+                  snapshot,
+                );
                 return (
                   <button
                     key={status.tool}
@@ -363,18 +363,19 @@ function ToolInspector({
   const secondaryAction = inspector.secondaryAction;
 
   useEffect(() => {
-    if (!stateModes.length) {
-      return;
-    }
-    if (!stateModes.includes(stateMode)) {
-      setStateMode(stateModes[0]);
+    const nextStateMode = resolveOverviewStateMode(stateMode, stateModes);
+    if (nextStateMode !== stateMode) {
+      setStateMode(nextStateMode);
     }
   }, [stateMode, stateModes]);
 
   useEffect(() => {
-    const availableProfiles = profiles.map((profile) => profile.name);
-    const nextProfile = status.active_profile ?? availableProfiles[0] ?? "";
-    if (!selectedProfile || !availableProfiles.includes(selectedProfile)) {
+    const nextProfile = resolveOverviewSelectedProfile(
+      selectedProfile,
+      profiles,
+      status.active_profile,
+    );
+    if (nextProfile !== selectedProfile) {
       setSelectedProfile(nextProfile);
     }
   }, [profiles, selectedProfile, status.active_profile]);

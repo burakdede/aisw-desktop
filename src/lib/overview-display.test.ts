@@ -7,9 +7,13 @@ import {
   overviewHeadline,
   overviewMetaLabel,
   overviewRecentSummary,
+  overviewToolListProfileLabel,
   overviewStateModeCopy,
   overviewTokenWarning,
   overviewWorkspaceActionLabel,
+  resolveOverviewSelectedProfile,
+  resolveOverviewSelectedTool,
+  resolveOverviewStateMode,
   resolveOverallOverviewState,
 } from "./overview-display";
 
@@ -84,6 +88,23 @@ describe("overview-display", () => {
   it("shares workspace and state-mode copy", () => {
     expect(overviewWorkspaceActionLabel(true)).toBe("Use Expected Set");
     expect(overviewWorkspaceActionLabel(false)).toBe("Open Sets");
+    expect(resolveOverviewSelectedTool("claude", makeSnapshot().statuses)).toBe("claude");
+    expect(resolveOverviewSelectedTool("missing", makeSnapshot().statuses)).toBe("claude");
+    expect(resolveOverviewSelectedTool("claude", [])).toBe("");
+    expect(resolveOverviewStateMode("shared", ["isolated", "shared"])).toBe("shared");
+    expect(resolveOverviewStateMode("unknown", ["isolated", "shared"])).toBe("isolated");
+    expect(resolveOverviewSelectedProfile("work", makeSnapshot().profiles.claude.profiles, "personal")).toBe("work");
+    expect(resolveOverviewSelectedProfile("missing", makeSnapshot().profiles.claude.profiles, "personal")).toBe("personal");
+    expect(
+      overviewToolListProfileLabel(makeStatus(), makeSettings(), makeSnapshot()),
+    ).toBe("Personal");
+    expect(
+      overviewToolListProfileLabel(
+        makeStatus({ active_profile: null }),
+        makeSettings(),
+        makeSnapshot(),
+      ),
+    ).toBe("No saved profile yet");
     expect(overviewStateModeCopy(["isolated", "shared"], "shared", "claude")).toBe(
       "Keep the normal tool config and history while switching credentials only.",
     );
