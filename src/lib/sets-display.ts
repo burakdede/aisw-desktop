@@ -16,6 +16,29 @@ type CommandResult = {
   remediation?: string;
 };
 
+const SETS_DISPLAY_COPY = {
+  importedContextPrefix: "Use CLI Context ",
+  lastSetResultPrefix: "Last set result: ",
+  lastProjectRuleResultPrefix: "Last project-rule result: ",
+  duplicateSetWarningPrefix: "A set named ",
+  duplicateSetWarningSuffix:
+    " already exists. Rename the existing set or choose a different name.",
+  emptySetSelectionWarning: "Select at least one tool profile before saving this set.",
+  emptyRuleSetWarning:
+    "No sets are available yet. Create one before saving a project rule.",
+  ruleTargetPrompts: {
+    path: "path prefix",
+    git_remote: "git remote pattern",
+  },
+  ruleTargetWarningSuffix: " before saving or removing this rule.",
+  workspaceActionUseExpectedSet: "Use Expected Set",
+  workspaceActionOpenSets: "Open Sets",
+  selectedRuleSubtitles: {
+    matched: "This rule currently matches",
+    saved: "Saved project rule",
+  },
+} as const;
+
 function normalizeProjectRuleLanguage(text: string) {
   return normalizeRuntimeLanguage(text)
     .replace("workspace guardrails", "project-rule guardrails")
@@ -48,7 +71,7 @@ export function importedContextStatus(active: boolean) {
 }
 
 export function importedContextActionLabel(active: boolean, contextLabel: string) {
-  return active ? CURRENT_LABEL : `Use CLI Context ${contextLabel}`;
+  return active ? CURRENT_LABEL : `${SETS_DISPLAY_COPY.importedContextPrefix}${contextLabel}`;
 }
 
 export function setSelectionCountLabel(count: number) {
@@ -72,19 +95,23 @@ export function setCommandResultLabel(
 }
 
 export function duplicateSetNameWarning(name: string) {
-  return `A set named ${name} already exists. Rename the existing set or choose a different name.`;
+  return `${SETS_DISPLAY_COPY.duplicateSetWarningPrefix}${name}${SETS_DISPLAY_COPY.duplicateSetWarningSuffix}`;
 }
 
 export function emptySetSelectionWarning() {
-  return "Select at least one tool profile before saving this set.";
+  return SETS_DISPLAY_COPY.emptySetSelectionWarning;
 }
 
 export function emptyRuleSetWarning() {
-  return "No sets are available yet. Create one before saving a project rule.";
+  return SETS_DISPLAY_COPY.emptyRuleSetWarning;
 }
 
 export function explicitRuleTargetWarning(scope: string) {
-  return `Enter a ${scope === "path" ? "path prefix" : "git remote pattern"} before saving or removing this rule.`;
+  const prompt =
+    scope === "path"
+      ? SETS_DISPLAY_COPY.ruleTargetPrompts.path
+      : SETS_DISPLAY_COPY.ruleTargetPrompts.git_remote;
+  return `Enter a ${prompt}${SETS_DISPLAY_COPY.ruleTargetWarningSuffix}`;
 }
 
 export function ruleScopeLabel(scope: string) {
@@ -113,7 +140,9 @@ export function ruleTargetLabel(scope: string, target: string) {
 }
 
 export function workspaceSetActionLabel(canResolveDirectly: boolean) {
-  return canResolveDirectly ? "Use Expected Set" : "Open Sets";
+  return canResolveDirectly
+    ? SETS_DISPLAY_COPY.workspaceActionUseExpectedSet
+    : SETS_DISPLAY_COPY.workspaceActionOpenSets;
 }
 
 export function savedRuleStatusLabel(active: boolean) {
@@ -121,7 +150,9 @@ export function savedRuleStatusLabel(active: boolean) {
 }
 
 export function selectedRuleSubtitle(matched: boolean) {
-  return matched ? "This rule currently matches" : "Saved project rule";
+  return matched
+    ? SETS_DISPLAY_COPY.selectedRuleSubtitles.matched
+    : SETS_DISPLAY_COPY.selectedRuleSubtitles.saved;
 }
 
 export function selectedRulePriorityLabel(scope: string) {
