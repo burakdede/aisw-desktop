@@ -20,7 +20,13 @@ import {
 } from "../../lib/settings-sections";
 import { doctorCheckHasKeyword, parseDoctorReportChecks } from "../diagnostics/diagnostic-doctor-checks";
 import type { AppBootstrap, DesktopSettings, UpdateCheckReport } from "../../lib/schemas";
-import { DEFAULT_ACTION_FAILURE_MESSAGE, NOT_FOUND_LABEL, NOT_SET_LABEL } from "../../lib/display-copy";
+import {
+  clipboardCopiedMessage,
+  clipboardUnavailableManualMessage,
+  DEFAULT_ACTION_FAILURE_MESSAGE,
+  NOT_FOUND_LABEL,
+  NOT_SET_LABEL,
+} from "../../lib/display-copy";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
 
@@ -306,11 +312,11 @@ export function settingsSectionDirectionForKey(key: string): SettingsSectionDire
 }
 
 export function clipboardUnavailableMessage(label: string) {
-  return `Clipboard access is unavailable. Copy the ${label} step manually.`;
+  return clipboardUnavailableManualMessage(`the ${label} step`);
 }
 
 export function clipboardSuccessMessage(label: string) {
-  return `Copied ${label} step.`;
+  return clipboardCopiedMessage(`${label} step`);
 }
 
 export function exportedDiagnosticMessage(filename: string) {

@@ -5,6 +5,10 @@ import {
   formatBackupInspectorTimestamp,
   resolveBackupTarget,
 } from "../../lib/backups";
+import {
+  clipboardCopiedMessage,
+  clipboardUnavailableManualMessage,
+} from "../../lib/display-copy";
 import { toolProfileDisplayLabel } from "../../lib/profile-display";
 import type { AppSnapshot, BackupEntry, DesktopSettings } from "../../lib/schemas";
 import { toolDisplayName } from "../../lib/tool-display";
@@ -232,8 +236,8 @@ export function buildRestoreSheetState(
 
 export function backupIdCopyMessage(clipboardAvailable: boolean, backupId: string) {
   return clipboardAvailable
-    ? "Copied backup ID."
-    : `Clipboard access is unavailable. Copy backup id ${backupId} manually.`;
+    ? clipboardCopiedMessage("backup ID")
+    : clipboardUnavailableManualMessage("backup id", backupId);
 }
 
 export function buildBackupsEmptyState(isLoading: boolean) {

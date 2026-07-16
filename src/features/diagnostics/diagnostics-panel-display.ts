@@ -1,5 +1,9 @@
 import type { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../lib/schemas";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
+import {
+  clipboardCopiedMessage,
+  clipboardUnavailableManualMessage,
+} from "../../lib/display-copy";
 import { asArray, asObject, asOptionalString } from "../../lib/parse-guards";
 import { contextDisplayLabel, toolProfileDisplayLabel } from "../../lib/profile-display";
 import { isSupportedTool } from "../../lib/tool-registry";
@@ -492,10 +496,10 @@ export function buildSelectedRepairFixes(
 
 export function diagnosticBundlePathCopyMessage(path: string, clipboardAvailable: boolean) {
   if (!clipboardAvailable) {
-    return `Clipboard access is unavailable. Copy the bundle path manually: ${path}`;
+    return clipboardUnavailableManualMessage("the bundle path", path);
   }
 
-  return `Copied bundle path ${path}.`;
+  return clipboardCopiedMessage("bundle path", path);
 }
 
 export function diagnosticInspectorStatusLabel(status: DiagnosticFinding["status"]) {
