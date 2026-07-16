@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "capture:marketing-assets": "node ./scripts/capture-marketing-assets.mjs",
     "tauri:dev": "tauri dev",
     "tauri:bundle-local": "node ./scripts/build-local-bundle.mjs",
     "prepare:sidecar": "node ./scripts/prepare-sidecar.mjs",
