@@ -15,6 +15,7 @@ import {
   type CommandResultScope,
   type CommandResultScopeType,
 } from "../shared/command-result-scope";
+import { SNAPSHOT_UPDATED_RESULT_SUMMARY } from "../shared/command-result-payload";
 import type { ActivityTimelineEntry } from "../shared/lastCommandResult";
 import type { CommandResultRecord } from "../shared/command-result-shape";
 
@@ -22,7 +23,7 @@ export type ActivityFilter = "all" | CommandResultStatus;
 type ActivityStatus = ActivityEntry["status"];
 type ActivityStatusVariant = "row" | "inspector";
 
-const GENERIC_ACTIVITY_RESULT = "snapshot updated successfully.";
+const GENERIC_ACTIVITY_RESULT = SNAPSHOT_UPDATED_RESULT_SUMMARY.toLowerCase();
 const ACTIVITY_RECOVERY_AVAILABLE_LABEL = "Recovery available";
 const ACTIVITY_TIME_PREFIX = {
   today: "Today at",
@@ -64,7 +65,7 @@ export const ACTIVITY_INSPECTOR_COPY = {
   commandHeading: "Recorded Command",
   commandFallback: "Command details were not recorded for this event.",
   resultHeading: "Redacted Result",
-  successResultFallback: "Snapshot updated successfully.",
+  successResultFallback: SNAPSHOT_UPDATED_RESULT_SUMMARY,
   errorResultFallback: "No redacted result payload was recorded for this event.",
 } as const;
 

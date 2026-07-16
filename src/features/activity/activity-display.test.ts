@@ -30,6 +30,7 @@ import {
   resolveSelectedActivityEntryKey,
   type ActivityEntry,
 } from "./activity-display";
+import { SNAPSHOT_UPDATED_RESULT_SUMMARY } from "../shared/command-result-payload";
 import { COMMAND_RESULT_GLOBAL_IDS } from "../shared/command-result-scope";
 import type { ActivityTimelineEntry } from "../shared/lastCommandResult";
 
@@ -123,7 +124,7 @@ describe("activity-display", () => {
         message: "Switched Claude Code to Personal2.",
         remediation: undefined,
         command: "aisw use claude personal2",
-        resultSummary: "Snapshot updated successfully.",
+        resultSummary: SNAPSHOT_UPDATED_RESULT_SUMMARY,
         at: new Date("2026-07-15T12:00:00.000Z").getTime(),
       },
       {
@@ -143,7 +144,7 @@ describe("activity-display", () => {
     expect(entries).toEqual([
       makeEntry({
         command: "aisw use claude personal2",
-        resultSummary: "Snapshot updated successfully.",
+        resultSummary: SNAPSHOT_UPDATED_RESULT_SUMMARY,
       }),
       makeEntry({
         key: "entry-2",
@@ -199,7 +200,7 @@ describe("activity-display", () => {
     expect(activityRecordedCommand(makeEntry())).toBe(
       "Command details were not recorded for this event.",
     );
-    expect(activityRecordedResult(makeEntry())).toBe("Snapshot updated successfully.");
+    expect(activityRecordedResult(makeEntry())).toBe(SNAPSHOT_UPDATED_RESULT_SUMMARY);
     expect(activityRecordedResult(makeEntry({ status: "error" }))).toBe(
       "No redacted result payload was recorded for this event.",
     );
