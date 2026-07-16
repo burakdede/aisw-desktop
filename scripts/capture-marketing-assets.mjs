@@ -58,7 +58,7 @@ async function captureScreenshots(browser) {
     await waitForApp(page, "Overview");
     await screenshotApp(page, "desktop-overview-hero.png");
 
-    await page.getByRole("button", { name: "Inspect Codex CLI" }).click();
+    await page.getByRole("button", { name: "Inspect Codex" }).click();
     await page.waitForTimeout(250);
     await screenshotApp(page, "desktop-current-state.png");
   });
@@ -66,7 +66,7 @@ async function captureScreenshots(browser) {
   await withPage(browser, async (page) => {
     await openScene(page, { scene: "profiles", nav: "profiles" });
     await waitForApp(page, "Profiles");
-    await page.getByRole("row", { name: /Release Review/i }).first().click();
+    await page.getByRole("option", { name: "Inspect Codex CLI Release Review" }).click();
     await page.waitForTimeout(250);
     await screenshotApp(page, "desktop-profiles.png");
   });
@@ -83,7 +83,7 @@ async function captureScreenshots(browser) {
     await openScene(page, { scene: "workspace", nav: "sets" });
     await waitForApp(page, "Sets");
     await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
-    await page.getByRole("button", { name: "Inspect rule for Acme Product" }).click();
+    await page.getByRole("button", { name: "Inspect rule for Acme Product" }).first().click();
     await page.waitForTimeout(300);
     await screenshotApp(page, "desktop-workspace-rules.png");
   });
@@ -123,19 +123,26 @@ async function captureQuickSwitchGif(browser) {
     async (page) => {
       await openScene(page, { scene: "overview", nav: "overview" });
       await waitForApp(page, "Overview");
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(700);
       await page.keyboard.press("Meta+K");
       await page.waitForSelector('[role="dialog"][aria-label="Quick Switch"]');
-      await page.getByLabel("Search Quick Switch").fill("personal");
-      await page.waitForTimeout(300);
-      await page.keyboard.press("ArrowDown");
-      await page.waitForTimeout(250);
+      await page.waitForTimeout(450);
+      await page.getByLabel("Search Quick Switch").type("personal", { delay: 120 });
+      await page.waitForTimeout(650);
       await page.keyboard.press("Enter");
-      await page.waitForTimeout(700);
+      await page.waitForTimeout(1200);
     },
   );
 
-  await transcodeGif(videoPath, path.join(mediaDir, "desktop-quick-switch.gif"));
+  await transcodeGif(
+    videoPath,
+    path.join(mediaDir, "desktop-quick-switch.gif"),
+    {
+      title: "Quick Switch",
+      detail: "Command-K. Type a profile. Press Enter.",
+      trimStartSeconds: 0.45,
+    },
+  );
 }
 
 async function captureWorkspaceSwitchGif(browser) {
@@ -145,14 +152,23 @@ async function captureWorkspaceSwitchGif(browser) {
     async (page) => {
       await openScene(page, { scene: "workspace", nav: "sets" });
       await waitForApp(page, "Sets");
+      await page.waitForTimeout(650);
       await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
-      await page.waitForTimeout(350);
-      await page.getByRole("button", { name: "Use Expected Set" }).click();
       await page.waitForTimeout(900);
+      await page.getByRole("button", { name: "Use Expected Set" }).click();
+      await page.waitForTimeout(1300);
     },
   );
 
-  await transcodeGif(videoPath, path.join(mediaDir, "desktop-workspace-switch.gif"));
+  await transcodeGif(
+    videoPath,
+    path.join(mediaDir, "desktop-workspace-switch.gif"),
+    {
+      title: "Project Rules",
+      detail: "Use Expected Set to restore this repository context.",
+      trimStartSeconds: 0.85,
+    },
+  );
 }
 
 async function withPage(browser, callback) {
@@ -214,25 +230,86 @@ async function screenshotApp(page, filename) {
   });
 }
 
-async function transcodeGif(videoPath, outputPath) {
-  const palettePath = path.join(frameDir, `${path.basename(outputPath, ".gif")}-palette.png`);
+async function transcodeGif(videoPath, outputPath, overlay) {
+  const baseName = path.basename(outputPath, ".gif");
+  const palettePath = path.join(frameDir, `${baseName}-palette.png`);
+  const overlayPngPath = path.join(frameDir, `${baseName}-overlay.png`);
+  const trimStart = String(overlay.trimStartSeconds ?? 0);
+
+  await renderOverlayCard(overlayPngPath, overlay);
+
   await runCommand("/opt/homebrew/bin/ffmpeg", [
     "-y",
+    "-ss",
+    trimStart,
     "-i",
     videoPath,
-    "-vf",
-    "fps=15,scale=1440:-1:flags=lanczos,palettegen=stats_mode=diff",
+    "-i",
+    overlayPngPath,
+    "-filter_complex",
+    "[0:v][1:v]overlay=(main_w-overlay_w)/2:main_h-overlay_h-32,fps=18,scale=1440:-1:flags=lanczos,palettegen=stats_mode=diff",
+    "-frames:v",
+    "1",
+    "-update",
+    "1",
     palettePath,
   ]);
   await runCommand("/opt/homebrew/bin/ffmpeg", [
     "-y",
+    "-ss",
+    trimStart,
     "-i",
     videoPath,
     "-i",
+    overlayPngPath,
+    "-i",
     palettePath,
-    "-lavfi",
-    "fps=15,scale=1440:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle",
+    "-loop",
+    "0",
+    "-filter_complex",
+    "[0:v][1:v]overlay=(main_w-overlay_w)/2:main_h-overlay_h-32,fps=18,scale=1440:-1:flags=lanczos[x];[x][2:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle",
     outputPath,
+  ]);
+}
+
+async function renderOverlayCard(pngPath, { title, detail }) {
+  await runCommand("/opt/homebrew/bin/magick", [
+    "-size",
+    "920x148",
+    "xc:none",
+    "-fill",
+    "rgba(18,20,27,0.9)",
+    "-stroke",
+    "rgba(255,255,255,0.18)",
+    "-strokewidth",
+    "2",
+    "-draw",
+    "roundrectangle 1,1 918,146 28,28",
+    "-font",
+    "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+    "-fill",
+    "#ffffff",
+    "-pointsize",
+    "44",
+    "-gravity",
+    "north",
+    "-annotate",
+    "+0+22",
+    title,
+    "-font",
+    "/System/Library/Fonts/Supplemental/Arial.ttf",
+    "-fill",
+    "#f4f6fb",
+    "-pointsize",
+    "28",
+    "-interline-spacing",
+    "6",
+    "-gravity",
+    "north",
+    "-annotate",
+    "+0+78",
+    detail.replace(/\\n/g, "\n"),
+    pngPath,
   ]);
 }
 
