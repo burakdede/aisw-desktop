@@ -3,6 +3,7 @@ import {
   doctorCheckHasKeyword,
   doctorCheckNameHasAll,
   parseDoctorChecks,
+  parseDoctorReportChecks,
 } from "./diagnostic-doctor-checks";
 
 describe("diagnostic-doctor-checks", () => {
@@ -47,5 +48,31 @@ describe("diagnostic-doctor-checks", () => {
     expect(doctorCheckNameHasAll(shellCheck, ["shell", "hook"])).toBe(true);
     expect(doctorCheckHasKeyword(shellCheck, "terminal integration")).toBe(true);
     expect(doctorCheckHasKeyword(shellCheck, "keyring")).toBe(false);
+  });
+
+  it("parses full doctor reports including passing checks", () => {
+    expect(
+      parseDoctorReportChecks({
+        checks: [
+          { name: "oauth_permission", detail: "Permission checks passed.", status: "pass" },
+          { name: "shell hook", detail: "Shell hook is not active.", status: "warn" },
+        ],
+      }),
+    ).toEqual([
+      {
+        name: "oauth_permission",
+        detail: "Permission checks passed.",
+        status: "pass",
+        normalizedName: "oauth_permission",
+        normalizedDetail: "permission checks passed.",
+      },
+      {
+        name: "shell hook",
+        detail: "Shell hook is not active.",
+        status: "warn",
+        normalizedName: "shell hook",
+        normalizedDetail: "shell hook is not active.",
+      },
+    ]);
   });
 });

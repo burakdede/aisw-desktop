@@ -18,6 +18,7 @@ import {
   SETTINGS_SECTIONS,
   type SettingsSection,
 } from "../../lib/settings-sections";
+import { doctorCheckHasKeyword, parseDoctorReportChecks } from "../diagnostics/diagnostic-doctor-checks";
 import type {
   AppBootstrap,
   DesktopSettings,
@@ -263,15 +264,16 @@ export function formatSettingsMutationError(error: unknown) {
 }
 
 export function findShellHookCheck(report: Record<string, unknown> | undefined) {
-  const checks = Array.isArray(report?.checks) ? report.checks : [];
-  for (const entry of checks) {
-    const check = entry as { name?: string; status?: string; detail?: string };
-    if (!check.name?.toLowerCase().includes("shell")) {
+  const checks = parseDoctorReportChecks(report, {
+    detailTransform: normalizeTerminalIntegrationText,
+  });
+  for (const check of checks) {
+    if (!doctorCheckHasKeyword(check, "shell")) {
       continue;
     }
     return {
-      status: normalizeResolvedCheckStatus(check.status, "warn"),
-      detail: normalizeTerminalIntegrationText(check.detail ?? ""),
+      status: check.status,
+      detail: check.detail,
     };
   }
   return null;

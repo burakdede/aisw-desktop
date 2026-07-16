@@ -11,6 +11,7 @@ import { toolBinaryName } from "../../lib/tool-guidance";
 import { resolveErrorDetails } from "../../lib/error-details";
 import { runtimeSummary } from "../../lib/runtime-display";
 import { countLabel, titleCase } from "../../lib/utils";
+import { parseDoctorReportChecks } from "../diagnostics/diagnostic-doctor-checks";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import {
   DEFAULT_PROFILE_IMPORT_MODE,
@@ -647,7 +648,9 @@ export function buildOnboardingHealthItems(
   snapshot: AppSnapshot,
   doctorReport: Record<string, unknown> | undefined,
 ): OnboardingHealthItem[] {
-  const doctorChecks = Array.isArray(doctorReport?.checks) ? doctorReport.checks : [];
+  const doctorChecks = parseDoctorReportChecks(doctorReport, {
+    defaultStatus: "warn",
+  });
   const items: OnboardingHealthItem[] = [
     {
       label: "Desktop engine",
@@ -661,11 +664,10 @@ export function buildOnboardingHealthItems(
     },
   ];
 
-  doctorChecks.forEach((entry) => {
-    const check = entry as { name?: string; status?: string; detail?: string };
+  doctorChecks.forEach((check) => {
     items.push({
       label: normalizeOnboardingHealthLabel(check.name),
-      status: normalizeResolvedCheckStatus(check.status, "warn"),
+      status: check.status,
       detail: normalizeOnboardingHealthDetail(check.detail),
     });
   });
