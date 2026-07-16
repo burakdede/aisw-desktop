@@ -130,6 +130,8 @@ export type ToolbarAction = {
   disabled?: boolean;
 };
 
+export type DesktopShortcutAction = "quick-switch" | "settings" | AppNavId;
+
 export type SidebarStatusRow = {
   label: string;
   value: string;
@@ -178,6 +180,31 @@ export function navShortcutLabel(id: AppNavId | string) {
 
 export function appNavFromShortcut(key: string) {
   return APP_NAV_SHORTCUT_KEYS[key];
+}
+
+export function resolveDesktopShortcutAction(input: {
+  key: string;
+  metaKey: boolean;
+  ctrlKey: boolean;
+  altKey: boolean;
+  editableTarget: boolean;
+  runtimeBlocked: boolean;
+}): DesktopShortcutAction | null {
+  if (!(input.metaKey || input.ctrlKey) || input.altKey || input.editableTarget) {
+    return null;
+  }
+
+  const key = input.key.toLowerCase();
+  if (key === "k") {
+    return "quick-switch";
+  }
+  if (key === "," || key === "<") {
+    return "settings";
+  }
+  if (input.runtimeBlocked) {
+    return null;
+  }
+  return appNavFromShortcut(key) ?? null;
 }
 
 export function buildAppNavItems(runtimeBlocked: boolean) {

@@ -20,6 +20,7 @@ import {
   deriveAppShellState,
   navShortcutLabel,
   REAPPLY_ACTIVE_PROFILE_LABEL,
+  resolveDesktopShortcutAction,
   resolveActiveReapplyAction,
   runtimeRecoveryPrimaryActionLabel,
   runtimeSelectionLabel,
@@ -125,6 +126,66 @@ describe("app-shell helpers", () => {
     expect(navShortcutLabel("settings")).toBe("⌘,");
     expect(navShortcutLabel("unknown")).toBeUndefined();
     expect(appNavFromShortcut("3")).toBe("sets");
+    expect(
+      resolveDesktopShortcutAction({
+        key: "k",
+        metaKey: true,
+        ctrlKey: false,
+        altKey: false,
+        editableTarget: false,
+        runtimeBlocked: true,
+      }),
+    ).toBe("quick-switch");
+    expect(
+      resolveDesktopShortcutAction({
+        key: ",",
+        metaKey: true,
+        ctrlKey: false,
+        altKey: false,
+        editableTarget: false,
+        runtimeBlocked: true,
+      }),
+    ).toBe("settings");
+    expect(
+      resolveDesktopShortcutAction({
+        key: "2",
+        metaKey: true,
+        ctrlKey: false,
+        altKey: false,
+        editableTarget: false,
+        runtimeBlocked: false,
+      }),
+    ).toBe("profiles");
+    expect(
+      resolveDesktopShortcutAction({
+        key: "2",
+        metaKey: true,
+        ctrlKey: false,
+        altKey: false,
+        editableTarget: false,
+        runtimeBlocked: true,
+      }),
+    ).toBeNull();
+    expect(
+      resolveDesktopShortcutAction({
+        key: "k",
+        metaKey: false,
+        ctrlKey: false,
+        altKey: false,
+        editableTarget: false,
+        runtimeBlocked: false,
+      }),
+    ).toBeNull();
+    expect(
+      resolveDesktopShortcutAction({
+        key: "k",
+        metaKey: true,
+        ctrlKey: false,
+        altKey: false,
+        editableTarget: true,
+        runtimeBlocked: false,
+      }),
+    ).toBeNull();
     expect(sectionTitle("profiles")).toBe("Profiles");
     expect(sectionTitle("overview", true)).toBe("Get started");
     expect(buildAppNavItems(true).find((item) => item.id === "settings")).toEqual(

@@ -6494,6 +6494,17 @@ describe("App", () => {
     });
   });
 
+  it("opens quick switch from the keyboard shortcut", async () => {
+    await renderOverviewApp();
+
+    fireEvent.keyDown(window, { key: "k", metaKey: true });
+
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { name: "Quick Switch" })).toBeInTheDocument();
+      expect(screen.getByLabelText("Search Quick Switch")).toHaveFocus();
+    });
+  });
+
   it("opens settings from the keyboard shortcut", async () => {
     await renderApp();
     await waitFor(() => expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument());

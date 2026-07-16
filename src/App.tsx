@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppFrame } from "./components/AppFrame";
 import { HelpSheet } from "./components/HelpSheet";
@@ -80,6 +80,7 @@ import {
   describeRuntimeBlocker,
   deriveAppShellState,
   REAPPLY_ACTIVE_PROFILE_LABEL,
+  resolveDesktopShortcutAction,
   resolveActiveReapplyAction,
   type ToolbarAction,
   type ProfilesRouteState,
@@ -168,38 +169,31 @@ export function App() {
     ? !bootstrap.data.runtime_status.compatible
     : true;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (!(event.metaKey || event.ctrlKey) || event.altKey) {
-        return;
-      }
-      if (isEditableTarget(event.target)) {
+      const action = resolveDesktopShortcutAction({
+        key: event.key,
+        metaKey: event.metaKey,
+        ctrlKey: event.ctrlKey,
+        altKey: event.altKey,
+        editableTarget: isEditableTarget(event.target),
+        runtimeBlocked: runtimeBlockedForShortcuts,
+      });
+      if (!action) {
         return;
       }
 
-      const key = event.key.toLowerCase();
-      if (key === "k") {
-        event.preventDefault();
+      event.preventDefault();
+
+      if (action === "quick-switch") {
         setQuickSwitchOpen(true);
         return;
       }
-
-      if (key === "," || key === "<") {
-        event.preventDefault();
+      if (action === "settings") {
         openSettings();
         return;
       }
-
-      if (runtimeBlockedForShortcuts) {
-        return;
-      }
-
-      const navShortcut = appNavFromShortcut(key);
-      if (!navShortcut) {
-        return;
-      }
-      event.preventDefault();
-      selectNav(navShortcut);
+      selectNav(action);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);

@@ -120,6 +120,8 @@ test("opens quick switch from the keyboard shortcut and focuses search", async (
   await installDesktopMock(page, "switching");
 
   await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.locator("body").focus();
   await page.keyboard.press("Meta+K");
 
   const dialog = page.getByRole("dialog", { name: "Quick Switch" });
