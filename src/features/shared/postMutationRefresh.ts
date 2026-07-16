@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-const POST_MUTATION_QUERY_KEYS = [
+export const POST_MUTATION_QUERY_KEYS = [
   ["bootstrap"],
   ["snapshot"],
   ["doctor"],
@@ -13,6 +13,6 @@ const POST_MUTATION_QUERY_KEYS = [
 
 export async function invalidatePostMutationQueries(queryClient: QueryClient) {
   for (const queryKey of POST_MUTATION_QUERY_KEYS) {
-    await queryClient.invalidateQueries({ queryKey: [...queryKey] });
+    await queryClient.invalidateQueries({ queryKey });
   }
 }
