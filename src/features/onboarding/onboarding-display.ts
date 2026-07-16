@@ -45,6 +45,12 @@ export type SetupStepOption = {
   label: string;
 };
 
+type SetupStepDetail = {
+  summary: string;
+  footerTitle: string;
+  footerNote: string | ((switchReady: boolean) => string);
+};
+
 export type SecureStorageStatus = {
   available: boolean;
   label: string;
@@ -195,6 +201,44 @@ export const ONBOARDING_STEP_FOOTER_COPY = {
   continuePrefix: "Continue to ",
 } as const;
 
+const ONBOARDING_SWITCH_READY_FOOTER_NOTE =
+  "Re-apply one saved set once so you know switching works before you start coding.";
+const ONBOARDING_SWITCH_PENDING_FOOTER_NOTE =
+  "You can continue, but you will need one saved set name before the first switch can succeed.";
+
+const ONBOARDING_STEP_DETAILS: Record<SetupStep, SetupStepDetail> = {
+  runtime: {
+    summary: "Confirm the included desktop engine, data folder, and secure storage.",
+    footerTitle: "Confirm the included desktop engine",
+    footerNote:
+      "Use the included desktop engine unless you intentionally want AI Switch to point at another managed engine.",
+  },
+  accounts: {
+    summary: "Import current logins or add the first saved profiles you need.",
+    footerTitle: "Save at least one reusable account",
+    footerNote:
+      "Imported current logins and saved profiles are what make safe switching possible later.",
+  },
+  switch: {
+    summary: "Run one safe set switch before you start coding.",
+    footerTitle: "Run a safe first switch",
+    footerNote: (switchReady) =>
+      switchReady ? ONBOARDING_SWITCH_READY_FOOTER_NOTE : ONBOARDING_SWITCH_PENDING_FOOTER_NOTE,
+  },
+  terminal: {
+    summary: "Optional setup for already-open terminal sessions.",
+    footerTitle: "Leave terminal integration for later unless you need it",
+    footerNote:
+      "The app already updates local credential files directly. Shell integration is only for already-open terminal sessions.",
+  },
+  done: {
+    summary: "Review what is ready now and what can wait until later.",
+    footerTitle: "Review the local setup summary",
+    footerNote:
+      "You can reopen setup later from Settings if you want to finish optional tools or terminal integration.",
+  },
+};
+
 export type OnboardingInventory = {
   liveAccounts: LiveAccount[];
   installedToolsNeedingProfile: ToolStatus[];
@@ -205,50 +249,16 @@ export type OnboardingInventory = {
 };
 
 export function setupStepSummary(step: SetupStep) {
-  switch (step) {
-    case "runtime":
-      return "Confirm the included desktop engine, data folder, and secure storage.";
-    case "accounts":
-      return "Import current logins or add the first saved profiles you need.";
-    case "switch":
-      return "Run one safe set switch before you start coding.";
-    case "terminal":
-      return "Optional setup for already-open terminal sessions.";
-    case "done":
-      return "Review what is ready now and what can wait until later.";
-  }
+  return ONBOARDING_STEP_DETAILS[step].summary;
 }
 
 export function setupStepFooterTitle(step: SetupStep) {
-  switch (step) {
-    case "runtime":
-      return "Confirm the included desktop engine";
-    case "accounts":
-      return "Save at least one reusable account";
-    case "switch":
-      return "Run a safe first switch";
-    case "terminal":
-      return "Leave terminal integration for later unless you need it";
-    case "done":
-      return "Review the local setup summary";
-  }
+  return ONBOARDING_STEP_DETAILS[step].footerTitle;
 }
 
 export function setupStepFooterNote(step: SetupStep, switchReady: boolean) {
-  switch (step) {
-    case "runtime":
-      return "Use the included desktop engine unless you intentionally want AI Switch to point at another managed engine.";
-    case "accounts":
-      return "Imported current logins and saved profiles are what make safe switching possible later.";
-    case "switch":
-      return switchReady
-        ? "Re-apply one saved set once so you know switching works before you start coding."
-        : "You can continue, but you will need one saved set name before the first switch can succeed.";
-    case "terminal":
-      return "The app already updates local credential files directly. Shell integration is only for already-open terminal sessions.";
-    case "done":
-      return "You can reopen setup later from Settings if you want to finish optional tools or terminal integration.";
-  }
+  const footerNote = ONBOARDING_STEP_DETAILS[step].footerNote;
+  return typeof footerNote === "function" ? footerNote(switchReady) : footerNote;
 }
 
 export function onboardingSwitchReadinessStatus(switchReady: boolean) {
