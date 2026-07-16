@@ -142,6 +142,7 @@ export const SETS_PANEL_COPY = {
   gitRemotePatternLabel: "Git remote pattern",
   setFieldLabel: "Set",
   selectSetLabel: "Select set",
+  summaryEmptyValue: "—",
 } as const;
 
 export const SETS_MODE_OPTIONS = SETS_PANEL_MODES.map((value) => ({
@@ -411,15 +412,12 @@ export function buildSavedSetRows(input: {
       selected,
       active,
       status: profileSetStatus(active, ready),
-      summary: input.tools
-        .map((tool) => {
-          const profile = set.profiles[tool];
-          const label = profile
-            ? toolProfileDisplayLabel(input.settings, input.snapshot, tool, profile)
-            : "—";
-          return `${toolShortName(tool)}: ${label}`;
-        })
-        .join(" · "),
+      summary: buildToolSelectionSummary({
+        profiles: set.profiles,
+        settings: input.settings,
+        snapshot: input.snapshot,
+        tools: input.tools,
+      }),
       missingSummary: missing.length
         ? missing.map(([tool, profile]) => `${tool}: ${profile}`).join(" · ")
         : null,
@@ -443,15 +441,12 @@ export function buildImportedContextRows(input: {
       name: entry.name,
       displayLabel,
       status: importedContextStatus(active),
-      summary: input.tools
-        .map((tool) => {
-          const profile = entry.profiles[tool];
-          const label = profile
-            ? toolProfileDisplayLabel(input.settings, input.snapshot, tool, profile)
-            : "—";
-          return `${toolShortName(tool)}: ${label}`;
-        })
-        .join(" · "),
+      summary: buildToolSelectionSummary({
+        profiles: entry.profiles,
+        settings: input.settings,
+        snapshot: input.snapshot,
+        tools: input.tools,
+      }),
       actionLabel: importedContextActionLabel(active, displayLabel),
       active,
     };
@@ -512,4 +507,30 @@ export function savedSetActivationLabel(displayLabel: string) {
 
 export function importedContextActivationResultLabel(displayLabel: string) {
   return `Activated set ${displayLabel}.`;
+}
+
+function buildToolSelectionSummary(input: {
+  profiles: Record<string, string | null | undefined>;
+  settings: DesktopSettings;
+  snapshot: AppSnapshot;
+  tools: readonly string[];
+}) {
+  return input.tools
+    .map((tool) => formatToolSelectionSummaryItem(input, tool))
+    .join(" · ");
+}
+
+function formatToolSelectionSummaryItem(
+  input: {
+    profiles: Record<string, string | null | undefined>;
+    settings: DesktopSettings;
+    snapshot: AppSnapshot;
+  },
+  tool: string,
+) {
+  const profile = input.profiles[tool];
+  const label = profile
+    ? toolProfileDisplayLabel(input.settings, input.snapshot, tool, profile)
+    : SETS_PANEL_COPY.summaryEmptyValue;
+  return `${toolShortName(tool)}: ${label}`;
 }
