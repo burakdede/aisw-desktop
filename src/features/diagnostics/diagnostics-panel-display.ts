@@ -2,7 +2,7 @@ import type { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { contextDisplayLabel, toolProfileDisplayLabel } from "../../lib/profile-display";
 import { isSupportedTool } from "../../lib/tool-registry";
-import { countLabel, titleCase } from "../../lib/utils";
+import { countLabel, pluralChoice, titleCase } from "../../lib/utils";
 import { BLOCKED_LABEL, NEEDS_ATTENTION_SENTENCE_LABEL } from "../../lib/status-copy";
 import {
   doctorCheckHasKeyword,
@@ -181,6 +181,52 @@ export const DIAGNOSTICS_PANEL_COPY = {
   copyReportPathLabel: "Copy report path",
 } as const;
 
+const RECENT_FAILURE_TITLES = {
+  permissionDenied: "Permission issue",
+  oauthTimeout: "OAuth timeout",
+  configLockTimeout: "Config lock timeout",
+  nonInteractiveMode: "Non-interactive mode failure",
+  geminiInvalidStateMode: "Gemini shared-mode failure",
+  invalidStateMode: "Unsupported state mode",
+  backupNeedsAttention: "Backup restore needs attention",
+} as const;
+
+const DIAGNOSTIC_IMPACT_RULES = [
+  {
+    key: "liveMismatch",
+    detail:
+      "Switching is no longer guaranteed to match the saved profile, so you may start coding with the wrong account identity.",
+  },
+  {
+    key: "keyring",
+    detail:
+      "Stored credentials may not be readable or writable until local credential storage is repaired.",
+  },
+  {
+    key: "permission",
+    detail:
+      "AI Switch may fail to update local state, backups, or profile changes until local file permissions are corrected.",
+  },
+  {
+    key: "shell",
+    detail:
+      "Shell commands can drift from the desktop state until terminal integration is installed or refreshed.",
+  },
+  {
+    key: "missing",
+    detail:
+      "This tool cannot be switched or verified from the desktop app until its CLI is installed.",
+  },
+  {
+    key: "project",
+    detail:
+      "Project rules are no longer protecting the active workspace from using the wrong saved set.",
+  },
+] as const;
+
+const DEFAULT_DIAGNOSTIC_IMPACT_DETAIL =
+  "This state needs review before you rely on the current desktop switching state.";
+
 export function buildDiagnosticFindings(
   issueCards: IssueCardData[],
   recentFailures: RecentFailureCard[],
@@ -313,18 +359,20 @@ export function recentFailureTitle(input: {
     case "KeyringUnavailable":
       return `${titleCase(input.tool ?? "Credential")} keyring unavailable`;
     case "PermissionDenied":
-      return "Permission issue";
+      return RECENT_FAILURE_TITLES.permissionDenied;
     case "OAuthTimeout":
-      return "OAuth timeout";
+      return RECENT_FAILURE_TITLES.oauthTimeout;
     case "ConfigLockTimeout":
-      return "Config lock timeout";
+      return RECENT_FAILURE_TITLES.configLockTimeout;
     case "NonInteractiveMode":
-      return "Non-interactive mode failure";
+      return RECENT_FAILURE_TITLES.nonInteractiveMode;
     case "InvalidStateMode":
-      return input.tool === "gemini" ? "Gemini shared-mode failure" : "Unsupported state mode";
+      return input.tool === "gemini"
+        ? RECENT_FAILURE_TITLES.geminiInvalidStateMode
+        : RECENT_FAILURE_TITLES.invalidStateMode;
     default:
       if (input.scope === "global" && input.id === "backup") {
-        return "Backup restore needs attention";
+        return RECENT_FAILURE_TITLES.backupNeedsAttention;
       }
       return input.tool ? `${titleCase(input.tool)} · ${input.label}` : input.label;
   }
@@ -401,25 +449,12 @@ export function groupDiagnosticFindings(findings: DiagnosticFinding[]) {
 }
 
 export function impactTextForFinding(finding: DiagnosticFinding) {
-  if (diagnosticTitleHas(finding.title, "liveMismatch")) {
-    return "Switching is no longer guaranteed to match the saved profile, so you may start coding with the wrong account identity.";
+  for (const rule of DIAGNOSTIC_IMPACT_RULES) {
+    if (diagnosticTitleHas(finding.title, rule.key)) {
+      return rule.detail;
+    }
   }
-  if (diagnosticTitleHas(finding.title, "keyring")) {
-    return "Stored credentials may not be readable or writable until local credential storage is repaired.";
-  }
-  if (diagnosticTitleHas(finding.title, "permission")) {
-    return "AI Switch may fail to update local state, backups, or profile changes until local file permissions are corrected.";
-  }
-  if (diagnosticTitleHas(finding.title, "shell")) {
-    return "Shell commands can drift from the desktop state until terminal integration is installed or refreshed.";
-  }
-  if (diagnosticTitleHas(finding.title, "missing")) {
-    return "This tool cannot be switched or verified from the desktop app until its CLI is installed.";
-  }
-  if (diagnosticTitleHas(finding.title, "project")) {
-    return "Project rules are no longer protecting the active workspace from using the wrong saved set.";
-  }
-  return "This state needs review before you rely on the current desktop switching state.";
+  return DEFAULT_DIAGNOSTIC_IMPACT_DETAIL;
 }
 
 export function diagnosticQuickFixKey(fix: Pick<DiagnosticQuickFixInput, "title" | "label">) {
@@ -472,7 +507,7 @@ ${trailingCommand}`;
 }
 
 export function diagnosticsRepairPlanSummary(count: number) {
-  return `${count} ${count === 1 ? "repair can" : "repairs can"} be applied without changing account identity.`;
+  return `${count} ${pluralChoice(count, "repair can", "repairs can")} be applied without changing account identity.`;
 }
 
 export function diagnosticsRepairSelectionLabel(count: number) {

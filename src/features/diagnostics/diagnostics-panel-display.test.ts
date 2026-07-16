@@ -155,6 +155,14 @@ describe("diagnostics-panel-display", () => {
         label: "Restore backup",
       }),
     ).toBe("Backup restore needs attention");
+    expect(
+      recentFailureTitle({
+        kind: "InvalidStateMode",
+        scope: "tool",
+        tool: "gemini",
+        label: "Shared state mode",
+      }),
+    ).toBe("Gemini shared-mode failure");
 
     const cards = buildRecentFailureCards(
       {
@@ -252,6 +260,14 @@ describe("diagnostics-panel-display", () => {
       ),
     ).toBe(true);
     expect(impactTextForFinding(finding)).toContain("Stored credentials");
+    expect(
+      impactTextForFinding({
+        ...finding,
+        title: "Unexpected issue",
+      }),
+    ).toBe(
+      "This state needs review before you rely on the current desktop switching state.",
+    );
     expect(formatRelativeVerifiedTime(1000, 1005)).toBe("just now");
     expect(formatRelativeVerifiedTime(1000, 25_000)).toBe("24 sec ago");
     expect(formatRelativeVerifiedTime(1000, 181_000)).toBe("3 min ago");
