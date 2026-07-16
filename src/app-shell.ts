@@ -1,6 +1,9 @@
 import { DesktopCommandError, type TrayCommandResultEvent } from "./lib/tauri";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "./lib/schemas";
-import type { ProfileImportMode } from "./features/shared/profile-capabilities";
+import type {
+  ExplicitProfileCredentialBackend,
+  ProfileImportMode,
+} from "./features/shared/profile-capabilities";
 import type {
   CommandResultScope,
   LastCommandResult,
@@ -95,7 +98,7 @@ export type ProfilesRouteState = {
   tool?: string;
   expandedProfile?: string | null;
   mode?: ProfileImportMode;
-  credentialBackend?: "file" | "system-keyring" | null;
+  credentialBackend?: ExplicitProfileCredentialBackend | null;
   openToken?: number;
 };
 

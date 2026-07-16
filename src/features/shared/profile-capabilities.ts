@@ -1,8 +1,16 @@
 import { AppBootstrap } from "../../lib/schemas";
+import {
+  CREDENTIAL_BACKENDS,
+  normalizeCredentialBackend as normalizeCredentialBackendValue,
+} from "../../lib/credential-backends";
 import { toolSupportsSystemKeyringCredentials } from "../../lib/tool-registry";
 
 export const PROFILE_IMPORT_MODES = ["from_live", "from_env", "api_key", "oauth"] as const;
-export const PROFILE_CREDENTIAL_BACKENDS = ["auto", "system-keyring", "file"] as const;
+export const PROFILE_CREDENTIAL_BACKENDS = [
+  CREDENTIAL_BACKENDS.auto,
+  CREDENTIAL_BACKENDS.systemKeyring,
+  CREDENTIAL_BACKENDS.file,
+] as const;
 
 type ToolCapabilities = NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
 
@@ -91,11 +99,12 @@ function normalizeImportMode(mode: string): ProfileImportMode | null {
 function normalizeCredentialBackend(
   backend: string,
 ): ExplicitProfileCredentialBackend | null {
-  if (backend === "system_keyring" || backend === "system-keyring") {
-    return "system-keyring";
-  }
-  if (backend === "file") {
-    return "file";
+  const normalized = normalizeCredentialBackendValue(backend);
+  if (
+    normalized === CREDENTIAL_BACKENDS.systemKeyring ||
+    normalized === CREDENTIAL_BACKENDS.file
+  ) {
+    return normalized;
   }
   return null;
 }

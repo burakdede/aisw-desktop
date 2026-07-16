@@ -4,6 +4,7 @@ import {
   normalizeResolvedCheckStatus,
   type ResolvedCheckStatus,
 } from "../../lib/check-status";
+import { isSystemKeyringBackend } from "../../lib/credential-backends";
 import { toolDisplayName } from "../../lib/tool-display";
 import { toolBinaryName } from "../../lib/tool-guidance";
 import { runtimeSummary } from "../../lib/runtime-display";
@@ -640,13 +641,9 @@ export function supportsSecureStorage(
   toolCapabilities: RuntimeToolCapabilities,
 ) {
   return (
-    snapshot.statuses.some(
-      (status) =>
-        status.credential_backend === "system_keyring" ||
-        status.credential_backend === "system-keyring",
-    ) ||
+    snapshot.statuses.some((status) => isSystemKeyringBackend(status.credential_backend)) ||
     Object.values(toolCapabilities).some((capability) =>
-      capability.credential_backends.includes("system-keyring"),
+      capability.credential_backends.some((backend) => isSystemKeyringBackend(backend)),
     )
   );
 }

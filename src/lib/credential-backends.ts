@@ -3,6 +3,12 @@ import { titleCase } from "./utils";
 
 type CredentialBackendLabelVariant = "default" | "inventory" | "overview";
 
+export const CREDENTIAL_BACKENDS = {
+  auto: "auto",
+  file: "file",
+  systemKeyring: "system-keyring",
+} as const;
+
 export function credentialBackendLabel(
   backend: string | null | undefined,
   variant: CredentialBackendLabelVariant = "default",
@@ -14,11 +20,11 @@ export function credentialBackendLabel(
   }
 
   switch (normalized) {
-    case "auto":
+    case CREDENTIAL_BACKENDS.auto:
       return "Automatic";
-    case "file":
+    case CREDENTIAL_BACKENDS.file:
       return variant === "inventory" ? "File" : "File-backed";
-    case "system-keyring":
+    case CREDENTIAL_BACKENDS.systemKeyring:
       if (variant === "inventory") {
         return "Keychain";
       }
@@ -31,12 +37,16 @@ export function credentialBackendLabel(
   }
 }
 
-function normalizeCredentialBackend(backend: string | null | undefined) {
+export function normalizeCredentialBackend(backend: string | null | undefined) {
   if (!backend) {
     return null;
   }
-  if (backend === "system_keyring" || backend === "system-keyring") {
-    return "system-keyring";
+  if (backend === "system_keyring" || backend === CREDENTIAL_BACKENDS.systemKeyring) {
+    return CREDENTIAL_BACKENDS.systemKeyring;
   }
   return backend;
+}
+
+export function isSystemKeyringBackend(backend: string | null | undefined) {
+  return normalizeCredentialBackend(backend) === CREDENTIAL_BACKENDS.systemKeyring;
 }
