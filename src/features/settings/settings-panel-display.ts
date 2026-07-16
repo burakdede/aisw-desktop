@@ -26,6 +26,8 @@ import {
   DEFAULT_ACTION_FAILURE_MESSAGE,
   NOT_FOUND_LABEL,
   NOT_SET_LABEL,
+  openedItemMessage,
+  savedItemMessage,
 } from "../../lib/display-copy";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
@@ -320,11 +322,11 @@ export function clipboardSuccessMessage(label: string) {
 }
 
 export function exportedDiagnosticMessage(filename: string) {
-  return `Saved ${filename}.`;
+  return savedItemMessage(filename);
 }
 
 export function openedAppDataFolderMessage(path: string) {
-  return `Opened ${path}.`;
+  return openedItemMessage(path);
 }
 
 export function launchAtLoginErrorMessage(error: unknown) {

@@ -1,4 +1,4 @@
-import { DATE_UNAVAILABLE_LABEL } from "../../lib/display-copy";
+import { DATE_UNAVAILABLE_LABEL, openedItemMessage } from "../../lib/display-copy";
 import { calendarDayStarts } from "../../lib/calendar-time";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { toolDisplayName } from "../../lib/tool-display";
@@ -159,7 +159,7 @@ export function buildActivityExportBody(entries: ActivityEntry[]) {
 }
 
 export function buildActivityExportMessage(filename: string) {
-  return `Opened ${filename}.`;
+  return openedItemMessage(filename);
 }
 
 export function activityFooterMessage(message: string) {

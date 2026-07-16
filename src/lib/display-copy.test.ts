@@ -4,6 +4,8 @@ import {
   clipboardUnavailableManualMessage,
   DATE_UNAVAILABLE_LABEL,
   DEFAULT_ACTION_FAILURE_MESSAGE,
+  openedItemMessage,
+  savedItemMessage,
 } from "./display-copy";
 
 describe("display-copy", () => {
@@ -20,5 +22,7 @@ describe("display-copy", () => {
     expect(clipboardCopiedMessage("bundle path", "/tmp/report.zip")).toBe(
       "Copied bundle path /tmp/report.zip.",
     );
+    expect(savedItemMessage("support.zip")).toBe("Saved support.zip.");
+    expect(openedItemMessage("/tmp/aisw")).toBe("Opened /tmp/aisw.");
   });
 });

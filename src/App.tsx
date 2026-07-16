@@ -23,7 +23,7 @@ import { invalidatePostMutationQueries } from "./features/shared/postMutationRef
 import { SettingsPanel } from "./features/settings/components/SettingsPanel";
 import { useDesktop } from "./features/shared/useDesktop";
 import { notifyDesktop } from "./lib/notifications";
-import { DEFAULT_ACTION_FAILURE_MESSAGE } from "./lib/display-copy";
+import { DEFAULT_ACTION_FAILURE_MESSAGE, savedItemMessage } from "./lib/display-copy";
 import {
   DESKTOP_DIAGNOSTIC_QUERY_KEYS,
   DESKTOP_MENU_EVENTS,
@@ -215,7 +215,7 @@ export function App() {
     onSuccess: async (result) => {
       await notifyDesktop({
         title: "Support report exported",
-        body: `Saved ${result.filename}.`,
+        body: savedItemMessage(result.filename),
       });
     },
     onError: async (error) => {
@@ -370,7 +370,7 @@ export function App() {
             .then((result) =>
               notifyDesktop({
                 title: "Diagnostic report exported",
-                body: `Saved ${result.filename}.`,
+                body: savedItemMessage(result.filename),
               }),
             )
             .catch((error) =>

@@ -15,3 +15,11 @@ export function clipboardUnavailableManualMessage(subject: string, value?: strin
 export function clipboardCopiedMessage(subject: string, value?: string) {
   return value ? `Copied ${subject} ${value}.` : `Copied ${subject}.`;
 }
+
+export function savedItemMessage(item: string) {
+  return `Saved ${item}.`;
+}
+
+export function openedItemMessage(item: string) {
+  return `Opened ${item}.`;
+}
