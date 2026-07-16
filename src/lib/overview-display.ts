@@ -5,7 +5,12 @@ import { fixedStateModeDescription, stateModeDescription, stateModeLabel } from 
 import { toolInspectorEmptyLabel, overviewHealthLabel, overviewHealthText, resolveOverviewHealthState, type OverviewHealthState } from "./status-display";
 import { toolProfileDisplayLabel } from "./profile-display";
 import { formatMessageWithRemediation } from "./remediation-text";
-import { workspaceSetActionLabel } from "./sets-display";
+import {
+  noRecentSetWorkspaceChangesMessage,
+  projectResultSummary,
+  setResultSummary,
+  workspaceSetActionLabel,
+} from "./sets-display";
 import type { AppSnapshot, DesktopSettings, ToolStatus } from "./schemas";
 import {
   formatTokenWarning,
@@ -262,26 +267,15 @@ export function overviewRecentSummary(input: {
   };
 }) {
   if (input.bulkResult) {
-    return formatMessageWithRemediation(
-      `Last set result: ${input.bulkResult.message}`,
-      input.bulkResult.remediation,
-    );
+    return setResultSummary(input.bulkResult);
   }
   if (input.workspaceResult) {
-    return formatMessageWithRemediation(
-      `Last project result: ${input.workspaceResult.message}`,
-      input.workspaceResult.remediation,
-    );
+    return projectResultSummary(input.workspaceResult);
   }
   if (input.contextResult) {
-    return formatMessageWithRemediation(
-      `Last set result: ${normalizeRuntimeLanguage(input.contextResult.message)}`,
-      input.contextResult.remediation
-        ? normalizeRuntimeLanguage(input.contextResult.remediation)
-        : undefined,
-    );
+    return setResultSummary(input.contextResult, true);
   }
-  return "No recent set or workspace changes are recorded in this session.";
+  return noRecentSetWorkspaceChangesMessage();
 }
 
 export function overviewLastResultMessage(lastResult: {

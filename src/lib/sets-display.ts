@@ -16,10 +16,16 @@ type CommandResult = {
   remediation?: string;
 };
 
+type SetSummaryKind = "set" | "project" | "project-rule";
+type SetSummaryNormalization = "none" | "runtime" | "project-rule";
+
 const SETS_DISPLAY_COPY = {
   importedContextPrefix: "Use CLI Context ",
   lastSetResultPrefix: "Last set result: ",
+  lastProjectResultPrefix: "Last project result: ",
   lastProjectRuleResultPrefix: "Last project-rule result: ",
+  noRecentSetWorkspaceChanges:
+    "No recent set or workspace changes are recorded in this session.",
   duplicateSetWarningPrefix: "A set named ",
   duplicateSetWarningSuffix:
     " already exists. Rename the existing set or choose a different name.",
@@ -39,6 +45,12 @@ const SETS_DISPLAY_COPY = {
   },
 } as const;
 
+const SET_SUMMARY_PREFIXES: Record<SetSummaryKind, string> = {
+  set: SETS_DISPLAY_COPY.lastSetResultPrefix,
+  project: SETS_DISPLAY_COPY.lastProjectResultPrefix,
+  "project-rule": SETS_DISPLAY_COPY.lastProjectRuleResultPrefix,
+};
+
 function normalizeProjectRuleLanguage(text: string) {
   return normalizeRuntimeLanguage(text)
     .replace("workspace guardrails", "project-rule guardrails")
@@ -47,11 +59,32 @@ function normalizeProjectRuleLanguage(text: string) {
     .replace("Workspace checks", "Project-rule checks");
 }
 
-function normalizeSetPanelResultText(text: string, kind: "set" | "project-rule") {
-  if (kind === "project-rule") {
-    return normalizeProjectRuleLanguage(text);
+function normalizeSetSummaryText(text: string, mode: SetSummaryNormalization) {
+  switch (mode) {
+    case "runtime":
+      return normalizeRuntimeLanguage(text);
+    case "project-rule":
+      return normalizeProjectRuleLanguage(text);
+    default:
+      return text;
   }
-  return normalizeRuntimeLanguage(text);
+}
+
+function formatSetSummaryResult(
+  result: CommandResult | null | undefined,
+  kind: SetSummaryKind,
+  normalization: SetSummaryNormalization,
+) {
+  if (!result) {
+    return null;
+  }
+
+  const message = normalizeSetSummaryText(result.message, normalization);
+  const remediation = result.remediation
+    ? normalizeSetSummaryText(result.remediation, normalization)
+    : null;
+
+  return formatMessageWithRemediation(`${SET_SUMMARY_PREFIXES[kind]}${message}`, remediation);
 }
 
 export function profileSetStatus(active: boolean, ready: boolean) {
@@ -82,16 +115,26 @@ export function setCommandResultLabel(
   result: CommandResult | null | undefined,
   kind: "set" | "project-rule",
 ) {
-  if (!result) {
-    return null;
-  }
+  return formatSetSummaryResult(
+    result,
+    kind,
+    kind === "project-rule" ? "project-rule" : "runtime",
+  );
+}
 
-  const message = normalizeSetPanelResultText(result.message, kind);
-  const remediation = result.remediation
-    ? normalizeSetPanelResultText(result.remediation, kind)
-    : null;
+export function setResultSummary(
+  result: CommandResult | null | undefined,
+  normalizeRuntimeCopy = false,
+) {
+  return formatSetSummaryResult(result, "set", normalizeRuntimeCopy ? "runtime" : "none");
+}
 
-  return formatMessageWithRemediation(`Last ${kind} result: ${message}`, remediation);
+export function projectResultSummary(result: CommandResult | null | undefined) {
+  return formatSetSummaryResult(result, "project", "none");
+}
+
+export function noRecentSetWorkspaceChangesMessage() {
+  return SETS_DISPLAY_COPY.noRecentSetWorkspaceChanges;
 }
 
 export function duplicateSetNameWarning(name: string) {

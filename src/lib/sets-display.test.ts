@@ -6,7 +6,9 @@ import {
   explicitRuleTargetWarning,
   importedContextActionLabel,
   importedContextStatus,
+  noRecentSetWorkspaceChangesMessage,
   profileSetStatus,
+  projectResultSummary,
   ruleScopeLabel,
   ruleTargetLabel,
   savedRuleStatusLabel,
@@ -14,6 +16,7 @@ import {
   selectedRulePriorityLabel,
   selectedRuleSubtitle,
   setCommandResultLabel,
+  setResultSummary,
   setSelectionCountLabel,
   workspaceSetActionLabel,
 } from "./sets-display";
@@ -114,6 +117,33 @@ describe("sets-display", () => {
       ),
     ).toBe(
       "Last project-rule result: Project-rule guardrails updated. Remediation: Review project-rule checks.",
+    );
+    expect(
+      projectResultSummary({
+        status: "success",
+        message: "Switched project set.",
+        remediation: "Verify live state.",
+      }),
+    ).toBe("Last project result: Switched project set. Remediation: Verify live state.");
+    expect(
+      setResultSummary(
+        {
+          status: "error",
+          message: "AISW cannot load CLI context.",
+          remediation: "Open Sets.",
+        },
+        true,
+      ),
+    ).toBe("Last set result: AI Switch cannot load set. Remediation: Open Sets.");
+    expect(
+      setResultSummary({
+        status: "error",
+        message: "Switched set.",
+        remediation: "Verify live state.",
+      }),
+    ).toBe("Last set result: Switched set. Remediation: Verify live state.");
+    expect(noRecentSetWorkspaceChangesMessage()).toBe(
+      "No recent set or workspace changes are recorded in this session.",
     );
     expect(setCommandResultLabel(null, "set")).toBeNull();
   });
