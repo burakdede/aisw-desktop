@@ -40,6 +40,17 @@ export type OnboardingAccountBadge = {
   tone: "ok" | "soft";
 };
 
+type OnboardingAccountPresentation = {
+  badge: OnboardingAccountBadge;
+  summary: string;
+};
+
+type OnboardingMissingToolNoteParts = {
+  beforeBinary: string;
+  binary: string;
+  afterBinary: string;
+};
+
 export type SetupStepOption = {
   value: SetupStep;
   label: string;
@@ -343,25 +354,11 @@ export function shouldShowSetupFlow(
 }
 
 export function onboardingAccountBadge(item: OnboardingAccountItem): OnboardingAccountBadge {
-  if (item.kind === "live") {
-    return { tone: "ok", label: "Ready to import" };
-  }
-  if (item.kind === "needs-profile") {
-    return { tone: "soft", label: "Needs profile" };
-  }
-  return { tone: "soft", label: "Not installed" };
+  return buildOnboardingAccountPresentation(item).badge;
 }
 
 export function onboardingAccountSummary(item: OnboardingAccountItem) {
-  if (item.kind === "live") {
-    return `${item.account.outcome ?? "unknown"} · ${item.account.auth_method ?? "unknown"}${
-      item.account.matched_profile ? ` · matches ${item.account.matched_profile}` : ""
-    }`;
-  }
-  if (item.kind === "needs-profile") {
-    return "No saved profile yet";
-  }
-  return "Not installed yet";
+  return buildOnboardingAccountPresentation(item).summary;
 }
 
 export function selectDefaultAccountItem(items: OnboardingAccountItem[]) {
@@ -471,10 +468,42 @@ export function onboardingMissingToolHeading(tool: string) {
 }
 
 export function onboardingMissingToolNote(tool: string) {
-  return `You can finish setup without ${toolDisplayName(tool)}. Install the ${toolBinaryName(tool)} tool later when you want to manage that provider here.`;
+  const parts = buildOnboardingMissingToolNoteParts(tool);
+  return `${parts.beforeBinary}${parts.binary}${parts.afterBinary}`;
 }
 
 export function onboardingMissingToolNoteParts(tool: string) {
+  return buildOnboardingMissingToolNoteParts(tool);
+}
+
+function buildOnboardingAccountPresentation(
+  item: OnboardingAccountItem,
+): OnboardingAccountPresentation {
+  if (item.kind === "live") {
+    return {
+      badge: { tone: "ok", label: "Ready to import" },
+      summary: `${item.account.outcome ?? "unknown"} · ${item.account.auth_method ?? "unknown"}${
+        item.account.matched_profile ? ` · matches ${item.account.matched_profile}` : ""
+      }`,
+    };
+  }
+
+  if (item.kind === "needs-profile") {
+    return {
+      badge: { tone: "soft", label: "Needs profile" },
+      summary: "No saved profile yet",
+    };
+  }
+
+  return {
+    badge: { tone: "soft", label: "Not installed" },
+    summary: "Not installed yet",
+  };
+}
+
+function buildOnboardingMissingToolNoteParts(
+  tool: string,
+): OnboardingMissingToolNoteParts {
   const binary = toolBinaryName(tool);
   return {
     beforeBinary: `You can finish setup without ${toolDisplayName(tool)}. Install the `,
