@@ -7,7 +7,11 @@ import { resolveGlobalStateMode, supportedStateModes } from "../features/shared/
 import { useDesktopActions } from "../features/shared/useDesktopActions";
 import {
   buildQuickSwitchItems,
+  nextQuickSwitchSelectionIndex,
+  QUICK_SWITCH_COPY,
+  QUICK_SWITCH_SHORTCUT_HINTS,
   quickSwitchNoMatchesDescription,
+  quickSwitchOptionMetaLabel,
   quickSwitchResultCountLabel,
   quickSwitchStatusCopy,
   type QuickSwitchItem,
@@ -107,14 +111,14 @@ export function QuickSwitchPalette({
       if (event.key === "ArrowDown") {
         event.preventDefault();
         setSelectedIndex((current) =>
-          filteredItems.length ? (current + 1) % filteredItems.length : 0,
+          nextQuickSwitchSelectionIndex(current, filteredItems.length, "next"),
         );
         return;
       }
       if (event.key === "ArrowUp") {
         event.preventDefault();
         setSelectedIndex((current) =>
-          filteredItems.length ? (current - 1 + filteredItems.length) % filteredItems.length : 0,
+          nextQuickSwitchSelectionIndex(current, filteredItems.length, "previous"),
         );
         return;
       }
@@ -196,18 +200,18 @@ export function QuickSwitchPalette({
 
   return (
     <DialogSurface
-      ariaLabel="Quick Switch"
+      ariaLabel={QUICK_SWITCH_COPY.dialogAriaLabel}
       className="quick-switch-palette"
       initialFocusSelector="input, button:not([disabled])"
       onClose={onClose}
     >
         <div className="quick-switch-header quick-switch-header-compact">
           <div>
-            <p className="card-kicker">Quick Switch</p>
-            <h3>Search sets or profiles</h3>
+            <p className="card-kicker">{QUICK_SWITCH_COPY.kicker}</p>
+            <h3>{QUICK_SWITCH_COPY.heading}</h3>
           </div>
           <button className="ghost-button" type="button" onClick={onClose}>
-            Close
+            {QUICK_SWITCH_COPY.closeLabel}
           </button>
         </div>
         <div className="quick-switch-search-row">
@@ -215,10 +219,10 @@ export function QuickSwitchPalette({
             ref={inputRef}
             className="search-field quick-switch-search-field"
             inputClassName="search-field-input quick-switch-search"
-            ariaLabel="Search Quick Switch"
+            ariaLabel={QUICK_SWITCH_COPY.searchAriaLabel}
             ariaControls="quick-switch-results-listbox"
             ariaActiveDescendant={selectedItem ? `quick-switch-option-${selectedItem.id}` : undefined}
-            placeholder="Search profiles or sets"
+            placeholder={QUICK_SWITCH_COPY.searchPlaceholder}
             value={query}
             onChange={setQuery}
           />
@@ -248,7 +252,7 @@ export function QuickSwitchPalette({
           className="quick-switch-results"
           role="listbox"
           id="quick-switch-results-listbox"
-          aria-label="Quick Switch results"
+          aria-label={QUICK_SWITCH_COPY.resultsAriaLabel}
         >
           {filteredItems.length ? (
             Object.entries(groupedItems).map(([group, groupItems]) => (
@@ -294,7 +298,9 @@ export function QuickSwitchPalette({
                               )}
                             </strong>
                             {item.active ? (
-                              <span className="quick-switch-option-badge">Current</span>
+                              <span className="quick-switch-option-badge">
+                                {QUICK_SWITCH_COPY.currentBadgeLabel}
+                              </span>
                             ) : null}
                           </div>
                           <p>
@@ -302,7 +308,7 @@ export function QuickSwitchPalette({
                           </p>
                         </div>
                         <span className="quick-switch-option-meta">
-                          {item.active ? "Selected" : "Return"}
+                          {quickSwitchOptionMetaLabel(item.active)}
                         </span>
                       </button>
                     );
@@ -312,32 +318,25 @@ export function QuickSwitchPalette({
             ))
           ) : (
             <article className="diagnostic-card">
-              <h3>No matches</h3>
+              <h3>{QUICK_SWITCH_COPY.noMatchesHeading}</h3>
               <p className="inline-note">
                 {quickSwitchNoMatchesDescription()}
               </p>
             </article>
           )}
         </div>
-        <footer className="quick-switch-footer quick-switch-footer-compact" aria-label="Quick Switch shortcuts">
-          <span>
-            <kbd>↑</kbd>
-            <kbd>↓</kbd>
-            Move
-          </span>
-          <span>
-            <kbd>Enter</kbd>
-            Switch
-          </span>
-          <span>
-            <kbd>⌘</kbd>
-            <kbd>Enter</kbd>
-            Match all
-          </span>
-          <span>
-            <kbd>Esc</kbd>
-            Close
-          </span>
+        <footer
+          className="quick-switch-footer quick-switch-footer-compact"
+          aria-label={QUICK_SWITCH_COPY.shortcutsAriaLabel}
+        >
+          {QUICK_SWITCH_SHORTCUT_HINTS.map((hint) => (
+            <span key={`${hint.keys.join("+")}-${hint.label}`}>
+              {hint.keys.map((key) => (
+                <kbd key={key}>{key}</kbd>
+              ))}
+              {hint.label}
+            </span>
+          ))}
         </footer>
     </DialogSurface>
   );

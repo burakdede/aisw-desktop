@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import type { AppSnapshot, DesktopSettings } from "../lib/schemas";
 import {
   buildQuickSwitchItems,
+  nextQuickSwitchSelectionIndex,
+  QUICK_SWITCH_COPY,
+  QUICK_SWITCH_SHORTCUT_HINTS,
   quickSwitchNoMatchesDescription,
+  quickSwitchOptionMetaLabel,
   quickSwitchResultCountLabel,
   quickSwitchShortcutSummary,
   quickSwitchStatusCopy,
@@ -109,6 +113,14 @@ describe("quick-switch-display", () => {
   it("shares quick switch status copy and shortcuts", () => {
     const items = buildQuickSwitchItems(makeSettings(), makeSnapshot());
 
+    expect(QUICK_SWITCH_COPY.searchPlaceholder).toBe("Search profiles or sets");
+    expect(QUICK_SWITCH_COPY.currentBadgeLabel).toBe("Current");
+    expect(QUICK_SWITCH_SHORTCUT_HINTS).toEqual([
+      { keys: ["↑", "↓"], label: "Move" },
+      { keys: ["Enter"], label: "Switch" },
+      { keys: ["⌘", "Enter"], label: "Match all" },
+      { keys: ["Esc"], label: "Close" },
+    ]);
     expect(quickSwitchShortcutSummary(items[0])).toBe("Enter switches set");
     expect(quickSwitchShortcutSummary(items[2])).toBe("⌘Enter matches tools");
     expect(quickSwitchStatusCopy(items[0])).toEqual({
@@ -123,6 +135,8 @@ describe("quick-switch-display", () => {
       subtitle: "Search by set name, tool, profile name, or saved label.",
       shortcut: null,
     });
+    expect(quickSwitchOptionMetaLabel(true)).toBe("Selected");
+    expect(quickSwitchOptionMetaLabel(false)).toBe("Return");
   });
 
   it("shares result-count and empty-state copy", () => {
@@ -131,5 +145,9 @@ describe("quick-switch-display", () => {
     expect(quickSwitchNoMatchesDescription()).toBe(
       "Search by set name, tool, profile name, or saved label.",
     );
+    expect(nextQuickSwitchSelectionIndex(0, 0, "next")).toBe(0);
+    expect(nextQuickSwitchSelectionIndex(0, 3, "next")).toBe(1);
+    expect(nextQuickSwitchSelectionIndex(2, 3, "next")).toBe(0);
+    expect(nextQuickSwitchSelectionIndex(0, 3, "previous")).toBe(2);
   });
 });

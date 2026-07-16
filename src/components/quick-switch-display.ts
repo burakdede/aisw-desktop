@@ -44,6 +44,29 @@ export type QuickSwitchItem =
       label: string;
     };
 
+export const QUICK_SWITCH_COPY = {
+  dialogAriaLabel: "Quick Switch",
+  kicker: "Quick Switch",
+  heading: "Search sets or profiles",
+  closeLabel: "Close",
+  searchAriaLabel: "Search Quick Switch",
+  searchPlaceholder: "Search profiles or sets",
+  resultsAriaLabel: "Quick Switch results",
+  shortcutsAriaLabel: "Quick Switch shortcuts",
+  noMatchesHeading: "No matches",
+  currentSelectionLabel: "Current selection",
+  currentBadgeLabel: "Current",
+  selectedMetaLabel: "Selected",
+  inactiveMetaLabel: "Return",
+} as const;
+
+export const QUICK_SWITCH_SHORTCUT_HINTS = [
+  { keys: ["↑", "↓"], label: "Move" },
+  { keys: ["Enter"], label: "Switch" },
+  { keys: ["⌘", "Enter"], label: "Match all" },
+  { keys: ["Esc"], label: "Close" },
+] as const;
+
 export function buildQuickSwitchItems(settings: DesktopSettings, snapshot: AppSnapshot): QuickSwitchItem[] {
   const items: QuickSwitchItem[] = [];
 
@@ -117,7 +140,7 @@ export function quickSwitchStatusCopy(item: QuickSwitchItem | null) {
   if (!item) {
     return {
       label: "Selection",
-      title: "No matches",
+      title: QUICK_SWITCH_COPY.noMatchesHeading,
       subtitle: quickSwitchNoMatchesDescription(),
       shortcut: null,
     };
@@ -126,7 +149,7 @@ export function quickSwitchStatusCopy(item: QuickSwitchItem | null) {
   return {
     label: item.group,
     title: item.title,
-    subtitle: item.active ? "Current selection" : item.subtitle,
+    subtitle: item.active ? QUICK_SWITCH_COPY.currentSelectionLabel : item.subtitle,
     shortcut: quickSwitchShortcutSummary(item),
   };
 }
@@ -137,6 +160,26 @@ export function quickSwitchResultCountLabel(count: number) {
 
 export function quickSwitchNoMatchesDescription() {
   return "Search by set name, tool, profile name, or saved label.";
+}
+
+export function nextQuickSwitchSelectionIndex(
+  currentIndex: number,
+  totalItems: number,
+  direction: "next" | "previous",
+) {
+  if (totalItems <= 0) {
+    return 0;
+  }
+
+  if (direction === "next") {
+    return (currentIndex + 1) % totalItems;
+  }
+
+  return (currentIndex - 1 + totalItems) % totalItems;
+}
+
+export function quickSwitchOptionMetaLabel(active: boolean) {
+  return active ? QUICK_SWITCH_COPY.selectedMetaLabel : QUICK_SWITCH_COPY.inactiveMetaLabel;
 }
 
 function quickSwitchSetSubtitle(set: NonNullable<DesktopSettings["profile_sets"]>[number]) {
