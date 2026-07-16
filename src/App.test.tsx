@@ -20,6 +20,7 @@ import {
   type DesktopEventName,
 } from "./lib/desktop-event-contract";
 import { loadDesktopPreferences } from "./lib/desktop-preferences";
+import type { UnknownRecord } from "./lib/parse-guards";
 import { desktopSettingsSchema } from "./lib/schemas";
 import type { AppBootstrap, AppSnapshot, DesktopSettings, InitReport } from "./lib/schemas";
 
@@ -44,6 +45,8 @@ const bootstrapSettings: DesktopSettings = {
   profile_labels: {},
   profile_sets: [],
 };
+
+type DesktopMockRecord = UnknownRecord;
 
 const bootstrap = {
   settings: bootstrapSettings,
@@ -342,6 +345,18 @@ function getQuickSwitchDialog() {
   return within(screen.getByRole("dialog", { name: "Quick Switch" }));
 }
 
+function desktopMockRecord(overrides: DesktopMockRecord) {
+  return overrides;
+}
+
+function readDesktopMockRecord() {
+  const mock = window.__AISW_DESKTOP_MOCK__;
+  if (!mock || typeof mock === "function") {
+    throw new Error("Expected the desktop mock to be a static record.");
+  }
+  return mock;
+}
+
 async function openQuickSwitchDialog() {
   if (!screen.queryByRole("dialog", { name: "Quick Switch" })) {
     await waitFor(() => {
@@ -620,7 +635,7 @@ describe("App", () => {
   });
 
   it("shows activity in a timeline and inspector layout", async () => {
-    const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
+    const defaultMock = readDesktopMockRecord();
     const calls: Array<{ command: string; args: unknown }> = [];
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
@@ -6640,13 +6655,13 @@ describe("App", () => {
 
   it("opens local documentation from the app menu when the reference file is available", async () => {
     const calls: string[] = [];
-    const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
+    const defaultMock = readDesktopMockRecord();
     window.__AISW_DESKTOP_MOCK__ = async (command) => {
       calls.push(command);
       return (
-        {
+        desktopMockRecord({
           open_reference_document: "/Users/burakdede/Projects/aisw-desktop/README.md",
-        } as Record<string, unknown>
+        })
       )[command] ?? defaultMock[command];
     };
 
@@ -6677,13 +6692,13 @@ describe("App", () => {
 
   it("opens the issue tracker from the app menu", async () => {
     const calls: string[] = [];
-    const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
+    const defaultMock = readDesktopMockRecord();
     window.__AISW_DESKTOP_MOCK__ = async (command) => {
       calls.push(command);
       return (
-        {
+        desktopMockRecord({
           open_issue_tracker: "https://github.com/example/ai-switch/issues",
-        } as Record<string, unknown>
+        })
       )[command] ?? defaultMock[command];
     };
 
@@ -6698,20 +6713,20 @@ describe("App", () => {
 
   it("falls back to diagnostic export when opening the issue tracker fails", async () => {
     const calls: string[] = [];
-    const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
+    const defaultMock = readDesktopMockRecord();
     window.__AISW_DESKTOP_MOCK__ = async (command) => {
       calls.push(command);
       if (command === "open_issue_tracker") {
         throw new Error("Issue tracker unavailable");
       }
       return (
-        {
+        desktopMockRecord({
           export_diagnostic_bundle: {
             path: "/tmp/ai-switch/ai-switch-diagnostics-123.json",
             filename: "ai-switch-diagnostics-123.json",
             generated_at: "unix:123",
           },
-        } as Record<string, unknown>
+        })
       )[command] ?? defaultMock[command];
     };
 
@@ -6741,7 +6756,7 @@ describe("App", () => {
   it("opens troubleshooting from the app menu in diagnostics", async () => {
     let doctorRuns = 0;
     let verifyRuns = 0;
-    const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
+    const defaultMock = readDesktopMockRecord();
 
     window.__AISW_DESKTOP_MOCK__ = async (command) => {
       if (command === "run_doctor") {
@@ -8504,18 +8519,18 @@ describe("App", () => {
 
   it("exports a redacted diagnostic report from security settings", async () => {
     const calls: string[] = [];
-    const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
+    const defaultMock = readDesktopMockRecord();
     window.__AISW_DESKTOP_MOCK__ = async (command) => {
       calls.push(command);
       return (
-        {
+        desktopMockRecord({
           export_diagnostic_bundle: {
             path: "/tmp/ai-switch/ai-switch-diagnostics-123.json",
             filename: "ai-switch-diagnostics-123.json",
             generated_at: "unix:123",
           },
           run_doctor: { summary: { status: "pass" }, checks: [] },
-        } as Record<string, unknown>
+        })
       )[command] ?? defaultMock[command];
     };
 
@@ -8534,11 +8549,11 @@ describe("App", () => {
 
   it("opens the app data folder from advanced settings", async () => {
     const calls: string[] = [];
-    const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
+    const defaultMock = readDesktopMockRecord();
     window.__AISW_DESKTOP_MOCK__ = async (command) => {
       calls.push(command);
       return (
-        {
+        desktopMockRecord({
           open_app_data_folder: "/tmp/ai-switch-desktop",
           run_doctor: { summary: { status: "pass" }, checks: [] },
           get_shell_guidance: {
@@ -8548,7 +8563,7 @@ describe("App", () => {
             manual_apply_examples: [],
             variants: [],
           },
-        } as Record<string, unknown>
+        })
       )[command] ?? defaultMock[command];
     };
 
@@ -8583,7 +8598,7 @@ describe("App", () => {
   it("saves general desktop preferences from settings", async () => {
     const commands: string[] = [];
     let launchAtLoginEnabled = false;
-    const defaultMock = window.__AISW_DESKTOP_MOCK__ as Record<string, unknown>;
+    const defaultMock = readDesktopMockRecord();
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       commands.push(command);
       if (command === "get_launch_at_login_status") {
