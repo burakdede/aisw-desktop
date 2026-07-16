@@ -1,4 +1,3 @@
-import { createRef } from "react";
 import { act, renderHook } from "@testing-library/react";
 import { PANEL_COMPACT_BREAKPOINT } from "../lib/layout";
 import { useCompactLayout } from "./useCompactLayout";
@@ -55,12 +54,15 @@ describe("useCompactLayout", () => {
 
     const observe = vi.fn();
     const disconnect = vi.fn();
-    globalThis.ResizeObserver = class {
+    class MockResizeObserver implements ResizeObserver {
       constructor(_callback: ResizeObserverCallback) {}
 
       observe = observe;
+      unobserve = vi.fn();
       disconnect = disconnect;
-    } as unknown as typeof ResizeObserver;
+      takeRecords = vi.fn(() => []);
+    }
+    globalThis.ResizeObserver = MockResizeObserver;
 
     const { result, unmount } = renderHook(() => useCompactLayout(ref, PANEL_COMPACT_BREAKPOINT));
     expect(result.current).toBe(false);
