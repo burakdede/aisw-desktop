@@ -3,6 +3,7 @@ import { disposeSafely, type AsyncDispose } from "./async-dispose";
 import { resolveBrowserStorage } from "./browser-storage";
 import { WINDOW_STATE_PERSIST_DELAY_MS } from "./desktop-timing";
 import { hasDesktopRuntime } from "./runtime-environment";
+import { asFiniteNumber, parseJsonObject } from "./parse-guards";
 
 type PersistedWindowState = {
   width: number;
@@ -29,7 +30,7 @@ type WindowModule = {
   LogicalSize: new (width: number, height: number) => unknown;
 };
 
-const WINDOW_STATE_KEY = "ai-switch.desktop.window-state";
+export const WINDOW_STATE_STORAGE_KEY = "ai-switch.desktop.window-state";
 
 declare global {
   interface Window {
@@ -77,7 +78,7 @@ export function clearPersistedWindowState() {
   }
 
   try {
-    storage.removeItem(WINDOW_STATE_KEY);
+    storage.removeItem(WINDOW_STATE_STORAGE_KEY);
   } catch {
     // Ignore storage failures and allow the app to continue.
   }
@@ -120,7 +121,7 @@ async function persistWindowState(appWindow: WindowGeometryHandle) {
       y: Math.round(position.y),
     };
 
-    storage.setItem(WINDOW_STATE_KEY, JSON.stringify(nextState));
+    storage.setItem(WINDOW_STATE_STORAGE_KEY, JSON.stringify(nextState));
   } catch {
     // Ignore persistence failures and keep the window interactive.
   }
@@ -132,35 +133,30 @@ function loadWindowState(): PersistedWindowState | null {
     return null;
   }
 
-  try {
-    const raw = storage.getItem(WINDOW_STATE_KEY);
-    if (!raw) {
-      return null;
-    }
-    const parsed = JSON.parse(raw) as Partial<PersistedWindowState> | null;
-    if (
-      !parsed ||
-      !isFiniteNumber(parsed.width) ||
-      !isFiniteNumber(parsed.height) ||
-      !isFiniteNumber(parsed.x) ||
-      !isFiniteNumber(parsed.y)
-    ) {
-      return null;
-    }
-
-    return {
-      width: Math.max(parsed.width, MIN_WINDOW_WIDTH),
-      height: Math.max(parsed.height, MIN_WINDOW_HEIGHT),
-      x: parsed.x,
-      y: parsed.y,
-    };
-  } catch {
+  const parsed = parseJsonObject(storage.getItem(WINDOW_STATE_STORAGE_KEY));
+  if (!parsed) {
     return null;
   }
-}
 
-function isFiniteNumber(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value);
+  const width = asFiniteNumber(parsed.width);
+  const height = asFiniteNumber(parsed.height);
+  const x = asFiniteNumber(parsed.x);
+  const y = asFiniteNumber(parsed.y);
+  if (
+    width === undefined ||
+    height === undefined ||
+    x === undefined ||
+    y === undefined
+  ) {
+    return null;
+  }
+
+  return {
+    width: Math.max(width, MIN_WINDOW_WIDTH),
+    height: Math.max(height, MIN_WINDOW_HEIGHT),
+    x,
+    y,
+  };
 }
 
 async function resolveWindowModule(): Promise<WindowModule | null> {
@@ -183,8 +179,9 @@ async function resolveWindowModule(): Promise<WindowModule | null> {
       ) {}
     }
 
+    const mockWindow = window.__AISW_WINDOW_MOCK__;
     return {
-      getCurrentWindow: () => window.__AISW_WINDOW_MOCK__ as WindowGeometryHandle,
+      getCurrentWindow: () => mockWindow,
       LogicalPosition: MockLogicalPosition,
       LogicalSize: MockLogicalSize,
     };

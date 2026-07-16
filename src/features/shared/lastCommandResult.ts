@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import { resolveBrowserStorage, type BrowserStorage } from "../../lib/browser-storage";
 import { ACTIVITY_STORE_KEY, limitActivityTimeline } from "./activity-store";
 import {
+  COMMAND_RESULT_GLOBAL_IDS,
   COMMAND_RESULT_SCOPE_TYPES,
   commandResultScopeValue,
   isCommandResultGlobalId,
@@ -16,7 +17,7 @@ import {
   type CommandResultStatus,
   type ParsedStoredCommandResult,
 } from "./command-result-shape";
-import { asObject, asOptionalString } from "../../lib/parse-guards";
+import { asObject, asOptionalString, parseJsonObject } from "../../lib/parse-guards";
 
 export type LastCommandResult = ParsedStoredCommandResult;
 
@@ -113,54 +114,37 @@ function loadStore(): CommandResultStore {
   }
 
   const raw = storage.getItem(ACTIVITY_STORE_KEY);
-  if (!raw) {
+  const parsed = parseJsonObject(raw);
+  if (!parsed) {
     return emptyStore();
   }
 
-  try {
-    const parsed = JSON.parse(raw) as Partial<CommandResultStore> | null;
-    const tool = asToolResultMap(parsed?.tool);
-    const global = asGlobalResultMap(parsed?.global);
-    const timeline = asTimeline(parsed?.timeline);
+  const tool = asToolResultMap(parsed.tool);
+  const global = asGlobalResultMap(parsed.global);
+  const timeline = asTimeline(parsed.timeline);
 
-    if (timeline.length > 0) {
-      return {
-        tool,
-        global,
-        timeline,
-      };
-    }
-
-    const migratedTimeline = [
-      ...Object.entries(global).flatMap(([id, result]) =>
-        result
-          ? [
-              createTimelineEntry(
-                { type: "global", id: id as CommandResultGlobalId },
-                result,
-                "migrated",
-              ),
-            ]
-          : [],
-      ),
-      ...Object.entries(tool).flatMap(([entryTool, result]) =>
-        result
-          ? [
-              createTimelineEntry({ type: "tool", tool: entryTool }, result, "migrated"),
-            ]
-          : [],
-      ),
-    ]
-      .sort((left, right) => right.at - left.at);
-
+  if (timeline.length > 0) {
     return {
       tool,
       global,
-      timeline: limitActivityTimeline(migratedTimeline),
+      timeline,
     };
-  } catch {
-    return emptyStore();
   }
+
+  const migratedTimeline = [
+    ...getGlobalTimelineEntries(global),
+    ...Object.entries(tool).flatMap(([entryTool, result]) =>
+      result
+        ? [createTimelineEntry({ type: "tool", tool: entryTool }, result, "migrated")]
+        : [],
+    ),
+  ].sort((left, right) => right.at - left.at);
+
+  return {
+    tool,
+    global,
+    timeline: limitActivityTimeline(migratedTimeline),
+  };
 }
 
 function persistStore(store: CommandResultStore) {
@@ -198,16 +182,19 @@ function asGlobalResultMap(value: unknown): Partial<Record<CommandResultGlobalId
     return {};
   }
 
-  return Object.fromEntries(
-    Object.entries(value).flatMap(([key, result]) => {
-      if (!isCommandResultGlobalId(key)) {
-        return [];
-      }
+  const results: Partial<Record<CommandResultGlobalId, LastCommandResult>> = {};
+  Object.entries(value).forEach(([key, result]) => {
+    if (!isCommandResultGlobalId(key)) {
+      return;
+    }
 
-      const parsed = asLastCommandResult(result);
-      return parsed ? [[key, parsed]] : [];
-    }),
-  ) as Partial<Record<CommandResultGlobalId, LastCommandResult>>;
+    const parsed = asLastCommandResult(result);
+    if (parsed) {
+      results[key] = parsed;
+    }
+  });
+
+  return results;
 }
 
 function asTimeline(value: unknown): ActivityTimelineEntry[] {
@@ -277,4 +264,13 @@ function buildTimelineEntryKey(
 function createTimelineKeySuffix() {
   nextTimelineNonce += 1;
   return nextTimelineNonce.toString(16);
+}
+
+function getGlobalTimelineEntries(global: Partial<Record<CommandResultGlobalId, LastCommandResult>>) {
+  return Object.values(COMMAND_RESULT_GLOBAL_IDS).flatMap((id) => {
+    const result = global[id];
+    return result
+      ? [createTimelineEntry({ type: "global", id }, result, "migrated")]
+      : [];
+  });
 }

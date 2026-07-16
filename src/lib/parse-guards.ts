@@ -26,6 +26,22 @@ export function asNumber(value: unknown, fallback = 0) {
   return typeof value === "number" ? value : fallback;
 }
 
+export function asFiniteNumber(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+export function parseJsonObject(value: string | null | undefined): UnknownRecord | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  try {
+    return asObject(JSON.parse(value));
+  } catch {
+    return undefined;
+  }
+}
+
 export function isOneOf<const Value extends string>(
   options: readonly Value[],
   value: unknown,
