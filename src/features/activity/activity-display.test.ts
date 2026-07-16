@@ -30,6 +30,7 @@ import {
   resolveSelectedActivityEntryKey,
   type ActivityEntry,
 } from "./activity-display";
+import { COMMAND_RESULT_GLOBAL_IDS } from "../shared/command-result-scope";
 import type { ActivityTimelineEntry } from "../shared/lastCommandResult";
 
 function makeEntry(overrides: Partial<ActivityEntry> = {}): ActivityEntry {
@@ -57,8 +58,10 @@ describe("activity-display", () => {
       { value: "error", label: "Failed" },
     ]);
     expect(activityScopeLabel({ type: "tool", tool: "claude" })).toBe("Claude Code");
-    expect(activityScopeLabel({ type: "global", id: "workspace" })).toBe("Project rules");
-    expect(activityGlobalScopeLabel("profile-set")).toBe("Saved set");
+    expect(
+      activityScopeLabel({ type: "global", id: COMMAND_RESULT_GLOBAL_IDS.workspace }),
+    ).toBe("Project rules");
+    expect(activityGlobalScopeLabel(COMMAND_RESULT_GLOBAL_IDS.profileSet)).toBe("Saved set");
     expect(activityGlobalScopeLabel("unknown")).toBe("App");
     expect(activityStatusLabel("success")).toBe("Success");
     expect(activityStatusLabel("error")).toBe("Failed");
@@ -125,7 +128,7 @@ describe("activity-display", () => {
       },
       {
         key: "entry-2",
-        scope: { type: "global", id: "settings" },
+        scope: { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.settings },
         label: "Save settings",
         status: "error",
         message: "Settings update failed.",

@@ -1,4 +1,4 @@
-import { DesktopCommandError, type TrayCommandResultEvent } from "./lib/tauri";
+import { DesktopCommandError } from "./lib/tauri";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "./lib/schemas";
 import { resolveErrorDetails } from "./lib/error-details";
 import { DEFAULT_ACTION_FAILURE_MESSAGE } from "./lib/display-copy";
@@ -10,7 +10,11 @@ import type {
   CommandResultScope,
   LastCommandResult,
 } from "./features/shared/lastCommandResult";
-import { parseTrayCommandResultEvent } from "./features/shared/command-result-shape";
+import {
+  parseTrayCommandResultEvent,
+  type ParsedTrayCommandResultEvent,
+} from "./features/shared/command-result-shape";
+import { COMMAND_RESULT_GLOBAL_IDS } from "./features/shared/command-result-scope";
 import { normalizeRuntimeLanguage } from "./features/shared/runtime-language";
 import {
   profileDisplayLabel,
@@ -160,13 +164,13 @@ export type SidebarStatusRow = {
 
 export type ReapplyActiveProfileAction =
   | {
-      scope: { type: "global"; id: "profile-set" };
+      scope: { type: "global"; id: typeof COMMAND_RESULT_GLOBAL_IDS.profileSet };
       resultLabel: "Re-apply active profile";
       message: string;
       action: { kind: "set"; name: string; label: string };
     }
   | {
-      scope: { type: "global"; id: "switch-all" };
+      scope: { type: "global"; id: typeof COMMAND_RESULT_GLOBAL_IDS.switchAll };
       resultLabel: "Re-apply active profile";
       message: string;
       action: {
@@ -484,13 +488,15 @@ export function buildTrayCommandFeedback(input: unknown) {
   const message = normalizeRuntimeLanguage(event.message);
   const remediation = normalizeRuntimeLanguage(event.remediation);
   const label =
-    event.scope === "global" && event.id === "context"
+    event.scope === "global" && event.id === COMMAND_RESULT_GLOBAL_IDS.context
       ? "Use set"
       : normalizeRuntimeLanguage(event.label);
-  const scope: CommandResultScope =
-    event.scope === "tool"
-      ? { type: "tool", tool: event.tool }
-      : { type: "global", id: event.id };
+  let scope: CommandResultScope;
+  if (event.scope === "tool") {
+    scope = { type: "tool", tool: event.tool };
+  } else {
+    scope = { type: "global", id: event.id };
+  }
 
   return {
     notification: {
@@ -529,7 +535,7 @@ export function resolveActiveReapplyAction(input: {
   if (activeSet) {
     const label = profileSetDisplayLabel(activeSet);
     return {
-      scope: { type: "global", id: "profile-set" },
+      scope: { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.profileSet },
       resultLabel: REAPPLY_ACTIVE_PROFILE_LABEL,
       message: `Re-applied current set ${label}.`,
       action: {
@@ -554,7 +560,7 @@ export function resolveActiveReapplyAction(input: {
     const profile = uniqueProfiles[0];
     const label = profileDisplayLabel(settings, snapshot, profile);
     return {
-      scope: { type: "global", id: "switch-all" },
+      scope: { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.switchAll },
       resultLabel: REAPPLY_ACTIVE_PROFILE_LABEL,
       message: `Re-applied shared profile ${label}.`,
       action: {
@@ -611,7 +617,7 @@ export function sectionDetail(section: string, setupFocused = false) {
   }
 }
 
-function asTrayCommandResultEvent(value: unknown): TrayCommandResultEvent {
+function asTrayCommandResultEvent(value: unknown): ParsedTrayCommandResultEvent {
   const parsed = parseTrayCommandResultEvent(value);
   if (!parsed) {
     throw new Error("Invalid tray command result payload.");

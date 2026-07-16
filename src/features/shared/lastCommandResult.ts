@@ -2,13 +2,17 @@ import { useSyncExternalStore } from "react";
 import { resolveBrowserStorage } from "../../lib/browser-storage";
 import { ACTIVITY_STORE_KEY, limitActivityTimeline } from "./activity-store";
 import {
+  isCommandResultGlobalId,
+  type CommandResultGlobalId,
+} from "./command-result-scope";
+import {
   parseStoredCommandResult,
   type CommandResultStatus,
 } from "./command-result-shape";
 
 export type CommandResultScope =
   | { type: "tool"; tool: string }
-  | { type: "global"; id: string };
+  | { type: "global"; id: CommandResultGlobalId };
 
 export type LastCommandResult = {
   label: string;
@@ -28,7 +32,7 @@ export type ActivityTimelineEntry = LastCommandResult & {
 
 type CommandResultStore = {
   tool: Record<string, LastCommandResult | undefined>;
-  global: Record<string, LastCommandResult | undefined>;
+  global: Partial<Record<CommandResultGlobalId, LastCommandResult>>;
   timeline: ActivityTimelineEntry[];
 };
 
@@ -120,8 +124,8 @@ function loadStore(): CommandResultStore {
 
   try {
     const parsed = JSON.parse(raw) as Partial<CommandResultStore> | null;
-    const tool = asResultMap(parsed?.tool);
-    const global = asResultMap(parsed?.global);
+    const tool = asToolResultMap(parsed?.tool);
+    const global = asGlobalResultMap(parsed?.global);
     const timeline = asTimeline(parsed?.timeline);
 
     if (timeline.length > 0) {
@@ -136,7 +140,11 @@ function loadStore(): CommandResultStore {
       ...Object.entries(global).flatMap(([id, result]) =>
         result
           ? [
-              createTimelineEntry({ type: "global", id }, result, "migrated"),
+              createTimelineEntry(
+                { type: "global", id: id as CommandResultGlobalId },
+                result,
+                "migrated",
+              ),
             ]
           : [],
       ),
@@ -177,7 +185,7 @@ function resolveStorage(): Storage | null {
   return resolveBrowserStorage() as Storage | null;
 }
 
-function asResultMap(value: unknown): Record<string, LastCommandResult | undefined> {
+function asToolResultMap(value: unknown): Record<string, LastCommandResult | undefined> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return {};
   }
@@ -188,6 +196,23 @@ function asResultMap(value: unknown): Record<string, LastCommandResult | undefin
       return parsed ? [[key, parsed]] : [];
     }),
   );
+}
+
+function asGlobalResultMap(value: unknown): Partial<Record<CommandResultGlobalId, LastCommandResult>> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).flatMap(([key, result]) => {
+      if (!isCommandResultGlobalId(key)) {
+        return [];
+      }
+
+      const parsed = asLastCommandResult(result);
+      return parsed ? [[key, parsed]] : [];
+    }),
+  ) as Partial<Record<CommandResultGlobalId, LastCommandResult>>;
 }
 
 function asTimeline(value: unknown): ActivityTimelineEntry[] {
@@ -238,12 +263,13 @@ function asTimelineEntry(value: unknown): ActivityTimelineEntry | null {
 
   if (
     (scope as Partial<CommandResultScope>).type === "global" &&
-    typeof (scope as { id?: unknown }).id === "string"
+    typeof (scope as { id?: unknown }).id === "string" &&
+    isCommandResultGlobalId((scope as { id: string }).id)
   ) {
     return {
       ...result,
       key: candidate.key,
-      scope: { type: "global", id: (scope as { id: string }).id },
+      scope: { type: "global", id: (scope as { id: CommandResultGlobalId }).id },
     };
   }
 

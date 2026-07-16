@@ -39,6 +39,7 @@ import {
   type WorkspaceBindingScope,
 } from "../../../lib/workspace-binding-contract";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
+import { COMMAND_RESULT_GLOBAL_IDS } from "../../shared/command-result-scope";
 import { resolveGlobalStateMode } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { resolveWorkspaceActivationTarget, workspaceBindingOptions } from "../../workspaces/workspace-activation";
@@ -151,8 +152,11 @@ export function SetsPanel({
   const importedContexts = snapshot.contexts;
   const activeContext = parseWorkspaceStatus(snapshot.workspace_status ?? undefined).currentContext;
   const setCommandResult =
-    lastCommandResults.global["profile-set"] ?? lastCommandResults.global.context ?? null;
-  const workspaceCommandResult = lastCommandResults.global.workspace ?? null;
+    lastCommandResults.global[COMMAND_RESULT_GLOBAL_IDS.profileSet]
+    ?? lastCommandResults.global[COMMAND_RESULT_GLOBAL_IDS.context]
+    ?? null;
+  const workspaceCommandResult =
+    lastCommandResults.global[COMMAND_RESULT_GLOBAL_IDS.workspace] ?? null;
   const setResultLabel = setCommandResultLabel(setCommandResult, "set");
   const projectRuleResultLabel = setCommandResultLabel(workspaceCommandResult, "project-rule");
 

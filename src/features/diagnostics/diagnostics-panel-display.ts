@@ -32,6 +32,7 @@ import {
 } from "./diagnostic-title-match";
 import { toolSupportsEditableStateModes } from "../../lib/tool-registry";
 import type { LastCommandResult } from "../shared/lastCommandResult";
+import { COMMAND_RESULT_GLOBAL_IDS } from "../shared/command-result-scope";
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import {
@@ -380,7 +381,7 @@ export function recentFailureTitle(input: {
         ? RECENT_FAILURE_TITLES.geminiInvalidStateMode
         : RECENT_FAILURE_TITLES.invalidStateMode;
     default:
-      if (input.scope === "global" && input.id === "backup") {
+      if (input.scope === "global" && input.id === COMMAND_RESULT_GLOBAL_IDS.backup) {
         return RECENT_FAILURE_TITLES.backupNeedsAttention;
       }
       return input.tool ? `${titleCase(input.tool)} · ${input.label}` : input.label;

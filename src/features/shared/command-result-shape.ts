@@ -1,4 +1,8 @@
 import { asObject, asOptionalString } from "../../lib/parse-guards";
+import {
+  isCommandResultGlobalId,
+  type CommandResultGlobalId,
+} from "./command-result-scope";
 
 export const COMMAND_RESULT_STATUSES = ["success", "error"] as const;
 
@@ -27,7 +31,7 @@ export type ParsedTrayCommandResultEvent =
     }
   | {
       scope: "global";
-      id: string;
+      id: CommandResultGlobalId;
       label: string;
       status: CommandResultStatus;
       message: string;
@@ -66,7 +70,9 @@ export function parseTrayCommandResultEvent(
 
   if (record.scope === "global") {
     const id = asOptionalString(record.id);
-    return id ? { ...base, scope: "global", id } : null;
+    return id && isCommandResultGlobalId(id)
+      ? { ...base, scope: "global", id }
+      : null;
   }
 
   return null;

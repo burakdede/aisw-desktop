@@ -5,6 +5,7 @@ import {
   parseStoredCommandResult,
   parseTrayCommandResultEvent,
 } from "./command-result-shape";
+import { COMMAND_RESULT_GLOBAL_IDS } from "./command-result-scope";
 
 describe("command-result-shape", () => {
   it("shares stable command result statuses", () => {
@@ -65,7 +66,7 @@ describe("command-result-shape", () => {
     expect(
       parseTrayCommandResultEvent({
         scope: "global",
-        id: "context",
+        id: COMMAND_RESULT_GLOBAL_IDS.context,
         label: "Use set",
         status: "error",
         message: "Mismatch.",
@@ -73,7 +74,7 @@ describe("command-result-shape", () => {
       }),
     ).toEqual({
       scope: "global",
-      id: "context",
+      id: COMMAND_RESULT_GLOBAL_IDS.context,
       label: "Use set",
       status: "error",
       message: "Mismatch.",
@@ -82,6 +83,15 @@ describe("command-result-shape", () => {
     });
 
     expect(parseTrayCommandResultEvent({ scope: "tool", label: "Broken" })).toBeNull();
+    expect(
+      parseTrayCommandResultEvent({
+        scope: "global",
+        id: "unknown",
+        label: "Use set",
+        status: "success",
+        message: "Ignored.",
+      }),
+    ).toBeNull();
   });
 
   it("extracts optional command strings", () => {

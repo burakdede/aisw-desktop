@@ -10,6 +10,7 @@ import {
   type CommandResultScope,
   useLastCommandResults,
 } from "./features/shared/lastCommandResult";
+import { COMMAND_RESULT_GLOBAL_IDS } from "./features/shared/command-result-scope";
 import { normalizeRuntimeLanguage } from "./features/shared/runtime-language";
 import { BackupsPanel } from "./features/backups/components/BackupsPanel";
 import { DiagnosticsPanel } from "./features/diagnostics/components/DiagnosticsPanel";
@@ -280,7 +281,7 @@ export function App() {
     onError: async (error) => {
       const reapplyError = buildReapplyActiveProfileError(error);
       recordCommandResult(
-        { type: "global", id: "profile-set" },
+        { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.profileSet },
         reapplyError.result,
       );
       await notifyDesktop({

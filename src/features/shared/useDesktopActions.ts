@@ -26,6 +26,7 @@ import {
   useLastCommandResults,
   type CommandResultScope,
 } from "./lastCommandResult";
+import { COMMAND_RESULT_GLOBAL_IDS } from "./command-result-scope";
 import {
   buildCommandResultError,
   buildCommandResultSuccess,
@@ -159,7 +160,7 @@ export function useDesktopActions() {
         variables.kind === "profile_set" ? variables.label ?? variables.name : variables.name;
       const message = switchedWorkspaceTargetMessage(targetLabel, variables.matchedTarget);
       recordCommandResult(
-        { type: "global", id: "workspace" },
+        { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.workspace },
         buildCommandResultSuccess({
           label,
           message,
@@ -173,7 +174,7 @@ export function useDesktopActions() {
       return result;
     } catch (error) {
       recordCommandResult(
-        { type: "global", id: "workspace" },
+        { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.workspace },
         buildCommandResultError(error, {
           label,
           fallbackMessage: desktopActionFailureMessage(label),
@@ -225,7 +226,7 @@ export function useDesktopActions() {
       mutationFn: queueMutation(
         DESKTOP_ACTION_RESULT_COPY.labels.switchAllTools,
         useAllProfiles,
-        () => ({ type: "global", id: "switch-all" }),
+        () => ({ type: "global", id: COMMAND_RESULT_GLOBAL_IDS.switchAll }),
         (variables) => switchAllToolsMessage(variables.label, variables.profile),
       ),
       onSettled: invalidate,
@@ -234,7 +235,7 @@ export function useDesktopActions() {
       mutationFn: queueMutation(
         DESKTOP_ACTION_RESULT_COPY.labels.useSet,
         useContext,
-        () => ({ type: "global", id: "context" }),
+        () => ({ type: "global", id: COMMAND_RESULT_GLOBAL_IDS.context }),
         (variables) => activatedSetMessage(variables.label, variables.context),
       ),
       onSettled: invalidate,
@@ -243,7 +244,7 @@ export function useDesktopActions() {
       mutationFn: queueMutation(
         DESKTOP_ACTION_RESULT_COPY.labels.activateSavedSet,
         activateProfileSet,
-        () => ({ type: "global", id: "profile-set" }),
+        () => ({ type: "global", id: COMMAND_RESULT_GLOBAL_IDS.profileSet }),
         (variables) => activatedSavedSetMessage(variables.label, variables.name),
       ),
       onSettled: invalidate,
@@ -271,7 +272,7 @@ export function useDesktopActions() {
       mutationFn: queueMutation(
         DESKTOP_ACTION_RESULT_COPY.labels.restoreBackup,
         restoreBackup,
-        () => ({ type: "global", id: "backup" }),
+        () => ({ type: "global", id: COMMAND_RESULT_GLOBAL_IDS.backup }),
         (backupId) => restoreBackupMessage(backupId),
       ),
       onSuccess: invalidate,
@@ -280,7 +281,7 @@ export function useDesktopActions() {
       mutationFn: queueMutation(
         DESKTOP_ACTION_RESULT_COPY.labels.updateSettings,
         updateSettings,
-        () => ({ type: "global", id: "settings" }),
+        () => ({ type: "global", id: COMMAND_RESULT_GLOBAL_IDS.settings }),
         () => DESKTOP_ACTION_RESULT_COPY.fallbackMessages.settingsSaved,
       ),
       onSuccess: invalidate,
@@ -299,7 +300,7 @@ export function useDesktopActions() {
             runInit,
           );
           recordCommandResult(
-            { type: "global", id: "setup" },
+            { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.setup },
             buildCommandResultSuccess({
               label: DESKTOP_ACTION_RESULT_COPY.labels.runSetup,
               message: DESKTOP_ACTION_RESULT_COPY.fallbackMessages.setupComplete,
@@ -308,7 +309,7 @@ export function useDesktopActions() {
           return result;
         } catch (error) {
           recordCommandResult(
-            { type: "global", id: "setup" },
+            { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.setup },
             buildCommandResultError(error, {
               label: DESKTOP_ACTION_RESULT_COPY.labels.runSetup,
               fallbackMessage: desktopActionFailureMessage(
@@ -328,7 +329,7 @@ export function useDesktopActions() {
       mutationFn: queueMutation(
         DESKTOP_ACTION_RESULT_COPY.labels.saveProjectRule,
         workspaceBind,
-        () => ({ type: "global", id: "workspace" }),
+        () => ({ type: "global", id: COMMAND_RESULT_GLOBAL_IDS.workspace }),
         (variables) => savedProjectRuleMessage(variables.label, variables.context),
       ),
       onSuccess: invalidate,
@@ -337,7 +338,7 @@ export function useDesktopActions() {
       mutationFn: queueMutation(
         DESKTOP_ACTION_RESULT_COPY.labels.removeProjectRule,
         workspaceUnbind,
-        () => ({ type: "global", id: "workspace" }),
+        () => ({ type: "global", id: COMMAND_RESULT_GLOBAL_IDS.workspace }),
         () => removedProjectRuleMessage(),
       ),
       onSuccess: invalidate,
@@ -346,7 +347,7 @@ export function useDesktopActions() {
       mutationFn: queueMutation(
         DESKTOP_ACTION_RESULT_COPY.labels.updateProjectRuleGuard,
         workspaceGuard,
-        () => ({ type: "global", id: "workspace" }),
+        () => ({ type: "global", id: COMMAND_RESULT_GLOBAL_IDS.workspace }),
         (mode) => updatedProjectRuleGuardMessage(mode),
       ),
       onSuccess: invalidate,

@@ -3,6 +3,7 @@ import {
   ACTIVITY_STORE_KEY,
   ACTIVITY_TIMELINE_LIMIT,
 } from "./activity-store";
+import { COMMAND_RESULT_GLOBAL_IDS } from "./command-result-scope";
 
 type StorageMock = {
   getItem: (key: string) => string | null;
@@ -46,7 +47,7 @@ describe("lastCommandResult store", () => {
       { label: "Switch profile", status: "success", message: "Switched Claude." },
     );
     module.recordCommandResult(
-      { type: "global", id: "workspace" },
+      { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.workspace },
       { label: "Use set", status: "error", message: "Workspace mismatch.", remediation: "Open Sets." },
     );
 
@@ -55,7 +56,10 @@ describe("lastCommandResult store", () => {
     expect(stored.tool.claude.message).toBe("Switched Claude.");
     expect(stored.global.workspace.message).toBe("Workspace mismatch.");
     expect(stored.timeline).toHaveLength(2);
-    expect(stored.timeline[0].scope).toEqual({ type: "global", id: "workspace" });
+    expect(stored.timeline[0].scope).toEqual({
+      type: "global",
+      id: COMMAND_RESULT_GLOBAL_IDS.workspace,
+    });
     expect(stored.timeline[1].scope).toEqual({ type: "tool", tool: "claude" });
 
     dateNow.mockRestore();
@@ -92,7 +96,7 @@ describe("lastCommandResult store", () => {
             },
           },
           global: {
-            context: {
+            [COMMAND_RESULT_GLOBAL_IDS.context]: {
               label: "Use set",
               status: "error",
               message: "Missing context.",
@@ -113,9 +117,12 @@ describe("lastCommandResult store", () => {
 
     const migrated = JSON.parse(window.localStorage.getItem(ACTIVITY_STORE_KEY) ?? "{}");
     expect(migrated.timeline[0].scope).toEqual({ type: "tool", tool: "gemini" });
-    expect(migrated.timeline.some((entry: { scope: { type: string; id?: string } }) => entry.scope.id === "context")).toBe(
-      true,
-    );
+    expect(
+      migrated.timeline.some(
+        (entry: { scope: { type: string; id?: string } }) =>
+          entry.scope.id === COMMAND_RESULT_GLOBAL_IDS.context,
+      ),
+    ).toBe(true);
 
     vi.resetModules();
     Object.defineProperty(window, "localStorage", {
@@ -125,13 +132,56 @@ describe("lastCommandResult store", () => {
     window.localStorage.setItem(ACTIVITY_STORE_KEY, "{not json");
     const invalidModule = await import("./lastCommandResult");
     invalidModule.recordCommandResult(
-      { type: "global", id: "switch-all" },
+      { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.switchAll },
       { label: "Switch all tools", status: "success", message: "Switched all." },
     );
 
     const recovered = JSON.parse(window.localStorage.getItem(ACTIVITY_STORE_KEY) ?? "{}");
     expect(recovered.timeline).toHaveLength(1);
-    expect(recovered.global["switch-all"].message).toBe("Switched all.");
+    expect(recovered.global[COMMAND_RESULT_GLOBAL_IDS.switchAll].message).toBe("Switched all.");
+  });
+
+  it("drops unknown persisted global ids during store recovery", async () => {
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      value: createStorageMock({
+        [ACTIVITY_STORE_KEY]: JSON.stringify({
+          global: {
+            unknown: {
+              label: "Ignored",
+              status: "success",
+              message: "Unknown scope.",
+              at: 100,
+            },
+          },
+          timeline: [
+            {
+              key: "ignored:100",
+              scope: { type: "global", id: "unknown" },
+              label: "Ignored",
+              status: "success",
+              message: "Unknown scope.",
+              at: 100,
+            },
+          ],
+        }),
+      }),
+    });
+
+    const module = await import("./lastCommandResult");
+
+    module.recordCommandResult(
+      { type: "tool", tool: "claude" },
+      { label: "Switch profile", status: "success", message: "Switched Claude." },
+    );
+
+    const recovered = JSON.parse(window.localStorage.getItem(ACTIVITY_STORE_KEY) ?? "{}");
+    expect(recovered.global).toEqual({});
+    expect(recovered.timeline).toEqual([
+      expect.objectContaining({
+        scope: { type: "tool", tool: "claude" },
+      }),
+    ]);
   });
 
   it("caps timeline history to the configured maximum", async () => {

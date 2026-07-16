@@ -11,6 +11,7 @@ import {
   openExternalGuide,
 } from "../../../lib/tool-guidance";
 import type { CommandResultStatus } from "../../shared/command-result-shape";
+import { COMMAND_RESULT_GLOBAL_IDS } from "../../shared/command-result-scope";
 import { supportedStateModes } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import {
@@ -118,9 +119,11 @@ export function OverviewPanel({
     [overviewStates],
   );
   const overallState: OverviewHealthState = overviewSummary.overallState;
-  const workspaceResult = lastCommandResults.global.workspace;
-  const contextResult = lastCommandResults.global.context;
-  const bulkResult = lastCommandResults.global["profile-set"] ?? lastCommandResults.global["switch-all"];
+  const workspaceResult = lastCommandResults.global[COMMAND_RESULT_GLOBAL_IDS.workspace];
+  const contextResult = lastCommandResults.global[COMMAND_RESULT_GLOBAL_IDS.context];
+  const bulkResult =
+    lastCommandResults.global[COMMAND_RESULT_GLOBAL_IDS.profileSet]
+    ?? lastCommandResults.global[COMMAND_RESULT_GLOBAL_IDS.switchAll];
 
   useEffect(() => {
     const nextTool = resolveOverviewSelectedTool(selectedTool, snapshot.statuses);

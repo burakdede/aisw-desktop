@@ -6,11 +6,10 @@ import {
   noSelectionHeading,
   openedItemMessage,
 } from "../../lib/display-copy";
-import { APP_NAV_IDS, APP_NAV_LABELS } from "../../lib/app-navigation";
 import { calendarDayStarts } from "../../lib/calendar-time";
-import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { toolDisplayName } from "../../lib/tool-display";
 import type { CommandResultStatus } from "../shared/command-result-shape";
+import { commandResultGlobalScopeLabel } from "../shared/command-result-scope";
 import type { ActivityTimelineEntry } from "../shared/lastCommandResult";
 
 export type ActivityFilter = "all" | CommandResultStatus;
@@ -18,7 +17,6 @@ type ActivityStatus = ActivityEntry["status"];
 type ActivityStatusVariant = "row" | "inspector";
 
 const GENERIC_ACTIVITY_RESULT = "snapshot updated successfully.";
-const ACTIVITY_SCOPE_FALLBACK_LABEL = "App";
 const ACTIVITY_RECOVERY_AVAILABLE_LABEL = "Recovery available";
 const ACTIVITY_TIME_PREFIX = {
   today: "Today at",
@@ -92,16 +90,6 @@ export const ACTIVITY_STATUS_NOTIFICATION = {
   logOpened: "Activity log opened",
   redactedExported: "Redacted activity exported",
   clearMessage: "Cleared locally stored desktop activity.",
-} as const;
-
-const ACTIVITY_GLOBAL_SCOPE_LABELS = {
-  "switch-all": DESKTOP_ACTION_COPY.quickSwitchLabel,
-  "profile-set": "Saved set",
-  context: APP_NAV_LABELS[APP_NAV_IDS.sets],
-  workspace: "Project rules",
-  backup: APP_NAV_LABELS[APP_NAV_IDS.backups],
-  settings: APP_NAV_LABELS[APP_NAV_IDS.settings],
-  setup: "Setup",
 } as const;
 
 const ACTIVITY_STATUS_LABELS: Record<ActivityStatus, string> = {
@@ -190,8 +178,7 @@ export function activityScopeLabel(scope: { type: "tool"; tool: string } | { typ
 }
 
 export function activityGlobalScopeLabel(id: string) {
-  return ACTIVITY_GLOBAL_SCOPE_LABELS[id as keyof typeof ACTIVITY_GLOBAL_SCOPE_LABELS]
-    ?? ACTIVITY_SCOPE_FALLBACK_LABEL;
+  return commandResultGlobalScopeLabel(id);
 }
 
 export function activityStatusLabel(status: ActivityStatus) {
