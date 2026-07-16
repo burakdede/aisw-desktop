@@ -7,12 +7,15 @@ import type {
 } from "../../lib/schemas";
 import { DesktopCommandError } from "../../lib/tauri";
 import {
+  buildProfileInspectAriaLabel,
   buildProfileActivationRequest,
   buildInventoryProfiles,
   buildProfileActionMenu,
   buildProfileEditSheetState,
   buildProfileLabelUpdateRequest,
   buildProfileRemovalSheetState,
+  buildProfileRowActionsAriaLabel,
+  buildProfileSavedAsLabel,
   buildProfileSheetDraftReset,
   buildProfileSheetSubmitLabel,
   buildSelectedProfileInspectorState,
@@ -28,6 +31,8 @@ import {
   nextInventorySelectionIndex,
   oauthEventStage,
   profileMutationError,
+  PROFILE_INSPECTOR_FIELD_LABELS,
+  PROFILE_PANEL_COPY,
   resolveAvailableSelection,
   STATIC_STATE_MODE_COPY,
   STATIC_STATE_MODE_LABEL,
@@ -128,6 +133,24 @@ function makeSnapshot(overrides: Partial<AppSnapshot> = {}): AppSnapshot {
 describe("profiles-panel-display", () => {
   it("builds, filters, and selects inventory entries", () => {
     expect(INVENTORY_FILTERS).toEqual(["all", "claude", "codex", "gemini"]);
+    expect(PROFILE_PANEL_COPY.searchPlaceholder).toBe("Search profiles…");
+    expect(PROFILE_PANEL_COPY.addProfileLabel).toBe("Add Profile");
+    expect(PROFILE_PANEL_COPY.tableColumns.map((column) => column.label)).toEqual([
+      "Name",
+      "Tool",
+      "Status",
+      "Authentication",
+      "Backend",
+      "Last checked",
+    ]);
+    expect(PROFILE_INSPECTOR_FIELD_LABELS.liveMatch).toBe("Live match");
+    expect(buildProfileInspectAriaLabel("claude", "Work Laptop")).toBe(
+      "Inspect Claude Code Work Laptop",
+    );
+    expect(buildProfileRowActionsAriaLabel("codex", "Personal")).toBe(
+      "More actions for Codex CLI Personal",
+    );
+    expect(buildProfileSavedAsLabel("work")).toBe("Saved as work");
 
     const snapshot = makeSnapshot();
     const settings = makeSettings();

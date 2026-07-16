@@ -10,6 +10,7 @@ import { DEFAULT_ACTION_FAILURE_MESSAGE } from "../../lib/display-copy";
 import { formatDateTimeWithZone } from "../../lib/date-format";
 import { profileLastCheckedLabel } from "../../lib/profile-detail-display";
 import { effectiveToolProfileLabel, mergeProfileLabel } from "../../lib/profile-display";
+import { toolDisplayName } from "../../lib/tool-display";
 import { DesktopCommandError } from "../../lib/tauri";
 import { titleCase } from "../../lib/utils";
 import {
@@ -76,6 +77,45 @@ export const STATIC_STATE_MODE_LABEL = "Isolated";
 export const STATIC_STATE_MODE_COPY =
   "Gemini keeps authentication and local state together.";
 
+export const PROFILE_PANEL_COPY = {
+  searchAriaLabel: "Search Profiles",
+  searchPlaceholder: "Search profiles…",
+  filterAriaLabel: "Profile filters",
+  addProfileLabel: "Add Profile",
+  tableAriaLabel: "Profile table",
+  listAriaLabel: "Profiles",
+  tableColumns: [
+    { label: "Name", className: undefined },
+    { label: "Tool", className: undefined },
+    { label: "Status", className: undefined },
+    { label: "Authentication", className: "profiles-table-column-auth" },
+    { label: "Backend", className: "profiles-table-column-low" },
+    { label: "Last checked", className: "profiles-table-column-low" },
+  ],
+  actionMenuAriaLabel: "Profile actions",
+  inspectorTriggerAriaLabel: "More profile actions",
+  emptyInventoryHeading: "No matching profiles",
+  emptyInventoryDetail: "Adjust the tool filter or search query.",
+  emptyInspectorHeading: "No profile selected",
+  emptyInspectorDetail:
+    "Select a saved profile from the table to inspect activation state and storage details.",
+  savedAsPrefix: "Saved as ",
+  inactiveStorageDetail: "Live storage details are available after this profile becomes active.",
+} as const;
+
+export const PROFILE_INSPECTOR_FIELD_LABELS = {
+  liveMatch: "Live match",
+  authentication: "Authentication",
+  credentialStorage: "Credential storage",
+  added: "Added",
+  lastChecked: "Last checked",
+  stateMode: "State mode",
+  credentialsPresent: "Credentials present",
+  localPermissions: "Local permissions",
+  tokenWarning: "Token warning",
+  warningPrefix: "Warning",
+} as const;
+
 export type InventoryKeyAction =
   | { kind: "move"; direction: "next" | "previous" | "first" | "last" }
   | { kind: "activate" }
@@ -90,6 +130,18 @@ export function buildProfileSheetDraftReset(
     mode: "from_live" as ProfileImportMode,
     profile: "",
   };
+}
+
+export function buildProfileInspectAriaLabel(tool: SupportedTool, label: string) {
+  return `Inspect ${toolDisplayName(tool)} ${label}`;
+}
+
+export function buildProfileRowActionsAriaLabel(tool: SupportedTool, label: string) {
+  return `More actions for ${toolDisplayName(tool)} ${label}`;
+}
+
+export function buildProfileSavedAsLabel(name: string) {
+  return `${PROFILE_PANEL_COPY.savedAsPrefix}${name}`;
 }
 
 export function buildInventoryProfiles(input: {

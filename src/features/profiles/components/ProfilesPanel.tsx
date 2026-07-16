@@ -70,12 +70,15 @@ import {
   profileImportModeNotes,
 } from "../profile-sheet-display";
 import {
+  buildProfileInspectAriaLabel,
   buildProfileActivationRequest,
   buildInventoryProfiles,
   buildProfileActionMenu,
   buildProfileEditSheetState,
   buildProfileLabelUpdateRequest,
   buildProfileRemovalSheetState,
+  buildProfileRowActionsAriaLabel,
+  buildProfileSavedAsLabel,
   buildProfileSheetDraftReset,
   buildProfileSheetSubmitLabel,
   buildSelectedProfileInspectorState,
@@ -90,6 +93,8 @@ import {
   latestBackupForProfile,
   nextInventorySelectionIndex,
   profileMutationError,
+  PROFILE_INSPECTOR_FIELD_LABELS,
+  PROFILE_PANEL_COPY,
   resolveAvailableSelection,
   STATIC_STATE_MODE_COPY,
   STATIC_STATE_MODE_LABEL,
@@ -635,13 +640,13 @@ export function ProfilesPanel({
         <SearchField
           className="search-field profiles-search-field"
           inputClassName="search-field-input profiles-search"
-          ariaLabel="Search Profiles"
-          placeholder="Search profiles…"
+          ariaLabel={PROFILE_PANEL_COPY.searchAriaLabel}
+          placeholder={PROFILE_PANEL_COPY.searchPlaceholder}
           value={search}
           onChange={setSearch}
         />
         <SegmentedControl
-          ariaLabel="Profile filters"
+          ariaLabel={PROFILE_PANEL_COPY.filterAriaLabel}
           options={INVENTORY_FILTERS.map((entry) => ({
             value: entry,
             label:
@@ -655,7 +660,7 @@ export function ProfilesPanel({
           onChange={setInventoryFilter}
         />
         <button className="primary-button" type="button" onClick={openProfileSheet}>
-          Add Profile
+          {PROFILE_PANEL_COPY.addProfileLabel}
         </button>
       </div>
       <SplitView
@@ -663,17 +668,16 @@ export function ProfilesPanel({
         primaryClassName="profiles-inventory-pane"
         secondaryClassName="profiles-inspector-pane"
         primary={showInventory ? (
-          <section className="profiles-pane profiles-table-pane" aria-label="Profile table">
+          <section className="profiles-pane profiles-table-pane" aria-label={PROFILE_PANEL_COPY.tableAriaLabel}>
             <div className="profiles-table-header" aria-hidden="true">
-              <span>Name</span>
-              <span>Tool</span>
-              <span>Status</span>
-              <span className="profiles-table-column-auth">Authentication</span>
-              <span className="profiles-table-column-low">Backend</span>
-              <span className="profiles-table-column-low">Last checked</span>
+              {PROFILE_PANEL_COPY.tableColumns.map((column) => (
+                <span key={column.label} className={column.className}>
+                  {column.label}
+                </span>
+              ))}
               <span />
             </div>
-            <div className="profiles-table-body" role="listbox" aria-label="Profiles">
+            <div className="profiles-table-body" role="listbox" aria-label={PROFILE_PANEL_COPY.listAriaLabel}>
               {filteredInventoryProfiles.map((inventoryEntry, index) => {
                 const rowSelected = expandedDetails === inventoryEntry.name && tool === inventoryEntry.tool;
                 const menuKey = `${inventoryEntry.tool}:${inventoryEntry.name}`;
@@ -701,7 +705,7 @@ export function ProfilesPanel({
                       }}
                       type="button"
                       className="profiles-table-row-button"
-                      aria-label={`Inspect ${toolDisplayName(inventoryEntry.tool)} ${inventoryEntry.label}`}
+                      aria-label={buildProfileInspectAriaLabel(inventoryEntry.tool, inventoryEntry.label)}
                       role="option"
                       aria-selected={rowSelected}
                       tabIndex={rowSelected || (!expandedDetails && index === 0) ? 0 : -1}
@@ -744,7 +748,10 @@ export function ProfilesPanel({
                         }}
                         className="ghost-button profile-row-actions-trigger"
                         type="button"
-                        aria-label={`More actions for ${toolDisplayName(inventoryEntry.tool)} ${inventoryEntry.label}`}
+                        aria-label={buildProfileRowActionsAriaLabel(
+                          inventoryEntry.tool,
+                          inventoryEntry.label,
+                        )}
                         aria-haspopup="menu"
                         aria-expanded={
                           openRowActions?.tool === inventoryEntry.tool &&
@@ -764,7 +771,7 @@ export function ProfilesPanel({
                           align="end"
                           boundaryAttribute="data-profile-row-actions"
                           role="menu"
-                          aria-label="Profile actions"
+                          aria-label={PROFILE_PANEL_COPY.actionMenuAriaLabel}
                         >
                           {rowActions.map((action) => (
                             <button
@@ -795,8 +802,8 @@ export function ProfilesPanel({
               })}
               {!filteredInventoryProfiles.length ? (
                 <div className="profiles-empty-state">
-                  <h3>No matching profiles</h3>
-                  <p className="inline-note">Adjust the tool filter or search query.</p>
+                  <h3>{PROFILE_PANEL_COPY.emptyInventoryHeading}</h3>
+                  <p className="inline-note">{PROFILE_PANEL_COPY.emptyInventoryDetail}</p>
                 </div>
               ) : null}
             </div>
@@ -825,7 +832,7 @@ export function ProfilesPanel({
                     </h3>
                     <p className="inline-note">{toolDisplayName(tool)}</p>
                     {selectedProfileInspectorState.hasCustomLabel ? (
-                      <p className="inline-note">Saved as {selectedProfileEntry.name}</p>
+                      <p className="inline-note">{buildProfileSavedAsLabel(selectedProfileEntry.name)}</p>
                     ) : null}
                     <div
                       className={`profiles-inspector-status profiles-inspector-status-${profileSwitchTone(
@@ -865,7 +872,7 @@ export function ProfilesPanel({
                         ref={inspectorMenuAnchorRef}
                         className="ghost-button profile-row-actions-trigger"
                         type="button"
-                        aria-label="More profile actions"
+                        aria-label={PROFILE_PANEL_COPY.inspectorTriggerAriaLabel}
                         aria-expanded={
                           openRowActions?.tool === tool &&
                           openRowActions?.name === selectedProfileEntry.name &&
@@ -893,7 +900,7 @@ export function ProfilesPanel({
                           boundaryAttribute="data-profile-row-actions"
                           containmentSelector=".profiles-inspector"
                           role="menu"
-                          aria-label="Profile actions"
+                          aria-label={PROFILE_PANEL_COPY.actionMenuAriaLabel}
                         >
                           {buildProfileActionMenu({
                             active: selectedProfileInspectorState.isActive,
@@ -926,19 +933,22 @@ export function ProfilesPanel({
                   variant="plain"
                   rows={[
                     {
-                      label: "Live match",
+                      label: PROFILE_INSPECTOR_FIELD_LABELS.liveMatch,
                       value: profileLiveMatchLabel(selectedProfileInspectorState.state),
                     },
-                    { label: "Authentication", value: profileAuthMethodLabel(selectedProfileEntry.auth) },
                     {
-                      label: "Credential storage",
+                      label: PROFILE_INSPECTOR_FIELD_LABELS.authentication,
+                      value: profileAuthMethodLabel(selectedProfileEntry.auth),
+                    },
+                    {
+                      label: PROFILE_INSPECTOR_FIELD_LABELS.credentialStorage,
                       value:
                         snapshot.profiles[tool]?.active === selectedProfileEntry.name
                           ? formatCredentialBackendLabel(toolStatus?.credential_backend, "inventory")
                           : selectedInventoryEntry?.backend ?? BACKEND_UNAVAILABLE_LABEL,
                     },
                     {
-                      label: "Added",
+                      label: PROFILE_INSPECTOR_FIELD_LABELS.added,
                       value: profileAddedLabel(
                         selectedLatestBackup
                           ? formatDateTimeWithZone(
@@ -948,13 +958,13 @@ export function ProfilesPanel({
                       ),
                     },
                     {
-                      label: "Last checked",
+                      label: PROFILE_INSPECTOR_FIELD_LABELS.lastChecked,
                       value: selectedInventoryEntry?.lastChecked ?? profileLastCheckedLabel(null, selectedProfileInspectorState.isActive),
                     },
                     ...(!availableStateModes.length
                       ? [
                           {
-                            label: "State mode",
+                            label: PROFILE_INSPECTOR_FIELD_LABELS.stateMode,
                             value: selectedProfileInspectorState.isActive
                               ? profileStateModeLabel(toolStatus?.state_mode)
                               : AVAILABLE_AFTER_ACTIVATION_LABEL,
@@ -998,13 +1008,17 @@ export function ProfilesPanel({
                     {selectedProfileInspectorState.isActive ? (
                       <>
                         <p className="inline-note">
-                          Credentials present: {profileStorageBooleanLabel(toolStatus?.credentials_present)}
+                          {PROFILE_INSPECTOR_FIELD_LABELS.credentialsPresent}:{" "}
+                          {profileStorageBooleanLabel(toolStatus?.credentials_present)}
                         </p>
                         <p className="inline-note">
-                          Local permissions: {profileStorageBooleanLabel(toolStatus?.permissions_ok)}
+                          {PROFILE_INSPECTOR_FIELD_LABELS.localPermissions}:{" "}
+                          {profileStorageBooleanLabel(toolStatus?.permissions_ok)}
                         </p>
                         {toolStatus?.token_warning ? (
-                          <p className="inline-note">Token warning: {profileTokenWarningLabel(toolStatus)}</p>
+                          <p className="inline-note">
+                            {PROFILE_INSPECTOR_FIELD_LABELS.tokenWarning}: {profileTokenWarningLabel(toolStatus)}
+                          </p>
                         ) : null}
                         {toolStatus?.warnings.length ? (
                           <div className="stack-list">
@@ -1013,7 +1027,7 @@ export function ProfilesPanel({
                                 key={`${warning.code ?? warning.message ?? "warning"}-${index}`}
                                 className="inline-note"
                               >
-                                Warning: {profileWarningLabel(warning)}
+                                {PROFILE_INSPECTOR_FIELD_LABELS.warningPrefix}: {profileWarningLabel(warning)}
                               </p>
                             ))}
                           </div>
@@ -1021,7 +1035,7 @@ export function ProfilesPanel({
                       </>
                     ) : (
                       <p className="inline-note">
-                        Live storage details are available after this profile becomes active.
+                        {PROFILE_PANEL_COPY.inactiveStorageDetail}
                       </p>
                     )}
                   </div>
@@ -1029,10 +1043,8 @@ export function ProfilesPanel({
               </>
             ) : (
               <div className="profiles-empty-state profiles-empty-state-inspector">
-                <h3>No profile selected</h3>
-                <p className="inline-note">
-                  Select a saved profile from the table to inspect activation state and storage details.
-                </p>
+                <h3>{PROFILE_PANEL_COPY.emptyInspectorHeading}</h3>
+                <p className="inline-note">{PROFILE_PANEL_COPY.emptyInspectorDetail}</p>
               </div>
             )}
           </aside>
