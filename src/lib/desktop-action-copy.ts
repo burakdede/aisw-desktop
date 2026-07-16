@@ -12,6 +12,7 @@ export const DESKTOP_ACTION_COPY = {
   openProfileDetailsLabel: "Open Profile Details",
   openProfilesLabel: "Open Profiles",
   openAccountSetupLabel: "Open Account Setup",
+  openTerminalSetupLabel: "Open terminal setup",
   openDiagnosticsLabel: "Open Diagnostics",
   openSettingsLabel: "Open Settings",
   diagnosticsShortcut: APP_NAV_SHORTCUT_LABELS[APP_NAV_IDS.diagnostics] ?? "⌘4",

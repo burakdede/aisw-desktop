@@ -9,7 +9,12 @@ import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { toolDisplayName } from "../../lib/tool-display";
 import { toolBinaryName } from "../../lib/tool-guidance";
 import { resolveErrorDetails, resolveErrorMessage } from "../../lib/error-details";
-import { BACK_LABEL, CANCEL_LABEL, CLOSE_LABEL } from "../../lib/display-copy";
+import {
+  BACK_LABEL,
+  CANCEL_LABEL,
+  CLOSE_LABEL,
+  YES_LABEL,
+} from "../../lib/display-copy";
 import { asArray, asObject, asOptionalString } from "../../lib/parse-guards";
 import { runtimeSummary } from "../../lib/runtime-display";
 import {
@@ -246,7 +251,7 @@ export const ONBOARDING_TERMINAL_STEP_COPY = {
     "This app writes live credential files directly. Most people can skip this and still switch accounts normally.",
   secondaryDetail:
     "Shell files should only be updated explicitly from guided setup, never silently.",
-  openSetupLabel: "Open terminal setup",
+  openSetupLabel: DESKTOP_ACTION_COPY.openTerminalSetupLabel,
 } as const;
 
 export const ONBOARDING_DONE_STEP_COPY = {
@@ -357,7 +362,7 @@ export function setupStepFooterNote(step: SetupStep, switchReady: boolean) {
 export function onboardingSwitchReadinessStatus(switchReady: boolean) {
   return switchReady
     ? {
-        label: "Yes",
+        label: YES_LABEL,
         detail: "At least one reusable profile is ready for a first switch.",
       }
     : {

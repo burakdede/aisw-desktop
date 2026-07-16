@@ -1,6 +1,11 @@
 import { authMethodLabel } from "./auth-method-display";
 import { DATE_UNAVAILABLE_LABEL } from "./date-format";
-import { NOT_AVAILABLE_LABEL, VERIFICATION_REQUIRED_LABEL } from "./display-copy";
+import {
+  NOT_AVAILABLE_LABEL,
+  NO_LABEL,
+  VERIFICATION_REQUIRED_LABEL,
+  YES_LABEL,
+} from "./display-copy";
 import {
   AVAILABLE_AFTER_ACTIVATION_LABEL,
   NOT_VERIFIED_LABEL,
@@ -24,7 +29,7 @@ export function profileStorageBooleanLabel(value: boolean | null | undefined) {
   if (value === undefined || value === null) {
     return VERIFICATION_REQUIRED_LABEL;
   }
-  return value ? "Yes" : "No";
+  return value ? YES_LABEL : NO_LABEL;
 }
 
 export function profileAuthMethodLabel(auth: string) {

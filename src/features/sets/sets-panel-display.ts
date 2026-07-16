@@ -5,6 +5,7 @@ import {
   inspectItemLabel,
   moreActionsLabel,
   noSelectionHeading,
+  YES_LABEL,
 } from "../../lib/display-copy";
 import {
   DEFAULT_WORKSPACE_BINDING_SCOPE,
@@ -139,7 +140,7 @@ export const SETS_PANEL_COPY = {
   noProjectRulesDetail:
     "Add a rule to match a default scope, folder, or git remote pattern to a saved set.",
   setUnavailableLabel: "Set Unavailable",
-  enabledLabel: "Yes",
+  enabledLabel: YES_LABEL,
   noRuleSelectedTitle: noSelectionHeading("rule"),
   noRuleSelectedDetail: "Select a rule to inspect it here.",
   closeLabel: CLOSE_LABEL,

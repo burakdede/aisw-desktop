@@ -666,7 +666,7 @@ function buildShellHookQuickFix(issue: {
     kind: "open_settings",
     title: "Terminal integration not active",
     detail: issue.detail,
-    label: "Open terminal setup",
+    label: DESKTOP_ACTION_COPY.openTerminalSetupLabel,
     status: issue.status,
     settingsSection: "shell",
   };

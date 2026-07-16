@@ -8,6 +8,8 @@ export const NOT_AVAILABLE_LABEL = "Not Available";
 export const NOT_FOUND_LABEL = "Not found";
 export const NOT_SET_LABEL = "Not set";
 export const VERIFICATION_REQUIRED_LABEL = "Verification Required";
+export const YES_LABEL = "Yes";
+export const NO_LABEL = "No";
 
 export function clipboardUnavailableManualMessage(subject: string, value?: string) {
   return value
