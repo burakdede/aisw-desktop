@@ -10,6 +10,16 @@ export const APP_NAV_IDS = {
 
 export type AppNavId = (typeof APP_NAV_IDS)[keyof typeof APP_NAV_IDS];
 
+export const APP_NAV_LABELS: Record<AppNavId, string> = {
+  [APP_NAV_IDS.overview]: "Overview",
+  [APP_NAV_IDS.profiles]: "Profiles",
+  [APP_NAV_IDS.sets]: "Sets",
+  [APP_NAV_IDS.diagnostics]: "Diagnostics",
+  [APP_NAV_IDS.backups]: "Backups",
+  [APP_NAV_IDS.activity]: "Activity",
+  [APP_NAV_IDS.settings]: "Settings",
+};
+
 export const DEFAULT_APP_SECTIONS = [
   APP_NAV_IDS.overview,
   APP_NAV_IDS.profiles,

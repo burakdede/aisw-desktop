@@ -1,3 +1,4 @@
+import { APP_NAV_IDS, APP_NAV_LABELS } from "../../lib/app-navigation";
 import { titleCase } from "../../lib/utils";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
@@ -10,7 +11,7 @@ const ONBOARDING_HEALTH_LABEL_RULES = [
   { label: "Secure storage", keywords: ["keyring"] },
   { label: "Local permissions", keywords: ["permission"] },
   { label: "Sign-in flow", keywords: ["oauth"] },
-  { label: "Backups", keywords: ["backup"] },
+  { label: APP_NAV_LABELS[APP_NAV_IDS.backups], keywords: ["backup"] },
   { label: "Desktop engine", keywords: ["runtime", "engine"] },
 ] as const;
 

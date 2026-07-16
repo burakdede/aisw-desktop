@@ -23,6 +23,7 @@ import { resolveGlobalStateMode, resolveStateModeRequest } from "./features/shar
 import { titleCase } from "./lib/utils";
 import {
   APP_NAV_IDS,
+  APP_NAV_LABELS,
   APP_NAV_SHORTCUT_KEYS,
   APP_NAV_SHORTCUT_LABELS,
   type AppNavId,
@@ -42,25 +43,25 @@ import {
 } from "./lib/runtime-display";
 
 export const APP_NAV = [
-  { id: APP_NAV_IDS.overview, label: "Overview", group: "Main" },
-  { id: APP_NAV_IDS.profiles, label: "Profiles", group: "Main" },
-  { id: APP_NAV_IDS.sets, label: "Sets", group: "Main" },
-  { id: APP_NAV_IDS.diagnostics, label: "Diagnostics", group: "Health" },
-  { id: APP_NAV_IDS.backups, label: "Backups", group: "Health" },
-  { id: APP_NAV_IDS.activity, label: "Activity", group: "Health" },
-  { id: APP_NAV_IDS.settings, label: "Settings", group: "App" },
+  { id: APP_NAV_IDS.overview, label: APP_NAV_LABELS[APP_NAV_IDS.overview], group: "Main" },
+  { id: APP_NAV_IDS.profiles, label: APP_NAV_LABELS[APP_NAV_IDS.profiles], group: "Main" },
+  { id: APP_NAV_IDS.sets, label: APP_NAV_LABELS[APP_NAV_IDS.sets], group: "Main" },
+  { id: APP_NAV_IDS.diagnostics, label: APP_NAV_LABELS[APP_NAV_IDS.diagnostics], group: "Health" },
+  { id: APP_NAV_IDS.backups, label: APP_NAV_LABELS[APP_NAV_IDS.backups], group: "Health" },
+  { id: APP_NAV_IDS.activity, label: APP_NAV_LABELS[APP_NAV_IDS.activity], group: "Health" },
+  { id: APP_NAV_IDS.settings, label: APP_NAV_LABELS[APP_NAV_IDS.settings], group: "App" },
 ] as const;
 
 const DEFAULT_PROFILE_SETUP_TOOL = "claude";
 
 const APP_SECTION_TITLES: Record<AppSectionId, string> = {
-  [APP_NAV_IDS.overview]: "Overview",
-  [APP_NAV_IDS.profiles]: "Profiles",
-  [APP_NAV_IDS.sets]: "Sets",
-  [APP_NAV_IDS.diagnostics]: "Diagnostics",
-  [APP_NAV_IDS.backups]: "Backups",
-  [APP_NAV_IDS.activity]: "Activity",
-  [APP_NAV_IDS.settings]: "Settings",
+  [APP_NAV_IDS.overview]: APP_NAV_LABELS[APP_NAV_IDS.overview],
+  [APP_NAV_IDS.profiles]: APP_NAV_LABELS[APP_NAV_IDS.profiles],
+  [APP_NAV_IDS.sets]: APP_NAV_LABELS[APP_NAV_IDS.sets],
+  [APP_NAV_IDS.diagnostics]: APP_NAV_LABELS[APP_NAV_IDS.diagnostics],
+  [APP_NAV_IDS.backups]: APP_NAV_LABELS[APP_NAV_IDS.backups],
+  [APP_NAV_IDS.activity]: APP_NAV_LABELS[APP_NAV_IDS.activity],
+  [APP_NAV_IDS.settings]: APP_NAV_LABELS[APP_NAV_IDS.settings],
   waiting: "AI Switch",
 };
 

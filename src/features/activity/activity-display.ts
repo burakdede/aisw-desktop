@@ -6,6 +6,7 @@ import {
   noSelectionHeading,
   openedItemMessage,
 } from "../../lib/display-copy";
+import { APP_NAV_IDS, APP_NAV_LABELS } from "../../lib/app-navigation";
 import { calendarDayStarts } from "../../lib/calendar-time";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { toolDisplayName } from "../../lib/tool-display";
@@ -95,10 +96,10 @@ export const ACTIVITY_STATUS_NOTIFICATION = {
 const ACTIVITY_GLOBAL_SCOPE_LABELS = {
   "switch-all": DESKTOP_ACTION_COPY.quickSwitchLabel,
   "profile-set": "Saved set",
-  context: "Sets",
+  context: APP_NAV_LABELS[APP_NAV_IDS.sets],
   workspace: "Project rules",
-  backup: "Backups",
-  settings: "Settings",
+  backup: APP_NAV_LABELS[APP_NAV_IDS.backups],
+  settings: APP_NAV_LABELS[APP_NAV_IDS.settings],
   setup: "Setup",
 } as const;
 

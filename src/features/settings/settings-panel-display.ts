@@ -4,7 +4,7 @@ import {
   DEFAULT_DESKTOP_PREFERENCES,
   type DesktopPreferences,
 } from "../../lib/desktop-preferences";
-import { type DefaultAppSection } from "../../lib/app-navigation";
+import { APP_NAV_IDS, APP_NAV_LABELS, type DefaultAppSection } from "../../lib/app-navigation";
 import {
   DESKTOP_UPDATE_CHANNELS,
   normalizeDesktopUpdateChannel,
@@ -194,12 +194,12 @@ const SETTINGS_SECTION_LABELS: Record<SettingsSection, string> = {
   [SETTINGS_SECTION_IDS.advanced]: "Advanced",
 };
 const DEFAULT_SECTION_LABELS: Record<DefaultAppSection, string> = {
-  overview: "Overview",
-  profiles: "Profiles",
-  sets: "Sets",
-  diagnostics: "Diagnostics",
-  backups: "Backups",
-  activity: "Activity",
+  [APP_NAV_IDS.overview]: APP_NAV_LABELS[APP_NAV_IDS.overview],
+  [APP_NAV_IDS.profiles]: APP_NAV_LABELS[APP_NAV_IDS.profiles],
+  [APP_NAV_IDS.sets]: APP_NAV_LABELS[APP_NAV_IDS.sets],
+  [APP_NAV_IDS.diagnostics]: APP_NAV_LABELS[APP_NAV_IDS.diagnostics],
+  [APP_NAV_IDS.backups]: APP_NAV_LABELS[APP_NAV_IDS.backups],
+  [APP_NAV_IDS.activity]: APP_NAV_LABELS[APP_NAV_IDS.activity],
 };
 const APPEARANCE_LABELS: Record<(typeof DESKTOP_APPEARANCES)[number], string> = {
   system: "System",
