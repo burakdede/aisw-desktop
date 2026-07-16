@@ -9,7 +9,7 @@ import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { toolDisplayName } from "../../lib/tool-display";
 import { toolBinaryName } from "../../lib/tool-guidance";
 import { runtimeSummary } from "../../lib/runtime-display";
-import { titleCase } from "../../lib/utils";
+import { countLabel, titleCase } from "../../lib/utils";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import {
   normalizeOnboardingHealthDetail,
@@ -75,6 +75,8 @@ export type OnboardingCompletionState = {
 };
 
 type RuntimeToolCapabilities = NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
+
+type SecureStoragePlatform = "mac" | "windows" | "other";
 
 export const ONBOARDING_SETUP_STEPS: readonly SetupStepOption[] = [
   { value: "runtime", label: "Welcome" },
@@ -217,6 +219,36 @@ const ONBOARDING_SWITCH_READY_FOOTER_NOTE =
   "Re-apply one saved set once so you know switching works before you start coding.";
 const ONBOARDING_SWITCH_PENDING_FOOTER_NOTE =
   "You can continue, but you will need one saved set name before the first switch can succeed.";
+
+const ONBOARDING_ACCOUNT_PRESENTATION_COPY = {
+  readyToImport: {
+    badge: { tone: "ok", label: "Ready to import" },
+    unknownValue: "unknown",
+  },
+  needsProfile: {
+    badge: { tone: "soft", label: "Needs profile" },
+    summary: "No saved profile yet",
+  },
+  missing: {
+    badge: { tone: "soft", label: "Not installed" },
+    summary: "Not installed yet",
+  },
+} as const;
+
+const SECURE_STORAGE_STATUS_COPY = {
+  unavailable: {
+    available: false,
+    label: "Not confirmed",
+    detail:
+      "Secure storage has not been confirmed yet. You can still continue with local file-based profiles.",
+  },
+  availableLabel: "Available",
+  detailByPlatform: {
+    mac: "Login Keychain available for local credential storage.",
+    windows: "Windows Credential Manager available for local credential storage.",
+    other: "System keyring available for local credential storage.",
+  },
+} as const;
 
 const ONBOARDING_STEP_DETAILS: Record<SetupStep, SetupStepDetail> = {
   runtime: {
@@ -482,8 +514,8 @@ function buildOnboardingAccountPresentation(
 ): OnboardingAccountPresentation {
   if (item.kind === "live") {
     return {
-      badge: { tone: "ok", label: "Ready to import" },
-      summary: `${item.account.outcome ?? "unknown"} · ${item.account.auth_method ?? "unknown"}${
+      badge: ONBOARDING_ACCOUNT_PRESENTATION_COPY.readyToImport.badge,
+      summary: `${item.account.outcome ?? ONBOARDING_ACCOUNT_PRESENTATION_COPY.readyToImport.unknownValue} · ${item.account.auth_method ?? ONBOARDING_ACCOUNT_PRESENTATION_COPY.readyToImport.unknownValue}${
         item.account.matched_profile ? ` · matches ${item.account.matched_profile}` : ""
       }`,
     };
@@ -491,14 +523,14 @@ function buildOnboardingAccountPresentation(
 
   if (item.kind === "needs-profile") {
     return {
-      badge: { tone: "soft", label: "Needs profile" },
-      summary: "No saved profile yet",
+      badge: ONBOARDING_ACCOUNT_PRESENTATION_COPY.needsProfile.badge,
+      summary: ONBOARDING_ACCOUNT_PRESENTATION_COPY.needsProfile.summary,
     };
   }
 
   return {
-    badge: { tone: "soft", label: "Not installed" },
-    summary: "Not installed yet",
+    badge: ONBOARDING_ACCOUNT_PRESENTATION_COPY.missing.badge,
+    summary: ONBOARDING_ACCOUNT_PRESENTATION_COPY.missing.summary,
   };
 }
 
@@ -633,7 +665,7 @@ export function onboardingCompletionState(
 
   if (profileCount > 0) {
     return {
-      state: `${profileCount} saved profile${profileCount === 1 ? "" : "s"}`,
+      state: countLabel(profileCount, "saved profile"),
       detail: "Saved locally and ready when needed.",
     };
   }
@@ -650,32 +682,16 @@ export function onboardingSecureStorageStatus(
   platform = typeof navigator === "undefined" ? "" : navigator.platform.toLowerCase(),
 ): SecureStorageStatus {
   if (!supportsSecureStorage(snapshot, toolCapabilities)) {
-    return {
-      available: false,
-      label: "Not confirmed",
-      detail:
-        "Secure storage has not been confirmed yet. You can still continue with local file-based profiles.",
-    };
+    return SECURE_STORAGE_STATUS_COPY.unavailable;
   }
 
-  if (platform.includes("mac")) {
-    return {
-      available: true,
-      label: "Available",
-      detail: "Login Keychain available for local credential storage.",
-    };
-  }
-  if (platform.includes("win")) {
-    return {
-      available: true,
-      label: "Available",
-      detail: "Windows Credential Manager available for local credential storage.",
-    };
-  }
   return {
     available: true,
-    label: "Available",
-    detail: "System keyring available for local credential storage.",
+    label: SECURE_STORAGE_STATUS_COPY.availableLabel,
+    detail:
+      SECURE_STORAGE_STATUS_COPY.detailByPlatform[
+        resolveSecureStoragePlatform(platform)
+      ],
   };
 }
 
@@ -689,4 +705,14 @@ export function supportsSecureStorage(
       capability.credential_backends.some((backend) => isSystemKeyringBackend(backend)),
     )
   );
+}
+
+function resolveSecureStoragePlatform(platform: string): SecureStoragePlatform {
+  if (platform.includes("mac")) {
+    return "mac";
+  }
+  if (platform.includes("win")) {
+    return "windows";
+  }
+  return "other";
 }
