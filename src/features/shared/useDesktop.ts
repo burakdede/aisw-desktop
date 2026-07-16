@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getBootstrap, getSnapshot, runInit } from "../../lib/client";
+import { isDesktopRuntimeUnavailableError } from "../../lib/tauri";
 import { useMutationAwareQueryEnabled } from "./mutationQueue";
 
 export function useDesktop() {
@@ -7,7 +8,9 @@ export function useDesktop() {
   const bootstrap = useQuery({
     queryKey: ["bootstrap"],
     queryFn: getBootstrap,
-    retry: false,
+    retry: (failureCount, error) =>
+      isDesktopRuntimeUnavailableError(error) && failureCount < 3,
+    retryDelay: (attempt) => Math.min(250 * attempt, 750),
     enabled: readEnabled,
   });
 

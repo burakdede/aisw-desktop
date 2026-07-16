@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen, type Event } from "@tauri-apps/api/event";
 import type { AsyncDispose } from "./async-dispose";
 
-const DESKTOP_RUNTIME_WAIT_TIMEOUT_MS = 300;
+const DESKTOP_RUNTIME_WAIT_TIMEOUT_MS = 1000;
 const DESKTOP_RUNTIME_WAIT_INTERVAL_MS = 20;
 
 export class DesktopCommandError extends Error {
@@ -15,6 +15,10 @@ export class DesktopCommandError extends Error {
     this.kind = options?.kind;
     this.remediation = options?.remediation;
   }
+}
+
+export function isDesktopRuntimeUnavailableError(error: unknown) {
+  return error instanceof DesktopCommandError && error.kind === "runtime_unavailable";
 }
 
 export type TrayCommandResultEvent =

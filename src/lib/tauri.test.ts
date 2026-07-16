@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DesktopCommandError,
   hasDesktopRuntime,
+  isDesktopRuntimeUnavailableError,
   invokeDesktop,
   listenDesktopEvent,
 } from "./tauri";
@@ -46,6 +47,21 @@ describe("tauri bridge", () => {
     expect(invokeMock).toHaveBeenCalledWith("get_bootstrap", { refresh: true });
   });
 
+  it("waits for the desktop runtime to appear before invoking", async () => {
+    vi.useFakeTimers();
+    invokeMock.mockResolvedValue({ ok: true });
+
+    window.setTimeout(() => {
+      window.__TAURI_INTERNALS__ = {};
+    }, 200);
+
+    const result = invokeDesktop("get_bootstrap", { refresh: true });
+    await vi.advanceTimersByTimeAsync(250);
+
+    await expect(result).resolves.toEqual({ ok: true });
+    expect(invokeMock).toHaveBeenCalledWith("get_bootstrap", { refresh: true });
+  });
+
   it("returns a runtime unavailable error when tauri is missing", async () => {
     vi.useFakeTimers();
 
@@ -70,5 +86,16 @@ describe("tauri bridge", () => {
     expect(typeof disposer).toBe("function");
     expect(listenMock).not.toHaveBeenCalled();
     expect(() => disposer()).not.toThrow();
+  });
+
+  it("identifies runtime unavailable errors", () => {
+    expect(
+      isDesktopRuntimeUnavailableError(
+        new DesktopCommandError("AI Switcher desktop runtime is unavailable.", {
+          kind: "runtime_unavailable",
+        }),
+      ),
+    ).toBe(true);
+    expect(isDesktopRuntimeUnavailableError(new Error("boom"))).toBe(false);
   });
 });
