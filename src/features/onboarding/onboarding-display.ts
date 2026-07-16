@@ -1,5 +1,6 @@
 import type { AppBootstrap, AppSnapshot, InitReport, ToolStatus } from "../../lib/schemas";
 import { toolDisplayName } from "../../lib/tool-display";
+import { toolBinaryName } from "../../lib/tool-guidance";
 import { runtimeSummary } from "../../lib/runtime-display";
 import { titleCase } from "../../lib/utils";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
@@ -101,6 +102,49 @@ export const ONBOARDING_RUNTIME_NEXT_STEPS = [
       "Most people can skip terminal integration unless they need already-open shells to update immediately.",
   },
 ] as const;
+
+export const ONBOARDING_ACCOUNTS_STEP_COPY = {
+  sectionKicker: "Accounts",
+  sectionHeading: "Detected tools",
+  sectionNote:
+    "Save current logins as reusable profiles, add missing profiles where needed, and ignore tools you do not use yet.",
+  listKicker: "Detected tools",
+  listHeading: "Choose one tool",
+  listAriaLabel: "Detected tools",
+  liveKicker: "Detected login",
+  liveStatusLabel: "Status",
+  liveSignInMethodLabel: "Sign-in method",
+  liveMatchedProfileLabel: "Matched profile",
+  unknownValue: "unknown",
+  unmatchedProfileLabel: "Not matched yet",
+  importActionLabel: "Import as profile",
+  chooseSignInMethodLabel: "Choose sign-in method",
+  needsProfileKicker: "Saved profile needed",
+  needsProfileStatusLabel: "Status",
+  needsProfileStatusValue: "Installed, but no saved profile yet",
+  needsProfileCurrentStateLabel: "Current state",
+  needsProfileCurrentStateValue: "No reusable account saved",
+  addProfileActionLabel: "Add profile",
+  missingKicker: "Optional tool",
+  missingStatusLabel: "Status",
+  missingStatusValue: "Optional for now",
+  binaryLabel: "Binary",
+  installationGuideLabel: "Open installation guide",
+  emptyDetail: "Run the setup scan to detect live Claude, Codex, and Gemini accounts.",
+} as const;
+
+export const ONBOARDING_IMPORT_DIALOG_COPY = {
+  kicker: "Import current account",
+  closeLabel: "Close",
+  headingPrefix: "Import",
+  headingSuffix: "profile",
+  introPrefix: "Save the account that ",
+  introSuffix:
+    " is already using as a reusable profile. This imported profile becomes the active saved account for this tool.",
+  profileNameLabel: "Profile name",
+  labelFieldLabel: "Label",
+  cancelLabel: "Cancel",
+} as const;
 
 export type OnboardingInventory = {
   liveAccounts: LiveAccount[];
@@ -327,6 +371,37 @@ export function onboardingHealthStatusSymbol(status: OnboardingHealthItem["statu
     return "!";
   }
   return "✕";
+}
+
+export function onboardingImportDialogAriaLabel(tool: string) {
+  return `Import ${toolDisplayName(tool)} Profile`;
+}
+
+export function onboardingLiveAccountImportNote(tool: string, importSupported: boolean) {
+  return importSupported
+    ? `Save the current ${toolDisplayName(tool)} login as a reusable profile in a setup sheet.`
+    : `This release cannot save the current ${toolDisplayName(tool)} login directly. Choose another sign-in method instead.`;
+}
+
+export function onboardingNeedsProfileNote(tool: string) {
+  return `Add one reusable ${toolDisplayName(tool)} profile so this computer can switch that tool safely later.`;
+}
+
+export function onboardingMissingToolHeading(tool: string) {
+  return `${toolDisplayName(tool)} is not installed`;
+}
+
+export function onboardingMissingToolNote(tool: string) {
+  return `You can finish setup without ${toolDisplayName(tool)}. Install the ${toolBinaryName(tool)} tool later when you want to manage that provider here.`;
+}
+
+export function onboardingMissingToolNoteParts(tool: string) {
+  const binary = toolBinaryName(tool);
+  return {
+    beforeBinary: `You can finish setup without ${toolDisplayName(tool)}. Install the `,
+    binary,
+    afterBinary: " tool later when you want to manage that provider here.",
+  };
 }
 
 export function resolveOnboardingStepState(activeStep: SetupStep) {

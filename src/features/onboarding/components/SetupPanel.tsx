@@ -28,6 +28,8 @@ import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { invalidatePostMutationQueries } from "../../shared/postMutationRefresh";
 import {
+  ONBOARDING_ACCOUNTS_STEP_COPY,
+  ONBOARDING_IMPORT_DIALOG_COPY,
   ONBOARDING_TRUST_ROWS,
   ONBOARDING_RUNTIME_NEXT_STEPS,
   ONBOARDING_RUNTIME_STEP_COPY,
@@ -44,8 +46,13 @@ import {
   onboardingPrimaryActionLabel,
   onboardingAccountBadge,
   onboardingAccountSummary,
+  onboardingImportDialogAriaLabel,
   onboardingSecureStorageStatus,
   onboardingSwitchReadinessStatus,
+  onboardingLiveAccountImportNote,
+  onboardingMissingToolHeading,
+  onboardingMissingToolNoteParts,
+  onboardingNeedsProfileNote,
   restoreIncludedEngineActionLabel,
   restoreIncludedEngineErrorMessage,
   resolveOnboardingStepState,
@@ -231,6 +238,18 @@ export function SetupPanel({
     accountItems,
     selectedAccountKey,
   );
+  const selectedLiveImportSupported =
+    selectedAccountItem?.kind === "live"
+      ? supportsProfileImportMode(
+          selectedAccountItem.account.tool,
+          toolCapabilities,
+          "from_live",
+        )
+      : false;
+  const selectedMissingToolNoteParts =
+    selectedAccountItem?.kind === "missing"
+      ? onboardingMissingToolNoteParts(selectedAccountItem.status.tool)
+      : null;
 
   return (
     <div className="setup-screen screen-content">
@@ -448,13 +467,10 @@ export function SetupPanel({
                 <div className="desktop-pane-section onboarding-detection-stack">
                   <div className="desktop-pane-section-header">
                     <div>
-                      <p className="card-kicker">Accounts</p>
-                      <h3>Detected tools</h3>
+                      <p className="card-kicker">{ONBOARDING_ACCOUNTS_STEP_COPY.sectionKicker}</p>
+                      <h3>{ONBOARDING_ACCOUNTS_STEP_COPY.sectionHeading}</h3>
                     </div>
-                    <p className="inline-note">
-                      Save current logins as reusable profiles, add missing profiles where needed, and ignore
-                      tools you do not use yet.
-                    </p>
+                    <p className="inline-note">{ONBOARDING_ACCOUNTS_STEP_COPY.sectionNote}</p>
                   </div>
                   {accountItems.length ? (
                     <SplitView
@@ -465,14 +481,14 @@ export function SetupPanel({
                         <article className="diagnostic-card onboarding-account-list-card">
                           <div className="desktop-pane-section-header">
                             <div>
-                              <p className="card-kicker">Detected tools</p>
-                              <h4>Choose one tool</h4>
+                              <p className="card-kicker">{ONBOARDING_ACCOUNTS_STEP_COPY.listKicker}</p>
+                              <h4>{ONBOARDING_ACCOUNTS_STEP_COPY.listHeading}</h4>
                             </div>
                             <span className="pill pill-soft">
                               {countLabel(accountItems.length, "item")}
                             </span>
                           </div>
-                          <div className="desktop-source-list" aria-label="Detected tools">
+                          <div className="desktop-source-list" aria-label={ONBOARDING_ACCOUNTS_STEP_COPY.listAriaLabel}>
                             {accountItems.map((item) => {
                               const tool = accountItemTool(item);
                               const title = toolDisplayName(tool);
@@ -521,7 +537,7 @@ export function SetupPanel({
                               <>
                                 <div className="desktop-pane-section-header">
                                   <div>
-                                    <p className="card-kicker">Detected login</p>
+                                    <p className="card-kicker">{ONBOARDING_ACCOUNTS_STEP_COPY.liveKicker}</p>
                                     <h3>
                                       <ToolBrand tool={selectedAccountItem.account.tool} className="tool-brand-heading" logoSize={18} />
                                     </h3>
@@ -532,38 +548,48 @@ export function SetupPanel({
                                 </div>
                                 <div className="onboarding-account-summary">
                                   <div>
-                                    <span className="overview-current-set-cell-label">Status</span>
-                                    <strong>{selectedAccountItem.account.outcome ?? "unknown"}</strong>
+                                    <span className="overview-current-set-cell-label">
+                                      {ONBOARDING_ACCOUNTS_STEP_COPY.liveStatusLabel}
+                                    </span>
+                                    <strong>
+                                      {selectedAccountItem.account.outcome ??
+                                        ONBOARDING_ACCOUNTS_STEP_COPY.unknownValue}
+                                    </strong>
                                   </div>
                                   <div>
-                                    <span className="overview-current-set-cell-label">Sign-in method</span>
-                                    <strong>{selectedAccountItem.account.auth_method ?? "unknown"}</strong>
+                                    <span className="overview-current-set-cell-label">
+                                      {ONBOARDING_ACCOUNTS_STEP_COPY.liveSignInMethodLabel}
+                                    </span>
+                                    <strong>
+                                      {selectedAccountItem.account.auth_method ??
+                                        ONBOARDING_ACCOUNTS_STEP_COPY.unknownValue}
+                                    </strong>
                                   </div>
                                   <div>
-                                    <span className="overview-current-set-cell-label">Matched profile</span>
-                                    <strong>{selectedAccountItem.account.matched_profile ?? "Not matched yet"}</strong>
+                                    <span className="overview-current-set-cell-label">
+                                      {ONBOARDING_ACCOUNTS_STEP_COPY.liveMatchedProfileLabel}
+                                    </span>
+                                    <strong>
+                                      {selectedAccountItem.account.matched_profile ??
+                                        ONBOARDING_ACCOUNTS_STEP_COPY.unmatchedProfileLabel}
+                                    </strong>
                                   </div>
                                 </div>
-                                {!supportsProfileImportMode(selectedAccountItem.account.tool, toolCapabilities, "from_live") ? (
-                                  <p className="inline-note">
-                                    This release cannot save the current {toolDisplayName(selectedAccountItem.account.tool)} login directly.
-                                    Choose another sign-in method instead.
-                                  </p>
-                                ) : (
-                                  <p className="inline-note">
-                                    Save the current {toolDisplayName(selectedAccountItem.account.tool)} login as a reusable profile in a
-                                    setup sheet.
-                                  </p>
-                                )}
+                                <p className="inline-note">
+                                  {onboardingLiveAccountImportNote(
+                                    selectedAccountItem.account.tool,
+                                    selectedLiveImportSupported,
+                                  )}
+                                </p>
                                 <div className="button-row">
-                                  {supportsProfileImportMode(selectedAccountItem.account.tool, toolCapabilities, "from_live") ? (
+                                  {selectedLiveImportSupported ? (
                                     <button
                                       className="ghost-button"
                                       type="button"
                                       disabled={mutationLock.isBusy}
                                       onClick={() => openLiveImport(selectedAccountItem.account)}
                                     >
-                                      Import as profile
+                                      {ONBOARDING_ACCOUNTS_STEP_COPY.importActionLabel}
                                     </button>
                                   ) : (
                                     <button
@@ -576,7 +602,7 @@ export function SetupPanel({
                                         })
                                       }
                                     >
-                                      Choose sign-in method
+                                      {ONBOARDING_ACCOUNTS_STEP_COPY.chooseSignInMethodLabel}
                                     </button>
                                   )}
                                 </div>
@@ -587,7 +613,7 @@ export function SetupPanel({
                               <>
                                 <div className="desktop-pane-section-header">
                                   <div>
-                                    <p className="card-kicker">Saved profile needed</p>
+                                    <p className="card-kicker">{ONBOARDING_ACCOUNTS_STEP_COPY.needsProfileKicker}</p>
                                     <h3>
                                       <ToolBrand tool={selectedAccountItem.status.tool} className="tool-brand-heading" logoSize={18} />
                                     </h3>
@@ -598,17 +624,19 @@ export function SetupPanel({
                                 </div>
                                 <div className="onboarding-account-summary">
                                   <div>
-                                    <span className="overview-current-set-cell-label">Status</span>
-                                    <strong>Installed, but no saved profile yet</strong>
+                                    <span className="overview-current-set-cell-label">
+                                      {ONBOARDING_ACCOUNTS_STEP_COPY.needsProfileStatusLabel}
+                                    </span>
+                                    <strong>{ONBOARDING_ACCOUNTS_STEP_COPY.needsProfileStatusValue}</strong>
                                   </div>
                                   <div>
-                                    <span className="overview-current-set-cell-label">Current state</span>
-                                    <strong>No reusable account saved</strong>
+                                    <span className="overview-current-set-cell-label">
+                                      {ONBOARDING_ACCOUNTS_STEP_COPY.needsProfileCurrentStateLabel}
+                                    </span>
+                                    <strong>{ONBOARDING_ACCOUNTS_STEP_COPY.needsProfileCurrentStateValue}</strong>
                                   </div>
                                 </div>
-                                <p className="inline-note">
-                                  Add one reusable {toolDisplayName(selectedAccountItem.status.tool)} profile so this computer can switch that tool safely later.
-                                </p>
+                                <p className="inline-note">{onboardingNeedsProfileNote(selectedAccountItem.status.tool)}</p>
                                 <div className="button-row">
                                   <button
                                     className="ghost-button"
@@ -617,7 +645,7 @@ export function SetupPanel({
                                     disabled={mutationLock.isBusy}
                                     onClick={() => onOpenProfiles(selectedAccountItem.status.tool)}
                                   >
-                                    Add profile
+                                    {ONBOARDING_ACCOUNTS_STEP_COPY.addProfileActionLabel}
                                   </button>
                                 </div>
                               </>
@@ -627,8 +655,8 @@ export function SetupPanel({
                               <>
                                 <div className="desktop-pane-section-header">
                                   <div>
-                                    <p className="card-kicker">Optional tool</p>
-                                    <h3>{toolDisplayName(selectedAccountItem.status.tool)} is not installed</h3>
+                                    <p className="card-kicker">{ONBOARDING_ACCOUNTS_STEP_COPY.missingKicker}</p>
+                                    <h3>{onboardingMissingToolHeading(selectedAccountItem.status.tool)}</h3>
                                   </div>
                                   <span className={`pill pill-${onboardingAccountBadge(selectedAccountItem).tone}`}>
                                     {onboardingAccountBadge(selectedAccountItem).label}
@@ -639,17 +667,22 @@ export function SetupPanel({
                                 </p>
                                 <div className="onboarding-account-summary">
                                   <div>
-                                    <span className="overview-current-set-cell-label">Status</span>
-                                    <strong>Optional for now</strong>
+                                    <span className="overview-current-set-cell-label">
+                                      {ONBOARDING_ACCOUNTS_STEP_COPY.missingStatusLabel}
+                                    </span>
+                                    <strong>{ONBOARDING_ACCOUNTS_STEP_COPY.missingStatusValue}</strong>
                                   </div>
                                   <div>
-                                    <span className="overview-current-set-cell-label">Binary</span>
+                                    <span className="overview-current-set-cell-label">
+                                      {ONBOARDING_ACCOUNTS_STEP_COPY.binaryLabel}
+                                    </span>
                                     <strong>{toolBinaryName(selectedAccountItem.status.tool)}</strong>
                                   </div>
                                 </div>
                                 <p className="inline-note">
-                                  You can finish setup without {toolDisplayName(selectedAccountItem.status.tool)}. Install the{" "}
-                                  <code>{toolBinaryName(selectedAccountItem.status.tool)}</code> tool later when you want to manage that provider here.
+                                  {selectedMissingToolNoteParts?.beforeBinary}
+                                  <code>{selectedMissingToolNoteParts?.binary}</code>
+                                  {selectedMissingToolNoteParts?.afterBinary}
                                 </p>
                                 <div className="button-row">
                                   <button
@@ -657,7 +690,7 @@ export function SetupPanel({
                                     type="button"
                                     onClick={() => openExternalGuide(installGuideUrlForTool(selectedAccountItem.status.tool))}
                                   >
-                                    Open installation guide
+                                    {ONBOARDING_ACCOUNTS_STEP_COPY.installationGuideLabel}
                                   </button>
                                 </div>
                               </>
@@ -667,9 +700,7 @@ export function SetupPanel({
                       }
                     />
                   ) : (
-                    <p className="inline-note">
-                      Run the setup scan to detect live Claude, Codex, and Gemini accounts.
-                    </p>
+                    <p className="inline-note">{ONBOARDING_ACCOUNTS_STEP_COPY.emptyDetail}</p>
                   )}
                 </div>
               </>
@@ -841,29 +872,32 @@ export function SetupPanel({
       />
       {pendingLiveImport ? (
         <DialogSurface
-          ariaLabel={`Import ${toolDisplayName(pendingLiveImport.tool)} Profile`}
+          ariaLabel={onboardingImportDialogAriaLabel(pendingLiveImport.tool)}
           className="quick-switch-palette profile-sheet"
           initialFocusSelector="input:not([disabled]), button:not([disabled])"
           onClose={closeLiveImport}
         >
             <div className="quick-switch-header">
               <div>
-                <p className="card-kicker">Import current account</p>
+                <p className="card-kicker">{ONBOARDING_IMPORT_DIALOG_COPY.kicker}</p>
                 <h3>
-                  Import <ToolBrand tool={pendingLiveImport.tool} className="tool-brand-inline" logoSize={18} shortName /> profile
+                  {ONBOARDING_IMPORT_DIALOG_COPY.headingPrefix}{" "}
+                  <ToolBrand tool={pendingLiveImport.tool} className="tool-brand-inline" logoSize={18} shortName />{" "}
+                  {ONBOARDING_IMPORT_DIALOG_COPY.headingSuffix}
                 </h3>
               </div>
               <button className="ghost-button" type="button" onClick={closeLiveImport}>
-                Close
+                {ONBOARDING_IMPORT_DIALOG_COPY.closeLabel}
               </button>
             </div>
             <p className="inline-note">
-              Save the account that {toolDisplayName(pendingLiveImport.tool)} is already using as a
-              reusable profile. This imported profile becomes the active saved account for this tool.
+              {ONBOARDING_IMPORT_DIALOG_COPY.introPrefix}
+              {toolDisplayName(pendingLiveImport.tool)}
+              {ONBOARDING_IMPORT_DIALOG_COPY.introSuffix}
             </p>
             <form className="stacked-form" onSubmit={(event) => submitImport(event, pendingLiveImport.tool)}>
               <label>
-                Profile name
+                {ONBOARDING_IMPORT_DIALOG_COPY.profileNameLabel}
                 <input
                   value={pendingProfileName}
                   onChange={(event) =>
@@ -875,7 +909,7 @@ export function SetupPanel({
                 />
               </label>
               <label>
-                Label
+                {ONBOARDING_IMPORT_DIALOG_COPY.labelFieldLabel}
                 <input
                   value={pendingProfileLabel}
                   onChange={(event) =>
@@ -888,7 +922,7 @@ export function SetupPanel({
               </label>
               <div className="button-row">
                 <button className="ghost-button" type="button" onClick={closeLiveImport}>
-                  Cancel
+                  {ONBOARDING_IMPORT_DIALOG_COPY.cancelLabel}
                 </button>
                 <button
                   className="primary-button"

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { AppBootstrap, AppSnapshot, InitReport } from "../../lib/schemas";
 import {
+  ONBOARDING_ACCOUNTS_STEP_COPY,
+  ONBOARDING_IMPORT_DIALOG_COPY,
   ONBOARDING_RUNTIME_NEXT_STEPS,
   ONBOARDING_RUNTIME_STEP_COPY,
   ONBOARDING_SETUP_STEPS,
@@ -13,8 +15,13 @@ import {
   buildOnboardingRuntimeRows,
   defaultSetupStep,
   onboardingHealthStatusSymbol,
+  onboardingImportDialogAriaLabel,
   onboardingImportedProfileLabel,
   onboardingImportSubmitLabel,
+  onboardingLiveAccountImportNote,
+  onboardingMissingToolHeading,
+  onboardingMissingToolNoteParts,
+  onboardingNeedsProfileNote,
   onboardingPrimaryActionLabel,
   onboardingAccountBadge,
   onboardingAccountSummary,
@@ -157,6 +164,13 @@ describe("onboarding-display", () => {
     expect(onboardingHealthStatusSymbol("pass")).toBe("✓");
     expect(onboardingHealthStatusSymbol("warn")).toBe("!");
     expect(onboardingHealthStatusSymbol("fail")).toBe("✕");
+    expect(ONBOARDING_ACCOUNTS_STEP_COPY.sectionHeading).toBe("Detected tools");
+    expect(ONBOARDING_ACCOUNTS_STEP_COPY.importActionLabel).toBe("Import as profile");
+    expect(ONBOARDING_ACCOUNTS_STEP_COPY.emptyDetail).toBe(
+      "Run the setup scan to detect live Claude, Codex, and Gemini accounts.",
+    );
+    expect(ONBOARDING_IMPORT_DIALOG_COPY.kicker).toBe("Import current account");
+    expect(ONBOARDING_IMPORT_DIALOG_COPY.headingSuffix).toBe("profile");
   });
 
   it("shares switch readiness copy", () => {
@@ -338,6 +352,22 @@ describe("onboarding-display", () => {
     expect(onboardingImportedProfileLabel("work laptop")).toBe("Work Laptop account");
     expect(onboardingImportSubmitLabel(true)).toBe("Importing…");
     expect(onboardingImportSubmitLabel(false)).toBe("Import");
+    expect(onboardingImportDialogAriaLabel("claude")).toBe("Import Claude Code Profile");
+    expect(onboardingLiveAccountImportNote("claude", true)).toBe(
+      "Save the current Claude Code login as a reusable profile in a setup sheet.",
+    );
+    expect(onboardingLiveAccountImportNote("claude", false)).toBe(
+      "This release cannot save the current Claude Code login directly. Choose another sign-in method instead.",
+    );
+    expect(onboardingNeedsProfileNote("codex")).toBe(
+      "Add one reusable Codex CLI profile so this computer can switch that tool safely later.",
+    );
+    expect(onboardingMissingToolHeading("gemini")).toBe("Gemini CLI is not installed");
+    expect(onboardingMissingToolNoteParts("gemini")).toEqual({
+      beforeBinary: "You can finish setup without Gemini CLI. Install the ",
+      binary: "gemini",
+      afterBinary: " tool later when you want to manage that provider here.",
+    });
     expect(restoreIncludedEngineActionLabel(true)).toBe("Switching to Included Engine…");
     expect(restoreIncludedEngineActionLabel(false)).toBe("Use Included Engine");
     expect(restoreIncludedEngineErrorMessage(new Error("No bundled engine found."))).toBe(
