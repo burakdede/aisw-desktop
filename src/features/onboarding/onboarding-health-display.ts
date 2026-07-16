@@ -1,18 +1,27 @@
 import { APP_NAV_IDS, APP_NAV_LABELS } from "../../lib/app-navigation";
+import {
+  DESKTOP_ENGINE_LABEL,
+  LOCAL_PERMISSIONS_LABEL,
+  NO_DETAIL_PROVIDED_LABEL,
+  SECURE_STORAGE_LABEL,
+  SETUP_CHECK_LABEL,
+  SIGN_IN_FLOW_LABEL,
+  TERMINAL_INTEGRATION_LABEL,
+} from "../../lib/desktop-domain-copy";
 import { titleCase } from "../../lib/utils";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
 
-export const ONBOARDING_HEALTH_SETUP_CHECK_LABEL = "Setup check";
-export const ONBOARDING_HEALTH_NO_DETAIL_LABEL = "No detail provided.";
+export const ONBOARDING_HEALTH_SETUP_CHECK_LABEL = SETUP_CHECK_LABEL;
+export const ONBOARDING_HEALTH_NO_DETAIL_LABEL = NO_DETAIL_PROVIDED_LABEL;
 
 const ONBOARDING_HEALTH_LABEL_RULES = [
-  { label: "Terminal integration", keywords: ["shell"] },
-  { label: "Secure storage", keywords: ["keyring"] },
-  { label: "Local permissions", keywords: ["permission"] },
-  { label: "Sign-in flow", keywords: ["oauth"] },
+  { label: TERMINAL_INTEGRATION_LABEL, keywords: ["shell"] },
+  { label: SECURE_STORAGE_LABEL, keywords: ["keyring"] },
+  { label: LOCAL_PERMISSIONS_LABEL, keywords: ["permission"] },
+  { label: SIGN_IN_FLOW_LABEL, keywords: ["oauth"] },
   { label: APP_NAV_LABELS[APP_NAV_IDS.backups], keywords: ["backup"] },
-  { label: "Desktop engine", keywords: ["runtime", "engine"] },
+  { label: DESKTOP_ENGINE_LABEL, keywords: ["runtime", "engine"] },
 ] as const;
 
 export function normalizeOnboardingHealthLabel(value: string | undefined) {

@@ -6,6 +6,11 @@ import {
 } from "../../lib/check-status";
 import { isSystemKeyringBackend } from "../../lib/credential-backends";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
+import {
+  DESKTOP_ENGINE_LABEL,
+  SECURE_STORAGE_LABEL,
+  TERMINAL_INTEGRATION_LABEL,
+} from "../../lib/desktop-domain-copy";
 import { toolDisplayName } from "../../lib/tool-display";
 import { toolBinaryName } from "../../lib/tool-guidance";
 import { resolveErrorDetails, resolveErrorMessage } from "../../lib/error-details";
@@ -144,16 +149,16 @@ export const ONBOARDING_OVERVIEW_COPY = {
   installedNowNote:
     "Missing tools are optional. You can finish setup and add them later.",
   switchReadyLabel: "Ready to switch",
-  runtimeLabel: "Desktop engine",
+  runtimeLabel: DESKTOP_ENGINE_LABEL,
   runtimeVersionPrefix: "Version",
   runtimeVersionUnknown: "unknown",
-  secureStorageLabel: "Secure storage",
+  secureStorageLabel: SECURE_STORAGE_LABEL,
   readyBadgeLabel: "Ready",
 } as const;
 
 export const ONBOARDING_RUNTIME_STEP_COPY = {
   welcomeKicker: "Welcome",
-  welcomeHeading: "Desktop engine",
+  welcomeHeading: DESKTOP_ENGINE_LABEL,
   welcomePrimaryNote:
     "AI Switch already includes the desktop engine it needs. You do not need a separate command-line install to finish setup.",
   welcomeSecondaryNote:
@@ -243,7 +248,7 @@ export const ONBOARDING_SWITCH_STEP_COPY = {
 
 export const ONBOARDING_TERMINAL_STEP_COPY = {
   kicker: "Optional",
-  heading: "Terminal integration",
+  heading: TERMINAL_INTEGRATION_LABEL,
   intro:
     "Optional. AI Switch updates live credential files without terminal integration. Turn this on later only if already-open terminal sessions need to pick up changes immediately.",
   detectedShellLabel: "Detected shell",
@@ -696,7 +701,7 @@ export function buildOnboardingHealthItems(
   });
   const items: OnboardingHealthItem[] = [
     {
-      label: "Desktop engine",
+      label: DESKTOP_ENGINE_LABEL,
       status: bootstrap.runtime_status.compatible ? "pass" : "fail",
       detail: bootstrap.runtime_status.compatible
         ? bootstrap.settings.runtime_kind === "bundled"
@@ -739,7 +744,7 @@ export function buildOnboardingRuntimeRows(
 
   return [
     {
-      label: "Desktop engine",
+      label: DESKTOP_ENGINE_LABEL,
       status: bootstrap.runtime_status.compatible ? "pass" : "warn",
       detail:
         bootstrap.settings.runtime_kind === "bundled"
@@ -756,7 +761,7 @@ export function buildOnboardingRuntimeRows(
         : "Managed automatically inside the standard AI Switch data location.",
     },
     {
-      label: "Secure storage",
+      label: SECURE_STORAGE_LABEL,
       status: secureStorage.available ? "pass" : "warn",
       detail: secureStorage.detail,
     },

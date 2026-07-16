@@ -8,6 +8,10 @@ import { compareBackupsNewestFirst } from "../../lib/backups";
 import { credentialBackendLabel as formatCredentialBackendLabel } from "../../lib/credential-backends";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import {
+  LOCAL_PERMISSIONS_LABEL,
+  SIGN_IN_FLOW_LABEL,
+} from "../../lib/desktop-domain-copy";
+import {
   CANCEL_LABEL,
   DEFAULT_ACTION_FAILURE_MESSAGE,
   inspectItemLabel,
@@ -156,7 +160,7 @@ export const PROFILE_ADD_SHEET_COPY = {
   credentialBackendLabel: "Credential backend",
   apiKeyLabel: "API key",
   expectedEnvVarPrefix: "Expected environment variable:",
-  oauthFlowHeading: "Sign-in flow",
+  oauthFlowHeading: SIGN_IN_FLOW_LABEL,
   oauthFlowPrimaryNote:
     "AI Switch will launch the tool's native login flow and stream progress from the included desktop engine.",
   oauthFlowSecondaryNote:
@@ -175,7 +179,7 @@ export const PROFILE_INSPECTOR_FIELD_LABELS = {
   lastChecked: "Last checked",
   stateMode: "State mode",
   credentialsPresent: "Credentials present",
-  localPermissions: "Local permissions",
+  localPermissions: LOCAL_PERMISSIONS_LABEL,
   tokenWarning: "Token warning",
   warningPrefix: "Warning",
 } as const;
