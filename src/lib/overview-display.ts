@@ -3,6 +3,7 @@ import { fixedStateModeDescription, stateModeDescription } from "../features/sha
 import { toolInspectorEmptyLabel, overviewHealthLabel, overviewHealthText, resolveOverviewHealthState, type OverviewHealthState } from "./status-display";
 import { toolProfileDisplayLabel } from "./profile-display";
 import type { AppSnapshot, DesktopSettings, ToolStatus } from "./schemas";
+import { toolShortName } from "./tool-registry";
 import { countLabel, pluralChoice, titleCase } from "./utils";
 
 export type OverviewInspectorActionKind =
@@ -76,7 +77,7 @@ export function overviewToolCountLabel(total: number) {
 }
 
 export function overviewToolInspectorLabel(tool: string) {
-  return `Inspect ${titleCase(tool)}`;
+  return `Inspect ${toolShortName(tool)}`;
 }
 
 export function overviewSelectProfileLabel(tool: string) {

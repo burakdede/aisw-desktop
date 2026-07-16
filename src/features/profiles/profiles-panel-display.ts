@@ -17,7 +17,7 @@ import {
   resolveProfileSwitchState,
   type ProfileSwitchState,
 } from "../../lib/status-display";
-import { SUPPORTED_TOOLS, type SupportedTool } from "../../lib/tool-registry";
+import { SUPPORTED_TOOLS, toolShortName, type SupportedTool } from "../../lib/tool-registry";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import type { ProfileCredentialBackend, ProfileImportMode } from "../shared/profile-capabilities";
 
@@ -529,7 +529,7 @@ export function buildOauthWizardSteps(
   const definitions = [
     {
       id: "start" as const,
-      label: `1. Starting ${titleCase(tool)} login`,
+      label: `1. Starting ${toolShortName(tool)} login`,
       fallback: "Preparing the native login flow.",
     },
     {

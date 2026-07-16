@@ -1,12 +1,11 @@
 import type { ProfileSwitchState } from "../../lib/status-display";
 import { profileSwitchLabel } from "../../lib/status-display";
 import { toolDisplayName } from "../../lib/tool-display";
-import { titleCase } from "../../lib/utils";
 import type {
   ProfileCredentialBackend,
   ProfileImportMode,
 } from "../shared/profile-capabilities";
-import { toolApiKeyEnvVar } from "../../lib/tool-registry";
+import { toolApiKeyEnvVar, toolShortName } from "../../lib/tool-registry";
 import { credentialBackendLabel as formatCredentialBackendLabel } from "../../lib/credential-backends";
 
 export function profileImportModeLabel(mode: ProfileImportMode) {
@@ -63,5 +62,5 @@ export function profileCompactSummary(entry: { tool: string; state: ProfileSwitc
 }
 
 export function duplicateProfileNameWarning(tool: string, profile: string) {
-  return `${titleCase(tool)} already has a profile named ${profile}. Choose a different name or rename the existing profile first.`;
+  return `${toolShortName(tool)} already has a profile named ${profile}. Choose a different name or rename the existing profile first.`;
 }
