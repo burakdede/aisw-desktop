@@ -47,7 +47,6 @@ import {
   SUPPORTED_TOOLS,
   isSupportedTool,
   toolApiKeyEnvVar,
-  toolShortName,
   type SupportedTool,
 } from "../../../lib/tool-registry";
 import { toolDisplayName } from "../../../lib/tool-display";
@@ -79,6 +78,7 @@ import {
   buildInventoryProfiles,
   buildProfileActionMenu,
   buildProfileEditSheetState,
+  buildProfileFileBackendNote,
   buildProfileRemovalHeading,
   buildProfileLabelUpdateRequest,
   buildProfileRemovalSheetState,
@@ -98,6 +98,7 @@ import {
   latestBackupForProfile,
   nextInventorySelectionIndex,
   profileMutationError,
+  PROFILE_ADD_SHEET_COPY,
   PROFILE_EDIT_SHEET_COPY,
   PROFILE_INSPECTOR_FIELD_LABELS,
   PROFILE_PANEL_COPY,
@@ -1214,12 +1215,12 @@ export function ProfilesPanel({
             <div className="quick-switch-header">
               <div>
                 <p className="card-kicker">{PROFILE_PANEL_COPY.addProfileLabel}</p>
-                <h3>Add a saved login</h3>
+                <h3>{PROFILE_ADD_SHEET_COPY.heading}</h3>
               </div>
             </div>
             <form className="stacked-form" onSubmit={submit}>
               <label>
-                Tool
+                {PROFILE_ADD_SHEET_COPY.toolLabel}
                 <select
                   value={tool}
                   onChange={(event) => {
@@ -1235,7 +1236,7 @@ export function ProfilesPanel({
                 </select>
               </label>
               <label>
-                Profile name
+                {PROFILE_ADD_SHEET_COPY.profileNameLabel}
                 <input value={profile} onChange={(event) => setProfile(event.target.value)} />
               </label>
               {hasDuplicateProfileName ? (
@@ -1244,13 +1245,13 @@ export function ProfilesPanel({
                 </p>
               ) : null}
               <label>
-                Display label
+                {PROFILE_ADD_SHEET_COPY.displayLabelLabel}
                 <input value={label} onChange={(event) => setLabel(event.target.value)} />
               </label>
               <label>
-                Authentication
+                {PROFILE_ADD_SHEET_COPY.authenticationLabel}
                 <select
-                  aria-label="Import mode"
+                  aria-label={PROFILE_ADD_SHEET_COPY.importModeAriaLabel}
                   value={mode}
                   onChange={(event) => setMode(event.target.value as typeof mode)}
                 >
@@ -1262,7 +1263,7 @@ export function ProfilesPanel({
                 </select>
               </label>
               <div className="profiles-sheet-note">
-                <p className="card-kicker">Mode</p>
+                <p className="card-kicker">{PROFILE_ADD_SHEET_COPY.modeKicker}</p>
                 <h4>{profileImportModeHeading(tool, mode)}</h4>
                 {profileImportModeNotes(tool, mode).map((note) => (
                   <p key={note} className="inline-note">
@@ -1271,7 +1272,7 @@ export function ProfilesPanel({
                 ))}
               </div>
               <label>
-                Credential backend
+                {PROFILE_ADD_SHEET_COPY.credentialBackendLabel}
                 <select
                   value={credentialBackend}
                   onChange={(event) =>
@@ -1288,12 +1289,12 @@ export function ProfilesPanel({
               </label>
               {availableCredentialBackends.length === 1 && availableCredentialBackends[0] === "file" ? (
                 <p className="inline-note">
-                  {toolShortName(tool)} profiles are always stored with file-backed credentials.
+                  {buildProfileFileBackendNote(tool)}
                 </p>
               ) : null}
               {mode === "api_key" ? (
                 <label>
-                  API key
+                  {PROFILE_ADD_SHEET_COPY.apiKeyLabel}
                   <input
                     ref={apiKeyInputRef}
                     type="password"
@@ -1308,17 +1309,17 @@ export function ProfilesPanel({
               ) : null}
               {mode === "from_env" ? (
                 <p className="inline-note">
-                  Expected environment variable: <code>{toolApiKeyEnvVar(tool)}</code>
+                  {PROFILE_ADD_SHEET_COPY.expectedEnvVarPrefix} <code>{toolApiKeyEnvVar(tool)}</code>
                 </p>
               ) : null}
               {mode === "oauth" ? (
                 <div className="diagnostic-card">
-                  <h4>Sign-in flow</h4>
+                  <h4>{PROFILE_ADD_SHEET_COPY.oauthFlowHeading}</h4>
                   <p className="inline-note">
-                    AI Switch will launch the tool&apos;s native login flow and stream progress from the included desktop engine.
+                    {PROFILE_ADD_SHEET_COPY.oauthFlowPrimaryNote}
                   </p>
                   <p className="inline-note">
-                    Keep this window open while the browser or terminal login completes.
+                    {PROFILE_ADD_SHEET_COPY.oauthFlowSecondaryNote}
                   </p>
                 </div>
               ) : null}
@@ -1341,7 +1342,7 @@ export function ProfilesPanel({
               )}
               {mode === "oauth" ? (
                 <article className="diagnostic-card">
-                  <h4>OAuth progress</h4>
+                  <h4>{PROFILE_ADD_SHEET_COPY.oauthProgressHeading}</h4>
                   {oauthWizardSteps.some((step) => step.status !== "pending") ? (
                     <div className="stack-list">
                       {oauthWizardSteps.map((step) => (
@@ -1355,7 +1356,7 @@ export function ProfilesPanel({
                     </div>
                   ) : (
                     <p className="inline-note">
-                      Start OAuth to stream each login step before the profile is captured and saved.
+                      {PROFILE_ADD_SHEET_COPY.oauthProgressEmptyNote}
                     </p>
                   )}
                   {oauthError ? <p className="inline-note">{oauthError}</p> : null}
@@ -1367,7 +1368,7 @@ export function ProfilesPanel({
                   type="button"
                   onClick={() => setProfileSheetOpen(false)}
                 >
-                  Cancel
+                  {PROFILE_ADD_SHEET_COPY.cancelLabel}
                 </button>
                 <button
                   className="primary-button"

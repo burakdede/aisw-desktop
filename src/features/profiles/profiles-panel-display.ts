@@ -138,6 +138,28 @@ export const PROFILE_REMOVAL_SHEET_COPY = {
   confirmLabel: "Remove Profile",
 } as const;
 
+export const PROFILE_ADD_SHEET_COPY = {
+  heading: "Add a saved login",
+  toolLabel: "Tool",
+  profileNameLabel: "Profile name",
+  displayLabelLabel: "Display label",
+  authenticationLabel: "Authentication",
+  importModeAriaLabel: "Import mode",
+  modeKicker: "Mode",
+  credentialBackendLabel: "Credential backend",
+  apiKeyLabel: "API key",
+  expectedEnvVarPrefix: "Expected environment variable:",
+  oauthFlowHeading: "Sign-in flow",
+  oauthFlowPrimaryNote:
+    "AI Switch will launch the tool's native login flow and stream progress from the included desktop engine.",
+  oauthFlowSecondaryNote:
+    "Keep this window open while the browser or terminal login completes.",
+  oauthProgressHeading: "OAuth progress",
+  oauthProgressEmptyNote:
+    "Start OAuth to stream each login step before the profile is captured and saved.",
+  cancelLabel: "Cancel",
+} as const;
+
 export const PROFILE_INSPECTOR_FIELD_LABELS = {
   liveMatch: "Live match",
   authentication: "Authentication",
@@ -222,6 +244,10 @@ export function buildProfileSavedAsLabel(name: string) {
 
 export function buildProfileRemovalHeading(label: string) {
   return `Remove “${label}”?`;
+}
+
+export function buildProfileFileBackendNote(tool: SupportedTool) {
+  return `${toolShortName(tool)} profiles are always stored with file-backed credentials.`;
 }
 
 export function buildInventoryProfiles(input: {

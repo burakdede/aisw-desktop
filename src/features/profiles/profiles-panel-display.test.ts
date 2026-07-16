@@ -12,6 +12,7 @@ import {
   buildInventoryProfiles,
   buildProfileActionMenu,
   buildProfileEditSheetState,
+  buildProfileFileBackendNote,
   buildProfileLabelUpdateRequest,
   buildProfileRemovalHeading,
   buildProfileRemovalSheetState,
@@ -32,6 +33,7 @@ import {
   nextInventorySelectionIndex,
   oauthEventStage,
   profileMutationError,
+  PROFILE_ADD_SHEET_COPY,
   PROFILE_EDIT_SHEET_COPY,
   PROFILE_INSPECTOR_FIELD_LABELS,
   PROFILE_PANEL_COPY,
@@ -138,6 +140,8 @@ describe("profiles-panel-display", () => {
     expect(INVENTORY_FILTERS).toEqual(["all", "claude", "codex", "gemini"]);
     expect(PROFILE_PANEL_COPY.searchPlaceholder).toBe("Search profiles…");
     expect(PROFILE_PANEL_COPY.addProfileLabel).toBe("Add Profile");
+    expect(PROFILE_ADD_SHEET_COPY.heading).toBe("Add a saved login");
+    expect(PROFILE_ADD_SHEET_COPY.oauthProgressHeading).toBe("OAuth progress");
     expect(PROFILE_EDIT_SHEET_COPY.heading).toBe("Rename Profile");
     expect(PROFILE_REMOVAL_SHEET_COPY.confirmLabel).toBe("Remove Profile");
     expect(PROFILE_PANEL_COPY.tableColumns.map((column) => column.label)).toEqual([
@@ -157,6 +161,9 @@ describe("profiles-panel-display", () => {
     );
     expect(buildProfileSavedAsLabel("work")).toBe("Saved as work");
     expect(buildProfileRemovalHeading("Work Laptop")).toBe("Remove “Work Laptop”?");
+    expect(buildProfileFileBackendNote("claude")).toBe(
+      "Claude profiles are always stored with file-backed credentials.",
+    );
 
     const snapshot = makeSnapshot();
     const settings = makeSettings();
