@@ -513,14 +513,14 @@ export function buildOverviewInspectorPresentation(input: {
     ? null
     : canReapplyActiveProfile
       ? supportsLiveImport
-        ? {
-            kind: "import_current",
-            label: "Import Current…",
-          }
-        : {
-            kind: "open_account_setup",
-            label: "Open Account Setup",
-          }
+      ? {
+          kind: "import_current",
+          label: DESKTOP_ACTION_COPY.importCurrentEllipsisLabel,
+        }
+      : {
+          kind: "open_account_setup",
+          label: DESKTOP_ACTION_COPY.openAccountSetupLabel,
+        }
       : status.active_profile
         ? {
             kind: "open_profile",
@@ -549,7 +549,7 @@ export function buildOverviewInspectorPresentation(input: {
     supportsLiveImport
       ? {
           kind: "import_current",
-          label: "Import Current…",
+          label: DESKTOP_ACTION_COPY.importCurrentEllipsisLabel,
         }
       : null,
     workspaceMismatchPresent

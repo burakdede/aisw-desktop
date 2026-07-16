@@ -6,6 +6,7 @@ import { SplitView } from "../../../components/SplitView";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { AppBootstrap, AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { exportDiagnosticBundle, runDoctor, runRepair, runVerify } from "../../../lib/client";
+import { DESKTOP_ACTION_COPY } from "../../../lib/desktop-action-copy";
 import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { openExternalGuide, installGuideUrlForTool } from "../../../lib/tool-guidance";
 import { useLastCommandResults } from "../../shared/lastCommandResult";
@@ -215,8 +216,8 @@ export function DiagnosticsPanel({
         toolCapabilities,
         DEFAULT_PROFILE_IMPORT_MODE,
       )
-      ? "Import Current…"
-      : "Open Account Setup"
+      ? DESKTOP_ACTION_COPY.importCurrentEllipsisLabel
+      : DESKTOP_ACTION_COPY.openAccountSetupLabel
     : null;
   const {
     secondaryInspectorAction,
