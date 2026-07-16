@@ -23,8 +23,6 @@ import {
 import { SETTINGS_SECTION_IDS, type SettingsSection } from "../../../lib/settings-sections";
 import {
   DEFAULT_PROFILE_IMPORT_MODE,
-  preferredProfileImportMode,
-  supportsProfileImportMode,
 } from "../../shared/profile-capabilities";
 import { DEFAULT_EDITABLE_STATE_MODE, resolveGlobalStateMode } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
@@ -53,6 +51,7 @@ import {
   defaultSetupStep,
   onboardingImportedProfileLabel,
   onboardingImportSubmitLabel,
+  onboardingLiveImportAction,
   onboardingPrimaryActionLabel,
   onboardingAccountBadge,
   onboardingAccountSummary,
@@ -184,13 +183,10 @@ export function SetupPanel({
     event.preventDefault();
     const value = profileNames[tool]?.trim();
     if (!value) return;
-    if (!supportsProfileImportMode(tool, toolCapabilities, DEFAULT_PROFILE_IMPORT_MODE)) {
+    const importAction = onboardingLiveImportAction(tool, toolCapabilities);
+    if (importAction.kind === "open_profiles") {
       onOpenProfiles(tool, {
-        mode: preferredProfileImportMode(
-          tool,
-          toolCapabilities,
-          DEFAULT_PROFILE_IMPORT_MODE,
-        ),
+        mode: importAction.mode,
       });
       return;
     }
@@ -245,14 +241,13 @@ export function SetupPanel({
     accountItems,
     selectedAccountKey,
   );
-  const selectedLiveImportSupported =
+  const selectedLiveImportAction =
     selectedAccountItem?.kind === "live"
-      ? supportsProfileImportMode(
+      ? onboardingLiveImportAction(
           selectedAccountItem.account.tool,
           toolCapabilities,
-          DEFAULT_PROFILE_IMPORT_MODE,
         )
-      : false;
+      : null;
   const selectedMissingToolNoteParts =
     selectedAccountItem?.kind === "missing"
       ? onboardingMissingToolNoteParts(selectedAccountItem.status.tool)
@@ -585,18 +580,18 @@ export function SetupPanel({
                                 <p className="inline-note">
                                   {onboardingLiveAccountImportNote(
                                     selectedAccountItem.account.tool,
-                                    selectedLiveImportSupported,
+                                    selectedLiveImportAction?.kind === "import_sheet",
                                   )}
                                 </p>
                                 <div className="button-row">
-                                  {selectedLiveImportSupported ? (
+                                  {selectedLiveImportAction?.kind === "import_sheet" ? (
                                     <button
                                       className="ghost-button"
                                       type="button"
                                       disabled={mutationLock.isBusy}
                                       onClick={() => openLiveImport(selectedAccountItem.account)}
                                     >
-                                      {ONBOARDING_ACCOUNTS_STEP_COPY.importActionLabel}
+                                      {selectedLiveImportAction.label}
                                     </button>
                                   ) : (
                                     <button
@@ -604,16 +599,15 @@ export function SetupPanel({
                                       type="button"
                                       disabled={mutationLock.isBusy}
                                       onClick={() =>
-                                        onOpenProfiles(selectedAccountItem.account.tool, {
-                                          mode: preferredProfileImportMode(
-                                            selectedAccountItem.account.tool,
-                                            toolCapabilities,
-                                            DEFAULT_PROFILE_IMPORT_MODE,
-                                          ),
-                                        })
+                                        selectedLiveImportAction &&
+                                        selectedLiveImportAction.kind === "open_profiles"
+                                          ? onOpenProfiles(selectedAccountItem.account.tool, {
+                                              mode: selectedLiveImportAction.mode,
+                                            })
+                                          : undefined
                                       }
                                     >
-                                      {ONBOARDING_ACCOUNTS_STEP_COPY.chooseSignInMethodLabel}
+                                      {selectedLiveImportAction?.label}
                                     </button>
                                   )}
                                 </div>

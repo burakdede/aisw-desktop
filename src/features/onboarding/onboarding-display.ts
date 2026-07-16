@@ -12,6 +12,12 @@ import { runtimeSummary } from "../../lib/runtime-display";
 import { countLabel, titleCase } from "../../lib/utils";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import {
+  DEFAULT_PROFILE_IMPORT_MODE,
+  preferredProfileImportMode,
+  supportsProfileImportMode,
+  type ProfileImportMode,
+} from "../shared/profile-capabilities";
+import {
   normalizeOnboardingHealthDetail,
   normalizeOnboardingHealthLabel,
 } from "./onboarding-health-display";
@@ -77,6 +83,17 @@ export type OnboardingCompletionState = {
 type RuntimeToolCapabilities = NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
 
 type SecureStoragePlatform = "mac" | "windows" | "other";
+
+export type OnboardingLiveImportAction =
+  | {
+      kind: "import_sheet";
+      label: string;
+    }
+  | {
+      kind: "open_profiles";
+      label: string;
+      mode: ProfileImportMode;
+    };
 
 export const ONBOARDING_SETUP_STEPS: readonly SetupStepOption[] = [
   { value: "runtime", label: "Welcome" },
@@ -490,6 +507,28 @@ export function onboardingLiveAccountImportNote(tool: string, importSupported: b
   return importSupported
     ? `Save the current ${toolDisplayName(tool)} login as a reusable profile in a setup sheet.`
     : `This release cannot save the current ${toolDisplayName(tool)} login directly. Choose another sign-in method instead.`;
+}
+
+export function onboardingLiveImportAction(
+  tool: string,
+  toolCapabilities: RuntimeToolCapabilities,
+): OnboardingLiveImportAction {
+  if (supportsProfileImportMode(tool, toolCapabilities, DEFAULT_PROFILE_IMPORT_MODE)) {
+    return {
+      kind: "import_sheet",
+      label: ONBOARDING_ACCOUNTS_STEP_COPY.importActionLabel,
+    };
+  }
+
+  return {
+    kind: "open_profiles",
+    label: ONBOARDING_ACCOUNTS_STEP_COPY.chooseSignInMethodLabel,
+    mode: preferredProfileImportMode(
+      tool,
+      toolCapabilities,
+      DEFAULT_PROFILE_IMPORT_MODE,
+    ),
+  };
 }
 
 export function onboardingNeedsProfileNote(tool: string) {

@@ -27,6 +27,7 @@ import {
   onboardingImportedProfileLabel,
   onboardingImportSubmitLabel,
   onboardingLiveAccountImportNote,
+  onboardingLiveImportAction,
   onboardingMissingToolHeading,
   onboardingMissingToolNoteParts,
   onboardingNeedsProfileNote,
@@ -372,6 +373,33 @@ describe("onboarding-display", () => {
     expect(onboardingLiveAccountImportNote("claude", false)).toBe(
       "This release cannot save the current Claude Code login directly. Choose another sign-in method instead.",
     );
+    expect(
+      onboardingLiveImportAction(
+        "claude",
+        makeRuntimeToolCapabilities({
+          claude: {
+            auth_methods: ["from_live", "oauth"],
+          },
+        }),
+      ),
+    ).toEqual({
+      kind: "import_sheet",
+      label: "Import as profile",
+    });
+    expect(
+      onboardingLiveImportAction(
+        "claude",
+        makeRuntimeToolCapabilities({
+          claude: {
+            auth_methods: ["oauth"],
+          },
+        }),
+      ),
+    ).toEqual({
+      kind: "open_profiles",
+      label: "Choose sign-in method",
+      mode: "oauth",
+    });
     expect(onboardingNeedsProfileNote("codex")).toBe(
       "Add one reusable Codex CLI profile so this computer can switch that tool safely later.",
     );
