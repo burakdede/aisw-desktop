@@ -2817,7 +2817,7 @@ describe("App", () => {
         return { command, snapshot: bootstrap.snapshot };
       }
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: bootstrap,
           get_snapshot: bootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
@@ -2828,7 +2828,7 @@ describe("App", () => {
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
           get_settings: bootstrap.settings,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -8874,7 +8874,7 @@ describe("App", () => {
         return currentSettings;
       }
       return (
-        {
+        desktopMockRecord({
           get_settings: currentSettings,
           run_doctor: { summary: { status: "pass" }, checks: [] },
           get_shell_guidance: {
@@ -8895,7 +8895,7 @@ describe("App", () => {
               },
             ],
           },
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -8960,7 +8960,7 @@ describe("App", () => {
         return currentSettings;
       }
       return (
-        {
+        desktopMockRecord({
           get_settings: currentSettings,
           run_doctor: { summary: { status: "pass" }, checks: [] },
           get_shell_guidance: {
@@ -8981,7 +8981,7 @@ describe("App", () => {
               },
             ],
           },
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -9051,7 +9051,7 @@ describe("App", () => {
         };
       }
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: {
             ...bootstrap,
             settings: currentSettings,
@@ -9065,7 +9065,7 @@ describe("App", () => {
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
           get_settings: currentSettings,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -9123,7 +9123,7 @@ describe("App", () => {
         };
       }
       return (
-        {
+        desktopMockRecord({
           run_doctor: { summary: { status: "pass" } },
           get_shell_guidance: {
             detected_shell: "zsh",
@@ -9143,7 +9143,7 @@ describe("App", () => {
               },
             ],
           },
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
