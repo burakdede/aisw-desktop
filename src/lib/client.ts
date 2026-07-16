@@ -36,6 +36,7 @@ import {
   type ReferenceDocumentKind,
 } from "./desktop-command-contract";
 import { invokeDesktop } from "./tauri";
+import type { WorkspaceGuardMode } from "./workspace-policy";
 import type { output, ZodTypeAny } from "zod";
 
 export interface AddProfileInput {
@@ -363,7 +364,7 @@ export async function workspaceUnbind(
   return invokeParsed(DESKTOP_COMMANDS.workspaceUnbind, mutationResponseSchema, { target });
 }
 
-export async function workspaceGuard(mode: "warn" | "strict"): Promise<MutationResponse> {
+export async function workspaceGuard(mode: WorkspaceGuardMode): Promise<MutationResponse> {
   return invokeParsed(DESKTOP_COMMANDS.workspaceGuard, mutationResponseSchema, { mode });
 }
 

@@ -1,3 +1,10 @@
+import {
+  DEFAULT_WORKSPACE_GUARD_MODE,
+  WORKSPACE_NO_CONTEXT,
+  normalizeWorkspaceGuardMode,
+  type WorkspaceGuardMode,
+} from "../../lib/workspace-policy";
+
 type UnknownRecord = Record<string, unknown>;
 
 export interface WorkspaceStatusCard {
@@ -15,7 +22,7 @@ export interface WorkspaceBindingCard {
 }
 
 export interface WorkspaceBindingsSummary {
-  guardMode: string;
+  guardMode: WorkspaceGuardMode;
   defaultContext: string;
   bindings: WorkspaceBindingCard[];
 }
@@ -47,12 +54,15 @@ export function parseWorkspaceStatus(
 
   return {
     status: asString(record?.status),
-    currentContext: asString(record?.current_context ?? record?.active_context, "none"),
+    currentContext: asString(
+      record?.current_context ?? record?.active_context,
+      WORKSPACE_NO_CONTEXT,
+    ),
     expectedContext: asString(
       record?.expected_context ?? matchedBinding?.context ?? record?.context,
-      "none",
+      WORKSPACE_NO_CONTEXT,
     ),
-    scope: asString(matchedBinding?.scope, "none"),
+    scope: asString(matchedBinding?.scope, WORKSPACE_NO_CONTEXT),
     target: asString(
       matchedBinding?.path ?? matchedBinding?.pattern ?? matchedBinding?.target,
       "No path or remote match",
@@ -72,13 +82,16 @@ export function parseWorkspaceBindings(
   ];
 
   return {
-    guardMode: asString(userBindings?.guard_mode, "warn"),
-    defaultContext: asString(userBindings?.default_context, "none"),
+    guardMode: normalizeWorkspaceGuardMode(
+      userBindings?.guard_mode,
+      DEFAULT_WORKSPACE_GUARD_MODE,
+    ),
+    defaultContext: asString(userBindings?.default_context, WORKSPACE_NO_CONTEXT),
     bindings: bindingItems
       .map((entry) => asObject(entry))
       .filter((entry): entry is UnknownRecord => Boolean(entry))
       .map((entry) => ({
-        context: asString(entry.context, "none"),
+        context: asString(entry.context, WORKSPACE_NO_CONTEXT),
         scope: asString(entry.scope),
         target: asString(entry.path ?? entry.pattern ?? entry.target, "default"),
       })),

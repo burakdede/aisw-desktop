@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   DESKTOP_COMMANDS,
+  REFERENCE_DOCUMENT_KIND_DOCUMENTATION,
+  REFERENCE_DOCUMENT_KIND_TROUBLESHOOTING,
   REFERENCE_DOCUMENT_KINDS,
 } from "./desktop-command-contract";
 
@@ -16,5 +18,7 @@ describe("desktop-command-contract", () => {
 
   it("shares reference document kinds", () => {
     expect(REFERENCE_DOCUMENT_KINDS).toEqual(["documentation", "troubleshooting"]);
+    expect(REFERENCE_DOCUMENT_KIND_DOCUMENTATION).toBe("documentation");
+    expect(REFERENCE_DOCUMENT_KIND_TROUBLESHOOTING).toBe("troubleshooting");
   });
 });

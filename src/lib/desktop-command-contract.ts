@@ -42,3 +42,8 @@ export const REFERENCE_DOCUMENT_KINDS = [
 
 export type DesktopCommandName = (typeof DESKTOP_COMMANDS)[keyof typeof DESKTOP_COMMANDS];
 export type ReferenceDocumentKind = (typeof REFERENCE_DOCUMENT_KINDS)[number];
+
+export const REFERENCE_DOCUMENT_KIND_DOCUMENTATION: ReferenceDocumentKind =
+  REFERENCE_DOCUMENT_KINDS[0];
+export const REFERENCE_DOCUMENT_KIND_TROUBLESHOOTING: ReferenceDocumentKind =
+  REFERENCE_DOCUMENT_KINDS[1];

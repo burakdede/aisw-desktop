@@ -30,6 +30,10 @@ import {
   DESKTOP_MENU_EVENTS,
   DESKTOP_TRAY_EVENTS,
 } from "./lib/desktop-event-contract";
+import {
+  REFERENCE_DOCUMENT_KIND_DOCUMENTATION,
+  REFERENCE_DOCUMENT_KIND_TROUBLESHOOTING,
+} from "./lib/desktop-command-contract";
 import { activeSetLabel } from "./lib/profile-display";
 import { listenDesktopEvent } from "./lib/tauri";
 import { subscribeDesktopEvents, type DesktopEventHandler } from "./lib/desktop-events";
@@ -354,7 +358,7 @@ export function App() {
       {
         event: DESKTOP_MENU_EVENTS.openHelp,
         handler: () => {
-          void openReferenceDocument("documentation").catch(() => {
+          void openReferenceDocument(REFERENCE_DOCUMENT_KIND_DOCUMENTATION).catch(() => {
             setHelpOpen(true);
           });
         },
@@ -380,7 +384,7 @@ export function App() {
       {
         event: DESKTOP_MENU_EVENTS.openTroubleshooting,
         handler: () => {
-          void openReferenceDocument("troubleshooting").catch(() => {
+          void openReferenceDocument(REFERENCE_DOCUMENT_KIND_TROUBLESHOOTING).catch(() => {
             setActiveNav("diagnostics");
             invalidateDiagnostics();
           });
