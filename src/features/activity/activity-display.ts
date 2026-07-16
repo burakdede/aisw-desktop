@@ -68,11 +68,11 @@ export const ACTIVITY_INSPECTOR_COPY = {
   errorResultFallback: "No redacted result payload was recorded for this event.",
 } as const;
 
-export const ACTIVITY_FILTER_OPTIONS = [
+export const ACTIVITY_FILTER_OPTIONS: ReadonlyArray<{ value: ActivityFilter; label: string }> = [
   { value: "all", label: "All" },
   { value: "success", label: "Success" },
   { value: "error", label: "Failed" },
-] as const;
+];
 
 export const ACTIVITY_TOOLBAR_COPY = {
   searchAriaLabel: "Search activity",

@@ -170,7 +170,7 @@ export function ActivityPanel({
           ariaLabel={ACTIVITY_TOOLBAR_COPY.filterAriaLabel}
           options={ACTIVITY_FILTER_OPTIONS}
           value={filter}
-          onChange={(value) => setFilter(value as ActivityFilter)}
+          onChange={setFilter}
         />
         <div className="activity-toolbar-menu-wrap">
           <button

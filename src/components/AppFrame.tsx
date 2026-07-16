@@ -14,28 +14,28 @@ import {
 } from "./app-frame-display";
 import { SymbolIcon, type SymbolIconName } from "./SymbolIcon";
 
-interface NavItem {
-  id: string;
+interface NavItem<Id extends SymbolIconName> {
+  id: Id;
   label: string;
   group: string;
   disabled?: boolean;
   shortcut?: string;
 }
 
-interface AppFrameProps {
+interface AppFrameProps<Id extends SymbolIconName> {
   title: string;
   subtitle?: string;
   detail?: string;
-  nav: NavItem[];
-  activeNav: string;
-  onSelectNav: (id: string) => void;
+  nav: NavItem<Id>[];
+  activeNav: Id;
+  onSelectNav: (id: Id) => void;
   statusBadge?: ReactNode;
   toolbar?: ReactNode;
   mode?: AppFrameMode;
   children: ReactNode;
 }
 
-export function AppFrame({
+export function AppFrame<Id extends SymbolIconName>({
   title,
   subtitle,
   detail,
@@ -46,27 +46,30 @@ export function AppFrame({
   toolbar,
   mode = APP_FRAME_MODES.standard,
   children,
-}: AppFrameProps) {
-  const navButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+}: AppFrameProps<Id>) {
+  const navButtonRefs = useRef<Record<Id, HTMLButtonElement | null>>({} as Record<
+    Id,
+    HTMLButtonElement | null
+  >);
   const [compactSidebar, setCompactSidebar] = useState(() =>
     isCompactSidebarWidth(readViewportWidth(COMPACT_SIDEBAR_BREAKPOINT)),
   );
   const [sidebarOpen, setSidebarOpen] = useState(() =>
     defaultSidebarOpen(readViewportWidth(COMPACT_SIDEBAR_BREAKPOINT)),
   );
-  const groups = nav.reduce<Record<string, NavItem[]>>((acc, item) => {
+  const groups = nav.reduce<Record<string, NavItem<Id>[]>>((acc, item) => {
     acc[item.group] ??= [];
     acc[item.group].push(item);
     return acc;
   }, {});
 
-  function focusNav(id: string) {
+  function focusNav(id: Id) {
     window.requestAnimationFrame(() => {
       navButtonRefs.current[id]?.focus();
     });
   }
 
-  function moveSelection(currentId: string, direction: "next" | "previous" | "first" | "last") {
+  function moveSelection(currentId: Id, direction: "next" | "previous" | "first" | "last") {
     const targetId = nextAppFrameNavItemId(currentId, nav, direction);
     if (!targetId || targetId === currentId) {
       return;
@@ -76,7 +79,7 @@ export function AppFrame({
     focusNav(targetId);
   }
 
-  function handleNavKeyDown(event: KeyboardEvent<HTMLButtonElement>, item: NavItem) {
+  function handleNavKeyDown(event: KeyboardEvent<HTMLButtonElement>, item: NavItem<Id>) {
     const direction = appFrameNavDirectionForKey(
       event.key,
       event.altKey || event.ctrlKey || event.metaKey,
@@ -123,7 +126,7 @@ export function AppFrame({
     return () => window.removeEventListener("keydown", handleEscape);
   }, [compactSidebar]);
 
-  function handleSelectNav(id: string) {
+  function handleSelectNav(id: Id) {
     onSelectNav(id);
     if (compactSidebar) {
       setSidebarOpen(false);
@@ -241,6 +244,6 @@ export function AppFrame({
   );
 }
 
-function SidebarIcon({ id }: { id: string }) {
-  return <SymbolIcon name={id as SymbolIconName} size="sm" />;
+function SidebarIcon({ id }: { id: SymbolIconName }) {
+  return <SymbolIcon name={id} size="sm" />;
 }

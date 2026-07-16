@@ -15,8 +15,8 @@ export const APP_FRAME_COPY = {
   setupKicker: "Welcome",
 } as const;
 
-export type AppFrameNavItem = {
-  id: string;
+export type AppFrameNavItem<Id extends string = string> = {
+  id: Id;
   disabled?: boolean;
 };
 
@@ -54,15 +54,15 @@ export function appFrameNavDirectionForKey(
   }
 }
 
-export function orderedAppFrameNavItems(items: AppFrameNavItem[]) {
+export function orderedAppFrameNavItems<Id extends string>(items: AppFrameNavItem<Id>[]) {
   return items.filter((item) => !item.disabled);
 }
 
-export function nextAppFrameNavItemId(
-  currentId: string,
-  items: AppFrameNavItem[],
+export function nextAppFrameNavItemId<Id extends string>(
+  currentId: Id,
+  items: AppFrameNavItem<Id>[],
   direction: AppFrameNavDirection,
-) {
+): Id | null {
   const orderedItems = orderedAppFrameNavItems(items);
   if (!orderedItems.length) {
     return null;

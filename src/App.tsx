@@ -133,7 +133,7 @@ export function App() {
     setActiveNav(APP_NAV_IDS.sets);
   }
 
-  function selectNav(id: string) {
+  function selectNav(id: AppNavId) {
     if (id === APP_NAV_IDS.profiles) {
       setProfilesRouteState(createProfilesRouteState());
     }
@@ -141,7 +141,7 @@ export function App() {
       setSettingsRouteState(createSettingsRouteState());
       setRuntimeRecoveryOpen(true);
     }
-    setActiveNav(id as AppNavId);
+    setActiveNav(id);
   }
 
   useEffect(() => {

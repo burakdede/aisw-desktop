@@ -33,6 +33,7 @@ import {
   APP_NAV_LABELS,
   APP_NAV_SHORTCUT_KEYS,
   APP_NAV_SHORTCUT_LABELS,
+  isAppNavId,
   type AppNavId,
 } from "./lib/app-navigation";
 import { createDesktopSettings } from "./lib/desktop-settings";
@@ -149,6 +150,7 @@ export type SettingsRouteState = {
 };
 
 export type AppSectionId = AppNavId | "waiting";
+const WAITING_APP_SECTION = "waiting";
 
 export type ToolbarAction = {
   kind: "quick-switch" | "verify" | "add-profile";
@@ -203,7 +205,7 @@ export function settingsForRecovery(settings: AppBootstrap["settings"] | undefin
 }
 
 export function navShortcutLabel(id: AppNavId | string) {
-  return APP_NAV_SHORTCUT_LABELS[id as AppNavId];
+  return isAppNavId(id) ? APP_NAV_SHORTCUT_LABELS[id] : undefined;
 }
 
 export function appNavFromShortcut(key: string) {
@@ -606,7 +608,11 @@ export function sectionTitle(section: string, setupFocused = false) {
     return "Get started";
   }
 
-  return APP_SECTION_TITLES[section as AppSectionId] ?? APP_SECTION_TITLES.waiting;
+  return isAppSectionId(section) ? APP_SECTION_TITLES[section] : APP_SECTION_TITLES.waiting;
+}
+
+function isAppSectionId(value: string): value is AppSectionId {
+  return value === WAITING_APP_SECTION || isAppNavId(value);
 }
 
 export function sectionDetail(section: string, setupFocused = false) {
