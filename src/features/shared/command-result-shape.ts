@@ -2,6 +2,7 @@ import { asObject, asOptionalString } from "../../lib/parse-guards";
 import type { ErrorMetadata } from "../../lib/error-details";
 import {
   COMMAND_RESULT_SCOPE_TYPES,
+  parseCommandResultScope,
   isCommandResultGlobalId,
   type CommandResultGlobalId,
 } from "./command-result-scope";
@@ -62,23 +63,14 @@ export function parseTrayCommandResultEvent(
 ): ParsedTrayCommandResultEvent | null {
   const base = parseCommandResultBase(value);
   const record = asObject(value);
-  if (!base || !record) {
+  const scope = parseCommandResultScope(value);
+  if (!base || !record || !scope) {
     return null;
   }
 
-  if (record.scope === COMMAND_RESULT_SCOPE_TYPES.tool) {
-    const tool = asOptionalString(record.tool);
-    return tool ? { ...base, scope: COMMAND_RESULT_SCOPE_TYPES.tool, tool } : null;
-  }
-
-  if (record.scope === COMMAND_RESULT_SCOPE_TYPES.global) {
-    const id = asOptionalString(record.id);
-    return id && isCommandResultGlobalId(id)
-      ? { ...base, scope: COMMAND_RESULT_SCOPE_TYPES.global, id }
-      : null;
-  }
-
-  return null;
+  return scope.type === COMMAND_RESULT_SCOPE_TYPES.tool
+    ? { ...base, scope: COMMAND_RESULT_SCOPE_TYPES.tool, tool: scope.tool }
+    : { ...base, scope: COMMAND_RESULT_SCOPE_TYPES.global, id: scope.id };
 }
 
 export function parseCommandResultCommand(value: unknown) {

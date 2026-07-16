@@ -1,3 +1,4 @@
+import { asObject, asOptionalString } from "../../lib/parse-guards";
 import { APP_NAV_IDS, APP_NAV_LABELS } from "../../lib/app-navigation";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { toolDisplayName } from "../../lib/tool-display";
@@ -55,6 +56,24 @@ export function isCommandResultGlobalId(value: string): value is CommandResultGl
   return COMMAND_RESULT_GLOBAL_ID_SET.has(value as CommandResultGlobalId);
 }
 
+export function parseCommandResultScope(value: unknown): CommandResultScope | null {
+  const record = asObject(value);
+  const scopeType = record ? parseCommandResultScopeType(record) : null;
+  if (!record || !scopeType) {
+    return null;
+  }
+
+  if (scopeType === COMMAND_RESULT_SCOPE_TYPES.tool) {
+    const tool = asOptionalString(record.tool);
+    return tool ? { type: COMMAND_RESULT_SCOPE_TYPES.tool, tool } : null;
+  }
+
+  const id = asOptionalString(record.id);
+  return id && isCommandResultGlobalId(id)
+    ? { type: COMMAND_RESULT_SCOPE_TYPES.global, id }
+    : null;
+}
+
 export function commandResultGlobalScopeLabel(id: string) {
   return isCommandResultGlobalId(id)
     ? COMMAND_RESULT_GLOBAL_LABELS[id]
@@ -69,4 +88,17 @@ export function commandResultScopeLabel(scope: CommandResultScope) {
 
 export function commandResultScopeValue(scope: CommandResultScope) {
   return scope.type === COMMAND_RESULT_SCOPE_TYPES.tool ? scope.tool : scope.id;
+}
+
+function parseCommandResultScopeType(record: Record<string, unknown>): CommandResultScopeType | null {
+  if (record.type === COMMAND_RESULT_SCOPE_TYPES.tool || record.scope === COMMAND_RESULT_SCOPE_TYPES.tool) {
+    return COMMAND_RESULT_SCOPE_TYPES.tool;
+  }
+  if (
+    record.type === COMMAND_RESULT_SCOPE_TYPES.global ||
+    record.scope === COMMAND_RESULT_SCOPE_TYPES.global
+  ) {
+    return COMMAND_RESULT_SCOPE_TYPES.global;
+  }
+  return null;
 }

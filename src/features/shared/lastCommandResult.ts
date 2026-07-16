@@ -5,6 +5,7 @@ import {
   COMMAND_RESULT_SCOPE_TYPES,
   commandResultScopeValue,
   isCommandResultGlobalId,
+  parseCommandResultScope,
   type CommandResultScope,
   type CommandResultGlobalId,
 } from "./command-result-scope";
@@ -15,6 +16,7 @@ import {
   type CommandResultStatus,
   type ParsedStoredCommandResult,
 } from "./command-result-shape";
+import { asObject, asOptionalString } from "../../lib/parse-guards";
 
 export type LastCommandResult = ParsedStoredCommandResult;
 
@@ -228,51 +230,23 @@ function asLastCommandResult(value: unknown): LastCommandResult | null {
 }
 
 function asTimelineEntry(value: unknown): ActivityTimelineEntry | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
+  const record = asObject(value);
+  if (!record) {
     return null;
   }
 
-  const candidate = value as Partial<ActivityTimelineEntry>;
-  const result = asLastCommandResult(candidate);
-  if (!result || typeof candidate.key !== "string") {
+  const result = asLastCommandResult(record);
+  const key = asOptionalString(record.key);
+  const scope = parseCommandResultScope(record.scope);
+  if (!result || !key || !scope) {
     return null;
   }
 
-  const scope = candidate.scope;
-  if (!scope || typeof scope !== "object" || Array.isArray(scope)) {
-    return null;
-  }
-
-  if (
-    (scope as Partial<CommandResultScope>).type === COMMAND_RESULT_SCOPE_TYPES.tool &&
-    typeof (scope as { tool?: unknown }).tool === "string"
-  ) {
-    return {
-      ...result,
-      key: candidate.key,
-      scope: {
-        type: COMMAND_RESULT_SCOPE_TYPES.tool,
-        tool: (scope as { tool: string }).tool,
-      },
-    };
-  }
-
-  if (
-    (scope as Partial<CommandResultScope>).type === COMMAND_RESULT_SCOPE_TYPES.global &&
-    typeof (scope as { id?: unknown }).id === "string" &&
-    isCommandResultGlobalId((scope as { id: string }).id)
-  ) {
-    return {
-      ...result,
-      key: candidate.key,
-      scope: {
-        type: COMMAND_RESULT_SCOPE_TYPES.global,
-        id: (scope as { id: CommandResultGlobalId }).id,
-      },
-    };
-  }
-
-  return null;
+  return {
+    ...result,
+    key,
+    scope,
+  };
 }
 
 function createTimelineEntry(
