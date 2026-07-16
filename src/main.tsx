@@ -1,15 +1,11 @@
 import React from "react";
-import ReactDOM from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { App } from "./App";
+import { bootstrapApplication } from "./bootstrap";
 import "./styles/global.css";
 
-const queryClient = new QueryClient();
+const rootElement = document.getElementById("root");
 
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </React.StrictMode>,
-);
+if (!rootElement) {
+  throw new Error("Root element #root is missing.");
+}
+
+void bootstrapApplication(rootElement);
