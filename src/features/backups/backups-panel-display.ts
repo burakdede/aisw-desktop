@@ -32,6 +32,13 @@ export type BackupRestoreSheetState = {
   toolLabel: string;
 };
 
+type BackupPresentation = {
+  entry: BackupEntry;
+  target: ReturnType<typeof resolveBackupTarget>;
+  profileLabel: string;
+  toolLabel: string;
+};
+
 export function sortBackups(
   left: BackupEntry,
   right: BackupEntry,
@@ -100,28 +107,18 @@ export function buildBackupInspectorState(
     return null;
   }
 
-  const target = resolveBackupTarget(selectedBackup.tool, selectedBackup.profile);
-  const profileLabel = toolProfileDisplayLabel(
-    settings,
-    snapshot,
-    target.tool,
-    target.profile,
-  );
+  const presentation = buildBackupPresentation(selectedBackup, settings, snapshot);
   const created = formatBackupInspectorTimestamp(
     selectedBackup.created_at ?? selectedBackup.backup_id,
   );
-  const toolLabel = toolDisplayName(target.tool);
 
   return {
-    entry: selectedBackup,
-    target,
-    profileLabel,
+    ...presentation,
     reason: backupReasonLabel(selectedBackup),
     contains: backupContainsLabel(selectedBackup),
     created,
-    toolLabel,
-    title: profileLabel,
-    subtitle: `${toolLabel} backup`,
+    title: presentation.profileLabel,
+    subtitle: `${presentation.toolLabel} backup`,
   };
 }
 
@@ -144,24 +141,30 @@ export function buildRestoreSheetState(
     return null;
   }
 
-  const target = resolveBackupTarget(entry.tool, entry.profile);
-  const profileLabel = toolProfileDisplayLabel(
-    settings,
-    snapshot,
-    target.tool,
-    target.profile,
-  );
-
-  return {
-    entry,
-    target,
-    profileLabel,
-    toolLabel: toolDisplayName(target.tool),
-  };
+  return buildBackupPresentation(entry, settings, snapshot);
 }
 
 export function backupIdCopyMessage(clipboardAvailable: boolean, backupId: string) {
   return clipboardAvailable
     ? "Copied backup ID."
     : `Clipboard access is unavailable. Copy backup id ${backupId} manually.`;
+}
+
+function buildBackupPresentation(
+  entry: BackupEntry,
+  settings: DesktopSettings,
+  snapshot: AppSnapshot,
+): BackupPresentation {
+  const target = resolveBackupTarget(entry.tool, entry.profile);
+  return {
+    entry,
+    target,
+    profileLabel: toolProfileDisplayLabel(
+      settings,
+      snapshot,
+      target.tool,
+      target.profile,
+    ),
+    toolLabel: toolDisplayName(target.tool),
+  };
 }
