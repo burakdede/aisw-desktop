@@ -372,7 +372,7 @@ export function buildSelectedProfileInspectorState(input: {
     selectedName && input.activeProfileName === selectedName,
   );
   const state: ProfileSwitchState = selectedName
-    ? resolveSelectedProfileSwitchState({
+    ? resolveProfileSwitchState({
         activeProfile: input.activeProfileName,
         activeProfileApplied: input.activeProfileApplied,
         profileName: selectedName,
@@ -679,21 +679,4 @@ export function isDuplicateProfileName(
       entry.name.trim().toLowerCase() === normalizedNext &&
       entry.name.trim().toLowerCase() !== normalizedCurrent,
   );
-}
-
-function resolveSelectedProfileSwitchState(input: {
-  activeProfile: string | null | undefined;
-  profileName: string;
-  activeProfileApplied: boolean | null | undefined;
-}): ProfileSwitchState {
-  if (input.activeProfile !== input.profileName) {
-    return "stored";
-  }
-  if (input.activeProfileApplied === false) {
-    return "live_mismatch";
-  }
-  if (input.activeProfileApplied === null || input.activeProfileApplied === undefined) {
-    return "not_verified";
-  }
-  return "active";
 }
