@@ -9,6 +9,7 @@ import type {
   CommandResultScope,
   LastCommandResult,
 } from "./features/shared/lastCommandResult";
+import { parseTrayCommandResultEvent } from "./features/shared/command-result-shape";
 import { normalizeRuntimeLanguage } from "./features/shared/runtime-language";
 import {
   profileDisplayLabel,
@@ -596,27 +597,9 @@ export function sectionDetail(section: string, setupFocused = false) {
 }
 
 function asTrayCommandResultEvent(value: unknown): TrayCommandResultEvent {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
+  const parsed = parseTrayCommandResultEvent(value);
+  if (!parsed) {
     throw new Error("Invalid tray command result payload.");
   }
-
-  const candidate = value as Partial<TrayCommandResultEvent>;
-  if (
-    typeof candidate.label !== "string" ||
-    typeof candidate.message !== "string" ||
-    (candidate.status !== "success" && candidate.status !== "error") ||
-    (candidate.scope !== "tool" && candidate.scope !== "global")
-  ) {
-    throw new Error("Invalid tray command result payload.");
-  }
-
-  if (candidate.scope === "tool" && typeof candidate.tool === "string") {
-    return candidate as TrayCommandResultEvent;
-  }
-
-  if (candidate.scope === "global" && typeof candidate.id === "string") {
-    return candidate as TrayCommandResultEvent;
-  }
-
-  throw new Error("Invalid tray command result payload.");
+  return parsed;
 }

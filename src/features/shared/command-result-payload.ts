@@ -1,5 +1,6 @@
 import type { LastCommandResult } from "./lastCommandResult";
 import { resolveErrorDetails } from "../../lib/error-details";
+import { parseCommandResultCommand } from "./command-result-shape";
 
 export const SNAPSHOT_UPDATED_RESULT_SUMMARY = "Snapshot updated successfully.";
 
@@ -36,10 +37,5 @@ export function buildCommandResultError(
 }
 
 export function resolveCommandResultCommand(result: unknown) {
-  return typeof result === "object" &&
-      result !== null &&
-      "command" in result &&
-      typeof (result as { command?: unknown }).command === "string"
-    ? (result as { command: string }).command
-    : undefined;
+  return parseCommandResultCommand(result);
 }

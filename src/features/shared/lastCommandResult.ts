@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { resolveBrowserStorage } from "../../lib/browser-storage";
 import { ACTIVITY_STORE_KEY, limitActivityTimeline } from "./activity-store";
+import { parseStoredCommandResult } from "./command-result-shape";
 
 export type CommandResultScope =
   | { type: "tool"; tool: string }
@@ -202,31 +203,7 @@ function asTimeline(value: unknown): ActivityTimelineEntry[] {
 }
 
 function asLastCommandResult(value: unknown): LastCommandResult | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return null;
-  }
-
-  const candidate = value as Partial<LastCommandResult>;
-  if (
-    typeof candidate.label !== "string" ||
-    (candidate.status !== "success" && candidate.status !== "error") ||
-    typeof candidate.message !== "string" ||
-    typeof candidate.at !== "number"
-  ) {
-    return null;
-  }
-
-  return {
-    label: candidate.label,
-    status: candidate.status,
-    message: candidate.message,
-    kind: typeof candidate.kind === "string" ? candidate.kind : undefined,
-    remediation: typeof candidate.remediation === "string" ? candidate.remediation : undefined,
-    command: typeof candidate.command === "string" ? candidate.command : undefined,
-    resultSummary:
-      typeof candidate.resultSummary === "string" ? candidate.resultSummary : undefined,
-    at: candidate.at,
-  };
+  return parseStoredCommandResult(value);
 }
 
 function asTimelineEntry(value: unknown): ActivityTimelineEntry | null {
