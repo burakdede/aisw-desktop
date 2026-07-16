@@ -29,8 +29,10 @@ import {
   onboardingImportSubmitLabel,
   onboardingLiveAccountImportNote,
   onboardingLiveImportAction,
+  onboardingLiveAccountValue,
   onboardingMissingToolHeading,
   onboardingMissingToolNoteParts,
+  onboardingMatchedProfileValue,
   onboardingNeedsProfileNote,
   onboardingOverviewBadgeLabel,
   onboardingPrimaryActionLabel,
@@ -341,6 +343,39 @@ describe("onboarding-display", () => {
       },
     ]);
 
+    expect(
+      readLiveAccounts({
+        result: {
+          live_accounts: [
+            {
+              tool: "claude",
+              outcome: "detected",
+              auth_method: "oauth",
+              matched_profile: null,
+            },
+            {
+              tool: "codex",
+              outcome: 123,
+            },
+            "invalid",
+          ],
+        },
+      } as InitReport),
+    ).toEqual([
+      {
+        tool: "claude",
+        outcome: "detected",
+        auth_method: "oauth",
+        matched_profile: null,
+      },
+      {
+        tool: "codex",
+        outcome: undefined,
+        auth_method: undefined,
+        matched_profile: undefined,
+      },
+    ]);
+
     expect(shouldShowSetupFlow(makeSnapshot(), initReport, false)).toBe(true);
     expect(defaultSetupStep(makeSnapshot(), initReport)).toBe("accounts");
     expect(shouldShowSetupFlow(makeSnapshot(), undefined, true)).toBe(true);
@@ -423,6 +458,10 @@ describe("onboarding-display", () => {
     expect(onboardingSwitchSubmitLabel(false)).toBe("Switch now");
     expect(onboardingDetectedShellSummary("zsh")).toBe("Detected shell: Zsh");
     expect(onboardingDetectedShellSummary(null)).toBeNull();
+    expect(onboardingLiveAccountValue("oauth")).toBe("oauth");
+    expect(onboardingLiveAccountValue("")).toBe("unknown");
+    expect(onboardingMatchedProfileValue("personal")).toBe("personal");
+    expect(onboardingMatchedProfileValue("")).toBe("Not matched yet");
     expect(onboardingDoneBadgeLabel(true)).toBe("Ready to switch");
     expect(onboardingDoneBadgeLabel(false)).toBe("Setup can continue later");
     expect(onboardingStepProgressLabel(0, 5)).toBe("Step 1 of 5");

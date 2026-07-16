@@ -53,6 +53,8 @@ import {
   onboardingImportedProfileLabel,
   onboardingImportSubmitLabel,
   onboardingLiveImportAction,
+  onboardingLiveAccountValue,
+  onboardingMatchedProfileValue,
   onboardingPrimaryActionLabel,
   onboardingAccountBadge,
   onboardingAccountSummary,
@@ -568,8 +570,7 @@ export function SetupPanel({
                                       {ONBOARDING_ACCOUNTS_STEP_COPY.liveStatusLabel}
                                     </span>
                                     <strong>
-                                      {selectedAccountItem.account.outcome ??
-                                        ONBOARDING_ACCOUNTS_STEP_COPY.unknownValue}
+                                      {onboardingLiveAccountValue(selectedAccountItem.account.outcome)}
                                     </strong>
                                   </div>
                                   <div>
@@ -577,8 +578,7 @@ export function SetupPanel({
                                       {ONBOARDING_ACCOUNTS_STEP_COPY.liveSignInMethodLabel}
                                     </span>
                                     <strong>
-                                      {selectedAccountItem.account.auth_method ??
-                                        ONBOARDING_ACCOUNTS_STEP_COPY.unknownValue}
+                                      {onboardingLiveAccountValue(selectedAccountItem.account.auth_method)}
                                     </strong>
                                   </div>
                                   <div>
@@ -586,8 +586,7 @@ export function SetupPanel({
                                       {ONBOARDING_ACCOUNTS_STEP_COPY.liveMatchedProfileLabel}
                                     </span>
                                     <strong>
-                                      {selectedAccountItem.account.matched_profile ??
-                                        ONBOARDING_ACCOUNTS_STEP_COPY.unmatchedProfileLabel}
+                                      {onboardingMatchedProfileValue(selectedAccountItem.account.matched_profile)}
                                     </strong>
                                   </div>
                                 </div>

@@ -9,6 +9,7 @@ import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { toolDisplayName } from "../../lib/tool-display";
 import { toolBinaryName } from "../../lib/tool-guidance";
 import { resolveErrorDetails } from "../../lib/error-details";
+import { asArray, asObject, asOptionalString } from "../../lib/parse-guards";
 import { runtimeSummary } from "../../lib/runtime-display";
 import { countLabel, titleCase } from "../../lib/utils";
 import { parseDoctorReportChecks } from "../diagnostics/diagnostic-doctor-checks";
@@ -171,6 +172,9 @@ export const ONBOARDING_RUNTIME_NEXT_STEPS = [
   },
 ] as const;
 
+const ONBOARDING_UNKNOWN_VALUE = "unknown";
+const ONBOARDING_UNMATCHED_PROFILE_LABEL = "Not matched yet";
+
 export const ONBOARDING_ACCOUNTS_STEP_COPY = {
   sectionKicker: "Accounts",
   sectionHeading: "Detected tools",
@@ -183,8 +187,8 @@ export const ONBOARDING_ACCOUNTS_STEP_COPY = {
   liveStatusLabel: "Status",
   liveSignInMethodLabel: "Sign-in method",
   liveMatchedProfileLabel: "Matched profile",
-  unknownValue: "unknown",
-  unmatchedProfileLabel: "Not matched yet",
+  unknownValue: ONBOARDING_UNKNOWN_VALUE,
+  unmatchedProfileLabel: ONBOARDING_UNMATCHED_PROFILE_LABEL,
   importActionLabel: "Import as profile",
   chooseSignInMethodLabel: "Choose sign-in method",
   needsProfileKicker: "Saved profile needed",
@@ -262,7 +266,7 @@ const ONBOARDING_SWITCH_PENDING_FOOTER_NOTE =
 const ONBOARDING_ACCOUNT_PRESENTATION_COPY = {
   readyToImport: {
     badge: { tone: "ok", label: "Ready to import" },
-    unknownValue: "unknown",
+    unknownValue: ONBOARDING_UNKNOWN_VALUE,
   },
   needsProfile: {
     badge: { tone: "soft", label: "Needs profile" },
@@ -357,9 +361,11 @@ export function onboardingSwitchReadinessStatus(switchReady: boolean) {
 }
 
 export function readLiveAccounts(initReport: InitReport | undefined): LiveAccount[] {
-  const result = initReport?.result as { live_accounts?: unknown } | undefined;
-  const accounts = result?.live_accounts;
-  return Array.isArray(accounts) ? (accounts as LiveAccount[]) : [];
+  const result = asObject(initReport?.result);
+  return asArray(result?.live_accounts).flatMap((account) => {
+    const parsed = parseLiveAccount(account);
+    return parsed ? [parsed] : [];
+  });
 }
 
 export function buildOnboardingInventory(
@@ -431,6 +437,16 @@ export function onboardingAccountBadge(item: OnboardingAccountItem): OnboardingA
 
 export function onboardingAccountSummary(item: OnboardingAccountItem) {
   return buildOnboardingAccountPresentation(item).summary;
+}
+
+export function onboardingLiveAccountValue(value: string | null | undefined) {
+  return value && value.length > 0 ? value : ONBOARDING_ACCOUNTS_STEP_COPY.unknownValue;
+}
+
+export function onboardingMatchedProfileValue(value: string | null | undefined) {
+  return value && value.length > 0
+    ? value
+    : ONBOARDING_ACCOUNTS_STEP_COPY.unmatchedProfileLabel;
 }
 
 export function selectDefaultAccountItem(items: OnboardingAccountItem[]) {
@@ -587,10 +603,11 @@ function buildOnboardingAccountPresentation(
   item: OnboardingAccountItem,
 ): OnboardingAccountPresentation {
   if (item.kind === "live") {
+    const matchedProfile = asOptionalString(item.account.matched_profile);
     return {
       badge: ONBOARDING_ACCOUNT_PRESENTATION_COPY.readyToImport.badge,
-      summary: `${item.account.outcome ?? ONBOARDING_ACCOUNT_PRESENTATION_COPY.readyToImport.unknownValue} · ${item.account.auth_method ?? ONBOARDING_ACCOUNT_PRESENTATION_COPY.readyToImport.unknownValue}${
-        item.account.matched_profile ? ` · matches ${item.account.matched_profile}` : ""
+      summary: `${onboardingLiveAccountValue(item.account.outcome)} · ${onboardingLiveAccountValue(item.account.auth_method)}${
+        matchedProfile ? ` · matches ${matchedProfile}` : ""
       }`,
     };
   }
@@ -616,6 +633,24 @@ function buildOnboardingMissingToolNoteParts(
     beforeBinary: `You can finish setup without ${toolDisplayName(tool)}. Install the `,
     binary,
     afterBinary: " tool later when you want to manage that provider here.",
+  };
+}
+
+function parseLiveAccount(value: unknown): LiveAccount | null {
+  const record = asObject(value);
+  const tool = asOptionalString(record?.tool);
+  if (!record || !tool) {
+    return null;
+  }
+
+  return {
+    tool,
+    outcome: asOptionalString(record.outcome),
+    auth_method: asOptionalString(record.auth_method),
+    matched_profile:
+      record.matched_profile === null
+        ? null
+        : asOptionalString(record.matched_profile),
   };
 }
 
