@@ -1,5 +1,10 @@
 import { countLabel } from "../../lib/utils";
 import { UNAVAILABLE_LABEL } from "../../lib/status-copy";
+import {
+  DIAGNOSTICS_EXPORT_REPORT_FAILED_MESSAGE,
+  DIAGNOSTICS_HEALTHY_PRIMARY_DETAIL,
+  DIAGNOSTICS_HEALTHY_TITLE,
+} from "./diagnostics-copy";
 
 type DiagnosticBundleResult = {
   filename: string;
@@ -24,13 +29,13 @@ export function buildDiagnosticsSummary(totalIssues: number, repairCount: number
   return {
     title: totalIssues
       ? `${countLabel(totalIssues, "issue")} ${pluralNeeds(totalIssues)} attention`
-      : "Everything looks good",
+      : DIAGNOSTICS_HEALTHY_TITLE,
     detail: totalIssues
       ? `${countLabel(repairCount, "repair")} can be applied safely. ${countLabel(
           remainingIssues,
           "issue",
         )} ${pluralRequires(remainingIssues)} a decision.`
-      : "All configured tools match their active AISW profiles and local storage checks passed.",
+      : DIAGNOSTICS_HEALTHY_PRIMARY_DETAIL,
   };
 }
 

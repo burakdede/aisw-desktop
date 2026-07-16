@@ -30,6 +30,11 @@ import {
   type DiagnosticFinding,
 } from "./diagnostics-panel-display";
 import {
+  DIAGNOSTICS_EXPORT_REPORT_FAILED_MESSAGE,
+  DIAGNOSTICS_HEALTHY_PRIMARY_DETAIL,
+  DIAGNOSTICS_HEALTHY_TITLE,
+} from "./diagnostics-copy";
+import {
   buildDiagnosticsStatusMessage,
   buildDiagnosticsSummary,
   formatRelativeVerifiedTime,
@@ -107,14 +112,14 @@ describe("diagnostics-panel-display", () => {
     expect(DIAGNOSTICS_PANEL_COPY.verifyButtonLabel).toBe("Verify");
     expect(DIAGNOSTICS_PANEL_COPY.reviewSafeFixesButtonLabel).toBe("Review Safe Fixes…");
     expect(DIAGNOSTICS_PANEL_COPY.applySafeFixesAriaLabel).toBe("Apply Safe Fixes");
-    expect(DIAGNOSTICS_PANEL_COPY.healthyTitle).toBe("Everything looks good");
+    expect(DIAGNOSTICS_PANEL_COPY.healthyTitle).toBe(DIAGNOSTICS_HEALTHY_TITLE);
     expect(DIAGNOSTICS_PANEL_COPY.technicalDetailsIntro).toBe(
       "Suggested commands for validation and recovery.",
     );
     expect(DIAGNOSTICS_PANEL_COPY.copyReportPathLabel).toBe("Copy report path");
     expect(DIAGNOSTICS_PANEL_COPY.inspectorBackLabel).toBe("Back");
     expect(DIAGNOSTICS_PANEL_COPY.exportReportFailedMessage).toBe(
-      "Support report export failed.",
+      DIAGNOSTICS_EXPORT_REPORT_FAILED_MESSAGE,
     );
     expect(diagnosticInspectorStatusLabel("fail")).toBe("Blocked");
     expect(diagnosticInspectorStatusLabel("warn")).toBe("Needs attention");
@@ -300,15 +305,15 @@ describe("diagnostics-panel-display", () => {
       detail: "1 repair can be applied safely. 1 issue requires a decision.",
     });
     expect(buildDiagnosticsSummary(0, 0)).toEqual({
-      title: "Everything looks good",
-      detail: "All configured tools match their active AISW profiles and local storage checks passed.",
+      title: DIAGNOSTICS_HEALTHY_TITLE,
+      detail: DIAGNOSTICS_HEALTHY_PRIMARY_DETAIL,
     });
 
     expect(
       buildDiagnosticsStatusMessage({
         bundleCopyMessage: "Copied bundle path /tmp/report.zip.",
         exportedBundle: { filename: "report.zip", path: "/tmp/report.zip" },
-        exportErrorMessage: "Support report export failed.",
+        exportErrorMessage: DIAGNOSTICS_EXPORT_REPORT_FAILED_MESSAGE,
         appliedFixCount: 2,
       }),
     ).toBe("Copied bundle path /tmp/report.zip.");
@@ -321,9 +326,9 @@ describe("diagnostics-panel-display", () => {
     expect(
       buildDiagnosticsStatusMessage({
         bundleCopyMessage: "",
-        exportErrorMessage: "Support report export failed.",
+        exportErrorMessage: DIAGNOSTICS_EXPORT_REPORT_FAILED_MESSAGE,
       }),
-    ).toBe("Support report export failed.");
+    ).toBe(DIAGNOSTICS_EXPORT_REPORT_FAILED_MESSAGE);
     expect(
       buildDiagnosticsStatusMessage({
         bundleCopyMessage: "",

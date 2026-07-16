@@ -4,6 +4,11 @@ import {
   buildDiagnosticsSummary,
   formatRelativeVerifiedTime,
 } from "./diagnostic-status-display";
+import {
+  DIAGNOSTICS_EXPORT_REPORT_FAILED_MESSAGE,
+  DIAGNOSTICS_HEALTHY_PRIMARY_DETAIL,
+  DIAGNOSTICS_HEALTHY_TITLE,
+} from "./diagnostics-copy";
 
 describe("diagnostic-status-display", () => {
   it("builds diagnostics summary copy", () => {
@@ -12,8 +17,8 @@ describe("diagnostic-status-display", () => {
       detail: "1 repair can be applied safely. 1 issue requires a decision.",
     });
     expect(buildDiagnosticsSummary(0, 0)).toEqual({
-      title: "Everything looks good",
-      detail: "All configured tools match their active AISW profiles and local storage checks passed.",
+      title: DIAGNOSTICS_HEALTHY_TITLE,
+      detail: DIAGNOSTICS_HEALTHY_PRIMARY_DETAIL,
     });
   });
 
@@ -31,7 +36,7 @@ describe("diagnostic-status-display", () => {
       buildDiagnosticsStatusMessage({
         bundleCopyMessage: "Copied bundle path /tmp/report.zip.",
         exportedBundle: { filename: "report.zip", path: "/tmp/report.zip" },
-        exportErrorMessage: "Support report export failed.",
+        exportErrorMessage: DIAGNOSTICS_EXPORT_REPORT_FAILED_MESSAGE,
         appliedFixCount: 2,
       }),
     ).toBe("Copied bundle path /tmp/report.zip.");
@@ -44,9 +49,9 @@ describe("diagnostic-status-display", () => {
     expect(
       buildDiagnosticsStatusMessage({
         bundleCopyMessage: "",
-        exportErrorMessage: "Support report export failed.",
+        exportErrorMessage: DIAGNOSTICS_EXPORT_REPORT_FAILED_MESSAGE,
       }),
-    ).toBe("Support report export failed.");
+    ).toBe(DIAGNOSTICS_EXPORT_REPORT_FAILED_MESSAGE);
     expect(
       buildDiagnosticsStatusMessage({
         bundleCopyMessage: "",

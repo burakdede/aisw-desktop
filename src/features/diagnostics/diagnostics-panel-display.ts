@@ -37,6 +37,12 @@ import {
   buildDiagnosticsSummary,
   formatRelativeVerifiedTime,
 } from "./diagnostic-status-display";
+import {
+  DIAGNOSTICS_EXPORT_REPORT_FAILED_MESSAGE,
+  DIAGNOSTICS_HEALTHY_COMPACT_DETAIL,
+  DIAGNOSTICS_HEALTHY_PRIMARY_DETAIL,
+  DIAGNOSTICS_HEALTHY_TITLE,
+} from "./diagnostics-copy";
 export {
   buildDiagnosticsStatusMessage,
   buildDiagnosticsSummary,
@@ -193,11 +199,9 @@ export const DIAGNOSTICS_PANEL_COPY = {
   findingsAriaLabel: "Diagnostics findings",
   inspectorOverflowTriggerAriaLabel: "More finding actions",
   inspectorOverflowMenuAriaLabel: "Finding actions",
-  healthyTitle: "Everything looks good",
-  healthyPrimaryDetail:
-    "All configured tools match their active AISW profiles and local storage checks passed.",
-  healthyCompactDetail:
-    "Active profiles, local storage, and repair checks are currently passing.",
+  healthyTitle: DIAGNOSTICS_HEALTHY_TITLE,
+  healthyPrimaryDetail: DIAGNOSTICS_HEALTHY_PRIMARY_DETAIL,
+  healthyCompactDetail: DIAGNOSTICS_HEALTHY_COMPACT_DETAIL,
   verifiedPrefix: "Verified",
   inspectorWhatHappenedKicker: "What happened",
   inspectorImpactKicker: "Impact",
@@ -221,7 +225,7 @@ export const DIAGNOSTICS_PANEL_COPY = {
   repairPlanCancelLabel: "Cancel",
   copyReportPathLabel: "Copy report path",
   passedChecksSuffix: "checks passed",
-  exportReportFailedMessage: "Support report export failed.",
+  exportReportFailedMessage: DIAGNOSTICS_EXPORT_REPORT_FAILED_MESSAGE,
 } as const;
 
 const RECENT_FAILURE_TITLES = {
