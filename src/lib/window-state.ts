@@ -1,3 +1,12 @@
+import {
+  LogicalPosition,
+  LogicalSize,
+  type PhysicalPosition,
+  type PhysicalSize,
+  type Position,
+  type Size,
+} from "@tauri-apps/api/dpi";
+import type { Window as TauriWindow } from "@tauri-apps/api/window";
 import { MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH } from "./layout";
 import { disposeSafely, type AsyncDispose } from "./async-dispose";
 import { resolveBrowserStorage } from "./browser-storage";
@@ -15,19 +24,19 @@ type PersistedWindowState = {
 type Unlisten = AsyncDispose;
 
 type WindowGeometryHandle = {
-  setSize: (size: unknown) => Promise<void>;
-  setPosition: (position: unknown) => Promise<void>;
-  innerSize: () => Promise<{ width: number; height: number }>;
-  outerPosition: () => Promise<{ x: number; y: number }>;
+  setSize: (size: LogicalSize | PhysicalSize | Size) => Promise<void>;
+  setPosition: (position: LogicalPosition | PhysicalPosition | Position) => Promise<void>;
+  innerSize: () => Promise<PhysicalSize | { width: number; height: number }>;
+  outerPosition: () => Promise<PhysicalPosition | { x: number; y: number }>;
   isMaximized: () => Promise<boolean>;
-  onResized: (handler: () => void) => Promise<Unlisten>;
-  onMoved: (handler: () => void) => Promise<Unlisten>;
+  onResized: TauriWindow["onResized"];
+  onMoved: TauriWindow["onMoved"];
 };
 
 type WindowModule = {
   getCurrentWindow: () => WindowGeometryHandle;
-  LogicalPosition: new (x: number, y: number) => unknown;
-  LogicalSize: new (width: number, height: number) => unknown;
+  LogicalPosition: typeof LogicalPosition;
+  LogicalSize: typeof LogicalSize;
 };
 
 export const WINDOW_STATE_STORAGE_KEY = "ai-switch.desktop.window-state";
@@ -165,25 +174,11 @@ async function resolveWindowModule(): Promise<WindowModule | null> {
   }
 
   if (window.__AISW_WINDOW_MOCK__) {
-    class MockLogicalSize {
-      constructor(
-        public width: number,
-        public height: number,
-      ) {}
-    }
-
-    class MockLogicalPosition {
-      constructor(
-        public x: number,
-        public y: number,
-      ) {}
-    }
-
     const mockWindow = window.__AISW_WINDOW_MOCK__;
     return {
       getCurrentWindow: () => mockWindow,
-      LogicalPosition: MockLogicalPosition,
-      LogicalSize: MockLogicalSize,
+      LogicalPosition,
+      LogicalSize,
     };
   }
 
@@ -194,7 +189,7 @@ async function resolveWindowModule(): Promise<WindowModule | null> {
   try {
     const module = await import("@tauri-apps/api/window");
     return {
-      getCurrentWindow: module.getCurrentWindow as () => WindowGeometryHandle,
+      getCurrentWindow: () => module.getCurrentWindow(),
       LogicalPosition: module.LogicalPosition,
       LogicalSize: module.LogicalSize,
     };

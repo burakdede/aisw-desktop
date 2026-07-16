@@ -47,10 +47,7 @@ export function AppFrame<Id extends SymbolIconName>({
   mode = APP_FRAME_MODES.standard,
   children,
 }: AppFrameProps<Id>) {
-  const navButtonRefs = useRef<Record<Id, HTMLButtonElement | null>>({} as Record<
-    Id,
-    HTMLButtonElement | null
-  >);
+  const navButtonRefs = useRef<Partial<Record<Id, HTMLButtonElement | null>>>({});
   const [compactSidebar, setCompactSidebar] = useState(() =>
     isCompactSidebarWidth(readViewportWidth(COMPACT_SIDEBAR_BREAKPOINT)),
   );
