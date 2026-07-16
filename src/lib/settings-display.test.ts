@@ -16,6 +16,7 @@ describe("settings-display", () => {
 
     expect(shellHookStatusLabel("pass")).toBe("Installed");
     expect(shellHookStatusLabel("warn")).toBe("Not installed");
+    expect(shellHookStatusLabel("bad")).toBe("Not installed");
     expect(shellHookStatusLabel("fail")).toBe(SHELL_CONFIG_UNAVAILABLE_LABEL);
 
     expect(

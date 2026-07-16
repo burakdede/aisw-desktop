@@ -1,4 +1,9 @@
 import type { AppBootstrap, AppSnapshot, InitReport, ToolStatus } from "../../lib/schemas";
+import {
+  checkStatusSymbol,
+  normalizeResolvedCheckStatus,
+  type ResolvedCheckStatus,
+} from "../../lib/check-status";
 import { toolDisplayName } from "../../lib/tool-display";
 import { toolBinaryName } from "../../lib/tool-guidance";
 import { runtimeSummary } from "../../lib/runtime-display";
@@ -17,7 +22,7 @@ export type LiveAccount = {
 
 export type OnboardingHealthItem = {
   label: string;
-  status: "pass" | "warn" | "fail";
+  status: ResolvedCheckStatus;
   detail: string;
 };
 
@@ -408,13 +413,7 @@ export function restoreIncludedEngineErrorMessage(error: unknown) {
 }
 
 export function onboardingHealthStatusSymbol(status: OnboardingHealthItem["status"]) {
-  if (status === "pass") {
-    return "✓";
-  }
-  if (status === "warn") {
-    return "!";
-  }
-  return "✕";
+  return checkStatusSymbol(status);
 }
 
 export function onboardingDetectedShellSummary(shell: string | null | undefined) {
@@ -515,13 +514,9 @@ export function buildOnboardingHealthItems(
 
   doctorChecks.forEach((entry) => {
     const check = entry as { name?: string; status?: string; detail?: string };
-    const status =
-      check.status === "pass" || check.status === "warn" || check.status === "fail"
-        ? check.status
-        : "warn";
     items.push({
       label: normalizeOnboardingHealthLabel(check.name),
-      status,
+      status: normalizeResolvedCheckStatus(check.status, "warn"),
       detail: normalizeOnboardingHealthDetail(check.detail),
     });
   });

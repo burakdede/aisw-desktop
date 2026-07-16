@@ -1,4 +1,5 @@
 import type { ShellHookGuidance } from "./schemas";
+import { normalizeCheckStatus } from "./check-status";
 import { titleCase } from "./utils";
 
 export const SHELL_CONFIG_UNAVAILABLE_LABEL = "Unavailable";
@@ -11,10 +12,10 @@ export function detectedShellLabel(detectedShell: string | null | undefined) {
 }
 
 export function shellHookStatusLabel(status: string | null | undefined) {
-  if (status === "pass") {
+  if (normalizeCheckStatus(status) === "pass") {
     return "Installed";
   }
-  if (status === "warn") {
+  if (normalizeCheckStatus(status, "warn") === "warn") {
     return "Not installed";
   }
   return SHELL_CONFIG_UNAVAILABLE_LABEL;

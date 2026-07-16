@@ -1,7 +1,38 @@
 import { describe, expect, it } from "vitest";
-import { parseRepairActions } from "./diagnostic-parsers";
+import {
+  parseDoctorSummary,
+  parseRepairActions,
+  parseVerifySummary,
+} from "./diagnostic-parsers";
 
 describe("parseRepairActions", () => {
+  it("normalizes doctor and verify summary statuses", () => {
+    expect(
+      parseDoctorSummary({
+        checks: [
+          { status: "pass" },
+          { status: "warn" },
+          { status: "fail" },
+          { status: "invalid" },
+        ],
+      }),
+    ).toEqual({
+      title: "Health scan",
+      status: "fail",
+      lines: ["4 checks", "1 pass", "1 warn", "1 fail"],
+    });
+
+    expect(
+      parseVerifySummary({
+        summary: { status: "invalid", passed: 1, warnings: 0, failed: 0 },
+      }),
+    ).toEqual({
+      title: "Live match",
+      status: "unknown",
+      lines: ["1 passed", "0 warnings", "0 failed"],
+    });
+  });
+
   it("dedupes duplicate safe fixes for the same target", () => {
     const actions = parseRepairActions({
       result: {

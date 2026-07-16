@@ -1,16 +1,20 @@
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
-
-type StatusTone = "pass" | "warn" | "fail" | "unknown";
+import {
+  countCheckStatuses,
+  normalizeCheckStatus,
+  summarizeCheckStatus,
+  type CheckStatus,
+} from "../../lib/check-status";
 
 export interface SummaryCardData {
   title: string;
-  status: StatusTone;
+  status: CheckStatus;
   lines: string[];
 }
 
 export interface IssueCardData {
   title: string;
-  status: StatusTone;
+  status: CheckStatus;
   issues: string[];
   remediation: string[];
 }
@@ -53,18 +57,17 @@ function normalizeUserFacingIssueText(value: string) {
 }
 
 export function parseDoctorSummary(payload: Record<string, unknown> | undefined): SummaryCardData {
-  const checks = asArray(payload?.checks);
-  const pass = checks.filter((check) => asObject(check)?.status === "pass").length;
-  const warn = checks.filter((check) => asObject(check)?.status === "warn").length;
-  const fail = checks.filter((check) => asObject(check)?.status === "fail").length;
+  const counts = countCheckStatuses(
+    asArray(payload?.checks).map((check) => asObject(check)?.status),
+  );
   return {
     title: "Health scan",
-    status: fail > 0 ? "fail" : warn > 0 ? "warn" : checks.length ? "pass" : "unknown",
+    status: summarizeCheckStatus(counts),
     lines: [
-      `${checks.length} checks`,
-      `${pass} pass`,
-      `${warn} warn`,
-      `${fail} fail`,
+      `${counts.total} checks`,
+      `${counts.pass} pass`,
+      `${counts.warn} warn`,
+      `${counts.fail} fail`,
     ],
   };
 }
@@ -73,7 +76,7 @@ export function parseVerifySummary(payload: Record<string, unknown> | undefined)
   const summary = asObject(payload?.summary);
   return {
     title: "Live match",
-    status: (summary?.status as StatusTone) ?? "unknown",
+    status: normalizeCheckStatus(summary?.status),
     lines: [
       `${asNumber(summary?.passed)} passed`,
       `${asNumber(summary?.warnings)} warnings`,
@@ -87,7 +90,7 @@ export function parseRepairSummary(payload: Record<string, unknown> | undefined)
   const summary = asObject(result?.summary);
   return {
     title: "Repair plan",
-    status: (summary?.status as StatusTone) ?? "unknown",
+    status: normalizeCheckStatus(summary?.status),
     lines: [
       `${asNumber(summary?.actions_planned)} actions planned`,
       `${asNumber(summary?.actions_applied)} applied`,
@@ -100,10 +103,10 @@ export function parseDoctorIssues(payload: Record<string, unknown> | undefined):
   return asArray(payload?.checks)
     .map((check) => asObject(check))
     .filter((check): check is Record<string, unknown> => Boolean(check))
-    .filter((check) => asString(check.status) !== "pass")
+    .filter((check) => normalizeCheckStatus(check.status) !== "pass")
     .map((check) => ({
       title: asString(check.name),
-      status: asString(check.status) as StatusTone,
+      status: normalizeCheckStatus(check.status, "warn"),
       issues: [normalizeUserFacingIssueText(asString(check.detail))],
       remediation: asStringArray(check.remediation).map(normalizeUserFacingIssueText),
     }));
@@ -113,10 +116,10 @@ export function parseVerifyIssues(payload: Record<string, unknown> | undefined):
   return asArray(payload?.tools)
     .map((tool) => asObject(tool))
     .filter((tool): tool is Record<string, unknown> => Boolean(tool))
-    .filter((tool) => asString(tool.status) !== "pass")
+    .filter((tool) => normalizeCheckStatus(tool.status) !== "pass")
     .map((tool) => ({
       title: asString(tool.tool),
-      status: asString(tool.status) as StatusTone,
+      status: normalizeCheckStatus(tool.status, "warn"),
       issues: asArray(tool.issues).map((issue) => normalizeUserFacingIssueText(asString(issue))),
       remediation: asArray(tool.remediation).map((item) => normalizeUserFacingIssueText(asString(item))),
     }));

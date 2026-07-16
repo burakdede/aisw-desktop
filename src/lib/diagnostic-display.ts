@@ -2,11 +2,15 @@ import type { IssueCardData, SummaryCardData } from "../features/diagnostics/dia
 import type { AppSnapshot, ToolStatus } from "./schemas";
 import { isSupportedTool } from "./tool-registry";
 import { toolDisplayName } from "./tool-display";
+import {
+  normalizeResolvedCheckStatus,
+  type ResolvedCheckStatus,
+} from "./check-status";
 
 export type DiagnosticCheckRow = {
   label: string;
   detail: string;
-  status: "pass" | "warn" | "fail";
+  status: ResolvedCheckStatus;
 };
 
 export function diagnosticFindingTitle(
@@ -98,5 +102,5 @@ function resolveDiagnosticTool(title: string) {
 }
 
 function normalizeDiagnosticStatus(status: string) {
-  return status === "fail" ? "fail" : status === "warn" ? "warn" : "pass";
+  return normalizeResolvedCheckStatus(status);
 }

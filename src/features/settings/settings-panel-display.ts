@@ -9,6 +9,7 @@ import {
   normalizeDesktopUpdateChannel,
   type DesktopUpdateChannel,
 } from "../../lib/desktop-settings";
+import { normalizeResolvedCheckStatus } from "../../lib/check-status";
 import type { AppBootstrap, DesktopSettings, ShellHookGuidance } from "../../lib/schemas";
 import { DEFAULT_ACTION_FAILURE_MESSAGE, NOT_FOUND_LABEL, NOT_SET_LABEL } from "../../lib/display-copy";
 import { DesktopCommandError } from "../../lib/tauri";
@@ -152,10 +153,7 @@ export function findShellHookCheck(report: Record<string, unknown> | undefined) 
       continue;
     }
     return {
-      status:
-        check.status === "pass" || check.status === "warn" || check.status === "fail"
-          ? check.status
-          : "warn",
+      status: normalizeResolvedCheckStatus(check.status, "warn"),
       detail: normalizeTerminalIntegrationText(check.detail ?? ""),
     };
   }
