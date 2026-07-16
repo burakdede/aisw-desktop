@@ -13,6 +13,58 @@ const frameDir = path.join(tempDir, "frames");
 const host = "127.0.0.1";
 const port = 4329;
 const baseUrl = `http://${host}:${port}/marketing-capture.html`;
+const SCREENSHOT_VIEWPORT = { width: 1600, height: 1100 };
+const GIF_VIEWPORT = { width: 1440, height: 980 };
+const DEVICE_SCALE_FACTOR = 2;
+const CAPTURE_COLOR_SCHEME = "light";
+const DEFAULT_SCREENSHOT_SETTLE_MS = 250;
+const WORKSPACE_RULES_SETTLE_MS = 300;
+const SERVER_READY_TIMEOUT_MS = 30_000;
+const SERVER_READY_POLL_MS = 250;
+const GIF_FPS = 18;
+const GIF_LOOP = "0";
+const OVERLAY_BOTTOM_OFFSET_PX = 32;
+const OVERLAY_CARD_SIZE = { width: 920, height: 148 };
+const OVERLAY_CARD_FRAME = {
+  left: 1,
+  top: 1,
+  right: 918,
+  bottom: 146,
+  radius: 28,
+};
+const OVERLAY_TITLE = {
+  font: "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+  pointSize: 44,
+  offsetY: 22,
+  color: "#ffffff",
+};
+const OVERLAY_DETAIL = {
+  font: "/System/Library/Fonts/Supplemental/Arial.ttf",
+  pointSize: 28,
+  offsetY: 78,
+  color: "#f4f6fb",
+  interlineSpacing: 6,
+};
+const OVERLAY_CARD_COLORS = {
+  fill: "rgba(18,20,27,0.9)",
+  stroke: "rgba(255,255,255,0.18)",
+  strokeWidth: "2",
+};
+const QUICK_SWITCH_CAPTURE = {
+  openDelayMs: 700,
+  searchReadyDelayMs: 450,
+  typingDelayMs: 120,
+  afterSearchDelayMs: 650,
+  afterSubmitDelayMs: 1200,
+  trimStartSeconds: 0.45,
+  searchText: "personal",
+};
+const WORKSPACE_SWITCH_CAPTURE = {
+  initialDelayMs: 650,
+  rulePanelDelayMs: 900,
+  afterSwitchDelayMs: 1300,
+  trimStartSeconds: 0.85,
+};
 
 async function main() {
   await fs.mkdir(mediaDir, { recursive: true });
@@ -59,7 +111,7 @@ async function captureScreenshots(browser) {
     await screenshotApp(page, "desktop-overview-hero.png");
 
     await page.getByRole("button", { name: "Inspect Codex" }).click();
-    await page.waitForTimeout(250);
+    await waitForUiSettle(page);
     await screenshotApp(page, "desktop-current-state.png");
   });
 
@@ -67,7 +119,7 @@ async function captureScreenshots(browser) {
     await openScene(page, { scene: "profiles", nav: "profiles" });
     await waitForApp(page, "Profiles");
     await page.getByRole("option", { name: "Inspect Codex CLI Release Review" }).click();
-    await page.waitForTimeout(250);
+    await waitForUiSettle(page);
     await screenshotApp(page, "desktop-profiles.png");
   });
 
@@ -75,7 +127,7 @@ async function captureScreenshots(browser) {
     await openScene(page, { scene: "sets", nav: "sets" });
     await waitForApp(page, "Sets");
     await page.getByRole("button", { name: "Inspect set Release Review" }).click();
-    await page.waitForTimeout(250);
+    await waitForUiSettle(page);
     await screenshotApp(page, "desktop-sets.png");
   });
 
@@ -84,7 +136,7 @@ async function captureScreenshots(browser) {
     await waitForApp(page, "Sets");
     await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
     await page.getByRole("button", { name: "Inspect rule for Acme Product" }).first().click();
-    await page.waitForTimeout(300);
+    await waitForUiSettle(page, WORKSPACE_RULES_SETTLE_MS);
     await screenshotApp(page, "desktop-workspace-rules.png");
   });
 
@@ -92,21 +144,21 @@ async function captureScreenshots(browser) {
     await openScene(page, { scene: "diagnostics", nav: "diagnostics" });
     await waitForApp(page, "Diagnostics");
     await page.getByRole("button", { name: "Inspect Keyring unavailable" }).click();
-    await page.waitForTimeout(250);
+    await waitForUiSettle(page);
     await screenshotApp(page, "desktop-diagnostics.png");
   });
 
   await withPage(browser, async (page) => {
     await openScene(page, { scene: "operations", nav: "backups" });
     await waitForApp(page, "Backups");
-    await page.waitForTimeout(250);
+    await waitForUiSettle(page);
     await screenshotApp(page, "desktop-backups.png");
   });
 
   await withPage(browser, async (page) => {
     await openScene(page, { scene: "operations", nav: "activity" });
     await waitForApp(page, "Activity");
-    await page.waitForTimeout(250);
+    await waitForUiSettle(page);
     await screenshotApp(page, "desktop-activity.png");
   });
 }
@@ -123,14 +175,16 @@ async function captureQuickSwitchGif(browser) {
     async (page) => {
       await openScene(page, { scene: "overview", nav: "overview" });
       await waitForApp(page, "Overview");
-      await page.waitForTimeout(700);
+      await waitForUiSettle(page, QUICK_SWITCH_CAPTURE.openDelayMs);
       await page.keyboard.press("Meta+K");
       await page.waitForSelector('[role="dialog"][aria-label="Quick Switch"]');
-      await page.waitForTimeout(450);
-      await page.getByLabel("Search Quick Switch").type("personal", { delay: 120 });
-      await page.waitForTimeout(650);
+      await waitForUiSettle(page, QUICK_SWITCH_CAPTURE.searchReadyDelayMs);
+      await page
+        .getByLabel("Search Quick Switch")
+        .type(QUICK_SWITCH_CAPTURE.searchText, { delay: QUICK_SWITCH_CAPTURE.typingDelayMs });
+      await waitForUiSettle(page, QUICK_SWITCH_CAPTURE.afterSearchDelayMs);
       await page.keyboard.press("Enter");
-      await page.waitForTimeout(1200);
+      await waitForUiSettle(page, QUICK_SWITCH_CAPTURE.afterSubmitDelayMs);
     },
   );
 
@@ -140,7 +194,7 @@ async function captureQuickSwitchGif(browser) {
     {
       title: "Quick Switch",
       detail: "Command-K. Type a profile. Press Enter.",
-      trimStartSeconds: 0.45,
+      trimStartSeconds: QUICK_SWITCH_CAPTURE.trimStartSeconds,
     },
   );
 }
@@ -152,11 +206,11 @@ async function captureWorkspaceSwitchGif(browser) {
     async (page) => {
       await openScene(page, { scene: "workspace", nav: "sets" });
       await waitForApp(page, "Sets");
-      await page.waitForTimeout(650);
+      await waitForUiSettle(page, WORKSPACE_SWITCH_CAPTURE.initialDelayMs);
       await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
-      await page.waitForTimeout(900);
+      await waitForUiSettle(page, WORKSPACE_SWITCH_CAPTURE.rulePanelDelayMs);
       await page.getByRole("button", { name: "Use Expected Set" }).click();
-      await page.waitForTimeout(1300);
+      await waitForUiSettle(page, WORKSPACE_SWITCH_CAPTURE.afterSwitchDelayMs);
     },
   );
 
@@ -166,16 +220,16 @@ async function captureWorkspaceSwitchGif(browser) {
     {
       title: "Project Rules",
       detail: "Use Expected Set to restore this repository context.",
-      trimStartSeconds: 0.85,
+      trimStartSeconds: WORKSPACE_SWITCH_CAPTURE.trimStartSeconds,
     },
   );
 }
 
 async function withPage(browser, callback) {
   const context = await browser.newContext({
-    viewport: { width: 1600, height: 1100 },
-    deviceScaleFactor: 2,
-    colorScheme: "light",
+    viewport: SCREENSHOT_VIEWPORT,
+    deviceScaleFactor: DEVICE_SCALE_FACTOR,
+    colorScheme: CAPTURE_COLOR_SCHEME,
   });
   const page = await context.newPage();
 
@@ -188,12 +242,12 @@ async function withPage(browser, callback) {
 
 async function withRecordedPage(browser, name, callback) {
   const context = await browser.newContext({
-    viewport: { width: 1440, height: 980 },
-    deviceScaleFactor: 2,
-    colorScheme: "light",
+    viewport: GIF_VIEWPORT,
+    deviceScaleFactor: DEVICE_SCALE_FACTOR,
+    colorScheme: CAPTURE_COLOR_SCHEME,
     recordVideo: {
       dir: videoDir,
-      size: { width: 1440, height: 980 },
+      size: GIF_VIEWPORT,
     },
   });
   const page = await context.newPage();
@@ -222,6 +276,10 @@ async function waitForApp(page, heading) {
   await page.getByRole("heading", { name: heading }).waitFor({ state: "visible" });
 }
 
+async function waitForUiSettle(page, delayMs = DEFAULT_SCREENSHOT_SETTLE_MS) {
+  await page.waitForTimeout(delayMs);
+}
+
 async function screenshotApp(page, filename) {
   const appShell = page.locator(".app-shell").first();
   await appShell.screenshot({
@@ -247,7 +305,7 @@ async function transcodeGif(videoPath, outputPath, overlay) {
     "-i",
     overlayPngPath,
     "-filter_complex",
-    "[0:v][1:v]overlay=(main_w-overlay_w)/2:main_h-overlay_h-32,fps=18,scale=1440:-1:flags=lanczos,palettegen=stats_mode=diff",
+    `[0:v][1:v]overlay=(main_w-overlay_w)/2:main_h-overlay_h-${OVERLAY_BOTTOM_OFFSET_PX},fps=${GIF_FPS},scale=${GIF_VIEWPORT.width}:-1:flags=lanczos,palettegen=stats_mode=diff`,
     "-frames:v",
     "1",
     "-update",
@@ -265,9 +323,9 @@ async function transcodeGif(videoPath, outputPath, overlay) {
     "-i",
     palettePath,
     "-loop",
-    "0",
+    GIF_LOOP,
     "-filter_complex",
-    "[0:v][1:v]overlay=(main_w-overlay_w)/2:main_h-overlay_h-32,fps=18,scale=1440:-1:flags=lanczos[x];[x][2:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle",
+    `[0:v][1:v]overlay=(main_w-overlay_w)/2:main_h-overlay_h-${OVERLAY_BOTTOM_OFFSET_PX},fps=${GIF_FPS},scale=${GIF_VIEWPORT.width}:-1:flags=lanczos[x];[x][2:v]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle`,
     outputPath,
   ]);
 }
@@ -275,39 +333,39 @@ async function transcodeGif(videoPath, outputPath, overlay) {
 async function renderOverlayCard(pngPath, { title, detail }) {
   await runCommand("/opt/homebrew/bin/magick", [
     "-size",
-    "920x148",
+    `${OVERLAY_CARD_SIZE.width}x${OVERLAY_CARD_SIZE.height}`,
     "xc:none",
     "-fill",
-    "rgba(18,20,27,0.9)",
+    OVERLAY_CARD_COLORS.fill,
     "-stroke",
-    "rgba(255,255,255,0.18)",
+    OVERLAY_CARD_COLORS.stroke,
     "-strokewidth",
-    "2",
+    OVERLAY_CARD_COLORS.strokeWidth,
     "-draw",
-    "roundrectangle 1,1 918,146 28,28",
+    `roundrectangle ${OVERLAY_CARD_FRAME.left},${OVERLAY_CARD_FRAME.top} ${OVERLAY_CARD_FRAME.right},${OVERLAY_CARD_FRAME.bottom} ${OVERLAY_CARD_FRAME.radius},${OVERLAY_CARD_FRAME.radius}`,
     "-font",
-    "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+    OVERLAY_TITLE.font,
     "-fill",
-    "#ffffff",
+    OVERLAY_TITLE.color,
     "-pointsize",
-    "44",
+    String(OVERLAY_TITLE.pointSize),
     "-gravity",
     "north",
     "-annotate",
-    "+0+22",
+    `+0+${OVERLAY_TITLE.offsetY}`,
     title,
     "-font",
-    "/System/Library/Fonts/Supplemental/Arial.ttf",
+    OVERLAY_DETAIL.font,
     "-fill",
-    "#f4f6fb",
+    OVERLAY_DETAIL.color,
     "-pointsize",
-    "28",
+    String(OVERLAY_DETAIL.pointSize),
     "-interline-spacing",
-    "6",
+    String(OVERLAY_DETAIL.interlineSpacing),
     "-gravity",
     "north",
     "-annotate",
-    "+0+78",
+    `+0+${OVERLAY_DETAIL.offsetY}`,
     detail.replace(/\\n/g, "\n"),
     pngPath,
   ]);
@@ -315,7 +373,7 @@ async function renderOverlayCard(pngPath, { title, detail }) {
 
 async function waitForServer(url) {
   const startedAt = Date.now();
-  while (Date.now() - startedAt < 30_000) {
+  while (Date.now() - startedAt < SERVER_READY_TIMEOUT_MS) {
     try {
       const response = await fetch(url);
       if (response.ok) {
@@ -324,7 +382,7 @@ async function waitForServer(url) {
     } catch {
       // Ignore until Vite is ready.
     }
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => setTimeout(resolve, SERVER_READY_POLL_MS));
   }
   throw new Error("Timed out waiting for the marketing capture server.");
 }
