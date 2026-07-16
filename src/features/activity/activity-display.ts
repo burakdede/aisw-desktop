@@ -1,4 +1,5 @@
 import { DATE_UNAVAILABLE_LABEL } from "../../lib/display-copy";
+import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { toolDisplayName } from "../../lib/tool-display";
 import type { ActivityTimelineEntry } from "../shared/lastCommandResult";
 
@@ -79,7 +80,7 @@ export const ACTIVITY_STATUS_NOTIFICATION = {
 } as const;
 
 const ACTIVITY_GLOBAL_SCOPE_LABELS = {
-  "switch-all": "Quick Switch",
+  "switch-all": DESKTOP_ACTION_COPY.quickSwitchLabel,
   "profile-set": "Saved set",
   context: "Sets",
   workspace: "Project rules",

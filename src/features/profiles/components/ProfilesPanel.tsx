@@ -1203,14 +1203,14 @@ export function ProfilesPanel({
       ) : null}
       {profileSheetOpen ? (
         <DialogSurface
-          ariaLabel="Add Profile"
+          ariaLabel={PROFILE_PANEL_COPY.addProfileLabel}
           className="quick-switch-palette profile-sheet"
           initialFocusSelector="select:not([disabled]), input:not([disabled]), button:not([disabled])"
           onClose={() => setProfileSheetOpen(false)}
         >
             <div className="quick-switch-header">
               <div>
-                <p className="card-kicker">Add Profile</p>
+                <p className="card-kicker">{PROFILE_PANEL_COPY.addProfileLabel}</p>
                 <h3>Add a saved login</h3>
               </div>
             </div>

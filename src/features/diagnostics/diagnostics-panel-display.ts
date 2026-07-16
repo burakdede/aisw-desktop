@@ -1,4 +1,5 @@
 import type { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../lib/schemas";
+import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { contextDisplayLabel, toolProfileDisplayLabel } from "../../lib/profile-display";
 import { isSupportedTool } from "../../lib/tool-registry";
 import { countLabel, titleCase } from "../../lib/utils";
@@ -138,7 +139,7 @@ type LastCommandResultsInput = {
 };
 
 export const DIAGNOSTICS_PANEL_COPY = {
-  verifyButtonLabel: "Verify",
+  verifyButtonLabel: DESKTOP_ACTION_COPY.verifyLabel,
   verifyAgainAriaLabel: "Verify Again",
   reviewSafeFixesAriaLabel: "Review Safe Fixes",
   applySafeFixesAriaLabel: "Apply Safe Fixes",

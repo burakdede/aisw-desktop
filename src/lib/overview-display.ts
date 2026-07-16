@@ -1,4 +1,5 @@
 import { AUTH_METHOD_NOT_CONFIGURED_LABEL, authMethodLabel } from "./auth-method-display";
+import { DESKTOP_ACTION_COPY } from "./desktop-action-copy";
 import { normalizeRuntimeLanguage } from "../features/shared/runtime-language";
 import { fixedStateModeDescription, stateModeDescription, stateModeLabel } from "../features/shared/state-modes";
 import { toolInspectorEmptyLabel, overviewHealthLabel, overviewHealthText, resolveOverviewHealthState, type OverviewHealthState } from "./status-display";
@@ -72,7 +73,7 @@ export const OVERVIEW_PANEL_COPY = {
   missingBinaryRefreshLabel: "Refresh",
   noProfileHeading: "No profile configured",
   noProfileBody: "Add a saved profile before switching this tool from Overview.",
-  addProfileLabel: "Add Profile…",
+  addProfileLabel: DESKTOP_ACTION_COPY.addProfileEllipsisLabel,
   activeProfileFieldLabel: "Active profile",
   stateModeFieldLabel: "State mode",
   stateModeAriaLabel: "State mode",

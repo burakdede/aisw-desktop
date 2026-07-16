@@ -5,6 +5,7 @@ import {
   type ResolvedCheckStatus,
 } from "../../lib/check-status";
 import { isSystemKeyringBackend } from "../../lib/credential-backends";
+import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { toolDisplayName } from "../../lib/tool-display";
 import { toolBinaryName } from "../../lib/tool-guidance";
 import { runtimeSummary } from "../../lib/runtime-display";
@@ -181,7 +182,7 @@ export const ONBOARDING_SWITCH_STEP_COPY = {
   selectPlaceholder: "Select profile",
   emptyDetail:
     "Import or create matching profile names across tools before running a shared switch check.",
-  openProfilesLabel: "Open Profiles",
+  openProfilesLabel: DESKTOP_ACTION_COPY.openProfilesLabel,
 } as const;
 
 export const ONBOARDING_TERMINAL_STEP_COPY = {

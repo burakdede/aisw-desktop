@@ -25,6 +25,7 @@ import {
   type AppNavId,
 } from "./lib/app-navigation";
 import { createDesktopSettings } from "./lib/desktop-settings";
+import { DESKTOP_ACTION_COPY } from "./lib/desktop-action-copy";
 import { type SettingsSection } from "./lib/settings-sections";
 export {
   runtimeSelectionLabel,
@@ -46,6 +47,19 @@ export const APP_NAV = [
   { id: APP_NAV_IDS.activity, label: "Activity", group: "Health" },
   { id: APP_NAV_IDS.settings, label: "Settings", group: "App" },
 ] as const;
+
+const DEFAULT_PROFILE_SETUP_TOOL = "claude";
+
+const APP_SECTION_TITLES: Record<AppSectionId, string> = {
+  [APP_NAV_IDS.overview]: "Overview",
+  [APP_NAV_IDS.profiles]: "Profiles",
+  [APP_NAV_IDS.sets]: "Sets",
+  [APP_NAV_IDS.diagnostics]: "Diagnostics",
+  [APP_NAV_IDS.backups]: "Backups",
+  [APP_NAV_IDS.activity]: "Activity",
+  [APP_NAV_IDS.settings]: "Settings",
+  waiting: "AI Switch",
+};
 
 export const APP_SHELL_COPY = {
   appSubtitle: "Manage Claude Code, Codex CLI, and Gemini CLI identities locally.",
@@ -183,18 +197,31 @@ export function createProfilesRouteState(
 }
 
 export function createAddProfileRouteState(current: ProfilesRouteState) {
-  return {
-    tool: "claude",
-    expandedProfile: null,
+  return createProfileSetupRouteState({
     openToken: (current.openToken ?? 0) + 1,
-  } satisfies ProfilesRouteState;
+  });
 }
 
 export function createImportCurrentLoginRouteState() {
+  return createProfileSetupRouteState({ mode: "from_live" });
+}
+
+export function createProfileSetupRouteState(
+  input: {
+    tool?: string;
+    mode?: ProfileImportMode;
+    credentialBackend?: ExplicitProfileCredentialBackend | null;
+    openToken?: number;
+  } = {},
+): ProfilesRouteState {
   return {
-    tool: "claude",
+    tool: input.tool ?? DEFAULT_PROFILE_SETUP_TOOL,
     expandedProfile: null,
-    mode: "from_live",
+    ...(input.mode ? { mode: input.mode } : {}),
+    ...(input.credentialBackend !== undefined
+      ? { credentialBackend: input.credentialBackend }
+      : {}),
+    ...(input.openToken !== undefined ? { openToken: input.openToken } : {}),
   } satisfies ProfilesRouteState;
 }
 
@@ -246,14 +273,14 @@ export function buildToolbarActions(input: {
     return [
       {
         kind: "quick-switch",
-        label: "Quick Switch",
-        shortcut: "⌘K",
+        label: DESKTOP_ACTION_COPY.quickSwitchLabel,
+        shortcut: DESKTOP_ACTION_COPY.quickSwitchShortcut,
         tone: "primary",
         disabled: input.runtimeBlocked,
       },
       {
         kind: "verify",
-        label: "Verify",
+        label: DESKTOP_ACTION_COPY.verifyLabel,
         tone: "ghost",
       },
     ] satisfies ToolbarAction[];
@@ -262,19 +289,19 @@ export function buildToolbarActions(input: {
   return [
     {
       kind: "quick-switch",
-      label: "Quick Switch",
-      shortcut: "⌘K",
+      label: DESKTOP_ACTION_COPY.quickSwitchLabel,
+      shortcut: DESKTOP_ACTION_COPY.quickSwitchShortcut,
       tone: "ghost",
       disabled: input.runtimeBlocked,
     },
     {
       kind: "verify",
-      label: "Verify",
+      label: DESKTOP_ACTION_COPY.verifyLabel,
       tone: "ghost",
     },
     {
       kind: "add-profile",
-      label: "Add Profile",
+      label: DESKTOP_ACTION_COPY.addProfileLabel,
       tone: "primary",
       disabled: input.runtimeBlocked,
     },
@@ -538,24 +565,7 @@ export function sectionTitle(section: string, setupFocused = false) {
     return "Get started";
   }
 
-  switch (section) {
-    case APP_NAV_IDS.overview:
-      return "Overview";
-    case APP_NAV_IDS.profiles:
-      return "Profiles";
-    case APP_NAV_IDS.sets:
-      return "Sets";
-    case APP_NAV_IDS.diagnostics:
-      return "Diagnostics";
-    case APP_NAV_IDS.backups:
-      return "Backups";
-    case APP_NAV_IDS.activity:
-      return "Activity";
-    case APP_NAV_IDS.settings:
-      return "Settings";
-    default:
-      return "AI Switch";
-  }
+  return APP_SECTION_TITLES[section as AppSectionId] ?? APP_SECTION_TITLES.waiting;
 }
 
 export function sectionDetail(section: string, setupFocused = false) {

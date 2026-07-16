@@ -6,6 +6,7 @@ import type {
 } from "../../lib/schemas";
 import { compareBackupsNewestFirst } from "../../lib/backups";
 import { credentialBackendLabel as formatCredentialBackendLabel } from "../../lib/credential-backends";
+import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { DEFAULT_ACTION_FAILURE_MESSAGE } from "../../lib/display-copy";
 import { formatDateTimeWithZone } from "../../lib/date-format";
 import { profileLastCheckedLabel } from "../../lib/profile-detail-display";
@@ -95,7 +96,7 @@ export const PROFILE_PANEL_COPY = {
   searchAriaLabel: "Search Profiles",
   searchPlaceholder: "Search profiles…",
   filterAriaLabel: "Profile filters",
-  addProfileLabel: "Add Profile",
+  addProfileLabel: DESKTOP_ACTION_COPY.addProfileLabel,
   tableAriaLabel: "Profile table",
   listAriaLabel: "Profiles",
   tableColumns: [

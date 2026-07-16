@@ -12,6 +12,7 @@ import {
   buildAppNavItems,
   createAddProfileRouteState,
   createImportCurrentLoginRouteState,
+  createProfileSetupRouteState,
   createProfilesRouteState,
   createSettingsRouteState,
   describeBootstrapError,
@@ -291,6 +292,21 @@ describe("app-shell helpers", () => {
       tool: "claude",
       expandedProfile: null,
       mode: "from_live",
+    });
+
+    expect(
+      createProfileSetupRouteState({
+        tool: "codex",
+        mode: "oauth",
+        credentialBackend: "system-keyring",
+        openToken: 2,
+      }),
+    ).toEqual({
+      tool: "codex",
+      expandedProfile: null,
+      mode: "oauth",
+      credentialBackend: "system-keyring",
+      openToken: 2,
     });
 
     expect(createSettingsRouteState("updates")).toEqual({ section: "updates" });

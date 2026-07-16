@@ -1,4 +1,5 @@
 import { APP_NAV_IDS } from "../lib/app-navigation";
+import { DESKTOP_ACTION_COPY } from "../lib/desktop-action-copy";
 import { SUPPORTED_TOOLS, type SupportedTool } from "../lib/tool-registry";
 
 export const HELP_SHEET_COPY = {
@@ -26,13 +27,22 @@ export const HELP_SHEET_COPY = {
 export const HELP_SHEET_SUPPORTED_TOOLS: readonly SupportedTool[] = SUPPORTED_TOOLS;
 
 export const HELP_SHEET_SHORTCUTS = [
-  { label: "Quick Switch", shortcut: "⌘K" },
-  { label: "Diagnostics", shortcut: "⌘4" },
-  { label: "Settings", shortcut: "⌘," },
+  {
+    label: DESKTOP_ACTION_COPY.quickSwitchLabel,
+    shortcut: DESKTOP_ACTION_COPY.quickSwitchShortcut,
+  },
+  {
+    label: "Diagnostics",
+    shortcut: DESKTOP_ACTION_COPY.diagnosticsShortcut,
+  },
+  {
+    label: "Settings",
+    shortcut: DESKTOP_ACTION_COPY.settingsShortcut,
+  },
 ] as const;
 
 export const HELP_SHEET_ACTIONS = [
-  { id: APP_NAV_IDS.profiles, label: "Open Profiles" },
-  { id: APP_NAV_IDS.diagnostics, label: "Open Diagnostics" },
-  { id: APP_NAV_IDS.settings, label: "Open Settings" },
+  { id: APP_NAV_IDS.profiles, label: DESKTOP_ACTION_COPY.openProfilesLabel },
+  { id: APP_NAV_IDS.diagnostics, label: DESKTOP_ACTION_COPY.openDiagnosticsLabel },
+  { id: APP_NAV_IDS.settings, label: DESKTOP_ACTION_COPY.openSettingsLabel },
 ] as const;

@@ -73,6 +73,7 @@ import {
   buildAppNavItems,
   createAddProfileRouteState,
   createImportCurrentLoginRouteState,
+  createProfileSetupRouteState,
   createProfilesRouteState,
   createSettingsRouteState,
   describeBootstrapError,
@@ -331,8 +332,7 @@ export function App() {
       {
         event: DESKTOP_MENU_EVENTS.openAddProfile,
         handler: () => {
-          setProfilesRouteState(createProfilesRouteState({ tool: "claude", expandedProfile: null }));
-          setActiveNav(APP_NAV_IDS.profiles);
+          openAddProfile();
         },
       },
       {
@@ -688,7 +688,7 @@ export function App() {
               onCloseSetup={closeSetupAssistant}
               onOpenProfiles={(tool, options) => {
                 setProfilesRouteState(
-                  createProfilesRouteState({ tool, expandedProfile: null, mode: options?.mode }),
+                  createProfileSetupRouteState({ tool, mode: options?.mode }),
                 );
                 setActiveNav(APP_NAV_IDS.profiles);
               }}
@@ -746,9 +746,8 @@ export function App() {
               }}
               onOpenProfileSetup={(options) => {
                 setProfilesRouteState(
-                  createProfilesRouteState({
+                  createProfileSetupRouteState({
                     tool: options?.tool,
-                    expandedProfile: null,
                     mode: options?.mode,
                     credentialBackend: options?.credentialBackend ?? null,
                   }),
