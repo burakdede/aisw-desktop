@@ -56,8 +56,20 @@ import {
   duplicateEditableProfileSetDraft,
   hasDuplicateSetName,
   importedContextActivationResultLabel,
+  RULE_SCOPE_OPTIONS,
   savedSetActionLabel,
   savedSetActivationLabel,
+  ruleEditorDialogLabel,
+  ruleEditorSubmitLabel,
+  ruleEditorTitle,
+  ruleTargetInputLabel,
+  setActionsTriggerLabel,
+  setEditorDialogLabel,
+  setEditorKicker,
+  setEditorSubmitLabel,
+  setEditorTitle,
+  SETS_MODE_OPTIONS,
+  SETS_PANEL_COPY,
   type BindScope,
   type EditableProfileSet,
   type EditableRule,
@@ -461,7 +473,7 @@ export function SetsPanel({
         </div>
         <div className="sets-library-row-meta">
           {row.usageCount ? <span>{countLabel(row.usageCount, "rule")}</span> : null}
-          {row.active ? <span>Current</span> : null}
+          {row.active ? <span>{SETS_PANEL_COPY.currentLabel}</span> : null}
         </div>
       </button>
     ));
@@ -475,19 +487,16 @@ export function SetsPanel({
     <div ref={rootRef} className="sets-screen screen-content">
       <div className="sets-toolbar-row">
         <SegmentedControl
-          ariaLabel="Sets mode"
+          ariaLabel={SETS_PANEL_COPY.modeAriaLabel}
           className="sets-mode-segmented"
-          options={[
-            { value: "sets", label: "Set Library" },
-            { value: "rules", label: "Project Rules" },
-          ]}
+          options={SETS_MODE_OPTIONS}
           value={mode}
           onChange={(value) => setMode(value as SetMode)}
         />
         {mode === "sets" ? (
           <div className="button-row">
             <button className="primary-button" type="button" onClick={openNewSetEditor}>
-              New Set…
+              {SETS_PANEL_COPY.newSetButtonLabel}
             </button>
           </div>
         ) : null}
@@ -500,18 +509,21 @@ export function SetsPanel({
             primaryClassName="sets-library-pane"
             secondaryClassName="sets-inspector-pane"
             primary={showSetLibrary ? (
-              <section className="sets-pane sets-library-list-pane" aria-label="Set Library">
+              <section
+                className="sets-pane sets-library-list-pane"
+                aria-label={SETS_PANEL_COPY.setLibraryAriaLabel}
+              >
                 <div className="sets-library-list">{setRows}</div>
                 {importedContextRows.length ? (
                   <details className="sets-imported-disclosure">
                     <summary>
-                      Imported CLI contexts
+                      {SETS_PANEL_COPY.importedContextsTitle}
                       <span className="sets-imported-disclosure-count">
                         {importedContextRows.length}
                       </span>
                     </summary>
                     <p className="inline-note">
-                      Use an imported CLI context directly without turning it into a saved set.
+                      {SETS_PANEL_COPY.importedContextsDetail}
                     </p>
                     <div className="stack-list">
                       {importedContextRows.map((row) => {
@@ -528,7 +540,7 @@ export function SetsPanel({
                               </span>
                             </div>
                             <p className="sets-library-row-summary">
-                              {"CLI context · "}
+                              {SETS_PANEL_COPY.importedContextSummaryPrefix}
                               {row.summary}
                             </p>
                           </div>
@@ -590,14 +602,14 @@ export function SetsPanel({
                         {selectedSetInspector?.activateLabel}
                       </button>
                       <button className="ghost-button" type="button" onClick={() => openEditSetEditor(selectedSet)}>
-                        Edit…
+                        {SETS_PANEL_COPY.editSetLabel}
                       </button>
                       <div className="profile-row-actions" data-profile-row-actions>
                         <button
                           ref={setMenuAnchorRef}
                           className="ghost-button profile-row-actions-trigger"
                           type="button"
-                          aria-label={`More actions for ${profileSetDisplayLabel(selectedSet)}`}
+                          aria-label={setActionsTriggerLabel(profileSetDisplayLabel(selectedSet))}
                           aria-expanded={setMenuOpen}
                           onClick={() => setSetMenuOpen((open) => !open)}
                         >
@@ -611,21 +623,21 @@ export function SetsPanel({
                             boundaryAttribute="data-profile-row-actions"
                             containmentSelector=".sets-inspector"
                             role="menu"
-                            aria-label="Set actions"
+                            aria-label={SETS_PANEL_COPY.setActionsMenuAriaLabel}
                           >
                             <button
                               type="button"
                               role="menuitem"
                               onClick={() => openEditSetEditor(selectedSet)}
                             >
-                              Rename…
+                              {SETS_PANEL_COPY.renameSetLabel}
                             </button>
                             <button
                               type="button"
                               role="menuitem"
                               onClick={() => duplicateSet(selectedSet)}
                             >
-                              Duplicate…
+                              {SETS_PANEL_COPY.duplicateSetLabel}
                             </button>
                             <button
                               type="button"
@@ -635,7 +647,7 @@ export function SetsPanel({
                                 setMode("rules");
                               }}
                             >
-                              Manage Project Rules…
+                              {SETS_PANEL_COPY.manageProjectRulesLabel}
                             </button>
                             <button
                               type="button"
@@ -644,7 +656,7 @@ export function SetsPanel({
                               disabled={mutationLock.isBusy}
                               onClick={() => deleteSet(selectedSet.name)}
                             >
-                              Remove…
+                              {SETS_PANEL_COPY.removeSetLabel}
                             </button>
                           </AnchoredMenu>
                         ) : null}
@@ -674,9 +686,9 @@ export function SetsPanel({
                   </>
                 ) : (
                   <div className="profiles-empty-state sets-empty-state-inline">
-                    <h3>No saved set selected</h3>
+                    <h3>{SETS_PANEL_COPY.noSavedSetSelectedTitle}</h3>
                     <p className="inline-note">
-                      Select a saved set to inspect mapped profiles and switch it.
+                      {SETS_PANEL_COPY.noSavedSetSelectedDetail}
                     </p>
                   </div>
                 )}
@@ -684,18 +696,18 @@ export function SetsPanel({
             ) : null}
           />
         ) : (
-          <section className="sets-empty-pane" aria-label="Set Library">
+          <section className="sets-empty-pane" aria-label={SETS_PANEL_COPY.setLibraryAriaLabel}>
             <div className="sets-empty-illustration" aria-hidden="true">
               <span>▤</span>
             </div>
-            <h3>No sets yet</h3>
-            <p className="inline-note">Combine work, personal, or client profiles so you can switch multiple coding agents in one action.</p>
+            <h3>{SETS_PANEL_COPY.noSetsTitle}</h3>
+            <p className="inline-note">{SETS_PANEL_COPY.noSetsPrimaryDetail}</p>
             <div className="button-row">
               <button className="primary-button" type="button" onClick={openNewSetEditor}>
-                Create Set…
+                {SETS_PANEL_COPY.createSetButtonLabel}
               </button>
             </div>
-            <p className="inline-note">You can also switch individual profiles from Quick Switch.</p>
+            <p className="inline-note">{SETS_PANEL_COPY.noSetsSecondaryDetail}</p>
           </section>
         )
       ) : (
@@ -704,9 +716,9 @@ export function SetsPanel({
             <section className="sets-rules-banner">
               <div className="sets-rules-banner-copy">
                 <div>
-                  <h3>Project mismatch</h3>
-                  <p className="inline-note">Expected set: {expectedContextDisplay}</p>
-                  <p className="inline-note">Current set: {currentContextDisplay}</p>
+                  <h3>{SETS_PANEL_COPY.projectMismatchTitle}</h3>
+                  <p className="inline-note">{SETS_PANEL_COPY.expectedSetPrefix}{expectedContextDisplay}</p>
+                  <p className="inline-note">{SETS_PANEL_COPY.currentSetPrefix}{currentContextDisplay}</p>
                   <p className="inline-note">
                     Matched by this {ruleScopeLabel(workspaceCard.scope).toLowerCase()} rule:{" "}
                     {ruleTargetLabel(workspaceCard.scope, workspaceCard.target)}
@@ -727,7 +739,7 @@ export function SetsPanel({
                   type="button"
                   onClick={() => setWorkspaceOverrideDismissed(true)}
                 >
-                  Keep current set
+                  {SETS_PANEL_COPY.keepCurrentSetLabel}
                 </button>
               </div>
             </section>
@@ -738,24 +750,27 @@ export function SetsPanel({
             primaryClassName="sets-rules-list-pane"
             secondaryClassName="sets-rules-inspector-pane"
             primary={showRuleTable ? (
-              <section className="sets-pane sets-rules-list-panel" aria-label="Project Rules">
+              <section
+                className="sets-pane sets-rules-list-panel"
+                aria-label={SETS_PANEL_COPY.projectRulesAriaLabel}
+              >
                 <header className="sets-pane-header sets-rules-pane-header">
                   <div>
-                    <h3>Project Rules</h3>
+                    <h3>{SETS_PANEL_COPY.projectRulesTitle}</h3>
                     <p className="inline-note">
-                      Match folders, remotes, or a default fallback to a saved set.
+                      {SETS_PANEL_COPY.projectRulesDetail}
                     </p>
                   </div>
                   <div className="button-row">
                     <button className="primary-button" type="button" onClick={openRuleEditor}>
-                      Add Rule…
+                      {SETS_PANEL_COPY.addRuleButtonLabel}
                     </button>
                     <div className="profile-row-actions" data-profile-row-actions>
                       <button
                         ref={rulesMenuAnchorRef}
                         className="ghost-button profile-row-actions-trigger profile-row-actions-trigger-visible"
                         type="button"
-                        aria-label="Project rules actions"
+                        aria-label={SETS_PANEL_COPY.projectRulesActionsAriaLabel}
                         aria-expanded={rulesMenuOpen}
                         onClick={() => setRulesMenuOpen((open) => !open)}
                       >
@@ -768,7 +783,7 @@ export function SetsPanel({
                           boundaryAttribute="data-profile-row-actions"
                           containmentSelector=".sets-rules-list-panel"
                           role="menu"
-                          aria-label="Project rules actions"
+                          aria-label={SETS_PANEL_COPY.projectRulesActionsAriaLabel}
                         >
                           <button
                             type="button"
@@ -778,7 +793,7 @@ export function SetsPanel({
                               onOpenContexts();
                             }}
                           >
-                            Open Sets
+                            {SETS_PANEL_COPY.openSetsLabel}
                           </button>
                         </AnchoredMenu>
                       ) : null}
@@ -820,9 +835,9 @@ export function SetsPanel({
                   </div>
                 ) : (
                   <div className="sets-empty-state-inline">
-                    <h4>No project rules yet</h4>
+                    <h4>{SETS_PANEL_COPY.noProjectRulesTitle}</h4>
                     <p className="inline-note">
-                      Add a rule to match a default scope, folder, or git remote pattern to a saved set.
+                      {SETS_PANEL_COPY.noProjectRulesDetail}
                     </p>
                   </div>
                 )}
@@ -867,7 +882,9 @@ export function SetsPanel({
                       </div>
                       <div className="sets-detail-row">
                         <span className="sets-detail-key">Set</span>
-                        <strong className="sets-detail-value">{selectedRuleContextLabel ?? "Set Unavailable"}</strong>
+                        <strong className="sets-detail-value">
+                          {selectedRuleContextLabel ?? SETS_PANEL_COPY.setUnavailableLabel}
+                        </strong>
                       </div>
                       <div className="sets-detail-row">
                         <span className="sets-detail-key">Priority</span>
@@ -875,7 +892,7 @@ export function SetsPanel({
                       </div>
                       <div className="sets-detail-row">
                         <span className="sets-detail-key">Enabled</span>
-                        <strong className="sets-detail-value">Yes</strong>
+                        <strong className="sets-detail-value">{SETS_PANEL_COPY.enabledLabel}</strong>
                       </div>
                       <div className="sets-detail-row">
                         <span className="sets-detail-key">Last matched</span>
@@ -900,9 +917,9 @@ export function SetsPanel({
                   </>
                 ) : (
                   <div className="sets-empty-state-inline">
-                    <h3>No rule selected</h3>
+                    <h3>{SETS_PANEL_COPY.noRuleSelectedTitle}</h3>
                     <p className="inline-note">
-                      Select a rule to inspect it here.
+                      {SETS_PANEL_COPY.noRuleSelectedDetail}
                     </p>
                   </div>
                 )}
@@ -914,7 +931,7 @@ export function SetsPanel({
 
       {setEditorOpen ? (
         <DialogSurface
-          ariaLabel={isEditingSet ? "Edit Set" : "New Set"}
+          ariaLabel={setEditorDialogLabel(isEditingSet)}
           className="quick-switch-palette profile-sheet set-sheet"
           initialFocusSelector="input:not([disabled]), select:not([disabled]), button:not([disabled])"
           onClose={closeSetEditor}
@@ -922,23 +939,23 @@ export function SetsPanel({
           <form className="stack-list" onSubmit={saveSet}>
             <div className="quick-switch-header">
               <div>
-                <p className="card-kicker">{isEditingSet ? "Edit set" : "New set"}</p>
-                <h3>{isEditingSet ? "Edit Set" : "New Set"}</h3>
+                <p className="card-kicker">{setEditorKicker(isEditingSet)}</p>
+                <h3>{setEditorTitle(isEditingSet)}</h3>
               </div>
               <button className="ghost-button" type="button" onClick={closeSetEditor}>
-                Close
+                {SETS_PANEL_COPY.closeLabel}
               </button>
             </div>
             <div className="stacked-form diagnostics-body">
               <label>
-                Set name
+                {SETS_PANEL_COPY.setNameLabel}
                 <input
                   value={setDraft.name}
                   onChange={(event) => setSetDraft((current) => ({ ...current, name: event.target.value }))}
                 />
               </label>
               <label>
-                Display label
+                {SETS_PANEL_COPY.displayLabelFieldLabel}
                 <input
                   value={setDraft.label}
                   onChange={(event) => setSetDraft((current) => ({ ...current, label: event.target.value }))}
@@ -959,7 +976,7 @@ export function SetsPanel({
                       }))
                     }
                   >
-                    <option value="">Not included</option>
+                    <option value="">{SETS_PANEL_COPY.notIncludedLabel}</option>
                     {profileOptions[tool].map((profile) => (
                       <option key={profile.value} value={profile.value}>
                         {profile.label}
@@ -980,14 +997,14 @@ export function SetsPanel({
             <footer className="quick-switch-footer">
               <div className="button-row">
                 <button className="ghost-button" type="button" onClick={closeSetEditor}>
-                  Cancel
+                  {SETS_PANEL_COPY.cancelLabel}
                 </button>
                 <button
                   className="primary-button"
                   type="submit"
                   disabled={mutationLock.isBusy || !trimmedDraftName || !draftHasSelections || duplicateSetName}
                 >
-                  {isEditingSet ? "Save Set" : "Create Set"}
+                  {setEditorSubmitLabel(isEditingSet)}
                 </button>
               </div>
             </footer>
@@ -997,7 +1014,7 @@ export function SetsPanel({
 
       {ruleEditorOpen ? (
         <DialogSurface
-          ariaLabel={isEditingRule ? "Edit Rule" : "Add Rule"}
+          ariaLabel={ruleEditorDialogLabel(isEditingRule)}
           className="quick-switch-palette profile-sheet set-sheet"
           initialFocusSelector="select:not([disabled]), input:not([disabled]), button:not([disabled])"
           onClose={closeRuleEditor}
@@ -1005,16 +1022,16 @@ export function SetsPanel({
           <form className="stack-list" onSubmit={submitRule}>
             <div className="quick-switch-header">
               <div>
-                <p className="card-kicker">Project rule</p>
-                <h3>{isEditingRule ? "Edit Project Rule" : "Add Project Rule"}</h3>
+                <p className="card-kicker">{SETS_PANEL_COPY.projectRuleKicker}</p>
+                <h3>{ruleEditorTitle(isEditingRule)}</h3>
               </div>
               <button className="ghost-button" type="button" onClick={closeRuleEditor}>
-                Close
+                {SETS_PANEL_COPY.closeLabel}
               </button>
             </div>
             <div className="stacked-form diagnostics-body">
               <label>
-                Rule scope
+                {SETS_PANEL_COPY.ruleScopeLabel}
                 <select
                   value={ruleDraft.scope}
                   onChange={(event) =>
@@ -1024,14 +1041,16 @@ export function SetsPanel({
                     }))
                   }
                 >
-                  <option value="default">Default set</option>
-                  <option value="path">Path prefix</option>
-                  <option value="git_remote">Git remote pattern</option>
+                  {RULE_SCOPE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               </label>
               {ruleDraft.scope !== "default" ? (
                 <label>
-                  {ruleDraft.scope === "path" ? "Path" : "Git remote pattern"}
+                  {ruleTargetInputLabel(ruleDraft.scope)}
                   <input
                     value={ruleDraft.targetValue}
                     onChange={(event) =>
@@ -1044,7 +1063,7 @@ export function SetsPanel({
                 </label>
               ) : null}
               <label>
-                Set
+                {SETS_PANEL_COPY.setFieldLabel}
                 <select
                   value={ruleDraft.context}
                   onChange={(event) =>
@@ -1054,7 +1073,7 @@ export function SetsPanel({
                     }))
                   }
                 >
-                  <option value="">Select set</option>
+                  <option value="">{SETS_PANEL_COPY.selectSetLabel}</option>
                   {bindingOptions.map((entry) => (
                     <option key={entry.value} value={entry.value}>
                       {entry.label}
@@ -1072,10 +1091,10 @@ export function SetsPanel({
             <footer className="quick-switch-footer">
               <div className="button-row">
                 <button className="ghost-button" type="button" onClick={closeRuleEditor}>
-                  Cancel
+                  {SETS_PANEL_COPY.cancelLabel}
                 </button>
                 <button className="primary-button" type="submit" disabled={mutationLock.isBusy || !canSaveBinding}>
-                  {isEditingRule ? "Save Rule" : "Add Rule"}
+                  {ruleEditorSubmitLabel(isEditingRule)}
                 </button>
               </div>
             </footer>

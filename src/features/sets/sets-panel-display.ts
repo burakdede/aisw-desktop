@@ -76,6 +76,116 @@ export type SetSettingsUpdate = Pick<
 
 export type WorkspaceBindingTarget = WorkspaceBindInput["target"];
 
+export const SETS_PANEL_COPY = {
+  modeAriaLabel: "Sets mode",
+  setLibraryModeLabel: "Set Library",
+  projectRulesModeLabel: "Project Rules",
+  newSetButtonLabel: "New Set…",
+  setLibraryAriaLabel: "Set Library",
+  importedContextsTitle: "Imported CLI contexts",
+  importedContextsDetail:
+    "Use an imported CLI context directly without turning it into a saved set.",
+  importedContextSummaryPrefix: "CLI context · ",
+  currentLabel: "Current",
+  editSetLabel: "Edit…",
+  setActionsTriggerLabelPrefix: "More actions for ",
+  setActionsMenuAriaLabel: "Set actions",
+  renameSetLabel: "Rename…",
+  duplicateSetLabel: "Duplicate…",
+  manageProjectRulesLabel: "Manage Project Rules…",
+  removeSetLabel: "Remove…",
+  noSavedSetSelectedTitle: "No saved set selected",
+  noSavedSetSelectedDetail:
+    "Select a saved set to inspect mapped profiles and switch it.",
+  noSetsTitle: "No sets yet",
+  noSetsPrimaryDetail:
+    "Combine work, personal, or client profiles so you can switch multiple coding agents in one action.",
+  createSetButtonLabel: "Create Set…",
+  noSetsSecondaryDetail:
+    "You can also switch individual profiles from Quick Switch.",
+  projectMismatchTitle: "Project mismatch",
+  expectedSetPrefix: "Expected set: ",
+  currentSetPrefix: "Current set: ",
+  keepCurrentSetLabel: "Keep current set",
+  projectRulesAriaLabel: "Project Rules",
+  projectRulesTitle: "Project Rules",
+  projectRulesDetail:
+    "Match folders, remotes, or a default fallback to a saved set.",
+  addRuleButtonLabel: "Add Rule…",
+  projectRulesActionsAriaLabel: "Project rules actions",
+  openSetsLabel: "Open Sets",
+  noProjectRulesTitle: "No project rules yet",
+  noProjectRulesDetail:
+    "Add a rule to match a default scope, folder, or git remote pattern to a saved set.",
+  setUnavailableLabel: "Set Unavailable",
+  enabledLabel: "Yes",
+  noRuleSelectedTitle: "No rule selected",
+  noRuleSelectedDetail: "Select a rule to inspect it here.",
+  closeLabel: "Close",
+  cancelLabel: "Cancel",
+  setNameLabel: "Set name",
+  displayLabelFieldLabel: "Display label",
+  notIncludedLabel: "Not included",
+  projectRuleKicker: "Project rule",
+  ruleScopeLabel: "Rule scope",
+  defaultSetRuleScopeLabel: "Default set",
+  pathPrefixRuleScopeLabel: "Path prefix",
+  gitRemotePatternRuleScopeLabel: "Git remote pattern",
+  pathLabel: "Path",
+  gitRemotePatternLabel: "Git remote pattern",
+  setFieldLabel: "Set",
+  selectSetLabel: "Select set",
+} as const;
+
+export const SETS_MODE_OPTIONS = [
+  { value: "sets", label: SETS_PANEL_COPY.setLibraryModeLabel },
+  { value: "rules", label: SETS_PANEL_COPY.projectRulesModeLabel },
+] as const;
+
+export const RULE_SCOPE_OPTIONS = [
+  { value: "default", label: SETS_PANEL_COPY.defaultSetRuleScopeLabel },
+  { value: "path", label: SETS_PANEL_COPY.pathPrefixRuleScopeLabel },
+  { value: "git_remote", label: SETS_PANEL_COPY.gitRemotePatternRuleScopeLabel },
+] as const;
+
+export function setActionsTriggerLabel(displayLabel: string) {
+  return `${SETS_PANEL_COPY.setActionsTriggerLabelPrefix}${displayLabel}`;
+}
+
+export function setEditorDialogLabel(isEditingSet: boolean) {
+  return isEditingSet ? "Edit Set" : "New Set";
+}
+
+export function setEditorKicker(isEditingSet: boolean) {
+  return isEditingSet ? "Edit set" : "New set";
+}
+
+export function setEditorTitle(isEditingSet: boolean) {
+  return isEditingSet ? "Edit Set" : "New Set";
+}
+
+export function setEditorSubmitLabel(isEditingSet: boolean) {
+  return isEditingSet ? "Save Set" : "Create Set";
+}
+
+export function ruleEditorDialogLabel(isEditingRule: boolean) {
+  return isEditingRule ? "Edit Rule" : "Add Rule";
+}
+
+export function ruleEditorTitle(isEditingRule: boolean) {
+  return isEditingRule ? "Edit Project Rule" : "Add Project Rule";
+}
+
+export function ruleEditorSubmitLabel(isEditingRule: boolean) {
+  return isEditingRule ? "Save Rule" : "Add Rule";
+}
+
+export function ruleTargetInputLabel(scope: BindScope) {
+  return scope === "path"
+    ? SETS_PANEL_COPY.pathLabel
+    : SETS_PANEL_COPY.gitRemotePatternLabel;
+}
+
 export function createEmptyEditableProfileSet(tools: readonly string[]): EditableProfileSet {
   return {
     sourceName: null,

@@ -16,8 +16,20 @@ import {
   duplicateEditableProfileSetDraft,
   hasDuplicateSetName,
   importedContextActivationResultLabel,
+  RULE_SCOPE_OPTIONS,
   savedSetActionLabel,
   savedSetActivationLabel,
+  ruleEditorDialogLabel,
+  ruleEditorSubmitLabel,
+  ruleEditorTitle,
+  ruleTargetInputLabel,
+  setActionsTriggerLabel,
+  setEditorDialogLabel,
+  setEditorKicker,
+  setEditorSubmitLabel,
+  setEditorTitle,
+  SETS_MODE_OPTIONS,
+  SETS_PANEL_COPY,
   unbindTargetForBinding,
   unbindTargetForWorkspaceBindingTarget,
   workspaceBindingTargetChanged,
@@ -124,6 +136,32 @@ function makeSnapshot(
 }
 
 describe("sets-panel-display", () => {
+  it("shares stable sets panel copy and editor labels", () => {
+    expect(SETS_PANEL_COPY.modeAriaLabel).toBe("Sets mode");
+    expect(SETS_PANEL_COPY.noSetsTitle).toBe("No sets yet");
+    expect(SETS_PANEL_COPY.projectRulesTitle).toBe("Project Rules");
+    expect(SETS_MODE_OPTIONS).toEqual([
+      { value: "sets", label: "Set Library" },
+      { value: "rules", label: "Project Rules" },
+    ]);
+    expect(RULE_SCOPE_OPTIONS).toEqual([
+      { value: "default", label: "Default set" },
+      { value: "path", label: "Path prefix" },
+      { value: "git_remote", label: "Git remote pattern" },
+    ]);
+    expect(setActionsTriggerLabel("Client Acme")).toBe("More actions for Client Acme");
+    expect(setEditorDialogLabel(true)).toBe("Edit Set");
+    expect(setEditorDialogLabel(false)).toBe("New Set");
+    expect(setEditorKicker(true)).toBe("Edit set");
+    expect(setEditorTitle(false)).toBe("New Set");
+    expect(setEditorSubmitLabel(true)).toBe("Save Set");
+    expect(ruleEditorDialogLabel(true)).toBe("Edit Rule");
+    expect(ruleEditorTitle(false)).toBe("Add Project Rule");
+    expect(ruleEditorSubmitLabel(false)).toBe("Add Rule");
+    expect(ruleTargetInputLabel("path")).toBe("Path");
+    expect(ruleTargetInputLabel("git_remote")).toBe("Git remote pattern");
+  });
+
   it("creates empty and editable set drafts for every supported tool", () => {
     expect(createEmptyEditableProfileSet(TOOLS)).toEqual({
       sourceName: null,
