@@ -19,6 +19,7 @@ import {
   DESKTOP_TRAY_EVENTS,
   type DesktopEventName,
 } from "./lib/desktop-event-contract";
+import { ACTIVITY_STORE_KEY } from "./features/shared/activity-store";
 import {
   DESKTOP_PREFERENCE_STORAGE_KEYS,
   loadDesktopPreferences,
@@ -26,6 +27,7 @@ import {
 import type { UnknownRecord } from "./lib/parse-guards";
 import { desktopSettingsSchema } from "./lib/schemas";
 import type { AppBootstrap, AppSnapshot, DesktopSettings, InitReport } from "./lib/schemas";
+import { WINDOW_STATE_STORAGE_KEY } from "./lib/window-state";
 
 const CURRENT_APP_VERSION = packageJson.version;
 
@@ -523,7 +525,7 @@ describe("App", () => {
     const setPosition = vi.fn().mockResolvedValue(undefined);
 
     window.localStorage.setItem(
-      "ai-switch.desktop.window-state",
+      WINDOW_STATE_STORAGE_KEY,
       JSON.stringify({ width: 1280, height: 820, x: 64, y: 96 }),
     );
 
@@ -569,7 +571,7 @@ describe("App", () => {
       await new Promise((resolve) => window.setTimeout(resolve, 220));
     });
 
-    expect(window.localStorage.getItem("ai-switch.desktop.window-state")).toBe(
+    expect(window.localStorage.getItem(WINDOW_STATE_STORAGE_KEY)).toBe(
       JSON.stringify({ width: 1360, height: 860, x: 180, y: 144 }),
     );
   });
@@ -764,10 +766,10 @@ describe("App", () => {
       ).toBeInTheDocument();
     });
 
-    expect(window.localStorage.getItem("ai-switch.desktop.activity-log")).toContain(
+    expect(window.localStorage.getItem(ACTIVITY_STORE_KEY)).toContain(
       "Checked for updates",
     );
-    expect(window.localStorage.getItem("ai-switch.desktop.activity-log")).toContain(
+    expect(window.localStorage.getItem(ACTIVITY_STORE_KEY)).toContain(
       "Saved settings",
     );
   });
@@ -8606,7 +8608,7 @@ describe("App", () => {
 
   it("clears the saved window layout from advanced settings", async () => {
     window.localStorage.setItem(
-      "ai-switch.desktop.window-state",
+      WINDOW_STATE_STORAGE_KEY,
       JSON.stringify({ width: 1280, height: 820, x: 64, y: 96 }),
     );
 
@@ -8614,7 +8616,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reset Window Layout" }));
 
     await waitFor(() => {
-      expect(window.localStorage.getItem("ai-switch.desktop.window-state")).toBeNull();
+      expect(window.localStorage.getItem(WINDOW_STATE_STORAGE_KEY)).toBeNull();
       expect(screen.getByText("Cleared the saved window size and position.")).toBeInTheDocument();
     });
   });
