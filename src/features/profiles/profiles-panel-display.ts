@@ -8,12 +8,12 @@ import { compareBackupsNewestFirst } from "../../lib/backups";
 import { credentialBackendLabel as formatCredentialBackendLabel } from "../../lib/credential-backends";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { DEFAULT_ACTION_FAILURE_MESSAGE } from "../../lib/display-copy";
+import { resolveErrorDetails } from "../../lib/error-details";
 import { formatDateTimeWithZone } from "../../lib/date-format";
 import { profileLastCheckedLabel } from "../../lib/profile-detail-display";
 import { effectiveToolProfileLabel, mergeProfileLabel } from "../../lib/profile-display";
 import { formatMessageWithRemediation } from "../../lib/remediation-text";
 import { toolDisplayName } from "../../lib/tool-display";
-import { DesktopCommandError } from "../../lib/tauri";
 import { titleCase } from "../../lib/utils";
 import {
   resolveProfileSwitchState,
@@ -709,24 +709,13 @@ export function profileMutationError(...errors: Array<unknown>) {
 }
 
 export function formatDesktopError(error: unknown) {
-  if (error instanceof DesktopCommandError) {
-    return formatMessageWithRemediation(
-      normalizeRuntimeLanguage(error.message),
-      error.remediation ? normalizeRuntimeLanguage(error.remediation) : undefined,
-    );
-  }
-  if (error instanceof Error) {
-    return normalizeRuntimeLanguage(error.message);
-  }
-  if (typeof error === "object" && error && "message" in error && typeof error.message === "string") {
-    const remediation =
-      "remediation" in error && typeof error.remediation === "string" ? error.remediation : undefined;
-    return formatMessageWithRemediation(
-      normalizeRuntimeLanguage(error.message),
-      remediation ? normalizeRuntimeLanguage(remediation) : undefined,
-    );
-  }
-  return DEFAULT_ACTION_FAILURE_MESSAGE;
+  const details = resolveErrorDetails(error, DEFAULT_ACTION_FAILURE_MESSAGE);
+  return formatMessageWithRemediation(
+    normalizeRuntimeLanguage(details.message),
+    details.remediation
+      ? normalizeRuntimeLanguage(details.remediation)
+      : undefined,
+  );
 }
 
 export function isDuplicateProfileName(

@@ -1,5 +1,5 @@
 import type { LastCommandResult } from "./lastCommandResult";
-import { DesktopCommandError } from "../../lib/tauri";
+import { resolveErrorDetails } from "../../lib/error-details";
 
 export const SNAPSHOT_UPDATED_RESULT_SUMMARY = "Snapshot updated successfully.";
 
@@ -25,13 +25,13 @@ export function buildCommandResultError(
     fallbackMessage: string;
   },
 ): Omit<LastCommandResult, "at"> {
-  const resolved = error instanceof Error ? error : new Error(input.fallbackMessage);
+  const resolved = resolveErrorDetails(error, input.fallbackMessage);
   return {
     label: input.label,
     status: "error",
     message: resolved.message,
-    kind: resolved instanceof DesktopCommandError ? resolved.kind : undefined,
-    remediation: resolved instanceof DesktopCommandError ? resolved.remediation : undefined,
+    kind: resolved.kind,
+    remediation: resolved.remediation,
   };
 }
 

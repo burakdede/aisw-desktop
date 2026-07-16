@@ -1,5 +1,6 @@
 import { DesktopCommandError, type TrayCommandResultEvent } from "./lib/tauri";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "./lib/schemas";
+import { resolveErrorDetails } from "./lib/error-details";
 import type {
   ExplicitProfileCredentialBackend,
   ProfileImportMode,
@@ -396,24 +397,10 @@ export function buildBootstrapErrorSurface(error: unknown) {
 }
 
 export function describeBootstrapError(error: unknown) {
-  if (error instanceof DesktopCommandError) {
-    return {
-      message: error.message,
-      remediation: error.remediation,
-    };
-  }
-
-  if (error instanceof Error) {
-    return {
-      message: error.message,
-      remediation: undefined,
-    };
-  }
-
-  return {
-    message: "AI Switch could not load its local desktop state.",
-    remediation: undefined,
-  };
+  return resolveErrorDetails(
+    error,
+    "AI Switch could not load its local desktop state.",
+  );
 }
 
 export function describeRuntimeBlocker(runtimeStatus: {
@@ -457,19 +444,21 @@ export function describeRuntimeBlocker(runtimeStatus: {
 }
 
 export function buildReapplyActiveProfileError(error: unknown) {
-  const message =
-    error instanceof Error ? error.message : "AI Switch could not complete that action.";
-  const remediation =
-    error instanceof DesktopCommandError ? error.remediation : undefined;
+  const details = resolveErrorDetails(
+    error,
+    "AI Switch could not complete that action.",
+  );
 
   return {
-    notificationBody: remediation ? `${message} ${remediation}` : message,
+    notificationBody: details.remediation
+      ? `${details.message} ${details.remediation}`
+      : details.message,
     result: {
       label: REAPPLY_ACTIVE_PROFILE_LABEL,
       status: "error" as const,
-      message,
-      kind: error instanceof DesktopCommandError ? error.kind : undefined,
-      remediation,
+      message: details.message,
+      kind: details.kind,
+      remediation: details.remediation,
     } satisfies Pick<LastCommandResult, "kind" | "label" | "message" | "remediation" | "status">,
   };
 }

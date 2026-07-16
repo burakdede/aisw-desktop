@@ -10,6 +10,7 @@ import {
   normalizeDesktopUpdateChannel,
   type DesktopUpdateChannel,
 } from "../../lib/desktop-settings";
+import { resolveErrorDetails } from "../../lib/error-details";
 import { normalizeResolvedCheckStatus } from "../../lib/check-status";
 import {
   DEFAULT_SETTINGS_SECTION,
@@ -24,7 +25,6 @@ import type {
   UpdateCheckReport,
 } from "../../lib/schemas";
 import { DEFAULT_ACTION_FAILURE_MESSAGE, NOT_FOUND_LABEL, NOT_SET_LABEL } from "../../lib/display-copy";
-import { DesktopCommandError } from "../../lib/tauri";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
 
@@ -253,21 +253,12 @@ function findShellGuidanceVariants(
 }
 
 export function formatSettingsMutationError(error: unknown) {
-  if (error instanceof DesktopCommandError) {
-    return {
-      message: normalizeRuntimeLanguage(error.message),
-      remediation: normalizeRuntimeLanguage(error.remediation),
-    };
-  }
-  if (error instanceof Error) {
-    return {
-      message: normalizeRuntimeLanguage(error.message),
-      remediation: undefined,
-    };
-  }
+  const details = resolveErrorDetails(error, DEFAULT_ACTION_FAILURE_MESSAGE);
   return {
-    message: DEFAULT_ACTION_FAILURE_MESSAGE,
-    remediation: undefined,
+    message: normalizeRuntimeLanguage(details.message),
+    remediation: details.remediation
+      ? normalizeRuntimeLanguage(details.remediation)
+      : undefined,
   };
 }
 
@@ -369,15 +360,17 @@ export function openedAppDataFolderMessage(path: string) {
 }
 
 export function launchAtLoginErrorMessage(error: unknown) {
-  return error instanceof Error
-    ? error.message
-    : "AI Switch could not update launch at login.";
+  return resolveErrorDetails(
+    error,
+    "AI Switch could not update launch at login.",
+  ).message;
 }
 
 export function appDataFolderErrorMessage(error: unknown) {
-  return error instanceof Error
-    ? error.message
-    : "AI Switch could not open the app data folder.";
+  return resolveErrorDetails(
+    error,
+    "AI Switch could not open the app data folder.",
+  ).message;
 }
 
 export function launchAtLoginDescription(

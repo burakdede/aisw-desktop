@@ -8,6 +8,7 @@ import { isSystemKeyringBackend } from "../../lib/credential-backends";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { toolDisplayName } from "../../lib/tool-display";
 import { toolBinaryName } from "../../lib/tool-guidance";
+import { resolveErrorDetails } from "../../lib/error-details";
 import { runtimeSummary } from "../../lib/runtime-display";
 import { countLabel, titleCase } from "../../lib/utils";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
@@ -494,9 +495,10 @@ export function restoreIncludedEngineActionLabel(isPending: boolean) {
 }
 
 export function restoreIncludedEngineErrorMessage(error: unknown) {
-  return error instanceof Error
-    ? error.message
-    : "Could not switch back to the included desktop engine.";
+  return resolveErrorDetails(
+    error,
+    "Could not switch back to the included desktop engine.",
+  ).message;
 }
 
 export function onboardingHealthStatusSymbol(status: OnboardingHealthItem["status"]) {
