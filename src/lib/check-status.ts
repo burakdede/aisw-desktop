@@ -1,3 +1,5 @@
+import { normalizeOneOf } from "./parse-guards";
+
 export const CHECK_STATUSES = ["pass", "warn", "fail", "unknown"] as const;
 export type CheckStatus = (typeof CHECK_STATUSES)[number];
 export type ResolvedCheckStatus = Exclude<CheckStatus, "unknown">;
@@ -15,10 +17,7 @@ export function normalizeCheckStatus(
   value: unknown,
   fallback: CheckStatus = "unknown",
 ): CheckStatus {
-  return typeof value === "string" &&
-    CHECK_STATUSES.includes(value as CheckStatus)
-    ? (value as CheckStatus)
-    : fallback;
+  return normalizeOneOf(CHECK_STATUSES, value, fallback);
 }
 
 export function normalizeResolvedCheckStatus(

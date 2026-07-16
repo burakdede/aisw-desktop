@@ -25,3 +25,18 @@ export function asOptionalString(value: unknown) {
 export function asNumber(value: unknown, fallback = 0) {
   return typeof value === "number" ? value : fallback;
 }
+
+export function isOneOf<const Value extends string>(
+  options: readonly Value[],
+  value: unknown,
+): value is Value {
+  return typeof value === "string" && options.includes(value as Value);
+}
+
+export function normalizeOneOf<const Value extends string>(
+  options: readonly Value[],
+  value: unknown,
+  fallback: Value,
+): Value {
+  return isOneOf(options, value) ? value : fallback;
+}

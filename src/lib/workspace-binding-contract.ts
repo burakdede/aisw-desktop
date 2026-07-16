@@ -1,3 +1,5 @@
+import { normalizeOneOf } from "./parse-guards";
+
 export const WORKSPACE_BINDING_SCOPES = [
   "default",
   "path",
@@ -13,8 +15,5 @@ export function normalizeWorkspaceBindingScope(
   value: unknown,
   fallback: WorkspaceBindingScope = DEFAULT_WORKSPACE_BINDING_SCOPE,
 ): WorkspaceBindingScope {
-  return typeof value === "string" &&
-    WORKSPACE_BINDING_SCOPES.includes(value as WorkspaceBindingScope)
-    ? (value as WorkspaceBindingScope)
-    : fallback;
+  return normalizeOneOf(WORKSPACE_BINDING_SCOPES, value, fallback);
 }

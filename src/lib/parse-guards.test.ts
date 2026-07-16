@@ -6,6 +6,8 @@ import {
   asObject,
   asOptionalString,
   asString,
+  isOneOf,
+  normalizeOneOf,
 } from "./parse-guards";
 
 describe("parse-guards", () => {
@@ -22,5 +24,9 @@ describe("parse-guards", () => {
     expect(asOptionalString(42)).toBeUndefined();
     expect(asNumber(12)).toBe(12);
     expect(asNumber("12", 7)).toBe(7);
+    expect(isOneOf(["stable", "beta"] as const, "stable")).toBe(true);
+    expect(isOneOf(["stable", "beta"] as const, "nightly")).toBe(false);
+    expect(normalizeOneOf(["stable", "beta"] as const, "beta", "stable")).toBe("beta");
+    expect(normalizeOneOf(["stable", "beta"] as const, "nightly", "stable")).toBe("stable");
   });
 });

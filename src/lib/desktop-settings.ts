@@ -1,3 +1,4 @@
+import { isOneOf } from "./parse-guards";
 import type { DesktopSettings } from "./schemas";
 
 export const DESKTOP_UPDATE_CHANNELS = ["stable", "beta"] as const;
@@ -17,10 +18,7 @@ export const DEFAULT_DESKTOP_SETTINGS: DesktopSettings = {
 export function isDesktopUpdateChannel(
   value: string | null | undefined,
 ): value is DesktopUpdateChannel {
-  return Boolean(
-    value &&
-      DESKTOP_UPDATE_CHANNELS.includes(value as DesktopUpdateChannel),
-  );
+  return isOneOf(DESKTOP_UPDATE_CHANNELS, value);
 }
 
 export function normalizeDesktopUpdateChannel(

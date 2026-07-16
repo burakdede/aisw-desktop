@@ -3,6 +3,7 @@ import {
   DEFAULT_APP_SECTIONS,
   type DefaultAppSection,
 } from "./app-navigation";
+import { isOneOf } from "./parse-guards";
 import { resolveBrowserStorage, type BrowserStorage } from "./browser-storage";
 
 export const DESKTOP_APPEARANCES = ["system", "light", "dark"] as const;
@@ -100,11 +101,11 @@ export function applyAppearancePreference(appearance: DesktopAppearance) {
 }
 
 function isDesktopAppearance(value: string | null): value is DesktopAppearance {
-  return Boolean(value && DESKTOP_APPEARANCES.includes(value as DesktopAppearance));
+  return isOneOf(DESKTOP_APPEARANCES, value);
 }
 
 function isDefaultSection(value: string | null): value is DefaultSection {
-  return Boolean(value && DEFAULT_SECTIONS.includes(value as DefaultSection));
+  return isOneOf(DEFAULT_SECTIONS, value);
 }
 
 function getStorage(): Pick<Storage, "getItem" | "setItem" | "clear" | "removeItem"> | null {

@@ -3,6 +3,7 @@ import {
   CREDENTIAL_BACKENDS,
   normalizeCredentialBackend as normalizeCredentialBackendValue,
 } from "../../lib/credential-backends";
+import { isOneOf } from "../../lib/parse-guards";
 import { toolSupportsSystemKeyringCredentials } from "../../lib/tool-registry";
 
 export const PROFILE_IMPORT_MODES = ["from_live", "from_env", "api_key", "oauth"] as const;
@@ -90,10 +91,7 @@ export function resolveCredentialBackendRequest(backend: ProfileCredentialBacken
 }
 
 function normalizeImportMode(mode: string): ProfileImportMode | null {
-  if (PROFILE_IMPORT_MODES.includes(mode as ProfileImportMode)) {
-    return mode as ProfileImportMode;
-  }
-  return null;
+  return isOneOf(PROFILE_IMPORT_MODES, mode) ? mode : null;
 }
 
 function normalizeCredentialBackend(
