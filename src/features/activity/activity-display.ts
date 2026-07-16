@@ -127,6 +127,11 @@ export type ActivityInspectorRow = {
   value: string;
 };
 
+type ActivityGroup = {
+  label: "Today" | "Yesterday" | "Earlier";
+  entries: ActivityEntry[];
+};
+
 export function buildActivityEntries(timeline: ActivityTimelineEntry[]): ActivityEntry[] {
   return timeline.map((entry) => ({
     key: entry.key,
@@ -220,10 +225,10 @@ export function filterActivity(entries: ActivityEntry[], search: string, filter:
 export function groupActivityEntries(entries: ActivityEntry[], now = new Date()) {
   const { todayStart, yesterdayStart } = calendarDayStarts(now);
 
-  const groups = [
-    { label: "Today", entries: [] as ActivityEntry[] },
-    { label: "Yesterday", entries: [] as ActivityEntry[] },
-    { label: "Earlier", entries: [] as ActivityEntry[] },
+  const groups: ActivityGroup[] = [
+    { label: "Today", entries: [] },
+    { label: "Yesterday", entries: [] },
+    { label: "Earlier", entries: [] },
   ];
 
   for (const entry of entries) {

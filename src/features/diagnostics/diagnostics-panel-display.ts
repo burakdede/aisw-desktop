@@ -114,6 +114,12 @@ export type RecentFailureCard = {
   profileTarget?: { tool: string; profile: string | null };
 };
 
+type DiagnosticFindingGroup = {
+  id: "blocked" | "needs-attention" | "suggestions";
+  label: "Blocked" | "Needs Attention" | "Suggestions";
+  items: DiagnosticFinding[];
+};
+
 export type DiagnosticInspectorAction = {
   key: string;
   kind:
@@ -463,10 +469,10 @@ export function matchesQuickFixToFinding(
 }
 
 export function groupDiagnosticFindings(findings: DiagnosticFinding[]) {
-  const groups = [
-    { id: "blocked", label: "Blocked", items: [] as DiagnosticFinding[] },
-    { id: "needs-attention", label: "Needs Attention", items: [] as DiagnosticFinding[] },
-    { id: "suggestions", label: "Suggestions", items: [] as DiagnosticFinding[] },
+  const groups: DiagnosticFindingGroup[] = [
+    { id: "blocked", label: "Blocked", items: [] },
+    { id: "needs-attention", label: "Needs Attention", items: [] },
+    { id: "suggestions", label: "Suggestions", items: [] },
   ];
 
   findings.forEach((finding) => {

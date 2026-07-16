@@ -331,14 +331,17 @@ export function buildSavedSetCollection(
   draft: EditableProfileSet,
   draftName: string,
 ) {
+  const profiles: Record<string, string | null> = {};
+  Object.entries(draft.profiles).forEach(([tool, profile]) => {
+    profiles[tool] = profile || null;
+  });
+
   return [
     ...localSets.filter((entry) => entry.name !== (draft.sourceName ?? draftName)),
     {
       name: draftName,
       label: draft.label.trim() || null,
-      profiles: Object.fromEntries(
-        Object.entries(draft.profiles).map(([tool, profile]) => [tool, profile || null]),
-      ),
+      profiles,
     },
   ].sort((left, right) => left.name.localeCompare(right.name));
 }

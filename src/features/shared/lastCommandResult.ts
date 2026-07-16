@@ -169,12 +169,15 @@ function asToolResultMap(value: unknown): Record<string, LastCommandResult | und
     return {};
   }
 
-  return Object.fromEntries(
-    Object.entries(value).flatMap(([key, result]) => {
-      const parsed = asLastCommandResult(result);
-      return parsed ? [[key, parsed]] : [];
-    }),
-  );
+  const results: Record<string, LastCommandResult | undefined> = {};
+  Object.entries(value).forEach(([key, result]) => {
+    const parsed = asLastCommandResult(result);
+    if (parsed) {
+      results[key] = parsed;
+    }
+  });
+
+  return results;
 }
 
 function asGlobalResultMap(value: unknown): Partial<Record<CommandResultGlobalId, LastCommandResult>> {
