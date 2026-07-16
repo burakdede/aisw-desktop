@@ -1,4 +1,25 @@
 import type { ToolStatus } from "./schemas";
+import {
+  ACTIVE_LABEL,
+  AVAILABLE_AFTER_ACTIVATION_LABEL,
+  BLOCKED_LABEL,
+  NEEDS_ATTENTION_LABEL,
+  NEEDS_ATTENTION_SENTENCE_LABEL,
+  NEEDS_REAPPLY_LABEL,
+  NOT_CONFIGURED_LABEL,
+  NOT_CONFIGURED_TITLE_LABEL,
+  NOT_INSTALLED_LABEL,
+  NOT_VERIFIED_LABEL,
+  NOT_VERIFIED_YET_LABEL,
+  NO_PROFILE_LABEL,
+  NO_SAVED_PROFILE_YET_LABEL,
+  READY_LABEL,
+  STORED_LABEL,
+  TOOL_NOT_INSTALLED_LABEL,
+  UNAVAILABLE_LABEL,
+  VERIFIED_IN_THIS_SESSION_LABEL,
+  VERIFICATION_PENDING_LABEL,
+} from "./status-copy";
 
 export type OverviewHealthState =
   | "ready"
@@ -12,6 +33,51 @@ export type ProfileSwitchState =
   | "active"
   | "not_verified"
   | "live_mismatch";
+
+const OVERVIEW_HEALTH_LABELS: Record<OverviewHealthState, string> = {
+  ready: READY_LABEL,
+  needs_attention: NEEDS_ATTENTION_LABEL,
+  blocked: BLOCKED_LABEL,
+  not_configured: NOT_CONFIGURED_TITLE_LABEL,
+  not_verified: NOT_VERIFIED_LABEL,
+};
+
+const OVERVIEW_HEALTH_TEXT_LABELS: Record<OverviewHealthState, string> = {
+  ready: READY_LABEL,
+  needs_attention: NEEDS_ATTENTION_SENTENCE_LABEL,
+  blocked: BLOCKED_LABEL,
+  not_configured: NOT_CONFIGURED_LABEL,
+  not_verified: "Not verified",
+};
+
+const OVERVIEW_HEALTH_SYMBOLS: Record<OverviewHealthState, string> = {
+  ready: "●",
+  needs_attention: "▲",
+  blocked: "⨯",
+  not_configured: "○",
+  not_verified: "?",
+};
+
+const PROFILE_SWITCH_LABELS: Record<ProfileSwitchState, string> = {
+  stored: STORED_LABEL,
+  live_mismatch: NEEDS_ATTENTION_LABEL,
+  not_verified: NOT_VERIFIED_LABEL,
+  active: ACTIVE_LABEL,
+};
+
+const PROFILE_SWITCH_SYMBOLS: Record<ProfileSwitchState, string> = {
+  stored: "○",
+  live_mismatch: "▲",
+  not_verified: "?",
+  active: "●",
+};
+
+const PROFILE_LIVE_MATCH_LABELS: Record<ProfileSwitchState, string> = {
+  stored: AVAILABLE_AFTER_ACTIVATION_LABEL,
+  not_verified: NOT_VERIFIED_LABEL,
+  live_mismatch: NEEDS_ATTENTION_LABEL,
+  active: READY_LABEL,
+};
 
 export function resolveOverviewHealthState(status: ToolStatus): OverviewHealthState {
   if (!status.binary_found) {
@@ -30,58 +96,24 @@ export function resolveOverviewHealthState(status: ToolStatus): OverviewHealthSt
 }
 
 export function overviewHealthLabel(state: OverviewHealthState) {
-  switch (state) {
-    case "ready":
-      return "Ready";
-    case "needs_attention":
-      return "Needs Attention";
-    case "blocked":
-      return "Blocked";
-    case "not_configured":
-      return "Not Configured";
-    case "not_verified":
-      return "Not Verified";
-  }
+  return OVERVIEW_HEALTH_LABELS[state];
 }
 
 export function overviewHealthText(status: ToolStatus, state: OverviewHealthState) {
   if (!status.binary_found) {
-    return "Not installed";
+    return NOT_INSTALLED_LABEL;
   }
   if (!status.active_profile) {
-    return "Not configured";
+    return NOT_CONFIGURED_LABEL;
   }
   if (status.active_profile_applied === false) {
     return "Live mismatch";
   }
-
-  switch (state) {
-    case "ready":
-      return "Ready";
-    case "needs_attention":
-      return "Needs attention";
-    case "blocked":
-      return "Blocked";
-    case "not_configured":
-      return "Not configured";
-    case "not_verified":
-      return "Not verified";
-  }
+  return OVERVIEW_HEALTH_TEXT_LABELS[state];
 }
 
 export function overviewHealthSymbol(state: OverviewHealthState) {
-  switch (state) {
-    case "ready":
-      return "●";
-    case "needs_attention":
-      return "▲";
-    case "blocked":
-      return "⨯";
-    case "not_configured":
-      return "○";
-    case "not_verified":
-      return "?";
-  }
+  return OVERVIEW_HEALTH_SYMBOLS[state];
 }
 
 export function resolveProfileSwitchState(input: {
@@ -114,73 +146,46 @@ export function profileSwitchTone(state: ProfileSwitchState) {
 }
 
 export function profileSwitchLabel(state: ProfileSwitchState) {
-  switch (state) {
-    case "stored":
-      return "Stored";
-    case "live_mismatch":
-      return "Needs Attention";
-    case "not_verified":
-      return "Not Verified";
-    case "active":
-      return "Active";
-  }
+  return PROFILE_SWITCH_LABELS[state];
 }
 
 export function profileSwitchSymbol(state: ProfileSwitchState) {
-  switch (state) {
-    case "stored":
-      return "○";
-    case "live_mismatch":
-      return "▲";
-    case "not_verified":
-      return "?";
-    case "active":
-      return "●";
-  }
+  return PROFILE_SWITCH_SYMBOLS[state];
 }
 
 export function profileLiveMatchLabel(state: ProfileSwitchState) {
-  switch (state) {
-    case "stored":
-      return "Available after activation";
-    case "not_verified":
-      return "Not Verified";
-    case "live_mismatch":
-      return "Needs Attention";
-    case "active":
-      return "Ready";
-  }
+  return PROFILE_LIVE_MATCH_LABELS[state];
 }
 
 export function toolListEmptyLabel(status: ToolStatus) {
   if (!status.binary_found) {
-    return "Not installed";
+    return NOT_INSTALLED_LABEL;
   }
   if (!status.active_profile) {
-    return "No profile";
+    return NO_PROFILE_LABEL;
   }
-  return "Verification pending";
+  return VERIFICATION_PENDING_LABEL;
 }
 
 export function toolInspectorEmptyLabel(status: ToolStatus) {
   if (!status.binary_found) {
-    return "Tool not installed";
+    return TOOL_NOT_INSTALLED_LABEL;
   }
   if (!status.active_profile) {
-    return "No saved profile yet";
+    return NO_SAVED_PROFILE_YET_LABEL;
   }
-  return "Not verified yet";
+  return NOT_VERIFIED_YET_LABEL;
 }
 
 export function toolVerificationLabel(status: ToolStatus) {
   if (!status.binary_found || !status.active_profile) {
-    return "Unavailable";
+    return UNAVAILABLE_LABEL;
   }
   if (status.active_profile_applied === true) {
-    return "Verified in this session";
+    return VERIFIED_IN_THIS_SESSION_LABEL;
   }
   if (status.active_profile_applied === false) {
-    return "Needs re-apply";
+    return NEEDS_REAPPLY_LABEL;
   }
-  return "Not verified yet";
+  return NOT_VERIFIED_YET_LABEL;
 }
