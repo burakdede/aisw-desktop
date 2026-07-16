@@ -41,6 +41,8 @@ import {
   createSettingsDraft,
   buildResetOnboardingPreferences,
   buildSettingsRequest,
+  patchDesktopPreferencesDraft,
+  patchSettingsDraft,
   clipboardSuccessMessage,
   clipboardUnavailableMessage,
   DEFAULT_SETTINGS_SECTION,
@@ -50,8 +52,7 @@ import {
   formatSettingsMutationError,
   launchAtLoginDescription,
   launchAtLoginErrorMessage,
-  LAUNCH_AT_LOGIN_DISABLED_MESSAGE,
-  LAUNCH_AT_LOGIN_ENABLED_MESSAGE,
+  launchAtLoginSuccessMessage,
   nextSettingsSection,
   nextRuntimeSourceSelection,
   openedAppDataFolderMessage,
@@ -62,6 +63,8 @@ import {
   selectedRuntimePath,
   settingsSectionDirectionForKey,
   SETTINGS_SECTIONS,
+  type DesktopPreferencesDraft,
+  type SettingsDraft,
   type SettingsSection,
   WINDOW_LAYOUT_RESET_MESSAGE,
 } from "../settings-panel-display";
@@ -130,17 +133,25 @@ export function SettingsPanel({
     enabled: readEnabled,
   });
   const appVersion = packageJson.version;
+  const settingsDraft = {
+    runtimeKind,
+    runtimePath,
+    aiswHome,
+    updateChannel,
+  };
+  const desktopPreferencesDraft = {
+    appearance,
+    defaultSection,
+    showMenuBarIcon,
+    restoreWindowState,
+  };
 
   const shellCheck = useMemo(() => findShellHookCheck(doctor.data), [doctor.data]);
   const launchAtLoginMutation = useMutation({
     mutationFn: setLaunchAtLogin,
     onSuccess: (status) => {
       queryClient.setQueryData(["launch-at-login"], status);
-      setLaunchMessage(
-        status.enabled
-          ? LAUNCH_AT_LOGIN_ENABLED_MESSAGE
-          : LAUNCH_AT_LOGIN_DISABLED_MESSAGE,
-      );
+      setLaunchMessage(launchAtLoginSuccessMessage(status.enabled));
     },
     onError: (error) => {
       setLaunchMessage(launchAtLoginErrorMessage(error));
@@ -171,11 +182,7 @@ export function SettingsPanel({
   }, [selectedShell, shellGuidance.data]);
 
   useEffect(() => {
-    const nextDraft = createSettingsDraft(settings);
-    setRuntimeKind(nextDraft.runtimeKind);
-    setRuntimePath(nextDraft.runtimePath);
-    setAiswHome(nextDraft.aiswHome);
-    setUpdateChannel(nextDraft.updateChannel);
+    applySettingsDraft(createSettingsDraft(settings));
   }, [
     settings.runtime_kind,
     settings.runtime_path,
@@ -205,13 +212,25 @@ export function SettingsPanel({
   }, [initialSection]);
 
   useEffect(() => {
-    const nextDraft = createDesktopPreferencesDraft(desktopPreferences);
+    applyDesktopPreferencesDraft(
+      createDesktopPreferencesDraft(desktopPreferences),
+    );
+    setLaunchMessage("");
+  }, [desktopPreferences]);
+
+  function applySettingsDraft(nextDraft: SettingsDraft) {
+    setRuntimeKind(nextDraft.runtimeKind);
+    setRuntimePath(nextDraft.runtimePath);
+    setAiswHome(nextDraft.aiswHome);
+    setUpdateChannel(nextDraft.updateChannel);
+  }
+
+  function applyDesktopPreferencesDraft(nextDraft: DesktopPreferencesDraft) {
     setAppearance(nextDraft.appearance);
     setDefaultSection(nextDraft.defaultSection);
     setShowMenuBarIcon(nextDraft.showMenuBarIcon);
     setRestoreWindowState(nextDraft.restoreWindowState);
-    setLaunchMessage("");
-  }, [desktopPreferences]);
+  }
 
   async function copyText(value: string, label: string) {
     if (!navigator.clipboard?.writeText) {
@@ -264,16 +283,12 @@ export function SettingsPanel({
   ) {
     const nextPreferences = buildDesktopPreferencesUpdate({
       desktopPreferences,
-      appearance,
-      defaultSection,
-      showMenuBarIcon,
-      restoreWindowState,
+      draft: desktopPreferencesDraft,
       next,
     });
-    setAppearance(nextPreferences.appearance);
-    setDefaultSection(nextPreferences.defaultSection);
-    setShowMenuBarIcon(nextPreferences.showMenuBarIcon);
-    setRestoreWindowState(nextPreferences.restoreWindowState);
+    applyDesktopPreferencesDraft(
+      patchDesktopPreferencesDraft(desktopPreferencesDraft, next),
+    );
     onUpdateDesktopPreferences?.(nextPreferences);
   }
 
@@ -496,19 +511,14 @@ export function SettingsPanel({
                           nextRuntimeKind,
                           runtimePath,
                         );
-                        setRuntimeKind(nextSelection.runtimeKind);
-                        setRuntimePath(nextSelection.runtimePath);
+                        applySettingsDraft(
+                          patchSettingsDraft(settingsDraft, nextSelection),
+                        );
                         updateSettingsMutation.mutate(
                           buildSettingsRequest({
                             settings,
-                            runtimeKind,
-                            runtimePath,
-                            aiswHome,
-                            updateChannel,
-                            next: {
-                              runtimeKind: nextSelection.runtimeKind,
-                              runtimePath: nextSelection.runtimePath,
-                            },
+                            draft: settingsDraft,
+                            next: nextSelection,
                           }),
                         );
                       }}
@@ -534,10 +544,7 @@ export function SettingsPanel({
                         updateSettingsMutation.mutate(
                           buildSettingsRequest({
                             settings,
-                            runtimeKind,
-                            runtimePath,
-                            aiswHome,
-                            updateChannel,
+                            draft: settingsDraft,
                             next: {
                               runtimePath,
                             },
@@ -671,10 +678,7 @@ export function SettingsPanel({
                         updateSettingsMutation.mutate(
                           buildSettingsRequest({
                             settings,
-                            runtimeKind,
-                            runtimePath,
-                            aiswHome,
-                            updateChannel,
+                            draft: settingsDraft,
                             next: {
                               updateChannel: nextUpdateChannel,
                             },
@@ -835,10 +839,7 @@ export function SettingsPanel({
                         updateSettingsMutation.mutate(
                           buildSettingsRequest({
                             settings,
-                            runtimeKind,
-                            runtimePath,
-                            aiswHome,
-                            updateChannel,
+                            draft: settingsDraft,
                             next: {
                               aiswHome,
                             },

@@ -20,9 +20,12 @@ import {
   launchAtLoginErrorMessage,
   LAUNCH_AT_LOGIN_DISABLED_MESSAGE,
   LAUNCH_AT_LOGIN_ENABLED_MESSAGE,
+  launchAtLoginSuccessMessage,
   nextSettingsSection,
   nextRuntimeSourceSelection,
   openedAppDataFolderMessage,
+  patchDesktopPreferencesDraft,
+  patchSettingsDraft,
   resolveSelectedShell,
   resolveSelectedShellVariant,
   sectionLabel,
@@ -185,6 +188,12 @@ describe("settings-panel-display", () => {
     expect(launchAtLoginDescription(false, null)).toBe(
       "Launch at login is not available in this environment.",
     );
+    expect(launchAtLoginSuccessMessage(true)).toBe(
+      LAUNCH_AT_LOGIN_ENABLED_MESSAGE,
+    );
+    expect(launchAtLoginSuccessMessage(false)).toBe(
+      LAUNCH_AT_LOGIN_DISABLED_MESSAGE,
+    );
   });
 
   it("shares effective and resolved runtime paths", () => {
@@ -248,16 +257,38 @@ describe("settings-panel-display", () => {
       runtimeKind: "custom",
       runtimePath: "/tmp/aisw",
     });
+    expect(
+      patchSettingsDraft(
+        {
+          runtimeKind: "bundled",
+          runtimePath: "",
+          aiswHome: "",
+          updateChannel: "stable",
+        },
+        {
+          runtimeKind: "custom",
+          runtimePath: "/Users/test/bin/aisw",
+          updateChannel: "beta",
+        },
+      ),
+    ).toEqual({
+      runtimeKind: "custom",
+      runtimePath: "/Users/test/bin/aisw",
+      aiswHome: "",
+      updateChannel: "beta",
+    });
 
     expect(
       buildSettingsRequest({
         settings: makeSettings({
           profile_sets: [{ name: "work", label: null, profiles: {} }],
         }),
-        runtimeKind: "bundled",
-        runtimePath: "/tmp/ignored",
-        aiswHome: "",
-        updateChannel: "stable",
+        draft: {
+          runtimeKind: "bundled",
+          runtimePath: "/tmp/ignored",
+          aiswHome: "",
+          updateChannel: "stable",
+        },
         next: {
           runtimeKind: "custom",
           runtimePath: "/Users/test/bin/aisw",
@@ -277,10 +308,12 @@ describe("settings-panel-display", () => {
     expect(
       buildDesktopPreferencesUpdate({
         desktopPreferences: makeDesktopPreferences({ reopenSetupAssistant: true }),
-        appearance: "system",
-        defaultSection: "overview",
-        showMenuBarIcon: true,
-        restoreWindowState: true,
+        draft: {
+          appearance: "system",
+          defaultSection: "overview",
+          showMenuBarIcon: true,
+          restoreWindowState: true,
+        },
         next: { appearance: "dark", showMenuBarIcon: false },
       }),
     ).toEqual({
@@ -289,6 +322,22 @@ describe("settings-panel-display", () => {
       showMenuBarIcon: false,
       restoreWindowState: true,
       reopenSetupAssistant: true,
+    });
+    expect(
+      patchDesktopPreferencesDraft(
+        {
+          appearance: "system",
+          defaultSection: "overview",
+          showMenuBarIcon: true,
+          restoreWindowState: true,
+        },
+        { defaultSection: "profiles", restoreWindowState: false },
+      ),
+    ).toEqual({
+      appearance: "system",
+      defaultSection: "profiles",
+      showMenuBarIcon: true,
+      restoreWindowState: false,
     });
 
     expect(

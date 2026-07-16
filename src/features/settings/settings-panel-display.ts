@@ -32,6 +32,8 @@ export type DesktopPreferencesDraft = Pick<
   DesktopPreferences,
   "appearance" | "defaultSection" | "showMenuBarIcon" | "restoreWindowState"
 >;
+export type SettingsDraftPatch = Partial<SettingsDraft>;
+export type DesktopPreferencesDraftPatch = Partial<DesktopPreferencesDraft>;
 
 const SETTINGS_SECTION_LABELS: Record<SettingsSection, string> = {
   general: "General",
@@ -200,6 +202,12 @@ export function launchAtLoginDescription(
     : detail ?? "Launch at login is not available in this environment.";
 }
 
+export function launchAtLoginSuccessMessage(enabled: boolean) {
+  return enabled
+    ? LAUNCH_AT_LOGIN_ENABLED_MESSAGE
+    : LAUNCH_AT_LOGIN_DISABLED_MESSAGE;
+}
+
 export function createSettingsDraft(settings: DesktopSettings): SettingsDraft {
   return {
     runtimeKind: settings.runtime_kind,
@@ -221,6 +229,31 @@ export function createDesktopPreferencesDraft(
   };
 }
 
+export function patchSettingsDraft(
+  draft: SettingsDraft,
+  next: SettingsDraftPatch,
+): SettingsDraft {
+  return {
+    runtimeKind: next.runtimeKind ?? draft.runtimeKind,
+    runtimePath: next.runtimePath ?? draft.runtimePath,
+    aiswHome: next.aiswHome ?? draft.aiswHome,
+    updateChannel: next.updateChannel ?? draft.updateChannel,
+  };
+}
+
+export function patchDesktopPreferencesDraft(
+  draft: DesktopPreferencesDraft,
+  next: DesktopPreferencesDraftPatch,
+): DesktopPreferencesDraft {
+  return {
+    appearance: next.appearance ?? draft.appearance,
+    defaultSection: next.defaultSection ?? draft.defaultSection,
+    showMenuBarIcon: next.showMenuBarIcon ?? draft.showMenuBarIcon,
+    restoreWindowState:
+      next.restoreWindowState ?? draft.restoreWindowState,
+  };
+}
+
 export function nextRuntimeSourceSelection(
   nextRuntimeKind: DesktopSettings["runtime_kind"],
   currentRuntimePath: string,
@@ -233,27 +266,17 @@ export function nextRuntimeSourceSelection(
 
 export function buildSettingsRequest(input: {
   settings: DesktopSettings;
-  runtimeKind: DesktopSettings["runtime_kind"];
-  runtimePath: string;
-  aiswHome: string;
-  updateChannel: string;
-  next?: {
-    runtimeKind?: DesktopSettings["runtime_kind"];
-    runtimePath?: string;
-    aiswHome?: string;
-    updateChannel?: string;
-  };
+  draft: SettingsDraft;
+  next?: SettingsDraftPatch;
 }): DesktopSettings {
-  const nextRuntimeKind = input.next?.runtimeKind ?? input.runtimeKind;
-  const nextRuntimePath = input.next?.runtimePath ?? input.runtimePath;
-  const nextAiswHome = input.next?.aiswHome ?? input.aiswHome;
-  const nextUpdateChannel = input.next?.updateChannel ?? input.updateChannel;
+  const nextDraft = patchSettingsDraft(input.draft, input.next ?? {});
 
   return {
-    runtime_kind: nextRuntimeKind,
-    runtime_path: effectiveRuntimePath(nextRuntimeKind, nextRuntimePath) || null,
-    aisw_home: nextAiswHome || null,
-    update_channel: nextUpdateChannel,
+    runtime_kind: nextDraft.runtimeKind,
+    runtime_path:
+      effectiveRuntimePath(nextDraft.runtimeKind, nextDraft.runtimePath) || null,
+    aisw_home: nextDraft.aiswHome || null,
+    update_channel: nextDraft.updateChannel,
     profile_labels: input.settings.profile_labels ?? {},
     profile_sets: input.settings.profile_sets,
   };
@@ -261,23 +284,15 @@ export function buildSettingsRequest(input: {
 
 export function buildDesktopPreferencesUpdate(input: {
   desktopPreferences?: DesktopPreferences;
-  appearance: DesktopPreferences["appearance"];
-  defaultSection: DesktopPreferences["defaultSection"];
-  showMenuBarIcon: boolean;
-  restoreWindowState: boolean;
-  next: Partial<
-    Pick<
-      DesktopPreferences,
-      "appearance" | "defaultSection" | "showMenuBarIcon" | "restoreWindowState"
-    >
-  >;
+  draft: DesktopPreferencesDraft;
+  next: DesktopPreferencesDraftPatch;
 }): DesktopPreferences {
+  const nextDraft = patchDesktopPreferencesDraft(input.draft, input.next);
   return {
-    appearance: input.next.appearance ?? input.appearance,
-    defaultSection: input.next.defaultSection ?? input.defaultSection,
-    showMenuBarIcon: input.next.showMenuBarIcon ?? input.showMenuBarIcon,
-    restoreWindowState:
-      input.next.restoreWindowState ?? input.restoreWindowState,
+    appearance: nextDraft.appearance,
+    defaultSection: nextDraft.defaultSection,
+    showMenuBarIcon: nextDraft.showMenuBarIcon,
+    restoreWindowState: nextDraft.restoreWindowState,
     reopenSetupAssistant:
       input.desktopPreferences?.reopenSetupAssistant ?? false,
   };
