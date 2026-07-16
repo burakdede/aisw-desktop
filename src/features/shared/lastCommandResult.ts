@@ -28,6 +28,8 @@ type CommandResultStore = {
 
 const ACTIVITY_STORE_KEY = "ai-switch.desktop.activity-log";
 const MAX_ACTIVITY_ENTRIES = 100;
+const TIMELINE_KEY_SEPARATOR = ":";
+let nextTimelineNonce = 0;
 
 let currentStore: CommandResultStore = loadStore();
 
@@ -59,13 +61,7 @@ export function recordCommandResult(scope: CommandResultScope, result: Omit<Last
     ...result,
     at: nextAt,
   };
-  const timelineEntry: ActivityTimelineEntry = {
-    ...next,
-    key: `${scope.type}:${scope.type === "tool" ? scope.tool : scope.id}:${nextAt}:${Math.random()
-      .toString(16)
-      .slice(2, 8)}`,
-    scope,
-  };
+  const timelineEntry = createTimelineEntry(scope, next);
 
   currentStore =
     scope.type === "tool"
@@ -136,22 +132,14 @@ function loadStore(): CommandResultStore {
       ...Object.entries(global).flatMap(([id, result]) =>
         result
           ? [
-              {
-                ...result,
-                key: `global:${id}:${result.at}`,
-                scope: { type: "global" as const, id },
-              },
+              createTimelineEntry({ type: "global", id }, result, "migrated"),
             ]
           : [],
       ),
       ...Object.entries(tool).flatMap(([entryTool, result]) =>
         result
           ? [
-              {
-                ...result,
-                key: `tool:${entryTool}:${result.at}`,
-                scope: { type: "tool" as const, tool: entryTool },
-              },
+              createTimelineEntry({ type: "tool", tool: entryTool }, result, "migrated"),
             ]
           : [],
       ),
@@ -284,4 +272,30 @@ function asTimelineEntry(value: unknown): ActivityTimelineEntry | null {
   }
 
   return null;
+}
+
+function createTimelineEntry(
+  scope: CommandResultScope,
+  result: LastCommandResult,
+  keySuffix = createTimelineKeySuffix(),
+): ActivityTimelineEntry {
+  return {
+    ...result,
+    key: buildTimelineEntryKey(scope, result.at, keySuffix),
+    scope,
+  };
+}
+
+function buildTimelineEntryKey(
+  scope: CommandResultScope,
+  timestamp: number,
+  suffix: string,
+) {
+  const scopeValue = scope.type === "tool" ? scope.tool : scope.id;
+  return [scope.type, scopeValue, String(timestamp), suffix].join(TIMELINE_KEY_SEPARATOR);
+}
+
+function createTimelineKeySuffix() {
+  nextTimelineNonce += 1;
+  return nextTimelineNonce.toString(16);
 }
