@@ -95,7 +95,7 @@ export interface RemoveProfileInput {
 }
 
 export interface UpdateSettingsInput {
-  runtime_kind: "bundled" | "system" | "custom";
+  runtime_kind: DesktopSettings["runtime_kind"];
   runtime_path?: string | null;
   aisw_home?: string | null;
   update_channel: string;

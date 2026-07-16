@@ -11,6 +11,7 @@ import {
 import {
   type DesktopPreferences,
 } from "../../../lib/desktop-preferences";
+import { normalizeDesktopUpdateChannel } from "../../../lib/desktop-settings";
 import {
   DATE_UNAVAILABLE_LABEL,
   DEFAULT_ACTION_FAILURE_MESSAGE,
@@ -691,7 +692,9 @@ export function SettingsPanel({
                       aria-label="Update channel"
                       value={updateChannel}
                       onChange={(event) => {
-                        const nextUpdateChannel = event.target.value;
+                        const nextUpdateChannel = normalizeDesktopUpdateChannel(
+                          event.target.value,
+                        );
                         setUpdateChannel(nextUpdateChannel);
                         updateSettingsMutation.mutate(
                           buildSettingsRequest({

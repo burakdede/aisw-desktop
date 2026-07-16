@@ -33,6 +33,7 @@ import {
 import { activeSetLabel } from "./lib/profile-display";
 import { listenDesktopEvent } from "./lib/tauri";
 import { subscribeDesktopEvents, type DesktopEventHandler } from "./lib/desktop-events";
+import { buildBundledRuntimeSettingsUpdate } from "./lib/desktop-settings";
 import { syncWindowState } from "./lib/window-state";
 import {
   activateProfileSet,
@@ -198,14 +199,9 @@ export function App() {
 
   const restoreBundledRuntimeMutation = useMutation({
     mutationFn: async () =>
-      updateSettings({
-        runtime_kind: "bundled",
-        runtime_path: null,
-        aisw_home: settingsForRecovery(bootstrap.data?.settings).aisw_home ?? null,
-        update_channel: settingsForRecovery(bootstrap.data?.settings).update_channel,
-        profile_labels: settingsForRecovery(bootstrap.data?.settings).profile_labels,
-        profile_sets: settingsForRecovery(bootstrap.data?.settings).profile_sets,
-      }),
+      updateSettings(
+        buildBundledRuntimeSettingsUpdate(settingsForRecovery(bootstrap.data?.settings)),
+      ),
     onSuccess: async () => {
       setRuntimeRecoveryOpen(false);
       await invalidatePostMutationQueries(queryClient);

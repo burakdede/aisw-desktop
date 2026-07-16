@@ -5,6 +5,7 @@ import { SourceListPanel } from "../../../components/SourceListPanel";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { getShellGuidance, runDoctor, updateSettings } from "../../../lib/client";
+import { buildBundledRuntimeSettingsUpdate } from "../../../lib/desktop-settings";
 import { sharedProfileEntries } from "../../../lib/profile-display";
 import {
   runtimeReadinessLabel,
@@ -135,15 +136,7 @@ export function SetupPanel({
     defaultSetupStep(snapshot, initReport),
   );
   const restoreBundledRuntimeMutation = useMutation({
-    mutationFn: async () =>
-      updateSettings({
-        runtime_kind: "bundled",
-        runtime_path: null,
-        aisw_home: settings.aisw_home ?? null,
-        update_channel: settings.update_channel,
-        profile_labels: settings.profile_labels,
-        profile_sets: settings.profile_sets,
-      }),
+    mutationFn: async () => updateSettings(buildBundledRuntimeSettingsUpdate(settings)),
     onSuccess: async () => {
       await invalidatePostMutationQueries(queryClient);
     },

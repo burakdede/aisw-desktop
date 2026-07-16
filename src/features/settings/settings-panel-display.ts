@@ -4,6 +4,11 @@ import {
   DEFAULT_DESKTOP_PREFERENCES,
   type DesktopPreferences,
 } from "../../lib/desktop-preferences";
+import {
+  DESKTOP_UPDATE_CHANNELS,
+  normalizeDesktopUpdateChannel,
+  type DesktopUpdateChannel,
+} from "../../lib/desktop-settings";
 import type { AppBootstrap, DesktopSettings, ShellHookGuidance } from "../../lib/schemas";
 import { DEFAULT_ACTION_FAILURE_MESSAGE, NOT_FOUND_LABEL, NOT_SET_LABEL } from "../../lib/display-copy";
 import { DesktopCommandError } from "../../lib/tauri";
@@ -44,7 +49,7 @@ export type SettingsDraft = {
   runtimeKind: DesktopSettings["runtime_kind"];
   runtimePath: string;
   aiswHome: string;
-  updateChannel: string;
+  updateChannel: DesktopUpdateChannel;
 };
 export type DesktopPreferencesDraft = Pick<
   DesktopPreferences,
@@ -83,7 +88,7 @@ const RUNTIME_SOURCE_LABELS: Record<DesktopSettings["runtime_kind"], string> = {
   system: "System engine",
   custom: "Custom path",
 };
-const UPDATE_CHANNEL_LABELS: Record<SettingsDraft["updateChannel"], string> = {
+const UPDATE_CHANNEL_LABELS: Record<DesktopUpdateChannel, string> = {
   stable: "Stable",
   beta: "Beta",
 };
@@ -108,11 +113,9 @@ export const SETTINGS_RUNTIME_SOURCE_OPTIONS = (
   label,
 })) satisfies SettingsOption<DesktopSettings["runtime_kind"]>[];
 
-export const SETTINGS_UPDATE_CHANNEL_OPTIONS = (
-  Object.entries(UPDATE_CHANNEL_LABELS) as [SettingsDraft["updateChannel"], string][]
-).map(([value, label]) => ({
+export const SETTINGS_UPDATE_CHANNEL_OPTIONS = DESKTOP_UPDATE_CHANNELS.map((value) => ({
   value,
-  label,
+  label: UPDATE_CHANNEL_LABELS[value],
 })) satisfies SettingsOption<SettingsDraft["updateChannel"]>[];
 
 function findShellGuidanceVariants(
@@ -288,7 +291,7 @@ export function createSettingsDraft(settings: DesktopSettings): SettingsDraft {
     runtimeKind: settings.runtime_kind,
     runtimePath: settings.runtime_path ?? "",
     aiswHome: settings.aisw_home ?? "",
-    updateChannel: settings.update_channel,
+    updateChannel: normalizeDesktopUpdateChannel(settings.update_channel),
   };
 }
 

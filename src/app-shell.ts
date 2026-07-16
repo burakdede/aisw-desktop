@@ -16,6 +16,7 @@ import {
 } from "./lib/profile-display";
 import { resolveGlobalStateMode, resolveStateModeRequest } from "./features/shared/state-modes";
 import { titleCase } from "./lib/utils";
+import { createDesktopSettings } from "./lib/desktop-settings";
 export {
   runtimeSelectionLabel,
   runtimeSourceLabel,
@@ -156,16 +157,7 @@ const NAV_SHORTCUTS: Record<string, AppNavId> = {
 };
 
 export function settingsForRecovery(settings: AppBootstrap["settings"] | undefined) {
-  return (
-    settings ?? {
-      runtime_kind: "bundled" as const,
-      runtime_path: null,
-      aisw_home: null,
-      update_channel: "stable",
-      profile_labels: {},
-      profile_sets: [],
-    }
-  );
+  return createDesktopSettings(settings ?? {});
 }
 
 export function navShortcutLabel(id: AppNavId | string) {
