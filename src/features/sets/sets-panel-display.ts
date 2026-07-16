@@ -83,6 +83,13 @@ export type SetSettingsUpdate = Pick<
 
 export type WorkspaceBindingTarget = WorkspaceBindInput["target"];
 
+type EditorCopy = {
+  dialogLabel: string;
+  kicker?: string;
+  title: string;
+  submitLabel: string;
+};
+
 export const SETS_PANEL_COPY = {
   modeAriaLabel: "Sets mode",
   setLibraryModeLabel: "Set Library",
@@ -159,36 +166,64 @@ export const RULE_SCOPE_OPTIONS = [
   { value: "git_remote", label: SETS_PANEL_COPY.gitRemotePatternRuleScopeLabel },
 ] as const;
 
+const SET_EDITOR_COPY = {
+  edit: {
+    dialogLabel: "Edit Set",
+    kicker: "Edit set",
+    title: "Edit Set",
+    submitLabel: "Save Set",
+  },
+  create: {
+    dialogLabel: "New Set",
+    kicker: "New set",
+    title: "New Set",
+    submitLabel: "Create Set",
+  },
+} as const satisfies Record<"edit" | "create", Required<EditorCopy>>;
+
+const RULE_EDITOR_COPY = {
+  edit: {
+    dialogLabel: "Edit Rule",
+    title: "Edit Project Rule",
+    submitLabel: "Save Rule",
+  },
+  create: {
+    dialogLabel: "Add Rule",
+    title: "Add Project Rule",
+    submitLabel: "Add Rule",
+  },
+} as const satisfies Record<"edit" | "create", EditorCopy>;
+
 export function setActionsTriggerLabel(displayLabel: string) {
   return `${SETS_PANEL_COPY.setActionsTriggerLabelPrefix}${displayLabel}`;
 }
 
 export function setEditorDialogLabel(isEditingSet: boolean) {
-  return isEditingSet ? "Edit Set" : "New Set";
+  return selectEditorCopy(SET_EDITOR_COPY, isEditingSet).dialogLabel;
 }
 
 export function setEditorKicker(isEditingSet: boolean) {
-  return isEditingSet ? "Edit set" : "New set";
+  return selectEditorCopy(SET_EDITOR_COPY, isEditingSet).kicker;
 }
 
 export function setEditorTitle(isEditingSet: boolean) {
-  return isEditingSet ? "Edit Set" : "New Set";
+  return selectEditorCopy(SET_EDITOR_COPY, isEditingSet).title;
 }
 
 export function setEditorSubmitLabel(isEditingSet: boolean) {
-  return isEditingSet ? "Save Set" : "Create Set";
+  return selectEditorCopy(SET_EDITOR_COPY, isEditingSet).submitLabel;
 }
 
 export function ruleEditorDialogLabel(isEditingRule: boolean) {
-  return isEditingRule ? "Edit Rule" : "Add Rule";
+  return selectEditorCopy(RULE_EDITOR_COPY, isEditingRule).dialogLabel;
 }
 
 export function ruleEditorTitle(isEditingRule: boolean) {
-  return isEditingRule ? "Edit Project Rule" : "Add Project Rule";
+  return selectEditorCopy(RULE_EDITOR_COPY, isEditingRule).title;
 }
 
 export function ruleEditorSubmitLabel(isEditingRule: boolean) {
-  return isEditingRule ? "Save Rule" : "Add Rule";
+  return selectEditorCopy(RULE_EDITOR_COPY, isEditingRule).submitLabel;
 }
 
 export function ruleTargetInputLabel(scope: WorkspaceBindingScope) {
@@ -533,4 +568,11 @@ function formatToolSelectionSummaryItem(
     ? toolProfileDisplayLabel(input.settings, input.snapshot, tool, profile)
     : SETS_PANEL_COPY.summaryEmptyValue;
   return `${toolShortName(tool)}: ${label}`;
+}
+
+function selectEditorCopy(
+  copy: Record<"edit" | "create", EditorCopy>,
+  isEditing: boolean,
+) {
+  return isEditing ? copy.edit : copy.create;
 }
