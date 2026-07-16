@@ -32,9 +32,24 @@ import {
   resolveCommandResultCommand,
   SNAPSHOT_UPDATED_RESULT_SUMMARY,
 } from "./command-result-payload";
+import {
+  activatedSavedSetMessage,
+  activatedSetMessage,
+  addProfileSavedMessage,
+  DESKTOP_ACTION_RESULT_COPY,
+  desktopActionFailureMessage,
+  removeProfileMessage,
+  removedProjectRuleMessage,
+  renameProfileMessage,
+  restoreBackupMessage,
+  savedProjectRuleMessage,
+  switchAllToolsMessage,
+  switchedWorkspaceTargetMessage,
+  switchProfileMessage,
+  updatedProjectRuleGuardMessage,
+} from "./desktop-action-result-copy";
 import { enqueueMutation, useMutationQueueState } from "./mutationQueue";
 import { invalidatePostMutationQueries } from "./postMutationRefresh";
-import { titleCase } from "../../lib/utils";
 
 type WorkspaceTargetInput =
   | {
@@ -63,12 +78,14 @@ export function useDesktopActions() {
     setApiKeyProfilePending(true);
     setApiKeyProfileError(null);
     try {
-      const result = await enqueueMutation("Add profile", () => addProfile(input));
+      const result = await enqueueMutation(DESKTOP_ACTION_RESULT_COPY.labels.addProfile, () =>
+        addProfile(input),
+      );
       recordCommandResult(
         { type: "tool", tool: input.tool },
         buildCommandResultSuccess({
-          label: "Add profile",
-          message: `Saved ${input.tool} profile ${input.profile}.`,
+          label: DESKTOP_ACTION_RESULT_COPY.labels.addProfile,
+          message: addProfileSavedMessage(input.tool, input.profile),
         }),
       );
       await invalidate();
@@ -77,12 +94,14 @@ export function useDesktopActions() {
       recordCommandResult(
         { type: "tool", tool: input.tool },
         buildCommandResultError(error, {
-          label: "Add profile",
-          fallbackMessage: "Failed to add API key profile.",
+          label: DESKTOP_ACTION_RESULT_COPY.labels.addProfile,
+          fallbackMessage: DESKTOP_ACTION_RESULT_COPY.fallbackMessages.addApiKeyProfile,
         }),
       );
       const resolved =
-        error instanceof Error ? error : new Error("Failed to add API key profile.");
+        error instanceof Error
+          ? error
+          : new Error(DESKTOP_ACTION_RESULT_COPY.fallbackMessages.addApiKeyProfile);
       setApiKeyProfileError(resolved);
       throw resolved;
     } finally {
@@ -119,7 +138,7 @@ export function useDesktopActions() {
             scope,
             buildCommandResultError(error, {
               label,
-              fallbackMessage: `${label} failed.`,
+              fallbackMessage: desktopActionFailureMessage(label),
             }),
           );
         }
@@ -129,7 +148,7 @@ export function useDesktopActions() {
   };
 
   const activateWorkspaceTarget = async (variables: WorkspaceTargetInput) => {
-    const label = "Use expected project set";
+    const label = DESKTOP_ACTION_RESULT_COPY.labels.useExpectedProjectSet;
     try {
       const result = await enqueueMutation(label, () =>
         variables.kind === "profile_set"
@@ -138,7 +157,7 @@ export function useDesktopActions() {
       );
       const targetLabel =
         variables.kind === "profile_set" ? variables.label ?? variables.name : variables.name;
-      const message = `Switched to ${targetLabel} for ${variables.matchedTarget}.`;
+      const message = switchedWorkspaceTargetMessage(targetLabel, variables.matchedTarget);
       recordCommandResult(
         { type: "global", id: "workspace" },
         buildCommandResultSuccess({
@@ -147,7 +166,7 @@ export function useDesktopActions() {
         }),
       );
       await notifyDesktop({
-        title: "Project switch",
+        title: DESKTOP_ACTION_RESULT_COPY.fallbackMessages.projectSwitchTitle,
         body: message,
       });
       await invalidate();
@@ -157,12 +176,13 @@ export function useDesktopActions() {
         { type: "global", id: "workspace" },
         buildCommandResultError(error, {
           label,
-          fallbackMessage: `${label} failed.`,
+          fallbackMessage: desktopActionFailureMessage(label),
         }),
       );
-      const resolved = error instanceof Error ? error : new Error(`${label} failed.`);
+      const resolved =
+        error instanceof Error ? error : new Error(desktopActionFailureMessage(label));
       await notifyDesktop({
-        title: "Project switch",
+        title: DESKTOP_ACTION_RESULT_COPY.fallbackMessages.projectSwitchTitle,
         body:
           resolved instanceof DesktopCommandError && resolved.remediation
             ? `${resolved.message} ${resolved.remediation}`
@@ -175,91 +195,93 @@ export function useDesktopActions() {
   return {
     addProfileMutation: useMutation({
       mutationFn: queueMutation(
-        "Add profile",
+        DESKTOP_ACTION_RESULT_COPY.labels.addProfile,
         addProfile,
         (variables) => ({ type: "tool", tool: variables.tool }),
-        (variables) => `Saved ${variables.tool} profile ${variables.profile}.`,
+        (variables) => addProfileSavedMessage(variables.tool, variables.profile),
       ),
       onSuccess: invalidate,
     }),
     addProfileOAuthMutation: useMutation({
       mutationFn: queueMutation(
-        "Add profile",
+        DESKTOP_ACTION_RESULT_COPY.labels.addProfile,
         addProfileOAuth,
         (variables) => ({ type: "tool", tool: variables.tool }),
-        (variables) => `Saved ${variables.tool} profile ${variables.profile}.`,
+        (variables) => addProfileSavedMessage(variables.tool, variables.profile),
       ),
       onSuccess: invalidate,
     }),
     useProfileMutation: useMutation({
       mutationFn: queueMutation(
-        "Switch profile",
+        DESKTOP_ACTION_RESULT_COPY.labels.switchProfile,
         useProfile,
         (variables) => ({ type: "tool", tool: variables.tool }),
-        (variables) => `Switched ${titleCase(variables.tool)} to ${variables.label ?? variables.profile}.`,
+        (variables) =>
+          switchProfileMessage(variables.tool, variables.label, variables.profile),
       ),
       onSettled: invalidate,
     }),
     useAllProfilesMutation: useMutation({
       mutationFn: queueMutation(
-        "Switch all tools",
+        DESKTOP_ACTION_RESULT_COPY.labels.switchAllTools,
         useAllProfiles,
         () => ({ type: "global", id: "switch-all" }),
-        (variables) => `Switched all tools to ${variables.label ?? variables.profile}.`,
+        (variables) => switchAllToolsMessage(variables.label, variables.profile),
       ),
       onSettled: invalidate,
     }),
     useContextMutation: useMutation({
       mutationFn: queueMutation(
-        "Use set",
+        DESKTOP_ACTION_RESULT_COPY.labels.useSet,
         useContext,
         () => ({ type: "global", id: "context" }),
-        (variables) => `Activated set ${variables.label ?? variables.context}.`,
+        (variables) => activatedSetMessage(variables.label, variables.context),
       ),
       onSettled: invalidate,
     }),
     activateProfileSetMutation: useMutation({
       mutationFn: queueMutation(
-        "Activate saved set",
+        DESKTOP_ACTION_RESULT_COPY.labels.activateSavedSet,
         activateProfileSet,
         () => ({ type: "global", id: "profile-set" }),
-        (variables) => `Activated saved set ${variables.label ?? variables.name}.`,
+        (variables) => activatedSavedSetMessage(variables.label, variables.name),
       ),
       onSettled: invalidate,
     }),
     renameProfileMutation: useMutation({
       mutationFn: queueMutation(
-        "Rename profile",
+        DESKTOP_ACTION_RESULT_COPY.labels.renameProfile,
         renameProfile,
         (variables) => ({ type: "tool", tool: variables.tool }),
-        (variables) => `Renamed ${variables.tool} profile ${variables.oldName} to ${variables.newName}.`,
+        (variables) =>
+          renameProfileMessage(variables.tool, variables.oldName, variables.newName),
       ),
       onSuccess: invalidate,
     }),
     removeProfileMutation: useMutation({
       mutationFn: queueMutation(
-        "Remove profile",
+        DESKTOP_ACTION_RESULT_COPY.labels.removeProfile,
         removeProfile,
         (variables) => ({ type: "tool", tool: variables.tool }),
-        (variables) => `Removed ${variables.tool} profile ${variables.profile}.`,
+        (variables) => removeProfileMessage(variables.tool, variables.profile),
       ),
       onSuccess: invalidate,
     }),
     restoreBackupMutation: useMutation({
       mutationFn: queueMutation(
-        "Restore backup",
+        DESKTOP_ACTION_RESULT_COPY.labels.restoreBackup,
         restoreBackup,
         () => ({ type: "global", id: "backup" }),
-        (backupId) => `Restored backup ${backupId}.`,
+        (backupId) => restoreBackupMessage(backupId),
       ),
       onSuccess: invalidate,
     }),
     updateSettingsMutation: useMutation({
       mutationFn: queueMutation(
-        "Update settings",
+        DESKTOP_ACTION_RESULT_COPY.labels.updateSettings,
         updateSettings,
         () => ({ type: "global", id: "settings" }),
-        () => "Saved AI Switch settings.",
+        () => DESKTOP_ACTION_RESULT_COPY.fallbackMessages.settingsSaved,
       ),
       onSuccess: invalidate,
     }),
@@ -272,12 +294,15 @@ export function useDesktopActions() {
     initMutation: useMutation({
       mutationFn: async () => {
         try {
-          const result = await enqueueMutation("Run setup", runInit);
+          const result = await enqueueMutation(
+            DESKTOP_ACTION_RESULT_COPY.labels.runSetup,
+            runInit,
+          );
           recordCommandResult(
             { type: "global", id: "setup" },
             buildCommandResultSuccess({
-              label: "Run setup",
-              message: "Finished setup scan.",
+              label: DESKTOP_ACTION_RESULT_COPY.labels.runSetup,
+              message: DESKTOP_ACTION_RESULT_COPY.fallbackMessages.setupComplete,
             }),
           );
           return result;
@@ -285,8 +310,10 @@ export function useDesktopActions() {
           recordCommandResult(
             { type: "global", id: "setup" },
             buildCommandResultError(error, {
-              label: "Run setup",
-              fallbackMessage: "Run setup failed.",
+              label: DESKTOP_ACTION_RESULT_COPY.labels.runSetup,
+              fallbackMessage: desktopActionFailureMessage(
+                DESKTOP_ACTION_RESULT_COPY.labels.runSetup,
+              ),
             }),
           );
           throw error;
@@ -299,28 +326,28 @@ export function useDesktopActions() {
     }),
     workspaceBindMutation: useMutation({
       mutationFn: queueMutation(
-        "Save project rule",
+        DESKTOP_ACTION_RESULT_COPY.labels.saveProjectRule,
         workspaceBind,
         () => ({ type: "global", id: "workspace" }),
-        (variables) => `Saved project rule for ${variables.label ?? variables.context}.`,
+        (variables) => savedProjectRuleMessage(variables.label, variables.context),
       ),
       onSuccess: invalidate,
     }),
     workspaceUnbindMutation: useMutation({
       mutationFn: queueMutation(
-        "Remove project rule",
+        DESKTOP_ACTION_RESULT_COPY.labels.removeProjectRule,
         workspaceUnbind,
         () => ({ type: "global", id: "workspace" }),
-        () => "Removed project rule.",
+        () => removedProjectRuleMessage(),
       ),
       onSuccess: invalidate,
     }),
     workspaceGuardMutation: useMutation({
       mutationFn: queueMutation(
-        "Update project rule guard",
+        DESKTOP_ACTION_RESULT_COPY.labels.updateProjectRuleGuard,
         workspaceGuard,
         () => ({ type: "global", id: "workspace" }),
-        (mode) => `Updated project rule guard to ${mode}.`,
+        (mode) => updatedProjectRuleGuardMessage(mode),
       ),
       onSuccess: invalidate,
     }),
