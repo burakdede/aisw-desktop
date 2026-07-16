@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { resolveBrowserStorage } from "../../lib/browser-storage";
+import { resolveBrowserStorage, type BrowserStorage } from "../../lib/browser-storage";
 import { ACTIVITY_STORE_KEY, limitActivityTimeline } from "./activity-store";
 import {
   COMMAND_RESULT_SCOPE_TYPES,
@@ -176,8 +176,8 @@ function persistStore(store: CommandResultStore) {
   }
 }
 
-function resolveStorage(): Storage | null {
-  return resolveBrowserStorage() as Storage | null;
+function resolveStorage(): BrowserStorage | null {
+  return resolveBrowserStorage();
 }
 
 function asToolResultMap(value: unknown): Record<string, LastCommandResult | undefined> {

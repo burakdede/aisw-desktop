@@ -3,6 +3,7 @@ import { listen, type Event } from "@tauri-apps/api/event";
 import type { AsyncDispose } from "./async-dispose";
 import type { ErrorMetadata } from "./error-details";
 import type { UnknownRecord } from "./parse-guards";
+import { hasDesktopRuntime as hasRuntimeBridge } from "./runtime-environment";
 import {
   DESKTOP_RUNTIME_WAIT_INTERVAL_MS,
   DESKTOP_RUNTIME_WAIT_TIMEOUT_MS,
@@ -36,11 +37,7 @@ declare global {
 }
 
 export function hasDesktopRuntime() {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  return Boolean(window.__TAURI_INTERNALS__);
+  return hasRuntimeBridge();
 }
 
 export async function invokeDesktop<T>(command: string, args?: UnknownRecord) {

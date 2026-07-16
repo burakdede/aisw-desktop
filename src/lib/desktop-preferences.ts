@@ -3,6 +3,7 @@ import {
   DEFAULT_APP_SECTIONS,
   type DefaultAppSection,
 } from "./app-navigation";
+import { hasDesktopRuntime } from "./runtime-environment";
 import { isOneOf } from "./parse-guards";
 import { resolveBrowserStorage, type BrowserStorage } from "./browser-storage";
 
@@ -109,10 +110,10 @@ function isDefaultSection(value: string | null): value is DefaultSection {
 }
 
 function getStorage(): Pick<Storage, "getItem" | "setItem" | "clear" | "removeItem"> | null {
-  return resolveBrowserStorage(memoryStorage as BrowserStorage);
+  return resolveBrowserStorage(memoryStorage);
 }
 
-function createMemoryStorage() {
+function createMemoryStorage(): BrowserStorage {
   const values = new Map<string, string>();
   return {
     getItem(key: string) {
@@ -131,11 +132,7 @@ function createMemoryStorage() {
 }
 
 async function syncNativeWindowTheme(appearance: DesktopAppearance) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  if (!(window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__) {
+  if (!hasDesktopRuntime()) {
     return;
   }
 

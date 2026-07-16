@@ -2,6 +2,7 @@ import { MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH } from "./layout";
 import { disposeSafely, type AsyncDispose } from "./async-dispose";
 import { resolveBrowserStorage } from "./browser-storage";
 import { WINDOW_STATE_PERSIST_DELAY_MS } from "./desktop-timing";
+import { hasDesktopRuntime } from "./runtime-environment";
 
 type PersistedWindowState = {
   width: number;
@@ -189,7 +190,7 @@ async function resolveWindowModule(): Promise<WindowModule | null> {
     };
   }
 
-  if (!(window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__) {
+  if (!hasDesktopRuntime()) {
     return null;
   }
 
