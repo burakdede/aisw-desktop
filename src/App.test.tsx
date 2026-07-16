@@ -4486,7 +4486,7 @@ describe("App", () => {
         return { command, snapshot: workspaceSnapshot };
       }
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: {
             ...bootstrap,
             settings: settingsWithSet,
@@ -4501,7 +4501,7 @@ describe("App", () => {
           get_project_bindings: projectBindings,
           list_backups: [],
           get_settings: settingsWithSet,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -4626,7 +4626,7 @@ describe("App", () => {
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: {
             ...bootstrap,
             settings: settingsWithSet,
@@ -4643,7 +4643,7 @@ describe("App", () => {
           get_settings: settingsWithSet,
           workspace_unbind: { command: "workspace_unbind", snapshot: workspaceSnapshot },
           workspace_bind: { command: "workspace_bind", snapshot: workspaceSnapshot },
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -4727,7 +4727,7 @@ describe("App", () => {
 
     window.__AISW_DESKTOP_MOCK__ = async (command) =>
       (
-        {
+        desktopMockRecord({
           get_bootstrap: {
             ...bootstrap,
             settings: settingsWithSet,
@@ -4742,7 +4742,7 @@ describe("App", () => {
           get_project_bindings: projectBindings,
           list_backups: [],
           get_settings: settingsWithSet,
-        } as Record<string, unknown>
+        })
       )[command];
 
     await renderApp();
@@ -4830,7 +4830,7 @@ describe("App", () => {
         return { command, snapshot: workspaceSnapshot };
       }
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: {
             ...bootstrap,
             settings: settingsWithSet,
@@ -4864,7 +4864,7 @@ describe("App", () => {
           },
           list_backups: [],
           get_settings: settingsWithSet,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -4919,7 +4919,7 @@ describe("App", () => {
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: {
             ...bootstrap,
             settings: settingsWithEmptyMatch,
@@ -4934,7 +4934,7 @@ describe("App", () => {
           get_project_bindings: { result: staleWorkspaceSnapshot.project_bindings },
           list_backups: [],
           get_settings: settingsWithEmptyMatch,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -5004,7 +5004,7 @@ describe("App", () => {
         return { command, snapshot: contextSnapshot };
       }
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: {
             ...bootstrap,
             settings: settingsWithSet,
@@ -5038,7 +5038,7 @@ describe("App", () => {
           },
           list_backups: [],
           get_settings: settingsWithSet,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -5066,7 +5066,7 @@ describe("App", () => {
 
     window.__AISW_DESKTOP_MOCK__ = async (command) =>
       (
-        {
+        desktopMockRecord({
           get_bootstrap: {
             ...bootstrap,
             settings: settingsWithSet,
@@ -5107,7 +5107,7 @@ describe("App", () => {
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
           get_settings: settingsWithSet,
-        } as Record<string, unknown>
+        })
       )[command];
 
     await renderApp();
@@ -5146,7 +5146,7 @@ describe("App", () => {
 
     window.__AISW_DESKTOP_MOCK__ = async (command) =>
       (
-        {
+        desktopMockRecord({
           get_bootstrap: {
             ...bootstrap,
             settings: settingsWithSet,
@@ -5161,7 +5161,7 @@ describe("App", () => {
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
           get_settings: settingsWithSet,
-        } as Record<string, unknown>
+        })
       )[command];
 
     await renderApp();
@@ -5184,7 +5184,7 @@ describe("App", () => {
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: {
             ...bootstrap,
             snapshot: emptyWorkspaceSnapshot,
@@ -5198,7 +5198,7 @@ describe("App", () => {
           get_project_bindings: { result: emptyWorkspaceSnapshot.project_bindings },
           list_backups: [],
           get_settings: bootstrap.settings,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
