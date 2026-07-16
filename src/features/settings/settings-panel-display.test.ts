@@ -6,6 +6,7 @@ import {
   appDataFolderErrorMessage,
   buildDesktopPreferencesUpdate,
   buildResetOnboardingPreferences,
+  buildRuntimeSelectionSettings,
   buildSettingsRequest,
   clipboardSuccessMessage,
   clipboardUnavailableMessage,
@@ -24,6 +25,7 @@ import {
   nextSettingsSection,
   nextRuntimeSourceSelection,
   openedAppDataFolderMessage,
+  persistedRuntimePath,
   patchDesktopPreferencesDraft,
   patchSettingsDraft,
   resolveSelectedShell,
@@ -239,6 +241,8 @@ describe("settings-panel-display", () => {
   it("shares effective and resolved runtime paths", () => {
     expect(effectiveRuntimePath("bundled", "/tmp/aisw")).toBe("");
     expect(effectiveRuntimePath("custom", "/tmp/aisw")).toBe("/tmp/aisw");
+    expect(persistedRuntimePath("bundled", "/tmp/aisw")).toBeNull();
+    expect(persistedRuntimePath("custom", "/tmp/aisw")).toBe("/tmp/aisw");
 
     expect(selectedRuntimePath(makeSettings(), makeRuntimeStatus())).toBe(
       "/Applications/AI Switcher.app/Contents/MacOS/aisw",
@@ -252,6 +256,24 @@ describe("settings-panel-display", () => {
         makeRuntimeStatus(),
       ),
     ).toBe("/Users/test/bin/aisw");
+    expect(
+      buildRuntimeSelectionSettings(makeSettings(), {
+        runtimeKind: "system",
+        runtimePath: "/tmp/ignored",
+      }),
+    ).toMatchObject({
+      runtime_kind: "system",
+      runtime_path: null,
+    });
+    expect(
+      buildRuntimeSelectionSettings(makeSettings(), {
+        runtimeKind: "custom",
+        runtimePath: "/Users/test/bin/aisw",
+      }),
+    ).toMatchObject({
+      runtime_kind: "custom",
+      runtime_path: "/Users/test/bin/aisw",
+    });
   });
 
   it("shares section metadata and navigation order", () => {

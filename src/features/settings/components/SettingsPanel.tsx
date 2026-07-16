@@ -40,6 +40,7 @@ import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import {
   buildDesktopPreferencesUpdate,
+  buildRuntimeSelectionSettings,
   createDesktopPreferencesDraft,
   createSettingsDraft,
   buildResetOnboardingPreferences,
@@ -184,11 +185,10 @@ export function SettingsPanel({
   const launchAtLoginEnabled = launchAtLogin.data?.enabled ?? false;
   const launchAtLoginDetail = launchAtLogin.data?.detail;
   const runtimePathValue = selectedRuntimePath(
-    {
-      ...settings,
-      runtime_kind: runtimeKind,
-      runtime_path: effectiveRuntimePath(runtimeKind, runtimePath) || null,
-    },
+    buildRuntimeSelectionSettings(settings, {
+      runtimeKind,
+      runtimePath,
+    }),
     runtimeStatus,
   );
 

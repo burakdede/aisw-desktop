@@ -66,6 +66,8 @@ export type SettingsOption<Value extends string> = {
   label: string;
 };
 
+type RuntimeInventoryPathKey = "bundled_path" | "system_path";
+
 const SETTINGS_SECTION_KEY_DIRECTIONS = {
   ArrowDown: "next",
   ArrowRight: "next",
@@ -104,6 +106,14 @@ const RUNTIME_SOURCE_LABELS: Record<DesktopSettings["runtime_kind"], string> = {
 const UPDATE_CHANNEL_LABELS: Record<DesktopUpdateChannel, string> = {
   stable: "Stable",
   beta: "Beta",
+};
+
+const RUNTIME_INVENTORY_PATH_KEYS: Record<
+  Exclude<DesktopSettings["runtime_kind"], "custom">,
+  RuntimeInventoryPathKey
+> = {
+  bundled: "bundled_path",
+  system: "system_path",
 };
 
 export const SETTINGS_APPEARANCE_OPTIONS = DESKTOP_APPEARANCES.map((value) => ({
@@ -177,6 +187,13 @@ export function effectiveRuntimePath(
   runtimePath: string,
 ) {
   return runtimeKind === "custom" ? runtimePath : "";
+}
+
+export function persistedRuntimePath(
+  runtimeKind: DesktopSettings["runtime_kind"],
+  runtimePath: string,
+) {
+  return effectiveRuntimePath(runtimeKind, runtimePath) || null;
 }
 
 export function sectionLabel(section: SettingsSection) {
@@ -330,8 +347,19 @@ export function nextRuntimeSourceSelection(
 ) {
   return {
     runtimeKind: nextRuntimeKind,
-    runtimePath: nextRuntimeKind === "custom" ? currentRuntimePath : "",
+    runtimePath: effectiveRuntimePath(nextRuntimeKind, currentRuntimePath),
   } satisfies Pick<SettingsDraft, "runtimeKind" | "runtimePath">;
+}
+
+export function buildRuntimeSelectionSettings(
+  settings: DesktopSettings,
+  draft: Pick<SettingsDraft, "runtimeKind" | "runtimePath">,
+): DesktopSettings {
+  return {
+    ...settings,
+    runtime_kind: draft.runtimeKind,
+    runtime_path: persistedRuntimePath(draft.runtimeKind, draft.runtimePath),
+  };
 }
 
 export function buildSettingsRequest(input: {
@@ -343,8 +371,7 @@ export function buildSettingsRequest(input: {
 
   return {
     runtime_kind: nextDraft.runtimeKind,
-    runtime_path:
-      effectiveRuntimePath(nextDraft.runtimeKind, nextDraft.runtimePath) || null,
+    runtime_path: persistedRuntimePath(nextDraft.runtimeKind, nextDraft.runtimePath),
     aisw_home: nextDraft.aiswHome || null,
     update_channel: nextDraft.updateChannel,
     profile_labels: input.settings.profile_labels ?? {},
@@ -389,10 +416,9 @@ export function selectedRuntimePath(
   if (settings.runtime_kind === "custom") {
     return settings.runtime_path ?? NOT_SET_LABEL;
   }
-  if (settings.runtime_kind === "system") {
-    return runtimeStatus.inventory?.system_path ?? NOT_FOUND_LABEL;
-  }
-  return runtimeStatus.inventory?.bundled_path ?? NOT_FOUND_LABEL;
+
+  const inventoryKey = RUNTIME_INVENTORY_PATH_KEYS[settings.runtime_kind];
+  return runtimeStatus.inventory?.[inventoryKey] ?? NOT_FOUND_LABEL;
 }
 
 function resolveSettingsSectionIndex(
