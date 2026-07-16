@@ -1,5 +1,11 @@
 import { DialogSurface } from "./DialogSurface";
 import { ToolBrand } from "./ToolBrand";
+import {
+  HELP_SHEET_ACTIONS,
+  HELP_SHEET_COPY,
+  HELP_SHEET_SHORTCUTS,
+  HELP_SHEET_SUPPORTED_TOOLS,
+} from "./help-sheet-display";
 
 type HelpSheetProps = {
   open: boolean;
@@ -20,24 +26,27 @@ export function HelpSheet({
     return null;
   }
 
+  const actionHandlers = {
+    profiles: onOpenProfiles,
+    diagnostics: onOpenDiagnostics,
+    settings: onOpenSettings,
+  } as const;
+
   return (
     <DialogSurface
-      ariaLabel="Using AI Switch"
+      ariaLabel={HELP_SHEET_COPY.dialogAriaLabel}
       className="quick-switch-palette profile-sheet"
       initialFocusSelector="button:not([disabled])"
       onClose={onClose}
     >
         <div className="quick-switch-header">
           <div>
-            <p className="card-kicker">Help</p>
-            <h3>Using AI Switch</h3>
-            <p className="inline-note">
-              AI Switch keeps account switching local to this computer and focused on profile changes,
-              verification, and recovery.
-            </p>
+            <p className="card-kicker">{HELP_SHEET_COPY.kicker}</p>
+            <h3>{HELP_SHEET_COPY.heading}</h3>
+            <p className="inline-note">{HELP_SHEET_COPY.intro}</p>
           </div>
           <button className="ghost-button" type="button" onClick={onClose}>
-            Close
+            {HELP_SHEET_COPY.closeLabel}
           </button>
         </div>
 
@@ -45,84 +54,58 @@ export function HelpSheet({
           <article className="diagnostic-card">
             <div className="desktop-pane-section-header">
               <div>
-                <p className="card-kicker">Supported tools</p>
-                <h4>Desktop control center</h4>
+                <p className="card-kicker">{HELP_SHEET_COPY.supportedToolsKicker}</p>
+                <h4>{HELP_SHEET_COPY.supportedToolsHeading}</h4>
               </div>
             </div>
-            <div className="tool-brand-list" aria-label="Supported tools">
-              <ToolBrand tool="claude" className="tool-brand-inline" logoSize={18} />
-              <ToolBrand tool="codex" className="tool-brand-inline" logoSize={18} />
-              <ToolBrand tool="gemini" className="tool-brand-inline" logoSize={18} />
+            <div className="tool-brand-list" aria-label={HELP_SHEET_COPY.supportedToolsAriaLabel}>
+              {HELP_SHEET_SUPPORTED_TOOLS.map((tool) => (
+                <ToolBrand key={tool} tool={tool} className="tool-brand-inline" logoSize={18} />
+              ))}
             </div>
-            <p className="inline-note">Credentials stay on this Mac. No telemetry or prompt proxying is used.</p>
-            <p className="inline-note">Use Profiles to save accounts, Quick Switch to move fast, and Diagnostics when something drifts.</p>
+            <p className="inline-note">{HELP_SHEET_COPY.supportedToolsPrimaryNote}</p>
+            <p className="inline-note">{HELP_SHEET_COPY.supportedToolsSecondaryNote}</p>
           </article>
 
           <article className="diagnostic-card">
             <div className="desktop-pane-section-header">
               <div>
-                <p className="card-kicker">Shortcuts</p>
-                <h4>Fast navigation</h4>
+                <p className="card-kicker">{HELP_SHEET_COPY.shortcutsKicker}</p>
+                <h4>{HELP_SHEET_COPY.shortcutsHeading}</h4>
               </div>
             </div>
             <div className="settings-summary-grid">
-              <div>
-                <span className="overview-current-set-cell-label">Quick Switch</span>
-                <strong>⌘K</strong>
-              </div>
-              <div>
-                <span className="overview-current-set-cell-label">Diagnostics</span>
-                <strong>⌘4</strong>
-              </div>
-              <div>
-                <span className="overview-current-set-cell-label">Settings</span>
-                <strong>⌘,</strong>
-              </div>
+              {HELP_SHEET_SHORTCUTS.map((item) => (
+                <div key={`${item.label}-${item.shortcut}`}>
+                  <span className="overview-current-set-cell-label">{item.label}</span>
+                  <strong>{item.shortcut}</strong>
+                </div>
+              ))}
             </div>
           </article>
 
           <article className="diagnostic-card">
             <div className="desktop-pane-section-header">
               <div>
-                <p className="card-kicker">Next steps</p>
-                <h4>Open the right surface</h4>
+                <p className="card-kicker">{HELP_SHEET_COPY.nextStepsKicker}</p>
+                <h4>{HELP_SHEET_COPY.nextStepsHeading}</h4>
               </div>
             </div>
-            <p className="inline-note">
-              Go to Profiles to save or import accounts, Diagnostics to verify switching health, or
-              Settings to review app setup and terminal integration.
-            </p>
+            <p className="inline-note">{HELP_SHEET_COPY.nextStepsNote}</p>
             <div className="button-row">
-              <button
-                className="ghost-button"
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onOpenProfiles();
-                }}
-              >
-                Open Profiles
-              </button>
-              <button
-                className="ghost-button"
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onOpenDiagnostics();
-                }}
-              >
-                Open Diagnostics
-              </button>
-              <button
-                className="ghost-button"
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onOpenSettings();
-                }}
-              >
-                Open Settings
-              </button>
+              {HELP_SHEET_ACTIONS.map((action) => (
+                <button
+                  key={action.id}
+                  className="ghost-button"
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    actionHandlers[action.id]();
+                  }}
+                >
+                  {action.label}
+                </button>
+              ))}
             </div>
           </article>
         </div>
