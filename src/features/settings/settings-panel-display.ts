@@ -19,12 +19,7 @@ import {
   type SettingsSection,
 } from "../../lib/settings-sections";
 import { doctorCheckHasKeyword, parseDoctorReportChecks } from "../diagnostics/diagnostic-doctor-checks";
-import type {
-  AppBootstrap,
-  DesktopSettings,
-  ShellHookGuidance,
-  UpdateCheckReport,
-} from "../../lib/schemas";
+import type { AppBootstrap, DesktopSettings, UpdateCheckReport } from "../../lib/schemas";
 import { DEFAULT_ACTION_FAILURE_MESSAGE, NOT_FOUND_LABEL, NOT_SET_LABEL } from "../../lib/display-copy";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
@@ -246,13 +241,6 @@ export const SETTINGS_UPDATE_CHANNEL_OPTIONS = DESKTOP_UPDATE_CHANNELS.map((valu
   label: UPDATE_CHANNEL_LABELS[value],
 })) satisfies SettingsOption<SettingsDraft["updateChannel"]>[];
 
-function findShellGuidanceVariants(
-  shellGuidance: ShellHookGuidance | undefined,
-) {
-  const variants = shellGuidance?.variants;
-  return Array.isArray(variants) && variants.length ? variants : undefined;
-}
-
 export function formatSettingsMutationError(error: unknown) {
   const details = resolveErrorDetails(error, DEFAULT_ACTION_FAILURE_MESSAGE);
   return {
@@ -315,34 +303,6 @@ export function settingsSectionDirectionForKey(key: string): SettingsSectionDire
   return SETTINGS_SECTION_KEY_DIRECTIONS[
     key as keyof typeof SETTINGS_SECTION_KEY_DIRECTIONS
   ] ?? null;
-}
-
-export function resolveSelectedShellVariant(
-  shellGuidance: ShellHookGuidance | undefined,
-  selectedShell: string,
-) {
-  const variants = findShellGuidanceVariants(shellGuidance);
-  if (!variants) {
-    return undefined;
-  }
-  return variants.find((variant) => variant.shell === selectedShell) ?? variants[0];
-}
-
-export function resolveSelectedShell(
-  shellGuidance: ShellHookGuidance | undefined,
-  currentShell: string,
-) {
-  if (currentShell) {
-    return currentShell;
-  }
-
-  const variants = findShellGuidanceVariants(shellGuidance);
-  if (!variants) {
-    return "";
-  }
-
-  const preferred = shellGuidance?.detected_shell ?? "";
-  return variants.find((variant) => variant.shell === preferred)?.shell ?? variants[0].shell;
 }
 
 export function clipboardUnavailableMessage(label: string) {

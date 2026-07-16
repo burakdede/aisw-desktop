@@ -9,6 +9,19 @@ export const SHELL_GUIDANCE_UNAVAILABLE_LABEL = "Terminal setup guidance is unav
 export const SHELL_HOOK_INSTALLED_LABEL = "Installed";
 export const SHELL_HOOK_NOT_INSTALLED_LABEL = "Not installed";
 
+type ShellGuidanceVariantLike = Pick<ShellHookGuidance["variants"][number], "shell" | "config_path">;
+type ShellGuidanceLike<Variant extends ShellGuidanceVariantLike = ShellGuidanceVariantLike> = {
+  detected_shell?: string | null;
+  variants?: readonly Variant[] | null;
+};
+
+function shellGuidanceVariants<Variant extends ShellGuidanceVariantLike>(
+  shellGuidance: ShellGuidanceLike<Variant> | undefined,
+) {
+  const variants = shellGuidance?.variants;
+  return Array.isArray(variants) && variants.length ? variants : undefined;
+}
+
 export function detectedShellLabel(detectedShell: string | null | undefined) {
   return detectedShell ? titleCase(detectedShell) : SHELL_CONFIG_UNAVAILABLE_LABEL;
 }
@@ -24,10 +37,38 @@ export function shellHookStatusLabel(status: string | null | undefined) {
   return SHELL_CONFIG_UNAVAILABLE_LABEL;
 }
 
-export function shellConfigPathLabel(
-  variant: ShellHookGuidance["variants"][number] | undefined,
+export function shellConfigPathLabel<Variant extends { config_path: string }>(
+  variant: Variant | undefined,
 ) {
   return variant?.config_path ?? SHELL_CONFIG_UNAVAILABLE_LABEL;
+}
+
+export function selectedShellVariant<Variant extends ShellGuidanceVariantLike>(
+  shellGuidance: ShellGuidanceLike<Variant> | undefined,
+  selectedShell: string,
+) {
+  const variants = shellGuidanceVariants(shellGuidance);
+  if (!variants) {
+    return undefined;
+  }
+  return variants.find((variant) => variant.shell === selectedShell) ?? variants[0];
+}
+
+export function selectedShellValue(
+  shellGuidance: ShellGuidanceLike | undefined,
+  currentShell: string,
+) {
+  if (currentShell) {
+    return currentShell;
+  }
+
+  const variants = shellGuidanceVariants(shellGuidance);
+  if (!variants) {
+    return "";
+  }
+
+  const preferred = shellGuidance?.detected_shell ?? "";
+  return variants.find((variant) => variant.shell === preferred)?.shell ?? variants[0].shell;
 }
 
 export function shellGuidanceFallbackLabel(isLoading: boolean) {

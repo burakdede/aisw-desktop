@@ -21,6 +21,8 @@ import { notifyDesktop } from "../../../lib/notifications";
 import {
   detectedShellLabel,
   SHELL_COMPLETION_AVAILABLE_LABEL,
+  selectedShellValue,
+  selectedShellVariant,
   shellConfigPathLabel,
   shellGuidanceFallbackLabel,
   shellHookStatusLabel,
@@ -62,8 +64,6 @@ import {
   appDataFolderErrorMessage,
   buildUpdateCheckResultLines,
   releaseChannelDescription,
-  resolveSelectedShell,
-  resolveSelectedShellVariant,
   sectionLabel,
   selectedRuntimePath,
   SETTINGS_CHECK_FOR_UPDATES_LABEL,
@@ -180,7 +180,7 @@ export function SettingsPanel({
     },
   });
   const selectedVariant = useMemo(
-    () => resolveSelectedShellVariant(shellGuidance.data, selectedShell),
+    () => selectedShellVariant(shellGuidance.data, selectedShell),
     [selectedShell, shellGuidance.data],
   );
   const launchAtLoginSupported = launchAtLogin.data?.supported ?? false;
@@ -195,7 +195,7 @@ export function SettingsPanel({
   );
 
   useEffect(() => {
-    const next = resolveSelectedShell(shellGuidance.data, selectedShell);
+    const next = selectedShellValue(shellGuidance.data, selectedShell);
     if (!next || next === selectedShell) {
       return;
     }

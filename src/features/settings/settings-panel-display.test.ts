@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DesktopPreferences } from "../../lib/desktop-preferences";
+import { selectedShellValue, selectedShellVariant } from "../../lib/settings-display";
 import { DesktopCommandError } from "../../lib/tauri";
 import type { AppBootstrap, DesktopSettings } from "../../lib/schemas";
 import {
@@ -29,8 +30,6 @@ import {
   persistedRuntimePath,
   patchDesktopPreferencesDraft,
   patchSettingsDraft,
-  resolveSelectedShell,
-  resolveSelectedShellVariant,
   sectionLabel,
   selectedRuntimePath,
   SETTINGS_APPEARANCE_OPTIONS,
@@ -235,15 +234,15 @@ describe("settings-panel-display", () => {
   });
 
   it("shares shell selection, keyboard navigation, and action copy", () => {
-    expect(resolveSelectedShellVariant(makeShellGuidance(), "bash")).toEqual(
+    expect(selectedShellVariant(makeShellGuidance(), "bash")).toEqual(
       makeShellGuidance().variants[1],
     );
-    expect(resolveSelectedShellVariant(makeShellGuidance(), "fish")).toEqual(
+    expect(selectedShellVariant(makeShellGuidance(), "fish")).toEqual(
       makeShellGuidance().variants[0],
     );
-    expect(resolveSelectedShell(makeShellGuidance(), "")).toBe("zsh");
-    expect(resolveSelectedShell(makeShellGuidance(), "bash")).toBe("bash");
-    expect(resolveSelectedShell(undefined, "")).toBe("");
+    expect(selectedShellValue(makeShellGuidance(), "")).toBe("zsh");
+    expect(selectedShellValue(makeShellGuidance(), "bash")).toBe("bash");
+    expect(selectedShellValue(undefined, "")).toBe("");
 
     expect(settingsSectionDirectionForKey("ArrowDown")).toBe("next");
     expect(settingsSectionDirectionForKey("ArrowLeft")).toBe("previous");
