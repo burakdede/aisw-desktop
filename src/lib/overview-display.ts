@@ -4,6 +4,11 @@ import { fixedStateModeDescription, stateModeDescription, stateModeLabel } from 
 import { toolInspectorEmptyLabel, overviewHealthLabel, overviewHealthText, resolveOverviewHealthState, type OverviewHealthState } from "./status-display";
 import { toolProfileDisplayLabel } from "./profile-display";
 import type { AppSnapshot, DesktopSettings, ToolStatus } from "./schemas";
+import {
+  formatTokenWarning,
+  formatToolWarning,
+  RUNTIME_WARNING_FALLBACK_DETAIL,
+} from "./tool-warning-display";
 import { toolShortName } from "./tool-registry";
 import { countLabel, pluralChoice, titleCase } from "./utils";
 
@@ -297,25 +302,14 @@ export function overviewLastResultMessage(lastResult: {
 }
 
 export function overviewTokenWarning(status: ToolStatus) {
-  const warning = status.token_warning;
-  if (!warning) {
-    return "Token state needs attention.";
-  }
-
-  const detail = warning.summary ?? warning.message ?? warning.code ?? "Token state needs attention.";
-  const suffix = warning.expires_at
-    ? ` Expires at ${warning.expires_at}.`
-    : typeof warning.expires_in_days === "number"
-      ? ` Expires in ${warning.expires_in_days} days.`
-      : "";
-  return `Token warning: ${detail}${suffix}`;
+  return formatTokenWarning(status.token_warning, { prefix: "Token warning: " });
 }
 
 export function overviewDiagnosticWarning(warning: ToolStatus["warnings"][number]) {
-  const detail = warning.message ?? warning.code ?? "Warning reported by the runtime.";
-  return warning.remediation
-    ? `Warning: ${detail} Remediation: ${warning.remediation}`
-    : `Warning: ${detail}`;
+  return formatToolWarning(warning, {
+    prefix: "Warning: ",
+    fallbackDetail: RUNTIME_WARNING_FALLBACK_DETAIL,
+  });
 }
 
 export function overviewAuthMethodLabel(authMethod: string | null | undefined) {

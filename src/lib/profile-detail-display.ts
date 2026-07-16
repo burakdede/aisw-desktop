@@ -6,6 +6,7 @@ import {
   NOT_VERIFIED_LABEL,
 } from "./status-copy";
 import type { ToolStatus } from "./schemas";
+import { formatTokenWarning, formatToolWarning } from "./tool-warning-display";
 import { stateModeLabel } from "../features/shared/state-modes";
 
 export const HIDE_STORAGE_DETAILS_LABEL = "Hide Storage Details";
@@ -31,25 +32,13 @@ export function profileAuthMethodLabel(auth: string) {
 }
 
 export function profileTokenWarningLabel(status: Pick<ToolStatus, "token_warning">) {
-  const warning = status.token_warning;
-  if (!warning) {
-    return "Token state needs attention.";
-  }
-
-  const detail = warning.summary ?? warning.message ?? warning.code ?? "Token state needs attention.";
-  const suffix = warning.expires_at
-    ? ` Expires at ${warning.expires_at}.`
-    : typeof warning.expires_in_days === "number"
-      ? ` Expires in ${warning.expires_in_days} days.`
-      : "";
-  return `${detail}${suffix}`;
+  return formatTokenWarning(status.token_warning);
 }
 
 export function profileWarningLabel(
   warning: NonNullable<ToolStatus["warnings"]>[number],
 ) {
-  const detail = warning.message ?? warning.code ?? "Warning reported by AI Switch.";
-  return warning.remediation ? `${detail} Remediation: ${warning.remediation}` : detail;
+  return formatToolWarning(warning);
 }
 
 export function profileLastCheckedLabel(
