@@ -3,6 +3,11 @@ import { contextDisplayLabel, toolProfileDisplayLabel } from "../../lib/profile-
 import { isSupportedTool } from "../../lib/tool-registry";
 import { countLabel, titleCase } from "../../lib/utils";
 import { BLOCKED_LABEL, NEEDS_ATTENTION_SENTENCE_LABEL } from "../../lib/status-copy";
+import {
+  diagnosticTitleHas,
+  diagnosticTitleHasAny,
+  normalizeDiagnosticTitle,
+} from "./diagnostic-title-match";
 import { toolSupportsEditableStateModes } from "../../lib/tool-registry";
 import type { LastCommandResult } from "../shared/lastCommandResult";
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
@@ -316,38 +321,41 @@ export function matchesQuickFixToFinding(
   if (!finding) {
     return false;
   }
-  const findingTitle = finding.title.trim().toLowerCase();
-  const fixTitle = fix.title.trim().toLowerCase();
+  const findingTitle = normalizeDiagnosticTitle(finding.title);
+  const fixTitle = normalizeDiagnosticTitle(fix.title);
 
   if (findingTitle === fixTitle) {
     return true;
   }
 
   if (finding.profileTarget?.tool && fix.profileTarget?.tool === finding.profileTarget.tool) {
-    if (findingTitle.includes("live mismatch") && fixTitle.includes("live mismatch")) {
+    if (diagnosticTitleHas(findingTitle, "liveMismatch") && diagnosticTitleHas(fixTitle, "liveMismatch")) {
       return true;
     }
-    if (findingTitle.includes("profile missing") && fixTitle.includes(finding.profileTarget.tool)) {
+    if (diagnosticTitleHas(findingTitle, "profileMissing") && fixTitle.includes(finding.profileTarget.tool)) {
       return true;
     }
   }
 
-  if (findingTitle.includes("permission") && fixTitle.includes("permission")) {
+  if (diagnosticTitleHas(findingTitle, "permission") && diagnosticTitleHas(fixTitle, "permission")) {
     return true;
   }
-  if (findingTitle.includes("keyring") && (fixTitle.includes("keyring") || fixTitle.includes("file-backed storage"))) {
+  if (
+    diagnosticTitleHas(findingTitle, "keyring") &&
+    (diagnosticTitleHas(fixTitle, "keyring") || fixTitle.includes("file-backed storage"))
+  ) {
     return true;
   }
-  if (findingTitle.includes("oauth") && fixTitle.includes("oauth")) {
+  if (diagnosticTitleHas(findingTitle, "oauth") && diagnosticTitleHas(fixTitle, "oauth")) {
     return true;
   }
-  if (findingTitle.includes("shell") && fixTitle.includes("terminal integration")) {
+  if (diagnosticTitleHas(findingTitle, "shell") && fixTitle.includes("terminal integration")) {
     return true;
   }
-  if (findingTitle.includes("project") && fixTitle.includes("project")) {
+  if (diagnosticTitleHas(findingTitle, "project") && diagnosticTitleHas(fixTitle, "project")) {
     return true;
   }
-  if (findingTitle.includes("missing") && fixTitle.includes("missing")) {
+  if (diagnosticTitleHas(findingTitle, "missing") && diagnosticTitleHas(fixTitle, "missing")) {
     return true;
   }
 
@@ -362,12 +370,11 @@ export function groupDiagnosticFindings(findings: DiagnosticFinding[]) {
   ];
 
   findings.forEach((finding) => {
-    const title = finding.title.toLowerCase();
     if (finding.status === "fail") {
       groups[0].items.push(finding);
       return;
     }
-    if (title.includes("missing") || title.includes("shell") || title.includes("setup")) {
+    if (diagnosticTitleHasAny(finding.title, ["missing", "shell", "setup"])) {
       groups[2].items.push(finding);
       return;
     }
@@ -378,23 +385,22 @@ export function groupDiagnosticFindings(findings: DiagnosticFinding[]) {
 }
 
 export function impactTextForFinding(finding: DiagnosticFinding) {
-  const title = finding.title.toLowerCase();
-  if (title.includes("live mismatch")) {
+  if (diagnosticTitleHas(finding.title, "liveMismatch")) {
     return "Switching is no longer guaranteed to match the saved profile, so you may start coding with the wrong account identity.";
   }
-  if (title.includes("keyring")) {
+  if (diagnosticTitleHas(finding.title, "keyring")) {
     return "Stored credentials may not be readable or writable until local credential storage is repaired.";
   }
-  if (title.includes("permission")) {
+  if (diagnosticTitleHas(finding.title, "permission")) {
     return "AI Switch may fail to update local state, backups, or profile changes until local file permissions are corrected.";
   }
-  if (title.includes("shell")) {
+  if (diagnosticTitleHas(finding.title, "shell")) {
     return "Shell commands can drift from the desktop state until terminal integration is installed or refreshed.";
   }
-  if (title.includes("missing")) {
+  if (diagnosticTitleHas(finding.title, "missing")) {
     return "This tool cannot be switched or verified from the desktop app until its CLI is installed.";
   }
-  if (title.includes("project")) {
+  if (diagnosticTitleHas(finding.title, "project")) {
     return "Project rules are no longer protecting the active workspace from using the wrong saved set.";
   }
   return "This state needs review before you rely on the current desktop switching state.";
