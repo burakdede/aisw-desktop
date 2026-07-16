@@ -11,6 +11,7 @@ import {
   buildInventoryProfiles,
   buildProfileActionMenu,
   buildProfileEditSheetState,
+  buildProfileLabelUpdateRequest,
   buildProfileRemovalSheetState,
   buildProfileSheetDraftReset,
   buildProfileSheetSubmitLabel,
@@ -28,6 +29,8 @@ import {
   oauthEventStage,
   profileMutationError,
   resolveAvailableSelection,
+  STATIC_STATE_MODE_COPY,
+  STATIC_STATE_MODE_LABEL,
   shouldAutoOpenProfileSheet,
   toggleProfileActionMenu,
 } from "./profiles-panel-display";
@@ -300,6 +303,10 @@ describe("profiles-panel-display", () => {
         apiKeyPending: false,
       }),
     ).toBe("Import");
+    expect(STATIC_STATE_MODE_LABEL).toBe("Isolated");
+    expect(STATIC_STATE_MODE_COPY).toBe(
+      "Gemini keeps authentication and local state together.",
+    );
   });
 
   it("builds edit/removal sheet state and profile activation requests", () => {
@@ -386,6 +393,37 @@ describe("profiles-panel-display", () => {
       profile: "work",
       stateMode: null,
       label: "Work Laptop",
+    });
+
+    expect(
+      buildProfileLabelUpdateRequest({
+        settings,
+        tool: "claude",
+        profileName: "work",
+        profileLabel: "Work Laptop",
+        nextLabel: "Work Laptop",
+      }),
+    ).toBeNull();
+
+    expect(
+      buildProfileLabelUpdateRequest({
+        settings,
+        tool: "claude",
+        profileName: "work",
+        profileLabel: "Work Laptop",
+        nextLabel: "Desk",
+      }),
+    ).toEqual({
+      runtime_kind: "bundled",
+      runtime_path: null,
+      aisw_home: null,
+      update_channel: "stable",
+      profile_sets: [],
+      profile_labels: {
+        claude: {
+          work: "Desk",
+        },
+      },
     });
   });
 

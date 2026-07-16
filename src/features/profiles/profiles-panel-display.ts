@@ -9,7 +9,7 @@ import { credentialBackendLabel as formatCredentialBackendLabel } from "../../li
 import { DEFAULT_ACTION_FAILURE_MESSAGE } from "../../lib/display-copy";
 import { formatDateTimeWithZone } from "../../lib/date-format";
 import { profileLastCheckedLabel } from "../../lib/profile-detail-display";
-import { effectiveToolProfileLabel } from "../../lib/profile-display";
+import { effectiveToolProfileLabel, mergeProfileLabel } from "../../lib/profile-display";
 import { DesktopCommandError } from "../../lib/tauri";
 import { titleCase } from "../../lib/utils";
 import {
@@ -61,12 +61,20 @@ export type InventoryEntry = {
 };
 
 export type ProfileActionScope = "inspector" | "table";
+export type ProfileActionTarget = {
+  tool: SupportedTool;
+  name: string;
+};
 
 export type OpenProfileActionMenu = {
   tool: SupportedTool;
   name: string;
   scope: ProfileActionScope;
 } | null;
+
+export const STATIC_STATE_MODE_LABEL = "Isolated";
+export const STATIC_STATE_MODE_COPY =
+  "Gemini keeps authentication and local state together.";
 
 export type InventoryKeyAction =
   | { kind: "move"; direction: "next" | "previous" | "first" | "last" }
@@ -412,6 +420,38 @@ export function buildProfileActivationRequest(input: {
     profile: input.profileName,
     stateMode: input.availableStateModes.length ? input.selectedStateMode : null,
     label: input.profileLabel,
+  };
+}
+
+export function buildProfileLabelUpdateRequest(input: {
+  settings: DesktopSettings;
+  tool: SupportedTool;
+  profileName: string;
+  profileLabel: string | null | undefined;
+  nextLabel: string;
+}) {
+  const currentLabel = effectiveToolProfileLabel(
+    input.settings,
+    input.tool,
+    input.profileName,
+    input.profileLabel ?? null,
+  );
+  if (input.nextLabel === currentLabel) {
+    return null;
+  }
+
+  return {
+    runtime_kind: input.settings.runtime_kind,
+    runtime_path: input.settings.runtime_path ?? null,
+    aisw_home: input.settings.aisw_home ?? null,
+    update_channel: input.settings.update_channel,
+    profile_sets: input.settings.profile_sets,
+    profile_labels: mergeProfileLabel(
+      input.settings,
+      input.tool,
+      input.profileName,
+      input.nextLabel || null,
+    ),
   };
 }
 

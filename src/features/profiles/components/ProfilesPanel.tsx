@@ -31,7 +31,6 @@ import {
 } from "../../../lib/profile-detail-display";
 import {
   effectiveToolProfileLabel,
-  mergeProfileLabel,
 } from "../../../lib/profile-display";
 import {
   profileLiveMatchLabel,
@@ -75,6 +74,7 @@ import {
   buildInventoryProfiles,
   buildProfileActionMenu,
   buildProfileEditSheetState,
+  buildProfileLabelUpdateRequest,
   buildProfileRemovalSheetState,
   buildProfileSheetDraftReset,
   buildProfileSheetSubmitLabel,
@@ -91,10 +91,14 @@ import {
   nextInventorySelectionIndex,
   profileMutationError,
   resolveAvailableSelection,
+  STATIC_STATE_MODE_COPY,
+  STATIC_STATE_MODE_LABEL,
   shouldAutoOpenProfileSheet,
   toggleProfileActionMenu,
   type InventoryEntry,
   type InventoryFilter,
+  type ProfileActionMenuItem,
+  type ProfileActionTarget,
 } from "../profiles-panel-display";
 
 const TOOLS = SUPPORTED_TOOLS;
@@ -266,6 +270,14 @@ export function ProfilesPanel({
     settings,
     tool,
   });
+  const mutationErrorMessage = profileMutationError(
+    addProfileMutation.error,
+    addProfileOAuthMutation.error,
+    renameProfileMutation.error,
+    removeProfileMutation.error,
+    useProfileMutation.error,
+    apiKeyProfileAction.error,
+  );
 
   useEffect(() => {
     const nextStateMode = resolveAvailableSelection(stateMode, availableStateModes, "isolated");
@@ -538,6 +550,38 @@ export function ProfilesPanel({
     setProfileSheetOpen(true);
   }
 
+  function handleProfileAction(
+    action: ProfileActionMenuItem,
+    target: ProfileActionTarget,
+  ) {
+    switch (action.kind) {
+      case "activate":
+      case "reapply": {
+        const entry = inventoryProfiles.find(
+          (candidate) =>
+            candidate.tool === target.tool && candidate.name === target.name,
+        );
+        if (entry) {
+          activateInventoryEntry(entry);
+        }
+        break;
+      }
+      case "rename":
+        setPendingEdit({ name: target.name, focus: "name" });
+        break;
+      case "change_label":
+        setPendingEdit({ name: target.name, focus: "label" });
+        break;
+      case "view_backups":
+        openBackupsForProfile(target.tool, target.name);
+        return;
+      case "remove":
+        setPendingRemoval(target.name);
+        break;
+    }
+    setOpenRowActions(null);
+  }
+
   function focusInventoryRow(index: number) {
     window.requestAnimationFrame(() => {
       inventoryRowRefs.current[index]?.focus();
@@ -733,27 +777,12 @@ export function ProfilesPanel({
                                   : mutationLock.isBusy
                               }
                               className={action.danger ? "profile-row-actions-danger" : undefined}
-                              onClick={() => {
-                                switch (action.kind) {
-                                  case "activate":
-                                  case "reapply":
-                                    activateInventoryEntry(inventoryEntry);
-                                    break;
-                                  case "rename":
-                                    setPendingEdit({ name: inventoryEntry.name, focus: "name" });
-                                    break;
-                                  case "change_label":
-                                    setPendingEdit({ name: inventoryEntry.name, focus: "label" });
-                                    break;
-                                  case "view_backups":
-                                    openBackupsForProfile(inventoryEntry.tool, inventoryEntry.name);
-                                    break;
-                                  case "remove":
-                                    setPendingRemoval(inventoryEntry.name);
-                                    break;
-                                }
-                                setOpenRowActions(null);
-                              }}
+                              onClick={() =>
+                                handleProfileAction(action, {
+                                  tool: inventoryEntry.tool,
+                                  name: inventoryEntry.name,
+                                })
+                              }
                             >
                               {action.label}
                             </button>
@@ -878,25 +907,12 @@ export function ProfilesPanel({
                               role="menuitem"
                               disabled={action.kind === "view_backups" ? action.disabled : false}
                               className={action.danger ? "profile-row-actions-danger" : undefined}
-                              onClick={() => {
-                                switch (action.kind) {
-                                  case "rename":
-                                    setPendingEdit({ name: selectedProfileEntry.name, focus: "name" });
-                                    break;
-                                  case "change_label":
-                                    setPendingEdit({ name: selectedProfileEntry.name, focus: "label" });
-                                    break;
-                                  case "view_backups":
-                                    openBackupsForProfile(tool, selectedProfileEntry.name);
-                                    break;
-                                  case "remove":
-                                    setPendingRemoval(selectedProfileEntry.name);
-                                    break;
-                                  default:
-                                    break;
-                                }
-                                setOpenRowActions(null);
-                              }}
+                              onClick={() =>
+                                handleProfileAction(action, {
+                                  tool,
+                                  name: selectedProfileEntry.name,
+                                })
+                              }
                             >
                               {action.label}
                             </button>
@@ -958,9 +974,9 @@ export function ProfilesPanel({
                 ) : (
                   <div className="state-mode-static">
                     <span className="state-mode-static-label">State mode</span>
-                    <strong>Isolated</strong>
+                    <strong>{STATIC_STATE_MODE_LABEL}</strong>
                     <p className="state-mode-copy">
-                      Gemini keeps authentication and local state together.
+                      {STATIC_STATE_MODE_COPY}
                     </p>
                   </div>
                 )}
@@ -1053,26 +1069,15 @@ export function ProfilesPanel({
                 });
               }
 
-              const currentLabel = effectiveToolProfileLabel(
+              const labelUpdateRequest = buildProfileLabelUpdateRequest({
                 settings,
                 tool,
-                editSheetState.profile.name,
-                editSheetState.profile.label,
-              );
-              if (nextLabel !== currentLabel) {
-                updateSettingsMutation.mutate({
-                  runtime_kind: settings.runtime_kind,
-                  runtime_path: settings.runtime_path ?? null,
-                  aisw_home: settings.aisw_home ?? null,
-                  update_channel: settings.update_channel,
-                  profile_sets: settings.profile_sets,
-                  profile_labels: mergeProfileLabel(
-                    settings,
-                    tool,
-                    editSheetState.profile.name,
-                    nextLabel || null,
-                  ),
-                });
+                profileName: editSheetState.profile.name,
+                profileLabel: editSheetState.profile.label,
+                nextLabel,
+              });
+              if (labelUpdateRequest) {
+                updateSettingsMutation.mutate(labelUpdateRequest);
               }
 
               setPendingEdit(null);
@@ -1299,9 +1304,9 @@ export function ProfilesPanel({
               ) : (
                 <div className="state-mode-static">
                   <span className="state-mode-static-label">State mode</span>
-                  <strong>Isolated</strong>
+                  <strong>{STATIC_STATE_MODE_LABEL}</strong>
                   <p className="state-mode-copy">
-                    Gemini keeps authentication and local state together.
+                    {STATIC_STATE_MODE_COPY}
                   </p>
                 </div>
               )}
@@ -1354,25 +1359,7 @@ export function ProfilesPanel({
                   })}
                 </button>
               </div>
-              {profileMutationError(
-                addProfileMutation.error,
-                addProfileOAuthMutation.error,
-                renameProfileMutation.error,
-                removeProfileMutation.error,
-                useProfileMutation.error,
-                apiKeyProfileAction.error,
-              ) ? (
-                <p className="inline-note">
-                  {profileMutationError(
-                    addProfileMutation.error,
-                    addProfileOAuthMutation.error,
-                    renameProfileMutation.error,
-                    removeProfileMutation.error,
-                    useProfileMutation.error,
-                    apiKeyProfileAction.error,
-                  )}
-                </p>
-              ) : null}
+              {mutationErrorMessage ? <p className="inline-note">{mutationErrorMessage}</p> : null}
             </form>
         </DialogSurface>
       ) : null}
