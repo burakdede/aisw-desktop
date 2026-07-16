@@ -1,9 +1,14 @@
 import { KeyboardEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { cn } from "../lib/utils";
 import { BrandMark } from "./BrandMark";
+import {
+  APP_FRAME_COPY,
+  appFrameNavDirectionForKey,
+  defaultSidebarOpen,
+  isCompactSidebarWidth,
+  nextAppFrameNavItemId,
+} from "./app-frame-display";
 import { SymbolIcon, type SymbolIconName } from "./SymbolIcon";
-
-const COMPACT_SIDEBAR_BREAKPOINT = 880;
 
 interface NavItem {
   id: string;
@@ -39,14 +44,13 @@ export function AppFrame({
   children,
 }: AppFrameProps) {
   const navButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const [compactSidebar, setCompactSidebar] = useState(() => window.innerWidth < COMPACT_SIDEBAR_BREAKPOINT);
-  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= COMPACT_SIDEBAR_BREAKPOINT);
+  const [compactSidebar, setCompactSidebar] = useState(() => isCompactSidebarWidth(window.innerWidth));
+  const [sidebarOpen, setSidebarOpen] = useState(() => defaultSidebarOpen(window.innerWidth));
   const groups = nav.reduce<Record<string, NavItem[]>>((acc, item) => {
     acc[item.group] ??= [];
     acc[item.group].push(item);
     return acc;
   }, {});
-  const orderedNavItems = nav.filter((item) => !item.disabled);
 
   function focusNav(id: string) {
     window.requestAnimationFrame(() => {
@@ -55,64 +59,31 @@ export function AppFrame({
   }
 
   function moveSelection(currentId: string, direction: "next" | "previous" | "first" | "last") {
-    if (!orderedNavItems.length) {
+    const targetId = nextAppFrameNavItemId(currentId, nav, direction);
+    if (!targetId || targetId === currentId) {
       return;
     }
 
-    const currentIndex = orderedNavItems.findIndex((item) => item.id === currentId);
-    if (currentIndex === -1) {
-      return;
-    }
-
-    const targetIndex =
-      direction === "first"
-        ? 0
-        : direction === "last"
-          ? orderedNavItems.length - 1
-          : direction === "next"
-            ? Math.min(currentIndex + 1, orderedNavItems.length - 1)
-            : Math.max(currentIndex - 1, 0);
-    const target = orderedNavItems[targetIndex];
-    if (!target || target.id === currentId) {
-      return;
-    }
-
-    onSelectNav(target.id);
-    focusNav(target.id);
+    onSelectNav(targetId);
+    focusNav(targetId);
   }
 
   function handleNavKeyDown(event: KeyboardEvent<HTMLButtonElement>, item: NavItem) {
-    if (event.altKey || event.ctrlKey || event.metaKey) {
+    const direction = appFrameNavDirectionForKey(
+      event.key,
+      event.altKey || event.ctrlKey || event.metaKey,
+    );
+    if (!direction) {
       return;
     }
 
-    switch (event.key) {
-      case "ArrowDown":
-      case "ArrowRight":
-        event.preventDefault();
-        moveSelection(item.id, "next");
-        break;
-      case "ArrowUp":
-      case "ArrowLeft":
-        event.preventDefault();
-        moveSelection(item.id, "previous");
-        break;
-      case "Home":
-        event.preventDefault();
-        moveSelection(item.id, "first");
-        break;
-      case "End":
-        event.preventDefault();
-        moveSelection(item.id, "last");
-        break;
-      default:
-        break;
-    }
+    event.preventDefault();
+    moveSelection(item.id, direction);
   }
 
   useEffect(() => {
     function syncSidebarLayout() {
-      const nextCompact = window.innerWidth < COMPACT_SIDEBAR_BREAKPOINT;
+      const nextCompact = isCompactSidebarWidth(window.innerWidth);
       setCompactSidebar(nextCompact);
       setSidebarOpen((current) => {
         if (!nextCompact) {
@@ -164,7 +135,7 @@ export function AppFrame({
           <button
             type="button"
             className="sidebar-scrim"
-            aria-label="Close sidebar"
+            aria-label={APP_FRAME_COPY.closeSidebarLabel}
             onClick={() => setSidebarOpen(false)}
           />
         ) : null}
@@ -186,7 +157,7 @@ export function AppFrame({
                   </div>
                 </div>
               </div>
-              <nav className="nav-list" aria-label="Primary">
+              <nav className="nav-list" aria-label={APP_FRAME_COPY.primaryNavAriaLabel}>
                 {Object.entries(groups).map(([group, items]) => (
                   <div key={group} className="nav-group">
                     <p className="nav-group-label">{group}</p>
@@ -230,7 +201,9 @@ export function AppFrame({
                 <button
                   type="button"
                   className="ghost-button icon-button sidebar-toggle"
-                  aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+                  aria-label={
+                    sidebarOpen ? APP_FRAME_COPY.hideSidebarLabel : APP_FRAME_COPY.showSidebarLabel
+                  }
                   aria-expanded={showSidebar}
                   aria-controls="app-sidebar"
                   onClick={() => setSidebarOpen((current) => !current)}
@@ -239,7 +212,7 @@ export function AppFrame({
                 </button>
               ) : null}
               <div className="window-toolbar-meta">
-                {mode === "setup" ? <p className="window-toolbar-kicker">Welcome</p> : null}
+                {mode === "setup" ? <p className="window-toolbar-kicker">{APP_FRAME_COPY.setupKicker}</p> : null}
                 <div className="window-toolbar-copy">
                   <h2>{title}</h2>
                   {detail ? <p className="window-toolbar-subtitle">{detail}</p> : null}
