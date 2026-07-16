@@ -1,5 +1,31 @@
 import { DATE_UNAVAILABLE_LABEL, parseStoredDate } from "./date-format";
 
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+const BACKUP_REASON_RULES = [
+  {
+    patterns: ["before-switch", "switch"],
+    label: "Before profile switch",
+  },
+  {
+    patterns: ["remove"],
+    label: "Before removal",
+  },
+  {
+    patterns: ["rename"],
+    label: "Before rename",
+  },
+] as const;
+
+const BACKUP_REASON_FALLBACK_LABEL = "Created restore point";
+const GEMINI_BACKUP_CONTENTS_LABEL = "Profile data snapshot";
+const DEFAULT_BACKUP_CONTENTS_LABEL = "Profile files and config snapshot";
+const BACKUP_TIME_COPY = {
+  todayPrefix: "Today",
+  yesterdayPrefix: "Yesterday",
+  inspectorConnector: "at",
+} as const;
+
 export type BackupLike = {
   backup_id: string;
   created_at?: string | null;
@@ -30,27 +56,20 @@ export function resolveBackupTarget(tool: string, profile: string): BackupTarget
 
 export function backupReasonLabel(entry: Pick<BackupLike, "backup_id">) {
   const normalized = entry.backup_id.toLowerCase();
-  if (normalized.includes("before-switch")) {
-    return "Before profile switch";
+  for (const rule of BACKUP_REASON_RULES) {
+    if (rule.patterns.some((pattern) => normalized.includes(pattern))) {
+      return rule.label;
+    }
   }
-  if (normalized.includes("switch")) {
-    return "Before profile switch";
-  }
-  if (normalized.includes("remove")) {
-    return "Before removal";
-  }
-  if (normalized.includes("rename")) {
-    return "Before rename";
-  }
-  return "Created restore point";
+  return BACKUP_REASON_FALLBACK_LABEL;
 }
 
 export function backupContainsLabel(entry: Pick<BackupEntryLike, "tool" | "profile">) {
   const target = resolveBackupTarget(entry.tool, entry.profile);
   if (target.tool === "gemini") {
-    return "Profile data snapshot";
+    return GEMINI_BACKUP_CONTENTS_LABEL;
   }
-  return "Profile files and config snapshot";
+  return DEFAULT_BACKUP_CONTENTS_LABEL;
 }
 
 export function formatBackupInspectorTimestamp(value: string) {
@@ -67,23 +86,15 @@ export function formatBackupListTimestamp(value: string, now = new Date()) {
     return DATE_UNAVAILABLE_LABEL;
   }
 
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfEntry = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const diffDays = Math.round(
-    (startOfToday.getTime() - startOfEntry.getTime()) / (1000 * 60 * 60 * 24),
-  );
-
-  const timeLabel = new Intl.DateTimeFormat(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
+  const diffDays = calendarDayDifference(date, now);
+  const timeLabel = formatBackupTime(date);
 
   if (diffDays === 0) {
-    return `Today, ${timeLabel}`;
+    return `${BACKUP_TIME_COPY.todayPrefix}, ${timeLabel}`;
   }
 
   if (diffDays === 1) {
-    return `Yesterday, ${timeLabel}`;
+    return `${BACKUP_TIME_COPY.yesterdayPrefix}, ${timeLabel}`;
   }
 
   return new Intl.DateTimeFormat(undefined, {
@@ -102,29 +113,34 @@ function backupSortKey(value: string) {
 }
 
 function formatFriendlyInspectorDate(date: Date, now = new Date()) {
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfEntry = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const diffDays = Math.round(
-    (startOfToday.getTime() - startOfEntry.getTime()) / (1000 * 60 * 60 * 24),
-  );
-
-  const timeLabel = new Intl.DateTimeFormat(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
+  const diffDays = calendarDayDifference(date, now);
+  const timeLabel = formatBackupTime(date);
 
   if (diffDays === 0) {
-    return `Today at ${timeLabel}`;
+    return `${BACKUP_TIME_COPY.todayPrefix} ${BACKUP_TIME_COPY.inspectorConnector} ${timeLabel}`;
   }
 
   if (diffDays === 1) {
-    return `Yesterday at ${timeLabel}`;
+    return `${BACKUP_TIME_COPY.yesterdayPrefix} ${BACKUP_TIME_COPY.inspectorConnector} ${timeLabel}`;
   }
 
   return new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",
     year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function calendarDayDifference(date: Date, now: Date) {
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfEntry = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return Math.round((startOfToday.getTime() - startOfEntry.getTime()) / DAY_IN_MS);
+}
+
+function formatBackupTime(date: Date) {
+  return new Intl.DateTimeFormat(undefined, {
     hour: "numeric",
     minute: "2-digit",
   }).format(date);
