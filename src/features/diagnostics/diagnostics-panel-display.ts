@@ -552,35 +552,12 @@ export function buildDiagnosticQuickFixModels(input: {
 
   const shellHookIssue = shellHookDoctorIssue(doctor);
   if (shellHookIssue) {
-    fixes.push({
-      kind: "open_settings",
-      title: "Terminal integration not active",
-      detail: shellHookIssue.detail,
-      label: "Open terminal setup",
-      status: shellHookIssue.status,
-      settingsSection: "shell",
-    });
+    fixes.push(buildShellHookQuickFix(shellHookIssue));
   }
 
   const keyringIssue = keyringDoctorIssue(doctor);
   if (keyringIssue) {
-    fixes.push({
-      kind: "open_profile_setup",
-      title: "Use file-backed storage",
-      detail: "Open account setup with file-backed credential storage preselected for the next import or add flow.",
-      label: "Use file-backed storage",
-      status: keyringIssue.status,
-      setupMode: DEFAULT_PROFILE_IMPORT_MODE,
-      credentialBackend: "file",
-    });
-    fixes.push({
-      kind: "open_settings",
-      title: "Keyring setup instructions",
-      detail: "Review the supported local keyring services for macOS, Windows, and Linux.",
-      label: "Show keyring setup",
-      status: keyringIssue.status,
-      settingsSection: "keyring",
-    });
+    fixes.push(...buildKeyringQuickFixes(keyringIssue));
   }
 
   if (!snapshot) {
@@ -589,43 +566,13 @@ export function buildDiagnosticQuickFixModels(input: {
 
   snapshot.statuses.forEach((status) => {
     if (!status.binary_found) {
-      fixes.push({
-        kind: "open_installation_guide",
-        title: `${status.tool} is missing`,
-        detail: `Open the install guide for ${status.tool} and then refresh diagnostics.`,
-        label: "Open installation guide",
-        status: "warn",
-        toolTarget: status.tool,
-        secondaryAction: {
-          kind: "refresh_diagnostics",
-          label: "Refresh diagnostics",
-        },
-      });
+      fixes.push(buildMissingToolQuickFix(status.tool));
     }
 
     if (status.active_profile && status.active_profile_applied === false) {
-      const profileLabel = toolProfileDisplayLabel(settings, snapshot, status.tool, status.active_profile);
-      fixes.push({
-        kind: "reapply_profile",
-        title: `${status.tool} live mismatch`,
-        detail: `Re-apply ${profileLabel} so the live credentials match the saved profile again.`,
-        label: `Re-apply ${profileLabel}`,
-        status: "fail",
-        profileTarget: {
-          tool: status.tool,
-          profile: status.active_profile,
-        },
-        importTarget: {
-          tool: status.tool,
-          stateMode: resolveStateMode(status),
-        },
-        importFallbackMode: preferredProfileImportMode(
-          status.tool,
-          toolCapabilities,
-          DEFAULT_PROFILE_IMPORT_MODE,
-        ),
-        primary: true,
-      });
+      fixes.push(
+        buildLiveMismatchQuickFix(status, settings, snapshot, toolCapabilities),
+      );
     }
   });
 
@@ -636,21 +583,7 @@ export function buildDiagnosticQuickFixModels(input: {
     workspace.expectedContext !== workspace.currentContext;
 
   if (hasWorkspaceMismatch) {
-    const expectedContextLabel = contextDisplayLabel(settings, workspace.expectedContext);
-    const currentContextLabel = contextDisplayLabel(settings, workspace.currentContext);
-    const target = resolveWorkspaceActivationTarget(workspace.expectedContext, settings, snapshot);
-    fixes.push({
-      kind: "resolve_workspace",
-      title: "Project set mismatch",
-      detail: target
-        ? `This folder wants ${expectedContextLabel}, but ${currentContextLabel} is currently active.`
-        : `This folder wants ${expectedContextLabel}, but no matching detected set or ready saved set is currently available.`,
-      label: target ? "Use expected set now" : "Open Sets",
-      status: "warn",
-      primary: true,
-      workspaceActivationTarget: target,
-      matchedWorkspaceTarget: workspace.target,
-    });
+    fixes.push(buildWorkspaceMismatchQuickFix(workspace, settings, snapshot));
   }
 
   return fixes;
@@ -668,6 +601,122 @@ function buildRepairFixMap(repair: Record<string, unknown> | undefined) {
       }
       return map;
     }, new Map<string, string>());
+}
+
+function buildShellHookQuickFix(issue: {
+  detail: string;
+  status: "warn" | "fail";
+}): DiagnosticQuickFixModel {
+  return {
+    kind: "open_settings",
+    title: "Terminal integration not active",
+    detail: issue.detail,
+    label: "Open terminal setup",
+    status: issue.status,
+    settingsSection: "shell",
+  };
+}
+
+function buildKeyringQuickFixes(issue: {
+  status: "warn" | "fail";
+}): DiagnosticQuickFixModel[] {
+  return [
+    {
+      kind: "open_profile_setup",
+      title: "Use file-backed storage",
+      detail: "Open account setup with file-backed credential storage preselected for the next import or add flow.",
+      label: "Use file-backed storage",
+      status: issue.status,
+      setupMode: DEFAULT_PROFILE_IMPORT_MODE,
+      credentialBackend: "file",
+    },
+    {
+      kind: "open_settings",
+      title: "Keyring setup instructions",
+      detail: "Review the supported local keyring services for macOS, Windows, and Linux.",
+      label: "Show keyring setup",
+      status: issue.status,
+      settingsSection: "keyring",
+    },
+  ];
+}
+
+function buildMissingToolQuickFix(tool: string): DiagnosticQuickFixModel {
+  return {
+    kind: "open_installation_guide",
+    title: `${tool} is missing`,
+    detail: `Open the install guide for ${tool} and then refresh diagnostics.`,
+    label: "Open installation guide",
+    status: "warn",
+    toolTarget: tool,
+    secondaryAction: {
+      kind: "refresh_diagnostics",
+      label: "Refresh diagnostics",
+    },
+  };
+}
+
+function buildLiveMismatchQuickFix(
+  status: ToolStatus,
+  settings: DesktopSettings,
+  snapshot: AppSnapshot,
+  toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"],
+): DiagnosticQuickFixModel {
+  const profileLabel = toolProfileDisplayLabel(
+    settings,
+    snapshot,
+    status.tool,
+    status.active_profile!,
+  );
+
+  return {
+    kind: "reapply_profile",
+    title: `${status.tool} live mismatch`,
+    detail: `Re-apply ${profileLabel} so the live credentials match the saved profile again.`,
+    label: `Re-apply ${profileLabel}`,
+    status: "fail",
+    profileTarget: {
+      tool: status.tool,
+      profile: status.active_profile!,
+    },
+    importTarget: {
+      tool: status.tool,
+      stateMode: resolveStateMode(status),
+    },
+    importFallbackMode: preferredProfileImportMode(
+      status.tool,
+      toolCapabilities,
+      DEFAULT_PROFILE_IMPORT_MODE,
+    ),
+    primary: true,
+  };
+}
+
+function buildWorkspaceMismatchQuickFix(
+  workspace: ReturnType<typeof parseWorkspaceStatus>,
+  settings: DesktopSettings,
+  snapshot: AppSnapshot,
+): DiagnosticQuickFixModel {
+  const expectedContextLabel = contextDisplayLabel(settings, workspace.expectedContext);
+  const currentContextLabel = contextDisplayLabel(settings, workspace.currentContext);
+  const target = resolveWorkspaceActivationTarget(
+    workspace.expectedContext,
+    settings,
+    snapshot,
+  );
+
+  return {
+    kind: "resolve_workspace",
+    title: "Project set mismatch",
+    detail: target
+      ? `This folder wants ${expectedContextLabel}, but ${currentContextLabel} is currently active.`
+      : `This folder wants ${expectedContextLabel}, but no matching detected set or ready saved set is currently available.`,
+    label: target ? "Use expected set now" : "Open Sets",
+    status: "warn",
+    primary: true,
+    workspaceActivationTarget: target,
+    matchedWorkspaceTarget: workspace.target,
+  };
 }
 
 function repairableDoctorIssues(
