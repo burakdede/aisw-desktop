@@ -11,7 +11,11 @@ export const POST_MUTATION_QUERY_KEYS = [
   ["project-bindings"],
 ] as const;
 
-export async function invalidatePostMutationQueries(queryClient: QueryClient) {
+export type PostMutationQueryInvalidator = Pick<QueryClient, "invalidateQueries">;
+
+export async function invalidatePostMutationQueries(
+  queryClient: PostMutationQueryInvalidator,
+) {
   for (const queryKey of POST_MUTATION_QUERY_KEYS) {
     await queryClient.invalidateQueries({ queryKey });
   }

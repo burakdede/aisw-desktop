@@ -20,10 +20,9 @@ export function makeRuntimeToolCapability(
 export function makeRuntimeToolCapabilities(
   entries: Record<string, Partial<RuntimeToolCapability> | undefined>,
 ): RuntimeToolCapabilities {
-  return Object.fromEntries(
-    Object.entries(entries).map(([tool, overrides]) => [
-      tool,
-      makeRuntimeToolCapability(overrides),
-    ]),
-  );
+  const capabilities: RuntimeToolCapabilities = {};
+  Object.entries(entries).forEach(([tool, overrides]) => {
+    capabilities[tool] = makeRuntimeToolCapability(overrides);
+  });
+  return capabilities;
 }

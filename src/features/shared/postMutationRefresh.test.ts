@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   invalidatePostMutationQueries,
   POST_MUTATION_QUERY_KEYS,
+  type PostMutationQueryInvalidator,
 } from "./postMutationRefresh";
 
 describe("postMutationRefresh", () => {
@@ -19,9 +20,11 @@ describe("postMutationRefresh", () => {
 
     const invalidateQueries = vi.fn().mockResolvedValue(undefined);
 
-    await invalidatePostMutationQueries({
+    const queryClient: PostMutationQueryInvalidator = {
       invalidateQueries,
-    } as unknown as Parameters<typeof invalidatePostMutationQueries>[0]);
+    };
+
+    await invalidatePostMutationQueries(queryClient);
 
     expect(invalidateQueries.mock.calls).toEqual(
       POST_MUTATION_QUERY_KEYS.map((queryKey) => [{ queryKey }]),

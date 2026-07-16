@@ -4,6 +4,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AnchoredMenu } from "./AnchoredMenu";
 import { DialogSurface } from "./DialogSurface";
 
+function mockRect(
+  element: Element,
+  rect: Omit<DOMRect, "toJSON">,
+) {
+  return vi.spyOn(element, "getBoundingClientRect").mockReturnValue({
+    ...rect,
+    toJSON: () => undefined,
+  });
+}
+
 describe("AnchoredMenu", () => {
   const originalInnerWidth = window.innerWidth;
   const originalInnerHeight = window.innerHeight;
@@ -38,10 +48,10 @@ describe("AnchoredMenu", () => {
 
     const anchorRef = { current: anchor } as RefObject<HTMLElement>;
 
-    anchor.closest = vi.fn((selector?: string) =>
+    vi.spyOn(anchor, "closest").mockImplementation((selector?: string) =>
       selector === ".pane" ? wrapper : null,
-    ) as typeof anchor.closest;
-    anchor.getBoundingClientRect = vi.fn(() => ({
+    );
+    mockRect(anchor, {
       x: 280,
       y: 120,
       left: 280,
@@ -50,9 +60,8 @@ describe("AnchoredMenu", () => {
       bottom: 144,
       width: 40,
       height: 24,
-      toJSON: () => undefined,
-    })) as typeof anchor.getBoundingClientRect;
-    wrapper.getBoundingClientRect = vi.fn(() => ({
+    });
+    mockRect(wrapper, {
       x: 200,
       y: 80,
       left: 200,
@@ -61,8 +70,7 @@ describe("AnchoredMenu", () => {
       bottom: 340,
       width: 220,
       height: 260,
-      toJSON: () => undefined,
-    })) as typeof wrapper.getBoundingClientRect;
+    });
 
     render(
       <AnchoredMenu
@@ -78,7 +86,7 @@ describe("AnchoredMenu", () => {
     const menu = document.body.querySelector(".anchored-menu-surface") as HTMLDivElement;
     expect(menu).not.toBeNull();
 
-    menu.getBoundingClientRect = vi.fn(() => ({
+    mockRect(menu, {
       x: 0,
       y: 0,
       left: 0,
@@ -87,8 +95,7 @@ describe("AnchoredMenu", () => {
       bottom: 120,
       width: 160,
       height: 120,
-      toJSON: () => undefined,
-    })) as typeof menu.getBoundingClientRect;
+    });
 
     fireEvent(window, new Event("resize"));
 
@@ -108,8 +115,8 @@ describe("AnchoredMenu", () => {
 
     const anchorRef = { current: anchor } as RefObject<HTMLElement>;
 
-    anchor.closest = vi.fn(() => wrapper) as typeof anchor.closest;
-    anchor.getBoundingClientRect = vi.fn(() => ({
+    vi.spyOn(anchor, "closest").mockReturnValue(wrapper);
+    mockRect(anchor, {
       x: 340,
       y: 280,
       left: 340,
@@ -118,9 +125,8 @@ describe("AnchoredMenu", () => {
       bottom: 304,
       width: 32,
       height: 24,
-      toJSON: () => undefined,
-    })) as typeof anchor.getBoundingClientRect;
-    wrapper.getBoundingClientRect = vi.fn(() => ({
+    });
+    mockRect(wrapper, {
       x: 200,
       y: 80,
       left: 200,
@@ -129,8 +135,7 @@ describe("AnchoredMenu", () => {
       bottom: 340,
       width: 220,
       height: 260,
-      toJSON: () => undefined,
-    })) as typeof wrapper.getBoundingClientRect;
+    });
 
     render(
       <AnchoredMenu anchorRef={anchorRef} align="start" containmentSelector=".pane">
@@ -139,7 +144,7 @@ describe("AnchoredMenu", () => {
     );
 
     const menu = document.body.querySelector(".anchored-menu-surface") as HTMLDivElement;
-    menu.getBoundingClientRect = vi.fn(() => ({
+    mockRect(menu, {
       x: 0,
       y: 0,
       left: 0,
@@ -148,8 +153,7 @@ describe("AnchoredMenu", () => {
       bottom: 90,
       width: 100,
       height: 90,
-      toJSON: () => undefined,
-    })) as typeof menu.getBoundingClientRect;
+    });
 
     fireEvent(window, new Event("scroll"));
 
