@@ -5,6 +5,7 @@ import {
   sharedProfileEntries,
   toolProfileDisplayLabel,
 } from "../lib/profile-display";
+import { CURRENT_LABEL } from "../lib/status-copy";
 import { toolDisplayName } from "../lib/tool-display";
 import { countLabel } from "../lib/utils";
 
@@ -55,7 +56,7 @@ export const QUICK_SWITCH_COPY = {
   shortcutsAriaLabel: "Quick Switch shortcuts",
   noMatchesHeading: "No matches",
   currentSelectionLabel: "Current selection",
-  currentBadgeLabel: "Current",
+  currentBadgeLabel: CURRENT_LABEL,
   selectedMetaLabel: "Selected",
   inactiveMetaLabel: "Return",
 } as const;

@@ -21,6 +21,7 @@ import {
   profileSetStatus,
   setSelectionCountLabel,
 } from "../../lib/sets-display";
+import { CURRENT_LABEL } from "../../lib/status-copy";
 import { toolShortName } from "../../lib/tool-registry";
 
 export type EditableProfileSet = {
@@ -101,7 +102,7 @@ export const SETS_PANEL_COPY = {
   importedContextsDetail:
     "Use an imported CLI context directly without turning it into a saved set.",
   importedContextSummaryPrefix: "CLI context · ",
-  currentLabel: "Current",
+  currentLabel: CURRENT_LABEL,
   editSetLabel: "Edit…",
   setActionsMenuAriaLabel: "Set actions",
   renameSetLabel: "Rename…",

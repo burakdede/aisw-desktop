@@ -11,6 +11,11 @@ import { toolBinaryName } from "../../lib/tool-guidance";
 import { resolveErrorDetails, resolveErrorMessage } from "../../lib/error-details";
 import { asArray, asObject, asOptionalString } from "../../lib/parse-guards";
 import { runtimeSummary } from "../../lib/runtime-display";
+import {
+  AVAILABLE_LABEL,
+  NO_SAVED_PROFILE_YET_LABEL,
+  NOT_INSTALLED_LABEL,
+} from "../../lib/status-copy";
 import { countLabel, titleCase } from "../../lib/utils";
 import { parseDoctorReportChecks } from "../diagnostics/diagnostic-doctor-checks";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
@@ -270,10 +275,10 @@ const ONBOARDING_ACCOUNT_PRESENTATION_COPY = {
   },
   needsProfile: {
     badge: { tone: "soft", label: "Needs profile" },
-    summary: "No saved profile yet",
+    summary: NO_SAVED_PROFILE_YET_LABEL,
   },
   missing: {
-    badge: { tone: "soft", label: "Not installed" },
+    badge: { tone: "soft", label: NOT_INSTALLED_LABEL },
     summary: "Not installed yet",
   },
 } as const;
@@ -285,7 +290,7 @@ const SECURE_STORAGE_STATUS_COPY = {
     detail:
       "Secure storage has not been confirmed yet. You can still continue with local file-based profiles.",
   },
-  availableLabel: "Available",
+  availableLabel: AVAILABLE_LABEL,
   detailByPlatform: {
     mac: "Login Keychain available for local credential storage.",
     windows: "Windows Credential Manager available for local credential storage.",
