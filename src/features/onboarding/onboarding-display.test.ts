@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AppBootstrap, AppSnapshot, InitReport } from "../../lib/schemas";
+import { makeRuntimeToolCapabilities } from "../../test-support/runtime-tool-capabilities";
 import {
   ONBOARDING_ACCOUNTS_STEP_COPY,
   ONBOARDING_DONE_STEP_COPY,
@@ -70,14 +71,9 @@ function makeBootstrap(overrides: Partial<AppBootstrap> = {}): AppBootstrap {
       },
       capabilities: {
         features: {},
-        tools: {
-          claude: {
-            auth_methods: ["oauth"],
-            state_modes: ["isolated", "shared"],
-            credential_backends: ["system-keyring"],
-            fail_closed_keyring_identity: false,
-          },
-        },
+        tools: makeRuntimeToolCapabilities({
+          claude: undefined,
+        }),
       },
       inventory: {
         bundled_path: "/Applications/AI Switcher.app/Contents/Resources/aisw",

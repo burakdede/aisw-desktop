@@ -28,6 +28,7 @@ import {
 } from "./app-shell";
 import type { AppSnapshot, DesktopSettings } from "./lib/schemas";
 import { DesktopCommandError } from "./lib/tauri";
+import { makeRuntimeToolCapabilities } from "./test-support/runtime-tool-capabilities";
 
 function makeSettings(
   overrides: Partial<DesktopSettings> = {},
@@ -430,20 +431,10 @@ describe("app-shell helpers", () => {
             },
           ],
         }),
-        toolCapabilities: {
-          claude: {
-            auth_methods: ["oauth"],
-            state_modes: ["isolated", "shared"],
-            credential_backends: ["system-keyring"],
-            fail_closed_keyring_identity: false,
-          },
-          codex: {
-            auth_methods: ["oauth"],
-            state_modes: ["isolated", "shared"],
-            credential_backends: ["system-keyring"],
-            fail_closed_keyring_identity: false,
-          },
-        },
+        toolCapabilities: makeRuntimeToolCapabilities({
+          claude: undefined,
+          codex: undefined,
+        }),
         runtimeBlocked: false,
       }),
     ).toEqual({
@@ -461,20 +452,10 @@ describe("app-shell helpers", () => {
       resolveActiveReapplyAction({
         snapshot: makeSnapshot(),
         settings: makeSettings(),
-        toolCapabilities: {
-          claude: {
-            auth_methods: ["oauth"],
-            state_modes: ["isolated", "shared"],
-            credential_backends: ["system-keyring"],
-            fail_closed_keyring_identity: false,
-          },
-          codex: {
-            auth_methods: ["oauth"],
-            state_modes: ["isolated", "shared"],
-            credential_backends: ["system-keyring"],
-            fail_closed_keyring_identity: false,
-          },
-        },
+        toolCapabilities: makeRuntimeToolCapabilities({
+          claude: undefined,
+          codex: undefined,
+        }),
         runtimeBlocked: false,
       }),
     ).toEqual({
@@ -508,20 +489,10 @@ describe("app-shell helpers", () => {
           },
         }),
         settings: makeSettings(),
-        toolCapabilities: {
-          claude: {
-            auth_methods: ["oauth"],
-            state_modes: ["isolated", "shared"],
-            credential_backends: ["system-keyring"],
-            fail_closed_keyring_identity: false,
-          },
-          codex: {
-            auth_methods: ["oauth"],
-            state_modes: ["isolated", "shared"],
-            credential_backends: ["system-keyring"],
-            fail_closed_keyring_identity: false,
-          },
-        },
+        toolCapabilities: makeRuntimeToolCapabilities({
+          claude: undefined,
+          codex: undefined,
+        }),
         runtimeBlocked: false,
       }),
     ).toEqual({
@@ -567,20 +538,10 @@ describe("app-shell helpers", () => {
           },
         }),
         settings: makeSettings(),
-        toolCapabilities: {
-          claude: {
-            auth_methods: ["oauth"],
-            state_modes: ["isolated", "shared"],
-            credential_backends: ["system-keyring"],
-            fail_closed_keyring_identity: false,
-          },
-          codex: {
-            auth_methods: ["oauth"],
-            state_modes: ["isolated", "shared"],
-            credential_backends: ["system-keyring"],
-            fail_closed_keyring_identity: false,
-          },
-        },
+        toolCapabilities: makeRuntimeToolCapabilities({
+          claude: undefined,
+          codex: undefined,
+        }),
         runtimeBlocked: false,
       }),
     ).toThrow("AI Switch could not determine a single active profile to re-apply.");

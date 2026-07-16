@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "../../lib/schemas";
 import { DEFAULT_PROFILE_IMPORT_MODE } from "../shared/profile-capabilities";
+import { makeRuntimeToolCapabilities } from "../../test-support/runtime-tool-capabilities";
 import {
   DIAGNOSTICS_PANEL_COPY,
   buildDiagnosticQuickFixModels,
@@ -96,20 +97,16 @@ function makeSettings(overrides: Partial<DesktopSettings> = {}): DesktopSettings
 }
 
 function makeToolCapabilities(): NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"] {
-  return {
+  return makeRuntimeToolCapabilities({
     claude: {
       auth_methods: ["from_live", "oauth"],
-      state_modes: ["isolated", "shared"],
       credential_backends: ["file", "system_keyring"],
-      fail_closed_keyring_identity: false,
     },
     codex: {
       auth_methods: ["from_live", "oauth"],
-      state_modes: ["isolated", "shared"],
       credential_backends: ["file", "system_keyring"],
-      fail_closed_keyring_identity: false,
     },
-  };
+  });
 }
 
 describe("diagnostics-panel-display", () => {

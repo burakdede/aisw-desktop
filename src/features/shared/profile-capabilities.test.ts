@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AppBootstrap } from "../../lib/schemas";
+import { makeRuntimeToolCapabilities } from "../../test-support/runtime-tool-capabilities";
 import {
   DEFAULT_PROFILE_CREDENTIAL_BACKEND,
   DEFAULT_PROFILE_IMPORT_MODE,
@@ -22,14 +23,12 @@ describe("profile-capabilities", () => {
   });
 
   it("normalizes supported import modes and preferred fallbacks", () => {
-    const toolCapabilities: ToolCapabilities = {
+    const toolCapabilities: ToolCapabilities = makeRuntimeToolCapabilities({
       claude: {
         auth_methods: ["oauth", "from_live", "oauth", "unknown"],
         state_modes: [],
-        credential_backends: ["system-keyring"],
-        fail_closed_keyring_identity: false,
       },
-    };
+    });
 
     expect(supportedProfileImportModes("claude", toolCapabilities)).toEqual([
       "oauth",
@@ -42,20 +41,18 @@ describe("profile-capabilities", () => {
   });
 
   it("normalizes supported credential backends and request values", () => {
-    const toolCapabilities: ToolCapabilities = {
+    const toolCapabilities: ToolCapabilities = makeRuntimeToolCapabilities({
       claude: {
         auth_methods: [],
         state_modes: [],
         credential_backends: ["system_keyring", "file", "file"],
-        fail_closed_keyring_identity: false,
       },
       gemini: {
         auth_methods: [],
         state_modes: [],
         credential_backends: [],
-        fail_closed_keyring_identity: false,
       },
-    };
+    });
 
     expect(supportedCredentialBackends("claude", toolCapabilities)).toEqual([
       DEFAULT_PROFILE_CREDENTIAL_BACKEND,
