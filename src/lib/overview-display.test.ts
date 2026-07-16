@@ -213,7 +213,7 @@ describe("overview-display", () => {
         remediation: "Open Sets",
       }),
     ).toBe("Warning: Workspace mismatch Remediation: Open Sets");
-    expect(overviewAuthMethodLabel("api_key")).toBe("Api Key");
+    expect(overviewAuthMethodLabel("api_key")).toBe("API Key");
     expect(overviewAuthMethodLabel(null)).toBe("Not configured");
     expect(overviewInspectorActionDisabled("open_profile", true, true)).toBe(false);
     expect(overviewInspectorActionDisabled("refresh", false, true)).toBe(true);

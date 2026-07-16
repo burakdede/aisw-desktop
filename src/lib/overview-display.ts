@@ -1,3 +1,4 @@
+import { AUTH_METHOD_NOT_CONFIGURED_LABEL, authMethodLabel } from "./auth-method-display";
 import { normalizeRuntimeLanguage } from "../features/shared/runtime-language";
 import { fixedStateModeDescription, stateModeDescription, stateModeLabel } from "../features/shared/state-modes";
 import { toolInspectorEmptyLabel, overviewHealthLabel, overviewHealthText, resolveOverviewHealthState, type OverviewHealthState } from "./status-display";
@@ -318,7 +319,7 @@ export function overviewDiagnosticWarning(warning: ToolStatus["warnings"][number
 }
 
 export function overviewAuthMethodLabel(authMethod: string | null | undefined) {
-  return authMethod ? titleCase(authMethod.replace(/_/g, " ")) : "Not configured";
+  return authMethodLabel(authMethod, AUTH_METHOD_NOT_CONFIGURED_LABEL);
 }
 
 export function overviewInspectorActionDisabled(

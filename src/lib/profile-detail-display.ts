@@ -1,8 +1,8 @@
+import { authMethodLabel } from "./auth-method-display";
 import { DATE_UNAVAILABLE_LABEL } from "./date-format";
 import { NOT_AVAILABLE_LABEL, VERIFICATION_REQUIRED_LABEL } from "./display-copy";
 import type { ToolStatus } from "./schemas";
 import { stateModeLabel } from "../features/shared/state-modes";
-import { titleCase } from "./utils";
 
 export const HIDE_STORAGE_DETAILS_LABEL = "Hide Storage Details";
 export const STORAGE_DETAILS_LABEL = "Storage Details";
@@ -24,13 +24,7 @@ export function profileStorageBooleanLabel(value: boolean | null | undefined) {
 }
 
 export function profileAuthMethodLabel(auth: string) {
-  if (auth === "oauth") {
-    return "OAuth";
-  }
-  if (auth === "api_key") {
-    return "API Key";
-  }
-  return titleCase(auth.split("_").join(" "));
+  return authMethodLabel(auth);
 }
 
 export function profileTokenWarningLabel(status: Pick<ToolStatus, "token_warning">) {
