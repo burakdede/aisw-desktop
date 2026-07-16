@@ -47,8 +47,9 @@ const bootstrapSettings: DesktopSettings = {
 };
 
 type DesktopMockRecord = UnknownRecord;
+type AppBootstrapFixture = AppBootstrap & { snapshot: AppSnapshot };
 
-const bootstrap = {
+const bootstrap: AppBootstrapFixture = {
   settings: bootstrapSettings,
   runtime_status: {
     resolved_path: "/Applications/AI Switch.app/Contents/Resources/aisw",
@@ -85,6 +86,7 @@ const bootstrap = {
         active_profile_applied: true,
         credentials_present: true,
         permissions_ok: true,
+        warnings: [],
       },
     ],
     profiles: {
@@ -276,13 +278,13 @@ async function renderSetupPanel({
   });
 
   let rendered: ReturnType<typeof render> | undefined;
-  const setupBootstrap = (bootstrapOverride ?? bootstrap) as unknown as AppBootstrap;
+  const setupBootstrap = bootstrapOverride ?? bootstrap;
   await act(async () => {
     rendered = render(
       <QueryClientProvider client={queryClient}>
         <SetupPanel
           bootstrap={setupBootstrap}
-          snapshot={(setupBootstrap.snapshot ?? bootstrap.snapshot) as unknown as AppSnapshot}
+          snapshot={setupBootstrap.snapshot ?? bootstrap.snapshot}
           initReport={initReport}
           onOpenProfiles={onOpenProfiles}
           onOpenSettings={onOpenSettings}
@@ -2323,7 +2325,7 @@ describe("App", () => {
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: bootstrap,
           get_snapshot: bootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
@@ -2334,7 +2336,7 @@ describe("App", () => {
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
           get_settings: bootstrap.settings,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -3823,7 +3825,7 @@ describe("App", () => {
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: bootstrap,
           get_snapshot: bootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
@@ -3840,7 +3842,7 @@ describe("App", () => {
             },
           ],
           get_settings: bootstrap.settings,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -3911,7 +3913,7 @@ describe("App", () => {
 
     window.__AISW_DESKTOP_MOCK__ = async (command) =>
       (
-        {
+        desktopMockRecord({
           get_bootstrap: {
             ...bootstrap,
             settings: labeledSettings,
@@ -3931,7 +3933,7 @@ describe("App", () => {
             },
           ],
           get_settings: labeledSettings,
-        } as Record<string, unknown>
+        })
       )[command];
 
     await renderApp();
@@ -3948,7 +3950,7 @@ describe("App", () => {
   it("uses the newest matching backup timestamp in the profiles inspector", async () => {
     window.__AISW_DESKTOP_MOCK__ = async (command) =>
       (
-        {
+        desktopMockRecord({
           get_bootstrap: bootstrap,
           get_snapshot: bootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
@@ -3970,7 +3972,7 @@ describe("App", () => {
             },
           ],
           get_settings: bootstrap.settings,
-        } as Record<string, unknown>
+        })
       )[command];
 
     await renderApp();
@@ -4036,7 +4038,7 @@ describe("App", () => {
         return { command, snapshot: sharedModeBootstrap.snapshot };
       }
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: sharedModeBootstrap,
           get_snapshot: sharedModeBootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
@@ -4053,7 +4055,7 @@ describe("App", () => {
             },
           ],
           get_settings: sharedModeBootstrap.settings,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -4087,7 +4089,7 @@ describe("App", () => {
     window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
       calls.push({ command, args });
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: bootstrap,
           get_snapshot: bootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
@@ -4104,7 +4106,7 @@ describe("App", () => {
             },
           ],
           get_settings: bootstrap.settings,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -4132,7 +4134,7 @@ describe("App", () => {
         return { command, snapshot: bootstrap.snapshot };
       }
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: bootstrap,
           get_snapshot: bootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
@@ -4143,7 +4145,7 @@ describe("App", () => {
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
           get_settings: bootstrap.settings,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -4164,7 +4166,7 @@ describe("App", () => {
         return { command, snapshot: bootstrap.snapshot };
       }
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: bootstrap,
           get_snapshot: bootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
@@ -4175,7 +4177,7 @@ describe("App", () => {
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
           get_settings: bootstrap.settings,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -4231,7 +4233,7 @@ describe("App", () => {
         return { command, snapshot: sharedBootstrap.snapshot };
       }
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: sharedBootstrap,
           get_snapshot: sharedBootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
@@ -4242,7 +4244,7 @@ describe("App", () => {
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
           get_settings: sharedBootstrap.settings,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -4270,7 +4272,7 @@ describe("App", () => {
         return { command, snapshot: bootstrap.snapshot };
       }
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: bootstrap,
           get_snapshot: bootstrap.snapshot,
           run_init: {
@@ -4287,7 +4289,7 @@ describe("App", () => {
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
           get_settings: bootstrap.settings,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -4327,10 +4329,16 @@ describe("App", () => {
         return currentSettings;
       }
       return (
-        {
+        desktopMockRecord({
           run_doctor: { checks: [], summary: { status: "pass" } },
-          get_shell_guidance: { detected_shell: "zsh", capabilities: [], note: "", manual_apply_examples: [], variants: [] },
-        } as Record<string, unknown>
+          get_shell_guidance: {
+            detected_shell: "zsh",
+            capabilities: [],
+            note: "",
+            manual_apply_examples: [],
+            variants: [],
+          },
+        })
       )[command];
     };
 
@@ -4343,7 +4351,7 @@ describe("App", () => {
           compatible: false,
           issues: ["Engine capability details are unavailable"],
         },
-      } as unknown as AppBootstrap,
+      },
       initReport: {
         result: {
           live_accounts: [{ tool: "claude", outcome: "detected", auth_method: "oauth" }],
@@ -4373,7 +4381,7 @@ describe("App", () => {
         return { command, snapshot: bootstrap.snapshot };
       }
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: {
             ...bootstrap,
             snapshot: {
@@ -4403,7 +4411,7 @@ describe("App", () => {
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
           get_settings: bootstrap.settings,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
