@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DesktopCommandError } from "./tauri";
-import { resolveErrorDetails } from "./error-details";
+import { resolveErrorDetails, resolveErrorMessage } from "./error-details";
 
 describe("error-details", () => {
   it("extracts desktop command details when available", () => {
@@ -41,5 +41,10 @@ describe("error-details", () => {
     expect(resolveErrorDetails(null, "Fallback")).toEqual({
       message: "Fallback",
     });
+    expect(resolveErrorMessage(new Error("Oops"), "Fallback")).toBe("Oops");
+    expect(resolveErrorMessage({ message: "Object failure" }, "Fallback")).toBe(
+      "Object failure",
+    );
+    expect(resolveErrorMessage(null, "Fallback")).toBe("Fallback");
   });
 });

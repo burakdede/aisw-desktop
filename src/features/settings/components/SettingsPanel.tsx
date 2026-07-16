@@ -17,6 +17,7 @@ import {
   DEFAULT_ACTION_FAILURE_MESSAGE,
   NOT_FOUND_LABEL,
 } from "../../../lib/display-copy";
+import { resolveErrorMessage } from "../../../lib/error-details";
 import { notifyDesktop } from "../../../lib/notifications";
 import {
   detectedShellLabel,
@@ -273,8 +274,7 @@ export function SettingsPanel({
         body: message,
       });
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : DEFAULT_ACTION_FAILURE_MESSAGE;
+      const message = resolveErrorMessage(error, DEFAULT_ACTION_FAILURE_MESSAGE);
       setSecurityMessage(message);
     }
   }

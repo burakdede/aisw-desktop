@@ -35,3 +35,10 @@ export function resolveErrorDetails(
 
   return { message: fallbackMessage };
 }
+
+export function resolveErrorMessage(
+  error: unknown,
+  fallbackMessage: string,
+) {
+  return resolveErrorDetails(error, fallbackMessage).message;
+}

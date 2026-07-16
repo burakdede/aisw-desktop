@@ -10,7 +10,7 @@ import {
   normalizeDesktopUpdateChannel,
   type DesktopUpdateChannel,
 } from "../../lib/desktop-settings";
-import { resolveErrorDetails } from "../../lib/error-details";
+import { resolveErrorDetails, resolveErrorMessage } from "../../lib/error-details";
 import { normalizeResolvedCheckStatus } from "../../lib/check-status";
 import {
   DEFAULT_SETTINGS_SECTION,
@@ -330,17 +330,11 @@ export function openedAppDataFolderMessage(path: string) {
 }
 
 export function launchAtLoginErrorMessage(error: unknown) {
-  return resolveErrorDetails(
-    error,
-    "AI Switch could not update launch at login.",
-  ).message;
+  return resolveErrorMessage(error, "AI Switch could not update launch at login.");
 }
 
 export function appDataFolderErrorMessage(error: unknown) {
-  return resolveErrorDetails(
-    error,
-    "AI Switch could not open the app data folder.",
-  ).message;
+  return resolveErrorMessage(error, "AI Switch could not open the app data folder.");
 }
 
 export function launchAtLoginDescription(

@@ -24,6 +24,7 @@ import { SettingsPanel } from "./features/settings/components/SettingsPanel";
 import { useDesktop } from "./features/shared/useDesktop";
 import { notifyDesktop } from "./lib/notifications";
 import { DEFAULT_ACTION_FAILURE_MESSAGE, savedItemMessage } from "./lib/display-copy";
+import { resolveErrorMessage } from "./lib/error-details";
 import {
   DESKTOP_DIAGNOSTIC_QUERY_KEYS,
   DESKTOP_MENU_EVENTS,
@@ -221,7 +222,7 @@ export function App() {
     onError: async (error) => {
       await notifyDesktop({
         title: "Support report export failed",
-        body: error instanceof Error ? error.message : DEFAULT_ACTION_FAILURE_MESSAGE,
+        body: resolveErrorMessage(error, DEFAULT_ACTION_FAILURE_MESSAGE),
       });
     },
   });
@@ -376,7 +377,7 @@ export function App() {
             .catch((error) =>
               notifyDesktop({
                 title: "Diagnostic export failed",
-                body: error instanceof Error ? error.message : DEFAULT_ACTION_FAILURE_MESSAGE,
+                body: resolveErrorMessage(error, DEFAULT_ACTION_FAILURE_MESSAGE),
               }),
             );
         },
