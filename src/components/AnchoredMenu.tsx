@@ -9,6 +9,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "../lib/utils";
+import { readViewportHeight, readViewportWidth } from "../lib/viewport-size";
 
 export function AnchoredMenu({
   anchorRef,
@@ -50,9 +51,9 @@ export function AnchoredMenu({
       const containmentElement = containmentSelector ? anchor.closest(containmentSelector) : null;
       const containmentRect = containmentElement?.getBoundingClientRect();
       const minLeft = (containmentRect?.left ?? 0) + 8;
-      const maxRight = (containmentRect?.right ?? window.innerWidth) - 8;
+      const maxRight = (containmentRect?.right ?? readViewportWidth(0)) - 8;
       const minTop = (containmentRect?.top ?? 0) + 8;
-      const maxBottom = (containmentRect?.bottom ?? window.innerHeight) - 8;
+      const maxBottom = (containmentRect?.bottom ?? readViewportHeight(0)) - 8;
       const margin = 8;
 
       let left = align === "start" ? anchorRect.left : anchorRect.right - menuRect.width;

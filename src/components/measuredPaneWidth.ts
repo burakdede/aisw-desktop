@@ -1,9 +1,11 @@
+import { readViewportWidth } from "../lib/viewport-size";
+
 export function measuredPaneWidth(
   element: HTMLDivElement | null,
   fallbackWidth: number,
 ) {
   if (!element) {
-    return typeof window !== "undefined" ? window.innerWidth : fallbackWidth;
+    return readViewportWidth(fallbackWidth);
   }
 
   const width = element.getBoundingClientRect().width;
@@ -11,5 +13,5 @@ export function measuredPaneWidth(
     return width;
   }
 
-  return typeof window !== "undefined" ? window.innerWidth : fallbackWidth;
+  return readViewportWidth(fallbackWidth);
 }

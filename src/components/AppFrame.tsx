@@ -1,8 +1,10 @@
 import { KeyboardEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { cn } from "../lib/utils";
+import { readViewportWidth } from "../lib/viewport-size";
 import { BrandMark } from "./BrandMark";
 import {
   APP_FRAME_COPY,
+  COMPACT_SIDEBAR_BREAKPOINT,
   appFrameNavDirectionForKey,
   defaultSidebarOpen,
   isCompactSidebarWidth,
@@ -44,8 +46,12 @@ export function AppFrame({
   children,
 }: AppFrameProps) {
   const navButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const [compactSidebar, setCompactSidebar] = useState(() => isCompactSidebarWidth(window.innerWidth));
-  const [sidebarOpen, setSidebarOpen] = useState(() => defaultSidebarOpen(window.innerWidth));
+  const [compactSidebar, setCompactSidebar] = useState(() =>
+    isCompactSidebarWidth(readViewportWidth(COMPACT_SIDEBAR_BREAKPOINT)),
+  );
+  const [sidebarOpen, setSidebarOpen] = useState(() =>
+    defaultSidebarOpen(readViewportWidth(COMPACT_SIDEBAR_BREAKPOINT)),
+  );
   const groups = nav.reduce<Record<string, NavItem[]>>((acc, item) => {
     acc[item.group] ??= [];
     acc[item.group].push(item);
@@ -83,7 +89,9 @@ export function AppFrame({
 
   useEffect(() => {
     function syncSidebarLayout() {
-      const nextCompact = isCompactSidebarWidth(window.innerWidth);
+      const nextCompact = isCompactSidebarWidth(
+        readViewportWidth(COMPACT_SIDEBAR_BREAKPOINT),
+      );
       setCompactSidebar(nextCompact);
       setSidebarOpen((current) => {
         if (!nextCompact) {
