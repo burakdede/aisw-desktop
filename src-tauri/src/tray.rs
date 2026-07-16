@@ -15,11 +15,28 @@ const OPEN_ID: &str = "open";
 const SETTINGS_ID: &str = "settings";
 const DIAGNOSTICS_ID: &str = "diagnostics";
 const QUIT_ID: &str = "quit";
+const CONTEXT_PREFIX: &str = "context:";
+const PROFILE_PREFIX: &str = "profile:";
 const SWITCH_ALL_PREFIX: &str = "switch-all:";
 const PROFILE_SET_PREFIX: &str = "profile-set:";
 const OPEN_DIAGNOSTICS_EVENT: &str = "tray-open-diagnostics";
 const RUN_DIAGNOSTICS_EVENT: &str = "tray-run-diagnostics";
 const TRAY_COMMAND_RESULT_EVENT: &str = "tray-command-result";
+const TRAY_COMMAND_STATUS_SUCCESS: &str = "success";
+const TRAY_COMMAND_STATUS_ERROR: &str = "error";
+const ACTIVE_MARKER_SUFFIX: &str = " ✓";
+const DESKTOP_ENGINE_UNAVAILABLE_LABEL: &str = "Desktop engine unavailable";
+const NO_ACTIVE_PROFILES_LABEL: &str = "no active profiles";
+const CURRENT_SET_LABEL: &str = "Current Set";
+const OPEN_AI_SWITCH_LABEL: &str = "Open AI Switch";
+const SETTINGS_LABEL: &str = "Settings…";
+const QUIT_AI_SWITCH_LABEL: &str = "Quit AI Switch";
+const SWITCHING_UNAVAILABLE_NOTICE: &str =
+    "Switching is unavailable. Switch back to the included desktop engine in Settings.";
+const SWITCH_SET_TITLE: &str = "Switch Set";
+const DIAGNOSTICS_TITLE: &str = "Diagnostics";
+const VERIFY_NOW_LABEL: &str = "Verify Now";
+const DIAGNOSTICS_READY_LABEL: &str = "Ready: no warnings";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum TrayAction {
@@ -288,7 +305,7 @@ fn build_tray_command_result_event(
         Ok(_) => TrayCommandResultEvent {
             scope,
             label: label.to_owned(),
-            status: "success".to_owned(),
+            status: TRAY_COMMAND_STATUS_SUCCESS.to_owned(),
             message: success_message,
             kind: None,
             remediation: None,
@@ -296,7 +313,7 @@ fn build_tray_command_result_event(
         Err(error) => TrayCommandResultEvent {
             scope,
             label: label.to_owned(),
-            status: "error".to_owned(),
+            status: TRAY_COMMAND_STATUS_ERROR.to_owned(),
             message: error.message,
             kind: Some(error.kind),
             remediation: error.remediation,
@@ -339,8 +356,8 @@ fn parse_tray_action(id: &str) -> TrayAction {
         SETTINGS_ID => TrayAction::OpenSettings,
         DIAGNOSTICS_ID => TrayAction::OpenDiagnostics,
         QUIT_ID => TrayAction::Quit,
-        _ if id.starts_with("context:") => {
-            TrayAction::UseContext(id.trim_start_matches("context:").to_owned())
+        _ if id.starts_with(CONTEXT_PREFIX) => {
+            TrayAction::UseContext(id.trim_start_matches(CONTEXT_PREFIX).to_owned())
         }
         _ if id.starts_with(SWITCH_ALL_PREFIX) => {
             TrayAction::UseAllProfiles(id.trim_start_matches(SWITCH_ALL_PREFIX).to_owned())
@@ -348,7 +365,7 @@ fn parse_tray_action(id: &str) -> TrayAction {
         _ if id.starts_with(PROFILE_SET_PREFIX) => {
             TrayAction::ActivateProfileSet(id.trim_start_matches(PROFILE_SET_PREFIX).to_owned())
         }
-        _ if id.starts_with("profile:") => {
+        _ if id.starts_with(PROFILE_PREFIX) => {
             let mut parts = id.splitn(3, ':');
             let _ = parts.next();
             let tool = parts.next().unwrap_or_default();
@@ -450,29 +467,13 @@ fn tray_menu_model(
         status_items,
         runtime_notice: tray_runtime_notice(runtime_compatible).map(str::to_owned),
         sections,
-        footer_items: vec![
-            TrayEntry {
-                id: OPEN_ID.to_owned(),
-                label: "Open AI Switch".to_owned(),
-                enabled: true,
-            },
-            TrayEntry {
-                id: SETTINGS_ID.to_owned(),
-                label: "Settings…".to_owned(),
-                enabled: true,
-            },
-            TrayEntry {
-                id: QUIT_ID.to_owned(),
-                label: "Quit AI Switch".to_owned(),
-                enabled: true,
-            },
-        ],
+        footer_items: tray_footer_items(),
     }
 }
 
 fn tray_status_label(runtime_compatible: bool, snapshot: Option<&AppSnapshot>) -> String {
     if !runtime_compatible {
-        return "Desktop engine unavailable".to_owned();
+        return DESKTOP_ENGINE_UNAVAILABLE_LABEL.to_owned();
     }
 
     active_summary_or_default(snapshot)
@@ -482,7 +483,7 @@ fn tray_runtime_notice(runtime_compatible: bool) -> Option<&'static str> {
     if runtime_compatible {
         None
     } else {
-        Some("Switching is unavailable. Switch back to the included desktop engine in Settings.")
+        Some(SWITCHING_UNAVAILABLE_NOTICE)
     }
 }
 
@@ -514,7 +515,7 @@ fn active_summary(snapshot: &AppSnapshot) -> String {
         })
         .collect::<Vec<_>>();
     if active.is_empty() {
-        "no active profiles".to_owned()
+        NO_ACTIVE_PROFILES_LABEL.to_owned()
     } else {
         active.join(", ")
     }
@@ -523,7 +524,7 @@ fn active_summary(snapshot: &AppSnapshot) -> String {
 fn active_summary_or_default(snapshot: Option<&AppSnapshot>) -> String {
     snapshot
         .map(active_summary)
-        .unwrap_or_else(|| "no active profiles".to_owned())
+        .unwrap_or_else(|| NO_ACTIVE_PROFILES_LABEL.to_owned())
 }
 
 fn active_set_label(
@@ -566,30 +567,28 @@ fn tray_status_items(
     snapshot: Option<&AppSnapshot>,
     runtime_compatible: bool,
 ) -> Vec<TrayEntry> {
-    let mut items = vec![TrayEntry {
-        id: "status.current-set".to_owned(),
-        label: active_set_label(settings, snapshot)
-            .map(|name| format!("Current Set: {name}"))
+    let mut items = vec![status_entry(
+        "status.current-set",
+        active_set_label(settings, snapshot)
+            .map(|name| format!("{CURRENT_SET_LABEL}: {name}"))
             .unwrap_or_else(|| {
                 format!(
-                    "Current Set: {}",
+                    "{CURRENT_SET_LABEL}: {}",
                     tray_status_label(runtime_compatible, snapshot)
                 )
             }),
-        enabled: false,
-    }];
+    )];
 
     if let Some(snapshot) = snapshot {
         for tool in tray_tool_order(snapshot) {
-            items.push(TrayEntry {
-                id: format!("status.tool.{tool}"),
-                label: format!(
+            items.push(status_entry(
+                format!("status.tool.{tool}"),
+                format!(
                     "{}: {}",
                     tool_display_name(&tool),
                     tray_active_profile_label(settings, snapshot, &tool)
                 ),
-                enabled: false,
-            });
+            ));
         }
     }
 
@@ -661,7 +660,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
     let set_entries = combined_set_entries(settings, snapshot);
     if !set_entries.is_empty() {
         sections.push(TraySection {
-            title: "Switch Set".to_owned(),
+            title: SWITCH_SET_TITLE.to_owned(),
             items: set_entries,
         });
     }
@@ -680,7 +679,7 @@ fn tray_sections(settings: Option<&DesktopSettings>, snapshot: &AppSnapshot) -> 
                 .iter()
                 .map(|profile| {
                     let suffix = if entry.active.as_deref() == Some(profile.name.as_str()) {
-                        " ✓"
+                        ACTIVE_MARKER_SUFFIX
                     } else {
                         ""
                     };
@@ -728,10 +727,11 @@ fn profile_set_entries(settings: &DesktopSettings, snapshot: &AppSnapshot) -> Ve
             profile_set_has_usable_selections(set, snapshot)
                 && !has_matching_cli_context(snapshot, &set.name)
         })
-        .map(|set| TrayEntry {
-            id: format!("{PROFILE_SET_PREFIX}{}", set.name),
-            label: profile_set_label(&set, snapshot),
-            enabled: true,
+        .map(|set| {
+            selectable_entry(
+                format!("{PROFILE_SET_PREFIX}{}", set.name),
+                profile_set_label(&set, snapshot),
+            )
         })
         .collect()
 }
@@ -742,20 +742,17 @@ fn combined_set_entries(
 ) -> Vec<TrayEntry> {
     let mut shared_entries = shared_profile_entries(settings, snapshot)
         .into_iter()
-        .map(|(profile, label)| TrayEntry {
-            id: format!("{SWITCH_ALL_PREFIX}{profile}"),
-            label,
-            enabled: true,
-        })
+        .map(|(profile, label)| selectable_entry(format!("{SWITCH_ALL_PREFIX}{profile}"), label))
         .collect::<Vec<_>>();
 
     let mut context_entries = snapshot
         .contexts
         .iter()
-        .map(|context| TrayEntry {
-            id: format!("context:{}", context.name),
-            label: tray_context_entry_label(settings, snapshot, &context.name),
-            enabled: true,
+        .map(|context| {
+            selectable_entry(
+                format!("{CONTEXT_PREFIX}{}", context.name),
+                tray_context_entry_label(settings, snapshot, &context.name),
+            )
         })
         .collect::<Vec<_>>();
     context_entries.sort_by_key(|left| left.label.to_lowercase());
@@ -777,34 +774,28 @@ fn combined_set_entries(
 
 fn tray_diagnostics_section(snapshot: &AppSnapshot) -> TraySection {
     let summaries = tray_warning_summaries(snapshot);
-    let mut items = vec![TrayEntry {
-        id: DIAGNOSTICS_ID.to_owned(),
-        label: "Verify Now".to_owned(),
-        enabled: true,
-    }];
-
-    if summaries.is_empty() {
-        items.push(TrayEntry {
-            id: "diagnostics.summary".to_owned(),
-            label: "Ready: no warnings".to_owned(),
-            enabled: false,
-        });
-    } else {
-        items.push(TrayEntry {
-            id: "diagnostics.summary".to_owned(),
-            label: format!(
-                "{} Warning{}: {}",
-                summaries.len(),
-                if summaries.len() == 1 { "" } else { "s" },
-                summaries[0]
-            ),
-            enabled: false,
-        });
-    }
+    let mut items = vec![selectable_entry(DIAGNOSTICS_ID, VERIFY_NOW_LABEL)];
+    items.push(status_entry(
+        "diagnostics.summary",
+        diagnostics_summary_label(&summaries),
+    ));
 
     TraySection {
-        title: "Diagnostics".to_owned(),
+        title: DIAGNOSTICS_TITLE.to_owned(),
         items,
+    }
+}
+
+fn diagnostics_summary_label(summaries: &[String]) -> String {
+    if summaries.is_empty() {
+        DIAGNOSTICS_READY_LABEL.to_owned()
+    } else {
+        format!(
+            "{} Warning{}: {}",
+            summaries.len(),
+            if summaries.len() == 1 { "" } else { "s" },
+            summaries[0]
+        )
     }
 }
 
@@ -851,7 +842,7 @@ fn tray_warning_summaries(snapshot: &AppSnapshot) -> Vec<String> {
 fn profile_set_label(set: &ProfileSet, snapshot: &AppSnapshot) -> String {
     let label = set.label.as_deref().unwrap_or(&set.name);
     if profile_set_is_active(set, snapshot) {
-        format!("{label} ✓")
+        active_entry_label(label, true)
     } else {
         label.to_owned()
     }
@@ -929,11 +920,7 @@ fn tray_context_entry_label(
     context: &str,
 ) -> String {
     let label = tray_context_display_label(settings, context);
-    if active_context_name(snapshot) == Some(context) {
-        format!("{label} ✓")
-    } else {
-        label
-    }
+    active_entry_label(&label, active_context_name(snapshot) == Some(context))
 }
 
 fn active_context_name(snapshot: &AppSnapshot) -> Option<&str> {
@@ -1015,6 +1002,38 @@ fn shared_profile_display_name_from_parts(
         .unwrap_or_else(|| title_case(&profile.name))
 }
 
+fn tray_footer_items() -> Vec<TrayEntry> {
+    vec![
+        selectable_entry(OPEN_ID, OPEN_AI_SWITCH_LABEL),
+        selectable_entry(SETTINGS_ID, SETTINGS_LABEL),
+        selectable_entry(QUIT_ID, QUIT_AI_SWITCH_LABEL),
+    ]
+}
+
+fn active_entry_label(label: &str, active: bool) -> String {
+    if active {
+        format!("{label}{ACTIVE_MARKER_SUFFIX}")
+    } else {
+        label.to_owned()
+    }
+}
+
+fn status_entry(id: impl Into<String>, label: impl Into<String>) -> TrayEntry {
+    TrayEntry {
+        id: id.into(),
+        label: label.into(),
+        enabled: false,
+    }
+}
+
+fn selectable_entry(id: impl Into<String>, label: impl Into<String>) -> TrayEntry {
+    TrayEntry {
+        id: id.into(),
+        label: label.into(),
+        enabled: true,
+    }
+}
+
 fn active_profile_for_tool<'a>(snapshot: &'a AppSnapshot, tool: &str) -> Option<&'a str> {
     snapshot
         .statuses
@@ -1032,12 +1051,14 @@ fn active_profile_for_tool<'a>(snapshot: &'a AppSnapshot, tool: &str) -> Option<
 #[cfg(test)]
 mod tests {
     use super::{
-        active_set_label, active_summary, active_summary_or_default,
-        build_tray_command_result_event, parse_tray_action, profile_set_entries,
-        profile_set_is_active, shared_profile_entries, tray_context_display_label,
-        tray_context_entry_label, tray_menu_model, tray_profile_display_name, tray_runtime_notice,
-        tray_sections, tray_status_label, tray_use_all_profiles_request, tray_use_context_request,
-        tray_use_profile_request, TrayAction, TrayCommandScope, TrayEntry, TraySection,
+        active_entry_label, active_set_label, active_summary, active_summary_or_default,
+        build_tray_command_result_event, diagnostics_summary_label, parse_tray_action,
+        profile_set_entries, profile_set_is_active, shared_profile_entries,
+        tray_context_display_label, tray_context_entry_label, tray_footer_items, tray_menu_model,
+        tray_profile_display_name, tray_runtime_notice, tray_sections, tray_status_label,
+        tray_use_all_profiles_request, tray_use_context_request, tray_use_profile_request,
+        TrayAction, TrayCommandScope, TrayEntry, TraySection, DIAGNOSTICS_READY_LABEL,
+        OPEN_AI_SWITCH_LABEL, QUIT_AI_SWITCH_LABEL, SETTINGS_LABEL,
     };
     use crate::errors::{ErrorPayload, GuiErrorKind};
     use crate::models::{
@@ -1102,6 +1123,37 @@ mod tests {
             )
         );
         assert_eq!(tray_runtime_notice(true), None);
+    }
+
+    #[test]
+    fn tray_helpers_share_active_labels_footer_copy_and_diagnostics_summary() {
+        assert_eq!(active_entry_label("Work", true), "Work ✓");
+        assert_eq!(active_entry_label("Work", false), "Work");
+        assert_eq!(diagnostics_summary_label(&[]), DIAGNOSTICS_READY_LABEL);
+        assert_eq!(
+            diagnostics_summary_label(&["Claude Code live mismatch".to_owned()]),
+            "1 Warning: Claude Code live mismatch"
+        );
+        assert_eq!(
+            tray_footer_items(),
+            vec![
+                TrayEntry {
+                    id: "open".to_owned(),
+                    label: OPEN_AI_SWITCH_LABEL.to_owned(),
+                    enabled: true,
+                },
+                TrayEntry {
+                    id: "settings".to_owned(),
+                    label: SETTINGS_LABEL.to_owned(),
+                    enabled: true,
+                },
+                TrayEntry {
+                    id: "quit".to_owned(),
+                    label: QUIT_AI_SWITCH_LABEL.to_owned(),
+                    enabled: true,
+                },
+            ]
+        );
     }
 
     #[test]
