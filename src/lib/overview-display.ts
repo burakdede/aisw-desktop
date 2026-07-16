@@ -5,6 +5,7 @@ import { fixedStateModeDescription, stateModeDescription, stateModeLabel } from 
 import { toolInspectorEmptyLabel, overviewHealthLabel, overviewHealthText, resolveOverviewHealthState, type OverviewHealthState } from "./status-display";
 import { toolProfileDisplayLabel } from "./profile-display";
 import { formatMessageWithRemediation } from "./remediation-text";
+import { workspaceSetActionLabel } from "./sets-display";
 import type { AppSnapshot, DesktopSettings, ToolStatus } from "./schemas";
 import {
   formatTokenWarning,
@@ -214,7 +215,7 @@ export function overviewMetaLabel(states: OverviewHealthState[]) {
 }
 
 export function overviewWorkspaceActionLabel(canResolveDirectly: boolean) {
-  return canResolveDirectly ? "Use Expected Set" : "Open Sets";
+  return workspaceSetActionLabel(canResolveDirectly);
 }
 
 export function overviewSetButtonLabel(hasCurrentSet: boolean) {
