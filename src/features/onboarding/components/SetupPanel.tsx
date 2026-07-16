@@ -15,6 +15,7 @@ import { AppBootstrap, AppSnapshot, InitReport } from "../../../lib/schemas";
 import { toolSupportsEditableStateModes } from "../../../lib/tool-registry";
 import { toolDisplayName } from "../../../lib/tool-display";
 import { countLabel } from "../../../lib/utils";
+import { inspectItemLabel } from "../../../lib/display-copy";
 import {
   installGuideUrlForTool,
   openExternalGuide,
@@ -522,7 +523,7 @@ export function SetupPanel({
                                       ? "desktop-source-row-selected"
                                       : ""
                                   }`}
-                                  aria-label={`Inspect ${title}`}
+                                  aria-label={inspectItemLabel(title)}
                                   aria-pressed={selectedAccountItem?.key === item.key}
                                   onClick={() => setSelectedAccountKey(item.key)}
                                 >

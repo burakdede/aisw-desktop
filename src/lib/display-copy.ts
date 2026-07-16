@@ -23,3 +23,11 @@ export function savedItemMessage(item: string) {
 export function openedItemMessage(item: string) {
   return `Opened ${item}.`;
 }
+
+export function inspectItemLabel(item: string) {
+  return `Inspect ${item}`;
+}
+
+export function moreActionsLabel(item: string) {
+  return `More actions for ${item}`;
+}

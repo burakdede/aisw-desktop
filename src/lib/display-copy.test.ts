@@ -4,6 +4,8 @@ import {
   clipboardUnavailableManualMessage,
   DATE_UNAVAILABLE_LABEL,
   DEFAULT_ACTION_FAILURE_MESSAGE,
+  inspectItemLabel,
+  moreActionsLabel,
   openedItemMessage,
   savedItemMessage,
 } from "./display-copy";
@@ -24,5 +26,7 @@ describe("display-copy", () => {
     );
     expect(savedItemMessage("support.zip")).toBe("Saved support.zip.");
     expect(openedItemMessage("/tmp/aisw")).toBe("Opened /tmp/aisw.");
+    expect(inspectItemLabel("Claude")).toBe("Inspect Claude");
+    expect(moreActionsLabel("Client Acme")).toBe("More actions for Client Acme");
   });
 });

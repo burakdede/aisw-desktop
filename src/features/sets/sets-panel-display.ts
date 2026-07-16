@@ -20,6 +20,7 @@ import {
   profileSetStatus,
   setSelectionCountLabel,
 } from "../../lib/sets-display";
+import { moreActionsLabel } from "../../lib/display-copy";
 import { toolShortName } from "../../lib/tool-registry";
 
 export type EditableProfileSet = {
@@ -102,7 +103,6 @@ export const SETS_PANEL_COPY = {
   importedContextSummaryPrefix: "CLI context · ",
   currentLabel: "Current",
   editSetLabel: "Edit…",
-  setActionsTriggerLabelPrefix: "More actions for ",
   setActionsMenuAriaLabel: "Set actions",
   renameSetLabel: "Rename…",
   duplicateSetLabel: "Duplicate…",
@@ -195,7 +195,7 @@ const RULE_EDITOR_COPY = {
 } as const satisfies Record<"edit" | "create", EditorCopy>;
 
 export function setActionsTriggerLabel(displayLabel: string) {
-  return `${SETS_PANEL_COPY.setActionsTriggerLabelPrefix}${displayLabel}`;
+  return moreActionsLabel(displayLabel);
 }
 
 export function setEditorDialogLabel(isEditingSet: boolean) {

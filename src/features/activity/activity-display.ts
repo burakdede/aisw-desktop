@@ -1,4 +1,8 @@
-import { DATE_UNAVAILABLE_LABEL, openedItemMessage } from "../../lib/display-copy";
+import {
+  DATE_UNAVAILABLE_LABEL,
+  inspectItemLabel,
+  openedItemMessage,
+} from "../../lib/display-copy";
 import { calendarDayStarts } from "../../lib/calendar-time";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { toolDisplayName } from "../../lib/tool-display";
@@ -75,7 +79,6 @@ export const ACTIVITY_TOOLBAR_COPY = {
 
 export const ACTIVITY_PANEL_COPY = {
   listAriaLabel: "Activity timeline",
-  inspectPrefix: "Inspect",
   backLabel: "Back",
   cancelLabel: "Cancel",
 } as const;
@@ -346,7 +349,7 @@ export function buildActivityScopeValue(entry: ActivityEntry) {
 }
 
 export function activityEntryAriaLabel(entry: Pick<ActivityEntry, "label">) {
-  return `${ACTIVITY_PANEL_COPY.inspectPrefix} ${entry.label}`;
+  return inspectItemLabel(entry.label);
 }
 
 function activityPreview(entry: ActivityEntry) {

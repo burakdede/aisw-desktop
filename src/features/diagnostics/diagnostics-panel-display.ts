@@ -3,6 +3,7 @@ import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import {
   clipboardCopiedMessage,
   clipboardUnavailableManualMessage,
+  inspectItemLabel,
 } from "../../lib/display-copy";
 import { asArray, asObject, asOptionalString } from "../../lib/parse-guards";
 import { contextDisplayLabel, toolProfileDisplayLabel } from "../../lib/profile-display";
@@ -186,7 +187,6 @@ export const DIAGNOSTICS_PANEL_COPY = {
   repairPlanCancelLabel: "Cancel",
   copyReportPathLabel: "Copy report path",
   passedChecksSuffix: "checks passed",
-  findingInspectPrefix: "Inspect",
   exportReportFailedMessage: "Support report export failed.",
 } as const;
 
@@ -509,7 +509,7 @@ export function diagnosticInspectorStatusLabel(status: DiagnosticFinding["status
 export function diagnosticFindingAriaLabel(
   finding: Pick<DiagnosticFinding, "title">,
 ) {
-  return `${DIAGNOSTICS_PANEL_COPY.findingInspectPrefix} ${finding.title}`;
+  return inspectItemLabel(finding.title);
 }
 
 export function diagnosticsPassedChecksSummary(count: number) {

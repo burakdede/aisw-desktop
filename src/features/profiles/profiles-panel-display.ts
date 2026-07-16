@@ -7,7 +7,11 @@ import type {
 import { compareBackupsNewestFirst } from "../../lib/backups";
 import { credentialBackendLabel as formatCredentialBackendLabel } from "../../lib/credential-backends";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
-import { DEFAULT_ACTION_FAILURE_MESSAGE } from "../../lib/display-copy";
+import {
+  DEFAULT_ACTION_FAILURE_MESSAGE,
+  inspectItemLabel,
+  moreActionsLabel,
+} from "../../lib/display-copy";
 import { resolveErrorDetails } from "../../lib/error-details";
 import { formatDateTimeWithZone } from "../../lib/date-format";
 import { profileLastCheckedLabel } from "../../lib/profile-detail-display";
@@ -231,11 +235,11 @@ export function buildProfileSheetDraftReset(
 }
 
 export function buildProfileInspectAriaLabel(tool: SupportedTool, label: string) {
-  return `Inspect ${toolDisplayName(tool)} ${label}`;
+  return inspectItemLabel(`${toolDisplayName(tool)} ${label}`);
 }
 
 export function buildProfileRowActionsAriaLabel(tool: SupportedTool, label: string) {
-  return `More actions for ${toolDisplayName(tool)} ${label}`;
+  return moreActionsLabel(`${toolDisplayName(tool)} ${label}`);
 }
 
 export function buildProfileSavedAsLabel(name: string) {
