@@ -48,7 +48,7 @@
     "@vitest/coverage-v8": "^4.1.10",
     "jsdom": "^24.1.1",
     "typescript": "^5.5.4",
-    "vite": "^8.1.4",
+    "vite": "8.0.16",
     "vitest": "^4.1.10"
   }
 }

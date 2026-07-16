@@ -7,6 +7,11 @@ export default defineConfig({
     __SERVER_FORWARD_CONSOLE__: "false",
   },
   plugins: [react()],
+  server: {
+    host: "0.0.0.0",
+    port: 1420,
+    strictPort: true,
+  },
   test: {
     environment: "jsdom",
     setupFiles: "./src/test/setup.ts",
