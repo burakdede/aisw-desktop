@@ -4,8 +4,12 @@ import {
   normalizeWorkspaceGuardMode,
   type WorkspaceGuardMode,
 } from "../../lib/workspace-policy";
-
-type UnknownRecord = Record<string, unknown>;
+import {
+  asArray,
+  asNonEmptyString,
+  asObject,
+  type UnknownRecord,
+} from "../../lib/parse-guards";
 
 export interface WorkspaceStatusCard {
   status: string;
@@ -27,20 +31,6 @@ export interface WorkspaceBindingsSummary {
   bindings: WorkspaceBindingCard[];
 }
 
-function asObject(value: unknown): UnknownRecord | undefined {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as UnknownRecord)
-    : undefined;
-}
-
-function asArray(value: unknown) {
-  return Array.isArray(value) ? value : [];
-}
-
-function asString(value: unknown, fallback = "unknown") {
-  return typeof value === "string" && value.length > 0 ? value : fallback;
-}
-
 function pickRecord(payload: Record<string, unknown> | undefined) {
   return asObject(payload?.result) ?? asObject(payload);
 }
@@ -53,17 +43,17 @@ export function parseWorkspaceStatus(
     asObject(record?.matched_binding) ?? asObject(record?.binding) ?? asObject(record?.match);
 
   return {
-    status: asString(record?.status),
-    currentContext: asString(
+    status: asNonEmptyString(record?.status),
+    currentContext: asNonEmptyString(
       record?.current_context ?? record?.active_context,
       WORKSPACE_NO_CONTEXT,
     ),
-    expectedContext: asString(
+    expectedContext: asNonEmptyString(
       record?.expected_context ?? matchedBinding?.context ?? record?.context,
       WORKSPACE_NO_CONTEXT,
     ),
-    scope: asString(matchedBinding?.scope, WORKSPACE_NO_CONTEXT),
-    target: asString(
+    scope: asNonEmptyString(matchedBinding?.scope, WORKSPACE_NO_CONTEXT),
+    target: asNonEmptyString(
       matchedBinding?.path ?? matchedBinding?.pattern ?? matchedBinding?.target,
       "No path or remote match",
     ),
@@ -86,14 +76,14 @@ export function parseWorkspaceBindings(
       userBindings?.guard_mode,
       DEFAULT_WORKSPACE_GUARD_MODE,
     ),
-    defaultContext: asString(userBindings?.default_context, WORKSPACE_NO_CONTEXT),
+    defaultContext: asNonEmptyString(userBindings?.default_context, WORKSPACE_NO_CONTEXT),
     bindings: bindingItems
       .map((entry) => asObject(entry))
       .filter((entry): entry is UnknownRecord => Boolean(entry))
       .map((entry) => ({
-        context: asString(entry.context, WORKSPACE_NO_CONTEXT),
-        scope: asString(entry.scope),
-        target: asString(entry.path ?? entry.pattern ?? entry.target, "default"),
+        context: asNonEmptyString(entry.context, WORKSPACE_NO_CONTEXT),
+        scope: asNonEmptyString(entry.scope),
+        target: asNonEmptyString(entry.path ?? entry.pattern ?? entry.target, "default"),
       })),
   };
 }

@@ -1,5 +1,6 @@
 import type { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../lib/schemas";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
+import { asArray, asObject, asOptionalString } from "../../lib/parse-guards";
 import { contextDisplayLabel, toolProfileDisplayLabel } from "../../lib/profile-display";
 import { isSupportedTool } from "../../lib/tool-registry";
 import { countLabel, pluralChoice, titleCase } from "../../lib/utils";
@@ -645,7 +646,7 @@ function buildRepairFixMap(repair: Record<string, unknown> | undefined) {
     .map((action) => asObject(action))
     .filter((action): action is Record<string, unknown> => Boolean(action))
     .reduce((map, action) => {
-      const fix = asStringValue(action.fix);
+      const fix = asOptionalString(action.fix);
       if (fix) {
         map.set(fix.toLowerCase(), fix);
       }
@@ -862,20 +863,6 @@ function keyringDoctorIssue(doctor: Record<string, unknown> | undefined) {
   }
 
   return null;
-}
-
-function asObject(value: unknown): Record<string, unknown> | undefined {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : undefined;
-}
-
-function asArray(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
-}
-
-function asStringValue(value: unknown) {
-  return typeof value === "string" ? value : undefined;
 }
 
 function resolveStateMode(status: ToolStatus) {

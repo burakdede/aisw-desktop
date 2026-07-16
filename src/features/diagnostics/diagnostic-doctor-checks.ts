@@ -1,4 +1,5 @@
 import type { ResolvedCheckStatus } from "../../lib/check-status";
+import { asArray, asObject, asOptionalString } from "../../lib/parse-guards";
 
 export type ParsedDoctorCheck = {
   name: string;
@@ -22,15 +23,15 @@ export function parseDoctorChecks(
     .map((check) => asObject(check))
     .filter((check): check is Record<string, unknown> => Boolean(check))
     .map((check) => {
-      const rawDetail = asStringValue(check.detail) ?? options?.defaultDetail ?? "";
+      const rawDetail = asOptionalString(check.detail) ?? options?.defaultDetail ?? "";
       const detail = options?.detailTransform ? options.detailTransform(rawDetail) : rawDetail;
 
       return {
-        name: asStringValue(check.name) ?? "",
+        name: asOptionalString(check.name) ?? "",
         detail,
-        status: (asStringValue(check.status) as Extract<ResolvedCheckStatus, "warn" | "fail"> | undefined)
+        status: (asOptionalString(check.status) as Extract<ResolvedCheckStatus, "warn" | "fail"> | undefined)
           ?? defaultStatus,
-        normalizedName: (asStringValue(check.name) ?? "").toLowerCase(),
+        normalizedName: (asOptionalString(check.name) ?? "").toLowerCase(),
         normalizedDetail: detail.toLowerCase(),
       } satisfies ParsedDoctorCheck;
     });
@@ -48,18 +49,4 @@ export function doctorCheckNameHasAll(
   keywords: readonly string[],
 ) {
   return keywords.every((keyword) => check.normalizedName.includes(keyword));
-}
-
-function asObject(value: unknown): Record<string, unknown> | undefined {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : undefined;
-}
-
-function asArray(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
-}
-
-function asStringValue(value: unknown) {
-  return typeof value === "string" ? value : undefined;
 }

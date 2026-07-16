@@ -5,6 +5,7 @@ import {
   summarizeCheckStatus,
   type CheckStatus,
 } from "../../lib/check-status";
+import { asArray, asNumber, asObject, asString } from "../../lib/parse-guards";
 
 export interface SummaryCardData {
   title: string;
@@ -27,29 +28,11 @@ export interface RepairActionData {
   count: number;
 }
 
-function asObject(value: unknown): Record<string, unknown> | undefined {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : undefined;
-}
-
-function asArray(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
-}
-
 function asStringArray(value: unknown): string[] {
   if (typeof value === "string") {
     return [value];
   }
   return asArray(value).map((item) => asString(item)).filter(Boolean);
-}
-
-function asString(value: unknown, fallback = "unknown") {
-  return typeof value === "string" ? value : fallback;
-}
-
-function asNumber(value: unknown, fallback = 0) {
-  return typeof value === "number" ? value : fallback;
 }
 
 function normalizeUserFacingIssueText(value: string) {
