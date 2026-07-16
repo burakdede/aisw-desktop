@@ -1,0 +1,77 @@
+import { describe, expect, it } from "vitest";
+import type { AppBootstrap, AppSnapshot } from "../../lib/schemas";
+import {
+  DEFAULT_EDITABLE_STATE_MODE,
+  EDITABLE_STATE_MODES,
+  fixedStateModeDescription,
+  resolveGlobalStateMode,
+  resolveStateModeRequest,
+  stateModeDescription,
+  stateModeLabel,
+  supportedStateModes,
+} from "./state-modes";
+
+type ToolCapabilities = NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
+
+describe("state-modes", () => {
+  it("shares editable state mode ids and defaults", () => {
+    expect(EDITABLE_STATE_MODES).toEqual(["isolated", "shared"]);
+    expect(DEFAULT_EDITABLE_STATE_MODE).toBe("isolated");
+    expect(stateModeLabel("system_keyring")).toBe("System Keyring");
+    expect(stateModeDescription(DEFAULT_EDITABLE_STATE_MODE)).toBe(
+      "Separate config, history, and extensions for this profile.",
+    );
+    expect(stateModeDescription("portable")).toBe(
+      "Use the runtime-supported state handling for this profile.",
+    );
+  });
+
+  it("normalizes supported and preferred state modes", () => {
+    const toolCapabilities: ToolCapabilities = {
+      claude: {
+        auth_methods: [],
+        state_modes: ["shared", "isolated", "shared", "unsupported"],
+        credential_backends: [],
+        fail_closed_keyring_identity: false,
+      },
+      gemini: {
+        auth_methods: [],
+        state_modes: ["shared"],
+        credential_backends: [],
+        fail_closed_keyring_identity: false,
+      },
+    };
+
+    expect(supportedStateModes("claude", toolCapabilities)).toEqual(["shared", "isolated"]);
+    expect(supportedStateModes("gemini", toolCapabilities)).toEqual([]);
+    expect(resolveStateModeRequest("claude", toolCapabilities, "shared")).toBe("shared");
+    expect(resolveStateModeRequest("claude", toolCapabilities, "portable")).toBe("shared");
+    expect(resolveStateModeRequest("gemini", toolCapabilities, "shared")).toBeNull();
+  });
+
+  it("resolves the global state mode across editable tools", () => {
+    const snapshot = {
+      statuses: [
+        { tool: "claude", state_mode: "shared" },
+        { tool: "codex", state_mode: "shared" },
+        { tool: "gemini", state_mode: "isolated" },
+      ],
+    } as AppSnapshot;
+
+    expect(resolveGlobalStateMode(snapshot)).toBe("shared");
+    expect(
+      resolveGlobalStateMode({
+        statuses: [
+          { tool: "claude", state_mode: "shared" },
+          { tool: "codex", state_mode: "isolated" },
+        ],
+      } as AppSnapshot),
+    ).toBe(DEFAULT_EDITABLE_STATE_MODE);
+    expect(resolveGlobalStateMode({ statuses: [{ tool: "gemini", state_mode: "isolated" }] } as AppSnapshot)).toBe(
+      DEFAULT_EDITABLE_STATE_MODE,
+    );
+    expect(fixedStateModeDescription("gemini")).toBe(
+      "Gemini CLI keeps authentication and local state together.",
+    );
+  });
+});

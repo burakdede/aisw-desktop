@@ -1,5 +1,5 @@
 import { normalizeRuntimeLanguage } from "../features/shared/runtime-language";
-import { fixedStateModeDescription, stateModeDescription } from "../features/shared/state-modes";
+import { fixedStateModeDescription, stateModeDescription, stateModeLabel } from "../features/shared/state-modes";
 import { toolInspectorEmptyLabel, overviewHealthLabel, overviewHealthText, resolveOverviewHealthState, type OverviewHealthState } from "./status-display";
 import { toolProfileDisplayLabel } from "./profile-display";
 import type { AppSnapshot, DesktopSettings, ToolStatus } from "./schemas";
@@ -85,7 +85,7 @@ export function overviewSelectProfileLabel(tool: string) {
 }
 
 export function overviewStateModeLabel(mode: string) {
-  return titleCase(mode);
+  return stateModeLabel(mode);
 }
 
 export function overviewLiveMismatchNotice(

@@ -1,6 +1,7 @@
 import { DATE_UNAVAILABLE_LABEL } from "./date-format";
 import { NOT_AVAILABLE_LABEL, VERIFICATION_REQUIRED_LABEL } from "./display-copy";
 import type { ToolStatus } from "./schemas";
+import { stateModeLabel } from "../features/shared/state-modes";
 import { titleCase } from "./utils";
 
 export const HIDE_STORAGE_DETAILS_LABEL = "Hide Storage Details";
@@ -12,7 +13,7 @@ export function profileStateModeLabel(mode: string | null | undefined) {
   if (!mode) {
     return NOT_AVAILABLE_LABEL;
   }
-  return titleCase(mode);
+  return stateModeLabel(mode);
 }
 
 export function profileStorageBooleanLabel(value: boolean | null | undefined) {

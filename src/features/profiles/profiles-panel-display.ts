@@ -26,6 +26,7 @@ import {
   type ProfileCredentialBackend,
   type ProfileImportMode,
 } from "../shared/profile-capabilities";
+import { DEFAULT_EDITABLE_STATE_MODE, stateModeLabel } from "../shared/state-modes";
 
 export type OAuthWizardStep = {
   id: "start" | "browser" | "login" | "capture" | "saved";
@@ -79,7 +80,7 @@ export type OpenProfileActionMenu = {
   scope: ProfileActionScope;
 } | null;
 
-export const STATIC_STATE_MODE_LABEL = "Isolated";
+export const STATIC_STATE_MODE_LABEL = stateModeLabel(DEFAULT_EDITABLE_STATE_MODE);
 export const STATIC_STATE_MODE_COPY =
   "Gemini keeps authentication and local state together.";
 

@@ -12,6 +12,7 @@ import {
   type ExplicitProfileCredentialBackend,
   type ProfileImportMode,
 } from "../shared/profile-capabilities";
+import { DEFAULT_EDITABLE_STATE_MODE } from "../shared/state-modes";
 import type { IssueCardData } from "./diagnostic-parsers";
 import { diagnosticFindingTitle } from "../../lib/diagnostic-display";
 import { parseWorkspaceStatus } from "../workspaces/workspace-parsers";
@@ -845,7 +846,7 @@ function resolveStateMode(status: ToolStatus) {
   if (!toolSupportsEditableStateModes(status.tool)) {
     return null;
   }
-  return status.state_mode ?? "isolated";
+  return status.state_mode ?? DEFAULT_EDITABLE_STATE_MODE;
 }
 
 function resolveIssueProfileTarget(title: string, snapshot: AppSnapshot) {

@@ -60,7 +60,7 @@ import {
   type ProfileCredentialBackend,
   type ProfileImportMode,
 } from "../../shared/profile-capabilities";
-import { supportedStateModes } from "../../shared/state-modes";
+import { DEFAULT_EDITABLE_STATE_MODE, supportedStateModes } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { StateModeField } from "../../shared/components/StateModeField";
@@ -159,7 +159,7 @@ export function ProfilesPanel({
   const [credentialBackend, setCredentialBackend] = useState<ProfileCredentialBackend>(
     initialCredentialBackend ?? DEFAULT_PROFILE_CREDENTIAL_BACKEND,
   );
-  const [stateMode, setStateMode] = useState("isolated");
+  const [stateMode, setStateMode] = useState<string>(DEFAULT_EDITABLE_STATE_MODE);
   const [renameDrafts, setRenameDrafts] = useState<Record<string, string>>({});
   const [labelDrafts, setLabelDrafts] = useState<Record<string, string>>({});
   const [oauthEvents, setOauthEvents] = useState<OAuthProgressEvent[]>([]);
@@ -288,7 +288,11 @@ export function ProfilesPanel({
   );
 
   useEffect(() => {
-    const nextStateMode = resolveAvailableSelection(stateMode, availableStateModes, "isolated");
+    const nextStateMode = resolveAvailableSelection(
+      stateMode,
+      availableStateModes,
+      DEFAULT_EDITABLE_STATE_MODE,
+    );
     if (nextStateMode !== stateMode) {
       setStateMode(nextStateMode);
     }

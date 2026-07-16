@@ -26,7 +26,7 @@ import {
   preferredProfileImportMode,
   supportsProfileImportMode,
 } from "../../shared/profile-capabilities";
-import { resolveGlobalStateMode } from "../../shared/state-modes";
+import { DEFAULT_EDITABLE_STATE_MODE, resolveGlobalStateMode } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { invalidatePostMutationQueries } from "../../shared/postMutationRefresh";
@@ -198,7 +198,7 @@ export function SetupPanel({
       tool,
       profile: value,
       label: profileLabels[tool]?.trim() || onboardingImportedProfileLabel(value),
-      stateMode: toolSupportsEditableStateModes(tool) ? "isolated" : null,
+      stateMode: toolSupportsEditableStateModes(tool) ? DEFAULT_EDITABLE_STATE_MODE : null,
       importMode: { kind: DEFAULT_PROFILE_IMPORT_MODE },
     });
   }

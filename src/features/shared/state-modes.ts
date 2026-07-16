@@ -1,12 +1,21 @@
 import { AppBootstrap, AppSnapshot } from "../../lib/schemas";
 import { toolDisplayName } from "../../lib/tool-display";
 import { toolSupportsEditableStateModes } from "../../lib/tool-registry";
+import { titleCase } from "../../lib/utils";
 
-const EDITABLE_STATE_MODES = new Set(["isolated", "shared"]);
-const STATE_MODE_COPY: Record<string, string> = {
+export const EDITABLE_STATE_MODES = ["isolated", "shared"] as const;
+export type EditableStateMode = (typeof EDITABLE_STATE_MODES)[number];
+export const DEFAULT_EDITABLE_STATE_MODE: EditableStateMode = EDITABLE_STATE_MODES[0];
+
+const EDITABLE_STATE_MODE_SET = new Set<string>(EDITABLE_STATE_MODES);
+const STATE_MODE_COPY: Record<EditableStateMode, string> = {
   isolated: "Separate config, history, and extensions for this profile.",
   shared: "Keep the normal tool config and history while switching credentials only.",
 };
+
+export function stateModeLabel(mode: string) {
+  return titleCase(mode);
+}
 
 export function supportedStateModes(
   tool: string,
@@ -18,14 +27,14 @@ export function supportedStateModes(
 
   const configured = toolCapabilities[tool]?.state_modes ?? [];
   const normalized = configured.filter(
-    (mode, index) => EDITABLE_STATE_MODES.has(mode) && configured.indexOf(mode) === index,
+    (mode, index) => EDITABLE_STATE_MODE_SET.has(mode) && configured.indexOf(mode) === index,
   );
 
   if (normalized.length) {
-    return normalized;
+    return normalized as EditableStateMode[];
   }
 
-  return ["isolated", "shared"];
+  return [...EDITABLE_STATE_MODES];
 }
 
 export function resolveStateModeRequest(
@@ -37,8 +46,8 @@ export function resolveStateModeRequest(
   if (!modes.length) {
     return null;
   }
-  if (preferred && modes.includes(preferred)) {
-    return preferred;
+  if (preferred && modes.includes(preferred as EditableStateMode)) {
+    return preferred as EditableStateMode;
   }
   return modes[0] ?? null;
 }
@@ -46,15 +55,16 @@ export function resolveStateModeRequest(
 export function resolveGlobalStateMode(snapshot: AppSnapshot) {
   const editableStatuses = snapshot.statuses.filter((status) => toolSupportsEditableStateModes(status.tool));
   if (!editableStatuses.length) {
-    return "isolated";
+    return DEFAULT_EDITABLE_STATE_MODE;
   }
   return editableStatuses.every((status) => status.state_mode === "shared")
     ? "shared"
-    : "isolated";
+    : DEFAULT_EDITABLE_STATE_MODE;
 }
 
 export function stateModeDescription(mode: string) {
-  return STATE_MODE_COPY[mode] ?? "Use the runtime-supported state handling for this profile.";
+  return STATE_MODE_COPY[mode as EditableStateMode]
+    ?? "Use the runtime-supported state handling for this profile.";
 }
 
 export function fixedStateModeDescription(tool: string) {

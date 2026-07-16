@@ -1,6 +1,5 @@
 import { SegmentedControl } from "../../../components/SegmentedControl";
-import { titleCase } from "../../../lib/utils";
-import { stateModeDescription } from "../state-modes";
+import { stateModeDescription, stateModeLabel } from "../state-modes";
 
 export function StateModeField({
   name,
@@ -25,7 +24,7 @@ export function StateModeField({
           ariaLabel="State mode"
           options={options.map((option) => ({
             value: option,
-            label: titleCase(option),
+            label: stateModeLabel(option),
           }))}
           value={selectedOption}
           onChange={onChange}
@@ -56,7 +55,7 @@ export function StateModeField({
                   aria-describedby={descriptionId}
                   onChange={(event) => onChange(event.target.value)}
                 />
-                <span className="state-mode-label">{titleCase(option)}</span>
+                <span className="state-mode-label">{stateModeLabel(option)}</span>
               </label>
               <span id={descriptionId} className="state-mode-copy">
                 {copy}
