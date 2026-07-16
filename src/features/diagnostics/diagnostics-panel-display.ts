@@ -2,6 +2,7 @@ import type { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../
 import { contextDisplayLabel, toolProfileDisplayLabel } from "../../lib/profile-display";
 import { isSupportedTool } from "../../lib/tool-registry";
 import { countLabel, titleCase } from "../../lib/utils";
+import { BLOCKED_LABEL, NEEDS_ATTENTION_SENTENCE_LABEL } from "../../lib/status-copy";
 import { toolSupportsEditableStateModes } from "../../lib/tool-registry";
 import type { LastCommandResult } from "../shared/lastCommandResult";
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
@@ -501,7 +502,7 @@ export function diagnosticBundlePathCopyMessage(path: string, clipboardAvailable
 }
 
 export function diagnosticInspectorStatusLabel(status: DiagnosticFinding["status"]) {
-  return status === "fail" ? "Blocked" : "Needs attention";
+  return status === "fail" ? BLOCKED_LABEL : NEEDS_ATTENTION_SENTENCE_LABEL;
 }
 
 export function diagnosticTechnicalCommandBlock(primaryLabel?: string | null) {

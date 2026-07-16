@@ -1,4 +1,12 @@
 import { normalizeRuntimeLanguage } from "../features/shared/runtime-language";
+import {
+  ACTIVE_LABEL,
+  AVAILABLE_LABEL,
+  CURRENT_LABEL,
+  IMPORTED_LABEL,
+  NEEDS_ATTENTION_LABEL,
+  SAVED_LABEL,
+} from "./status-copy";
 import { countLabel } from "./utils";
 
 type CommandResult = {
@@ -24,22 +32,22 @@ function normalizeSetPanelResultText(text: string, kind: "set" | "project-rule")
 
 export function profileSetStatus(active: boolean, ready: boolean) {
   if (active) {
-    return { label: "Current", tone: "ready", symbol: "●" };
+    return { label: CURRENT_LABEL, tone: "ready", symbol: "●" };
   }
   if (ready) {
-    return { label: "Available", tone: "available", symbol: "●" };
+    return { label: AVAILABLE_LABEL, tone: "available", symbol: "●" };
   }
-  return { label: "Needs Attention", tone: "warn", symbol: "▲" };
+  return { label: NEEDS_ATTENTION_LABEL, tone: "warn", symbol: "▲" };
 }
 
 export function importedContextStatus(active: boolean) {
   return active
-    ? { label: "Current", tone: "ready", symbol: "●" }
-    : { label: "Imported", tone: "available", symbol: "○" };
+    ? { label: CURRENT_LABEL, tone: "ready", symbol: "●" }
+    : { label: IMPORTED_LABEL, tone: "available", symbol: "○" };
 }
 
 export function importedContextActionLabel(active: boolean, contextLabel: string) {
-  return active ? "Current" : `Use CLI Context ${contextLabel}`;
+  return active ? CURRENT_LABEL : `Use CLI Context ${contextLabel}`;
 }
 
 export function setSelectionCountLabel(count: number) {
@@ -108,7 +116,7 @@ export function workspaceSetActionLabel(canResolveDirectly: boolean) {
 }
 
 export function savedRuleStatusLabel(active: boolean) {
-  return active ? "Active" : "Saved";
+  return active ? ACTIVE_LABEL : SAVED_LABEL;
 }
 
 export function selectedRuleSubtitle(matched: boolean) {

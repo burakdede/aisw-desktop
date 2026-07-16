@@ -1,4 +1,10 @@
 import type { DesktopSettings } from "./schemas";
+import {
+  NEEDS_ATTENTION_LABEL,
+  NEEDS_ATTENTION_SENTENCE_LABEL,
+  READY_LABEL,
+  SUPPORTED_LABEL,
+} from "./status-copy";
 
 export const INCLUDED_DESKTOP_ENGINE_LABEL = "Included desktop engine";
 
@@ -53,12 +59,12 @@ export function runtimeReadinessLabel(
   variant: "title" | "sentence" = "title",
 ) {
   if (compatible) {
-    return "Ready";
+    return READY_LABEL;
   }
 
-  return variant === "sentence" ? "Needs attention" : "Needs Attention";
+  return variant === "sentence" ? NEEDS_ATTENTION_SENTENCE_LABEL : NEEDS_ATTENTION_LABEL;
 }
 
 export function runtimeCompatibilityLabel(compatible: boolean) {
-  return compatible ? "Supported" : "Needs Attention";
+  return compatible ? SUPPORTED_LABEL : NEEDS_ATTENTION_LABEL;
 }
