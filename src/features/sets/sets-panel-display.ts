@@ -1,5 +1,10 @@
 import type { WorkspaceBindInput, WorkspaceUnbindInput } from "../../lib/client";
 import {
+  DEFAULT_WORKSPACE_BINDING_SCOPE,
+  normalizeWorkspaceBindingScope,
+  type WorkspaceBindingScope,
+} from "../../lib/workspace-binding-contract";
+import {
   contextDisplayLabel,
   missingProfileSetSelections,
   profileSetDisplayLabel,
@@ -24,11 +29,13 @@ export type EditableProfileSet = {
   profiles: Record<string, string>;
 };
 
-export type BindScope = "default" | "path" | "git_remote";
+export const SETS_PANEL_MODES = ["sets", "rules"] as const;
+export type SetPanelMode = (typeof SETS_PANEL_MODES)[number];
+export const DEFAULT_SETS_PANEL_MODE: SetPanelMode = SETS_PANEL_MODES[0];
 
 export type EditableRule = {
   source: WorkspaceUnbindInput | null;
-  scope: BindScope;
+  scope: WorkspaceBindingScope;
   context: string;
   targetValue: string;
 };
@@ -137,10 +144,13 @@ export const SETS_PANEL_COPY = {
   selectSetLabel: "Select set",
 } as const;
 
-export const SETS_MODE_OPTIONS = [
-  { value: "sets", label: SETS_PANEL_COPY.setLibraryModeLabel },
-  { value: "rules", label: SETS_PANEL_COPY.projectRulesModeLabel },
-] as const;
+export const SETS_MODE_OPTIONS = SETS_PANEL_MODES.map((value) => ({
+  value,
+  label:
+    value === "sets"
+      ? SETS_PANEL_COPY.setLibraryModeLabel
+      : SETS_PANEL_COPY.projectRulesModeLabel,
+})) satisfies ReadonlyArray<{ value: SetPanelMode; label: string }>;
 
 export const RULE_SCOPE_OPTIONS = [
   { value: "default", label: SETS_PANEL_COPY.defaultSetRuleScopeLabel },
@@ -180,7 +190,7 @@ export function ruleEditorSubmitLabel(isEditingRule: boolean) {
   return isEditingRule ? "Save Rule" : "Add Rule";
 }
 
-export function ruleTargetInputLabel(scope: BindScope) {
+export function ruleTargetInputLabel(scope: WorkspaceBindingScope) {
   return scope === "path"
     ? SETS_PANEL_COPY.pathLabel
     : SETS_PANEL_COPY.gitRemotePatternLabel;
@@ -294,7 +304,7 @@ export function deletedSetActionLabel(
 export function createEmptyRuleDraft(defaultContext = ""): EditableRule {
   return {
     source: null,
-    scope: "default",
+    scope: DEFAULT_WORKSPACE_BINDING_SCOPE,
     context: defaultContext,
     targetValue: "",
   };
@@ -305,29 +315,28 @@ export function createEditableRuleDraft(binding: {
   target: string;
   context: string;
 }): EditableRule {
+  const scope = normalizeWorkspaceBindingScope(binding.scope);
   return {
     source: unbindTargetForBinding(binding.scope, binding.target),
-    scope:
-      binding.scope === "path" || binding.scope === "git_remote"
-        ? binding.scope
-        : "default",
+    scope,
     context: binding.context,
-    targetValue: binding.scope === "default" ? "" : binding.target,
+    targetValue: scope === "default" ? "" : binding.target,
   };
 }
 
 export function unbindTargetForBinding(scope: string, target: string): WorkspaceUnbindInput {
-  if (scope === "path") {
+  const normalizedScope = normalizeWorkspaceBindingScope(scope);
+  if (normalizedScope === "path") {
     return { scope: "path", path: target };
   }
-  if (scope === "git_remote") {
+  if (normalizedScope === "git_remote") {
     return { scope: "git_remote", pattern: target };
   }
-  return { scope: "default" };
+  return { scope: DEFAULT_WORKSPACE_BINDING_SCOPE };
 }
 
 export function buildWorkspaceBindingTarget(
-  scope: BindScope,
+  scope: WorkspaceBindingScope,
   targetValue: string,
 ): WorkspaceBindingTarget {
   if (scope === "default") {

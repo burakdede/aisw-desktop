@@ -13,6 +13,7 @@ import {
   createEmptyEditableProfileSet,
   createEmptyRuleDraft,
   deletedSetActionLabel,
+  DEFAULT_SETS_PANEL_MODE,
   duplicateEditableProfileSetDraft,
   hasDuplicateSetName,
   importedContextActivationResultLabel,
@@ -28,6 +29,7 @@ import {
   setEditorKicker,
   setEditorSubmitLabel,
   setEditorTitle,
+  SETS_PANEL_MODES,
   SETS_MODE_OPTIONS,
   SETS_PANEL_COPY,
   unbindTargetForBinding,
@@ -140,6 +142,8 @@ describe("sets-panel-display", () => {
     expect(SETS_PANEL_COPY.modeAriaLabel).toBe("Sets mode");
     expect(SETS_PANEL_COPY.noSetsTitle).toBe("No sets yet");
     expect(SETS_PANEL_COPY.projectRulesTitle).toBe("Project Rules");
+    expect(SETS_PANEL_MODES).toEqual(["sets", "rules"]);
+    expect(DEFAULT_SETS_PANEL_MODE).toBe("sets");
     expect(SETS_MODE_OPTIONS).toEqual([
       { value: "sets", label: "Set Library" },
       { value: "rules", label: "Project Rules" },

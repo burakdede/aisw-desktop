@@ -36,6 +36,7 @@ import {
   type ReferenceDocumentKind,
 } from "./desktop-command-contract";
 import { invokeDesktop } from "./tauri";
+import type { WorkspaceBindingScope } from "./workspace-binding-contract";
 import type { WorkspaceGuardMode } from "./workspace-policy";
 import type { output, ZodTypeAny } from "zod";
 
@@ -110,15 +111,15 @@ export interface UpdateSettingsInput {
 
 export interface WorkspaceBindInput {
   target:
-    | { scope: "default" }
-    | { scope: "path"; path: string }
-    | { scope: "git_remote"; pattern: string };
+    | { scope: Extract<WorkspaceBindingScope, "default"> }
+    | { scope: Extract<WorkspaceBindingScope, "path">; path: string }
+    | { scope: Extract<WorkspaceBindingScope, "git_remote">; pattern: string };
   context: string;
   label?: string;
 }
 
 export interface WorkspaceUnbindInput {
-  scope: "default" | "path" | "git_remote";
+  scope: WorkspaceBindingScope;
   path?: string;
   pattern?: string;
 }

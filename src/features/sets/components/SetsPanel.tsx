@@ -34,6 +34,10 @@ import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { SUPPORTED_TOOLS, toolShortName } from "../../../lib/tool-registry";
 import { countLabel } from "../../../lib/utils";
+import {
+  DEFAULT_WORKSPACE_BINDING_SCOPE,
+  type WorkspaceBindingScope,
+} from "../../../lib/workspace-binding-contract";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { resolveGlobalStateMode } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
@@ -63,6 +67,7 @@ import {
   ruleEditorSubmitLabel,
   ruleEditorTitle,
   ruleTargetInputLabel,
+  DEFAULT_SETS_PANEL_MODE,
   setActionsTriggerLabel,
   setEditorDialogLabel,
   setEditorKicker,
@@ -70,15 +75,14 @@ import {
   setEditorTitle,
   SETS_MODE_OPTIONS,
   SETS_PANEL_COPY,
-  type BindScope,
   type EditableProfileSet,
   type EditableRule,
+  type SetPanelMode,
   unbindTargetForBinding,
   workspaceBindingTargetChanged,
 } from "../sets-panel-display";
 
 const TOOLS = SUPPORTED_TOOLS;
-type SetMode = "sets" | "rules";
 
 export function SetsPanel({
   snapshot,
@@ -112,7 +116,7 @@ export function SetsPanel({
     lastCommandResults,
   } = useDesktopActions();
 
-  const [mode, setMode] = useState<SetMode>("sets");
+  const [mode, setMode] = useState<SetPanelMode>(DEFAULT_SETS_PANEL_MODE);
   const [selectedSetName, setSelectedSetName] = useState<string | null>(
     settings.profile_sets?.[0]?.name ?? null,
   );
@@ -127,7 +131,9 @@ export function SetsPanel({
   const [compactSetInspectorOpen, setCompactSetInspectorOpen] = useState(false);
   const [compactRuleInspectorOpen, setCompactRuleInspectorOpen] = useState(false);
   const [workspaceOverrideDismissed, setWorkspaceOverrideDismissed] = useState(false);
-  const [scope, setScope] = useState<BindScope>("default");
+  const [scope, setScope] = useState<WorkspaceBindingScope>(
+    DEFAULT_WORKSPACE_BINDING_SCOPE,
+  );
   const [context, setContext] = useState("");
   const [targetValue, setTargetValue] = useState("");
   const [ruleDraft, setRuleDraft] = useState<EditableRule>({
@@ -491,7 +497,7 @@ export function SetsPanel({
           className="sets-mode-segmented"
           options={SETS_MODE_OPTIONS}
           value={mode}
-          onChange={(value) => setMode(value as SetMode)}
+          onChange={(value) => setMode(value as SetPanelMode)}
         />
         {mode === "sets" ? (
           <div className="button-row">
@@ -1037,7 +1043,7 @@ export function SetsPanel({
                   onChange={(event) =>
                     setRuleDraft((current) => ({
                       ...current,
-                      scope: event.target.value as BindScope,
+                      scope: event.target.value as WorkspaceBindingScope,
                     }))
                   }
                 >
