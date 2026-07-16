@@ -26,6 +26,12 @@ import {
   useLastCommandResults,
   type CommandResultScope,
 } from "./lastCommandResult";
+import {
+  buildCommandResultError,
+  buildCommandResultSuccess,
+  resolveCommandResultCommand,
+  SNAPSHOT_UPDATED_RESULT_SUMMARY,
+} from "./command-result-payload";
 import { enqueueMutation, useMutationQueueState } from "./mutationQueue";
 import { invalidatePostMutationQueries } from "./postMutationRefresh";
 import { titleCase } from "../../lib/utils";
@@ -60,28 +66,23 @@ export function useDesktopActions() {
       const result = await enqueueMutation("Add profile", () => addProfile(input));
       recordCommandResult(
         { type: "tool", tool: input.tool },
-        {
+        buildCommandResultSuccess({
           label: "Add profile",
-          status: "success",
           message: `Saved ${input.tool} profile ${input.profile}.`,
-        },
+        }),
       );
       await invalidate();
       return result;
     } catch (error) {
-      const resolved =
-        error instanceof Error ? error : new Error("Failed to add API key profile.");
       recordCommandResult(
         { type: "tool", tool: input.tool },
-        {
+        buildCommandResultError(error, {
           label: "Add profile",
-          status: "error",
-          message: resolved.message,
-          kind: resolved instanceof DesktopCommandError ? resolved.kind : undefined,
-          remediation:
-            resolved instanceof DesktopCommandError ? resolved.remediation : undefined,
-        },
+          fallbackMessage: "Failed to add API key profile.",
+        }),
       );
+      const resolved =
+        error instanceof Error ? error : new Error("Failed to add API key profile.");
       setApiKeyProfileError(resolved);
       throw resolved;
     } finally {
@@ -100,34 +101,27 @@ export function useDesktopActions() {
         const result = await enqueueMutation(label, () => mutationFn(variables));
         const scope = scopeForVariables(variables);
         if (scope) {
-          const command =
-            typeof result === "object" &&
-            result !== null &&
-            "command" in result &&
-            typeof (result as { command?: unknown }).command === "string"
-              ? (result as { command: string }).command
-              : undefined;
-          recordCommandResult(scope, {
-            label,
-            status: "success",
-            message: successMessage(variables),
-            command,
-            resultSummary: "Snapshot updated successfully.",
-          });
+          recordCommandResult(
+            scope,
+            buildCommandResultSuccess({
+              label,
+              message: successMessage(variables),
+              command: resolveCommandResultCommand(result),
+              resultSummary: SNAPSHOT_UPDATED_RESULT_SUMMARY,
+            }),
+          );
         }
         return result;
       } catch (error) {
         const scope = scopeForVariables(variables);
         if (scope) {
-          const resolved = error instanceof Error ? error : new Error(`${label} failed.`);
-          recordCommandResult(scope, {
-            label,
-            status: "error",
-            message: resolved.message,
-            kind: resolved instanceof DesktopCommandError ? resolved.kind : undefined,
-            remediation:
-              resolved instanceof DesktopCommandError ? resolved.remediation : undefined,
-          });
+          recordCommandResult(
+            scope,
+            buildCommandResultError(error, {
+              label,
+              fallbackMessage: `${label} failed.`,
+            }),
+          );
         }
         throw error;
       }
@@ -147,11 +141,10 @@ export function useDesktopActions() {
       const message = `Switched to ${targetLabel} for ${variables.matchedTarget}.`;
       recordCommandResult(
         { type: "global", id: "workspace" },
-        {
+        buildCommandResultSuccess({
           label,
-          status: "success",
           message,
-        },
+        }),
       );
       await notifyDesktop({
         title: "Project switch",
@@ -160,17 +153,14 @@ export function useDesktopActions() {
       await invalidate();
       return result;
     } catch (error) {
-      const resolved = error instanceof Error ? error : new Error(`${label} failed.`);
       recordCommandResult(
         { type: "global", id: "workspace" },
-        {
+        buildCommandResultError(error, {
           label,
-          status: "error",
-          message: resolved.message,
-          kind: resolved instanceof DesktopCommandError ? resolved.kind : undefined,
-          remediation: resolved instanceof DesktopCommandError ? resolved.remediation : undefined,
-        },
+          fallbackMessage: `${label} failed.`,
+        }),
       );
+      const resolved = error instanceof Error ? error : new Error(`${label} failed.`);
       await notifyDesktop({
         title: "Project switch",
         body:
@@ -285,25 +275,19 @@ export function useDesktopActions() {
           const result = await enqueueMutation("Run setup", runInit);
           recordCommandResult(
             { type: "global", id: "setup" },
-            {
+            buildCommandResultSuccess({
               label: "Run setup",
-              status: "success",
               message: "Finished setup scan.",
-            },
+            }),
           );
           return result;
         } catch (error) {
-          const resolved = error instanceof Error ? error : new Error("Run setup failed.");
           recordCommandResult(
             { type: "global", id: "setup" },
-            {
+            buildCommandResultError(error, {
               label: "Run setup",
-              status: "error",
-              message: resolved.message,
-              kind: resolved instanceof DesktopCommandError ? resolved.kind : undefined,
-              remediation:
-                resolved instanceof DesktopCommandError ? resolved.remediation : undefined,
-            },
+              fallbackMessage: "Run setup failed.",
+            }),
           );
           throw error;
         }
