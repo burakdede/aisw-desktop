@@ -579,7 +579,7 @@ export function SetupPanel({
                                       {ONBOARDING_ACCOUNTS_STEP_COPY.liveSignInMethodLabel}
                                     </span>
                                     <strong>
-                                      {onboardingLiveAccountValue(selectedAccountItem.account.auth_method)}
+                                      {onboardingLiveAccountValue(selectedAccountItem.account.authMethod)}
                                     </strong>
                                   </div>
                                   <div>
@@ -587,7 +587,7 @@ export function SetupPanel({
                                       {ONBOARDING_ACCOUNTS_STEP_COPY.liveMatchedProfileLabel}
                                     </span>
                                     <strong>
-                                      {onboardingMatchedProfileValue(selectedAccountItem.account.matched_profile)}
+                                      {onboardingMatchedProfileValue(selectedAccountItem.account.matchedProfile)}
                                     </strong>
                                   </div>
                                 </div>

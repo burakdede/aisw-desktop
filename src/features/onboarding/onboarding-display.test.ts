@@ -213,8 +213,8 @@ describe("onboarding-display", () => {
       account: {
         tool: "claude",
         outcome: "detected",
-        auth_method: "oauth",
-        matched_profile: "personal",
+        authMethod: "oauth",
+        matchedProfile: "personal",
       },
     };
     const needsProfileItem: OnboardingAccountItem = {
@@ -338,8 +338,8 @@ describe("onboarding-display", () => {
       {
         tool: "claude",
         outcome: "detected",
-        auth_method: "oauth",
-        matched_profile: "personal",
+        authMethod: "oauth",
+        matchedProfile: "personal",
       },
     ]);
 
@@ -357,6 +357,11 @@ describe("onboarding-display", () => {
               tool: "codex",
               outcome: 123,
             },
+            {
+              tool: "unknown-tool",
+              outcome: "detected",
+              auth_method: "oauth",
+            },
             "invalid",
           ],
         },
@@ -365,14 +370,14 @@ describe("onboarding-display", () => {
       {
         tool: "claude",
         outcome: "detected",
-        auth_method: "oauth",
-        matched_profile: null,
+        authMethod: "oauth",
+        matchedProfile: null,
       },
       {
         tool: "codex",
         outcome: undefined,
-        auth_method: undefined,
-        matched_profile: undefined,
+        authMethod: undefined,
+        matchedProfile: undefined,
       },
     ]);
 

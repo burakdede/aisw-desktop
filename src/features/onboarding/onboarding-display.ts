@@ -17,6 +17,10 @@ import {
   SECURE_STORAGE_LABEL,
   TERMINAL_INTEGRATION_LABEL,
 } from "../../lib/desktop-domain-copy";
+import {
+  isSupportedTool,
+  type SupportedTool,
+} from "../../lib/tool-registry";
 import { toolDisplayName } from "../../lib/tool-display";
 import { toolBinaryName } from "../../lib/tool-guidance";
 import { resolveErrorDetails, resolveErrorMessage } from "../../lib/error-details";
@@ -50,10 +54,10 @@ import {
 export type SetupStep = "accounts" | "runtime" | "switch" | "terminal" | "done";
 
 export type LiveAccount = {
-  tool: string;
+  tool: SupportedTool;
   outcome?: string;
-  auth_method?: string;
-  matched_profile?: string | null;
+  authMethod?: string;
+  matchedProfile?: string | null;
 };
 
 export type OnboardingHealthItem = {
@@ -353,7 +357,7 @@ export type OnboardingInventory = {
   installedToolsNeedingProfile: ToolStatus[];
   missingTools: ToolStatus[];
   accountItems: OnboardingAccountItem[];
-  installedNow: string[];
+  installedNow: SupportedTool[];
   needsAttentionCount: number;
 };
 
@@ -395,7 +399,10 @@ export function buildOnboardingInventory(
   initReport: InitReport | undefined,
 ): OnboardingInventory {
   const liveAccounts = readLiveAccounts(initReport);
-  const liveAccountTools = new Set(liveAccounts.map((account) => account.tool));
+  const liveAccountTools = new Set<string>(liveAccounts.map((account) => account.tool));
+  const installedNow = snapshot.statuses.flatMap((status): SupportedTool[] =>
+    status.binary_found && isSupportedTool(status.tool) ? [status.tool] : [],
+  );
   const installedToolsNeedingProfile = snapshot.statuses.filter(
     (status) =>
       status.binary_found &&
@@ -426,9 +433,7 @@ export function buildOnboardingInventory(
     installedToolsNeedingProfile,
     missingTools,
     accountItems,
-    installedNow: snapshot.statuses
-      .filter((status) => status.binary_found)
-      .map((status) => status.tool),
+    installedNow,
     needsAttentionCount:
       liveAccounts.length + installedToolsNeedingProfile.length + missingTools.length,
   };
@@ -622,11 +627,10 @@ function buildOnboardingAccountPresentation(
   item: OnboardingAccountItem,
 ): OnboardingAccountPresentation {
   if (item.kind === "live") {
-    const matchedProfile = asOptionalString(item.account.matched_profile);
     return {
       badge: ONBOARDING_ACCOUNT_PRESENTATION_COPY.readyToImport.badge,
-      summary: `${onboardingLiveAccountValue(item.account.outcome)} · ${onboardingLiveAccountValue(item.account.auth_method)}${
-        matchedProfile ? ` · matches ${matchedProfile}` : ""
+      summary: `${onboardingLiveAccountValue(item.account.outcome)} · ${onboardingLiveAccountValue(item.account.authMethod)}${
+        item.account.matchedProfile ? ` · matches ${item.account.matchedProfile}` : ""
       }`,
     };
   }
@@ -658,15 +662,15 @@ function buildOnboardingMissingToolNoteParts(
 function parseLiveAccount(value: unknown): LiveAccount | null {
   const record = asObject(value);
   const tool = asOptionalString(record?.tool);
-  if (!record || !tool) {
+  if (!record || !tool || !isSupportedTool(tool)) {
     return null;
   }
 
   return {
     tool,
     outcome: asOptionalString(record.outcome),
-    auth_method: asOptionalString(record.auth_method),
-    matched_profile:
+    authMethod: asOptionalString(record.auth_method),
+    matchedProfile:
       record.matched_profile === null
         ? null
         : asOptionalString(record.matched_profile),
