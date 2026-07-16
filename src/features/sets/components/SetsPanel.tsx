@@ -33,7 +33,7 @@ import {
 import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { SUPPORTED_TOOLS, toolShortName } from "../../../lib/tool-registry";
-import { countLabel } from "../../../lib/utils";
+import { buildKeyedRecord, countLabel } from "../../../lib/utils";
 import {
   DEFAULT_WORKSPACE_BINDING_SCOPE,
   normalizeWorkspaceBindingScope,
@@ -177,15 +177,12 @@ export function SetsPanel({
   const activeSetCount = localSets.filter((entry) => profileSetIsActive(snapshot, entry)).length;
   const profileOptions = useMemo(
     () =>
-      Object.fromEntries(
-        TOOLS.map((tool) => [
-          tool,
-          (snapshot.profiles[tool]?.profiles ?? []).map((profile) => ({
+      buildKeyedRecord(TOOLS, (tool) =>
+        (snapshot.profiles[tool]?.profiles ?? []).map((profile) => ({
             value: profile.name,
             label: toolProfileDisplayLabel(settings, snapshot, tool, profile.name),
           })),
-        ]),
-      ) as Record<(typeof TOOLS)[number], Array<{ value: string; label: string }>>,
+      ),
     [settings, snapshot],
   );
 

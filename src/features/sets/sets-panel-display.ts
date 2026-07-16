@@ -31,6 +31,7 @@ import {
 } from "../../lib/sets-display";
 import { CURRENT_LABEL } from "../../lib/status-copy";
 import { toolShortName } from "../../lib/tool-registry";
+import { buildKeyedRecord } from "../../lib/utils";
 
 export type EditableProfileSet = {
   sourceName: string | null;
@@ -261,7 +262,7 @@ export function createEmptyEditableProfileSet(tools: readonly string[]): Editabl
     sourceName: null,
     name: "",
     label: "",
-    profiles: Object.fromEntries(tools.map((tool) => [tool, ""])),
+    profiles: buildKeyedRecord(tools, () => ""),
   };
 }
 
@@ -273,7 +274,7 @@ export function createEditableProfileSetDraft(
     sourceName: set.name,
     name: set.name,
     label: set.label ?? "",
-    profiles: Object.fromEntries(tools.map((tool) => [tool, set.profiles[tool] ?? ""])),
+    profiles: buildKeyedRecord(tools, (tool) => set.profiles[tool] ?? ""),
   };
 }
 
@@ -296,7 +297,7 @@ export function duplicateEditableProfileSetDraft(
     label: existingSet.label
       ? `${existingSet.label} Copy`
       : `${profileSetDisplayLabel(existingSet)} Copy`,
-    profiles: Object.fromEntries(tools.map((tool) => [tool, existingSet.profiles[tool] ?? ""])),
+    profiles: buildKeyedRecord(tools, (tool) => existingSet.profiles[tool] ?? ""),
   };
 }
 
@@ -544,17 +545,15 @@ export function buildSelectedSetInspectorState(input: {
       ? "Current"
       : `Switch to ${profileSetDisplayLabel(input.selectedSet)}`,
     selectionCountLabel: setSelectionCountLabel(selectedCount),
-    mappedProfiles: input.tools.map((tool) => ({
-      tool,
-      value: input.selectedSet.profiles[tool]
-        ? toolProfileDisplayLabel(
-            input.settings,
-            input.snapshot,
-            tool,
-            input.selectedSet.profiles[tool] as string,
-          )
-        : "Not included",
-    })),
+    mappedProfiles: input.tools.map((tool) => {
+      const profile = input.selectedSet.profiles[tool];
+      return {
+        tool,
+        value: profile
+          ? toolProfileDisplayLabel(input.settings, input.snapshot, tool, profile)
+          : "Not included",
+      };
+    }),
     projectRuleCount: input.ruleUsageCountByContext.get(input.selectedSet.name) ?? 0,
     warning,
   };

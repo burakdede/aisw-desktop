@@ -45,6 +45,7 @@ import {
   normalizeSettingsSection,
   type SettingsSection,
 } from "../../../lib/settings-sections";
+import { buildKeyedRecord } from "../../../lib/utils";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import {
@@ -118,10 +119,7 @@ export function SettingsPanel({
 }) {
   const queryClient = useQueryClient();
   const sectionButtonRefs = useRef<Record<SettingsSection, HTMLButtonElement | null>>(
-    Object.fromEntries(SETTINGS_SECTIONS.map((section) => [section, null])) as Record<
-      SettingsSection,
-      HTMLButtonElement | null
-    >,
+    buildKeyedRecord(SETTINGS_SECTIONS, () => null),
   );
   const { updateSettingsMutation, checkForUpdatesMutation, installUpdateMutation, mutationLock } =
     useDesktopActions();

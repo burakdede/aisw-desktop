@@ -19,3 +19,14 @@ export function pluralChoice<T>(count: number, singular: T, plural: T) {
 export function countLabel(count: number, singular: string, plural = `${singular}s`) {
   return `${count} ${pluralChoice(count, singular, plural)}`;
 }
+
+export function buildKeyedRecord<const Key extends string, Value>(
+  keys: readonly Key[],
+  createValue: (key: Key) => Value,
+) {
+  const record = {} as Record<Key, Value>;
+  keys.forEach((key) => {
+    record[key] = createValue(key);
+  });
+  return record;
+}

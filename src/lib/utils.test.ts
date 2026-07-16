@@ -1,4 +1,4 @@
-import { countLabel, pluralChoice, pluralSuffix, titleCase } from "./utils";
+import { buildKeyedRecord, countLabel, pluralChoice, pluralSuffix, titleCase } from "./utils";
 
 describe("utils", () => {
   it("formats title case values", () => {
@@ -13,5 +13,14 @@ describe("utils", () => {
     expect(countLabel(1, "tool")).toBe("1 tool");
     expect(countLabel(2, "tool")).toBe("2 tools");
     expect(countLabel(2, "safe fix", "safe fixes")).toBe("2 safe fixes");
+  });
+
+  it("builds typed records from fixed key lists", () => {
+    expect(
+      buildKeyedRecord(["claude", "codex"] as const, (tool) => `${tool}-profile`),
+    ).toEqual({
+      claude: "claude-profile",
+      codex: "codex-profile",
+    });
   });
 });
