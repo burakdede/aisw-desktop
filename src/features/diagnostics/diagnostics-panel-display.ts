@@ -4,6 +4,11 @@ import { isSupportedTool } from "../../lib/tool-registry";
 import { countLabel, titleCase } from "../../lib/utils";
 import { BLOCKED_LABEL, NEEDS_ATTENTION_SENTENCE_LABEL } from "../../lib/status-copy";
 import {
+  doctorCheckHasKeyword,
+  doctorCheckNameHasAll,
+  parseDoctorChecks,
+} from "./diagnostic-doctor-checks";
+import {
   diagnosticTitleHas,
   diagnosticTitleHasAny,
   normalizeDiagnosticTitle,
@@ -738,38 +743,33 @@ function repairableDoctorIssues(
   status: "warn" | "fail";
   primary?: boolean;
 }> {
-  return asArray(doctor?.checks)
-    .map((check) => asObject(check))
-    .filter((check): check is Record<string, unknown> => Boolean(check))
-    .flatMap((check) => {
-      const name = asStringValue(check.name)?.toLowerCase() ?? "";
-      const detail = asStringValue(check.detail) ?? "AI Switch reported an issue.";
-      const status = (asStringValue(check.status) as "warn" | "fail" | undefined) ?? "warn";
-
-      if (name.includes("keyring")) {
+  return parseDoctorChecks(doctor, {
+    defaultDetail: "AI Switch reported an issue.",
+  }).flatMap((check) => {
+      if (doctorCheckHasKeyword(check, "keyring")) {
         return [doctorRepairFixCard(
           "Keyring unavailable",
-          detail,
+          check.detail,
           "Apply keyring repair",
-          status,
+          check.status,
           repairFixMap.get("keyring") ?? "keyring",
         )];
       }
-      if (name.includes("permission")) {
+      if (doctorCheckHasKeyword(check, "permission")) {
         return [doctorRepairFixCard(
           "Permission issue",
-          detail,
+          check.detail,
           "Repair permissions",
-          status,
+          check.status,
           repairFixMap.get("permissions") ?? "permissions",
         )];
       }
-      if (name.includes("oauth")) {
+      if (doctorCheckHasKeyword(check, "oauth")) {
         return [doctorRepairFixCard(
           "OAuth failure",
-          detail,
+          check.detail,
           "Retry OAuth repair",
-          status,
+          check.status,
           repairFixMap.get("oauth") ?? "oauth",
         )];
       }
@@ -795,22 +795,18 @@ function doctorRepairFixCard(
 }
 
 function shellHookDoctorIssue(doctor: Record<string, unknown> | undefined) {
-  const checks = asArray(doctor?.checks)
-    .map((check) => asObject(check))
-    .filter((check): check is Record<string, unknown> => Boolean(check));
+  const checks = parseDoctorChecks(doctor, {
+    defaultDetail: "Terminal integration guidance needs attention.",
+    detailTransform: normalizeTerminalIntegrationText,
+  });
 
   for (const check of checks) {
-    const name = asStringValue(check.name)?.toLowerCase() ?? "";
-    const detail = normalizeTerminalIntegrationText(
-      asStringValue(check.detail) ?? "Terminal integration guidance needs attention.",
-    );
-    const status = (asStringValue(check.status) as "warn" | "fail" | undefined) ?? "warn";
-    const detailText = detail.toLowerCase();
     if (
-      (name.includes("shell") && name.includes("hook")) ||
-      detailText.includes("shell hook") || detailText.includes("terminal integration")
+      doctorCheckNameHasAll(check, ["shell", "hook"]) ||
+      doctorCheckHasKeyword(check, "shell hook") ||
+      doctorCheckHasKeyword(check, "terminal integration")
     ) {
-      return { detail, status };
+      return { detail: check.detail, status: check.status };
     }
   }
 
@@ -818,17 +814,13 @@ function shellHookDoctorIssue(doctor: Record<string, unknown> | undefined) {
 }
 
 function keyringDoctorIssue(doctor: Record<string, unknown> | undefined) {
-  const checks = asArray(doctor?.checks)
-    .map((check) => asObject(check))
-    .filter((check): check is Record<string, unknown> => Boolean(check));
+  const checks = parseDoctorChecks(doctor, {
+    defaultDetail: "Keyring access needs attention.",
+  });
 
   for (const check of checks) {
-    const name = asStringValue(check.name)?.toLowerCase() ?? "";
-    const detail = asStringValue(check.detail) ?? "Keyring access needs attention.";
-    const status = (asStringValue(check.status) as "warn" | "fail" | undefined) ?? "warn";
-    const detailText = detail.toLowerCase();
-    if (name.includes("keyring") || detailText.includes("keyring")) {
-      return { detail, status };
+    if (doctorCheckHasKeyword(check, "keyring")) {
+      return { detail: check.detail, status: check.status };
     }
   }
 
