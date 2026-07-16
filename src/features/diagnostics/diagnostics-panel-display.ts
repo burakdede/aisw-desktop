@@ -949,7 +949,7 @@ function buildOpenProfileDetailsAction(
   return {
     key: `profile-${finding.key}`,
     kind: "open_profile_details",
-    label: "Open Profile Details",
+    label: DESKTOP_ACTION_COPY.openProfileDetailsLabel,
     profileTarget: finding.profileTarget,
   };
 }

@@ -91,7 +91,7 @@ export const OVERVIEW_PANEL_COPY = {
   backLabel: "Back",
   liveMismatchFallbackProfileLabel: "the saved profile",
   missingBinaryActionLabel: "Installation Help",
-  missingBinaryRefreshLabel: "Refresh",
+  missingBinaryRefreshLabel: DESKTOP_ACTION_COPY.refreshLabel,
   noProfileHeading: "No profile configured",
   noProfileBody: "Add a saved profile before switching this tool from Overview.",
   addProfileLabel: DESKTOP_ACTION_COPY.addProfileEllipsisLabel,
@@ -524,7 +524,7 @@ export function buildOverviewInspectorPresentation(input: {
       : status.active_profile
         ? {
             kind: "open_profile",
-            label: "Open Profile",
+            label: DESKTOP_ACTION_COPY.openProfileLabel,
           }
         : workspaceMismatchPresent
           ? {
@@ -543,7 +543,7 @@ export function buildOverviewInspectorPresentation(input: {
     status.active_profile
       ? {
           kind: "open_profile",
-          label: "Open Profile",
+          label: DESKTOP_ACTION_COPY.openProfileLabel,
         }
       : null,
     supportsLiveImport
@@ -561,7 +561,7 @@ export function buildOverviewInspectorPresentation(input: {
     !status.binary_found
       ? {
           kind: "refresh",
-          label: "Refresh",
+          label: DESKTOP_ACTION_COPY.refreshLabel,
         }
       : null,
   ].filter((action): action is OverviewInspectorAction => Boolean(action));

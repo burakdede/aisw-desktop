@@ -11,6 +11,7 @@ import {
   noSelectionHeading,
   quotedActionHeading,
 } from "../../lib/display-copy";
+import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { toolProfileDisplayLabel } from "../../lib/profile-display";
 import type { AppSnapshot, BackupEntry, DesktopSettings } from "../../lib/schemas";
 import { toolDisplayName } from "../../lib/tool-display";
@@ -40,7 +41,7 @@ export const BACKUPS_PANEL_COPY = {
   toolbarMenuMoreAriaLabel: "Backups more actions",
   toolbarMenuAriaLabel: "Backups actions",
   tableAriaLabel: "Backups list",
-  refreshLabel: "Refresh",
+  refreshLabel: DESKTOP_ACTION_COPY.refreshLabel,
   columns: {
     created: "Created",
     tool: "Tool",
@@ -66,7 +67,7 @@ export const BACKUPS_PANEL_COPY = {
     restoreLabel: "Restore…",
     menuAriaLabel: "Backup actions",
     restoreAndActivateLabel: "Restore and Activate…",
-    openProfileLabel: "Open Profile",
+    openProfileLabel: DESKTOP_ACTION_COPY.openProfileLabel,
     copyBackupIdLabel: "Copy Backup ID",
     revealBackupFolderLabel: "Reveal Backup Folder",
     infoLabels: {
