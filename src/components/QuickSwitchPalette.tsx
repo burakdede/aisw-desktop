@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { DialogSurface } from "./DialogSurface";
 import { SearchField } from "./SearchField";
 import { ToolBrand } from "./ToolBrand";
+import { QUICK_SWITCH_FOCUS_DELAY_MS } from "../lib/desktop-timing";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "../lib/schemas";
 import { resolveGlobalStateMode, supportedStateModes } from "../features/shared/state-modes";
 import { useDesktopActions } from "../features/shared/useDesktopActions";
@@ -62,7 +63,7 @@ export function QuickSwitchPalette({
       inputRef.current?.select();
     };
     const frame = window.requestAnimationFrame(focusSearchField);
-    const timeout = window.setTimeout(focusSearchField, 40);
+    const timeout = window.setTimeout(focusSearchField, QUICK_SWITCH_FOCUS_DELAY_MS);
     return () => {
       window.cancelAnimationFrame(frame);
       window.clearTimeout(timeout);

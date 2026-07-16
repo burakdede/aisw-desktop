@@ -1,0 +1,16 @@
+export const DESKTOP_RUNTIME_WAIT_TIMEOUT_MS = 1000;
+export const DESKTOP_RUNTIME_WAIT_INTERVAL_MS = 20;
+
+export const DESKTOP_BOOTSTRAP_RETRY_LIMIT = 3;
+export const DESKTOP_BOOTSTRAP_RETRY_BASE_DELAY_MS = 250;
+export const DESKTOP_BOOTSTRAP_RETRY_MAX_DELAY_MS = 750;
+
+export const WINDOW_STATE_PERSIST_DELAY_MS = 160;
+export const QUICK_SWITCH_FOCUS_DELAY_MS = 40;
+
+export function desktopBootstrapRetryDelay(attempt: number) {
+  return Math.min(
+    DESKTOP_BOOTSTRAP_RETRY_BASE_DELAY_MS * attempt,
+    DESKTOP_BOOTSTRAP_RETRY_MAX_DELAY_MS,
+  );
+}

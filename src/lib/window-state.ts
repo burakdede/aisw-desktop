@@ -1,6 +1,7 @@
 import { MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH } from "./layout";
 import { disposeSafely, type AsyncDispose } from "./async-dispose";
 import { resolveBrowserStorage } from "./browser-storage";
+import { WINDOW_STATE_PERSIST_DELAY_MS } from "./desktop-timing";
 
 type PersistedWindowState = {
   width: number;
@@ -53,7 +54,7 @@ export async function syncWindowState(): Promise<Unlisten> {
     persistTimer = window.setTimeout(() => {
       persistTimer = null;
       void persistWindowState(appWindow);
-    }, 160);
+    }, WINDOW_STATE_PERSIST_DELAY_MS);
   };
 
   const unlistenResize = await appWindow.onResized(schedulePersist);

@@ -1,9 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type Event } from "@tauri-apps/api/event";
 import type { AsyncDispose } from "./async-dispose";
-
-const DESKTOP_RUNTIME_WAIT_TIMEOUT_MS = 1000;
-const DESKTOP_RUNTIME_WAIT_INTERVAL_MS = 20;
+import {
+  DESKTOP_RUNTIME_WAIT_INTERVAL_MS,
+  DESKTOP_RUNTIME_WAIT_TIMEOUT_MS,
+} from "./desktop-timing";
 
 export class DesktopCommandError extends Error {
   kind?: string;
