@@ -16,6 +16,7 @@ import {
   type CommandResultScopeType,
 } from "../shared/command-result-scope";
 import type { ActivityTimelineEntry } from "../shared/lastCommandResult";
+import type { CommandResultRecord } from "../shared/command-result-shape";
 
 export type ActivityFilter = "all" | CommandResultStatus;
 type ActivityStatus = ActivityEntry["status"];
@@ -118,14 +119,8 @@ export type ActivityEntry = {
   scopeLabel: string;
   scopeType: CommandResultScopeType;
   scopeTool?: string;
-  label: string;
-  status: CommandResultStatus;
-  message: string;
-  remediation?: string;
-  command?: string;
-  resultSummary?: string;
   at: number;
-};
+} & CommandResultRecord;
 
 export type ActivityInspectorRow = {
   label: string;

@@ -11,19 +11,12 @@ import {
 export type { CommandResultScope } from "./command-result-scope";
 import {
   parseStoredCommandResult,
+  type CommandResultRecord,
   type CommandResultStatus,
+  type ParsedStoredCommandResult,
 } from "./command-result-shape";
 
-export type LastCommandResult = {
-  label: string;
-  status: CommandResultStatus;
-  message: string;
-  kind?: string;
-  remediation?: string;
-  command?: string;
-  resultSummary?: string;
-  at: number;
-};
+export type LastCommandResult = ParsedStoredCommandResult;
 
 export type ActivityTimelineEntry = LastCommandResult & {
   key: string;
@@ -63,7 +56,7 @@ export function useLastCommandResults() {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
-export function recordCommandResult(scope: CommandResultScope, result: Omit<LastCommandResult, "at">) {
+export function recordCommandResult(scope: CommandResultScope, result: CommandResultRecord) {
   const nextAt = Date.now();
   const next: LastCommandResult = {
     ...result,

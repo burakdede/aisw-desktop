@@ -1,16 +1,17 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type Event } from "@tauri-apps/api/event";
 import type { AsyncDispose } from "./async-dispose";
+import type { ErrorMetadata } from "./error-details";
 import {
   DESKTOP_RUNTIME_WAIT_INTERVAL_MS,
   DESKTOP_RUNTIME_WAIT_TIMEOUT_MS,
 } from "./desktop-timing";
 
 export class DesktopCommandError extends Error {
-  kind?: string;
-  remediation?: string;
+  kind?: ErrorMetadata["kind"];
+  remediation?: ErrorMetadata["remediation"];
 
-  constructor(message: string, options?: { kind?: string; remediation?: string }) {
+  constructor(message: string, options?: ErrorMetadata) {
     super(message);
     this.name = "DesktopCommandError";
     this.kind = options?.kind;

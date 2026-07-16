@@ -1,4 +1,5 @@
 import { asObject, asOptionalString } from "../../lib/parse-guards";
+import type { ErrorMetadata } from "../../lib/error-details";
 import {
   COMMAND_RESULT_SCOPE_TYPES,
   isCommandResultGlobalId,
@@ -9,14 +10,25 @@ export const COMMAND_RESULT_STATUSES = ["success", "error"] as const;
 
 export type CommandResultStatus = (typeof COMMAND_RESULT_STATUSES)[number];
 
-export type ParsedStoredCommandResult = {
+export type CommandResultBase = {
   label: string;
   status: CommandResultStatus;
   message: string;
-  kind?: string;
-  remediation?: string;
+} & ErrorMetadata;
+
+export type CommandResultSummary = Pick<
+  CommandResultBase,
+  "status" | "message" | "remediation"
+>;
+
+export type CommandResultMetadata = {
   command?: string;
   resultSummary?: string;
+};
+
+export type CommandResultRecord = CommandResultBase & CommandResultMetadata;
+
+export type ParsedStoredCommandResult = CommandResultRecord & {
   at: number;
 };
 
@@ -24,21 +36,11 @@ export type ParsedTrayCommandResultEvent =
   | {
       scope: typeof COMMAND_RESULT_SCOPE_TYPES.tool;
       tool: string;
-      label: string;
-      status: CommandResultStatus;
-      message: string;
-      kind?: string;
-      remediation?: string;
-    }
+    } & CommandResultBase
   | {
       scope: typeof COMMAND_RESULT_SCOPE_TYPES.global;
       id: CommandResultGlobalId;
-      label: string;
-      status: CommandResultStatus;
-      message: string;
-      kind?: string;
-      remediation?: string;
-    };
+    } & CommandResultBase;
 
 export function parseStoredCommandResult(
   value: unknown,

@@ -1,5 +1,5 @@
 import { normalizeRuntimeLanguage } from "../features/shared/runtime-language";
-import type { CommandResultStatus } from "../features/shared/command-result-shape";
+import type { CommandResultSummary } from "../features/shared/command-result-shape";
 import {
   ACTIVE_LABEL,
   AVAILABLE_LABEL,
@@ -10,12 +10,6 @@ import {
 } from "./status-copy";
 import { formatMessageWithRemediation } from "./remediation-text";
 import { countLabel } from "./utils";
-
-type CommandResult = {
-  status: CommandResultStatus;
-  message: string;
-  remediation?: string;
-};
 
 type SetSummaryKind = "set" | "project" | "project-rule";
 type SetSummaryNormalization = "none" | "runtime" | "project-rule";
@@ -72,7 +66,7 @@ function normalizeSetSummaryText(text: string, mode: SetSummaryNormalization) {
 }
 
 function formatSetSummaryResult(
-  result: CommandResult | null | undefined,
+  result: CommandResultSummary | null | undefined,
   kind: SetSummaryKind,
   normalization: SetSummaryNormalization,
 ) {
@@ -113,7 +107,7 @@ export function setSelectionCountLabel(count: number) {
 }
 
 export function setCommandResultLabel(
-  result: CommandResult | null | undefined,
+  result: CommandResultSummary | null | undefined,
   kind: "set" | "project-rule",
 ) {
   return formatSetSummaryResult(
@@ -124,13 +118,13 @@ export function setCommandResultLabel(
 }
 
 export function setResultSummary(
-  result: CommandResult | null | undefined,
+  result: CommandResultSummary | null | undefined,
   normalizeRuntimeCopy = false,
 ) {
   return formatSetSummaryResult(result, "set", normalizeRuntimeCopy ? "runtime" : "none");
 }
 
-export function projectResultSummary(result: CommandResult | null | undefined) {
+export function projectResultSummary(result: CommandResultSummary | null | undefined) {
   return formatSetSummaryResult(result, "project", "none");
 }
 

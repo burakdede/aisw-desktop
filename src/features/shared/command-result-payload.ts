@@ -1,6 +1,6 @@
-import type { LastCommandResult } from "./lastCommandResult";
 import { resolveErrorDetails } from "../../lib/error-details";
 import { parseCommandResultCommand } from "./command-result-shape";
+import type { CommandResultRecord } from "./command-result-shape";
 
 export const SNAPSHOT_UPDATED_RESULT_SUMMARY = "Snapshot updated successfully.";
 
@@ -9,7 +9,7 @@ export function buildCommandResultSuccess(input: {
   message: string;
   command?: string;
   resultSummary?: string;
-}): Omit<LastCommandResult, "at"> {
+}): CommandResultRecord {
   return {
     label: input.label,
     status: "success",
@@ -25,7 +25,7 @@ export function buildCommandResultError(
     label: string;
     fallbackMessage: string;
   },
-): Omit<LastCommandResult, "at"> {
+): CommandResultRecord {
   const resolved = resolveErrorDetails(error, input.fallbackMessage);
   return {
     label: input.label,

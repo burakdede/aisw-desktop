@@ -1,10 +1,13 @@
 import { asObject, asOptionalString } from "./parse-guards";
 
-export type ErrorDetails = {
-  message: string;
+export type ErrorMetadata = {
   remediation?: string;
   kind?: string;
 };
+
+export type ErrorDetails = {
+  message: string;
+} & ErrorMetadata;
 
 export function resolveErrorDetails(
   error: unknown,

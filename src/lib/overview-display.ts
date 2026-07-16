@@ -1,7 +1,10 @@
 import { AUTH_METHOD_NOT_CONFIGURED_LABEL, authMethodLabel } from "./auth-method-display";
 import { DESKTOP_ACTION_COPY } from "./desktop-action-copy";
 import { BACK_LABEL, inspectItemLabel, noSelectionHeading } from "./display-copy";
-import type { CommandResultStatus } from "../features/shared/command-result-shape";
+import type {
+  CommandResultStatus,
+  CommandResultSummary,
+} from "../features/shared/command-result-shape";
 import { normalizeRuntimeLanguage } from "../features/shared/runtime-language";
 import {
   fixedStateModeDescription,
@@ -275,21 +278,9 @@ export function overviewSelectedStateMode(
 }
 
 export function overviewRecentSummary(input: {
-  bulkResult?: {
-    status: CommandResultStatus;
-    message: string;
-    remediation?: string;
-  };
-  workspaceResult?: {
-    status: CommandResultStatus;
-    message: string;
-    remediation?: string;
-  };
-  contextResult?: {
-    status: CommandResultStatus;
-    message: string;
-    remediation?: string;
-  };
+  bulkResult?: CommandResultSummary;
+  workspaceResult?: CommandResultSummary;
+  contextResult?: CommandResultSummary;
 }) {
   if (input.bulkResult) {
     return setResultSummary(input.bulkResult);
