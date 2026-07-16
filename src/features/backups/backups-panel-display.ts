@@ -8,6 +8,7 @@ import {
 import {
   clipboardCopiedMessage,
   clipboardUnavailableManualMessage,
+  noSelectionHeading,
   quotedActionHeading,
 } from "../../lib/display-copy";
 import { toolProfileDisplayLabel } from "../../lib/profile-display";
@@ -56,7 +57,7 @@ export const BACKUPS_PANEL_COPY = {
       detail: "Restore points appear here automatically before AI Switch changes a saved profile.",
     },
     unselected: {
-      heading: "No backup selected",
+      heading: noSelectionHeading("backup"),
       detail: "Choose a restore point to inspect its contents and restore options.",
     },
   },

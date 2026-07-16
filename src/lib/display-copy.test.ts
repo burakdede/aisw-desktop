@@ -6,6 +6,7 @@ import {
   DEFAULT_ACTION_FAILURE_MESSAGE,
   inspectItemLabel,
   moreActionsLabel,
+  noSelectionHeading,
   openedItemMessage,
   quotedActionHeading,
   savedItemMessage,
@@ -30,5 +31,6 @@ describe("display-copy", () => {
     expect(inspectItemLabel("Claude")).toBe("Inspect Claude");
     expect(moreActionsLabel("Client Acme")).toBe("More actions for Client Acme");
     expect(quotedActionHeading("Remove", "Work Laptop")).toBe("Remove “Work Laptop”?");
+    expect(noSelectionHeading("profile")).toBe("No profile selected");
   });
 });

@@ -35,3 +35,7 @@ export function moreActionsLabel(item: string) {
 export function quotedActionHeading(action: string, item: string) {
   return `${action} “${item}”?`;
 }
+
+export function noSelectionHeading(subject: string) {
+  return `No ${subject} selected`;
+}

@@ -1,5 +1,5 @@
 import type { WorkspaceBindInput, WorkspaceUnbindInput } from "../../lib/client";
-import { inspectItemLabel, moreActionsLabel } from "../../lib/display-copy";
+import { inspectItemLabel, moreActionsLabel, noSelectionHeading } from "../../lib/display-copy";
 import {
   DEFAULT_WORKSPACE_BINDING_SCOPE,
   normalizeWorkspaceBindingScope,
@@ -108,7 +108,7 @@ export const SETS_PANEL_COPY = {
   duplicateSetLabel: "Duplicate…",
   manageProjectRulesLabel: "Manage Project Rules…",
   removeSetLabel: "Remove…",
-  noSavedSetSelectedTitle: "No saved set selected",
+  noSavedSetSelectedTitle: noSelectionHeading("saved set"),
   noSavedSetSelectedDetail:
     "Select a saved set to inspect mapped profiles and switch it.",
   noSetsTitle: "No sets yet",
@@ -133,7 +133,7 @@ export const SETS_PANEL_COPY = {
     "Add a rule to match a default scope, folder, or git remote pattern to a saved set.",
   setUnavailableLabel: "Set Unavailable",
   enabledLabel: "Yes",
-  noRuleSelectedTitle: "No rule selected",
+  noRuleSelectedTitle: noSelectionHeading("rule"),
   noRuleSelectedDetail: "Select a rule to inspect it here.",
   closeLabel: "Close",
   cancelLabel: "Cancel",

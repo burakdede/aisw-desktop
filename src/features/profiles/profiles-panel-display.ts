@@ -11,6 +11,7 @@ import {
   DEFAULT_ACTION_FAILURE_MESSAGE,
   inspectItemLabel,
   moreActionsLabel,
+  noSelectionHeading,
   quotedActionHeading,
 } from "../../lib/display-copy";
 import { resolveErrorDetails } from "../../lib/error-details";
@@ -116,7 +117,7 @@ export const PROFILE_PANEL_COPY = {
   inspectorTriggerAriaLabel: "More profile actions",
   emptyInventoryHeading: "No matching profiles",
   emptyInventoryDetail: "Adjust the tool filter or search query.",
-  emptyInspectorHeading: "No profile selected",
+  emptyInspectorHeading: noSelectionHeading("profile"),
   emptyInspectorDetail:
     "Select a saved profile from the table to inspect activation state and storage details.",
   savedAsPrefix: "Saved as ",

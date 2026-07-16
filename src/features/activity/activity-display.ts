@@ -1,6 +1,7 @@
 import {
   DATE_UNAVAILABLE_LABEL,
   inspectItemLabel,
+  noSelectionHeading,
   openedItemMessage,
 } from "../../lib/display-copy";
 import { calendarDayStarts } from "../../lib/calendar-time";
@@ -27,7 +28,7 @@ export const ACTIVITY_EMPTY_STATE = {
 } as const;
 
 export const ACTIVITY_EMPTY_SELECTION_STATE = {
-  heading: "No event selected",
+  heading: noSelectionHeading("event"),
   detail: "Choose an event to inspect its recorded details.",
 } as const;
 

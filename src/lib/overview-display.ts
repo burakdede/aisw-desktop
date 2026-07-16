@@ -1,6 +1,6 @@
 import { AUTH_METHOD_NOT_CONFIGURED_LABEL, authMethodLabel } from "./auth-method-display";
 import { DESKTOP_ACTION_COPY } from "./desktop-action-copy";
-import { inspectItemLabel } from "./display-copy";
+import { inspectItemLabel, noSelectionHeading } from "./display-copy";
 import { normalizeRuntimeLanguage } from "../features/shared/runtime-language";
 import { fixedStateModeDescription, stateModeDescription, stateModeLabel } from "../features/shared/state-modes";
 import { toolInspectorEmptyLabel, overviewHealthLabel, overviewHealthText, resolveOverviewHealthState, type OverviewHealthState } from "./status-display";
@@ -78,7 +78,7 @@ export type OverviewStateSummary = {
 export const OVERVIEW_CURRENT_SET_LABEL = "Current set:";
 export const OVERVIEW_EMPTY_SELECTION_COPY =
   "Choose a tool to inspect its active profile and switching state.";
-export const OVERVIEW_NO_TOOL_SELECTED_HEADING = "No tool selected";
+export const OVERVIEW_NO_TOOL_SELECTED_HEADING = noSelectionHeading("tool");
 export const OVERVIEW_MORE_ACTIONS_LABEL = "More profile actions";
 export const OVERVIEW_PANEL_COPY = {
   currentSetFallback: "None",
