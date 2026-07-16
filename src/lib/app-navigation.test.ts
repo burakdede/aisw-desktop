@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  APP_NAV_GROUPS,
+  APP_NAV_ITEMS,
   APP_NAV_IDS,
   APP_NAV_SHORTCUT_KEYS,
   APP_NAV_SHORTCUT_LABELS,
@@ -25,6 +27,62 @@ describe("app-navigation", () => {
       "diagnostics",
       "backups",
       "activity",
+    ]);
+    expect(APP_NAV_GROUPS).toEqual({
+      main: "Main",
+      health: "Health",
+      app: "App",
+    });
+    expect(APP_NAV_ITEMS).toEqual([
+      {
+        id: "overview",
+        label: "Overview",
+        group: "Main",
+        defaultSection: true,
+        shortcut: "⌘1",
+      },
+      {
+        id: "profiles",
+        label: "Profiles",
+        group: "Main",
+        defaultSection: true,
+        shortcut: "⌘2",
+      },
+      {
+        id: "sets",
+        label: "Sets",
+        group: "Main",
+        defaultSection: true,
+        shortcut: "⌘3",
+      },
+      {
+        id: "diagnostics",
+        label: "Diagnostics",
+        group: "Health",
+        defaultSection: true,
+        shortcut: "⌘4",
+      },
+      {
+        id: "backups",
+        label: "Backups",
+        group: "Health",
+        defaultSection: true,
+        shortcut: "⌘5",
+      },
+      {
+        id: "activity",
+        label: "Activity",
+        group: "Health",
+        defaultSection: true,
+        shortcut: "⌘6",
+      },
+      {
+        id: "settings",
+        label: "Settings",
+        group: "App",
+        defaultSection: false,
+        shortcut: "⌘,",
+      },
     ]);
   });
 

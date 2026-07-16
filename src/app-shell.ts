@@ -30,6 +30,7 @@ import { resolveGlobalStateMode, resolveStateModeRequest } from "./features/shar
 import { titleCase } from "./lib/utils";
 import {
   APP_NAV_IDS,
+  APP_NAV_ITEMS,
   APP_NAV_LABELS,
   APP_NAV_SHORTCUT_KEYS,
   APP_NAV_SHORTCUT_LABELS,
@@ -50,28 +51,9 @@ import {
   runtimeSourceLabel,
 } from "./lib/runtime-display";
 
-export const APP_NAV = [
-  { id: APP_NAV_IDS.overview, label: APP_NAV_LABELS[APP_NAV_IDS.overview], group: "Main" },
-  { id: APP_NAV_IDS.profiles, label: APP_NAV_LABELS[APP_NAV_IDS.profiles], group: "Main" },
-  { id: APP_NAV_IDS.sets, label: APP_NAV_LABELS[APP_NAV_IDS.sets], group: "Main" },
-  { id: APP_NAV_IDS.diagnostics, label: APP_NAV_LABELS[APP_NAV_IDS.diagnostics], group: "Health" },
-  { id: APP_NAV_IDS.backups, label: APP_NAV_LABELS[APP_NAV_IDS.backups], group: "Health" },
-  { id: APP_NAV_IDS.activity, label: APP_NAV_LABELS[APP_NAV_IDS.activity], group: "Health" },
-  { id: APP_NAV_IDS.settings, label: APP_NAV_LABELS[APP_NAV_IDS.settings], group: "App" },
-] as const;
+export const APP_NAV = APP_NAV_ITEMS;
 
 const DEFAULT_PROFILE_SETUP_TOOL = "claude";
-
-const APP_SECTION_TITLES: Record<AppSectionId, string> = {
-  [APP_NAV_IDS.overview]: APP_NAV_LABELS[APP_NAV_IDS.overview],
-  [APP_NAV_IDS.profiles]: APP_NAV_LABELS[APP_NAV_IDS.profiles],
-  [APP_NAV_IDS.sets]: APP_NAV_LABELS[APP_NAV_IDS.sets],
-  [APP_NAV_IDS.diagnostics]: APP_NAV_LABELS[APP_NAV_IDS.diagnostics],
-  [APP_NAV_IDS.backups]: APP_NAV_LABELS[APP_NAV_IDS.backups],
-  [APP_NAV_IDS.activity]: APP_NAV_LABELS[APP_NAV_IDS.activity],
-  [APP_NAV_IDS.settings]: APP_NAV_LABELS[APP_NAV_IDS.settings],
-  waiting: "AI Switch",
-};
 
 export const APP_SHELL_COPY = {
   appSubtitle: "Manage Claude Code, Codex CLI, and Gemini CLI identities locally.",
@@ -607,8 +589,10 @@ export function sectionTitle(section: string, setupFocused = false) {
   if (setupFocused) {
     return "Get started";
   }
-
-  return isAppSectionId(section) ? APP_SECTION_TITLES[section] : APP_SECTION_TITLES.waiting;
+  if (section === WAITING_APP_SECTION) {
+    return "AI Switch";
+  }
+  return isAppNavId(section) ? APP_NAV_LABELS[section] : "AI Switch";
 }
 
 function isAppSectionId(value: string): value is AppSectionId {

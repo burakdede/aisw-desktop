@@ -14,6 +14,7 @@ import { resolveErrorDetails, resolveErrorMessage } from "../../lib/error-detail
 import { normalizeResolvedCheckStatus } from "../../lib/check-status";
 import {
   DEFAULT_SETTINGS_SECTION,
+  settingsSectionLabel,
   SETTINGS_SECTION_IDS,
   SETTINGS_SECTIONS,
   type SettingsSection,
@@ -190,15 +191,6 @@ const SETTINGS_SECTION_KEY_DIRECTIONS = {
   Home: "first",
   End: "last",
 } as const satisfies Record<string, SettingsSectionDirection>;
-
-const SETTINGS_SECTION_LABELS: Record<SettingsSection, string> = {
-  [SETTINGS_SECTION_IDS.general]: "General",
-  [SETTINGS_SECTION_IDS.runtime]: "Engine",
-  [SETTINGS_SECTION_IDS.shell]: "Terminal Integration",
-  [SETTINGS_SECTION_IDS.keyring]: "Security",
-  [SETTINGS_SECTION_IDS.updates]: "Updates",
-  [SETTINGS_SECTION_IDS.advanced]: "Advanced",
-};
 const DEFAULT_SECTION_LABELS: Record<DefaultAppSection, string> = {
   [APP_NAV_IDS.overview]: APP_NAV_LABELS[APP_NAV_IDS.overview],
   [APP_NAV_IDS.profiles]: APP_NAV_LABELS[APP_NAV_IDS.profiles],
@@ -296,7 +288,7 @@ export function persistedRuntimePath(
 }
 
 export function sectionLabel(section: SettingsSection) {
-  return SETTINGS_SECTION_LABELS[section];
+  return settingsSectionLabel(section);
 }
 
 export function nextSettingsSection(
