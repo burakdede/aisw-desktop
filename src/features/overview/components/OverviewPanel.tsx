@@ -23,9 +23,17 @@ import {
   buildOverviewInspectorPresentation,
   overviewAuthMethodLabel,
   overviewDiagnosticWarning,
+  OVERVIEW_CURRENT_SET_LABEL,
+  OVERVIEW_EMPTY_SELECTION_COPY,
+  overviewInspectorActionDisabled,
+  overviewInspectorEmptyHeading,
   overviewHeadline,
+  overviewLastResultMessage,
   overviewMetaLabel,
   overviewRecentSummary,
+  OVERVIEW_MORE_ACTIONS_LABEL,
+  overviewSelectedStateMode,
+  overviewSetButtonLabel,
   overviewToolListProfileLabel,
   overviewStateModeCopy,
   overviewTokenWarning,
@@ -152,7 +160,7 @@ export function OverviewPanel({
       <div className="overview-set-row">
         <div className="overview-set-row-main">
           <span className="overview-set-row-inline">
-            <span className="overview-set-row-label">Current set:</span>
+            <span className="overview-set-row-label">{OVERVIEW_CURRENT_SET_LABEL}</span>
             <strong>{currentSetDisplay}</strong>
           </span>
         </div>
@@ -163,7 +171,7 @@ export function OverviewPanel({
             disabled={mutationLock.isBusy}
             onClick={onOpenContexts}
           >
-            {currentSetLabel ? "Open Sets" : "Choose Set…"}
+            {overviewSetButtonLabel(Boolean(currentSetLabel))}
           </button>
         </div>
       </div>
@@ -279,8 +287,8 @@ export function OverviewPanel({
         ) : showInspector ? (
           <aside className="overview-pane overview-inspector-pane">
             <div className="overview-empty-state">
-              <h3>{compactLayout ? selectedToolName : "No tool selected"}</h3>
-              <p className="inline-note">Choose a tool to inspect its active profile and switching state.</p>
+              <h3>{overviewInspectorEmptyHeading(compactLayout, selectedToolName)}</h3>
+              <p className="inline-note">{OVERVIEW_EMPTY_SELECTION_COPY}</p>
             </div>
           </aside>
         ) : null}
@@ -411,7 +419,11 @@ function ToolInspector({
     if (!selectedProfile) {
       return;
     }
-    onUse(status.tool, selectedProfile, stateModes.length ? stateMode : null);
+    onUse(
+      status.tool,
+      selectedProfile,
+      overviewSelectedStateMode(stateModes, stateMode),
+    );
   }
 
   function runInspectorAction(kind: ReturnType<typeof buildOverviewInspectorPresentation>["menuActions"][number]["kind"]) {
@@ -421,7 +433,11 @@ function ToolInspector({
         if (!selectedProfile) {
           return;
         }
-        onUse(status.tool, selectedProfile, stateModes.length ? stateMode : null);
+        onUse(
+          status.tool,
+          selectedProfile,
+          overviewSelectedStateMode(stateModes, stateMode),
+        );
         return;
       case "import_current":
         onImport(status.tool);
@@ -580,7 +596,7 @@ function ToolInspector({
                 type="button"
                 aria-haspopup="menu"
                 aria-expanded={actionsMenuOpen}
-                aria-label="More profile actions"
+                aria-label={OVERVIEW_MORE_ACTIONS_LABEL}
                 onClick={() => setActionsMenuOpen((open) => !open)}
               >
                 <SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />
@@ -601,13 +617,11 @@ function ToolInspector({
                       className="ghost-button"
                       role="menuitem"
                       type="button"
-                      disabled={
-                        (action.kind === "open_profile"
-                          ? false
-                          : action.kind === "refresh"
-                            ? refreshLocked
-                            : mutationLocked)
-                      }
+                      disabled={overviewInspectorActionDisabled(
+                        action.kind,
+                        mutationLocked,
+                        refreshLocked,
+                      )}
                       onClick={() => {
                         setActionsMenuOpen(false);
                         runInspectorAction(action.kind);
@@ -673,10 +687,7 @@ function ToolInspector({
             <span className="overview-inline-notice-symbol" aria-hidden="true">
               {lastResult.status === "error" ? "▲" : "●"}
             </span>
-            <p>
-              {`Last result: ${lastResult.message}`}
-              {lastResult.remediation ? ` Remediation: ${lastResult.remediation}` : ""}
-            </p>
+            <p>{overviewLastResultMessage(lastResult)}</p>
           </div>
         </div>
       ) : null}

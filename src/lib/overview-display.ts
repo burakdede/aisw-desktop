@@ -36,6 +36,12 @@ export type OverviewInspectorPresentation = {
   summaryLabel: string;
 };
 
+export const OVERVIEW_CURRENT_SET_LABEL = "Current set:";
+export const OVERVIEW_EMPTY_SELECTION_COPY =
+  "Choose a tool to inspect its active profile and switching state.";
+export const OVERVIEW_NO_TOOL_SELECTED_HEADING = "No tool selected";
+export const OVERVIEW_MORE_ACTIONS_LABEL = "More profile actions";
+
 export function resolveOverviewSelectedTool(
   currentTool: string,
   statuses: ToolStatus[],
@@ -155,12 +161,30 @@ export function overviewWorkspaceActionLabel(canResolveDirectly: boolean) {
   return canResolveDirectly ? "Use Expected Set" : "Open Sets";
 }
 
+export function overviewSetButtonLabel(hasCurrentSet: boolean) {
+  return hasCurrentSet ? "Open Sets" : "Choose Set…";
+}
+
+export function overviewInspectorEmptyHeading(
+  compactLayout: boolean,
+  selectedToolName: string,
+) {
+  return compactLayout ? selectedToolName : OVERVIEW_NO_TOOL_SELECTED_HEADING;
+}
+
 export function overviewStateModeCopy(options: string[], selected: string, tool: string) {
   if (!options.length) {
     return fixedStateModeDescription(tool);
   }
   const effective = options.includes(selected) ? selected : options[0] ?? selected;
   return stateModeDescription(effective);
+}
+
+export function overviewSelectedStateMode(
+  options: string[],
+  selected: string,
+) {
+  return options.length ? selected : null;
 }
 
 export function overviewRecentSummary(input: {
@@ -200,6 +224,15 @@ export function overviewRecentSummary(input: {
   return "No recent set or workspace changes are recorded in this session.";
 }
 
+export function overviewLastResultMessage(lastResult: {
+  message: string;
+  remediation?: string;
+}) {
+  return `Last result: ${lastResult.message}${
+    lastResult.remediation ? ` Remediation: ${lastResult.remediation}` : ""
+  }`;
+}
+
 export function overviewTokenWarning(status: ToolStatus) {
   const warning = status.token_warning;
   if (!warning) {
@@ -224,6 +257,20 @@ export function overviewDiagnosticWarning(warning: ToolStatus["warnings"][number
 
 export function overviewAuthMethodLabel(authMethod: string | null | undefined) {
   return authMethod ? titleCase(authMethod.replace(/_/g, " ")) : "Not configured";
+}
+
+export function overviewInspectorActionDisabled(
+  actionKind: OverviewInspectorActionKind,
+  mutationLocked: boolean,
+  refreshLocked: boolean,
+) {
+  if (actionKind === "open_profile") {
+    return false;
+  }
+  if (actionKind === "refresh") {
+    return refreshLocked;
+  }
+  return mutationLocked;
 }
 
 export function buildOverviewInspectorPresentation(input: {

@@ -2,11 +2,20 @@ import { describe, expect, it } from "vitest";
 import type { AppSnapshot, DesktopSettings, ToolStatus } from "./schemas";
 import {
   buildOverviewInspectorPresentation,
+  OVERVIEW_CURRENT_SET_LABEL,
+  OVERVIEW_EMPTY_SELECTION_COPY,
+  overviewInspectorActionDisabled,
+  overviewInspectorEmptyHeading,
   overviewAuthMethodLabel,
   overviewDiagnosticWarning,
   overviewHeadline,
+  overviewLastResultMessage,
   overviewMetaLabel,
+  OVERVIEW_MORE_ACTIONS_LABEL,
+  OVERVIEW_NO_TOOL_SELECTED_HEADING,
   overviewRecentSummary,
+  overviewSelectedStateMode,
+  overviewSetButtonLabel,
   overviewToolListProfileLabel,
   overviewStateModeCopy,
   overviewTokenWarning,
@@ -86,13 +95,27 @@ describe("overview-display", () => {
   });
 
   it("shares workspace and state-mode copy", () => {
+    expect(OVERVIEW_CURRENT_SET_LABEL).toBe("Current set:");
+    expect(OVERVIEW_EMPTY_SELECTION_COPY).toBe(
+      "Choose a tool to inspect its active profile and switching state.",
+    );
+    expect(OVERVIEW_NO_TOOL_SELECTED_HEADING).toBe("No tool selected");
+    expect(OVERVIEW_MORE_ACTIONS_LABEL).toBe("More profile actions");
     expect(overviewWorkspaceActionLabel(true)).toBe("Use Expected Set");
     expect(overviewWorkspaceActionLabel(false)).toBe("Open Sets");
+    expect(overviewSetButtonLabel(true)).toBe("Open Sets");
+    expect(overviewSetButtonLabel(false)).toBe("Choose Set…");
+    expect(overviewInspectorEmptyHeading(true, "Claude Code")).toBe("Claude Code");
+    expect(overviewInspectorEmptyHeading(false, "Claude Code")).toBe(
+      OVERVIEW_NO_TOOL_SELECTED_HEADING,
+    );
     expect(resolveOverviewSelectedTool("claude", makeSnapshot().statuses)).toBe("claude");
     expect(resolveOverviewSelectedTool("missing", makeSnapshot().statuses)).toBe("claude");
     expect(resolveOverviewSelectedTool("claude", [])).toBe("");
     expect(resolveOverviewStateMode("shared", ["isolated", "shared"])).toBe("shared");
     expect(resolveOverviewStateMode("unknown", ["isolated", "shared"])).toBe("isolated");
+    expect(overviewSelectedStateMode(["isolated", "shared"], "shared")).toBe("shared");
+    expect(overviewSelectedStateMode([], "isolated")).toBeNull();
     expect(resolveOverviewSelectedProfile("work", makeSnapshot().profiles.claude.profiles, "personal")).toBe("work");
     expect(resolveOverviewSelectedProfile("missing", makeSnapshot().profiles.claude.profiles, "personal")).toBe("personal");
     expect(
@@ -135,6 +158,19 @@ describe("overview-display", () => {
     expect(overviewRecentSummary({})).toBe(
       "No recent set or workspace changes are recorded in this session.",
     );
+    expect(
+      overviewLastResultMessage({
+        message: "Switched Claude to Personal.",
+      }),
+    ).toBe("Last result: Switched Claude to Personal.");
+    expect(
+      overviewLastResultMessage({
+        message: "profile work no longer exists",
+        remediation: "Refresh profile state.",
+      }),
+    ).toBe(
+      "Last result: profile work no longer exists Remediation: Refresh profile state.",
+    );
 
     expect(
       overviewTokenWarning(
@@ -156,6 +192,9 @@ describe("overview-display", () => {
     ).toBe("Warning: Workspace mismatch Remediation: Open Sets");
     expect(overviewAuthMethodLabel("api_key")).toBe("Api Key");
     expect(overviewAuthMethodLabel(null)).toBe("Not configured");
+    expect(overviewInspectorActionDisabled("open_profile", true, true)).toBe(false);
+    expect(overviewInspectorActionDisabled("refresh", false, true)).toBe(true);
+    expect(overviewInspectorActionDisabled("switch", true, false)).toBe(true);
   });
 
   it("builds overview inspector actions for alternate profile switching", () => {
