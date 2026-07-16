@@ -136,7 +136,9 @@ export function App() {
   useEffect(() => {
     applyAppearancePreference(desktopPreferences.appearance);
     saveDesktopPreferences(desktopPreferences);
-    void setTrayVisibility(desktopPreferences.showMenuBarIcon);
+    void setTrayVisibility(desktopPreferences.showMenuBarIcon).catch(() => {
+      // Keep the renderer usable when the native bridge is unavailable during dev startup.
+    });
   }, [desktopPreferences]);
 
   useEffect(() => {

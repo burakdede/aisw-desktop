@@ -1,6 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type Event } from "@tauri-apps/api/event";
 
+const DESKTOP_RUNTIME_WAIT_TIMEOUT_MS = 300;
+const DESKTOP_RUNTIME_WAIT_INTERVAL_MS = 20;
+
 export class DesktopCommandError extends Error {
   kind?: string;
   remediation?: string;
@@ -35,12 +38,21 @@ export type TrayCommandResultEvent =
 
 declare global {
   interface Window {
+    __TAURI_INTERNALS__?: unknown;
     __AISW_DESKTOP_MOCK__?: Record<string, unknown> | ((cmd: string, args?: unknown) => unknown);
     __AISW_DESKTOP_LISTEN__?: <T>(
       event: string,
       handler: (payload: T) => void,
     ) => Promise<() => void> | (() => void);
   }
+}
+
+export function hasDesktopRuntime() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return Boolean(window.__TAURI_INTERNALS__);
 }
 
 export async function invokeDesktop<T>(command: string, args?: Record<string, unknown>) {
@@ -51,6 +63,10 @@ export async function invokeDesktop<T>(command: string, args?: Record<string, un
         return (await mock(command, args)) as T;
       }
       return mock[command] as T;
+    }
+
+    if (!(await waitForDesktopRuntime())) {
+      throw desktopRuntimeUnavailableError();
     }
 
     return await invoke<T>(command, args);
@@ -67,8 +83,40 @@ export async function listenDesktopEvent<T>(
     return window.__AISW_DESKTOP_LISTEN__<T>(event, handler);
   }
 
+  if (!(await waitForDesktopRuntime())) {
+    return () => {};
+  }
+
   return listen(event, (payload: Event<T>) => {
     handler(payload.payload);
+  });
+}
+
+async function waitForDesktopRuntime() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  if (hasDesktopRuntime()) {
+    return true;
+  }
+
+  const timeoutAt = Date.now() + DESKTOP_RUNTIME_WAIT_TIMEOUT_MS;
+  while (Date.now() < timeoutAt) {
+    await new Promise((resolve) => window.setTimeout(resolve, DESKTOP_RUNTIME_WAIT_INTERVAL_MS));
+    if (hasDesktopRuntime()) {
+      return true;
+    }
+  }
+
+  return hasDesktopRuntime();
+}
+
+function desktopRuntimeUnavailableError() {
+  return new DesktopCommandError("AI Switcher desktop runtime is unavailable.", {
+    kind: "runtime_unavailable",
+    remediation:
+      "Launch AI Switcher with `npm run tauri:dev` or open the packaged desktop app instead of the standalone Vite page.",
   });
 }
 
