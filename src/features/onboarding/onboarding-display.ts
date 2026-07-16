@@ -10,7 +10,10 @@ import { toolBinaryName } from "../../lib/tool-guidance";
 import { runtimeSummary } from "../../lib/runtime-display";
 import { titleCase } from "../../lib/utils";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
-import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
+import {
+  normalizeOnboardingHealthDetail,
+  normalizeOnboardingHealthLabel,
+} from "./onboarding-health-display";
 
 export type SetupStep = "accounts" | "runtime" | "switch" | "terminal" | "done";
 
@@ -645,37 +648,5 @@ export function supportsSecureStorage(
     Object.values(toolCapabilities).some((capability) =>
       capability.credential_backends.some((backend) => isSystemKeyringBackend(backend)),
     )
-  );
-}
-
-function normalizeOnboardingHealthLabel(value: string | undefined) {
-  const normalized = value?.trim().toLowerCase().replace(/[_-]+/g, " ");
-  if (!normalized) {
-    return "Setup check";
-  }
-  if (normalized.includes("shell")) {
-    return "Terminal integration";
-  }
-  if (normalized.includes("keyring")) {
-    return "Secure storage";
-  }
-  if (normalized.includes("permission")) {
-    return "Local permissions";
-  }
-  if (normalized.includes("oauth")) {
-    return "Sign-in flow";
-  }
-  if (normalized.includes("backup")) {
-    return "Backups";
-  }
-  if (normalized.includes("runtime") || normalized.includes("engine")) {
-    return "Desktop engine";
-  }
-  return titleCase(normalized);
-}
-
-function normalizeOnboardingHealthDetail(value: string | undefined) {
-  return normalizeTerminalIntegrationText(
-    normalizeRuntimeLanguage(value ?? "No detail provided."),
   );
 }
