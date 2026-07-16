@@ -18,6 +18,7 @@ import {
   setCommandResultLabel,
   setResultSummary,
   setSelectionCountLabel,
+  USE_EXPECTED_SET_LABEL,
   workspaceSetActionLabel,
 } from "./sets-display";
 
@@ -81,7 +82,7 @@ describe("sets-display", () => {
     expect(ruleTargetLabel("default", "default")).toBe("Default set");
     expect(ruleTargetLabel("path", "none")).toBe("No target");
     expect(ruleTargetLabel("path", "/code/acme")).toBe("/code/acme");
-    expect(workspaceSetActionLabel(true)).toBe("Use Expected Set");
+    expect(workspaceSetActionLabel(true)).toBe(USE_EXPECTED_SET_LABEL);
     expect(workspaceSetActionLabel(false)).toBe("Open Sets");
     expect(savedRuleStatusLabel(true)).toBe("Active");
     expect(savedRuleStatusLabel(false)).toBe("Saved");

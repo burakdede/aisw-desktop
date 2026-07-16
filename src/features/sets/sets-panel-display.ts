@@ -24,6 +24,7 @@ import {
 } from "../../lib/profile-display";
 import type { AppSnapshot, DesktopSettings } from "../../lib/schemas";
 import {
+  OPEN_SETS_LABEL,
   importedContextActionLabel,
   importedContextStatus,
   profileSetStatus,
@@ -137,7 +138,7 @@ export const SETS_PANEL_COPY = {
     "Match folders, remotes, or a default fallback to a saved set.",
   addRuleButtonLabel: "Add Rule…",
   projectRulesActionsAriaLabel: "Project rules actions",
-  openSetsLabel: "Open Sets",
+  openSetsLabel: OPEN_SETS_LABEL,
   noProjectRulesTitle: "No project rules yet",
   noProjectRulesDetail:
     "Add a rule to match a default scope, folder, or git remote pattern to a saved set.",

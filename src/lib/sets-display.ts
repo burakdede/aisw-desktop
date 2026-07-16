@@ -14,6 +14,11 @@ import { countLabel } from "./utils";
 type SetSummaryKind = "set" | "project" | "project-rule";
 type SetSummaryNormalization = "none" | "runtime" | "project-rule";
 
+export const OPEN_SETS_LABEL = "Open Sets";
+export const CHOOSE_SET_LABEL = "Choose Set…";
+export const USE_EXPECTED_SET_LABEL = "Use Expected Set";
+export const USE_EXPECTED_SET_NOW_LABEL = "Use expected set now";
+
 const SETS_DISPLAY_COPY = {
   importedContextPrefix: "Use CLI Context ",
   lastSetResultPrefix: "Last set result: ",
@@ -32,8 +37,8 @@ const SETS_DISPLAY_COPY = {
     git_remote: "git remote pattern",
   },
   ruleTargetWarningSuffix: " before saving or removing this rule.",
-  workspaceActionUseExpectedSet: "Use Expected Set",
-  workspaceActionOpenSets: "Open Sets",
+  workspaceActionUseExpectedSet: USE_EXPECTED_SET_LABEL,
+  workspaceActionOpenSets: OPEN_SETS_LABEL,
   selectedRuleSubtitles: {
     matched: "This rule currently matches",
     saved: "Saved project rule",

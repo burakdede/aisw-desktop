@@ -82,6 +82,10 @@ import {
   type WorkspaceActivationTarget,
 } from "../workspaces/workspace-activation";
 import type { SettingsSection } from "../../lib/settings-sections";
+import {
+  OPEN_SETS_LABEL,
+  USE_EXPECTED_SET_NOW_LABEL,
+} from "../../lib/sets-display";
 
 export type DiagnosticQuickFixInput = {
   title: string;
@@ -825,7 +829,7 @@ function buildWorkspaceMismatchQuickFix(
     detail: target
       ? `This folder wants ${expectedContextLabel}, but ${currentContextLabel} is currently active.`
       : `This folder wants ${expectedContextLabel}, but no matching detected set or ready saved set is currently available.`,
-    label: target ? "Use expected set now" : "Open Sets",
+    label: target ? USE_EXPECTED_SET_NOW_LABEL : OPEN_SETS_LABEL,
     status: "warn",
     primary: true,
     workspaceActivationTarget: target,

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { AppSnapshot, DesktopSettings, ToolStatus } from "./schemas";
 import {
+  CHOOSE_SET_LABEL,
+  OPEN_SETS_LABEL,
+  USE_EXPECTED_SET_LABEL,
+} from "./sets-display";
+import {
   buildOverviewInspectorNotices,
   buildOverviewStateSummary,
   buildOverviewInspectorPresentation,
@@ -138,10 +143,10 @@ describe("overview-display", () => {
       summary: "Live credentials do not match Personal.",
       detail: "Claude Code appears to have been signed into outside AI Switch.",
     });
-    expect(overviewWorkspaceActionLabel(true)).toBe("Use Expected Set");
-    expect(overviewWorkspaceActionLabel(false)).toBe("Open Sets");
-    expect(overviewSetButtonLabel(true)).toBe("Open Sets");
-    expect(overviewSetButtonLabel(false)).toBe("Choose Set…");
+    expect(overviewWorkspaceActionLabel(true)).toBe(USE_EXPECTED_SET_LABEL);
+    expect(overviewWorkspaceActionLabel(false)).toBe(OPEN_SETS_LABEL);
+    expect(overviewSetButtonLabel(true)).toBe(OPEN_SETS_LABEL);
+    expect(overviewSetButtonLabel(false)).toBe(CHOOSE_SET_LABEL);
     expect(overviewInspectorEmptyHeading(true, "Claude Code")).toBe("Claude Code");
     expect(overviewInspectorEmptyHeading(false, "Claude Code")).toBe(
       OVERVIEW_NO_TOOL_SELECTED_HEADING,

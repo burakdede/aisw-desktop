@@ -24,6 +24,8 @@ import {
 import { toolProfileDisplayLabel } from "./profile-display";
 import { formatMessageWithRemediation } from "./remediation-text";
 import {
+  CHOOSE_SET_LABEL,
+  OPEN_SETS_LABEL,
   noRecentSetWorkspaceChangesMessage,
   projectResultSummary,
   setResultSummary,
@@ -236,7 +238,7 @@ export function overviewWorkspaceActionLabel(canResolveDirectly: boolean) {
 }
 
 export function overviewSetButtonLabel(hasCurrentSet: boolean) {
-  return hasCurrentSet ? "Open Sets" : "Choose Set…";
+  return hasCurrentSet ? OPEN_SETS_LABEL : CHOOSE_SET_LABEL;
 }
 
 export function overviewInspectorEmptyHeading(

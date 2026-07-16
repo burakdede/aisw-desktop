@@ -34,6 +34,7 @@ import {
   DIAGNOSTICS_HEALTHY_PRIMARY_DETAIL,
   DIAGNOSTICS_HEALTHY_TITLE,
 } from "./diagnostics-copy";
+import { USE_EXPECTED_SET_NOW_LABEL } from "../../lib/sets-display";
 import {
   buildDiagnosticsStatusMessage,
   buildDiagnosticsSummary,
@@ -180,7 +181,7 @@ describe("diagnostics-panel-display", () => {
         },
         global: {
           workspace: {
-            label: "Use expected set now",
+            label: USE_EXPECTED_SET_NOW_LABEL,
             status: "error",
             message: "Mismatch.",
             kind: "PermissionDenied",
@@ -565,7 +566,7 @@ describe("diagnostics-panel-display", () => {
     });
     expect(models[7]).toMatchObject({
       title: "Project set mismatch",
-      label: "Use expected set now",
+      label: USE_EXPECTED_SET_NOW_LABEL,
       matchedWorkspaceTarget: "/tmp/project",
       workspaceActivationTarget: {
         kind: "context",
