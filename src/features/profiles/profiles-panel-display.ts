@@ -36,6 +36,12 @@ export type OAuthWizardStep = {
   status: "pending" | "warn" | "pass" | "fail";
 };
 
+type OAuthWizardStepDefinition = {
+  id: OAuthWizardStep["id"];
+  label: string | ((tool: string) => string);
+  fallback: string;
+};
+
 type ProfileEntry = {
   name: string;
   label?: string | null;
@@ -123,6 +129,47 @@ export const PROFILE_INSPECTOR_FIELD_LABELS = {
   tokenWarning: "Token warning",
   warningPrefix: "Warning",
 } as const;
+
+const OAUTH_WIZARD_FAILURE_LABEL = "5. OAuth failed";
+
+const OAUTH_WIZARD_STEP_DEFINITIONS: readonly OAuthWizardStepDefinition[] = [
+  {
+    id: "start",
+    label: (tool) => `1. Starting ${toolShortName(tool)} login`,
+    fallback: "Preparing the native login flow.",
+  },
+  {
+    id: "browser",
+    label: "2. Browser opens",
+    fallback: "AI Switch launches the provider login flow.",
+  },
+  {
+    id: "login",
+    label: "3. Complete login in browser",
+    fallback: "Finish the provider sign-in flow in the browser or terminal window.",
+  },
+  {
+    id: "capture",
+    label: "4. Waiting for credential capture",
+    fallback: "AI Switch waits for the upstream tool to persist the captured credentials.",
+  },
+  {
+    id: "saved",
+    label: "5. Profile saved",
+    fallback: "AI Switch stores the captured profile and refreshes app state.",
+  },
+] as const;
+
+const OAUTH_EVENT_PHASE_STAGE_MAP = {
+  started: "start",
+  starting_upstream_auth: "browser",
+  browser_launch: "browser",
+  waiting_for_user: "login",
+  waiting_for_login: "login",
+  applying_changes: "capture",
+  profile_saved: "saved",
+  result: "saved",
+} as const satisfies Record<string, OAuthWizardStep["id"]>;
 
 export type InventoryKeyAction =
   | { kind: "move"; direction: "next" | "previous" | "first" | "last" }
@@ -534,36 +581,8 @@ export function buildOauthWizardSteps(
   events: OAuthProgressEvent[],
   oauthError: string,
 ): OAuthWizardStep[] {
-  const definitions = [
-    {
-      id: "start" as const,
-      label: `1. Starting ${toolShortName(tool)} login`,
-      fallback: "Preparing the native login flow.",
-    },
-    {
-      id: "browser" as const,
-      label: "2. Browser opens",
-      fallback: "AI Switch launches the provider login flow.",
-    },
-    {
-      id: "login" as const,
-      label: "3. Complete login in browser",
-      fallback: "Finish the provider sign-in flow in the browser or terminal window.",
-    },
-    {
-      id: "capture" as const,
-      label: "4. Waiting for credential capture",
-      fallback: "AI Switch waits for the upstream tool to persist the captured credentials.",
-    },
-    {
-      id: "saved" as const,
-      label: "5. Profile saved",
-      fallback: "AI Switch stores the captured profile and refreshes app state.",
-    },
-  ];
-
   const stageIndex = new Map<OAuthWizardStep["id"], number>(
-    definitions.map((definition, index) => [definition.id, index]),
+    OAUTH_WIZARD_STEP_DEFINITIONS.map((definition, index) => [definition.id, index]),
   );
   const seen = new Map<OAuthWizardStep["id"], { detail: string; failed: boolean }>();
   let highestReached = -1;
@@ -580,7 +599,7 @@ export function buildOauthWizardSteps(
       highestReached = index;
     }
 
-    const detail = event.message?.trim() || definitions[index].fallback;
+    const detail = event.message?.trim() || OAUTH_WIZARD_STEP_DEFINITIONS[index].fallback;
     const failed = stage === "saved" && event.ok === false;
     if (failed) {
       terminalFailure = true;
@@ -589,13 +608,13 @@ export function buildOauthWizardSteps(
   }
 
   if (oauthError) {
-    highestReached = Math.max(highestReached, definitions.length - 1);
+    highestReached = Math.max(highestReached, OAUTH_WIZARD_STEP_DEFINITIONS.length - 1);
     terminalFailure = true;
   }
 
-  return definitions.map((definition, index) => {
+  return OAUTH_WIZARD_STEP_DEFINITIONS.map((definition, index) => {
     const explicit = seen.get(definition.id);
-    const isFinal = index === definitions.length - 1;
+    const isFinal = index === OAUTH_WIZARD_STEP_DEFINITIONS.length - 1;
     let status: OAuthWizardStep["status"] = "pending";
 
     if (terminalFailure && isFinal) {
@@ -604,13 +623,18 @@ export function buildOauthWizardSteps(
       status = highestReached === index && !isFinal ? "warn" : "pass";
     }
 
-    if (highestReached === definitions.length - 1 && !terminalFailure) {
+    if (highestReached === OAUTH_WIZARD_STEP_DEFINITIONS.length - 1 && !terminalFailure) {
       status = "pass";
     }
 
     return {
       id: definition.id,
-      label: terminalFailure && isFinal ? "5. OAuth failed" : definition.label,
+      label:
+        terminalFailure && isFinal
+          ? OAUTH_WIZARD_FAILURE_LABEL
+          : typeof definition.label === "function"
+            ? definition.label(tool)
+            : definition.label,
       detail:
         explicit?.detail ??
         (isFinal && oauthError ? oauthError : definition.fallback),
@@ -621,23 +645,7 @@ export function buildOauthWizardSteps(
 
 export function oauthEventStage(event: OAuthProgressEvent): OAuthWizardStep["id"] | null {
   const phase = (event.phase ?? event.type ?? "").toLowerCase();
-  switch (phase) {
-    case "started":
-      return "start";
-    case "starting_upstream_auth":
-    case "browser_launch":
-      return "browser";
-    case "waiting_for_user":
-    case "waiting_for_login":
-      return "login";
-    case "applying_changes":
-      return "capture";
-    case "profile_saved":
-    case "result":
-      return "saved";
-    default:
-      return null;
-  }
+  return OAUTH_EVENT_PHASE_STAGE_MAP[phase as keyof typeof OAUTH_EVENT_PHASE_STAGE_MAP] ?? null;
 }
 
 export function profileMutationError(...errors: Array<unknown>) {
