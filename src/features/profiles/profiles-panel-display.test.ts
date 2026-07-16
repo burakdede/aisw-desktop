@@ -6,6 +6,7 @@ import type {
   OAuthProgressEvent,
 } from "../../lib/schemas";
 import { DesktopCommandError } from "../../lib/tauri";
+import { makeToolStatus } from "../../test-support/runtime-tool-statuses";
 import {
   buildProfileInspectAriaLabel,
   buildProfileActivationRequest,
@@ -95,9 +96,7 @@ function makeSettings(overrides: Partial<DesktopSettings> = {}): DesktopSettings
 function makeSnapshot(overrides: Partial<AppSnapshot> = {}): AppSnapshot {
   return {
     statuses: [
-      {
-        tool: "claude",
-        binary_found: true,
+      makeToolStatus("claude", {
         stored_profiles: 1,
         active_profile: "work",
         auth_method: "oauth",
@@ -106,23 +105,14 @@ function makeSnapshot(overrides: Partial<AppSnapshot> = {}): AppSnapshot {
         active_profile_applied: true,
         credentials_present: true,
         permissions_ok: true,
-        token_warning: null,
-        warnings: [],
-      },
-      {
-        tool: "codex",
-        binary_found: true,
+      }),
+      makeToolStatus("codex", {
         stored_profiles: 1,
         active_profile: null,
         auth_method: "oauth",
         credential_backend: "file",
         state_mode: "isolated",
-        active_profile_applied: null,
-        credentials_present: null,
-        permissions_ok: null,
-        token_warning: null,
-        warnings: [],
-      },
+      }),
     ],
     profiles: {
       claude: {

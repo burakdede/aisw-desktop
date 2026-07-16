@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { resolveWorkspaceActivationTarget } from "./workspace-activation";
 import type { AppSnapshot, DesktopSettings } from "../../lib/schemas";
+import { makeToolStatus } from "../../test-support/runtime-tool-statuses";
 
 const snapshot: AppSnapshot = {
   statuses: [
-    {
-      tool: "claude",
-      binary_found: true,
+    makeToolStatus("claude", {
       stored_profiles: 1,
       active_profile: "work",
       auth_method: "oauth",
@@ -15,11 +14,8 @@ const snapshot: AppSnapshot = {
       active_profile_applied: true,
       credentials_present: true,
       permissions_ok: true,
-      warnings: [],
-    },
-    {
-      tool: "codex",
-      binary_found: true,
+    }),
+    makeToolStatus("codex", {
       stored_profiles: 1,
       active_profile: "work",
       auth_method: "api_key",
@@ -28,8 +24,7 @@ const snapshot: AppSnapshot = {
       active_profile_applied: true,
       credentials_present: true,
       permissions_ok: true,
-      warnings: [],
-    },
+    }),
   ],
   profiles: {
     claude: {

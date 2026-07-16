@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AppSnapshot, DesktopSettings } from "../../lib/schemas";
+import { makeToolStatus } from "../../test-support/runtime-tool-statuses";
 import {
   buildImportedContextRows,
   buildSavedSetRows,
@@ -76,9 +77,7 @@ function makeSnapshot(
 ): AppSnapshot {
   return {
     statuses: [
-      {
-        tool: "claude",
-        binary_found: true,
+      makeToolStatus("claude", {
         stored_profiles: 1,
         active_profile: "work",
         auth_method: "oauth",
@@ -87,12 +86,8 @@ function makeSnapshot(
         active_profile_applied: true,
         credentials_present: true,
         permissions_ok: true,
-        token_warning: null,
-        warnings: [],
-      },
-      {
-        tool: "codex",
-        binary_found: true,
+      }),
+      makeToolStatus("codex", {
         stored_profiles: 1,
         active_profile: "work",
         auth_method: "oauth",
@@ -101,23 +96,16 @@ function makeSnapshot(
         active_profile_applied: true,
         credentials_present: true,
         permissions_ok: true,
-        token_warning: null,
-        warnings: [],
-      },
-      {
-        tool: "gemini",
-        binary_found: true,
+      }),
+      makeToolStatus("gemini", {
         stored_profiles: 1,
-        active_profile: null,
         auth_method: "oauth",
         credential_backend: "keychain",
         state_mode: "isolated",
         active_profile_applied: true,
         credentials_present: true,
         permissions_ok: true,
-        token_warning: null,
-        warnings: [],
-      },
+      }),
     ],
     profiles: {
       claude: {

@@ -3,6 +3,7 @@ import type { AppBootstrap, AppSnapshot, DesktopSettings } from "../../lib/schem
 import { DEFAULT_PROFILE_IMPORT_MODE } from "../shared/profile-capabilities";
 import { COMMAND_RESULT_GLOBAL_IDS } from "../shared/command-result-scope";
 import { makeRuntimeToolCapabilities } from "../../test-support/runtime-tool-capabilities";
+import { makeToolStatus } from "../../test-support/runtime-tool-statuses";
 import {
   DIAGNOSTICS_PANEL_COPY,
   buildDiagnosticQuickFixModels,
@@ -38,30 +39,17 @@ import type { IssueCardData } from "./diagnostic-parsers";
 function makeSnapshot(): AppSnapshot {
   return {
     statuses: [
-      {
-        tool: "claude",
-        binary_found: true,
+      makeToolStatus("claude", {
         stored_profiles: 1,
         active_profile: "work",
         active_profile_applied: false,
         auth_method: "oauth",
         credential_backend: "file",
         state_mode: "isolated",
-        warnings: [],
-        token_warning: null,
-      },
-      {
-        tool: "codex",
+      }),
+      makeToolStatus("codex", {
         binary_found: false,
-        stored_profiles: 0,
-        active_profile: null,
-        active_profile_applied: null,
-        auth_method: null,
-        credential_backend: null,
-        state_mode: null,
-        warnings: [],
-        token_warning: null,
-      },
+      }),
     ],
     profiles: {
       claude: {

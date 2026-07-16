@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AppBootstrap, AppSnapshot, InitReport } from "../../lib/schemas";
 import { makeRuntimeToolCapabilities } from "../../test-support/runtime-tool-capabilities";
+import { makeToolStatus } from "../../test-support/runtime-tool-statuses";
 import {
   ONBOARDING_ACCOUNTS_STEP_COPY,
   ONBOARDING_DONE_STEP_COPY,
@@ -97,9 +98,7 @@ function makeBootstrap(overrides: Partial<AppBootstrap> = {}): AppBootstrap {
 function makeSnapshot(overrides: Partial<AppSnapshot> = {}): AppSnapshot {
   return {
     statuses: [
-      {
-        tool: "claude",
-        binary_found: true,
+      makeToolStatus("claude", {
         stored_profiles: 1,
         active_profile: "personal",
         auth_method: "oauth",
@@ -108,9 +107,7 @@ function makeSnapshot(overrides: Partial<AppSnapshot> = {}): AppSnapshot {
         active_profile_applied: true,
         credentials_present: true,
         permissions_ok: true,
-        token_warning: null,
-        warnings: [],
-      },
+      }),
     ],
     profiles: {
       claude: {

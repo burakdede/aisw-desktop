@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AppSnapshot, DesktopSettings } from "../lib/schemas";
+import { makeToolStatus } from "../test-support/runtime-tool-statuses";
 import {
   buildQuickSwitchItems,
   nextQuickSwitchSelectionIndex,
@@ -39,30 +40,22 @@ function makeSettings(): DesktopSettings {
 function makeSnapshot(): AppSnapshot {
   return {
     statuses: [
-      {
-        tool: "claude",
-        binary_found: true,
+      makeToolStatus("claude", {
         stored_profiles: 1,
         active_profile: "work",
         active_profile_applied: true,
         auth_method: "oauth",
         credential_backend: "file",
         state_mode: "isolated",
-        warnings: [],
-        token_warning: null,
-      },
-      {
-        tool: "codex",
-        binary_found: true,
+      }),
+      makeToolStatus("codex", {
         stored_profiles: 1,
         active_profile: "work",
         active_profile_applied: true,
         auth_method: "oauth",
         credential_backend: "file",
         state_mode: "isolated",
-        warnings: [],
-        token_warning: null,
-      },
+      }),
     ],
     profiles: {
       claude: {
