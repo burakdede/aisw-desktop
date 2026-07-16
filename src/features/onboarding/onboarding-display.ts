@@ -63,6 +63,45 @@ export const ONBOARDING_TRUST_ROWS = [
   "Built-in desktop engine ready",
 ] as const;
 
+export const ONBOARDING_SETUP_SCREEN_COPY = {
+  toolbarKicker: "Local-only setup",
+  toolbarNote:
+    "Set up AI Switch on this computer before you switch coding-agent profiles.",
+  closeLabel: "Close setup",
+} as const;
+
+export const ONBOARDING_RUNTIME_STEP_COPY = {
+  welcomeKicker: "Welcome",
+  welcomeHeading: "Desktop engine",
+  welcomePrimaryNote:
+    "AI Switch already includes the desktop engine it needs. You do not need a separate command-line install to finish setup.",
+  welcomeSecondaryNote:
+    "If you already use a command-line switching tool, you can keep it installed. AI Switch Desktop stays on its included engine unless you deliberately override it.",
+  settingsButtonLabel: "Engine Settings",
+  nextKicker: "Next",
+  nextHeading: "After setup",
+  healthFallback:
+    "Run the setup scan to populate desktop engine, storage, and tool health details.",
+} as const;
+
+export const ONBOARDING_RUNTIME_NEXT_STEPS = [
+  {
+    label: "1. Save your first profile",
+    detail:
+      "Import the login already open in a supported tool, or add a new profile from the Profiles section.",
+  },
+  {
+    label: "2. Try one switch",
+    detail:
+      "Re-apply one saved set once so you know switching works before you start coding.",
+  },
+  {
+    label: "3. Add terminal integration later if needed",
+    detail:
+      "Most people can skip terminal integration unless they need already-open shells to update immediately.",
+  },
+] as const;
+
 export type OnboardingInventory = {
   liveAccounts: LiveAccount[];
   installedToolsNeedingProfile: ToolStatus[];
@@ -278,6 +317,16 @@ export function restoreIncludedEngineErrorMessage(error: unknown) {
   return error instanceof Error
     ? error.message
     : "Could not switch back to the included desktop engine.";
+}
+
+export function onboardingHealthStatusSymbol(status: OnboardingHealthItem["status"]) {
+  if (status === "pass") {
+    return "✓";
+  }
+  if (status === "warn") {
+    return "!";
+  }
+  return "✕";
 }
 
 export function resolveOnboardingStepState(activeStep: SetupStep) {

@@ -29,10 +29,14 @@ import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { invalidatePostMutationQueries } from "../../shared/postMutationRefresh";
 import {
   ONBOARDING_TRUST_ROWS,
+  ONBOARDING_RUNTIME_NEXT_STEPS,
+  ONBOARDING_RUNTIME_STEP_COPY,
+  ONBOARDING_SETUP_SCREEN_COPY,
   accountItemTool,
   buildOnboardingInventory,
   onboardingCompletionState,
   buildOnboardingHealthItems,
+  onboardingHealthStatusSymbol,
   buildOnboardingRuntimeRows,
   defaultSetupStep,
   onboardingImportedProfileLabel,
@@ -233,15 +237,13 @@ export function SetupPanel({
       <div className="setup-screen-toolbar">
         <div className="setup-screen-toolbar-copy">
           <h2 className="visually-hidden">Get started</h2>
-          <span className="setup-screen-kicker">Local-only setup</span>
-          <p className="inline-note">
-            Set up AI Switch on this computer before you switch coding-agent profiles.
-          </p>
+          <span className="setup-screen-kicker">{ONBOARDING_SETUP_SCREEN_COPY.toolbarKicker}</span>
+          <p className="inline-note">{ONBOARDING_SETUP_SCREEN_COPY.toolbarNote}</p>
         </div>
         <div className="button-row setup-screen-toolbar-actions">
           {forcedOpen ? (
             <button className="ghost-button" type="button" onClick={onCloseSetup}>
-              Close setup
+              {ONBOARDING_SETUP_SCREEN_COPY.closeLabel}
             </button>
           ) : null}
           <button
@@ -365,27 +367,21 @@ export function SetupPanel({
                 <article className="diagnostic-card">
                   <div className="desktop-pane-section-header">
                     <div>
-                      <p className="card-kicker">Welcome</p>
-                      <h3>Desktop engine</h3>
+                      <p className="card-kicker">{ONBOARDING_RUNTIME_STEP_COPY.welcomeKicker}</p>
+                      <h3>{ONBOARDING_RUNTIME_STEP_COPY.welcomeHeading}</h3>
                     </div>
                     <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
                       {runtimeReadinessLabel(bootstrap.runtime_status.compatible, "sentence")}
                     </span>
                   </div>
-                  <p className="inline-note">
-                    AI Switch already includes the desktop engine it needs. You do not need
-                    a separate command-line install to finish setup.
-                  </p>
+                  <p className="inline-note">{ONBOARDING_RUNTIME_STEP_COPY.welcomePrimaryNote}</p>
                   <p className="inline-note">{currentRuntimeSummary.description}</p>
-                  <p className="inline-note">
-                    If you already use a command-line switching tool, you can keep it installed.
-                    AI Switch Desktop stays on its included engine unless you deliberately override it.
-                  </p>
+                  <p className="inline-note">{ONBOARDING_RUNTIME_STEP_COPY.welcomeSecondaryNote}</p>
                   <div className="stack-list">
                     {runtimeRows.map((item) => (
                       <div key={item.label}>
                         <p className={`diagnostic-status diagnostic-status-${item.status}`}>
-                          {item.status === "pass" ? "✓" : item.status === "warn" ? "!" : "✕"} {item.label}
+                          {onboardingHealthStatusSymbol(item.status)} {item.label}
                         </p>
                         <p className="inline-note">{item.detail}</p>
                       </div>
@@ -405,7 +401,7 @@ export function SetupPanel({
                       </button>
                     ) : null}
                     <button className="ghost-button" type="button" onClick={() => onOpenSettings("runtime")}>
-                      Engine Settings
+                      {ONBOARDING_RUNTIME_STEP_COPY.settingsButtonLabel}
                     </button>
                   </div>
                   {restoreBundledRuntimeMutation.error ? (
@@ -420,43 +416,27 @@ export function SetupPanel({
                 <article className="diagnostic-card">
                   <div className="desktop-pane-section-header">
                     <div>
-                      <p className="card-kicker">Next</p>
-                      <h3>After setup</h3>
+                      <p className="card-kicker">{ONBOARDING_RUNTIME_STEP_COPY.nextKicker}</p>
+                      <h3>{ONBOARDING_RUNTIME_STEP_COPY.nextHeading}</h3>
                     </div>
                   </div>
                   <div className="stack-list">
-                    <div>
-                      <p className="diagnostic-status diagnostic-status-pass">1. Save your first profile</p>
-                      <p className="inline-note">
-                        Import the login already open in a supported tool, or add a new profile from
-                        the Profiles section.
-                      </p>
-                    </div>
-                    <div>
-                      <p className="diagnostic-status diagnostic-status-pass">2. Try one switch</p>
-                      <p className="inline-note">
-                        Re-apply one saved set once so you know switching works before you start coding.
-                      </p>
-                    </div>
-                    <div>
-                      <p className="diagnostic-status diagnostic-status-pass">3. Add terminal integration later if needed</p>
-                      <p className="inline-note">
-                        Most people can skip terminal integration unless they need already-open shells
-                        to update immediately.
-                      </p>
-                    </div>
+                    {ONBOARDING_RUNTIME_NEXT_STEPS.map((item) => (
+                      <div key={item.label}>
+                        <p className="diagnostic-status diagnostic-status-pass">{item.label}</p>
+                        <p className="inline-note">{item.detail}</p>
+                      </div>
+                    ))}
                     {healthItems.map((item) => (
                       <div key={item.label}>
                         <p className={`diagnostic-status diagnostic-status-${item.status}`}>
-                          {item.status === "pass" ? "✓" : item.status === "warn" ? "!" : "✕"} {item.label}
+                          {onboardingHealthStatusSymbol(item.status)} {item.label}
                         </p>
                         <p className="inline-note">{item.detail}</p>
                       </div>
                     ))}
                     {!healthItems.length ? (
-                      <p className="inline-note">
-                        Run the setup scan to populate desktop engine, storage, and tool health details.
-                      </p>
+                      <p className="inline-note">{ONBOARDING_RUNTIME_STEP_COPY.healthFallback}</p>
                     ) : null}
                   </div>
                 </article>

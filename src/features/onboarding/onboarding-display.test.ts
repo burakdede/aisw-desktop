@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { AppBootstrap, AppSnapshot, InitReport } from "../../lib/schemas";
 import {
+  ONBOARDING_RUNTIME_NEXT_STEPS,
+  ONBOARDING_RUNTIME_STEP_COPY,
   ONBOARDING_SETUP_STEPS,
+  ONBOARDING_SETUP_SCREEN_COPY,
   ONBOARDING_TRUST_ROWS,
   accountItemTool,
   onboardingCompletionState,
@@ -9,6 +12,7 @@ import {
   buildOnboardingHealthItems,
   buildOnboardingRuntimeRows,
   defaultSetupStep,
+  onboardingHealthStatusSymbol,
   onboardingImportedProfileLabel,
   onboardingImportSubmitLabel,
   onboardingPrimaryActionLabel,
@@ -116,6 +120,30 @@ describe("onboarding-display", () => {
       "No prompt or API traffic proxy",
       "Built-in desktop engine ready",
     ]);
+    expect(ONBOARDING_SETUP_SCREEN_COPY.toolbarKicker).toBe("Local-only setup");
+    expect(ONBOARDING_SETUP_SCREEN_COPY.closeLabel).toBe("Close setup");
+    expect(ONBOARDING_RUNTIME_STEP_COPY.welcomeHeading).toBe("Desktop engine");
+    expect(ONBOARDING_RUNTIME_STEP_COPY.settingsButtonLabel).toBe("Engine Settings");
+    expect(ONBOARDING_RUNTIME_STEP_COPY.healthFallback).toBe(
+      "Run the setup scan to populate desktop engine, storage, and tool health details.",
+    );
+    expect(ONBOARDING_RUNTIME_NEXT_STEPS).toEqual([
+      {
+        label: "1. Save your first profile",
+        detail:
+          "Import the login already open in a supported tool, or add a new profile from the Profiles section.",
+      },
+      {
+        label: "2. Try one switch",
+        detail:
+          "Re-apply one saved set once so you know switching works before you start coding.",
+      },
+      {
+        label: "3. Add terminal integration later if needed",
+        detail:
+          "Most people can skip terminal integration unless they need already-open shells to update immediately.",
+      },
+    ]);
     expect(setupStepSummary("runtime")).toBe(
       "Confirm the included desktop engine, data folder, and secure storage.",
     );
@@ -126,6 +154,9 @@ describe("onboarding-display", () => {
     expect(setupStepFooterNote("switch", false)).toBe(
       "You can continue, but you will need one saved set name before the first switch can succeed.",
     );
+    expect(onboardingHealthStatusSymbol("pass")).toBe("✓");
+    expect(onboardingHealthStatusSymbol("warn")).toBe("!");
+    expect(onboardingHealthStatusSymbol("fail")).toBe("✕");
   });
 
   it("shares switch readiness copy", () => {
