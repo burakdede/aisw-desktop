@@ -45,6 +45,20 @@ export type OverviewInspectorPresentation = {
   summaryLabel: string;
 };
 
+export type OverviewInspectorNotice = {
+  detail?: string;
+  symbol: "▲" | "●";
+  tone: "warn" | "ok";
+  summary: string;
+};
+
+export type OverviewLastResult = {
+  label: string;
+  status: "success" | "error";
+  message: string;
+  remediation?: string;
+};
+
 type OverviewHealthStateCounts = Record<OverviewHealthState, number>;
 
 export type OverviewStateSummary = {
@@ -288,6 +302,56 @@ export function overviewDiagnosticWarning(warning: ToolStatus["warnings"][number
     prefix: "Warning: ",
     fallbackDetail: RUNTIME_WARNING_FALLBACK_DETAIL,
   });
+}
+
+export function buildOverviewInspectorNotices(input: {
+  activeProfileLabel: string | null;
+  hasProfiles: boolean;
+  lastResult?: OverviewLastResult;
+  status: ToolStatus;
+  toolName: string;
+}): OverviewInspectorNotice[] {
+  const notices: OverviewInspectorNotice[] = [];
+
+  if (input.status.active_profile_applied === false) {
+    const mismatchNotice = overviewLiveMismatchNotice(input.toolName, input.activeProfileLabel);
+    notices.push({
+      tone: "warn",
+      symbol: "▲",
+      summary: mismatchNotice.summary,
+      detail: mismatchNotice.detail,
+    });
+  }
+
+  if (!input.hasProfiles) {
+    return notices;
+  }
+
+  if (input.status.token_warning) {
+    notices.push({
+      tone: "warn",
+      symbol: "▲",
+      summary: overviewTokenWarning(input.status),
+    });
+  }
+
+  if (input.status.warnings.length) {
+    notices.push({
+      tone: "warn",
+      symbol: "▲",
+      summary: overviewDiagnosticWarning(input.status.warnings[0]),
+    });
+  }
+
+  if (input.lastResult) {
+    notices.push({
+      tone: input.lastResult.status === "error" ? "warn" : "ok",
+      symbol: input.lastResult.status === "error" ? "▲" : "●",
+      summary: overviewLastResultMessage(input.lastResult),
+    });
+  }
+
+  return notices;
 }
 
 export function overviewAuthMethodLabel(authMethod: string | null | undefined) {

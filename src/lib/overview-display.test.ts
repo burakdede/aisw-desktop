@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AppSnapshot, DesktopSettings, ToolStatus } from "./schemas";
 import {
+  buildOverviewInspectorNotices,
   buildOverviewStateSummary,
   buildOverviewInspectorPresentation,
   OVERVIEW_CURRENT_SET_LABEL,
@@ -231,6 +232,79 @@ describe("overview-display", () => {
     expect(overviewInspectorActionDisabled("open_profile", true, true)).toBe(false);
     expect(overviewInspectorActionDisabled("refresh", false, true)).toBe(true);
     expect(overviewInspectorActionDisabled("switch", true, false)).toBe(true);
+  });
+
+  it("builds shared inspector notices for mismatch, warnings, and command results", () => {
+    expect(
+      buildOverviewInspectorNotices({
+        activeProfileLabel: "Personal",
+        hasProfiles: true,
+        lastResult: {
+          label: "Claude",
+          status: "success",
+          message: "Switched Claude to Personal.",
+        },
+        status: makeStatus({
+          active_profile_applied: false,
+          token_warning: {
+            summary: "Session expires soon",
+            expires_in_days: 2,
+          },
+          warnings: [{ message: "Workspace mismatch", remediation: "Open Sets" }],
+        }),
+        toolName: "Claude Code",
+      }),
+    ).toEqual([
+      {
+        tone: "warn",
+        symbol: "▲",
+        summary: "Live credentials do not match Personal.",
+        detail: "Claude Code appears to have been signed into outside AI Switch.",
+      },
+      {
+        tone: "warn",
+        symbol: "▲",
+        summary: "Token warning: Session expires soon Expires in 2 days.",
+      },
+      {
+        tone: "warn",
+        symbol: "▲",
+        summary: "Warning: Workspace mismatch Remediation: Open Sets",
+      },
+      {
+        tone: "ok",
+        symbol: "●",
+        summary: "Last result: Switched Claude to Personal.",
+      },
+    ]);
+
+    expect(
+      buildOverviewInspectorNotices({
+        activeProfileLabel: null,
+        hasProfiles: false,
+        lastResult: {
+          label: "Claude",
+          status: "error",
+          message: "Switch failed.",
+        },
+        status: makeStatus({
+          active_profile: null,
+          active_profile_applied: false,
+          token_warning: {
+            summary: "Ignored without profiles",
+          },
+          warnings: [{ message: "Ignored without profiles" }],
+        }),
+        toolName: "Claude Code",
+      }),
+    ).toEqual([
+      {
+        tone: "warn",
+        symbol: "▲",
+        summary: "Live credentials do not match the saved profile.",
+        detail: "Claude Code appears to have been signed into outside AI Switch.",
+      },
+    ]);
   });
 
   it("builds overview inspector actions for alternate profile switching", () => {

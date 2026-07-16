@@ -20,17 +20,15 @@ import {
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { BACKEND_UNAVAILABLE_LABEL } from "../../../lib/display-copy";
 import {
+  buildOverviewInspectorNotices,
   buildOverviewStateSummary,
   buildOverviewInspectorPresentation,
   overviewAuthMethodLabel,
-  overviewDiagnosticWarning,
   OVERVIEW_CURRENT_SET_LABEL,
   OVERVIEW_EMPTY_SELECTION_COPY,
   OVERVIEW_PANEL_COPY,
   overviewInspectorActionDisabled,
   overviewInspectorEmptyHeading,
-  overviewLastResultMessage,
-  overviewLiveMismatchNotice,
   overviewMissingBinaryMessage,
   overviewRecentSummary,
   OVERVIEW_MORE_ACTIONS_LABEL,
@@ -42,7 +40,6 @@ import {
   overviewToolInspectorLabel,
   overviewToolListProfileLabel,
   overviewStateModeCopy,
-  overviewTokenWarning,
   overviewWorkspaceActionLabel,
   resolveOverviewSelectedProfile,
   resolveOverviewSelectedTool,
@@ -390,7 +387,13 @@ function ToolInspector({
   const primaryAction = inspector.primaryAction;
   const secondaryAction = inspector.secondaryAction;
   const toolName = toolDisplayName(status.tool);
-  const mismatchNotice = overviewLiveMismatchNotice(toolName, inspector.activeProfileLabel);
+  const notices = buildOverviewInspectorNotices({
+    activeProfileLabel: inspector.activeProfileLabel,
+    hasProfiles: inspector.hasProfiles,
+    lastResult,
+    status,
+    toolName,
+  });
 
   useEffect(() => {
     const nextStateMode = resolveOverviewStateMode(stateMode, stateModes);
@@ -501,17 +504,9 @@ function ToolInspector({
         </div>
       </header>
 
-      {status.active_profile_applied === false ? (
-        <div className="overview-inline-notice overview-inline-notice-warn">
-          <div className="overview-inline-notice-copy">
-            <span className="overview-inline-notice-symbol" aria-hidden="true">▲</span>
-            <div className="overview-inline-notice-body">
-              <p>{mismatchNotice.summary}</p>
-              <p>{mismatchNotice.detail}</p>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {notices.map((notice, index) => (
+        <OverviewInlineNotice key={`${notice.symbol}-${index}`} notice={notice} />
+      ))}
 
       {!status.binary_found ? (
         <div className="overview-missing-binary">
@@ -693,36 +688,31 @@ function ToolInspector({
       </dl>
       ) : null}
 
-      {inspector.hasProfiles && status.token_warning ? (
-        <div className="overview-inline-notice overview-inline-notice-warn">
-          <div className="overview-inline-notice-copy">
-            <span className="overview-inline-notice-symbol" aria-hidden="true">▲</span>
-            <p>{overviewTokenWarning(status)}</p>
-          </div>
-        </div>
-      ) : null}
-
-      {inspector.hasProfiles && status.warnings.length ? (
-        <div className="overview-inline-notice overview-inline-notice-warn">
-          <div className="overview-inline-notice-copy">
-            <span className="overview-inline-notice-symbol" aria-hidden="true">▲</span>
-            <p>{overviewDiagnosticWarning(status.warnings[0])}</p>
-          </div>
-        </div>
-      ) : null}
-
-      {inspector.hasProfiles && lastResult ? (
-        <div className={`overview-inline-notice overview-inline-notice-${lastResult.status === "error" ? "warn" : "ok"}`}>
-          <div className="overview-inline-notice-copy">
-            <span className="overview-inline-notice-symbol" aria-hidden="true">
-              {lastResult.status === "error" ? "▲" : "●"}
-            </span>
-            <p>{overviewLastResultMessage(lastResult)}</p>
-          </div>
-        </div>
-      ) : null}
-
     </aside>
+  );
+}
+
+function OverviewInlineNotice({
+  notice,
+}: {
+  notice: ReturnType<typeof buildOverviewInspectorNotices>[number];
+}) {
+  return (
+    <div className={`overview-inline-notice overview-inline-notice-${notice.tone}`}>
+      <div className="overview-inline-notice-copy">
+        <span className="overview-inline-notice-symbol" aria-hidden="true">
+          {notice.symbol}
+        </span>
+        {notice.detail ? (
+          <div className="overview-inline-notice-body">
+            <p>{notice.summary}</p>
+            <p>{notice.detail}</p>
+          </div>
+        ) : (
+          <p>{notice.summary}</p>
+        )}
+      </div>
+    </div>
   );
 }
 
