@@ -1,4 +1,10 @@
-import type { AppBootstrap, AppSnapshot, InitReport, ToolStatus } from "../../lib/schemas";
+import type {
+  AppBootstrap,
+  AppSnapshot,
+  DoctorReport,
+  InitReport,
+  ToolStatus,
+} from "../../lib/schemas";
 import {
   checkStatusSymbol,
   normalizeResolvedCheckStatus,
@@ -694,7 +700,7 @@ export function resolveSelectedOnboardingAccountItem(
 export function buildOnboardingHealthItems(
   bootstrap: AppBootstrap,
   snapshot: AppSnapshot,
-  doctorReport: Record<string, unknown> | undefined,
+  doctorReport: DoctorReport | undefined,
 ): OnboardingHealthItem[] {
   const doctorChecks = parseDoctorReportChecks(doctorReport, {
     defaultStatus: "warn",

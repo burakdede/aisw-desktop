@@ -19,7 +19,12 @@ import {
   type SettingsSection,
 } from "../../lib/settings-sections";
 import { doctorCheckHasKeyword, parseDoctorReportChecks } from "../diagnostics/diagnostic-doctor-checks";
-import type { AppBootstrap, DesktopSettings, UpdateCheckReport } from "../../lib/schemas";
+import type {
+  AppBootstrap,
+  DesktopSettings,
+  DoctorReport,
+  UpdateCheckReport,
+} from "../../lib/schemas";
 import {
   clipboardCopiedMessage,
   clipboardUnavailableManualMessage,
@@ -259,7 +264,7 @@ export function formatSettingsMutationError(error: unknown) {
   };
 }
 
-export function findShellHookCheck(report: Record<string, unknown> | undefined) {
+export function findShellHookCheck(report: DoctorReport | undefined) {
   const checks = parseDoctorReportChecks(report, {
     detailTransform: normalizeTerminalIntegrationText,
   });

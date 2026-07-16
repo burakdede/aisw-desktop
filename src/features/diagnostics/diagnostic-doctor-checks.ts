@@ -4,7 +4,13 @@ import {
   type AttentionCheckStatus,
   type ResolvedCheckStatus,
 } from "../../lib/check-status";
-import { asArray, asObject, asOptionalString } from "../../lib/parse-guards";
+import type { DoctorReport } from "../../lib/schemas";
+import {
+  asArray,
+  asObject,
+  asOptionalString,
+  type UnknownRecord,
+} from "../../lib/parse-guards";
 
 export type DoctorReportCheck = {
   name: string;
@@ -19,7 +25,7 @@ export type ParsedDoctorCheck = DoctorReportCheck & {
 };
 
 export function parseDoctorReportChecks(
-  doctor: Record<string, unknown> | undefined,
+  doctor: DoctorReport | undefined,
   options?: {
     defaultDetail?: string;
     detailTransform?: (detail: string) => string;
@@ -30,12 +36,12 @@ export function parseDoctorReportChecks(
 
   return asArray(doctor?.checks)
     .map((check) => asObject(check))
-    .filter((check): check is Record<string, unknown> => Boolean(check))
+    .filter((check): check is UnknownRecord => Boolean(check))
     .map((check) => buildDoctorReportCheck(check, options, defaultStatus));
 }
 
 export function parseDoctorChecks(
-  doctor: Record<string, unknown> | undefined,
+  doctor: DoctorReport | undefined,
   options?: {
     defaultDetail?: string;
     detailTransform?: (detail: string) => string;
@@ -62,7 +68,7 @@ export function doctorCheckNameHasAll(
 }
 
 function buildDoctorReportCheck(
-  check: Record<string, unknown>,
+  check: UnknownRecord,
   options:
     | {
         defaultDetail?: string;

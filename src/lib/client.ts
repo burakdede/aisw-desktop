@@ -35,6 +35,7 @@ import {
   type DesktopCommandName,
   type ReferenceDocumentKind,
 } from "./desktop-command-contract";
+import type { UnknownRecord } from "./parse-guards";
 import { invokeDesktop } from "./tauri";
 import type { WorkspaceBindingScope } from "./workspace-binding-contract";
 import type { WorkspaceGuardMode } from "./workspace-policy";
@@ -127,7 +128,7 @@ export interface WorkspaceUnbindInput {
 async function invokeParsed<Schema extends ZodTypeAny>(
   command: DesktopCommandName,
   schema: Schema,
-  args?: Record<string, unknown>,
+  args?: UnknownRecord,
 ): Promise<output<Schema>> {
   return schema.parse(await invokeDesktop(command, args));
 }

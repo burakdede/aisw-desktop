@@ -1,3 +1,7 @@
+import type {
+  ProjectBindingsReport,
+  WorkspaceStatusReport,
+} from "../../lib/schemas";
 import {
   DEFAULT_WORKSPACE_GUARD_MODE,
   WORKSPACE_NO_CONTEXT,
@@ -34,7 +38,7 @@ export interface WorkspaceBindingsSummary {
   bindings: WorkspaceBindingCard[];
 }
 
-function pickRecord(payload: Record<string, unknown> | undefined) {
+function pickRecord(payload: UnknownRecord | undefined) {
   return asObject(payload?.result) ?? asObject(payload);
 }
 
@@ -49,7 +53,7 @@ function normalizeWorkspaceStatus(
 }
 
 export function parseWorkspaceStatus(
-  payload: Record<string, unknown> | undefined,
+  payload: WorkspaceStatusReport | undefined,
 ): WorkspaceStatusCard {
   const record = pickRecord(payload);
   const matchedBinding =
@@ -74,7 +78,7 @@ export function parseWorkspaceStatus(
 }
 
 export function parseWorkspaceBindings(
-  payload: Record<string, unknown> | undefined,
+  payload: ProjectBindingsReport | undefined,
 ): WorkspaceBindingsSummary {
   const record = pickRecord(payload);
   const userBindings = asObject(record?.user_bindings) ?? record;

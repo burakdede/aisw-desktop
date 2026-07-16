@@ -1,4 +1,9 @@
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
+import type {
+  DoctorReport,
+  RepairReport,
+  VerifyReport,
+} from "../../lib/schemas";
 import {
   countCheckStatuses,
   normalizeAttentionCheckStatus,
@@ -7,7 +12,13 @@ import {
   type AttentionCheckStatus,
   type CheckStatus,
 } from "../../lib/check-status";
-import { asArray, asNumber, asObject, asString } from "../../lib/parse-guards";
+import {
+  asArray,
+  asNumber,
+  asObject,
+  asString,
+  type UnknownRecord,
+} from "../../lib/parse-guards";
 
 export interface SummaryCardData {
   title: string;
@@ -48,7 +59,7 @@ function normalizeUserFacingIssueText(value: string) {
   return normalizeTerminalIntegrationText(value);
 }
 
-export function parseDoctorSummary(payload: Record<string, unknown> | undefined): SummaryCardData {
+export function parseDoctorSummary(payload: DoctorReport | undefined): SummaryCardData {
   const counts = countCheckStatuses(
     asArray(payload?.checks).map((check) => asObject(check)?.status),
   );
@@ -64,7 +75,7 @@ export function parseDoctorSummary(payload: Record<string, unknown> | undefined)
   };
 }
 
-export function parseVerifySummary(payload: Record<string, unknown> | undefined): SummaryCardData {
+export function parseVerifySummary(payload: VerifyReport | undefined): SummaryCardData {
   const summary = asObject(payload?.summary);
   return {
     title: "Live match",
@@ -77,7 +88,7 @@ export function parseVerifySummary(payload: Record<string, unknown> | undefined)
   };
 }
 
-export function parseRepairSummary(payload: Record<string, unknown> | undefined): SummaryCardData {
+export function parseRepairSummary(payload: RepairReport | undefined): SummaryCardData {
   const result = asObject(payload?.result);
   const summary = asObject(result?.summary);
   return {
@@ -91,10 +102,10 @@ export function parseRepairSummary(payload: Record<string, unknown> | undefined)
   };
 }
 
-export function parseDoctorIssues(payload: Record<string, unknown> | undefined): IssueCardData[] {
+export function parseDoctorIssues(payload: DoctorReport | undefined): IssueCardData[] {
   return asArray(payload?.checks)
     .map((check) => asObject(check))
-    .filter((check): check is Record<string, unknown> => Boolean(check))
+    .filter((check): check is UnknownRecord => Boolean(check))
     .filter((check) => normalizeCheckStatus(check.status) !== "pass")
     .map((check) => ({
       title: asString(check.name),
@@ -104,10 +115,10 @@ export function parseDoctorIssues(payload: Record<string, unknown> | undefined):
     }));
 }
 
-export function parseVerifyIssues(payload: Record<string, unknown> | undefined): IssueCardData[] {
+export function parseVerifyIssues(payload: VerifyReport | undefined): IssueCardData[] {
   return asArray(payload?.tools)
     .map((tool) => asObject(tool))
-    .filter((tool): tool is Record<string, unknown> => Boolean(tool))
+    .filter((tool): tool is UnknownRecord => Boolean(tool))
     .filter((tool) => normalizeCheckStatus(tool.status) !== "pass")
     .map((tool) => ({
       title: asString(tool.tool),
@@ -117,13 +128,13 @@ export function parseVerifyIssues(payload: Record<string, unknown> | undefined):
     }));
 }
 
-export function parseRepairActions(payload: Record<string, unknown> | undefined): RepairActionData[] {
+export function parseRepairActions(payload: RepairReport | undefined): RepairActionData[] {
   const result = asObject(payload?.result);
   const grouped = new Map<string, GroupedRepairAction>();
 
   asArray(result?.actions)
     .map((action) => asObject(action))
-    .filter((action): action is Record<string, unknown> => Boolean(action))
+    .filter((action): action is UnknownRecord => Boolean(action))
     .forEach((action) => {
       const kind = asString(action.kind, "");
       const fix = asString(action.fix, "");

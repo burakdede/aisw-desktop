@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen, type Event } from "@tauri-apps/api/event";
 import type { AsyncDispose } from "./async-dispose";
 import type { ErrorMetadata } from "./error-details";
+import type { UnknownRecord } from "./parse-guards";
 import {
   DESKTOP_RUNTIME_WAIT_INTERVAL_MS,
   DESKTOP_RUNTIME_WAIT_TIMEOUT_MS,
@@ -26,7 +27,7 @@ export function isDesktopRuntimeUnavailableError(error: unknown) {
 declare global {
   interface Window {
     __TAURI_INTERNALS__?: unknown;
-    __AISW_DESKTOP_MOCK__?: Record<string, unknown> | ((cmd: string, args?: unknown) => unknown);
+    __AISW_DESKTOP_MOCK__?: UnknownRecord | ((cmd: string, args?: unknown) => unknown);
     __AISW_DESKTOP_LISTEN__?: <T>(
       event: string,
       handler: (payload: T) => void,
@@ -42,7 +43,7 @@ export function hasDesktopRuntime() {
   return Boolean(window.__TAURI_INTERNALS__);
 }
 
-export async function invokeDesktop<T>(command: string, args?: Record<string, unknown>) {
+export async function invokeDesktop<T>(command: string, args?: UnknownRecord) {
   try {
     if (typeof window !== "undefined" && window.__AISW_DESKTOP_MOCK__) {
       const mock = window.__AISW_DESKTOP_MOCK__;

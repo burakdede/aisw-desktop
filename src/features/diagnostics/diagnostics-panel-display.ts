@@ -1,11 +1,23 @@
-import type { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../lib/schemas";
+import type {
+  AppBootstrap,
+  AppSnapshot,
+  DesktopSettings,
+  DoctorReport,
+  RepairReport,
+  ToolStatus,
+} from "../../lib/schemas";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import {
   clipboardCopiedMessage,
   clipboardUnavailableManualMessage,
   inspectItemLabel,
 } from "../../lib/display-copy";
-import { asArray, asObject, asOptionalString } from "../../lib/parse-guards";
+import {
+  asArray,
+  asObject,
+  asOptionalString,
+  type UnknownRecord,
+} from "../../lib/parse-guards";
 import { contextDisplayLabel, toolProfileDisplayLabel } from "../../lib/profile-display";
 import { isSupportedTool } from "../../lib/tool-registry";
 import { countLabel, pluralChoice, titleCase } from "../../lib/utils";
@@ -599,8 +611,8 @@ export function buildDiagnosticInspectorActions(input: {
 
 export function buildDiagnosticQuickFixModels(input: {
   snapshot: AppSnapshot | undefined;
-  doctor: Record<string, unknown> | undefined;
-  repair: Record<string, unknown> | undefined;
+  doctor: DoctorReport | undefined;
+  repair: RepairReport | undefined;
   settings: DesktopSettings;
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
 }) {
@@ -659,11 +671,11 @@ export function buildDiagnosticQuickFixModels(input: {
   return fixes;
 }
 
-function buildRepairFixMap(repair: Record<string, unknown> | undefined) {
+function buildRepairFixMap(repair: RepairReport | undefined) {
   const result = asObject(repair?.result);
   return asArray(result?.actions)
     .map((action) => asObject(action))
-    .filter((action): action is Record<string, unknown> => Boolean(action))
+    .filter((action): action is UnknownRecord => Boolean(action))
     .reduce((map, action) => {
       const fix = asOptionalString(action.fix);
       if (fix) {
@@ -790,7 +802,7 @@ function buildWorkspaceMismatchQuickFix(
 }
 
 function repairableDoctorIssues(
-  doctor: Record<string, unknown> | undefined,
+  doctor: DoctorReport | undefined,
   repairFixMap: Map<string, string>,
 ): Array<{
   title: string;
@@ -851,7 +863,7 @@ function doctorRepairFixCard(
   };
 }
 
-function shellHookDoctorIssue(doctor: Record<string, unknown> | undefined) {
+function shellHookDoctorIssue(doctor: DoctorReport | undefined) {
   const checks = parseDoctorChecks(doctor, {
     defaultDetail: "Terminal integration guidance needs attention.",
     detailTransform: normalizeTerminalIntegrationText,
@@ -870,7 +882,7 @@ function shellHookDoctorIssue(doctor: Record<string, unknown> | undefined) {
   return null;
 }
 
-function keyringDoctorIssue(doctor: Record<string, unknown> | undefined) {
+function keyringDoctorIssue(doctor: DoctorReport | undefined) {
   const checks = parseDoctorChecks(doctor, {
     defaultDetail: "Keyring access needs attention.",
   });

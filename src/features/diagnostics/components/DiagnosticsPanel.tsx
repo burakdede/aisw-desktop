@@ -4,7 +4,13 @@ import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { SplitView } from "../../../components/SplitView";
 import { useCompactLayout } from "../../../components/useCompactLayout";
-import { AppBootstrap, AppSnapshot, DesktopSettings } from "../../../lib/schemas";
+import type {
+  AppBootstrap,
+  AppSnapshot,
+  DesktopSettings,
+  DoctorReport,
+  RepairReport,
+} from "../../../lib/schemas";
 import { exportDiagnosticBundle, runDoctor, runRepair, runVerify } from "../../../lib/client";
 import { DESKTOP_ACTION_COPY } from "../../../lib/desktop-action-copy";
 import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
@@ -727,8 +733,8 @@ function buildQuickFixes(
     onRefreshDiagnostics,
   }: {
     snapshot: AppSnapshot | undefined;
-    doctor: Record<string, unknown> | undefined;
-    repair: Record<string, unknown> | undefined;
+    doctor: DoctorReport | undefined;
+    repair: RepairReport | undefined;
     settings: DesktopSettings;
     toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
     useProfile: (request: {
