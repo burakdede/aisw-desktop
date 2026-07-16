@@ -9,6 +9,16 @@ import {
   parseDoctorChecks,
 } from "./diagnostic-doctor-checks";
 import {
+  buildDiagnosticsStatusMessage,
+  buildDiagnosticsSummary,
+  formatRelativeVerifiedTime,
+} from "./diagnostic-status-display";
+export {
+  buildDiagnosticsStatusMessage,
+  buildDiagnosticsSummary,
+  formatRelativeVerifiedTime,
+} from "./diagnostic-status-display";
+import {
   diagnosticTitleHas,
   diagnosticTitleHasAny,
   normalizeDiagnosticTitle,
@@ -411,46 +421,6 @@ export function impactTextForFinding(finding: DiagnosticFinding) {
   return "This state needs review before you rely on the current desktop switching state.";
 }
 
-export function buildDiagnosticsSummary(totalIssues: number, repairCount: number) {
-  const remainingIssues = Math.max(totalIssues - repairCount, 0);
-  return {
-    title: totalIssues
-      ? `${countLabel(totalIssues, "issue")} ${pluralNeeds(totalIssues)} attention`
-      : "Everything looks good",
-    detail: totalIssues
-      ? `${countLabel(repairCount, "repair")} can be applied safely. ${countLabel(
-          remainingIssues,
-          "issue",
-        )} ${pluralRequires(remainingIssues)} a decision.`
-      : "All configured tools match their active AISW profiles and local storage checks passed.",
-  };
-}
-
-export function formatRelativeVerifiedTime(timestamp: number, nowMs = Date.now()) {
-  if (!timestamp) {
-    return "Unavailable";
-  }
-
-  const diffMs = Math.max(nowMs - timestamp, 0);
-  const diffSeconds = Math.floor(diffMs / 1000);
-  if (diffSeconds < 10) {
-    return "just now";
-  }
-  if (diffSeconds < 60) {
-    return `${diffSeconds} sec ago`;
-  }
-  const diffMinutes = Math.floor(diffSeconds / 60);
-  if (diffMinutes < 60) {
-    return `${diffMinutes} min ago`;
-  }
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) {
-    return `${diffHours} hr ago`;
-  }
-  const diffDays = Math.floor(diffHours / 24);
-  return `${countLabel(diffDays, "day")} ago`;
-}
-
 export function diagnosticQuickFixKey(fix: Pick<DiagnosticQuickFixInput, "title" | "label">) {
   return `${fix.title}:${fix.label}`;
 }
@@ -477,31 +447,6 @@ export function buildSelectedRepairFixes(
     )
     .filter((action): action is DiagnosticRepairAction => Boolean(action))
     .map((action) => diagnosticRepairFixFromAction(action));
-}
-
-export function buildDiagnosticsStatusMessage(input: {
-  bundleCopyMessage: string;
-  exportedBundle?: DiagnosticBundleResult | null;
-  exportErrorMessage?: string;
-  appliedFixCount?: number;
-}) {
-  if (input.bundleCopyMessage) {
-    return input.bundleCopyMessage;
-  }
-
-  if (input.exportedBundle) {
-    return `Support report ready: ${input.exportedBundle.filename}. ${input.exportedBundle.path}`;
-  }
-
-  if (input.exportErrorMessage) {
-    return input.exportErrorMessage;
-  }
-
-  if (typeof input.appliedFixCount === "number") {
-    return `Applied ${countLabel(input.appliedFixCount, "safe fix", "safe fixes")}.`;
-  }
-
-  return "";
 }
 
 export function diagnosticBundlePathCopyMessage(path: string, clipboardAvailable: boolean) {
@@ -723,14 +668,6 @@ function buildRepairFixMap(repair: Record<string, unknown> | undefined) {
       }
       return map;
     }, new Map<string, string>());
-}
-
-function pluralNeeds(count: number) {
-  return count === 1 ? "needs" : "need";
-}
-
-function pluralRequires(count: number) {
-  return count === 1 ? "requires" : "require";
 }
 
 function repairableDoctorIssues(

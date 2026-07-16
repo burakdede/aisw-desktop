@@ -7,8 +7,6 @@ import {
   buildDiagnosticQuickFixModels,
   buildDiagnosticInspectorActions,
   buildDiagnosticFindings,
-  buildDiagnosticsStatusMessage,
-  buildDiagnosticsSummary,
   buildSelectedRepairFixes,
   buildRecentFailureCards,
   diagnosticBundlePathCopyMessage,
@@ -20,7 +18,6 @@ import {
   diagnosticQuickFixKey,
   diagnosticRepairActionKey,
   diagnosticRepairFixFromAction,
-  formatRelativeVerifiedTime,
   groupDiagnosticFindings,
   impactTextForFinding,
   matchesQuickFixToFinding,
@@ -28,6 +25,11 @@ import {
   resolveSelectedFindingKey,
   type DiagnosticFinding,
 } from "./diagnostics-panel-display";
+import {
+  buildDiagnosticsStatusMessage,
+  buildDiagnosticsSummary,
+  formatRelativeVerifiedTime,
+} from "./diagnostic-status-display";
 import type { IssueCardData } from "./diagnostic-parsers";
 
 function makeSnapshot(): AppSnapshot {
