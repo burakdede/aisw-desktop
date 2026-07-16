@@ -168,7 +168,7 @@ export function buildAppNavItems(runtimeBlocked: boolean) {
     id,
     label,
     group,
-    disabled: runtimeBlocked && id !== "settings",
+    disabled: runtimeBlocked && id !== APP_NAV_IDS.settings,
     shortcut: navShortcutLabel(id),
   }));
 }

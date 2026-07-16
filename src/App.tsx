@@ -304,12 +304,12 @@ export function App() {
     const desktopEventHandlers: DesktopEventHandler[] = [
       {
         event: DESKTOP_TRAY_EVENTS.openDiagnostics,
-        handler: () => setActiveNav("diagnostics"),
+        handler: () => setActiveNav(APP_NAV_IDS.diagnostics),
       },
       {
         event: DESKTOP_TRAY_EVENTS.runDiagnostics,
         handler: () => {
-          setActiveNav("diagnostics");
+          setActiveNav(APP_NAV_IDS.diagnostics);
           invalidateDiagnostics();
         },
       },
@@ -690,28 +690,28 @@ export function App() {
                 setProfilesRouteState(
                   createProfilesRouteState({ tool, expandedProfile: null, mode: options?.mode }),
                 );
-                setActiveNav("profiles");
+                setActiveNav(APP_NAV_IDS.profiles);
               }}
               onOpenSettings={openSettings}
             />
           ) : null}
-          {activeSection === "overview" && !setupFocused ? (
+          {activeSection === APP_NAV_IDS.overview && !setupFocused ? (
             <OverviewPanel
               snapshot={resolvedSnapshot}
               settings={settings}
               toolCapabilities={toolCapabilities}
               onOpenContexts={openContexts}
               onOpenQuickSwitch={() => setQuickSwitchOpen(true)}
-              onOpenActivity={() => setActiveNav("activity")}
+              onOpenActivity={() => setActiveNav(APP_NAV_IDS.activity)}
               onOpenProfiles={(tool, expandedProfile, options) => {
                 setProfilesRouteState(
                   createProfilesRouteState({ tool, expandedProfile, mode: options?.mode }),
                 );
-                setActiveNav("profiles");
+                setActiveNav(APP_NAV_IDS.profiles);
               }}
             />
           ) : null}
-          {activeSection === "profiles" ? (
+          {activeSection === APP_NAV_IDS.profiles ? (
             <ProfilesPanel
               snapshot={resolvedSnapshot}
               settings={settings}
@@ -722,18 +722,18 @@ export function App() {
               initialCredentialBackend={profilesRouteState.credentialBackend}
               openToken={profilesRouteState.openToken}
               onOpenBackups={() => {
-                setActiveNav("backups");
+                setActiveNav(APP_NAV_IDS.backups);
               }}
             />
           ) : null}
-          {activeSection === "sets" ? (
+          {activeSection === APP_NAV_IDS.sets ? (
             <SetsPanel
               snapshot={resolvedSnapshot}
               settings={settings}
               onOpenContexts={openContexts}
             />
           ) : null}
-          {activeSection === "diagnostics" ? (
+          {activeSection === APP_NAV_IDS.diagnostics ? (
             <DiagnosticsPanel
               settings={settings}
               snapshot={resolvedSnapshot}
@@ -742,7 +742,7 @@ export function App() {
               onOpenContexts={openContexts}
               onOpenProfiles={(tool, expandedProfile) => {
                 setProfilesRouteState(createProfilesRouteState({ tool, expandedProfile }));
-                setActiveNav("profiles");
+                setActiveNav(APP_NAV_IDS.profiles);
               }}
               onOpenProfileSetup={(options) => {
                 setProfilesRouteState(
@@ -753,28 +753,28 @@ export function App() {
                     credentialBackend: options?.credentialBackend ?? null,
                   }),
                 );
-                setActiveNav("profiles");
+                setActiveNav(APP_NAV_IDS.profiles);
               }}
             />
           ) : null}
-          {activeSection === "backups" ? (
+          {activeSection === APP_NAV_IDS.backups ? (
             <BackupsPanel
               snapshot={resolvedSnapshot}
               settings={settings}
               toolCapabilities={toolCapabilities}
               onOpenProfiles={(tool, expandedProfile) => {
                 setProfilesRouteState(createProfilesRouteState({ tool, expandedProfile }));
-                setActiveNav("profiles");
+                setActiveNav(APP_NAV_IDS.profiles);
               }}
             />
           ) : null}
-          {activeSection === "activity" ? (
+          {activeSection === APP_NAV_IDS.activity ? (
             <ActivityPanel
               externalClearSignal={activityClearSignal}
               externalOpenLogSignal={activityOpenLogSignal}
             />
           ) : null}
-          {activeSection === "settings" ? (
+          {activeSection === APP_NAV_IDS.settings ? (
             <SettingsPanel
               settings={settings}
               runtimeStatus={runtimeStatus}
@@ -809,10 +809,10 @@ export function App() {
       onClose={() => setHelpOpen(false)}
       onOpenProfiles={() => {
         setProfilesRouteState(createProfilesRouteState());
-        setActiveNav("profiles");
+        setActiveNav(APP_NAV_IDS.profiles);
       }}
       onOpenDiagnostics={() => {
-        setActiveNav("diagnostics");
+        setActiveNav(APP_NAV_IDS.diagnostics);
       }}
       onOpenSettings={() => {
         openSettings();

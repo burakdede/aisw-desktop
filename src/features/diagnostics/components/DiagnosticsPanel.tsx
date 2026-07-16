@@ -27,7 +27,7 @@ import {
   type SummaryCardData,
 } from "../diagnostic-parsers";
 import { diagnosticCheckRows, type DiagnosticCheckRow } from "../../../lib/diagnostic-display";
-import type { SettingsSection } from "../../settings/settings-panel-display";
+import type { SettingsSection } from "../../../lib/settings-sections";
 import {
   DIAGNOSTICS_PANEL_COPY,
   buildDiagnosticQuickFixModels,
