@@ -34,6 +34,13 @@ export type ProfileSwitchState =
   | "not_verified"
   | "live_mismatch";
 
+type ToolVerificationState =
+  | "not_installed"
+  | "no_profile"
+  | "verified"
+  | "needs_reapply"
+  | "not_verified";
+
 const OVERVIEW_HEALTH_LABELS: Record<OverviewHealthState, string> = {
   ready: READY_LABEL,
   needs_attention: NEEDS_ATTENTION_LABEL,
@@ -72,12 +79,47 @@ const PROFILE_SWITCH_SYMBOLS: Record<ProfileSwitchState, string> = {
   active: "●",
 };
 
+const PROFILE_SWITCH_TONES: Record<ProfileSwitchState, "stored" | "warn" | "ok"> = {
+  stored: "stored",
+  not_verified: "stored",
+  live_mismatch: "warn",
+  active: "ok",
+};
+
 const PROFILE_LIVE_MATCH_LABELS: Record<ProfileSwitchState, string> = {
   stored: AVAILABLE_AFTER_ACTIVATION_LABEL,
   not_verified: NOT_VERIFIED_LABEL,
   live_mismatch: NEEDS_ATTENTION_LABEL,
   active: READY_LABEL,
 };
+
+const TOOL_LIST_EMPTY_LABELS: Record<
+  Extract<ToolVerificationState, "not_installed" | "no_profile" | "not_verified">,
+  string
+> = {
+  not_installed: NOT_INSTALLED_LABEL,
+  no_profile: NO_PROFILE_LABEL,
+  not_verified: VERIFICATION_PENDING_LABEL,
+};
+
+const TOOL_INSPECTOR_EMPTY_LABELS: Record<
+  Extract<ToolVerificationState, "not_installed" | "no_profile" | "not_verified">,
+  string
+> = {
+  not_installed: TOOL_NOT_INSTALLED_LABEL,
+  no_profile: NO_SAVED_PROFILE_YET_LABEL,
+  not_verified: NOT_VERIFIED_YET_LABEL,
+};
+
+const TOOL_VERIFICATION_LABELS: Record<ToolVerificationState, string> = {
+  not_installed: UNAVAILABLE_LABEL,
+  no_profile: UNAVAILABLE_LABEL,
+  verified: VERIFIED_IN_THIS_SESSION_LABEL,
+  needs_reapply: NEEDS_REAPPLY_LABEL,
+  not_verified: NOT_VERIFIED_YET_LABEL,
+};
+
+const OVERVIEW_LIVE_MISMATCH_TEXT = "Live mismatch";
 
 export function resolveOverviewHealthState(status: ToolStatus): OverviewHealthState {
   if (!status.binary_found) {
@@ -100,14 +142,15 @@ export function overviewHealthLabel(state: OverviewHealthState) {
 }
 
 export function overviewHealthText(status: ToolStatus, state: OverviewHealthState) {
-  if (!status.binary_found) {
+  const verificationState = resolveToolVerificationState(status);
+  if (verificationState === "not_installed") {
     return NOT_INSTALLED_LABEL;
   }
-  if (!status.active_profile) {
+  if (verificationState === "no_profile") {
     return NOT_CONFIGURED_LABEL;
   }
-  if (status.active_profile_applied === false) {
-    return "Live mismatch";
+  if (verificationState === "needs_reapply") {
+    return OVERVIEW_LIVE_MISMATCH_TEXT;
   }
   return OVERVIEW_HEALTH_TEXT_LABELS[state];
 }
@@ -134,15 +177,7 @@ export function resolveProfileSwitchState(input: {
 }
 
 export function profileSwitchTone(state: ProfileSwitchState) {
-  switch (state) {
-    case "stored":
-    case "not_verified":
-      return "stored";
-    case "live_mismatch":
-      return "warn";
-    case "active":
-      return "ok";
-  }
+  return PROFILE_SWITCH_TONES[state];
 }
 
 export function profileSwitchLabel(state: ProfileSwitchState) {
@@ -158,34 +193,44 @@ export function profileLiveMatchLabel(state: ProfileSwitchState) {
 }
 
 export function toolListEmptyLabel(status: ToolStatus) {
-  if (!status.binary_found) {
-    return NOT_INSTALLED_LABEL;
-  }
-  if (!status.active_profile) {
-    return NO_PROFILE_LABEL;
-  }
-  return VERIFICATION_PENDING_LABEL;
+  return TOOL_LIST_EMPTY_LABELS[resolveUnverifiedToolState(status)];
 }
 
 export function toolInspectorEmptyLabel(status: ToolStatus) {
-  if (!status.binary_found) {
-    return TOOL_NOT_INSTALLED_LABEL;
-  }
-  if (!status.active_profile) {
-    return NO_SAVED_PROFILE_YET_LABEL;
-  }
-  return NOT_VERIFIED_YET_LABEL;
+  return TOOL_INSPECTOR_EMPTY_LABELS[resolveUnverifiedToolState(status)];
 }
 
 export function toolVerificationLabel(status: ToolStatus) {
-  if (!status.binary_found || !status.active_profile) {
-    return UNAVAILABLE_LABEL;
+  return TOOL_VERIFICATION_LABELS[resolveToolVerificationState(status)];
+}
+
+function resolveToolVerificationState(status: ToolStatus): ToolVerificationState {
+  if (!status.binary_found) {
+    return "not_installed";
+  }
+  if (!status.active_profile) {
+    return "no_profile";
   }
   if (status.active_profile_applied === true) {
-    return VERIFIED_IN_THIS_SESSION_LABEL;
+    return "verified";
   }
   if (status.active_profile_applied === false) {
-    return NEEDS_REAPPLY_LABEL;
+    return "needs_reapply";
   }
-  return NOT_VERIFIED_YET_LABEL;
+  return "not_verified";
+}
+
+function resolveUnverifiedToolState(
+  status: ToolStatus,
+): Extract<ToolVerificationState, "not_installed" | "no_profile" | "not_verified"> {
+  const verificationState = resolveToolVerificationState(status);
+  if (
+    verificationState === "not_installed" ||
+    verificationState === "no_profile" ||
+    verificationState === "not_verified"
+  ) {
+    return verificationState;
+  }
+
+  return "not_verified";
 }
