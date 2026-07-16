@@ -1,4 +1,5 @@
-import type { SupportedTool } from "../lib/tool-registry";
+import { APP_NAV_IDS } from "../lib/app-navigation";
+import { SUPPORTED_TOOLS, type SupportedTool } from "../lib/tool-registry";
 
 export const HELP_SHEET_COPY = {
   dialogAriaLabel: "Using AI Switch",
@@ -22,11 +23,7 @@ export const HELP_SHEET_COPY = {
     "Go to Profiles to save or import accounts, Diagnostics to verify switching health, or Settings to review app setup and terminal integration.",
 } as const;
 
-export const HELP_SHEET_SUPPORTED_TOOLS: readonly SupportedTool[] = [
-  "claude",
-  "codex",
-  "gemini",
-] as const;
+export const HELP_SHEET_SUPPORTED_TOOLS: readonly SupportedTool[] = SUPPORTED_TOOLS;
 
 export const HELP_SHEET_SHORTCUTS = [
   { label: "Quick Switch", shortcut: "⌘K" },
@@ -35,7 +32,7 @@ export const HELP_SHEET_SHORTCUTS = [
 ] as const;
 
 export const HELP_SHEET_ACTIONS = [
-  { id: "profiles", label: "Open Profiles" },
-  { id: "diagnostics", label: "Open Diagnostics" },
-  { id: "settings", label: "Open Settings" },
+  { id: APP_NAV_IDS.profiles, label: "Open Profiles" },
+  { id: APP_NAV_IDS.diagnostics, label: "Open Diagnostics" },
+  { id: APP_NAV_IDS.settings, label: "Open Settings" },
 ] as const;
