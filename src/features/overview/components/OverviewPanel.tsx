@@ -60,6 +60,7 @@ import {
 } from "../../../lib/status-display";
 import { toolDisplayName } from "../../../lib/tool-display";
 import {
+  DEFAULT_PROFILE_IMPORT_MODE,
   preferredProfileImportMode,
   supportsProfileImportMode,
   type ProfileImportMode,
@@ -261,7 +262,11 @@ export function OverviewPanel({
             compactLayout={compactLayout}
             onImport={(tool) =>
               onOpenProfiles(tool, null, {
-                mode: preferredProfileImportMode(tool, toolCapabilities, "from_live"),
+                mode: preferredProfileImportMode(
+                  tool,
+                  toolCapabilities,
+                  DEFAULT_PROFILE_IMPORT_MODE,
+                ),
               })
             }
             onUse={(tool, profile, stateMode) =>
@@ -367,7 +372,11 @@ function ToolInspector({
   const [selectedProfile, setSelectedProfile] = useState(status.active_profile ?? profiles[0]?.name ?? "");
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
   const actionsMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
-  const supportsLiveImport = supportsProfileImportMode(status.tool, toolCapabilities, "from_live");
+  const supportsLiveImport = supportsProfileImportMode(
+    status.tool,
+    toolCapabilities,
+    DEFAULT_PROFILE_IMPORT_MODE,
+  );
   const inspector = buildOverviewInspectorPresentation({
     profiles,
     selectedProfile,

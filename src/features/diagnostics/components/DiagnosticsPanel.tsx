@@ -13,6 +13,8 @@ import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import {
+  DEFAULT_PROFILE_IMPORT_MODE,
+  type ExplicitProfileCredentialBackend,
   supportsProfileImportMode,
   type ProfileImportMode,
 } from "../../shared/profile-capabilities";
@@ -73,7 +75,7 @@ export function DiagnosticsPanel({
   onOpenProfileSetup: (options?: {
     tool?: string;
     mode?: ProfileImportMode;
-    credentialBackend?: "file" | "system-keyring" | null;
+    credentialBackend?: ExplicitProfileCredentialBackend | null;
   }) => void;
 }) {
   const queryClient = useQueryClient();
@@ -206,7 +208,11 @@ export function DiagnosticsPanel({
   }, [safeFixIds.join("|")]);
 
   const importCurrentLabel = primaryFindingFix?.importTarget
-    ? supportsProfileImportMode(primaryFindingFix.importTarget.tool, toolCapabilities, "from_live")
+    ? supportsProfileImportMode(
+        primaryFindingFix.importTarget.tool,
+        toolCapabilities,
+        DEFAULT_PROFILE_IMPORT_MODE,
+      )
       ? "Import Current…"
       : "Open Account Setup"
     : null;
@@ -259,7 +265,8 @@ export function DiagnosticsPanel({
         }
         onOpenProfileSetup({
           tool: action.importTarget.tool,
-          mode: (action.importFallbackMode as ProfileImportMode | undefined) ?? "from_live",
+          mode: (action.importFallbackMode as ProfileImportMode | undefined)
+            ?? DEFAULT_PROFILE_IMPORT_MODE,
         });
         return;
       case "open_profile_details":
@@ -683,7 +690,7 @@ type QuickFixCard = DiagnosticQuickFixInput & {
   repairFix?: string;
   settingsSection?: "shell" | "keyring";
   setupMode?: ProfileImportMode;
-  credentialBackend?: "file" | "system-keyring" | null;
+  credentialBackend?: ExplicitProfileCredentialBackend | null;
   toolTarget?: string;
   importTarget?: { tool: string; stateMode: string | null };
   importFallbackMode?: ProfileImportMode;
@@ -740,7 +747,7 @@ function buildQuickFixes(
     onOpenProfileSetup: (options?: {
       tool?: string;
       mode?: ProfileImportMode;
-      credentialBackend?: "file" | "system-keyring" | null;
+      credentialBackend?: ExplicitProfileCredentialBackend | null;
     }) => void;
     onRefreshDiagnostics: () => void;
   },
@@ -797,7 +804,7 @@ function runQuickFixAction(
     onOpenProfileSetup: (options?: {
       tool?: string;
       mode?: ProfileImportMode;
-      credentialBackend?: "file" | "system-keyring" | null;
+      credentialBackend?: ExplicitProfileCredentialBackend | null;
     }) => void;
   },
 ) {

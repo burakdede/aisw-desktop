@@ -51,9 +51,12 @@ import {
 } from "../../../lib/tool-registry";
 import { toolDisplayName } from "../../../lib/tool-display";
 import {
+  DEFAULT_PROFILE_CREDENTIAL_BACKEND,
+  DEFAULT_PROFILE_IMPORT_MODE,
   resolveCredentialBackendRequest,
   supportedCredentialBackends,
   supportedProfileImportModes,
+  type ExplicitProfileCredentialBackend,
   type ProfileCredentialBackend,
   type ProfileImportMode,
 } from "../../shared/profile-capabilities";
@@ -125,7 +128,7 @@ export function ProfilesPanel({
   initialTool?: string;
   initialExpandedProfile?: string | null;
   initialMode?: ProfileImportMode;
-  initialCredentialBackend?: "file" | "system-keyring" | null;
+  initialCredentialBackend?: ExplicitProfileCredentialBackend | null;
   openToken?: number;
   onOpenBackups?: () => void;
 }) {
@@ -151,10 +154,10 @@ export function ProfilesPanel({
   const [profile, setProfile] = useState("");
   const [label, setLabel] = useState("");
   const [mode, setMode] = useState<ProfileImportMode>(
-    initialMode ?? "from_live",
+    initialMode ?? DEFAULT_PROFILE_IMPORT_MODE,
   );
   const [credentialBackend, setCredentialBackend] = useState<ProfileCredentialBackend>(
-    initialCredentialBackend ?? "auto",
+    initialCredentialBackend ?? DEFAULT_PROFILE_CREDENTIAL_BACKEND,
   );
   const [stateMode, setStateMode] = useState("isolated");
   const [renameDrafts, setRenameDrafts] = useState<Record<string, string>>({});
@@ -307,14 +310,18 @@ export function ProfilesPanel({
   }, [initialMode]);
 
   useEffect(() => {
-    const nextMode = resolveAvailableSelection(mode, availableImportModes, "from_live");
+    const nextMode = resolveAvailableSelection(
+      mode,
+      availableImportModes,
+      DEFAULT_PROFILE_IMPORT_MODE,
+    );
     if (nextMode !== mode) {
       setMode(nextMode);
     }
   }, [availableImportModes, mode]);
 
   useEffect(() => {
-    const next = initialCredentialBackend ?? "auto";
+    const next = initialCredentialBackend ?? DEFAULT_PROFILE_CREDENTIAL_BACKEND;
     setCredentialBackend(next);
   }, [initialCredentialBackend]);
 
@@ -322,7 +329,7 @@ export function ProfilesPanel({
     const nextCredentialBackend = resolveAvailableSelection(
       credentialBackend,
       availableCredentialBackends,
-      "auto",
+      DEFAULT_PROFILE_CREDENTIAL_BACKEND,
     );
     if (nextCredentialBackend !== credentialBackend) {
       setCredentialBackend(nextCredentialBackend);
@@ -484,7 +491,7 @@ export function ProfilesPanel({
     const importMode =
       mode === "from_env"
         ? { kind: "from_env" as const }
-        : { kind: "from_live" as const };
+        : { kind: DEFAULT_PROFILE_IMPORT_MODE };
 
     addProfileMutation.mutate(
       {

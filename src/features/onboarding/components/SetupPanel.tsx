@@ -22,6 +22,7 @@ import {
 } from "../../../lib/tool-guidance";
 import { SETTINGS_SECTION_IDS, type SettingsSection } from "../../../lib/settings-sections";
 import {
+  DEFAULT_PROFILE_IMPORT_MODE,
   preferredProfileImportMode,
   supportsProfileImportMode,
 } from "../../shared/profile-capabilities";
@@ -183,9 +184,13 @@ export function SetupPanel({
     event.preventDefault();
     const value = profileNames[tool]?.trim();
     if (!value) return;
-    if (!supportsProfileImportMode(tool, toolCapabilities, "from_live")) {
+    if (!supportsProfileImportMode(tool, toolCapabilities, DEFAULT_PROFILE_IMPORT_MODE)) {
       onOpenProfiles(tool, {
-        mode: preferredProfileImportMode(tool, toolCapabilities, "from_live"),
+        mode: preferredProfileImportMode(
+          tool,
+          toolCapabilities,
+          DEFAULT_PROFILE_IMPORT_MODE,
+        ),
       });
       return;
     }
@@ -194,7 +199,7 @@ export function SetupPanel({
       profile: value,
       label: profileLabels[tool]?.trim() || onboardingImportedProfileLabel(value),
       stateMode: toolSupportsEditableStateModes(tool) ? "isolated" : null,
-      importMode: { kind: "from_live" },
+      importMode: { kind: DEFAULT_PROFILE_IMPORT_MODE },
     });
   }
 
@@ -245,7 +250,7 @@ export function SetupPanel({
       ? supportsProfileImportMode(
           selectedAccountItem.account.tool,
           toolCapabilities,
-          "from_live",
+          DEFAULT_PROFILE_IMPORT_MODE,
         )
       : false;
   const selectedMissingToolNoteParts =
@@ -600,7 +605,11 @@ export function SetupPanel({
                                       disabled={mutationLock.isBusy}
                                       onClick={() =>
                                         onOpenProfiles(selectedAccountItem.account.tool, {
-                                          mode: preferredProfileImportMode(selectedAccountItem.account.tool, toolCapabilities, "from_live"),
+                                          mode: preferredProfileImportMode(
+                                            selectedAccountItem.account.tool,
+                                            toolCapabilities,
+                                            DEFAULT_PROFILE_IMPORT_MODE,
+                                          ),
                                         })
                                       }
                                     >

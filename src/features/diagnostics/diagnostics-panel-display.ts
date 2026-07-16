@@ -7,7 +7,9 @@ import type { LastCommandResult } from "../shared/lastCommandResult";
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import {
+  DEFAULT_PROFILE_IMPORT_MODE,
   preferredProfileImportMode,
+  type ExplicitProfileCredentialBackend,
   type ProfileImportMode,
 } from "../shared/profile-capabilities";
 import type { IssueCardData } from "./diagnostic-parsers";
@@ -31,7 +33,7 @@ export type DiagnosticInspectorQuickFix = Pick<
   "title" | "label"
 > & {
   importTarget?: { tool: string; stateMode: string | null };
-  importFallbackMode?: string;
+  importFallbackMode?: ProfileImportMode;
   secondaryAction?: {
     label: string;
   };
@@ -84,7 +86,7 @@ export type DiagnosticQuickFixModel = DiagnosticQuickFixInput & {
   repairFix?: string;
   settingsSection?: "shell" | "keyring";
   setupMode?: ProfileImportMode;
-  credentialBackend?: "file" | "system-keyring" | null;
+  credentialBackend?: ExplicitProfileCredentialBackend | null;
   toolTarget?: string;
   importTarget?: { tool: string; stateMode: string | null };
   importFallbackMode?: ProfileImportMode;
@@ -609,7 +611,7 @@ export function buildDiagnosticQuickFixModels(input: {
       detail: "Open account setup with file-backed credential storage preselected for the next import or add flow.",
       label: "Use file-backed storage",
       status: keyringIssue.status,
-      setupMode: "from_live",
+      setupMode: DEFAULT_PROFILE_IMPORT_MODE,
       credentialBackend: "file",
     });
     fixes.push({
@@ -661,7 +663,7 @@ export function buildDiagnosticQuickFixModels(input: {
         importFallbackMode: preferredProfileImportMode(
           status.tool,
           toolCapabilities,
-          "from_live",
+          DEFAULT_PROFILE_IMPORT_MODE,
         ),
         primary: true,
       });

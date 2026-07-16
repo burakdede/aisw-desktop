@@ -1,13 +1,17 @@
 import { AppBootstrap } from "../../lib/schemas";
 import { toolSupportsSystemKeyringCredentials } from "../../lib/tool-registry";
 
-const PROFILE_IMPORT_MODES = ["from_live", "from_env", "api_key", "oauth"] as const;
-const PROFILE_CREDENTIAL_BACKENDS = ["auto", "system-keyring", "file"] as const;
+export const PROFILE_IMPORT_MODES = ["from_live", "from_env", "api_key", "oauth"] as const;
+export const PROFILE_CREDENTIAL_BACKENDS = ["auto", "system-keyring", "file"] as const;
 
 type ToolCapabilities = NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
 
 export type ProfileImportMode = (typeof PROFILE_IMPORT_MODES)[number];
 export type ProfileCredentialBackend = (typeof PROFILE_CREDENTIAL_BACKENDS)[number];
+export type ExplicitProfileCredentialBackend = Exclude<ProfileCredentialBackend, "auto">;
+
+export const DEFAULT_PROFILE_IMPORT_MODE = PROFILE_IMPORT_MODES[0];
+export const DEFAULT_PROFILE_CREDENTIAL_BACKEND = PROFILE_CREDENTIAL_BACKENDS[0];
 
 export function supportedProfileImportModes(
   tool: string,
@@ -54,7 +58,7 @@ export function supportedCredentialBackends(
   const configured = toolCapabilities[tool]?.credential_backends ?? [];
   const normalized = configured
     .map(normalizeCredentialBackend)
-    .filter((backend, index, array): backend is Exclude<ProfileCredentialBackend, "auto"> =>
+    .filter((backend, index, array): backend is ExplicitProfileCredentialBackend =>
       Boolean(backend) && array.indexOf(backend) === index,
     );
 
@@ -63,18 +67,18 @@ export function supportedCredentialBackends(
   }
 
   if (normalized.length > 1) {
-    return ["auto", ...normalized];
+    return [DEFAULT_PROFILE_CREDENTIAL_BACKEND, ...normalized];
   }
 
   if (!toolSupportsSystemKeyringCredentials(tool)) {
     return ["file"];
   }
 
-  return ["auto", "system-keyring", "file"];
+  return [...PROFILE_CREDENTIAL_BACKENDS];
 }
 
 export function resolveCredentialBackendRequest(backend: ProfileCredentialBackend): string | null {
-  return backend === "auto" ? null : backend;
+  return backend === DEFAULT_PROFILE_CREDENTIAL_BACKEND ? null : backend;
 }
 
 function normalizeImportMode(mode: string): ProfileImportMode | null {
@@ -86,7 +90,7 @@ function normalizeImportMode(mode: string): ProfileImportMode | null {
 
 function normalizeCredentialBackend(
   backend: string,
-): Exclude<ProfileCredentialBackend, "auto"> | null {
+): ExplicitProfileCredentialBackend | null {
   if (backend === "system_keyring" || backend === "system-keyring") {
     return "system-keyring";
   }

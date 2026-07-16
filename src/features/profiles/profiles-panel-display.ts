@@ -19,7 +19,13 @@ import {
 } from "../../lib/status-display";
 import { SUPPORTED_TOOLS, toolShortName, type SupportedTool } from "../../lib/tool-registry";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
-import type { ProfileCredentialBackend, ProfileImportMode } from "../shared/profile-capabilities";
+import {
+  DEFAULT_PROFILE_CREDENTIAL_BACKEND,
+  DEFAULT_PROFILE_IMPORT_MODE,
+  type ExplicitProfileCredentialBackend,
+  type ProfileCredentialBackend,
+  type ProfileImportMode,
+} from "../shared/profile-capabilities";
 
 export type OAuthWizardStep = {
   id: "start" | "browser" | "login" | "capture" | "saved";
@@ -125,9 +131,9 @@ export function buildProfileSheetDraftReset(
   initialCredentialBackend: ProfileCredentialBackend | null | undefined,
 ) {
   return {
-    credentialBackend: initialCredentialBackend ?? "auto",
+    credentialBackend: initialCredentialBackend ?? DEFAULT_PROFILE_CREDENTIAL_BACKEND,
     label: "",
-    mode: "from_live" as ProfileImportMode,
+    mode: DEFAULT_PROFILE_IMPORT_MODE,
     profile: "",
   };
 }
@@ -237,8 +243,8 @@ export function defaultExpandedProfileName(input: {
 export function shouldAutoOpenProfileSheet(input: {
   initialExpandedProfile: string | null | undefined;
   resolvedInitialTool: SupportedTool | null;
-  initialMode: string | undefined;
-  initialCredentialBackend: string | null | undefined;
+  initialMode: ProfileImportMode | undefined;
+  initialCredentialBackend: ExplicitProfileCredentialBackend | null | undefined;
   openToken: number | undefined;
 }) {
   return (
@@ -306,7 +312,7 @@ export function nextInventorySelectionIndex(
 }
 
 export function buildProfileSheetSubmitLabel(input: {
-  mode: "oauth" | "api_key" | "from_env" | "from_live";
+  mode: ProfileImportMode;
   addProfilePending: boolean;
   addProfileOAuthPending: boolean;
   apiKeyPending: boolean;

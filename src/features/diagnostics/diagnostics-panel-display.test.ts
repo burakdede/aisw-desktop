@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "../../lib/schemas";
+import { DEFAULT_PROFILE_IMPORT_MODE } from "../shared/profile-capabilities";
 import {
   DIAGNOSTICS_PANEL_COPY,
   buildDiagnosticQuickFixModels,
@@ -354,7 +355,7 @@ describe("diagnostics-panel-display", () => {
       title: "Claude live mismatch",
       label: "Re-apply Work",
       importTarget: { tool: "claude", stateMode: "isolated" },
-      importFallbackMode: "from_live",
+      importFallbackMode: DEFAULT_PROFILE_IMPORT_MODE,
       secondaryAction: { label: "Open Settings" },
     };
     const secondaryFindingFixes = [
