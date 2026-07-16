@@ -20,7 +20,12 @@ export {
   runtimeSelectionLabel,
   runtimeSourceLabel,
 } from "./lib/runtime-display";
-import { runtimeReadinessLabel, runtimeSourceLabel } from "./lib/runtime-display";
+import {
+  INCLUDED_DESKTOP_ENGINE_LABEL,
+  runtimeReadinessLabel,
+  runtimeSelectionLabel,
+  runtimeSourceLabel,
+} from "./lib/runtime-display";
 
 export const APP_NAV = [
   { id: "overview", label: "Overview", group: "Main" },
@@ -31,6 +36,53 @@ export const APP_NAV = [
   { id: "activity", label: "Activity", group: "Health" },
   { id: "settings", label: "Settings", group: "App" },
 ] as const;
+
+export const APP_SHELL_COPY = {
+  appSubtitle: "Manage Claude Code, Codex CLI, and Gemini CLI identities locally.",
+  currentStateKicker: "Current state",
+  runtimeRecovery: {
+    frameTitle: "Finish Setup",
+    frameDetail:
+      "AI Switch can continue as soon as it switches back to the included desktop engine.",
+    cardTitle: "Finish setup",
+    cardKicker: "Desktop engine required",
+    intro:
+      "AI Switch Desktop uses the included switching engine. A separate command-line install on this Mac cannot power this app yet.",
+    guidance:
+      "Your saved profiles stay local. Switch back to the included desktop engine to continue, or open Engine Settings only if you intentionally manage another compatible engine.",
+    usingNowLabel: "Using now",
+    needsLabel: "Desktop app needs",
+    nextStepLabel: "Next step",
+    useIncludedLabel: "Use Included Engine",
+    useIncludedPendingLabel: "Switching to Included Engine…",
+    retryLabel: "Try Again",
+    settingsLabel: "Engine Settings",
+    detailsSummary: "Why setup paused",
+    noIssuesLabel: "No additional compatibility details were reported.",
+  },
+  bootstrapSurface: {
+    loading: {
+      kicker: "AI Switch",
+      title: "Preparing your local switchboard…",
+      detail: "Loading saved profiles and the current tool state on this computer.",
+      status: "Opening local state",
+      summary: "This stays on-device and usually finishes in a moment.",
+    },
+    error: {
+      kicker: "AI Switch",
+      title: "AI Switch could not open this window.",
+      detail: "Check app setup, local permissions, and compatibility details before continuing.",
+      nextStepTitle: "Review setup",
+    },
+    statusLabel: "Status",
+    nextStepLabel: "Next step",
+  },
+  waitingSnapshot: {
+    title: "Waiting for snapshot",
+    kicker: "Bootstrap",
+    detail: "The desktop engine is compatible, but no state snapshot is available yet.",
+  },
+} as const;
 
 export type AppNavId = (typeof APP_NAV)[number]["id"];
 
@@ -275,6 +327,45 @@ export function buildSidebarStatusRows(input: {
       value: runtimeSourceLabel(input.runtimeKind),
     },
   ] satisfies SidebarStatusRow[];
+}
+
+export function buildRuntimeRecoveryStatusRows(input: {
+  runtimeKind: AppBootstrap["settings"]["runtime_kind"];
+  nextStep: string;
+}) {
+  return [
+    {
+      label: APP_SHELL_COPY.runtimeRecovery.usingNowLabel,
+      value: runtimeSelectionLabel(input.runtimeKind),
+    },
+    {
+      label: APP_SHELL_COPY.runtimeRecovery.needsLabel,
+      value: INCLUDED_DESKTOP_ENGINE_LABEL,
+    },
+    {
+      label: APP_SHELL_COPY.runtimeRecovery.nextStepLabel,
+      value: normalizeRuntimeLanguage(input.nextStep),
+    },
+  ] as const;
+}
+
+export function runtimeRecoveryPrimaryActionLabel(isPending: boolean) {
+  return isPending
+    ? APP_SHELL_COPY.runtimeRecovery.useIncludedPendingLabel
+    : APP_SHELL_COPY.runtimeRecovery.useIncludedLabel;
+}
+
+export function buildBootstrapLoadingSurface() {
+  return APP_SHELL_COPY.bootstrapSurface.loading;
+}
+
+export function buildBootstrapErrorSurface(error: unknown) {
+  const bootstrapError = describeBootstrapError(error);
+  return {
+    ...APP_SHELL_COPY.bootstrapSurface.error,
+    summary: bootstrapError.message,
+    remediation: bootstrapError.remediation,
+  };
 }
 
 export function describeBootstrapError(error: unknown) {

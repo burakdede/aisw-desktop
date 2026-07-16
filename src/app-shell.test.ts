@@ -1,7 +1,11 @@
 import {
+  APP_SHELL_COPY,
   appNavFromShortcut,
   APP_NAV,
+  buildBootstrapErrorSurface,
+  buildBootstrapLoadingSurface,
   buildReapplyActiveProfileError,
+  buildRuntimeRecoveryStatusRows,
   buildSidebarStatusRows,
   buildTrayCommandFeedback,
   buildToolbarActions,
@@ -16,6 +20,7 @@ import {
   navShortcutLabel,
   REAPPLY_ACTIVE_PROFILE_LABEL,
   resolveActiveReapplyAction,
+  runtimeRecoveryPrimaryActionLabel,
   runtimeSelectionLabel,
   runtimeSourceLabel,
   sectionTitle,
@@ -222,8 +227,46 @@ describe("app-shell helpers", () => {
     ).toEqual([
       { label: "Active set", value: "None" },
       { label: "Switching", value: "Ready" },
-      { label: "Engine source", value: "Custom override" },
+        { label: "Engine source", value: "Custom override" },
+      ]);
+
+    expect(APP_SHELL_COPY.currentStateKicker).toBe("Current state");
+    expect(APP_SHELL_COPY.runtimeRecovery.cardTitle).toBe("Finish setup");
+    expect(APP_SHELL_COPY.waitingSnapshot.title).toBe("Waiting for snapshot");
+  });
+
+  it("shares runtime recovery and bootstrap display copy", () => {
+    expect(
+      buildRuntimeRecoveryStatusRows({
+        runtimeKind: "system",
+        nextStep: "Use the included desktop engine.",
+      }),
+    ).toEqual([
+      { label: "Using now", value: "System engine" },
+      { label: "Desktop app needs", value: "Included desktop engine" },
+      { label: "Next step", value: "Use the included desktop engine." },
     ]);
+    expect(runtimeRecoveryPrimaryActionLabel(false)).toBe("Use Included Engine");
+    expect(runtimeRecoveryPrimaryActionLabel(true)).toBe("Switching to Included Engine…");
+    expect(buildBootstrapLoadingSurface()).toEqual({
+      kicker: "AI Switch",
+      title: "Preparing your local switchboard…",
+      detail: "Loading saved profiles and the current tool state on this computer.",
+      status: "Opening local state",
+      summary: "This stays on-device and usually finishes in a moment.",
+    });
+    expect(
+      buildBootstrapErrorSurface(
+        new DesktopCommandError("Broken", { remediation: "Review setup" }),
+      ),
+    ).toEqual({
+      kicker: "AI Switch",
+      title: "AI Switch could not open this window.",
+      detail: "Check app setup, local permissions, and compatibility details before continuing.",
+      nextStepTitle: "Review setup",
+      summary: "Broken",
+      remediation: "Review setup",
+    });
   });
 
   it("builds shared route state for profiles and settings", () => {

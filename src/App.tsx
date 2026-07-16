@@ -50,13 +50,14 @@ import {
   saveDesktopPreferences,
   type DesktopPreferences,
 } from "./lib/desktop-preferences";
-import {
-  INCLUDED_DESKTOP_ENGINE_LABEL,
-} from "./lib/runtime-display";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "./lib/schemas";
 import {
+  APP_SHELL_COPY,
   appNavFromShortcut,
+  buildBootstrapErrorSurface,
+  buildBootstrapLoadingSurface,
   buildReapplyActiveProfileError,
+  buildRuntimeRecoveryStatusRows,
   buildSidebarStatusRows,
   buildTrayCommandFeedback,
   buildToolbarActions,
@@ -73,10 +74,10 @@ import {
   type AppNavId,
   type ToolbarAction,
   type ProfilesRouteState,
-  runtimeSelectionLabel,
   sectionDetail,
   sectionTitle,
   settingsForRecovery,
+  runtimeRecoveryPrimaryActionLabel,
   type SettingsRouteState,
 } from "./app-shell";
 
@@ -418,26 +419,27 @@ export function App() {
   }, [queryClient]);
 
   if (bootstrap.isLoading) {
+    const loadingSurface = buildBootstrapLoadingSurface();
     return (
       <BootstrapSurface
-        kicker="AI Switch"
-        title="Preparing your local switchboard…"
-        detail="Loading saved profiles and the current tool state on this computer."
-        status="Opening local state"
-        summary="This stays on-device and usually finishes in a moment."
+        kicker={loadingSurface.kicker}
+        title={loadingSurface.title}
+        detail={loadingSurface.detail}
+        status={loadingSurface.status}
+        summary={loadingSurface.summary}
       />
     );
   }
 
   if (bootstrap.isError || !bootstrap.data) {
-    const bootstrapError = describeBootstrapError(bootstrap.error);
+    const bootstrapError = buildBootstrapErrorSurface(bootstrap.error);
     return (
       <BootstrapSurface
-        kicker="AI Switch"
-        title="AI Switch could not open this window."
-        detail="Check app setup, local permissions, and compatibility details before continuing."
+        kicker={bootstrapError.kicker}
+        title={bootstrapError.title}
+        detail={bootstrapError.detail}
         status="Needs attention"
-        summary={bootstrapError.message}
+        summary={bootstrapError.summary}
         remediation={bootstrapError.remediation}
       />
     );
@@ -470,6 +472,10 @@ export function App() {
     activeSection,
     runtimeBlocked,
     showSetupWindow,
+  });
+  const runtimeRecoveryRows = buildRuntimeRecoveryStatusRows({
+    runtimeKind: settings.runtime_kind,
+    nextStep: runtimeBlocker.nextStep,
   });
   const hasActivityEntries =
     Object.values(lastCommandResults.global).some(Boolean) ||
@@ -569,12 +575,12 @@ export function App() {
     <AppFrame
       mode={showSetupWindow ? "setup" : "standard"}
       title={
-        runtimeRecoveryFocused ? "Finish Setup" : sectionTitle(activeSection, setupFocused)
+        runtimeRecoveryFocused ? APP_SHELL_COPY.runtimeRecovery.frameTitle : sectionTitle(activeSection, setupFocused)
       }
-      subtitle="Manage Claude Code, Codex CLI, and Gemini CLI identities locally."
+      subtitle={APP_SHELL_COPY.appSubtitle}
       detail={
         runtimeRecoveryFocused
-          ? "AI Switch can continue as soon as it switches back to the included desktop engine."
+          ? APP_SHELL_COPY.runtimeRecovery.frameDetail
           : sectionDetail(activeSection, setupFocused)
       }
       nav={navItems}
@@ -584,7 +590,7 @@ export function App() {
       statusBadge={showSetupWindow ? undefined : (
         <div className="sidebar-status-stack">
           <div className="sidebar-status-header">
-            <span className="sidebar-status-kicker">Current state</span>
+            <span className="sidebar-status-kicker">{APP_SHELL_COPY.currentStateKicker}</span>
           </div>
           <div className="sidebar-status-grid">
             {sidebarStatusRows.map((row) => (
@@ -598,29 +604,20 @@ export function App() {
       )}
     >
       {runtimeRecoveryFocused ? (
-        <SectionCard title="Finish setup" kicker="Desktop engine required">
+        <SectionCard
+          title={APP_SHELL_COPY.runtimeRecovery.cardTitle}
+          kicker={APP_SHELL_COPY.runtimeRecovery.cardKicker}
+        >
           <div className="stack-list">
-            <p className="inline-note">
-              AI Switch Desktop uses the included switching engine. A separate command-line install
-              on this Mac cannot power this app yet.
-            </p>
-            <p className="inline-note">
-              Your saved profiles stay local. Switch back to the included desktop engine to continue,
-              or open Engine Settings only if you intentionally manage another compatible engine.
-            </p>
+            <p className="inline-note">{APP_SHELL_COPY.runtimeRecovery.intro}</p>
+            <p className="inline-note">{APP_SHELL_COPY.runtimeRecovery.guidance}</p>
             <div className="settings-summary-grid">
-              <div>
-                <span className="overview-current-set-cell-label">Using now</span>
-                <strong>{runtimeSelectionLabel(settings.runtime_kind)}</strong>
-              </div>
-              <div>
-                <span className="overview-current-set-cell-label">Desktop app needs</span>
-                <strong>{INCLUDED_DESKTOP_ENGINE_LABEL}</strong>
-              </div>
-              <div>
-                <span className="overview-current-set-cell-label">Next step</span>
-                <strong>{normalizeRuntimeLanguage(runtimeBlocker.nextStep)}</strong>
-              </div>
+              {runtimeRecoveryRows.map((row) => (
+                <div key={row.label}>
+                  <span className="overview-current-set-cell-label">{row.label}</span>
+                  <strong>{row.value}</strong>
+                </div>
+              ))}
             </div>
             <div className="button-row">
               {settings.runtime_kind !== "bundled" ? (
@@ -630,16 +627,14 @@ export function App() {
                   disabled={restoreBundledRuntimeMutation.isPending}
                   onClick={() => restoreBundledRuntimeMutation.mutate()}
                 >
-                  {restoreBundledRuntimeMutation.isPending
-                    ? "Switching to Included Engine…"
-                    : "Use Included Engine"}
+                  {runtimeRecoveryPrimaryActionLabel(restoreBundledRuntimeMutation.isPending)}
                 </button>
               ) : null}
               <button className="ghost-button" type="button" onClick={() => void retryRuntimeCheck()}>
-                Try Again
+                {APP_SHELL_COPY.runtimeRecovery.retryLabel}
               </button>
               <button className="ghost-button" type="button" onClick={() => setRuntimeRecoveryOpen(true)}>
-                Engine Settings
+                {APP_SHELL_COPY.runtimeRecovery.settingsLabel}
               </button>
             </div>
             {restoreBundledRuntimeMutation.error ? (
@@ -648,7 +643,7 @@ export function App() {
               </p>
             ) : null}
             <details className="diagnostic-card runtime-blocker-details">
-              <summary>Why setup paused</summary>
+              <summary>{APP_SHELL_COPY.runtimeRecovery.detailsSummary}</summary>
               <div className="stack-list">
                 <p className="inline-note">{normalizeRuntimeLanguage(runtimeBlocker.summary)}</p>
                 {runtimeStatus.issues.length ? (
@@ -658,7 +653,7 @@ export function App() {
                     </p>
                   ))
                 ) : (
-                  <p className="inline-note">No additional compatibility details were reported.</p>
+                  <p className="inline-note">{APP_SHELL_COPY.runtimeRecovery.noIssuesLabel}</p>
                 )}
               </div>
             </details>
@@ -786,8 +781,11 @@ export function App() {
           ) : null}
         </>
       ) : (
-        <SectionCard title="Waiting for snapshot" kicker="Bootstrap">
-          <p className="inline-note">The desktop engine is compatible, but no state snapshot is available yet.</p>
+        <SectionCard
+          title={APP_SHELL_COPY.waitingSnapshot.title}
+          kicker={APP_SHELL_COPY.waitingSnapshot.kicker}
+        >
+          <p className="inline-note">{APP_SHELL_COPY.waitingSnapshot.detail}</p>
         </SectionCard>
       )}
     </AppFrame>
@@ -849,14 +847,18 @@ function BootstrapSurface({
           </div>
           <div className="launch-card-status">
             <div className="launch-status-panel">
-              <span className="overview-current-set-cell-label">Status</span>
+              <span className="overview-current-set-cell-label">
+                {APP_SHELL_COPY.bootstrapSurface.statusLabel}
+              </span>
               <strong>{status}</strong>
               <p className="inline-note">{summary}</p>
             </div>
             {remediation ? (
               <div className="launch-status-panel">
-                <span className="overview-current-set-cell-label">Next step</span>
-                <strong>Review setup</strong>
+                <span className="overview-current-set-cell-label">
+                  {APP_SHELL_COPY.bootstrapSurface.nextStepLabel}
+                </span>
+                <strong>{APP_SHELL_COPY.bootstrapSurface.error.nextStepTitle}</strong>
                 <p className="inline-note">{remediation}</p>
               </div>
             ) : null}
