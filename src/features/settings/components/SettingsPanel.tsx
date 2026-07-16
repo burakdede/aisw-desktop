@@ -9,8 +9,6 @@ import {
   setLaunchAtLogin,
 } from "../../../lib/client";
 import {
-  DEFAULT_SECTIONS,
-  DESKTOP_APPEARANCES,
   type DesktopPreferences,
 } from "../../../lib/desktop-preferences";
 import {
@@ -31,7 +29,6 @@ import {
   runtimeReadinessLabel,
 } from "../../../lib/runtime-display";
 import { type AppBootstrap, type DesktopSettings } from "../../../lib/schemas";
-import { titleCase } from "../../../lib/utils";
 import { clearPersistedWindowState } from "../../../lib/window-state";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
@@ -61,8 +58,12 @@ import {
   resolveSelectedShellVariant,
   sectionLabel,
   selectedRuntimePath,
+  SETTINGS_APPEARANCE_OPTIONS,
+  SETTINGS_DEFAULT_SECTION_OPTIONS,
+  SETTINGS_RUNTIME_SOURCE_OPTIONS,
   settingsSectionDirectionForKey,
   SETTINGS_SECTIONS,
+  SETTINGS_UPDATE_CHANNEL_OPTIONS,
   type DesktopPreferencesDraft,
   type SettingsDraft,
   type SettingsSection,
@@ -400,9 +401,9 @@ export function SettingsPanel({
                         })
                       }
                     >
-                      {DESKTOP_APPEARANCES.map((entry) => (
-                        <option key={entry} value={entry}>
-                          {titleCase(entry)}
+                      {SETTINGS_APPEARANCE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
                         </option>
                       ))}
                     </select>
@@ -457,9 +458,9 @@ export function SettingsPanel({
                         })
                       }
                     >
-                      {DEFAULT_SECTIONS.map((entry) => (
-                        <option key={entry} value={entry}>
-                          {titleCase(entry)}
+                      {SETTINGS_DEFAULT_SECTION_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
                         </option>
                       ))}
                     </select>
@@ -523,9 +524,11 @@ export function SettingsPanel({
                         );
                       }}
                     >
-                      <option value="bundled">Bundled</option>
-                      <option value="system">System engine</option>
-                      <option value="custom">Custom path</option>
+                      {SETTINGS_RUNTIME_SOURCE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
                     </select>
                   </SettingsRow>
                   <SettingsStaticRow
@@ -686,8 +689,11 @@ export function SettingsPanel({
                         );
                       }}
                     >
-                      <option value="stable">Stable</option>
-                      <option value="beta">Beta</option>
+                      {SETTINGS_UPDATE_CHANNEL_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
                     </select>
                   </SettingsRow>
                   <SettingsActionRow

@@ -1,4 +1,6 @@
 import {
+  DEFAULT_SECTIONS,
+  DESKTOP_APPEARANCES,
   DEFAULT_DESKTOP_PREFERENCES,
   type DesktopPreferences,
 } from "../../lib/desktop-preferences";
@@ -34,6 +36,10 @@ export type DesktopPreferencesDraft = Pick<
 >;
 export type SettingsDraftPatch = Partial<SettingsDraft>;
 export type DesktopPreferencesDraftPatch = Partial<DesktopPreferencesDraft>;
+export type SettingsOption<Value extends string> = {
+  value: Value;
+  label: string;
+};
 
 const SETTINGS_SECTION_LABELS: Record<SettingsSection, string> = {
   general: "General",
@@ -43,6 +49,55 @@ const SETTINGS_SECTION_LABELS: Record<SettingsSection, string> = {
   updates: "Updates",
   advanced: "Advanced",
 };
+const DEFAULT_SECTION_LABELS: Record<(typeof DEFAULT_SECTIONS)[number], string> = {
+  overview: "Overview",
+  profiles: "Profiles",
+  sets: "Sets",
+  diagnostics: "Diagnostics",
+  backups: "Backups",
+  activity: "Activity",
+};
+const APPEARANCE_LABELS: Record<(typeof DESKTOP_APPEARANCES)[number], string> = {
+  system: "System",
+  light: "Light",
+  dark: "Dark",
+};
+const RUNTIME_SOURCE_LABELS: Record<DesktopSettings["runtime_kind"], string> = {
+  bundled: "Bundled",
+  system: "System engine",
+  custom: "Custom path",
+};
+const UPDATE_CHANNEL_LABELS: Record<SettingsDraft["updateChannel"], string> = {
+  stable: "Stable",
+  beta: "Beta",
+};
+
+export const SETTINGS_APPEARANCE_OPTIONS = DESKTOP_APPEARANCES.map((value) => ({
+  value,
+  label: APPEARANCE_LABELS[value],
+})) satisfies SettingsOption<DesktopPreferencesDraft["appearance"]>[];
+
+export const SETTINGS_DEFAULT_SECTION_OPTIONS = DEFAULT_SECTIONS.map((value) => ({
+  value,
+  label: DEFAULT_SECTION_LABELS[value],
+})) satisfies SettingsOption<DesktopPreferencesDraft["defaultSection"]>[];
+
+export const SETTINGS_RUNTIME_SOURCE_OPTIONS = (
+  Object.entries(RUNTIME_SOURCE_LABELS) as [
+    DesktopSettings["runtime_kind"],
+    string,
+  ][]
+).map(([value, label]) => ({
+  value,
+  label,
+})) satisfies SettingsOption<DesktopSettings["runtime_kind"]>[];
+
+export const SETTINGS_UPDATE_CHANNEL_OPTIONS = (
+  Object.entries(UPDATE_CHANNEL_LABELS) as [SettingsDraft["updateChannel"], string][]
+).map(([value, label]) => ({
+  value,
+  label,
+})) satisfies SettingsOption<SettingsDraft["updateChannel"]>[];
 
 function findShellGuidanceVariants(
   shellGuidance: ShellHookGuidance | undefined,

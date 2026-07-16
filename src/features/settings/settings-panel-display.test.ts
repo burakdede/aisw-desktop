@@ -30,8 +30,12 @@ import {
   resolveSelectedShellVariant,
   sectionLabel,
   selectedRuntimePath,
+  SETTINGS_APPEARANCE_OPTIONS,
+  SETTINGS_DEFAULT_SECTION_OPTIONS,
+  SETTINGS_RUNTIME_SOURCE_OPTIONS,
   settingsSectionDirectionForKey,
   SETTINGS_SECTIONS,
+  SETTINGS_UPDATE_CHANNEL_OPTIONS,
   WINDOW_LAYOUT_RESET_MESSAGE,
 } from "./settings-panel-display";
 
@@ -230,6 +234,31 @@ describe("settings-panel-display", () => {
     expect(nextSettingsSection("runtime", "first")).toBe("general");
     expect(nextSettingsSection("runtime", "last")).toBe("advanced");
     expect(nextSettingsSection("advanced", "next")).toBe("advanced");
+  });
+
+  it("shares stable option sets for settings selectors", () => {
+    expect(SETTINGS_APPEARANCE_OPTIONS).toEqual([
+      { value: "system", label: "System" },
+      { value: "light", label: "Light" },
+      { value: "dark", label: "Dark" },
+    ]);
+    expect(SETTINGS_DEFAULT_SECTION_OPTIONS).toEqual([
+      { value: "overview", label: "Overview" },
+      { value: "profiles", label: "Profiles" },
+      { value: "sets", label: "Sets" },
+      { value: "diagnostics", label: "Diagnostics" },
+      { value: "backups", label: "Backups" },
+      { value: "activity", label: "Activity" },
+    ]);
+    expect(SETTINGS_RUNTIME_SOURCE_OPTIONS).toEqual([
+      { value: "bundled", label: "Bundled" },
+      { value: "system", label: "System engine" },
+      { value: "custom", label: "Custom path" },
+    ]);
+    expect(SETTINGS_UPDATE_CHANNEL_OPTIONS).toEqual([
+      { value: "stable", label: "Stable" },
+      { value: "beta", label: "Beta" },
+    ]);
   });
 
   it("builds settings requests and desktop preference updates", () => {
