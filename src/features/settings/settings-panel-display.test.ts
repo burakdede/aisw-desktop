@@ -4,6 +4,7 @@ import { DesktopCommandError } from "../../lib/tauri";
 import type { AppBootstrap, DesktopSettings } from "../../lib/schemas";
 import {
   appDataFolderErrorMessage,
+  buildUpdateCheckResultLines,
   buildDesktopPreferencesUpdate,
   buildResetOnboardingPreferences,
   buildRuntimeSelectionSettings,
@@ -39,6 +40,7 @@ import {
   SETTINGS_EXPORT_REDACTED_SUPPORT_BUNDLE_LABEL,
   SETTINGS_INSTALLING_UPDATE_LABEL,
   SETTINGS_INSTALL_UPDATE_LABEL,
+  SETTINGS_NO_UPDATE_AVAILABLE_MESSAGE,
   SETTINGS_OPEN_APP_DATA_FOLDER_LABEL,
   SETTINGS_RESET_ONBOARDING_LABEL,
   SETTINGS_RESET_WINDOW_LAYOUT_LABEL,
@@ -138,6 +140,7 @@ describe("settings-panel-display", () => {
     expect(SETTINGS_SAVE_FAILED_TITLE).toBe("Settings could not be saved");
     expect(SETTINGS_UPDATE_CHECK_FAILED_TITLE).toBe("Update check failed");
     expect(SETTINGS_UPDATE_INSTALL_FAILED_TITLE).toBe("Update install failed");
+    expect(SETTINGS_NO_UPDATE_AVAILABLE_MESSAGE).toBe("No update is currently available.");
     expect(SETTINGS_REVEAL_IN_FINDER_LABEL).toBe("Reveal in Finder");
     expect(SETTINGS_OPEN_APP_DATA_FOLDER_LABEL).toBe("Open App Data Folder");
     expect(SETTINGS_COPY_REDACTED_REPORT_LABEL).toBe("Copy Redacted Report…");
@@ -156,6 +159,38 @@ describe("settings-panel-display", () => {
     expect(releaseChannelDescription("beta")).toBe(
       "Check for a signed desktop release on the selected beta channel.",
     );
+    expect(
+      buildUpdateCheckResultLines({
+        configured: true,
+        channel: "beta",
+        current_version: "0.1.0",
+        endpoint: "https://updates.example.com/beta.json",
+        update: {
+          version: "0.2.0-beta.1",
+          current_version: "0.1.0",
+          target: "darwin-aarch64",
+          notes: "Includes staged fixes.",
+        },
+      }),
+    ).toEqual([
+      "Channel: beta",
+      "Endpoint: https://updates.example.com/beta.json",
+      "Update available: 0.2.0-beta.1",
+      "Includes staged fixes.",
+    ]);
+    expect(
+      buildUpdateCheckResultLines({
+        configured: true,
+        channel: "stable",
+        current_version: "0.1.0",
+        endpoint: null,
+        update: null,
+        message: null,
+      }),
+    ).toEqual([
+      "Channel: stable",
+      "No update is currently available.",
+    ]);
   });
 
   it("shares normalized mutation errors and shell checks", () => {

@@ -60,6 +60,7 @@ import {
   nextRuntimeSourceSelection,
   openedAppDataFolderMessage,
   appDataFolderErrorMessage,
+  buildUpdateCheckResultLines,
   releaseChannelDescription,
   resolveSelectedShell,
   resolveSelectedShellVariant,
@@ -72,6 +73,7 @@ import {
   SETTINGS_EXPORT_REDACTED_SUPPORT_BUNDLE_LABEL,
   SETTINGS_INSTALLING_UPDATE_LABEL,
   SETTINGS_INSTALL_UPDATE_LABEL,
+  SETTINGS_NO_UPDATE_AVAILABLE_MESSAGE,
   SETTINGS_OPEN_APP_DATA_FOLDER_LABEL,
   SETTINGS_RESET_ONBOARDING_LABEL,
   SETTINGS_RESET_WINDOW_LAYOUT_LABEL,
@@ -758,24 +760,11 @@ export function SettingsPanel({
 
                 {checkForUpdatesMutation.data ? (
                   <div className="settings-result-list">
-                    <p className="inline-note">Channel: {checkForUpdatesMutation.data.channel}</p>
-                    {checkForUpdatesMutation.data.endpoint ? (
-                      <p className="inline-note">Endpoint: {checkForUpdatesMutation.data.endpoint}</p>
-                    ) : null}
-                    {checkForUpdatesMutation.data.update ? (
-                      <>
-                        <p className="inline-note">
-                          Update available: {checkForUpdatesMutation.data.update.version}
-                        </p>
-                        {checkForUpdatesMutation.data.update.notes ? (
-                          <p className="inline-note">{checkForUpdatesMutation.data.update.notes}</p>
-                        ) : null}
-                      </>
-                    ) : (
-                      <p className="inline-note">
-                        {checkForUpdatesMutation.data.message ?? "No update is currently available."}
+                    {buildUpdateCheckResultLines(checkForUpdatesMutation.data).map((line) => (
+                      <p key={line} className="inline-note">
+                        {line}
                       </p>
-                    )}
+                    ))}
                   </div>
                 ) : null}
                 {installUpdateMutation.data?.message ? (

@@ -17,7 +17,12 @@ import {
   SETTINGS_SECTIONS,
   type SettingsSection,
 } from "../../lib/settings-sections";
-import type { AppBootstrap, DesktopSettings, ShellHookGuidance } from "../../lib/schemas";
+import type {
+  AppBootstrap,
+  DesktopSettings,
+  ShellHookGuidance,
+  UpdateCheckReport,
+} from "../../lib/schemas";
 import { DEFAULT_ACTION_FAILURE_MESSAGE, NOT_FOUND_LABEL, NOT_SET_LABEL } from "../../lib/display-copy";
 import { DesktopCommandError } from "../../lib/tauri";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
@@ -35,6 +40,7 @@ export const WINDOW_LAYOUT_RESET_MESSAGE = "Cleared the saved window size and po
 export const SETTINGS_SAVE_FAILED_TITLE = "Settings could not be saved";
 export const SETTINGS_UPDATE_CHECK_FAILED_TITLE = "Update check failed";
 export const SETTINGS_UPDATE_INSTALL_FAILED_TITLE = "Update install failed";
+export const SETTINGS_NO_UPDATE_AVAILABLE_MESSAGE = "No update is currently available.";
 export const SETTINGS_REVEAL_IN_FINDER_LABEL = "Reveal in Finder";
 export const SETTINGS_OPEN_APP_DATA_FOLDER_LABEL = "Open App Data Folder";
 export const SETTINGS_COPY_REDACTED_REPORT_LABEL = "Copy Redacted Report…";
@@ -293,6 +299,25 @@ export function launchAtLoginSuccessMessage(enabled: boolean) {
 
 export function releaseChannelDescription(channel: string) {
   return `Check for a signed desktop release on the selected ${channel} channel.`;
+}
+
+export function buildUpdateCheckResultLines(report: UpdateCheckReport) {
+  const lines = [`Channel: ${report.channel}`];
+
+  if (report.endpoint) {
+    lines.push(`Endpoint: ${report.endpoint}`);
+  }
+
+  if (report.update) {
+    lines.push(`Update available: ${report.update.version}`);
+    if (report.update.notes) {
+      lines.push(report.update.notes);
+    }
+    return lines;
+  }
+
+  lines.push(report.message ?? SETTINGS_NO_UPDATE_AVAILABLE_MESSAGE);
+  return lines;
 }
 
 export function createSettingsDraft(settings: DesktopSettings): SettingsDraft {
