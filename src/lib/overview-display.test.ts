@@ -10,13 +10,20 @@ import {
   overviewDiagnosticWarning,
   overviewHeadline,
   overviewLastResultMessage,
+  overviewLiveMismatchNotice,
   overviewMetaLabel,
   OVERVIEW_MORE_ACTIONS_LABEL,
   OVERVIEW_NO_TOOL_SELECTED_HEADING,
+  OVERVIEW_PANEL_COPY,
   overviewRecentSummary,
   overviewSelectedStateMode,
   overviewSetButtonLabel,
+  overviewSelectProfileLabel,
+  overviewStateModeLabel,
+  overviewToolCountLabel,
+  overviewToolInspectorLabel,
   overviewToolListProfileLabel,
+  overviewMissingBinaryMessage,
   overviewStateModeCopy,
   overviewTokenWarning,
   overviewWorkspaceActionLabel,
@@ -101,6 +108,22 @@ describe("overview-display", () => {
     );
     expect(OVERVIEW_NO_TOOL_SELECTED_HEADING).toBe("No tool selected");
     expect(OVERVIEW_MORE_ACTIONS_LABEL).toBe("More profile actions");
+    expect(OVERVIEW_PANEL_COPY.currentSetFallback).toBe("None");
+    expect(OVERVIEW_PANEL_COPY.noToolsHeading).toBe("No tools detected");
+    expect(OVERVIEW_PANEL_COPY.footerActionLabel).toBe("View Activity");
+    expect(OVERVIEW_PANEL_COPY.actionsMenuAriaLabel).toBe("Overview actions");
+    expect(OVERVIEW_PANEL_COPY.facts.authentication).toBe("Authentication");
+    expect(overviewToolCountLabel(3)).toBe("3 total");
+    expect(overviewToolInspectorLabel("claude")).toBe("Inspect Claude");
+    expect(overviewSelectProfileLabel("claude")).toBe("Switch claude profile");
+    expect(overviewStateModeLabel("system_keyring")).toBe("System Keyring");
+    expect(overviewMissingBinaryMessage("Claude Code")).toBe(
+      "Claude Code is not installed on this Mac.",
+    );
+    expect(overviewLiveMismatchNotice("Claude Code", "Personal")).toEqual({
+      summary: "Live credentials do not match Personal.",
+      detail: "Claude Code appears to have been signed into outside AI Switch.",
+    });
     expect(overviewWorkspaceActionLabel(true)).toBe("Use Expected Set");
     expect(overviewWorkspaceActionLabel(false)).toBe("Open Sets");
     expect(overviewSetButtonLabel(true)).toBe("Open Sets");

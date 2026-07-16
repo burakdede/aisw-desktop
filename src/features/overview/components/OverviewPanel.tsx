@@ -25,15 +25,22 @@ import {
   overviewDiagnosticWarning,
   OVERVIEW_CURRENT_SET_LABEL,
   OVERVIEW_EMPTY_SELECTION_COPY,
+  OVERVIEW_PANEL_COPY,
   overviewInspectorActionDisabled,
   overviewInspectorEmptyHeading,
   overviewHeadline,
   overviewLastResultMessage,
+  overviewLiveMismatchNotice,
   overviewMetaLabel,
+  overviewMissingBinaryMessage,
   overviewRecentSummary,
   OVERVIEW_MORE_ACTIONS_LABEL,
+  overviewSelectProfileLabel,
   overviewSelectedStateMode,
   overviewSetButtonLabel,
+  overviewStateModeLabel,
+  overviewToolCountLabel,
+  overviewToolInspectorLabel,
   overviewToolListProfileLabel,
   overviewStateModeCopy,
   overviewTokenWarning,
@@ -52,7 +59,6 @@ import {
   type OverviewHealthState,
 } from "../../../lib/status-display";
 import { toolDisplayName } from "../../../lib/tool-display";
-import { titleCase } from "../../../lib/utils";
 import {
   preferredProfileImportMode,
   supportsProfileImportMode,
@@ -102,7 +108,7 @@ export function OverviewPanel({
   const expectedWorkspaceDisplay = contextDisplayLabel(settings, workspaceStatus.expectedContext);
   const currentWorkspaceDisplay = contextDisplayLabel(settings, workspaceStatus.currentContext);
   const currentSetLabel = activeSetLabel(settings, snapshot);
-  const currentSetDisplay = currentSetLabel ?? "None";
+  const currentSetDisplay = currentSetLabel ?? OVERVIEW_PANEL_COPY.currentSetFallback;
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [selectedTool, setSelectedTool] = useState(snapshot.statuses[0]?.tool ?? "");
   const compactLayout = useCompactLayout(rootRef, PANEL_COMPACT_BREAKPOINT);
@@ -141,7 +147,9 @@ export function OverviewPanel({
     : null;
   const showInspector = !compactLayout || compactInspectorOpen;
   const showToolList = !compactLayout || !compactInspectorOpen;
-  const selectedToolName = selectedStatus ? toolDisplayName(selectedStatus.tool) : "Tool";
+  const selectedToolName = selectedStatus
+    ? toolDisplayName(selectedStatus.tool)
+    : OVERVIEW_PANEL_COPY.selectedToolFallback;
 
   return (
     <div ref={rootRef} className="overview-screen screen-content">
@@ -180,11 +188,15 @@ export function OverviewPanel({
         {showToolList ? (
         <section className="overview-pane overview-list-pane">
           <div className="overview-pane-header">
-            <h3>Tools</h3>
-            <p className="overview-pane-meta">{snapshot.statuses.length} total</p>
+            <h3>{OVERVIEW_PANEL_COPY.toolsHeading}</h3>
+            <p className="overview-pane-meta">{overviewToolCountLabel(snapshot.statuses.length)}</p>
           </div>
           {snapshot.statuses.length ? (
-            <div className="overview-tool-list" role="list" aria-label="Tools">
+            <div
+              className="overview-tool-list"
+              role="list"
+              aria-label={OVERVIEW_PANEL_COPY.toolsAriaLabel}
+            >
               {snapshot.statuses.map((status) => {
                 const state = resolveOverviewHealthState(status);
                 const activeProfileLabel = overviewToolListProfileLabel(
@@ -199,7 +211,7 @@ export function OverviewPanel({
                       selectedTool === status.tool ? "overview-tool-list-row-selected" : ""
                     }`}
                     type="button"
-                    aria-label={`Inspect ${titleCase(status.tool)}`}
+                    aria-label={overviewToolInspectorLabel(status.tool)}
                     aria-pressed={selectedTool === status.tool}
                     onClick={() => {
                       setSelectedTool(status.tool);
@@ -227,8 +239,8 @@ export function OverviewPanel({
             </div>
           ) : (
             <div className="overview-empty-state">
-              <h3>No tools detected</h3>
-              <p className="inline-note">Install or configure a supported tool before switching can begin.</p>
+              <h3>{OVERVIEW_PANEL_COPY.noToolsHeading}</h3>
+              <p className="inline-note">{OVERVIEW_PANEL_COPY.noToolsBody}</p>
             </div>
           )}
         </section>
@@ -297,7 +309,7 @@ export function OverviewPanel({
       <div className="overview-footer-strip">
         <p>{recentSummary}</p>
         <button className="ghost-button" type="button" onClick={onOpenActivity}>
-          View Activity
+          {OVERVIEW_PANEL_COPY.footerActionLabel}
         </button>
       </div>
     </div>
@@ -369,6 +381,8 @@ function ToolInspector({
   });
   const primaryAction = inspector.primaryAction;
   const secondaryAction = inspector.secondaryAction;
+  const toolName = toolDisplayName(status.tool);
+  const mismatchNotice = overviewLiveMismatchNotice(toolName, inspector.activeProfileLabel);
 
   useEffect(() => {
     const nextStateMode = resolveOverviewStateMode(stateMode, stateModes);
@@ -463,7 +477,7 @@ function ToolInspector({
         <div className="overview-inspector-title-block">
           {compactLayout && onBack ? (
             <button className="ghost-button overview-inspector-back" type="button" onClick={onBack}>
-              Back
+              {OVERVIEW_PANEL_COPY.backLabel}
             </button>
           ) : null}
           <h3>
@@ -484,10 +498,8 @@ function ToolInspector({
           <div className="overview-inline-notice-copy">
             <span className="overview-inline-notice-symbol" aria-hidden="true">▲</span>
             <div className="overview-inline-notice-body">
-              <p>
-                Live credentials do not match <strong>{inspector.activeProfileLabel ?? "the saved profile"}</strong>.
-              </p>
-              <p>{toolDisplayName(status.tool)} appears to have been signed into outside AI Switch.</p>
+              <p>{mismatchNotice.summary}</p>
+              <p>{mismatchNotice.detail}</p>
             </div>
           </div>
         </div>
@@ -495,13 +507,13 @@ function ToolInspector({
 
       {!status.binary_found ? (
         <div className="overview-missing-binary">
-          <p className="inline-note">{toolDisplayName(status.tool)} is not installed on this Mac.</p>
+          <p className="inline-note">{overviewMissingBinaryMessage(toolName)}</p>
           <div className="button-row">
             <button className="ghost-button" type="button" onClick={() => openExternalGuide(installGuideUrlForTool(status.tool))}>
-              Installation Help
+              {OVERVIEW_PANEL_COPY.missingBinaryActionLabel}
             </button>
             <button className="ghost-button" type="button" disabled={refreshLocked} onClick={onRefresh}>
-              Refresh
+              {OVERVIEW_PANEL_COPY.missingBinaryRefreshLabel}
             </button>
           </div>
         </div>
@@ -509,11 +521,11 @@ function ToolInspector({
 
       {status.binary_found && !inspector.hasProfiles ? (
         <div className="overview-empty-state overview-empty-state-inline">
-          <h3>No profile configured</h3>
-          <p className="inline-note">Add a saved profile before switching this tool from Overview.</p>
+          <h3>{OVERVIEW_PANEL_COPY.noProfileHeading}</h3>
+          <p className="inline-note">{OVERVIEW_PANEL_COPY.noProfileBody}</p>
           <div className="button-row">
             <button className="primary-button" type="button" onClick={() => onAddProfile(status.tool)}>
-              Add Profile…
+              {OVERVIEW_PANEL_COPY.addProfileLabel}
             </button>
           </div>
         </div>
@@ -521,9 +533,9 @@ function ToolInspector({
 
       {inspector.hasProfiles ? (
         <label className="stacked-form overview-inspector-control">
-          <span>Active profile</span>
+          <span>{OVERVIEW_PANEL_COPY.activeProfileFieldLabel}</span>
           <select
-            aria-label={`Switch ${status.tool} profile`}
+            aria-label={overviewSelectProfileLabel(status.tool)}
             value={selectedProfile}
             onChange={(event) => setSelectedProfile(event.target.value)}
           >
@@ -538,8 +550,14 @@ function ToolInspector({
 
       {stateModes.length ? (
         <div className="overview-inspector-control">
-          <span className="overview-inspector-control-label">State mode</span>
-          <div className="overview-state-mode-control" role="group" aria-label="State mode">
+          <span className="overview-inspector-control-label">
+            {OVERVIEW_PANEL_COPY.stateModeFieldLabel}
+          </span>
+          <div
+            className="overview-state-mode-control"
+            role="group"
+            aria-label={OVERVIEW_PANEL_COPY.stateModeAriaLabel}
+          >
             {stateModes.map((mode) => (
               <button
                 key={mode}
@@ -548,7 +566,7 @@ function ToolInspector({
                 aria-pressed={stateMode === mode}
                 onClick={() => setStateMode(mode)}
               >
-                {titleCase(mode)}
+                {overviewStateModeLabel(mode)}
               </button>
             ))}
           </div>
@@ -558,8 +576,12 @@ function ToolInspector({
         </div>
       ) : inspector.hasProfiles && status.binary_found ? (
         <div className="overview-inspector-control">
-          <span className="overview-inspector-control-label">State mode</span>
-          <strong className="overview-static-value">Isolated</strong>
+          <span className="overview-inspector-control-label">
+            {OVERVIEW_PANEL_COPY.stateModeFieldLabel}
+          </span>
+          <strong className="overview-static-value">
+            {OVERVIEW_PANEL_COPY.stateModeFixedValue}
+          </strong>
           <p className="inline-note">{overviewStateModeCopy([], "isolated", status.tool)}</p>
         </div>
       ) : null}
@@ -609,7 +631,7 @@ function ToolInspector({
                   boundaryAttribute="data-overview-actions"
                   containmentSelector=".overview-inspector-pane"
                   role="menu"
-                  aria-label="Overview actions"
+                  aria-label={OVERVIEW_PANEL_COPY.actionsMenuAriaLabel}
                 >
                   {inspector.menuActions.map((action) => (
                     <button
@@ -641,23 +663,23 @@ function ToolInspector({
       {inspector.hasProfiles && status.binary_found ? (
       <dl className="overview-inspector-facts">
         <div>
-          <dt>Active profile</dt>
-          <dd>{inspector.activeProfileLabel ?? "None"}</dd>
+          <dt>{OVERVIEW_PANEL_COPY.facts.activeProfile}</dt>
+          <dd>{inspector.activeProfileLabel ?? OVERVIEW_PANEL_COPY.noneLabel}</dd>
         </div>
         <div>
-          <dt>Live state</dt>
+          <dt>{OVERVIEW_PANEL_COPY.facts.liveState}</dt>
           <dd>{inspector.healthText}</dd>
         </div>
         <div>
-          <dt>Authentication</dt>
+          <dt>{OVERVIEW_PANEL_COPY.facts.authentication}</dt>
           <dd>{overviewAuthMethodLabel(status.auth_method)}</dd>
         </div>
         <div>
-          <dt>Backend</dt>
+          <dt>{OVERVIEW_PANEL_COPY.facts.backend}</dt>
           <dd>{overviewCredentialBackendLabel(status.credential_backend)}</dd>
         </div>
         <div>
-          <dt>Last verified</dt>
+          <dt>{OVERVIEW_PANEL_COPY.facts.lastVerified}</dt>
           <dd>{toolVerificationLabel(status)}</dd>
         </div>
       </dl>

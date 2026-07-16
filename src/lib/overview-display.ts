@@ -41,6 +41,67 @@ export const OVERVIEW_EMPTY_SELECTION_COPY =
   "Choose a tool to inspect its active profile and switching state.";
 export const OVERVIEW_NO_TOOL_SELECTED_HEADING = "No tool selected";
 export const OVERVIEW_MORE_ACTIONS_LABEL = "More profile actions";
+export const OVERVIEW_PANEL_COPY = {
+  currentSetFallback: "None",
+  selectedToolFallback: "Tool",
+  toolsHeading: "Tools",
+  toolsAriaLabel: "Tools",
+  noToolsHeading: "No tools detected",
+  noToolsBody: "Install or configure a supported tool before switching can begin.",
+  footerActionLabel: "View Activity",
+  backLabel: "Back",
+  liveMismatchFallbackProfileLabel: "the saved profile",
+  missingBinaryActionLabel: "Installation Help",
+  missingBinaryRefreshLabel: "Refresh",
+  noProfileHeading: "No profile configured",
+  noProfileBody: "Add a saved profile before switching this tool from Overview.",
+  addProfileLabel: "Add Profile…",
+  activeProfileFieldLabel: "Active profile",
+  stateModeFieldLabel: "State mode",
+  stateModeAriaLabel: "State mode",
+  stateModeFixedValue: "Isolated",
+  actionsMenuAriaLabel: "Overview actions",
+  facts: {
+    activeProfile: "Active profile",
+    liveState: "Live state",
+    authentication: "Authentication",
+    backend: "Backend",
+    lastVerified: "Last verified",
+  },
+  noneLabel: "None",
+} as const;
+
+export function overviewToolCountLabel(total: number) {
+  return `${total} total`;
+}
+
+export function overviewToolInspectorLabel(tool: string) {
+  return `Inspect ${titleCase(tool)}`;
+}
+
+export function overviewSelectProfileLabel(tool: string) {
+  return `Switch ${tool} profile`;
+}
+
+export function overviewStateModeLabel(mode: string) {
+  return titleCase(mode);
+}
+
+export function overviewLiveMismatchNotice(
+  toolName: string,
+  activeProfileLabel: string | null,
+) {
+  return {
+    summary: `Live credentials do not match ${
+      activeProfileLabel ?? OVERVIEW_PANEL_COPY.liveMismatchFallbackProfileLabel
+    }.`,
+    detail: `${toolName} appears to have been signed into outside AI Switch.`,
+  };
+}
+
+export function overviewMissingBinaryMessage(toolName: string) {
+  return `${toolName} is not installed on this Mac.`;
+}
 
 export function resolveOverviewSelectedTool(
   currentTool: string,
