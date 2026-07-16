@@ -21,7 +21,11 @@ import {
 import { contextDisplayLabel, toolProfileDisplayLabel } from "../../lib/profile-display";
 import { isSupportedTool } from "../../lib/tool-registry";
 import { countLabel, pluralChoice, titleCase } from "../../lib/utils";
-import { BLOCKED_LABEL, NEEDS_ATTENTION_SENTENCE_LABEL } from "../../lib/status-copy";
+import {
+  BLOCKED_LABEL,
+  NEEDS_ATTENTION_LABEL,
+  NEEDS_ATTENTION_SENTENCE_LABEL,
+} from "../../lib/status-copy";
 import type { AttentionCheckStatus } from "../../lib/check-status";
 import {
   doctorCheckHasKeyword,
@@ -115,8 +119,8 @@ export type RecentFailureCard = {
 };
 
 type DiagnosticFindingGroup = {
-  id: "blocked" | "needs-attention" | "suggestions";
-  label: "Blocked" | "Needs Attention" | "Suggestions";
+  id: keyof typeof DIAGNOSTIC_FINDING_GROUP_LABELS;
+  label: (typeof DIAGNOSTIC_FINDING_GROUP_LABELS)[keyof typeof DIAGNOSTIC_FINDING_GROUP_LABELS];
   items: DiagnosticFinding[];
 };
 
@@ -265,6 +269,12 @@ const DIAGNOSTIC_IMPACT_RULES = [
 
 const DEFAULT_DIAGNOSTIC_IMPACT_DETAIL =
   "This state needs review before you rely on the current desktop switching state.";
+
+const DIAGNOSTIC_FINDING_GROUP_LABELS = {
+  blocked: BLOCKED_LABEL,
+  "needs-attention": NEEDS_ATTENTION_LABEL,
+  suggestions: "Suggestions",
+} as const;
 
 export function buildDiagnosticFindings(
   issueCards: IssueCardData[],
@@ -470,9 +480,21 @@ export function matchesQuickFixToFinding(
 
 export function groupDiagnosticFindings(findings: DiagnosticFinding[]) {
   const groups: DiagnosticFindingGroup[] = [
-    { id: "blocked", label: "Blocked", items: [] },
-    { id: "needs-attention", label: "Needs Attention", items: [] },
-    { id: "suggestions", label: "Suggestions", items: [] },
+    {
+      id: "blocked",
+      label: DIAGNOSTIC_FINDING_GROUP_LABELS.blocked,
+      items: [],
+    },
+    {
+      id: "needs-attention",
+      label: DIAGNOSTIC_FINDING_GROUP_LABELS["needs-attention"],
+      items: [],
+    },
+    {
+      id: "suggestions",
+      label: DIAGNOSTIC_FINDING_GROUP_LABELS.suggestions,
+      items: [],
+    },
   ];
 
   findings.forEach((finding) => {

@@ -7,6 +7,12 @@ import {
 } from "./status-copy";
 
 export const INCLUDED_DESKTOP_ENGINE_LABEL = "Included desktop engine";
+export const SYSTEM_ENGINE_LABEL = "System engine";
+export const CUSTOM_ENGINE_LABEL = "Custom engine";
+export const INCLUDED_RUNTIME_SOURCE_LABEL = "Included";
+export const INCLUDED_WITH_APP_RUNTIME_SOURCE_LABEL = "Included with this app";
+export const SYSTEM_OVERRIDE_LABEL = "System override";
+export const CUSTOM_OVERRIDE_LABEL = "Custom override";
 
 type RuntimeKind = DesktopSettings["runtime_kind"];
 
@@ -15,20 +21,20 @@ export function runtimeSelectionLabel(runtimeKind: RuntimeKind) {
     case "bundled":
       return INCLUDED_DESKTOP_ENGINE_LABEL;
     case "system":
-      return "System engine";
+      return SYSTEM_ENGINE_LABEL;
     case "custom":
-      return "Custom engine";
+      return CUSTOM_ENGINE_LABEL;
   }
 }
 
 export function runtimeSourceLabel(runtimeKind: RuntimeKind) {
   switch (runtimeKind) {
     case "bundled":
-      return "Included";
+      return INCLUDED_RUNTIME_SOURCE_LABEL;
     case "system":
-      return "System override";
+      return SYSTEM_OVERRIDE_LABEL;
     case "custom":
-      return "Custom override";
+      return CUSTOM_OVERRIDE_LABEL;
   }
 }
 
@@ -36,18 +42,18 @@ export function runtimeSummary(runtimeKind: RuntimeKind) {
   switch (runtimeKind) {
     case "bundled":
       return {
-        source: "Included with this app",
+        source: INCLUDED_WITH_APP_RUNTIME_SOURCE_LABEL,
         description: "AI Switch is already set to use the desktop engine bundled with this app.",
       };
     case "system":
       return {
-        source: "System override",
+        source: SYSTEM_OVERRIDE_LABEL,
         description:
           "AI Switch is currently pointing at a system-installed engine instead of the included one.",
       };
     case "custom":
       return {
-        source: "Custom override",
+        source: CUSTOM_OVERRIDE_LABEL,
         description:
           "AI Switch is currently pointing at a custom engine path instead of the included one.",
       };

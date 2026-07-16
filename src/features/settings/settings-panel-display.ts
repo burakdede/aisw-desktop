@@ -36,6 +36,7 @@ import {
 } from "../../lib/display-copy";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
+import { SYSTEM_ENGINE_LABEL } from "../../lib/runtime-display";
 
 export {
   DEFAULT_SETTINGS_SECTION,
@@ -213,7 +214,7 @@ const APPEARANCE_LABELS: Record<(typeof DESKTOP_APPEARANCES)[number], string> = 
 };
 const RUNTIME_SOURCE_LABELS: Record<DesktopSettings["runtime_kind"], string> = {
   bundled: "Bundled",
-  system: "System engine",
+  system: SYSTEM_ENGINE_LABEL,
   custom: "Custom path",
 };
 const UPDATE_CHANNEL_LABELS: Record<DesktopUpdateChannel, string> = {

@@ -29,6 +29,12 @@ import {
   settingsForRecovery,
 } from "./app-shell";
 import { COMMAND_RESULT_GLOBAL_IDS } from "./features/shared/command-result-scope";
+import {
+  CUSTOM_OVERRIDE_LABEL,
+  INCLUDED_DESKTOP_ENGINE_LABEL,
+  INCLUDED_RUNTIME_SOURCE_LABEL,
+  SYSTEM_ENGINE_LABEL,
+} from "./lib/runtime-display";
 import type { AppSnapshot, DesktopSettings } from "./lib/schemas";
 import { DesktopCommandError } from "./lib/tauri";
 import { makeRuntimeToolCapabilities } from "./test-support/runtime-tool-capabilities";
@@ -291,8 +297,8 @@ describe("app-shell helpers", () => {
     ).toEqual([
       { label: "Active set", value: "None" },
       { label: "Switching", value: "Ready" },
-        { label: "Engine source", value: "Custom override" },
-      ]);
+      { label: "Engine source", value: CUSTOM_OVERRIDE_LABEL },
+    ]);
 
     expect(APP_SHELL_COPY.currentStateKicker).toBe("Current state");
     expect(APP_SHELL_COPY.runtimeRecovery.cardTitle).toBe("Finish setup");
@@ -306,8 +312,8 @@ describe("app-shell helpers", () => {
         nextStep: "Use the included desktop engine.",
       }),
     ).toEqual([
-      { label: "Using now", value: "System engine" },
-      { label: "Desktop app needs", value: "Included desktop engine" },
+      { label: "Using now", value: SYSTEM_ENGINE_LABEL },
+      { label: "Desktop app needs", value: INCLUDED_DESKTOP_ENGINE_LABEL },
       { label: "Next step", value: "Use the included desktop engine." },
     ]);
     expect(runtimeRecoveryPrimaryActionLabel(false)).toBe("Use Included Engine");
@@ -425,10 +431,10 @@ describe("app-shell helpers", () => {
   });
 
   it("formats runtime labels for the shell", () => {
-    expect(runtimeSelectionLabel("bundled")).toBe("Included desktop engine");
-    expect(runtimeSelectionLabel("system")).toBe("System engine");
-    expect(runtimeSourceLabel("bundled")).toBe("Included");
-    expect(runtimeSourceLabel("custom")).toBe("Custom override");
+    expect(runtimeSelectionLabel("bundled")).toBe(INCLUDED_DESKTOP_ENGINE_LABEL);
+    expect(runtimeSelectionLabel("system")).toBe(SYSTEM_ENGINE_LABEL);
+    expect(runtimeSourceLabel("bundled")).toBe(INCLUDED_RUNTIME_SOURCE_LABEL);
+    expect(runtimeSourceLabel("custom")).toBe(CUSTOM_OVERRIDE_LABEL);
   });
 
   it("normalizes tray command feedback and reapply failures", () => {
