@@ -66,6 +66,15 @@ export type SettingsOption<Value extends string> = {
   label: string;
 };
 
+const SETTINGS_SECTION_KEY_DIRECTIONS = {
+  ArrowDown: "next",
+  ArrowRight: "next",
+  ArrowUp: "previous",
+  ArrowLeft: "previous",
+  Home: "first",
+  End: "last",
+} as const satisfies Record<string, SettingsSectionDirection>;
+
 const SETTINGS_SECTION_LABELS: Record<SettingsSection, string> = {
   [SETTINGS_SECTION_IDS.general]: "General",
   [SETTINGS_SECTION_IDS.runtime]: "Engine",
@@ -183,33 +192,15 @@ export function nextSettingsSection(
     return currentSection;
   }
 
-  const targetIndex =
-    direction === "first"
-      ? 0
-      : direction === "last"
-        ? SETTINGS_SECTIONS.length - 1
-        : direction === "next"
-          ? Math.min(currentIndex + 1, SETTINGS_SECTIONS.length - 1)
-          : Math.max(currentIndex - 1, 0);
+  const targetIndex = resolveSettingsSectionIndex(currentIndex, direction);
 
   return SETTINGS_SECTIONS[targetIndex] ?? currentSection;
 }
 
 export function settingsSectionDirectionForKey(key: string): SettingsSectionDirection | null {
-  switch (key) {
-    case "ArrowDown":
-    case "ArrowRight":
-      return "next";
-    case "ArrowUp":
-    case "ArrowLeft":
-      return "previous";
-    case "Home":
-      return "first";
-    case "End":
-      return "last";
-    default:
-      return null;
-  }
+  return SETTINGS_SECTION_KEY_DIRECTIONS[
+    key as keyof typeof SETTINGS_SECTION_KEY_DIRECTIONS
+  ] ?? null;
 }
 
 export function resolveSelectedShellVariant(
@@ -402,4 +393,20 @@ export function selectedRuntimePath(
     return runtimeStatus.inventory?.system_path ?? NOT_FOUND_LABEL;
   }
   return runtimeStatus.inventory?.bundled_path ?? NOT_FOUND_LABEL;
+}
+
+function resolveSettingsSectionIndex(
+  currentIndex: number,
+  direction: SettingsSectionDirection,
+) {
+  switch (direction) {
+    case "first":
+      return 0;
+    case "last":
+      return SETTINGS_SECTIONS.length - 1;
+    case "next":
+      return Math.min(currentIndex + 1, SETTINGS_SECTIONS.length - 1);
+    case "previous":
+      return Math.max(currentIndex - 1, 0);
+  }
 }
