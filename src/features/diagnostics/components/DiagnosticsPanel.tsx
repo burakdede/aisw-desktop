@@ -27,9 +27,9 @@ import {
   type SummaryCardData,
 } from "../diagnostic-parsers";
 import { diagnosticCheckRows, type DiagnosticCheckRow } from "../../../lib/diagnostic-display";
-import { countLabel } from "../../../lib/utils";
 import type { SettingsSection } from "../../settings/settings-panel-display";
 import {
+  DIAGNOSTICS_PANEL_COPY,
   buildDiagnosticQuickFixModels,
   buildDiagnosticInspectorActions,
   buildDiagnosticFindings,
@@ -38,6 +38,11 @@ import {
   buildSelectedRepairFixes,
   buildRecentFailureCards,
   diagnosticBundlePathCopyMessage,
+  diagnosticInspectorStatusLabel,
+  diagnosticsApplyRepairsLabel,
+  diagnosticsRepairPlanSummary,
+  diagnosticsRepairSelectionLabel,
+  diagnosticTechnicalCommandBlock,
   diagnosticQuickFixKey,
   diagnosticRepairActionKey,
   formatRelativeVerifiedTime,
@@ -272,21 +277,23 @@ export function DiagnosticsPanel({
         <div className="button-row">
           <button
             className="primary-button"
-            aria-label="Verify Again"
+            aria-label={DIAGNOSTICS_PANEL_COPY.verifyAgainAriaLabel}
             disabled={mutationLock.isBusy}
             onClick={() =>
               void refreshDiagnostics(queryClient, doctor.refetch, verify.refetch, repair.refetch)
             }
           >
-            Verify
+            {DIAGNOSTICS_PANEL_COPY.verifyButtonLabel}
           </button>
           <button
             className="ghost-button"
-            aria-label="Review Safe Fixes"
+            aria-label={DIAGNOSTICS_PANEL_COPY.reviewSafeFixesAriaLabel}
             onClick={() => setRepairPlanOpen(true)}
             disabled={applyRepair.isPending || !repairActions.length}
           >
-            {applyRepair.isPending ? "Applying Repairs…" : "Review Safe Fixes…"}
+            {applyRepair.isPending
+              ? DIAGNOSTICS_PANEL_COPY.applyingRepairsLabel
+              : DIAGNOSTICS_PANEL_COPY.reviewSafeFixesButtonLabel}
           </button>
           <div className="diagnostics-toolbar-menu-wrap">
             <button
@@ -295,7 +302,7 @@ export function DiagnosticsPanel({
               type="button"
               aria-haspopup="menu"
               aria-expanded={toolbarMenuOpen}
-              aria-label="Diagnostics more actions"
+              aria-label={DIAGNOSTICS_PANEL_COPY.diagnosticsActionsTriggerAriaLabel}
               onClick={() => setToolbarMenuOpen((open) => !open)}
             >
               •••
@@ -305,7 +312,7 @@ export function DiagnosticsPanel({
                 anchorRef={toolbarMenuAnchorRef}
                 className="profile-row-actions-menu"
                 role="menu"
-                aria-label="Diagnostics actions"
+                aria-label={DIAGNOSTICS_PANEL_COPY.diagnosticsActionsAriaLabel}
               >
                 <button
                   className="ghost-button"
@@ -317,7 +324,9 @@ export function DiagnosticsPanel({
                   }}
                   disabled={exportBundle.isPending}
                 >
-                  {exportBundle.isPending ? "Exporting Report…" : "Export Report"}
+                  {exportBundle.isPending
+                    ? DIAGNOSTICS_PANEL_COPY.exportingReportLabel
+                    : DIAGNOSTICS_PANEL_COPY.exportReportLabel}
                 </button>
               </AnchoredMenu>
             ) : null}
@@ -348,7 +357,10 @@ export function DiagnosticsPanel({
         primary={showFindings ? (
           <section className="diagnostics-pane">
             {findings.length ? (
-              <div className="diagnostics-findings-list" aria-label="Diagnostics findings">
+              <div
+                className="diagnostics-findings-list"
+                aria-label={DIAGNOSTICS_PANEL_COPY.findingsAriaLabel}
+              >
                 {findingGroups.map((group) => (
                   group.items.length ? (
                     <section key={group.id} className="diagnostics-finding-group">
@@ -405,21 +417,23 @@ export function DiagnosticsPanel({
             ) : (
               <div className="diagnostics-healthy-state">
                 <span aria-hidden="true">✓</span>
-                <h3>Everything looks good</h3>
+                <h3>{DIAGNOSTICS_PANEL_COPY.healthyTitle}</h3>
                 <p className="inline-note">
-                  All configured tools match their active AISW profiles and local storage checks passed.
+                  {DIAGNOSTICS_PANEL_COPY.healthyPrimaryDetail}
                 </p>
-                <p className="inline-note">Verified {verifiedLabel.toLowerCase()}</p>
+                <p className="inline-note">
+                  {DIAGNOSTICS_PANEL_COPY.verifiedPrefix} {verifiedLabel.toLowerCase()}
+                </p>
                 <div className="button-row">
                   <button
                     className="ghost-button"
-                    aria-label="Verify Again"
+                    aria-label={DIAGNOSTICS_PANEL_COPY.verifyAgainAriaLabel}
                     disabled={mutationLock.isBusy}
                     onClick={() =>
                       void refreshDiagnostics(queryClient, doctor.refetch, verify.refetch, repair.refetch)
                     }
                   >
-                    Verify Again
+                    {DIAGNOSTICS_PANEL_COPY.verifyAgainAriaLabel}
                   </button>
                 </div>
               </div>
@@ -444,27 +458,27 @@ export function DiagnosticsPanel({
                     <h3>{selectedFinding.title}</h3>
                     <p className={`diagnostics-inspector-status diagnostics-inspector-status-${selectedFinding.status}`}>
                       <span aria-hidden="true">{selectedFinding.status === "fail" ? "⨯" : "▲"}</span>
-                      <span>{selectedFinding.status === "fail" ? "Blocked" : "Needs attention"}</span>
+                      <span>{diagnosticInspectorStatusLabel(selectedFinding.status)}</span>
                     </p>
                   </div>
                 </header>
                 <section className="diagnostics-inspector-section">
-                  <p className="card-kicker">What happened</p>
+                  <p className="card-kicker">{DIAGNOSTICS_PANEL_COPY.inspectorWhatHappenedKicker}</p>
                   <p className="inline-note">{normalizeRuntimeLanguage(selectedFinding.preview)}</p>
                   {selectedFinding.lines.slice(1, 2).map((line) => (
                     <p key={line} className="inline-note">{normalizeRuntimeLanguage(line)}</p>
                   ))}
                 </section>
                 <section className="diagnostics-inspector-section">
-                  <p className="card-kicker">Impact</p>
+                  <p className="card-kicker">{DIAGNOSTICS_PANEL_COPY.inspectorImpactKicker}</p>
                   <p className="inline-note">{impactTextForFinding(selectedFinding)}</p>
                 </section>
                 <section className="diagnostics-inspector-section">
-                  <p className="card-kicker">Recommended action</p>
+                  <p className="card-kicker">{DIAGNOSTICS_PANEL_COPY.inspectorRecommendedActionKicker}</p>
                   <p className="inline-note">
                     {primaryFindingFix?.detail ??
                       selectedFinding.remediation[0] ??
-                      "Review the evidence below and decide how you want to correct this state."}
+                      DIAGNOSTICS_PANEL_COPY.inspectorRecommendedActionFallback}
                   </p>
                 </section>
                 {primaryFindingFix || secondaryInspectorAction || inspectorOverflowActions.length ? (
@@ -495,7 +509,7 @@ export function DiagnosticsPanel({
                           ref={inspectorMenuAnchorRef}
                           className="ghost-button profile-row-actions-trigger profile-row-actions-trigger-visible"
                           type="button"
-                          aria-label="More finding actions"
+                          aria-label={DIAGNOSTICS_PANEL_COPY.inspectorOverflowTriggerAriaLabel}
                           aria-expanded={inspectorMenuOpen}
                           onClick={() => setInspectorMenuOpen((open) => !open)}
                         >
@@ -509,7 +523,7 @@ export function DiagnosticsPanel({
                             boundaryAttribute="data-profile-row-actions"
                             containmentSelector=".diagnostics-inspector-surface"
                             role="menu"
-                            aria-label="Finding actions"
+                            aria-label={DIAGNOSTICS_PANEL_COPY.inspectorOverflowMenuAriaLabel}
                           >
                             {inspectorOverflowActions.map((action) => (
                               <button
@@ -532,7 +546,7 @@ export function DiagnosticsPanel({
                   </div>
                 ) : null}
                 <details className="diagnostics-disclosure">
-                  <summary>Evidence</summary>
+                  <summary>{DIAGNOSTICS_PANEL_COPY.evidenceSummary}</summary>
                   <div className="stack-list">
                     {selectedFinding.lines.map((line) => (
                       <p key={line} className="inline-note">{normalizeRuntimeLanguage(line)}</p>
@@ -540,13 +554,11 @@ export function DiagnosticsPanel({
                   </div>
                 </details>
                 <details className="diagnostics-disclosure">
-                  <summary>Technical Details</summary>
+                  <summary>{DIAGNOSTICS_PANEL_COPY.technicalDetailsSummary}</summary>
                   <div className="stack-list">
-                    <p className="inline-note">Suggested commands for validation and recovery.</p>
+                    <p className="inline-note">{DIAGNOSTICS_PANEL_COPY.technicalDetailsIntro}</p>
                     <pre className="diagnostics-command-block">
-{`aisw doctor --json
-aisw verify --json
-${primaryFindingFix?.label ? `# ${primaryFindingFix.label}` : "# Review the explicit action above"}`}
+{diagnosticTechnicalCommandBlock(primaryFindingFix?.label)}
                     </pre>
                     {selectedFinding.remediation.length ? (
                       <div className="stack-list">
@@ -561,9 +573,9 @@ ${primaryFindingFix?.label ? `# ${primaryFindingFix.label}` : "# Review the expl
             ) : (
               <div className="diagnostics-healthy-state diagnostics-healthy-state-compact">
                 <span aria-hidden="true">✓</span>
-                <h3>Everything looks good</h3>
+                <h3>{DIAGNOSTICS_PANEL_COPY.healthyTitle}</h3>
                 <p className="inline-note">
-                  Active profiles, local storage, and repair checks are currently passing.
+                  {DIAGNOSTICS_PANEL_COPY.healthyCompactDetail}
                 </p>
               </div>
             )}
@@ -572,21 +584,21 @@ ${primaryFindingFix?.label ? `# ${primaryFindingFix.label}` : "# Review the expl
       />
       {repairPlanOpen ? (
         <DialogSurface
-          ariaLabel="Review Safe Fixes"
+          ariaLabel={DIAGNOSTICS_PANEL_COPY.repairPlanDialogAriaLabel}
           className="quick-switch-palette profile-sheet"
           initialFocusSelector="button:not([disabled])"
           onClose={() => setRepairPlanOpen(false)}
         >
             <div className="quick-switch-header">
               <div>
-                <p className="card-kicker">Repair plan</p>
-                <h3>Review Safe Fixes</h3>
+                <p className="card-kicker">{DIAGNOSTICS_PANEL_COPY.repairPlanKicker}</p>
+                <h3>{DIAGNOSTICS_PANEL_COPY.repairPlanTitle}</h3>
                 <p className="inline-note">
-                  {repairActions.length} {repairActions.length === 1 ? "repair can" : "repairs can"} be applied without changing account identity.
+                  {diagnosticsRepairPlanSummary(repairActions.length)}
                 </p>
               </div>
               <button className="ghost-button" type="button" onClick={() => setRepairPlanOpen(false)}>
-                Close
+                {DIAGNOSTICS_PANEL_COPY.repairPlanCloseLabel}
               </button>
             </div>
             {repairActions.length ? (
@@ -615,34 +627,32 @@ ${primaryFindingFix?.label ? `# ${primaryFindingFix.label}` : "# Review the expl
               </div>
             ) : (
               <div className="diagnostics-sheet-empty">
-                <h3>No safe repairs queued</h3>
+                <h3>{DIAGNOSTICS_PANEL_COPY.repairPlanEmptyTitle}</h3>
                 <p className="inline-note">
-                  Diagnostics did not find any safe automatic repairs to apply right now.
+                  {DIAGNOSTICS_PANEL_COPY.repairPlanEmptyDetail}
                 </p>
               </div>
             )}
             <footer className="quick-switch-footer">
               <div className="quick-switch-selection">
-                <p className="card-kicker">Repairs</p>
-                <strong>{selectedSafeFixes.length} selected</strong>
-                <p>Profile re-apply, restore, and removal actions still require their own explicit flow.</p>
+                <p className="card-kicker">{DIAGNOSTICS_PANEL_COPY.repairPlanSelectionKicker}</p>
+                <strong>{diagnosticsRepairSelectionLabel(selectedSafeFixes.length)}</strong>
+                <p>{DIAGNOSTICS_PANEL_COPY.repairPlanSelectionDetail}</p>
               </div>
               <div className="button-row">
                 <button className="ghost-button" type="button" onClick={() => setRepairPlanOpen(false)}>
-                  Cancel
+                  {DIAGNOSTICS_PANEL_COPY.repairPlanCancelLabel}
                 </button>
                 <button
                   className="primary-button"
-                  aria-label="Apply Safe Fixes"
+                  aria-label={DIAGNOSTICS_PANEL_COPY.applySafeFixesAriaLabel}
                   type="button"
                   disabled={!selectedSafeFixes.length || applyRepair.isPending}
                   onClick={() =>
                     applyRepair.mutate(buildSelectedRepairFixes(selectedSafeFixes, repairActions))
                   }
                 >
-                  {applyRepair.isPending
-                    ? "Applying Repairs…"
-                    : `Apply ${countLabel(selectedSafeFixes.length, "Fix", "Fixes")}`}
+                  {diagnosticsApplyRepairsLabel(selectedSafeFixes.length, applyRepair.isPending)}
                 </button>
               </div>
             </footer>
@@ -659,7 +669,7 @@ ${primaryFindingFix?.label ? `# ${primaryFindingFix.label}` : "# Review the expl
               type="button"
               onClick={() => void copyBundlePath(exportedBundle.path, setBundleCopyMessage)}
             >
-              Copy report path
+              {DIAGNOSTICS_PANEL_COPY.copyReportPathLabel}
             </button>
           ) : null}
         </div>

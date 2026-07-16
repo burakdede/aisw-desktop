@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "../../lib/schemas";
 import {
+  DIAGNOSTICS_PANEL_COPY,
   buildDiagnosticQuickFixModels,
   buildDiagnosticInspectorActions,
   buildDiagnosticFindings,
@@ -9,6 +10,11 @@ import {
   buildSelectedRepairFixes,
   buildRecentFailureCards,
   diagnosticBundlePathCopyMessage,
+  diagnosticInspectorStatusLabel,
+  diagnosticsApplyRepairsLabel,
+  diagnosticsRepairPlanSummary,
+  diagnosticsRepairSelectionLabel,
+  diagnosticTechnicalCommandBlock,
   diagnosticQuickFixKey,
   diagnosticRepairActionKey,
   diagnosticRepairFixFromAction,
@@ -106,6 +112,32 @@ function makeToolCapabilities(): NonNullable<AppBootstrap["runtime_status"]["cap
 }
 
 describe("diagnostics-panel-display", () => {
+  it("shares stable diagnostics panel copy", () => {
+    expect(DIAGNOSTICS_PANEL_COPY.verifyButtonLabel).toBe("Verify");
+    expect(DIAGNOSTICS_PANEL_COPY.reviewSafeFixesButtonLabel).toBe("Review Safe Fixes…");
+    expect(DIAGNOSTICS_PANEL_COPY.applySafeFixesAriaLabel).toBe("Apply Safe Fixes");
+    expect(DIAGNOSTICS_PANEL_COPY.healthyTitle).toBe("Everything looks good");
+    expect(DIAGNOSTICS_PANEL_COPY.technicalDetailsIntro).toBe(
+      "Suggested commands for validation and recovery.",
+    );
+    expect(DIAGNOSTICS_PANEL_COPY.copyReportPathLabel).toBe("Copy report path");
+    expect(diagnosticInspectorStatusLabel("fail")).toBe("Blocked");
+    expect(diagnosticInspectorStatusLabel("warn")).toBe("Needs attention");
+    expect(diagnosticTechnicalCommandBlock("Re-apply Work")).toContain("# Re-apply Work");
+    expect(diagnosticTechnicalCommandBlock(null)).toContain(
+      "# Review the explicit action above",
+    );
+    expect(diagnosticsRepairPlanSummary(1)).toBe(
+      "1 repair can be applied without changing account identity.",
+    );
+    expect(diagnosticsRepairPlanSummary(3)).toBe(
+      "3 repairs can be applied without changing account identity.",
+    );
+    expect(diagnosticsRepairSelectionLabel(2)).toBe("2 selected");
+    expect(diagnosticsApplyRepairsLabel(2, true)).toBe("Applying Repairs…");
+    expect(diagnosticsApplyRepairsLabel(2, false)).toBe("Apply 2 Fixes");
+  });
+
   it("builds recent failure titles and cards", () => {
     expect(
       recentFailureTitle({

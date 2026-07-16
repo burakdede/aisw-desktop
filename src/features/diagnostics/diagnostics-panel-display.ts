@@ -113,6 +113,49 @@ type LastCommandResultsInput = {
   global: Record<string, LastCommandResult | undefined>;
 };
 
+export const DIAGNOSTICS_PANEL_COPY = {
+  verifyButtonLabel: "Verify",
+  verifyAgainAriaLabel: "Verify Again",
+  reviewSafeFixesAriaLabel: "Review Safe Fixes",
+  applySafeFixesAriaLabel: "Apply Safe Fixes",
+  reviewSafeFixesButtonLabel: "Review Safe Fixes…",
+  applyingRepairsLabel: "Applying Repairs…",
+  diagnosticsActionsAriaLabel: "Diagnostics actions",
+  diagnosticsActionsTriggerAriaLabel: "Diagnostics more actions",
+  exportReportLabel: "Export Report",
+  exportingReportLabel: "Exporting Report…",
+  findingsAriaLabel: "Diagnostics findings",
+  inspectorOverflowTriggerAriaLabel: "More finding actions",
+  inspectorOverflowMenuAriaLabel: "Finding actions",
+  healthyTitle: "Everything looks good",
+  healthyPrimaryDetail:
+    "All configured tools match their active AISW profiles and local storage checks passed.",
+  healthyCompactDetail:
+    "Active profiles, local storage, and repair checks are currently passing.",
+  verifiedPrefix: "Verified",
+  inspectorWhatHappenedKicker: "What happened",
+  inspectorImpactKicker: "Impact",
+  inspectorRecommendedActionKicker: "Recommended action",
+  inspectorRecommendedActionFallback:
+    "Review the evidence below and decide how you want to correct this state.",
+  evidenceSummary: "Evidence",
+  technicalDetailsSummary: "Technical Details",
+  technicalDetailsIntro: "Suggested commands for validation and recovery.",
+  technicalDetailsFallbackCommand: "# Review the explicit action above",
+  repairPlanDialogAriaLabel: "Review Safe Fixes",
+  repairPlanKicker: "Repair plan",
+  repairPlanTitle: "Review Safe Fixes",
+  repairPlanCloseLabel: "Close",
+  repairPlanEmptyTitle: "No safe repairs queued",
+  repairPlanEmptyDetail:
+    "Diagnostics did not find any safe automatic repairs to apply right now.",
+  repairPlanSelectionKicker: "Repairs",
+  repairPlanSelectionDetail:
+    "Profile re-apply, restore, and removal actions still require their own explicit flow.",
+  repairPlanCancelLabel: "Cancel",
+  copyReportPathLabel: "Copy report path",
+} as const;
+
 export function buildDiagnosticFindings(
   issueCards: IssueCardData[],
   recentFailures: RecentFailureCard[],
@@ -452,6 +495,33 @@ export function diagnosticBundlePathCopyMessage(path: string, clipboardAvailable
   }
 
   return `Copied bundle path ${path}.`;
+}
+
+export function diagnosticInspectorStatusLabel(status: DiagnosticFinding["status"]) {
+  return status === "fail" ? "Blocked" : "Needs attention";
+}
+
+export function diagnosticTechnicalCommandBlock(primaryLabel?: string | null) {
+  const trailingCommand = primaryLabel
+    ? `# ${primaryLabel}`
+    : DIAGNOSTICS_PANEL_COPY.technicalDetailsFallbackCommand;
+  return `aisw doctor --json
+aisw verify --json
+${trailingCommand}`;
+}
+
+export function diagnosticsRepairPlanSummary(count: number) {
+  return `${count} ${count === 1 ? "repair can" : "repairs can"} be applied without changing account identity.`;
+}
+
+export function diagnosticsRepairSelectionLabel(count: number) {
+  return `${count} selected`;
+}
+
+export function diagnosticsApplyRepairsLabel(count: number, isPending: boolean) {
+  return isPending
+    ? DIAGNOSTICS_PANEL_COPY.applyingRepairsLabel
+    : `Apply ${countLabel(count, "Fix", "Fixes")}`;
 }
 
 export function buildDiagnosticInspectorActions(input: {
