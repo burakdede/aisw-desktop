@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  APP_FRAME_MODES,
   APP_FRAME_COPY,
   appFrameNavDirectionForKey,
   COMPACT_SIDEBAR_BREAKPOINT,
@@ -12,6 +13,8 @@ import {
 describe("app-frame-display", () => {
   it("shares sidebar copy and breakpoint policy", () => {
     expect(COMPACT_SIDEBAR_BREAKPOINT).toBe(880);
+    expect(APP_FRAME_MODES.standard).toBe("standard");
+    expect(APP_FRAME_MODES.setup).toBe("setup");
     expect(APP_FRAME_COPY.closeSidebarLabel).toBe("Close sidebar");
     expect(APP_FRAME_COPY.hideSidebarLabel).toBe("Hide sidebar");
     expect(APP_FRAME_COPY.showSidebarLabel).toBe("Show sidebar");

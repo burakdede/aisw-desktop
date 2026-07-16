@@ -4,7 +4,9 @@ import { readViewportWidth } from "../lib/viewport-size";
 import { BrandMark } from "./BrandMark";
 import {
   APP_FRAME_COPY,
+  APP_FRAME_MODES,
   COMPACT_SIDEBAR_BREAKPOINT,
+  type AppFrameMode,
   appFrameNavDirectionForKey,
   defaultSidebarOpen,
   isCompactSidebarWidth,
@@ -29,7 +31,7 @@ interface AppFrameProps {
   onSelectNav: (id: string) => void;
   statusBadge?: ReactNode;
   toolbar?: ReactNode;
-  mode?: "standard" | "setup";
+  mode?: AppFrameMode;
   children: ReactNode;
 }
 
@@ -42,7 +44,7 @@ export function AppFrame({
   onSelectNav,
   statusBadge,
   toolbar,
-  mode = "standard",
+  mode = APP_FRAME_MODES.standard,
   children,
 }: AppFrameProps) {
   const navButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -128,18 +130,19 @@ export function AppFrame({
     }
   }
 
-  const showSidebar = mode !== "setup" && (!compactSidebar || sidebarOpen);
+  const isSetupMode = mode === APP_FRAME_MODES.setup;
+  const showSidebar = !isSetupMode && (!compactSidebar || sidebarOpen);
 
   return (
-    <main className={cn("app-shell", mode === "setup" ? "app-shell-setup-window" : "app-shell-window")}>
+    <main className={cn("app-shell", isSetupMode ? "app-shell-setup-window" : "app-shell-window")}>
       <div
         className={cn(
           "layout-shell",
-          mode === "setup" && "layout-shell-setup",
+          isSetupMode && "layout-shell-setup",
           compactSidebar && "layout-shell-compact",
         )}
       >
-        {compactSidebar && sidebarOpen && mode !== "setup" ? (
+        {compactSidebar && sidebarOpen && !isSetupMode ? (
           <button
             type="button"
             className="sidebar-scrim"
@@ -147,7 +150,7 @@ export function AppFrame({
             onClick={() => setSidebarOpen(false)}
           />
         ) : null}
-        {mode === "setup" || !showSidebar ? null : (
+        {isSetupMode || !showSidebar ? null : (
           <aside
             id="app-sidebar"
             className={cn(
@@ -202,10 +205,10 @@ export function AppFrame({
             {statusBadge ? <div className="status-badge sidebar-status-card">{statusBadge}</div> : null}
           </aside>
         )}
-        <div className={cn("content-shell", mode === "setup" && "content-shell-setup")}>
+        <div className={cn("content-shell", isSetupMode && "content-shell-setup")}>
           <header className="window-toolbar">
             <div className="window-toolbar-leading" data-tauri-drag-region>
-              {mode !== "setup" && compactSidebar ? (
+              {!isSetupMode && compactSidebar ? (
                 <button
                   type="button"
                   className="ghost-button icon-button sidebar-toggle"
@@ -220,7 +223,7 @@ export function AppFrame({
                 </button>
               ) : null}
               <div className="window-toolbar-meta">
-                {mode === "setup" ? <p className="window-toolbar-kicker">{APP_FRAME_COPY.setupKicker}</p> : null}
+                {isSetupMode ? <p className="window-toolbar-kicker">{APP_FRAME_COPY.setupKicker}</p> : null}
                 <div className="window-toolbar-copy">
                   <h2>{title}</h2>
                   {detail ? <p className="window-toolbar-subtitle">{detail}</p> : null}

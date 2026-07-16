@@ -1,5 +1,12 @@
 export const COMPACT_SIDEBAR_BREAKPOINT = 880;
 
+export const APP_FRAME_MODES = {
+  standard: "standard",
+  setup: "setup",
+} as const;
+
+export type AppFrameMode = (typeof APP_FRAME_MODES)[keyof typeof APP_FRAME_MODES];
+
 export const APP_FRAME_COPY = {
   closeSidebarLabel: "Close sidebar",
   hideSidebarLabel: "Hide sidebar",

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppFrame } from "./components/AppFrame";
+import { APP_FRAME_MODES } from "./components/app-frame-display";
 import { HelpSheet } from "./components/HelpSheet";
 import { QuickSwitchPalette } from "./components/QuickSwitchPalette";
 import { SectionCard } from "./components/SectionCard";
@@ -575,7 +576,7 @@ export function App() {
   return (
     <>
     <AppFrame
-      mode={showSetupWindow ? "setup" : "standard"}
+      mode={showSetupWindow ? APP_FRAME_MODES.setup : APP_FRAME_MODES.standard}
       title={
         runtimeRecoveryFocused ? APP_SHELL_COPY.runtimeRecovery.frameTitle : sectionTitle(activeSection, setupFocused)
       }

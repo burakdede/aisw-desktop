@@ -1,7 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type Event } from "@tauri-apps/api/event";
 import type { AsyncDispose } from "./async-dispose";
-import type { CommandResultStatus } from "../features/shared/command-result-shape";
 import {
   DESKTOP_RUNTIME_WAIT_INTERVAL_MS,
   DESKTOP_RUNTIME_WAIT_TIMEOUT_MS,
@@ -22,26 +21,6 @@ export class DesktopCommandError extends Error {
 export function isDesktopRuntimeUnavailableError(error: unknown) {
   return error instanceof DesktopCommandError && error.kind === "runtime_unavailable";
 }
-
-export type TrayCommandResultEvent =
-  | {
-      scope: "tool";
-      tool: string;
-      label: string;
-      status: CommandResultStatus;
-      message: string;
-      kind?: string;
-      remediation?: string;
-    }
-  | {
-      scope: "global";
-      id: string;
-      label: string;
-      status: CommandResultStatus;
-      message: string;
-      kind?: string;
-      remediation?: string;
-    };
 
 declare global {
   interface Window {
