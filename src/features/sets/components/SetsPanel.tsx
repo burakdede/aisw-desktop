@@ -41,10 +41,12 @@ import { resolveWorkspaceActivationTarget, workspaceBindingOptions } from "../..
 import { parseWorkspaceBindings, parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 import type { WorkspaceUnbindInput } from "../../../lib/client";
 import {
+  buildImportedContextRows,
   buildSavedSetRows,
   buildSavedSetCollection,
   buildSetSettingsUpdate,
   buildSelectedSetInspectorState,
+  buildWorkspaceBindingTarget,
   countRuleUsageByContext,
   createEditableProfileSetDraft,
   createEditableRuleDraft,
@@ -53,11 +55,14 @@ import {
   deletedSetActionLabel,
   duplicateEditableProfileSetDraft,
   hasDuplicateSetName,
+  importedContextActivationResultLabel,
   savedSetActionLabel,
+  savedSetActivationLabel,
   type BindScope,
   type EditableProfileSet,
   type EditableRule,
   unbindTargetForBinding,
+  workspaceBindingTargetChanged,
 } from "../sets-panel-display";
 
 const TOOLS = SUPPORTED_TOOLS;
@@ -311,30 +316,31 @@ export function SetsPanel({
   }
 
   function activateSavedSet(set: NonNullable<DesktopSettings["profile_sets"]>[number]) {
+    const displayLabel = profileSetDisplayLabel(set);
     setSelectedSetName(set.name);
     activateProfileSetMutation.mutate(
       {
         name: set.name,
-        label: profileSetDisplayLabel(set),
+        label: displayLabel,
       },
       {
         onSuccess: () => {
-          setLastSetAction(`Activated saved set ${profileSetDisplayLabel(set)}.`);
+          setLastSetAction(savedSetActivationLabel(displayLabel));
         },
       },
     );
   }
 
-  function activateImportedContext(name: string) {
+  function activateImportedContext(name: string, displayLabel: string) {
     useContextMutation.mutate(
       {
         context: name,
         stateMode: resolveGlobalStateMode(snapshot),
-        label: contextDisplayLabel(settings, name),
+        label: displayLabel,
       },
       {
         onSuccess: () => {
-          setLastSetAction(`Activated set ${contextDisplayLabel(settings, name)}.`);
+          setLastSetAction(importedContextActivationResultLabel(displayLabel));
         },
       },
     );
@@ -381,18 +387,10 @@ export function SetsPanel({
       ? selectedContext.label.slice("Saved set: ".length)
       : undefined;
 
-    const target =
-      ruleDraft.scope === "default"
-        ? { scope: "default" as const }
-        : ruleDraft.scope === "path"
-          ? { scope: "path" as const, path: trimmedTargetValue }
-          : { scope: "git_remote" as const, pattern: trimmedTargetValue };
+    const target = buildWorkspaceBindingTarget(ruleDraft.scope, trimmedTargetValue);
 
     const saveRule = async () => {
-      if (
-        ruleDraft.source &&
-        JSON.stringify(ruleDraft.source) !== JSON.stringify(unbindTargetForBinding(target.scope, trimmedTargetValue))
-      ) {
+      if (ruleDraft.source && workspaceBindingTargetChanged(ruleDraft.source, target)) {
         await workspaceUnbindMutation.mutateAsync(ruleDraft.source);
       }
       await workspaceBindMutation.mutateAsync({ target, context: ruleDraft.context, label });
@@ -424,6 +422,13 @@ export function SetsPanel({
         tools: TOOLS,
       })
     : null;
+  const importedContextRows = buildImportedContextRows({
+    activeContext,
+    importedContexts,
+    settings,
+    snapshot,
+    tools: TOOLS,
+  });
 
   const setRows = setRowModels.map((row) => (
       <button
@@ -497,54 +502,43 @@ export function SetsPanel({
             primary={showSetLibrary ? (
               <section className="sets-pane sets-library-list-pane" aria-label="Set Library">
                 <div className="sets-library-list">{setRows}</div>
-                {importedContexts.length ? (
+                {importedContextRows.length ? (
                   <details className="sets-imported-disclosure">
                     <summary>
                       Imported CLI contexts
                       <span className="sets-imported-disclosure-count">
-                        {importedContexts.length}
+                        {importedContextRows.length}
                       </span>
                     </summary>
                     <p className="inline-note">
                       Use an imported CLI context directly without turning it into a saved set.
                     </p>
                     <div className="stack-list">
-                      {importedContexts.map((entry) => {
-                        const active = activeContext === entry.name;
-                        const contextLabel = contextDisplayLabel(settings, entry.name);
-                        const status = importedContextStatus(active);
-
+                      {importedContextRows.map((row) => {
                         return (
-                          <article key={entry.name} className="list-row sets-cli-row">
+                          <article key={row.name} className="list-row sets-cli-row">
                           <div className="sets-cli-row-copy">
                             <div className="sets-library-row-title">
                               <strong>
-                                {contextLabel}
+                                {row.displayLabel}
                               </strong>
-                              <span className={`sets-library-row-state sets-library-row-state-${status.tone}`}>
-                                <span aria-hidden="true">{status.symbol}</span>
-                                <span>{status.label}</span>
+                              <span className={`sets-library-row-state sets-library-row-state-${row.status.tone}`}>
+                                <span aria-hidden="true">{row.status.symbol}</span>
+                                <span>{row.status.label}</span>
                               </span>
                             </div>
                             <p className="sets-library-row-summary">
                               {"CLI context · "}
-                              {Object.entries(entry.profiles)
-                                .map(([tool, profile]) => {
-                                  const label = profile
-                                    ? toolProfileDisplayLabel(settings, snapshot, tool, profile)
-                                    : "—";
-                                  return `${toolShortName(tool)}: ${label}`;
-                                })
-                                .join(" · ")}
+                              {row.summary}
                             </p>
                           </div>
                           <button
                             className="ghost-button"
                             type="button"
-                            disabled={mutationLock.isBusy || active}
-                            onClick={() => activateImportedContext(entry.name)}
+                            disabled={mutationLock.isBusy || row.active}
+                            onClick={() => activateImportedContext(row.name, row.displayLabel)}
                           >
-                            {importedContextActionLabel(active, contextLabel)}
+                            {row.actionLabel}
                           </button>
                           </article>
                         );

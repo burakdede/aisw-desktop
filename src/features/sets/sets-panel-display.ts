@@ -1,5 +1,6 @@
-import type { WorkspaceUnbindInput } from "../../lib/client";
+import type { WorkspaceBindInput, WorkspaceUnbindInput } from "../../lib/client";
 import {
+  contextDisplayLabel,
   missingProfileSetSelections,
   profileSetDisplayLabel,
   profileSetHasSelections,
@@ -8,7 +9,12 @@ import {
   toolProfileDisplayLabel,
 } from "../../lib/profile-display";
 import type { AppSnapshot, DesktopSettings } from "../../lib/schemas";
-import { profileSetStatus, setSelectionCountLabel } from "../../lib/sets-display";
+import {
+  importedContextActionLabel,
+  importedContextStatus,
+  profileSetStatus,
+  setSelectionCountLabel,
+} from "../../lib/sets-display";
 import { toolShortName } from "../../lib/tool-registry";
 
 export type EditableProfileSet = {
@@ -49,6 +55,15 @@ export type SelectedSetInspectorState = {
   warning: string | null;
 };
 
+export type ImportedContextRowModel = {
+  name: string;
+  displayLabel: string;
+  status: ReturnType<typeof importedContextStatus>;
+  summary: string;
+  actionLabel: string;
+  active: boolean;
+};
+
 export type SetSettingsUpdate = Pick<
   DesktopSettings,
   | "runtime_kind"
@@ -58,6 +73,8 @@ export type SetSettingsUpdate = Pick<
   | "profile_labels"
   | "profile_sets"
 >;
+
+export type WorkspaceBindingTarget = WorkspaceBindInput["target"];
 
 export function createEmptyEditableProfileSet(tools: readonly string[]): EditableProfileSet {
   return {
@@ -199,6 +216,52 @@ export function unbindTargetForBinding(scope: string, target: string): Workspace
   return { scope: "default" };
 }
 
+export function buildWorkspaceBindingTarget(
+  scope: BindScope,
+  targetValue: string,
+): WorkspaceBindingTarget {
+  if (scope === "default") {
+    return { scope: "default" };
+  }
+  if (scope === "path") {
+    return { scope: "path", path: targetValue };
+  }
+  return { scope: "git_remote", pattern: targetValue };
+}
+
+export function unbindTargetForWorkspaceBindingTarget(
+  target: WorkspaceBindingTarget,
+): WorkspaceUnbindInput {
+  if (target.scope === "path") {
+    return { scope: "path", path: target.path };
+  }
+  if (target.scope === "git_remote") {
+    return { scope: "git_remote", pattern: target.pattern };
+  }
+  return { scope: "default" };
+}
+
+export function workspaceBindingTargetChanged(
+  source: WorkspaceUnbindInput,
+  target: WorkspaceBindingTarget,
+) {
+  const nextSource = unbindTargetForWorkspaceBindingTarget(target);
+
+  if (source.scope !== nextSource.scope) {
+    return true;
+  }
+
+  if (nextSource.scope === "path") {
+    return source.path !== nextSource.path;
+  }
+
+  if (nextSource.scope === "git_remote") {
+    return source.pattern !== nextSource.pattern;
+  }
+
+  return false;
+}
+
 export function countRuleUsageByContext(
   bindings: Array<{ context: string }>,
 ) {
@@ -242,6 +305,36 @@ export function buildSavedSetRows(input: {
         ? missing.map(([tool, profile]) => `${tool}: ${profile}`).join(" · ")
         : null,
       usageCount: input.ruleUsageCountByContext.get(set.name) ?? 0,
+    };
+  });
+}
+
+export function buildImportedContextRows(input: {
+  activeContext: string | null;
+  importedContexts: AppSnapshot["contexts"];
+  settings: DesktopSettings;
+  snapshot: AppSnapshot;
+  tools: readonly string[];
+}): ImportedContextRowModel[] {
+  return input.importedContexts.map((entry) => {
+    const active = input.activeContext === entry.name;
+    const displayLabel = contextDisplayLabel(input.settings, entry.name);
+
+    return {
+      name: entry.name,
+      displayLabel,
+      status: importedContextStatus(active),
+      summary: input.tools
+        .map((tool) => {
+          const profile = entry.profiles[tool];
+          const label = profile
+            ? toolProfileDisplayLabel(input.settings, input.snapshot, tool, profile)
+            : "—";
+          return `${toolShortName(tool)}: ${label}`;
+        })
+        .join(" · "),
+      actionLabel: importedContextActionLabel(active, displayLabel),
+      active,
     };
   });
 }
@@ -292,4 +385,12 @@ export function buildSelectedSetInspectorState(input: {
     projectRuleCount: input.ruleUsageCountByContext.get(input.selectedSet.name) ?? 0,
     warning,
   };
+}
+
+export function savedSetActivationLabel(displayLabel: string) {
+  return `Activated saved set ${displayLabel}.`;
+}
+
+export function importedContextActivationResultLabel(displayLabel: string) {
+  return `Activated set ${displayLabel}.`;
 }

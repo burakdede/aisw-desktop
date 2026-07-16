@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { AppSnapshot, DesktopSettings } from "../../lib/schemas";
 import {
+  buildImportedContextRows,
   buildSavedSetRows,
   buildSavedSetCollection,
   buildSetSettingsUpdate,
   buildSelectedSetInspectorState,
+  buildWorkspaceBindingTarget,
   countRuleUsageByContext,
   createEditableProfileSetDraft,
   createEditableRuleDraft,
@@ -13,8 +15,12 @@ import {
   deletedSetActionLabel,
   duplicateEditableProfileSetDraft,
   hasDuplicateSetName,
+  importedContextActivationResultLabel,
   savedSetActionLabel,
+  savedSetActivationLabel,
   unbindTargetForBinding,
+  unbindTargetForWorkspaceBindingTarget,
+  workspaceBindingTargetChanged,
 } from "./sets-panel-display";
 
 const TOOLS = ["claude", "codex", "gemini"] as const;
@@ -258,6 +264,26 @@ describe("sets-panel-display", () => {
       scope: "git_remote",
       pattern: "github.com/acme/*",
     });
+
+    const pathTarget = buildWorkspaceBindingTarget("path", "/code/acme");
+    expect(pathTarget).toEqual({ scope: "path", path: "/code/acme" });
+    expect(unbindTargetForWorkspaceBindingTarget(pathTarget)).toEqual({
+      scope: "path",
+      path: "/code/acme",
+    });
+
+    expect(
+      workspaceBindingTargetChanged(
+        { scope: "path", path: "/code/acme" },
+        buildWorkspaceBindingTarget("path", "/code/acme"),
+      ),
+    ).toBe(false);
+    expect(
+      workspaceBindingTargetChanged(
+        { scope: "path", path: "/code/acme" },
+        buildWorkspaceBindingTarget("git_remote", "github.com/acme/*"),
+      ),
+    ).toBe(true);
   });
 
   it("builds saved set rows with summaries, status, and usage counts", () => {
@@ -309,6 +335,64 @@ describe("sets-panel-display", () => {
         usageCount: 1,
       },
     ]);
+  });
+
+  it("builds imported context rows and shared activation copy", () => {
+    const settings = makeSettings();
+    const snapshot = makeSnapshot({
+      contexts: [
+        {
+          name: "client-acme",
+          profiles: {
+            claude: "work",
+            codex: "work",
+            gemini: null,
+          },
+        },
+        {
+          name: "fallback",
+          profiles: {
+            claude: null,
+            codex: null,
+            gemini: "personal",
+          },
+        },
+      ],
+    });
+
+    expect(
+      buildImportedContextRows({
+        activeContext: "client-acme",
+        importedContexts: snapshot.contexts,
+        settings,
+        snapshot,
+        tools: TOOLS,
+      }),
+    ).toEqual([
+      {
+        name: "client-acme",
+        displayLabel: "Client Acme",
+        status: { label: "Current", tone: "ready", symbol: "●" },
+        summary: "Claude: Work Claude · Codex: Work Codex · Gemini: —",
+        actionLabel: "Current",
+        active: true,
+      },
+      {
+        name: "fallback",
+        displayLabel: "fallback",
+        status: { label: "Imported", tone: "available", symbol: "○" },
+        summary: "Claude: — · Codex: — · Gemini: Personal Gemini",
+        actionLabel: "Use CLI Context fallback",
+        active: false,
+      },
+    ]);
+
+    expect(savedSetActivationLabel("Client Acme")).toBe(
+      "Activated saved set Client Acme.",
+    );
+    expect(importedContextActivationResultLabel("Client Acme")).toBe(
+      "Activated set Client Acme.",
+    );
   });
 
   it("builds selected set inspector state with activation and warning policy", () => {
