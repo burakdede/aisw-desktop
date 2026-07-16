@@ -42,6 +42,11 @@ import {
   DIAGNOSTICS_HEALTHY_COMPACT_DETAIL,
   DIAGNOSTICS_HEALTHY_PRIMARY_DETAIL,
   DIAGNOSTICS_HEALTHY_TITLE,
+  DIAGNOSTICS_NO_SAFE_REPAIRS_QUEUED_TITLE,
+  DIAGNOSTICS_REFRESH_DIAGNOSTICS_LABEL,
+  DIAGNOSTICS_REPAIR_PLAN_LABEL,
+  DIAGNOSTICS_REVIEW_SAFE_FIXES_ELLIPSIS_LABEL,
+  DIAGNOSTICS_REVIEW_SAFE_FIXES_LABEL,
 } from "./diagnostics-copy";
 export {
   buildDiagnosticsStatusMessage,
@@ -192,9 +197,9 @@ export const DIAGNOSTICS_PANEL_COPY = {
   verifyButtonLabel: DESKTOP_ACTION_COPY.verifyLabel,
   inspectorBackLabel: "Back",
   verifyAgainAriaLabel: "Verify Again",
-  reviewSafeFixesAriaLabel: "Review Safe Fixes",
+  reviewSafeFixesAriaLabel: DIAGNOSTICS_REVIEW_SAFE_FIXES_LABEL,
   applySafeFixesAriaLabel: "Apply Safe Fixes",
-  reviewSafeFixesButtonLabel: "Review Safe Fixes…",
+  reviewSafeFixesButtonLabel: DIAGNOSTICS_REVIEW_SAFE_FIXES_ELLIPSIS_LABEL,
   applyingRepairsLabel: "Applying Repairs…",
   diagnosticsActionsAriaLabel: "Diagnostics actions",
   diagnosticsActionsTriggerAriaLabel: "Diagnostics more actions",
@@ -216,11 +221,11 @@ export const DIAGNOSTICS_PANEL_COPY = {
   technicalDetailsSummary: "Technical Details",
   technicalDetailsIntro: "Suggested commands for validation and recovery.",
   technicalDetailsFallbackCommand: "# Review the explicit action above",
-  repairPlanDialogAriaLabel: "Review Safe Fixes",
-  repairPlanKicker: "Repair plan",
-  repairPlanTitle: "Review Safe Fixes",
+  repairPlanDialogAriaLabel: DIAGNOSTICS_REVIEW_SAFE_FIXES_LABEL,
+  repairPlanKicker: DIAGNOSTICS_REPAIR_PLAN_LABEL,
+  repairPlanTitle: DIAGNOSTICS_REVIEW_SAFE_FIXES_LABEL,
   repairPlanCloseLabel: "Close",
-  repairPlanEmptyTitle: "No safe repairs queued",
+  repairPlanEmptyTitle: DIAGNOSTICS_NO_SAFE_REPAIRS_QUEUED_TITLE,
   repairPlanEmptyDetail:
     "Diagnostics did not find any safe automatic repairs to apply right now.",
   repairPlanSelectionKicker: "Repairs",
@@ -767,10 +772,10 @@ function buildMissingToolQuickFix(tool: string): DiagnosticQuickFixModel {
     label: "Open installation guide",
     status: "warn",
     toolTarget: tool,
-    secondaryAction: {
-      kind: "refresh_diagnostics",
-      label: "Refresh diagnostics",
-    },
+      secondaryAction: {
+        kind: "refresh_diagnostics",
+        label: DIAGNOSTICS_REFRESH_DIAGNOSTICS_LABEL,
+      },
   };
 }
 

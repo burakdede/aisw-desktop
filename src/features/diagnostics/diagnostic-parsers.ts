@@ -19,6 +19,7 @@ import {
   asString,
   type UnknownRecord,
 } from "../../lib/parse-guards";
+import { DIAGNOSTICS_REPAIR_PLAN_LABEL } from "./diagnostics-copy";
 
 export interface SummaryCardData {
   title: string;
@@ -92,7 +93,7 @@ export function parseRepairSummary(payload: RepairReport | undefined): SummaryCa
   const result = asObject(payload?.result);
   const summary = asObject(result?.summary);
   return {
-    title: "Repair plan",
+    title: DIAGNOSTICS_REPAIR_PLAN_LABEL,
     status: normalizeCheckStatus(summary?.status),
     lines: [
       `${asNumber(summary?.actions_planned)} actions planned`,

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { DIAGNOSTICS_REPAIR_PLAN_LABEL } from "./diagnostics-copy";
 import {
   parseDoctorSummary,
   parseRepairActions,
+  parseRepairSummary,
   parseVerifySummary,
 } from "./diagnostic-parsers";
 
@@ -30,6 +32,22 @@ describe("parseRepairActions", () => {
       title: "Live match",
       status: "unknown",
       lines: ["1 passed", "0 warnings", "0 failed"],
+    });
+    expect(
+      parseRepairSummary({
+        result: {
+          summary: {
+            status: "warn",
+            actions_planned: 2,
+            actions_applied: 1,
+            issues_remaining: 3,
+          },
+        },
+      }),
+    ).toEqual({
+      title: DIAGNOSTICS_REPAIR_PLAN_LABEL,
+      status: "warn",
+      lines: ["2 actions planned", "1 applied", "3 issues remaining"],
     });
   });
 

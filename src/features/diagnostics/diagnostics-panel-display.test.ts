@@ -33,6 +33,8 @@ import {
   DIAGNOSTICS_EXPORT_REPORT_FAILED_MESSAGE,
   DIAGNOSTICS_HEALTHY_PRIMARY_DETAIL,
   DIAGNOSTICS_HEALTHY_TITLE,
+  DIAGNOSTICS_REFRESH_DIAGNOSTICS_LABEL,
+  DIAGNOSTICS_REVIEW_SAFE_FIXES_ELLIPSIS_LABEL,
 } from "./diagnostics-copy";
 import { USE_EXPECTED_SET_NOW_LABEL } from "../../lib/sets-display";
 import {
@@ -111,7 +113,9 @@ function makeToolCapabilities(): NonNullable<AppBootstrap["runtime_status"]["cap
 describe("diagnostics-panel-display", () => {
   it("shares stable diagnostics panel copy", () => {
     expect(DIAGNOSTICS_PANEL_COPY.verifyButtonLabel).toBe("Verify");
-    expect(DIAGNOSTICS_PANEL_COPY.reviewSafeFixesButtonLabel).toBe("Review Safe Fixes…");
+    expect(DIAGNOSTICS_PANEL_COPY.reviewSafeFixesButtonLabel).toBe(
+      DIAGNOSTICS_REVIEW_SAFE_FIXES_ELLIPSIS_LABEL,
+    );
     expect(DIAGNOSTICS_PANEL_COPY.applySafeFixesAriaLabel).toBe("Apply Safe Fixes");
     expect(DIAGNOSTICS_PANEL_COPY.healthyTitle).toBe(DIAGNOSTICS_HEALTHY_TITLE);
     expect(DIAGNOSTICS_PANEL_COPY.technicalDetailsIntro).toBe(
@@ -561,7 +565,7 @@ describe("diagnostics-panel-display", () => {
       toolTarget: "codex",
       secondaryAction: {
         kind: "refresh_diagnostics",
-        label: "Refresh diagnostics",
+        label: DIAGNOSTICS_REFRESH_DIAGNOSTICS_LABEL,
       },
     });
     expect(models[7]).toMatchObject({
