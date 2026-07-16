@@ -549,28 +549,29 @@ export function buildDiagnosticInspectorActions(input: {
     input.primaryFindingFix,
     input.importCurrentLabel,
   );
+  const primarySecondaryAction = buildPrimarySecondaryAction(input.primaryFindingFix);
+  const primaryQuickFixAction = buildQuickFixAction(input.secondaryFindingFixes[0]);
+  const openProfileDetailsAction = buildOpenProfileDetailsAction(input.selectedFinding);
   const secondaryInspectorAction =
-    buildPrimarySecondaryAction(input.primaryFindingFix)
-    ?? buildQuickFixAction(input.secondaryFindingFixes[0])
-    ?? buildOpenProfileDetailsAction(input.selectedFinding)
+    primarySecondaryAction
+    ?? primaryQuickFixAction
+    ?? openProfileDetailsAction
     ?? importCurrentAction;
   const overflowActions: DiagnosticInspectorAction[] = [
     ...(importCurrentAction && secondaryInspectorAction?.key !== importCurrentAction.key
       ? [importCurrentAction]
       : []),
-    ...(buildPrimarySecondaryAction(input.primaryFindingFix)
-      && secondaryInspectorAction?.key
-        !== buildPrimarySecondaryAction(input.primaryFindingFix)?.key
-      ? [buildPrimarySecondaryAction(input.primaryFindingFix)!]
+    ...(primarySecondaryAction
+      && secondaryInspectorAction?.key !== primarySecondaryAction.key
+      ? [primarySecondaryAction]
       : []),
     ...input.secondaryFindingFixes
       .slice(secondaryInspectorAction?.kind === "quick_fix" ? 1 : 0)
       .map((fix) => buildQuickFixAction(fix))
       .filter((action): action is DiagnosticInspectorAction => Boolean(action)),
-    ...(buildOpenProfileDetailsAction(input.selectedFinding)
-      && secondaryInspectorAction?.key
-        !== buildOpenProfileDetailsAction(input.selectedFinding)?.key
-      ? [buildOpenProfileDetailsAction(input.selectedFinding)!]
+    ...(openProfileDetailsAction
+      && secondaryInspectorAction?.key !== openProfileDetailsAction.key
+      ? [openProfileDetailsAction]
       : []),
   ];
 
