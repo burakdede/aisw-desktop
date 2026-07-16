@@ -42,6 +42,7 @@ import {
   SETTINGS_INSTALL_UPDATE_LABEL,
   SETTINGS_NO_UPDATE_AVAILABLE_MESSAGE,
   SETTINGS_OPEN_APP_DATA_FOLDER_LABEL,
+  SETTINGS_PANEL_COPY,
   SETTINGS_RESET_ONBOARDING_LABEL,
   SETTINGS_RESET_WINDOW_LAYOUT_LABEL,
   SETTINGS_REOPEN_SETUP_ASSISTANT_LABEL,
@@ -156,6 +157,12 @@ describe("settings-panel-display", () => {
     expect(SETTINGS_SHELL_NOTE).toBe(
       "Current terminal sessions only need the hook when they must receive live environment changes immediately.",
     );
+    expect(SETTINGS_PANEL_COPY.mobilePickerLabel).toBe("Section");
+    expect(SETTINGS_PANEL_COPY.general.rows.launchAtLogin).toBe("Launch at login");
+    expect(SETTINGS_PANEL_COPY.shell.installButton).toBe("Copy Install");
+    expect(SETTINGS_PANEL_COPY.keyring.values.disabled).toBe("Disabled");
+    expect(SETTINGS_PANEL_COPY.updates.rows.availableReleases).toBe("Available releases");
+    expect(SETTINGS_PANEL_COPY.advanced.rows.supportBundle).toBe("Support bundle");
     expect(releaseChannelDescription("beta")).toBe(
       "Check for a signed desktop release on the selected beta channel.",
     );

@@ -54,6 +54,104 @@ export const SETTINGS_RESET_ONBOARDING_LABEL = "Reset Onboarding";
 export const SETTINGS_RESET_WINDOW_LAYOUT_LABEL = "Reset Window Layout";
 export const SETTINGS_SHELL_NOTE =
   "Current terminal sessions only need the hook when they must receive live environment changes immediately.";
+export const SETTINGS_PANEL_COPY = {
+  mobilePickerLabel: "Section",
+  mobilePickerAriaLabel: "Settings section",
+  sectionNavAriaLabel: "Settings sections",
+  general: {
+    groups: {
+      appearance: "Appearance",
+      startup: "Startup",
+      window: "Window",
+    },
+    rows: {
+      appearance: "Appearance",
+      launchAtLogin: "Launch at login",
+      showMenuBarIcon: "Show menu bar icon",
+      openAtLaunch: "Open at launch",
+      restoreWindowState: "Restore previous window size and position",
+    },
+    defaultSectionAriaLabel: "Default section",
+  },
+  runtime: {
+    groups: {
+      runtime: "AISW Runtime",
+      data: "AISW Data",
+    },
+    rows: {
+      bundledRuntime: "Bundled runtime",
+      status: "Status",
+      currentPath: "Current path",
+      runtimeSource: "Runtime source",
+      systemRuntime: "System runtime",
+      customRuntime: "Custom runtime",
+      aiswHome: "AISW home",
+      localDataFolder: "Local data folder",
+    },
+    customPathAriaLabel: "Engine path",
+  },
+  shell: {
+    groupTitle: "Terminal Integration",
+    rows: {
+      detectedShell: "Detected shell",
+      shellHook: "Shell hook",
+      configFile: "Config file",
+      completionScripts: "Completion scripts",
+      shellHookActions: "Shell hook actions",
+    },
+    installButton: "Copy Install",
+    verifyButton: "Copy Verify",
+  },
+  keyring: {
+    groups: {
+      storage: "Credential Storage",
+      localData: "Local Data",
+      diagnostics: "Diagnostics",
+    },
+    rows: {
+      macosKeychain: "macOS Keychain",
+      filePermissions: "File permissions",
+      remoteSync: "Remote sync",
+      telemetry: "Telemetry",
+      aiswDataFolder: "AISW data folder",
+      finder: "Finder",
+      supportBundle: "Support bundle",
+    },
+    values: {
+      available: "Available",
+      correct: "Correct",
+      disabled: "Disabled",
+    },
+  },
+  updates: {
+    groups: {
+      desktop: "AISW Desktop",
+      bundledRuntime: "Bundled AISW Engine",
+    },
+    rows: {
+      currentVersion: "Current version",
+      updateChannel: "Update channel",
+      availableReleases: "Available releases",
+      version: "Version",
+      compatibility: "Compatibility",
+    },
+  },
+  advanced: {
+    groups: {
+      applicationState: "Application State",
+      data: "Data",
+    },
+    rows: {
+      setupAssistant: "Setup assistant",
+      setupState: "Setup state",
+      windowLayout: "Window layout",
+      appDataFolder: "App data folder",
+      supportBundle: "Support bundle",
+      aiswHome: "AISW home",
+    },
+    aiswHomeAriaLabel: "AISW home",
+  },
+} as const;
 export type SettingsSectionDirection = "next" | "previous" | "first" | "last";
 export type SettingsDraft = {
   runtimeKind: DesktopSettings["runtime_kind"];

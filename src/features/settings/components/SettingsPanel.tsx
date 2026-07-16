@@ -73,8 +73,8 @@ import {
   SETTINGS_EXPORT_REDACTED_SUPPORT_BUNDLE_LABEL,
   SETTINGS_INSTALLING_UPDATE_LABEL,
   SETTINGS_INSTALL_UPDATE_LABEL,
-  SETTINGS_NO_UPDATE_AVAILABLE_MESSAGE,
   SETTINGS_OPEN_APP_DATA_FOLDER_LABEL,
+  SETTINGS_PANEL_COPY,
   SETTINGS_RESET_ONBOARDING_LABEL,
   SETTINGS_RESET_WINDOW_LAYOUT_LABEL,
   SETTINGS_REOPEN_SETUP_ASSISTANT_LABEL,
@@ -368,9 +368,9 @@ export function SettingsPanel({
     <div className="settings-screen screen-content">
       <div className="settings-mobile-picker">
         <label className="settings-field">
-          <span className="settings-field-label">Section</span>
+          <span className="settings-field-label">{SETTINGS_PANEL_COPY.mobilePickerLabel}</span>
           <select
-            aria-label="Settings section"
+            aria-label={SETTINGS_PANEL_COPY.mobilePickerAriaLabel}
             value={selectedSection}
             onChange={(event) => setSelectedSection(event.target.value as SettingsSection)}
           >
@@ -384,7 +384,10 @@ export function SettingsPanel({
       </div>
 
       <div className="settings-layout-v2">
-        <aside className="settings-category-pane" aria-label="Settings sections">
+        <aside
+          className="settings-category-pane"
+          aria-label={SETTINGS_PANEL_COPY.sectionNavAriaLabel}
+        >
           {SETTINGS_SECTIONS.map((section) => (
             <button
               key={section}
@@ -410,10 +413,10 @@ export function SettingsPanel({
 
             {selectedSection === "general" ? (
               <div className="settings-section-stack">
-                <SettingsGroup title="Appearance">
-                  <SettingsRow label="Appearance">
+                <SettingsGroup title={SETTINGS_PANEL_COPY.general.groups.appearance}>
+                  <SettingsRow label={SETTINGS_PANEL_COPY.general.rows.appearance}>
                     <select
-                      aria-label="Appearance"
+                      aria-label={SETTINGS_PANEL_COPY.general.rows.appearance}
                       value={appearance}
                       onChange={(event) =>
                         updateGeneralPreferences({
@@ -430,16 +433,16 @@ export function SettingsPanel({
                   </SettingsRow>
                 </SettingsGroup>
 
-                <SettingsGroup title="Startup">
+                <SettingsGroup title={SETTINGS_PANEL_COPY.general.groups.startup}>
                   <ToggleRow
-                    label="Launch at login"
+                    label={SETTINGS_PANEL_COPY.general.rows.launchAtLogin}
                     description={launchAtLoginDescription(launchAtLoginSupported, launchAtLoginDetail)}
                     control={
                       <button
                         type="button"
                         role="switch"
                         className="settings-switch"
-                        aria-label="Launch at login"
+                        aria-label={SETTINGS_PANEL_COPY.general.rows.launchAtLogin}
                         aria-checked={launchAtLoginEnabled}
                         disabled={
                           launchAtLogin.isLoading ||
@@ -454,13 +457,13 @@ export function SettingsPanel({
                     }
                   />
                   <ToggleRow
-                    label="Show menu bar icon"
+                    label={SETTINGS_PANEL_COPY.general.rows.showMenuBarIcon}
                     control={
                       <button
                         type="button"
                         role="switch"
                         className="settings-switch"
-                        aria-label="Show menu bar icon"
+                        aria-label={SETTINGS_PANEL_COPY.general.rows.showMenuBarIcon}
                         aria-checked={showMenuBarIcon}
                         onClick={() =>
                           updateGeneralPreferences({ showMenuBarIcon: !showMenuBarIcon })
@@ -468,9 +471,9 @@ export function SettingsPanel({
                       />
                     }
                   />
-                  <SettingsRow label="Open at launch">
+                  <SettingsRow label={SETTINGS_PANEL_COPY.general.rows.openAtLaunch}>
                     <select
-                      aria-label="Default section"
+                      aria-label={SETTINGS_PANEL_COPY.general.defaultSectionAriaLabel}
                       value={defaultSection}
                       onChange={(event) =>
                         updateGeneralPreferences({
@@ -486,15 +489,15 @@ export function SettingsPanel({
                     </select>
                   </SettingsRow>
                 </SettingsGroup>
-                <SettingsGroup title="Window">
+                <SettingsGroup title={SETTINGS_PANEL_COPY.general.groups.window}>
                   <ToggleRow
-                    label="Restore previous window size and position"
+                    label={SETTINGS_PANEL_COPY.general.rows.restoreWindowState}
                     control={
                       <button
                         type="button"
                         role="switch"
                         className="settings-switch"
-                        aria-label="Restore previous window size and position"
+                        aria-label={SETTINGS_PANEL_COPY.general.rows.restoreWindowState}
                         aria-checked={restoreWindowState}
                         onClick={() =>
                           updateGeneralPreferences({
@@ -512,19 +515,22 @@ export function SettingsPanel({
 
             {selectedSection === "runtime" ? (
               <div className="settings-section-stack">
-                <SettingsGroup title="AISW Runtime">
-                  <SettingsStaticRow label="Bundled runtime" value={runtimeStatus.version?.version ?? DATE_UNAVAILABLE_LABEL} />
+                <SettingsGroup title={SETTINGS_PANEL_COPY.runtime.groups.runtime}>
                   <SettingsStaticRow
-                    label="Status"
+                    label={SETTINGS_PANEL_COPY.runtime.rows.bundledRuntime}
+                    value={runtimeStatus.version?.version ?? DATE_UNAVAILABLE_LABEL}
+                  />
+                  <SettingsStaticRow
+                    label={SETTINGS_PANEL_COPY.runtime.rows.status}
                     value={runtimeReadinessLabel(runtimeStatus.compatible)}
                   />
                   <SettingsStaticRow
-                    label="Current path"
+                    label={SETTINGS_PANEL_COPY.runtime.rows.currentPath}
                     value={<code className="settings-path-value">{runtimePathValue}</code>}
                   />
-                  <SettingsRow label="Runtime source">
+                  <SettingsRow label={SETTINGS_PANEL_COPY.runtime.rows.runtimeSource}>
                     <select
-                      aria-label="Runtime source"
+                      aria-label={SETTINGS_PANEL_COPY.runtime.rows.runtimeSource}
                       value={runtimeKind}
                       onChange={(event) => {
                         const nextRuntimeKind = event.target.value as typeof runtimeKind;
@@ -552,12 +558,12 @@ export function SettingsPanel({
                     </select>
                   </SettingsRow>
                   <SettingsStaticRow
-                    label="System runtime"
+                    label={SETTINGS_PANEL_COPY.runtime.rows.systemRuntime}
                     value={<code className="settings-path-value">{runtimeStatus.inventory.system_path ?? NOT_FOUND_LABEL}</code>}
                   />
-                  <SettingsRow label="Custom runtime">
+                  <SettingsRow label={SETTINGS_PANEL_COPY.runtime.rows.customRuntime}>
                     <input
-                      aria-label="Engine path"
+                      aria-label={SETTINGS_PANEL_COPY.runtime.customPathAriaLabel}
                       value={runtimePath}
                       disabled={runtimeKind !== "custom"}
                       placeholder={runtimeKind === "custom" ? "/path/to/aisw" : ""}
@@ -578,10 +584,13 @@ export function SettingsPanel({
                   </SettingsRow>
                 </SettingsGroup>
 
-                <SettingsGroup title="AISW Data">
-                  <SettingsStaticRow label="AISW home" value={<code className="settings-path-value">{settings.aisw_home ?? "~/.aisw"}</code>} />
+                <SettingsGroup title={SETTINGS_PANEL_COPY.runtime.groups.data}>
+                  <SettingsStaticRow
+                    label={SETTINGS_PANEL_COPY.runtime.rows.aiswHome}
+                    value={<code className="settings-path-value">{settings.aisw_home ?? "~/.aisw"}</code>}
+                  />
                   <SettingsActionRow
-                    label="Local data folder"
+                    label={SETTINGS_PANEL_COPY.runtime.rows.localDataFolder}
                     action={
                       <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
                         {SETTINGS_REVEAL_IN_FINDER_LABEL}
@@ -602,23 +611,26 @@ export function SettingsPanel({
 
             {selectedSection === "shell" ? (
               <div className="settings-section-stack">
-                <SettingsGroup title="Terminal Integration">
+                <SettingsGroup title={SETTINGS_PANEL_COPY.shell.groupTitle}>
                   <SettingsStaticRow
-                    label="Detected shell"
+                    label={SETTINGS_PANEL_COPY.shell.rows.detectedShell}
                     value={detectedShellLabel(shellGuidance.data?.detected_shell)}
                   />
                   <SettingsStaticRow
-                    label="Shell hook"
+                    label={SETTINGS_PANEL_COPY.shell.rows.shellHook}
                     value={shellHookStatusLabel(shellCheck?.status)}
                   />
                   <SettingsStaticRow
-                    label="Config file"
+                    label={SETTINGS_PANEL_COPY.shell.rows.configFile}
                     value={<code className="settings-path-value">{shellConfigPathLabel(selectedVariant)}</code>}
                   />
-                  <SettingsStaticRow label="Completion scripts" value={SHELL_COMPLETION_AVAILABLE_LABEL} />
+                  <SettingsStaticRow
+                    label={SETTINGS_PANEL_COPY.shell.rows.completionScripts}
+                    value={SHELL_COMPLETION_AVAILABLE_LABEL}
+                  />
                   {selectedVariant ? (
                     <SettingsActionRow
-                      label="Shell hook actions"
+                      label={SETTINGS_PANEL_COPY.shell.rows.shellHookActions}
                       action={
                         <div className="button-row">
                           <button
@@ -626,14 +638,14 @@ export function SettingsPanel({
                             type="button"
                             onClick={() => void copyText(selectedVariant.install_command, "setup")}
                           >
-                            Copy Install
+                            {SETTINGS_PANEL_COPY.shell.installButton}
                           </button>
                           <button
                             className="ghost-button"
                             type="button"
                             onClick={() => void copyText(selectedVariant.verify_command, "verify")}
                           >
-                            Copy Verify
+                            {SETTINGS_PANEL_COPY.shell.verifyButton}
                           </button>
                         </div>
                       }
@@ -654,17 +666,32 @@ export function SettingsPanel({
 
             {selectedSection === "keyring" ? (
               <div className="settings-section-stack">
-                <SettingsGroup title="Credential Storage">
-                  <SettingsStaticRow label="macOS Keychain" value="Available" />
-                  <SettingsStaticRow label="File permissions" value="Correct" />
-                  <SettingsStaticRow label="Remote sync" value="Disabled" />
-                  <SettingsStaticRow label="Telemetry" value="Disabled" />
+                <SettingsGroup title={SETTINGS_PANEL_COPY.keyring.groups.storage}>
+                  <SettingsStaticRow
+                    label={SETTINGS_PANEL_COPY.keyring.rows.macosKeychain}
+                    value={SETTINGS_PANEL_COPY.keyring.values.available}
+                  />
+                  <SettingsStaticRow
+                    label={SETTINGS_PANEL_COPY.keyring.rows.filePermissions}
+                    value={SETTINGS_PANEL_COPY.keyring.values.correct}
+                  />
+                  <SettingsStaticRow
+                    label={SETTINGS_PANEL_COPY.keyring.rows.remoteSync}
+                    value={SETTINGS_PANEL_COPY.keyring.values.disabled}
+                  />
+                  <SettingsStaticRow
+                    label={SETTINGS_PANEL_COPY.keyring.rows.telemetry}
+                    value={SETTINGS_PANEL_COPY.keyring.values.disabled}
+                  />
                 </SettingsGroup>
 
-                <SettingsGroup title="Local Data">
-                  <SettingsStaticRow label="AISW data folder" value={<code className="settings-path-value">{settings.aisw_home ?? "~/.aisw"}</code>} />
+                <SettingsGroup title={SETTINGS_PANEL_COPY.keyring.groups.localData}>
+                  <SettingsStaticRow
+                    label={SETTINGS_PANEL_COPY.keyring.rows.aiswDataFolder}
+                    value={<code className="settings-path-value">{settings.aisw_home ?? "~/.aisw"}</code>}
+                  />
                   <SettingsActionRow
-                    label="Finder"
+                    label={SETTINGS_PANEL_COPY.keyring.rows.finder}
                     action={
                       <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
                         {SETTINGS_REVEAL_IN_FINDER_LABEL}
@@ -673,9 +700,9 @@ export function SettingsPanel({
                   />
                 </SettingsGroup>
 
-                <SettingsGroup title="Diagnostics">
+                <SettingsGroup title={SETTINGS_PANEL_COPY.keyring.groups.diagnostics}>
                   <SettingsActionRow
-                    label="Support bundle"
+                    label={SETTINGS_PANEL_COPY.keyring.rows.supportBundle}
                     action={
                       <button className="ghost-button" type="button" onClick={() => void exportReport()}>
                         {SETTINGS_COPY_REDACTED_REPORT_LABEL}
@@ -689,11 +716,14 @@ export function SettingsPanel({
 
             {selectedSection === "updates" ? (
               <div className="settings-section-stack">
-                <SettingsGroup title="AISW Desktop">
-                  <SettingsStaticRow label="Current version" value={appVersion} />
-                  <SettingsRow label="Update channel">
+                <SettingsGroup title={SETTINGS_PANEL_COPY.updates.groups.desktop}>
+                  <SettingsStaticRow
+                    label={SETTINGS_PANEL_COPY.updates.rows.currentVersion}
+                    value={appVersion}
+                  />
+                  <SettingsRow label={SETTINGS_PANEL_COPY.updates.rows.updateChannel}>
                     <select
-                      aria-label="Update channel"
+                      aria-label={SETTINGS_PANEL_COPY.updates.rows.updateChannel}
                       value={updateChannel}
                       onChange={(event) => {
                         const nextUpdateChannel = normalizeDesktopUpdateChannel(
@@ -719,7 +749,7 @@ export function SettingsPanel({
                     </select>
                   </SettingsRow>
                   <SettingsActionRow
-                    label="Available releases"
+                    label={SETTINGS_PANEL_COPY.updates.rows.availableReleases}
                     description={releaseChannelDescription(updateChannel)}
                     action={
                       <div className="button-row">
@@ -750,10 +780,13 @@ export function SettingsPanel({
                   />
                 </SettingsGroup>
 
-                <SettingsGroup title="Bundled AISW Engine">
-                  <SettingsStaticRow label="Version" value={runtimeStatus.version?.version ?? DATE_UNAVAILABLE_LABEL} />
+                <SettingsGroup title={SETTINGS_PANEL_COPY.updates.groups.bundledRuntime}>
                   <SettingsStaticRow
-                    label="Compatibility"
+                    label={SETTINGS_PANEL_COPY.updates.rows.version}
+                    value={runtimeStatus.version?.version ?? DATE_UNAVAILABLE_LABEL}
+                  />
+                  <SettingsStaticRow
+                    label={SETTINGS_PANEL_COPY.updates.rows.compatibility}
                     value={runtimeCompatibilityLabel(runtimeStatus.compatible)}
                   />
                 </SettingsGroup>
@@ -798,9 +831,9 @@ export function SettingsPanel({
 
             {selectedSection === "advanced" ? (
               <div className="settings-section-stack">
-                <SettingsGroup title="Application State">
+                <SettingsGroup title={SETTINGS_PANEL_COPY.advanced.groups.applicationState}>
                   <SettingsActionRow
-                    label="Setup assistant"
+                    label={SETTINGS_PANEL_COPY.advanced.rows.setupAssistant}
                     action={
                       <button
                         className="ghost-button"
@@ -813,7 +846,7 @@ export function SettingsPanel({
                     }
                   />
                   <SettingsActionRow
-                    label="Setup state"
+                    label={SETTINGS_PANEL_COPY.advanced.rows.setupState}
                     action={
                       <button className="ghost-button" type="button" onClick={resetOnboarding}>
                         {SETTINGS_RESET_ONBOARDING_LABEL}
@@ -822,9 +855,9 @@ export function SettingsPanel({
                   />
                 </SettingsGroup>
 
-                <SettingsGroup title="Data">
+                <SettingsGroup title={SETTINGS_PANEL_COPY.advanced.groups.data}>
                   <SettingsActionRow
-                    label="Window layout"
+                    label={SETTINGS_PANEL_COPY.advanced.rows.windowLayout}
                     action={
                       <button className="ghost-button" type="button" onClick={resetWindowLayout}>
                         {SETTINGS_RESET_WINDOW_LAYOUT_LABEL}
@@ -832,7 +865,7 @@ export function SettingsPanel({
                     }
                   />
                   <SettingsActionRow
-                    label="App data folder"
+                    label={SETTINGS_PANEL_COPY.advanced.rows.appDataFolder}
                     action={
                       <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
                         {SETTINGS_OPEN_APP_DATA_FOLDER_LABEL}
@@ -840,16 +873,16 @@ export function SettingsPanel({
                     }
                   />
                   <SettingsActionRow
-                    label="Support bundle"
+                    label={SETTINGS_PANEL_COPY.advanced.rows.supportBundle}
                     action={
                       <button className="ghost-button" type="button" onClick={() => void exportReport()}>
                         {SETTINGS_EXPORT_REDACTED_SUPPORT_BUNDLE_LABEL}
                       </button>
                     }
                   />
-                  <SettingsRow label="AISW home">
+                  <SettingsRow label={SETTINGS_PANEL_COPY.advanced.rows.aiswHome}>
                     <input
-                      aria-label="AISW home"
+                      aria-label={SETTINGS_PANEL_COPY.advanced.aiswHomeAriaLabel}
                       value={aiswHome}
                       onChange={(event) => setAiswHome(event.target.value)}
                       onBlur={() =>
