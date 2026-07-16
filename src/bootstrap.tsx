@@ -1,8 +1,13 @@
 import React, { Component, type ErrorInfo, type ReactNode } from "react";
 import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-type FatalPhase = "startup" | "runtime";
+import {
+  bootstrapConsoleScope,
+  fatalPhaseBody,
+  FATAL_PHASES,
+  type FatalPhase,
+  UNKNOWN_APPLICATION_ERROR_MESSAGE,
+} from "./lib/bootstrap-fatal";
 
 type FatalReport = {
   phase: FatalPhase;
@@ -37,7 +42,7 @@ export async function bootstrapApplication(rootElement: HTMLElement) {
     }
 
     fatalReport = nextReport;
-    console.error(`[bootstrap:${phase}]`, error);
+    console.error(bootstrapConsoleScope(phase), error);
     root.render(<FatalScreen {...nextReport} />);
   };
 
@@ -49,7 +54,7 @@ export async function bootstrapApplication(rootElement: HTMLElement) {
 
     root.render(
       <React.StrictMode>
-        <FatalBoundary onError={(error) => reportFatal("runtime", error)}>
+        <FatalBoundary onError={(error) => reportFatal(FATAL_PHASES.runtime, error)}>
           <QueryClientProvider client={queryClient}>
             <App />
           </QueryClientProvider>
@@ -57,7 +62,7 @@ export async function bootstrapApplication(rootElement: HTMLElement) {
       </React.StrictMode>,
     );
   } catch (error) {
-    reportFatal("startup", error);
+    reportFatal(FATAL_PHASES.startup, error);
   }
 }
 
@@ -65,7 +70,7 @@ export function normalizeFatalReport(phase: FatalPhase, error: unknown): FatalRe
   if (error instanceof Error) {
     return {
       phase,
-      message: error.message || "Unknown application error.",
+      message: error.message || UNKNOWN_APPLICATION_ERROR_MESSAGE,
       stack: error.stack,
     };
   }
@@ -79,7 +84,7 @@ export function normalizeFatalReport(phase: FatalPhase, error: unknown): FatalRe
 
   return {
     phase,
-    message: "Unknown application error.",
+    message: UNKNOWN_APPLICATION_ERROR_MESSAGE,
   };
 }
 
@@ -90,15 +95,15 @@ function installFatalListeners(reportFatal: (phase: FatalPhase, error: unknown) 
 
   window.addEventListener("error", (event) => {
     if (event.error) {
-      reportFatal("runtime", event.error);
+      reportFatal(FATAL_PHASES.runtime, event.error);
       return;
     }
 
-    reportFatal("runtime", event.message || "Unknown application error.");
+    reportFatal(FATAL_PHASES.runtime, event.message || UNKNOWN_APPLICATION_ERROR_MESSAGE);
   });
 
   window.addEventListener("unhandledrejection", (event) => {
-    reportFatal("runtime", event.reason);
+    reportFatal(FATAL_PHASES.runtime, event.reason);
   });
 }
 
@@ -132,11 +137,7 @@ function FatalScreen({ phase, message, stack }: FatalScreenProps) {
       <div className="fatal-screen-card">
         <p className="fatal-screen-kicker">AI Switcher</p>
         <h1 className="fatal-screen-title">The app could not load.</h1>
-        <p className="fatal-screen-body">
-          {phase === "startup"
-            ? "A startup error prevented the desktop app from rendering."
-            : "A runtime error interrupted the current view."}
-        </p>
+        <p className="fatal-screen-body">{fatalPhaseBody(phase)}</p>
         <div className="fatal-screen-detail">
           <strong>Error</strong>
           <p>{message}</p>
