@@ -1,13 +1,14 @@
 import type { ShellHookGuidance } from "./schemas";
 import { normalizeCheckStatus } from "./check-status";
+import { NOT_INSTALLED_LABEL, UNAVAILABLE_LABEL } from "./status-copy";
 import { titleCase } from "./utils";
 
-export const SHELL_CONFIG_UNAVAILABLE_LABEL = "Unavailable";
+export const SHELL_CONFIG_UNAVAILABLE_LABEL = UNAVAILABLE_LABEL;
 export const SHELL_COMPLETION_AVAILABLE_LABEL = "Available in this build";
 export const SHELL_GUIDANCE_LOADING_LABEL = "Loading shell guidance…";
 export const SHELL_GUIDANCE_UNAVAILABLE_LABEL = "Terminal setup guidance is unavailable.";
 export const SHELL_HOOK_INSTALLED_LABEL = "Installed";
-export const SHELL_HOOK_NOT_INSTALLED_LABEL = "Not installed";
+export const SHELL_HOOK_NOT_INSTALLED_LABEL = NOT_INSTALLED_LABEL;
 
 type ShellGuidanceVariantLike = Pick<ShellHookGuidance["variants"][number], "shell" | "config_path">;
 type ShellGuidanceLike<Variant extends ShellGuidanceVariantLike = ShellGuidanceVariantLike> = {
