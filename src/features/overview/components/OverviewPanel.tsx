@@ -20,6 +20,7 @@ import {
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { BACKEND_UNAVAILABLE_LABEL } from "../../../lib/display-copy";
 import {
+  buildOverviewStateSummary,
   buildOverviewInspectorPresentation,
   overviewAuthMethodLabel,
   overviewDiagnosticWarning,
@@ -28,10 +29,8 @@ import {
   OVERVIEW_PANEL_COPY,
   overviewInspectorActionDisabled,
   overviewInspectorEmptyHeading,
-  overviewHeadline,
   overviewLastResultMessage,
   overviewLiveMismatchNotice,
-  overviewMetaLabel,
   overviewMissingBinaryMessage,
   overviewRecentSummary,
   OVERVIEW_MORE_ACTIONS_LABEL,
@@ -48,7 +47,6 @@ import {
   resolveOverviewSelectedProfile,
   resolveOverviewSelectedTool,
   resolveOverviewStateMode,
-  resolveOverallOverviewState,
 } from "../../../lib/overview-display";
 import {
   overviewHealthLabel,
@@ -117,7 +115,11 @@ export function OverviewPanel({
   const selectedStatus =
     snapshot.statuses.find((status) => status.tool === selectedTool) ?? snapshot.statuses[0] ?? null;
   const overviewStates = snapshot.statuses.map(resolveOverviewHealthState);
-  const overallState: OverviewHealthState = resolveOverallOverviewState(overviewStates);
+  const overviewSummary = useMemo(
+    () => buildOverviewStateSummary(overviewStates),
+    [overviewStates],
+  );
+  const overallState: OverviewHealthState = overviewSummary.overallState;
   const workspaceResult = lastCommandResults.global.workspace;
   const contextResult = lastCommandResults.global.context;
   const bulkResult = lastCommandResults.global["profile-set"] ?? lastCommandResults.global["switch-all"];
@@ -134,9 +136,6 @@ export function OverviewPanel({
       setCompactInspectorOpen(false);
     }
   }, [compactLayout]);
-
-  const headline = useMemo(() => overviewHeadline(overviewStates), [overviewStates]);
-  const metaLabel = useMemo(() => overviewMetaLabel(overviewStates), [overviewStates]);
 
   const recentSummary = overviewRecentSummary({
     bulkResult,
@@ -159,10 +158,10 @@ export function OverviewPanel({
           <span className={`overview-status-symbol overview-status-symbol-${overallState}`} aria-hidden="true">
             {overviewHealthSymbol(overallState)}
           </span>
-          <strong>{headline}</strong>
+          <strong>{overviewSummary.headline}</strong>
         </div>
         <p className="overview-status-meta">
-          {hasWorkspaceMismatch ? `Expected set: ${expectedWorkspaceDisplay}` : metaLabel}
+          {hasWorkspaceMismatch ? `Expected set: ${expectedWorkspaceDisplay}` : overviewSummary.metaLabel}
         </p>
       </div>
 

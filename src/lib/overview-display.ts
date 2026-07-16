@@ -44,6 +44,15 @@ export type OverviewInspectorPresentation = {
   summaryLabel: string;
 };
 
+type OverviewHealthStateCounts = Record<OverviewHealthState, number>;
+
+export type OverviewStateSummary = {
+  counts: OverviewHealthStateCounts;
+  headline: string;
+  metaLabel: string;
+  overallState: OverviewHealthState;
+};
+
 export const OVERVIEW_CURRENT_SET_LABEL = "Current set:";
 export const OVERVIEW_EMPTY_SELECTION_COPY =
   "Choose a tool to inspect its active profile and switching state.";
@@ -77,6 +86,22 @@ export const OVERVIEW_PANEL_COPY = {
     lastVerified: "Last verified",
   },
   noneLabel: "None",
+} as const;
+
+const OVERVIEW_STATE_META_LABELS = {
+  blocked: "Fix blocked tools first",
+  needsAttention: "Review mismatches before coding",
+  notVerified: "Verification pending",
+  ready: "Ready to switch",
+  notConfigured: "No profiles configured",
+} as const;
+
+const OVERVIEW_STATE_HEADLINE_COPY = {
+  blockedSuffix: "blocked",
+  noToolsConfigured: "No tools configured yet",
+  notVerifiedTail: "verification",
+  readySuffix: "ready",
+  reviewReadiness: "Review tool readiness",
 } as const;
 
 export function overviewToolCountLabel(total: number) {
@@ -162,68 +187,15 @@ export function overviewToolListProfileLabel(
 export function resolveOverallOverviewState(
   states: OverviewHealthState[],
 ): OverviewHealthState {
-  const readyCount = states.filter((state) => state === "ready").length;
-  const attentionCount = states.filter((state) => state === "needs_attention").length;
-  const blockedCount = states.filter((state) => state === "blocked").length;
-  const notConfiguredCount = states.filter((state) => state === "not_configured").length;
-
-  if (blockedCount) {
-    return "blocked";
-  }
-  if (attentionCount) {
-    return "needs_attention";
-  }
-  if (!states.length || readyCount === 0) {
-    return "not_configured";
-  }
-  if (readyCount === states.length) {
-    return "ready";
-  }
-  if (notConfiguredCount === states.length) {
-    return "not_configured";
-  }
-  return "not_verified";
+  return buildOverviewStateSummary(states).overallState;
 }
 
 export function overviewHeadline(states: OverviewHealthState[]) {
-  const readyCount = states.filter((state) => state === "ready").length;
-  const attentionCount = states.filter((state) => state === "needs_attention").length;
-  const blockedCount = states.filter((state) => state === "blocked").length;
-  const notConfiguredCount = states.filter((state) => state === "not_configured").length;
-  const notVerifiedCount = states.filter((state) => state === "not_verified").length;
-
-  if (blockedCount) {
-    return `${countLabel(blockedCount, "tool")} blocked`;
-  }
-  if (attentionCount) {
-    return `${countLabel(attentionCount, "tool")} ${pluralChoice(attentionCount, "needs", "need")} attention`;
-  }
-  if (notConfiguredCount === states.length) {
-    return "No tools configured yet";
-  }
-  if (notVerifiedCount) {
-    return `${countLabel(notVerifiedCount, "tool")} ${pluralChoice(notVerifiedCount, "still needs", "still need")} verification`;
-  }
-  if (readyCount) {
-    return `${countLabel(readyCount, "tool")} ready`;
-  }
-  return "Review tool readiness";
+  return buildOverviewStateSummary(states).headline;
 }
 
 export function overviewMetaLabel(states: OverviewHealthState[]) {
-  if (states.includes("blocked")) {
-    return "Fix blocked tools first";
-  }
-  if (states.includes("needs_attention")) {
-    return "Review mismatches before coding";
-  }
-  if (states.includes("not_verified")) {
-    return "Verification pending";
-  }
-  if (states.includes("ready")) {
-    return "Ready to switch";
-  }
-  return "No profiles configured";
+  return buildOverviewStateSummary(states).metaLabel;
 }
 
 export function overviewWorkspaceActionLabel(canResolveDirectly: boolean) {
@@ -333,6 +305,95 @@ export function overviewInspectorActionDisabled(
     return refreshLocked;
   }
   return mutationLocked;
+}
+
+export function buildOverviewStateSummary(
+  states: OverviewHealthState[],
+): OverviewStateSummary {
+  const counts = countOverviewHealthStates(states);
+
+  return {
+    counts,
+    headline: buildOverviewHeadline(counts, states.length),
+    metaLabel: buildOverviewMetaLabel(counts),
+    overallState: resolveOverallStateFromCounts(counts, states.length),
+  };
+}
+
+function countOverviewHealthStates(states: OverviewHealthState[]): OverviewHealthStateCounts {
+  const counts: OverviewHealthStateCounts = {
+    ready: 0,
+    needs_attention: 0,
+    blocked: 0,
+    not_configured: 0,
+    not_verified: 0,
+  };
+
+  for (const state of states) {
+    counts[state] += 1;
+  }
+
+  return counts;
+}
+
+function resolveOverallStateFromCounts(
+  counts: OverviewHealthStateCounts,
+  total: number,
+): OverviewHealthState {
+  if (counts.blocked) {
+    return "blocked";
+  }
+  if (counts.needs_attention) {
+    return "needs_attention";
+  }
+  if (!total || counts.ready === 0) {
+    return "not_configured";
+  }
+  if (counts.ready === total) {
+    return "ready";
+  }
+  if (counts.not_configured === total) {
+    return "not_configured";
+  }
+  return "not_verified";
+}
+
+function buildOverviewHeadline(
+  counts: OverviewHealthStateCounts,
+  total: number,
+) {
+  if (counts.blocked) {
+    return `${countLabel(counts.blocked, "tool")} ${OVERVIEW_STATE_HEADLINE_COPY.blockedSuffix}`;
+  }
+  if (counts.needs_attention) {
+    return `${countLabel(counts.needs_attention, "tool")} ${pluralChoice(counts.needs_attention, "needs", "need")} attention`;
+  }
+  if (counts.not_configured === total) {
+    return OVERVIEW_STATE_HEADLINE_COPY.noToolsConfigured;
+  }
+  if (counts.not_verified) {
+    return `${countLabel(counts.not_verified, "tool")} ${pluralChoice(counts.not_verified, "still needs", "still need")} ${OVERVIEW_STATE_HEADLINE_COPY.notVerifiedTail}`;
+  }
+  if (counts.ready) {
+    return `${countLabel(counts.ready, "tool")} ${OVERVIEW_STATE_HEADLINE_COPY.readySuffix}`;
+  }
+  return OVERVIEW_STATE_HEADLINE_COPY.reviewReadiness;
+}
+
+function buildOverviewMetaLabel(counts: OverviewHealthStateCounts) {
+  if (counts.blocked) {
+    return OVERVIEW_STATE_META_LABELS.blocked;
+  }
+  if (counts.needs_attention) {
+    return OVERVIEW_STATE_META_LABELS.needsAttention;
+  }
+  if (counts.not_verified) {
+    return OVERVIEW_STATE_META_LABELS.notVerified;
+  }
+  if (counts.ready) {
+    return OVERVIEW_STATE_META_LABELS.ready;
+  }
+  return OVERVIEW_STATE_META_LABELS.notConfigured;
 }
 
 export function buildOverviewInspectorPresentation(input: {

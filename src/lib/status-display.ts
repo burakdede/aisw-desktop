@@ -47,7 +47,7 @@ const OVERVIEW_HEALTH_TEXT_LABELS: Record<OverviewHealthState, string> = {
   needs_attention: NEEDS_ATTENTION_SENTENCE_LABEL,
   blocked: BLOCKED_LABEL,
   not_configured: NOT_CONFIGURED_LABEL,
-  not_verified: "Not verified",
+  not_verified: NOT_VERIFIED_LABEL,
 };
 
 const OVERVIEW_HEALTH_SYMBOLS: Record<OverviewHealthState, string> = {

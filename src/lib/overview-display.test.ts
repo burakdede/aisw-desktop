@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AppSnapshot, DesktopSettings, ToolStatus } from "./schemas";
 import {
+  buildOverviewStateSummary,
   buildOverviewInspectorPresentation,
   OVERVIEW_CURRENT_SET_LABEL,
   OVERVIEW_EMPTY_SELECTION_COPY,
@@ -82,6 +83,18 @@ function makeSettings(overrides: Partial<DesktopSettings> = {}): DesktopSettings
 
 describe("overview-display", () => {
   it("shares overall overview health presentation", () => {
+    expect(buildOverviewStateSummary(["blocked", "ready"])).toMatchObject({
+      overallState: "blocked",
+      headline: "1 tool blocked",
+      metaLabel: "Fix blocked tools first",
+      counts: {
+        ready: 1,
+        needs_attention: 0,
+        blocked: 1,
+        not_configured: 0,
+        not_verified: 0,
+      },
+    });
     expect(resolveOverallOverviewState(["blocked", "ready"])).toBe("blocked");
     expect(resolveOverallOverviewState(["needs_attention", "ready"])).toBe("needs_attention");
     expect(resolveOverallOverviewState(["not_configured", "not_configured"])).toBe(
