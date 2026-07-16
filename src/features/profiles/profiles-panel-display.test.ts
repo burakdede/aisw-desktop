@@ -13,6 +13,7 @@ import {
   buildProfileActionMenu,
   buildProfileEditSheetState,
   buildProfileLabelUpdateRequest,
+  buildProfileRemovalHeading,
   buildProfileRemovalSheetState,
   buildProfileRowActionsAriaLabel,
   buildProfileSavedAsLabel,
@@ -31,8 +32,10 @@ import {
   nextInventorySelectionIndex,
   oauthEventStage,
   profileMutationError,
+  PROFILE_EDIT_SHEET_COPY,
   PROFILE_INSPECTOR_FIELD_LABELS,
   PROFILE_PANEL_COPY,
+  PROFILE_REMOVAL_SHEET_COPY,
   resolveAvailableSelection,
   STATIC_STATE_MODE_COPY,
   STATIC_STATE_MODE_LABEL,
@@ -135,6 +138,8 @@ describe("profiles-panel-display", () => {
     expect(INVENTORY_FILTERS).toEqual(["all", "claude", "codex", "gemini"]);
     expect(PROFILE_PANEL_COPY.searchPlaceholder).toBe("Search profiles…");
     expect(PROFILE_PANEL_COPY.addProfileLabel).toBe("Add Profile");
+    expect(PROFILE_EDIT_SHEET_COPY.heading).toBe("Rename Profile");
+    expect(PROFILE_REMOVAL_SHEET_COPY.confirmLabel).toBe("Remove Profile");
     expect(PROFILE_PANEL_COPY.tableColumns.map((column) => column.label)).toEqual([
       "Name",
       "Tool",
@@ -151,6 +156,7 @@ describe("profiles-panel-display", () => {
       "More actions for Codex CLI Personal",
     );
     expect(buildProfileSavedAsLabel("work")).toBe("Saved as work");
+    expect(buildProfileRemovalHeading("Work Laptop")).toBe("Remove “Work Laptop”?");
 
     const snapshot = makeSnapshot();
     const settings = makeSettings();

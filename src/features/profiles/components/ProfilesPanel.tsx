@@ -79,6 +79,7 @@ import {
   buildInventoryProfiles,
   buildProfileActionMenu,
   buildProfileEditSheetState,
+  buildProfileRemovalHeading,
   buildProfileLabelUpdateRequest,
   buildProfileRemovalSheetState,
   buildProfileRowActionsAriaLabel,
@@ -97,8 +98,10 @@ import {
   latestBackupForProfile,
   nextInventorySelectionIndex,
   profileMutationError,
+  PROFILE_EDIT_SHEET_COPY,
   PROFILE_INSPECTOR_FIELD_LABELS,
   PROFILE_PANEL_COPY,
+  PROFILE_REMOVAL_SHEET_COPY,
   resolveAvailableSelection,
   STATIC_STATE_MODE_COPY,
   STATIC_STATE_MODE_LABEL,
@@ -1066,15 +1069,15 @@ export function ProfilesPanel({
       />
       {editSheetState ? (
         <DialogSurface
-          ariaLabel="Edit Profile"
+          ariaLabel={PROFILE_EDIT_SHEET_COPY.ariaLabel}
           className="quick-switch-palette profile-sheet"
           initialFocusSelector="input:not([disabled]), button:not([disabled])"
           onClose={() => setPendingEdit(null)}
         >
           <div className="quick-switch-header">
             <div>
-              <p className="card-kicker">Profile</p>
-              <h3>Rename Profile</h3>
+              <p className="card-kicker">{PROFILE_EDIT_SHEET_COPY.kicker}</p>
+              <h3>{PROFILE_EDIT_SHEET_COPY.heading}</h3>
             </div>
           </div>
           <form
@@ -1110,11 +1113,11 @@ export function ProfilesPanel({
             }}
           >
             <label>
-              Current name
+              {PROFILE_EDIT_SHEET_COPY.currentNameLabel}
               <input value={editSheetState.profile.name} disabled />
             </label>
             <label>
-              New name
+              {PROFILE_EDIT_SHEET_COPY.newNameLabel}
               <input
                 ref={renameInputRef}
                 aria-label={`rename ${editSheetState.profile.name}`}
@@ -1133,7 +1136,7 @@ export function ProfilesPanel({
               </p>
             ) : null}
             <label>
-              Display label
+              {PROFILE_EDIT_SHEET_COPY.displayLabelLabel}
               <input
                 ref={editLabelInputRef}
                 aria-label={`label ${editSheetState.profile.name}`}
@@ -1148,14 +1151,14 @@ export function ProfilesPanel({
             </label>
             <div className="button-row">
               <button className="ghost-button" type="button" onClick={() => setPendingEdit(null)}>
-                Cancel
+                {PROFILE_EDIT_SHEET_COPY.cancelLabel}
               </button>
               <button
                 className="primary-button"
                 type="submit"
                 disabled={mutationLock.isBusy || Boolean(editSheetState.renameDuplicate)}
               >
-                Save
+                {PROFILE_EDIT_SHEET_COPY.saveLabel}
               </button>
             </div>
           </form>
@@ -1163,24 +1166,24 @@ export function ProfilesPanel({
       ) : null}
       {removalSheetState ? (
         <DialogSurface
-          ariaLabel="Remove Profile"
+          ariaLabel={PROFILE_REMOVAL_SHEET_COPY.ariaLabel}
           className="quick-switch-palette profile-sheet"
           initialFocusSelector="button:not([disabled])"
           onClose={() => setPendingRemoval(null)}
         >
             <div className="quick-switch-header">
               <div>
-                <p className="card-kicker">Removal</p>
-                <h3>Remove “{removalSheetState.display}”?</h3>
+                <p className="card-kicker">{PROFILE_REMOVAL_SHEET_COPY.kicker}</p>
+                <h3>{buildProfileRemovalHeading(removalSheetState.display)}</h3>
               </div>
             </div>
             <p className="inline-note">
-              AI Switch creates a backup before removal. Current live credentials are not removed automatically.
+              {PROFILE_REMOVAL_SHEET_COPY.warning}
             </p>
             <footer className="quick-switch-footer">
               <div className="button-row">
                 <button className="ghost-button" type="button" onClick={() => setPendingRemoval(null)}>
-                  Cancel
+                  {PROFILE_REMOVAL_SHEET_COPY.cancelLabel}
                 </button>
                 <button
                   className="ghost-button danger-button"
@@ -1195,7 +1198,7 @@ export function ProfilesPanel({
                     });
                   }}
                 >
-                  Remove Profile
+                  {PROFILE_REMOVAL_SHEET_COPY.confirmLabel}
                 </button>
               </div>
             </footer>

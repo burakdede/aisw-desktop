@@ -118,6 +118,26 @@ export const PROFILE_PANEL_COPY = {
   inactiveStorageDetail: "Live storage details are available after this profile becomes active.",
 } as const;
 
+export const PROFILE_EDIT_SHEET_COPY = {
+  ariaLabel: "Edit Profile",
+  kicker: "Profile",
+  heading: "Rename Profile",
+  currentNameLabel: "Current name",
+  newNameLabel: "New name",
+  displayLabelLabel: "Display label",
+  cancelLabel: "Cancel",
+  saveLabel: "Save",
+} as const;
+
+export const PROFILE_REMOVAL_SHEET_COPY = {
+  ariaLabel: "Remove Profile",
+  kicker: "Removal",
+  warning:
+    "AI Switch creates a backup before removal. Current live credentials are not removed automatically.",
+  cancelLabel: "Cancel",
+  confirmLabel: "Remove Profile",
+} as const;
+
 export const PROFILE_INSPECTOR_FIELD_LABELS = {
   liveMatch: "Live match",
   authentication: "Authentication",
@@ -198,6 +218,10 @@ export function buildProfileRowActionsAriaLabel(tool: SupportedTool, label: stri
 
 export function buildProfileSavedAsLabel(name: string) {
   return `${PROFILE_PANEL_COPY.savedAsPrefix}${name}`;
+}
+
+export function buildProfileRemovalHeading(label: string) {
+  return `Remove “${label}”?`;
 }
 
 export function buildInventoryProfiles(input: {
