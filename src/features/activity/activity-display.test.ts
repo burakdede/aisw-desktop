@@ -5,8 +5,10 @@ import {
   ACTIVITY_EMPTY_STATE,
   ACTIVITY_FILTER_OPTIONS,
   ACTIVITY_INSPECTOR_COPY,
+  ACTIVITY_PANEL_COPY,
   ACTIVITY_STATUS_NOTIFICATION,
   ACTIVITY_TOOLBAR_COPY,
+  activityEntryAriaLabel,
   activityFooterMessage,
   activityRecordedCommand,
   activityRecordedResult,
@@ -64,6 +66,10 @@ describe("activity-display", () => {
     expect(activityStatusSymbol("success", "inspector")).toBe("●");
     expect(activityStatusSymbol("error", "row")).toBe("▲");
     expect(buildActivityScopeValue(makeEntry())).toBe("Claude Code");
+    expect(ACTIVITY_PANEL_COPY.listAriaLabel).toBe("Activity timeline");
+    expect(ACTIVITY_PANEL_COPY.backLabel).toBe("Back");
+    expect(ACTIVITY_PANEL_COPY.cancelLabel).toBe("Cancel");
+    expect(activityEntryAriaLabel(makeEntry())).toBe("Inspect Use profile");
     expect(
       buildActivityScopeValue(
         makeEntry({

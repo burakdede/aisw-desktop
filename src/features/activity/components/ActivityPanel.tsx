@@ -22,8 +22,10 @@ import {
   ACTIVITY_EMPTY_SELECTION_STATE,
   ACTIVITY_EMPTY_STATE,
   ACTIVITY_INSPECTOR_COPY,
+  ACTIVITY_PANEL_COPY,
   ACTIVITY_STATUS_NOTIFICATION,
   ACTIVITY_TOOLBAR_COPY,
+  activityEntryAriaLabel,
   activityFooterMessage,
   activityRecordedCommand,
   activityRecordedResult,
@@ -240,7 +242,10 @@ export function ActivityPanel({
         secondaryClassName="activity-inspector-pane"
         primary={showList ? (
           <section className="activity-pane">
-            <div className="activity-list-body" aria-label="Activity timeline">
+            <div
+              className="activity-list-body"
+              aria-label={ACTIVITY_PANEL_COPY.listAriaLabel}
+            >
               {groupedEntries.length ? (
                 groupedEntries.map((group) => (
                   <section key={group.label} className="activity-group" aria-label={group.label}>
@@ -253,7 +258,7 @@ export function ActivityPanel({
                           className={`activity-event-row ${
                             selectedEntry?.key === entry.key ? "activity-event-row-selected" : ""
                           }`}
-                          aria-label={`Inspect ${entry.label}`}
+                          aria-label={activityEntryAriaLabel(entry)}
                           aria-pressed={selectedEntry?.key === entry.key}
                           onClick={() => {
                             setSelectedEntryKey(entry.key);
@@ -303,7 +308,7 @@ export function ActivityPanel({
                         type="button"
                         onClick={() => setCompactInspectorOpen(false)}
                       >
-                        Back
+                        {ACTIVITY_PANEL_COPY.backLabel}
                       </button>
                     ) : null}
                     <h3>{selectedEntry.label}</h3>
@@ -377,7 +382,7 @@ export function ActivityPanel({
           <footer className="quick-switch-footer">
             <div className="button-row">
               <button className="ghost-button" type="button" onClick={() => setPendingClear(false)}>
-                Cancel
+                {ACTIVITY_PANEL_COPY.cancelLabel}
               </button>
               <button className="ghost-button danger-button" type="button" onClick={applyClear}>
                 {ACTIVITY_CLEAR_DIALOG.confirmLabel}

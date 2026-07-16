@@ -73,6 +73,13 @@ export const ACTIVITY_TOOLBAR_COPY = {
   clearLabel: "Clear Activity History…",
 } as const;
 
+export const ACTIVITY_PANEL_COPY = {
+  listAriaLabel: "Activity timeline",
+  inspectPrefix: "Inspect",
+  backLabel: "Back",
+  cancelLabel: "Cancel",
+} as const;
+
 export const ACTIVITY_STATUS_NOTIFICATION = {
   logOpened: "Activity log opened",
   redactedExported: "Redacted activity exported",
@@ -338,6 +345,10 @@ export function activityRecordedResult(entry: ActivityEntry) {
 
 export function buildActivityScopeValue(entry: ActivityEntry) {
   return entry.scopeType === "tool" && entry.scopeTool ? toolDisplayName(entry.scopeTool) : entry.scopeLabel;
+}
+
+export function activityEntryAriaLabel(entry: Pick<ActivityEntry, "label">) {
+  return `${ACTIVITY_PANEL_COPY.inspectPrefix} ${entry.label}`;
 }
 
 function activityPreview(entry: ActivityEntry) {
