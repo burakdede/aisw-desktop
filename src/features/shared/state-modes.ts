@@ -1,4 +1,5 @@
 import { AppBootstrap, AppSnapshot } from "../../lib/schemas";
+import { isOneOf } from "../../lib/parse-guards";
 import { toolDisplayName } from "../../lib/tool-display";
 import { toolSupportsEditableStateModes } from "../../lib/tool-registry";
 import { titleCase } from "../../lib/utils";
@@ -12,14 +13,13 @@ export type ToolStateModeTarget = {
 };
 export const DEFAULT_EDITABLE_STATE_MODE: EditableStateMode = EDITABLE_STATE_MODES[0];
 
-const EDITABLE_STATE_MODE_SET = new Set<string>(EDITABLE_STATE_MODES);
 const STATE_MODE_COPY: Record<EditableStateMode, string> = {
   isolated: "Separate config, history, and extensions for this profile.",
   shared: "Keep the normal tool config and history while switching credentials only.",
 };
 
 export function isEditableStateMode(value: string | null | undefined): value is EditableStateMode {
-  return typeof value === "string" && EDITABLE_STATE_MODE_SET.has(value);
+  return typeof value === "string" && isOneOf(EDITABLE_STATE_MODES, value);
 }
 
 export function resolvePreferredEditableStateMode(
@@ -48,12 +48,15 @@ export function supportedStateModes(
   }
 
   const configured = toolCapabilities[tool]?.state_modes ?? [];
-  const normalized = configured.filter(
-    (mode, index) => EDITABLE_STATE_MODE_SET.has(mode) && configured.indexOf(mode) === index,
-  );
+  const normalized: EditableStateMode[] = [];
+  configured.forEach((mode) => {
+    if (isEditableStateMode(mode) && !normalized.includes(mode)) {
+      normalized.push(mode);
+    }
+  });
 
   if (normalized.length) {
-    return normalized as EditableStateMode[];
+    return normalized;
   }
 
   return [...EDITABLE_STATE_MODES];

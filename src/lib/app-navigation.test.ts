@@ -4,6 +4,7 @@ import {
   APP_NAV_SHORTCUT_KEYS,
   APP_NAV_SHORTCUT_LABELS,
   DEFAULT_APP_SECTIONS,
+  isAppNavId,
 } from "./app-navigation";
 
 describe("app-navigation", () => {
@@ -45,5 +46,7 @@ describe("app-navigation", () => {
       activity: "⌘6",
       settings: "⌘,",
     });
+    expect(isAppNavId("overview")).toBe(true);
+    expect(isAppNavId("invalid")).toBe(false);
   });
 });

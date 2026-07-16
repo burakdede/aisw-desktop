@@ -1,4 +1,5 @@
 import { asObject, asOptionalString } from "../../lib/parse-guards";
+import { isOneOf } from "../../lib/parse-guards";
 import { APP_NAV_IDS, APP_NAV_LABELS } from "../../lib/app-navigation";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { toolDisplayName } from "../../lib/tool-display";
@@ -36,9 +37,7 @@ export type GlobalCommandResultScope = {
 
 export type CommandResultScope = ToolCommandResultScope | GlobalCommandResultScope;
 
-const COMMAND_RESULT_GLOBAL_ID_SET = new Set<CommandResultGlobalId>(
-  Object.values(COMMAND_RESULT_GLOBAL_IDS),
-);
+const COMMAND_RESULT_GLOBAL_ID_VALUES = Object.values(COMMAND_RESULT_GLOBAL_IDS);
 
 export const COMMAND_RESULT_GLOBAL_FALLBACK_LABEL = "App";
 
@@ -53,7 +52,7 @@ export const COMMAND_RESULT_GLOBAL_LABELS: Record<CommandResultGlobalId, string>
 };
 
 export function isCommandResultGlobalId(value: string): value is CommandResultGlobalId {
-  return COMMAND_RESULT_GLOBAL_ID_SET.has(value as CommandResultGlobalId);
+  return isOneOf(COMMAND_RESULT_GLOBAL_ID_VALUES, value);
 }
 
 export function parseCommandResultScope(value: unknown): CommandResultScope | null {

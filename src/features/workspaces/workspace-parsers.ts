@@ -12,6 +12,7 @@ import {
   asArray,
   asNonEmptyString,
   asObject,
+  isOneOf,
   type UnknownRecord,
 } from "../../lib/parse-guards";
 
@@ -46,10 +47,7 @@ function normalizeWorkspaceStatus(
   value: unknown,
   fallback: WorkspaceStatus = "unknown",
 ): WorkspaceStatus {
-  return typeof value === "string" &&
-    WORKSPACE_STATUSES.includes(value as WorkspaceStatus)
-    ? (value as WorkspaceStatus)
-    : fallback;
+  return isOneOf(WORKSPACE_STATUSES, value) ? value : fallback;
 }
 
 export function parseWorkspaceStatus(

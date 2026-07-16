@@ -1,3 +1,5 @@
+import { isOneOf } from "./parse-guards";
+
 export const APP_NAV_IDS = {
   overview: "overview",
   profiles: "profiles",
@@ -10,7 +12,7 @@ export const APP_NAV_IDS = {
 
 export type AppNavId = (typeof APP_NAV_IDS)[keyof typeof APP_NAV_IDS];
 
-const APP_NAV_ID_SET = new Set<AppNavId>(Object.values(APP_NAV_IDS));
+const APP_NAV_ID_VALUES = Object.values(APP_NAV_IDS);
 
 export const APP_NAV_LABELS: Record<AppNavId, string> = {
   [APP_NAV_IDS.overview]: "Overview",
@@ -53,5 +55,5 @@ export const APP_NAV_SHORTCUT_LABELS: Partial<Record<AppNavId, string>> = {
 };
 
 export function isAppNavId(value: string): value is AppNavId {
-  return APP_NAV_ID_SET.has(value as AppNavId);
+  return isOneOf(APP_NAV_ID_VALUES, value);
 }

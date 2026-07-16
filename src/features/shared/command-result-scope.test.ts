@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   COMMAND_RESULT_GLOBAL_IDS,
+  isCommandResultGlobalId,
   parseCommandResultScope,
 } from "./command-result-scope";
 
@@ -28,6 +29,8 @@ describe("command-result-scope", () => {
   });
 
   it("rejects unsupported command-result scopes", () => {
+    expect(isCommandResultGlobalId(COMMAND_RESULT_GLOBAL_IDS.workspace)).toBe(true);
+    expect(isCommandResultGlobalId("unknown")).toBe(false);
     expect(
       parseCommandResultScope({
         scope: "global",
