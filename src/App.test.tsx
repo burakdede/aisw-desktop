@@ -2874,7 +2874,7 @@ describe("App", () => {
   });
 
   it("derives profile setup modes and backends from runtime capabilities", async () => {
-    const capabilityBootstrap = {
+    const capabilityBootstrap: AppBootstrapFixture = {
       ...bootstrap,
       runtime_status: {
         ...bootstrap.runtime_status,
@@ -2974,12 +2974,12 @@ describe("App", () => {
       },
     };
     await renderSetupPanel({
-      bootstrapOverride: capabilityBootstrap as unknown as AppBootstrap,
+      bootstrapOverride: capabilityBootstrap,
       initReport: {
         result: {
           live_accounts: [{ tool: "claude", outcome: "detected", auth_method: "oauth" }],
         },
-      } as InitReport,
+      },
       onOpenProfiles,
     });
 
@@ -3608,7 +3608,7 @@ describe("App", () => {
 
     window.__AISW_DESKTOP_MOCK__ = async (command) =>
       (
-        {
+        desktopMockRecord({
           get_bootstrap: bootstrap,
           get_snapshot: bootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
@@ -3630,7 +3630,7 @@ describe("App", () => {
             },
           ],
           get_settings: bootstrap.settings,
-        } as Record<string, unknown>
+        })
       )[command];
 
     try {
@@ -3677,7 +3677,7 @@ describe("App", () => {
   it("opens profile details directly from a backup row", async () => {
     window.__AISW_DESKTOP_MOCK__ = async (command) =>
       (
-        {
+        desktopMockRecord({
           get_bootstrap: bootstrap,
           get_snapshot: bootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
@@ -3694,7 +3694,7 @@ describe("App", () => {
             },
           ],
           get_settings: bootstrap.settings,
-        } as Record<string, unknown>
+        })
       )[command];
 
     await renderApp();
@@ -3778,7 +3778,7 @@ describe("App", () => {
         return { command, snapshot: bootstrap.snapshot };
       }
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: bootstrap,
           get_snapshot: bootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
@@ -3789,7 +3789,7 @@ describe("App", () => {
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
           get_settings: bootstrap.settings,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
