@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "../../lib/schemas";
 import { DEFAULT_PROFILE_IMPORT_MODE } from "../shared/profile-capabilities";
+import { COMMAND_RESULT_GLOBAL_IDS } from "../shared/command-result-scope";
 import { makeRuntimeToolCapabilities } from "../../test-support/runtime-tool-capabilities";
 import {
   DIAGNOSTICS_PANEL_COPY,
@@ -161,7 +162,7 @@ describe("diagnostics-panel-display", () => {
       recentFailureTitle({
         kind: undefined,
         scope: "global",
-        id: "backup",
+        id: COMMAND_RESULT_GLOBAL_IDS.backup,
         label: "Restore backup",
       }),
     ).toBe("Backup restore needs attention");

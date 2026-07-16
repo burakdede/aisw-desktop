@@ -8,6 +8,7 @@ import {
   recordCommandResult,
   resetLastCommandResultsForTests,
 } from "./features/shared/lastCommandResult";
+import { COMMAND_RESULT_GLOBAL_IDS } from "./features/shared/command-result-scope";
 import { normalizeRuntimeLanguage } from "./features/shared/runtime-language";
 import { normalizeTerminalIntegrationText } from "./features/shared/terminal-integration-language";
 import { useDesktopActions } from "./features/shared/useDesktopActions";
@@ -627,7 +628,7 @@ describe("App", () => {
     };
 
     recordCommandResult(
-      { type: "global", id: "settings" },
+      { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.settings },
       {
         label: "Saved settings",
         status: "success",
@@ -710,7 +711,7 @@ describe("App", () => {
 
   it("keeps a persisted activity timeline even when the same scope records multiple events", async () => {
     recordCommandResult(
-      { type: "global", id: "settings" },
+      { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.settings },
       {
         label: "Saved settings",
         status: "success",
@@ -718,7 +719,7 @@ describe("App", () => {
       },
     );
     recordCommandResult(
-      { type: "global", id: "settings" },
+      { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.settings },
       {
         label: "Checked for updates",
         status: "error",
@@ -7085,7 +7086,7 @@ describe("App", () => {
     await act(async () => {
       handlers?.["tray-command-result"]?.({
         scope: "global",
-        id: "context",
+        id: COMMAND_RESULT_GLOBAL_IDS.context,
         label: "Use set",
         status: "success",
         message: "Activated set client-acme.",
@@ -7175,7 +7176,7 @@ describe("App", () => {
     await act(async () => {
       handlers?.["tray-command-result"]?.({
         scope: "global",
-        id: "context",
+        id: COMMAND_RESULT_GLOBAL_IDS.context,
         label: "Use set",
         status: "error",
         message: "Set switch failed.",

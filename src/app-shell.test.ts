@@ -28,6 +28,7 @@ import {
   sectionTitle,
   settingsForRecovery,
 } from "./app-shell";
+import { COMMAND_RESULT_GLOBAL_IDS } from "./features/shared/command-result-scope";
 import type { AppSnapshot, DesktopSettings } from "./lib/schemas";
 import { DesktopCommandError } from "./lib/tauri";
 import { makeRuntimeToolCapabilities } from "./test-support/runtime-tool-capabilities";
@@ -434,14 +435,14 @@ describe("app-shell helpers", () => {
     expect(
       buildTrayCommandFeedback({
         scope: "global",
-        id: "context",
+        id: COMMAND_RESULT_GLOBAL_IDS.context,
         status: "error",
         label: "Use context",
         message: "AISW cannot switch.",
         remediation: "Run aisw verify.",
       }),
     ).toEqual({
-      scope: { type: "global", id: "context" },
+      scope: { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.context },
       result: {
         label: "Use set",
         status: "error",
@@ -515,7 +516,7 @@ describe("app-shell helpers", () => {
         runtimeBlocked: false,
       }),
     ).toEqual({
-      scope: { type: "global", id: "profile-set" },
+      scope: { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.profileSet },
       resultLabel: "Re-apply active profile",
       message: "Re-applied current set Work.",
       action: {
@@ -536,7 +537,7 @@ describe("app-shell helpers", () => {
         runtimeBlocked: false,
       }),
     ).toEqual({
-      scope: { type: "global", id: "switch-all" },
+      scope: { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.switchAll },
       resultLabel: "Re-apply active profile",
       message: "Re-applied shared profile Work Claude.",
       action: {
