@@ -97,6 +97,10 @@ import {
   isDuplicateProfileName,
   latestBackupForProfile,
   nextInventorySelectionIndex,
+  normalizeInventoryFilter,
+  normalizeProfileSheetCredentialBackend,
+  normalizeProfileSheetImportMode,
+  normalizeProfileSheetTool,
   profileMutationError,
   PROFILE_ADD_SHEET_COPY,
   PROFILE_EDIT_SHEET_COPY,
@@ -675,7 +679,7 @@ export function ProfilesPanel({
               ),
           }))}
           value={inventoryFilter}
-          onChange={setInventoryFilter}
+          onChange={(value) => setInventoryFilter(normalizeInventoryFilter(value, inventoryFilter))}
         />
         <button className="primary-button" type="button" onClick={openProfileSheet}>
           {PROFILE_PANEL_COPY.addProfileLabel}
@@ -1224,7 +1228,7 @@ export function ProfilesPanel({
                 <select
                   value={tool}
                   onChange={(event) => {
-                    setTool(event.target.value as typeof tool);
+                    setTool(normalizeProfileSheetTool(event.target.value, tool));
                     setExpandedDetails(null);
                   }}
                 >
@@ -1253,7 +1257,15 @@ export function ProfilesPanel({
                 <select
                   aria-label={PROFILE_ADD_SHEET_COPY.importModeAriaLabel}
                   value={mode}
-                  onChange={(event) => setMode(event.target.value as typeof mode)}
+                  onChange={(event) =>
+                    setMode(
+                      normalizeProfileSheetImportMode(
+                        event.target.value,
+                        availableImportModes,
+                        mode,
+                      ),
+                    )
+                  }
                 >
                   {availableImportModes.map((entry) => (
                     <option key={entry} value={entry}>
@@ -1276,7 +1288,13 @@ export function ProfilesPanel({
                 <select
                   value={credentialBackend}
                   onChange={(event) =>
-                    setCredentialBackend(event.target.value as typeof credentialBackend)
+                    setCredentialBackend(
+                      normalizeProfileSheetCredentialBackend(
+                        event.target.value,
+                        availableCredentialBackends,
+                        credentialBackend,
+                      ),
+                    )
                   }
                   disabled={availableCredentialBackends.length === 1}
                 >

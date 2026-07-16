@@ -26,6 +26,7 @@ import { effectiveToolProfileLabel, mergeProfileLabel } from "../../lib/profile-
 import { formatMessageWithRemediation } from "../../lib/remediation-text";
 import { toolDisplayName } from "../../lib/tool-display";
 import { titleCase } from "../../lib/utils";
+import { normalizeOneOf } from "../../lib/parse-guards";
 import {
   resolveProfileSwitchState,
   type ProfileSwitchState,
@@ -33,6 +34,8 @@ import {
 import { SUPPORTED_TOOLS, toolShortName, type SupportedTool } from "../../lib/tool-registry";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import {
+  PROFILE_CREDENTIAL_BACKENDS,
+  PROFILE_IMPORT_MODES,
   DEFAULT_PROFILE_CREDENTIAL_BACKEND,
   DEFAULT_PROFILE_IMPORT_MODE,
   type ExplicitProfileCredentialBackend,
@@ -259,6 +262,44 @@ export function buildProfileRemovalHeading(label: string) {
 
 export function buildProfileFileBackendNote(tool: SupportedTool) {
   return `${toolShortName(tool)} profiles are always stored with file-backed credentials.`;
+}
+
+export function normalizeInventoryFilter(
+  value: unknown,
+  fallback: InventoryFilter = INVENTORY_FILTERS[0],
+): InventoryFilter {
+  return normalizeOneOf(INVENTORY_FILTERS, value, fallback);
+}
+
+export function normalizeProfileSheetTool(
+  value: unknown,
+  fallback: SupportedTool = SUPPORTED_TOOLS[0],
+): SupportedTool {
+  return normalizeOneOf(SUPPORTED_TOOLS, value, fallback);
+}
+
+export function normalizeProfileSheetImportMode(
+  value: unknown,
+  availableModes: readonly ProfileImportMode[],
+  fallback: ProfileImportMode = DEFAULT_PROFILE_IMPORT_MODE,
+): ProfileImportMode {
+  return resolveAvailableSelection(
+    normalizeOneOf(PROFILE_IMPORT_MODES, value, fallback),
+    availableModes,
+    fallback,
+  );
+}
+
+export function normalizeProfileSheetCredentialBackend(
+  value: unknown,
+  availableBackends: readonly ProfileCredentialBackend[],
+  fallback: ProfileCredentialBackend = DEFAULT_PROFILE_CREDENTIAL_BACKEND,
+): ProfileCredentialBackend {
+  return resolveAvailableSelection(
+    normalizeOneOf(PROFILE_CREDENTIAL_BACKENDS, value, fallback),
+    availableBackends,
+    fallback,
+  );
 }
 
 export function buildInventoryProfiles(input: {

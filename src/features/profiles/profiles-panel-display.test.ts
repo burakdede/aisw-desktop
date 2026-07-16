@@ -31,6 +31,10 @@ import {
   isDuplicateProfileName,
   latestBackupForProfile,
   nextInventorySelectionIndex,
+  normalizeInventoryFilter,
+  normalizeProfileSheetCredentialBackend,
+  normalizeProfileSheetImportMode,
+  normalizeProfileSheetTool,
   oauthEventStage,
   profileMutationError,
   PROFILE_ADD_SHEET_COPY,
@@ -138,6 +142,33 @@ function makeSnapshot(overrides: Partial<AppSnapshot> = {}): AppSnapshot {
 describe("profiles-panel-display", () => {
   it("builds, filters, and selects inventory entries", () => {
     expect(INVENTORY_FILTERS).toEqual(["all", "claude", "codex", "gemini"]);
+    expect(normalizeInventoryFilter("codex")).toBe("codex");
+    expect(normalizeInventoryFilter("bad")).toBe("all");
+    expect(normalizeProfileSheetTool("gemini")).toBe("gemini");
+    expect(normalizeProfileSheetTool("bad", "codex")).toBe("codex");
+    expect(normalizeProfileSheetImportMode("oauth", ["oauth", "api_key"], "api_key")).toBe(
+      "oauth",
+    );
+    expect(normalizeProfileSheetImportMode("bad", ["oauth", "api_key"], "api_key")).toBe(
+      "api_key",
+    );
+    expect(normalizeProfileSheetImportMode("bad", ["oauth"], "api_key")).toBe(
+      "oauth",
+    );
+    expect(
+      normalizeProfileSheetCredentialBackend(
+        "file",
+        ["auto", "file"],
+        "auto",
+      ),
+    ).toBe("file");
+    expect(
+      normalizeProfileSheetCredentialBackend(
+        "bad",
+        ["auto", "file"],
+        "auto",
+      ),
+    ).toBe("auto");
     expect(PROFILE_PANEL_COPY.searchPlaceholder).toBe("Search profiles…");
     expect(PROFILE_PANEL_COPY.addProfileLabel).toBe("Add Profile");
     expect(PROFILE_ADD_SHEET_COPY.heading).toBe("Add a saved login");

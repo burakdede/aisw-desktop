@@ -36,6 +36,7 @@ import { SUPPORTED_TOOLS, toolShortName } from "../../../lib/tool-registry";
 import { countLabel } from "../../../lib/utils";
 import {
   DEFAULT_WORKSPACE_BINDING_SCOPE,
+  normalizeWorkspaceBindingScope,
   type WorkspaceBindingScope,
 } from "../../../lib/workspace-binding-contract";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
@@ -61,6 +62,7 @@ import {
   duplicateEditableProfileSetDraft,
   hasDuplicateSetName,
   importedContextActivationResultLabel,
+  normalizeSetPanelMode,
   ruleRowAriaLabel,
   RULE_SCOPE_OPTIONS,
   savedSetActionLabel,
@@ -503,7 +505,7 @@ export function SetsPanel({
           className="sets-mode-segmented"
           options={SETS_MODE_OPTIONS}
           value={mode}
-          onChange={(value) => setMode(value as SetPanelMode)}
+          onChange={(value) => setMode(normalizeSetPanelMode(value, mode))}
         />
         {mode === "sets" ? (
           <div className="button-row">
@@ -1051,7 +1053,7 @@ export function SetsPanel({
                   onChange={(event) =>
                     setRuleDraft((current) => ({
                       ...current,
-                      scope: event.target.value as WorkspaceBindingScope,
+                      scope: normalizeWorkspaceBindingScope(event.target.value, current.scope),
                     }))
                   }
                 >

@@ -17,6 +17,7 @@ import {
   duplicateEditableProfileSetDraft,
   hasDuplicateSetName,
   importedContextActivationResultLabel,
+  normalizeSetPanelMode,
   ruleRowAriaLabel,
   RULE_SCOPE_OPTIONS,
   savedSetActionLabel,
@@ -146,6 +147,9 @@ describe("sets-panel-display", () => {
     expect(SETS_PANEL_COPY.projectRulesTitle).toBe("Project Rules");
     expect(SETS_PANEL_MODES).toEqual(["sets", "rules"]);
     expect(DEFAULT_SETS_PANEL_MODE).toBe("sets");
+    expect(normalizeSetPanelMode("rules")).toBe("rules");
+    expect(normalizeSetPanelMode("bad")).toBe("sets");
+    expect(normalizeSetPanelMode("bad", "rules")).toBe("rules");
     expect(SETS_MODE_OPTIONS).toEqual([
       { value: "sets", label: "Set Library" },
       { value: "rules", label: "Project Rules" },

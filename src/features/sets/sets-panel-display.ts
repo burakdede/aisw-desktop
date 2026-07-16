@@ -12,6 +12,7 @@ import {
   normalizeWorkspaceBindingScope,
   type WorkspaceBindingScope,
 } from "../../lib/workspace-binding-contract";
+import { normalizeOneOf } from "../../lib/parse-guards";
 import {
   contextDisplayLabel,
   missingProfileSetSelections,
@@ -173,6 +174,13 @@ export const RULE_SCOPE_OPTIONS = [
   { value: "path", label: SETS_PANEL_COPY.pathPrefixRuleScopeLabel },
   { value: "git_remote", label: SETS_PANEL_COPY.gitRemotePatternRuleScopeLabel },
 ] as const;
+
+export function normalizeSetPanelMode(
+  value: unknown,
+  fallback: SetPanelMode = DEFAULT_SETS_PANEL_MODE,
+): SetPanelMode {
+  return normalizeOneOf(SETS_PANEL_MODES, value, fallback);
+}
 
 const SET_EDITOR_COPY = {
   edit: {
