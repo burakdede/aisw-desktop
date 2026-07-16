@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { resolveBrowserStorage } from "../../lib/browser-storage";
+import { ACTIVITY_STORE_KEY, limitActivityTimeline } from "./activity-store";
 
 export type CommandResultScope =
   | { type: "tool"; tool: string }
@@ -27,8 +28,6 @@ type CommandResultStore = {
   timeline: ActivityTimelineEntry[];
 };
 
-const ACTIVITY_STORE_KEY = "ai-switch.desktop.activity-log";
-const MAX_ACTIVITY_ENTRIES = 100;
 const TIMELINE_KEY_SEPARATOR = ":";
 let nextTimelineNonce = 0;
 
@@ -72,7 +71,7 @@ export function recordCommandResult(scope: CommandResultScope, result: Omit<Last
             ...currentStore.tool,
             [scope.tool]: next,
           },
-          timeline: [timelineEntry, ...currentStore.timeline].slice(0, MAX_ACTIVITY_ENTRIES),
+          timeline: limitActivityTimeline([timelineEntry, ...currentStore.timeline]),
         }
       : {
           ...currentStore,
@@ -80,7 +79,7 @@ export function recordCommandResult(scope: CommandResultScope, result: Omit<Last
             ...currentStore.global,
             [scope.id]: next,
           },
-          timeline: [timelineEntry, ...currentStore.timeline].slice(0, MAX_ACTIVITY_ENTRIES),
+          timeline: limitActivityTimeline([timelineEntry, ...currentStore.timeline]),
         };
 
   emitChange();
@@ -145,13 +144,12 @@ function loadStore(): CommandResultStore {
           : [],
       ),
     ]
-      .sort((left, right) => right.at - left.at)
-      .slice(0, MAX_ACTIVITY_ENTRIES);
+      .sort((left, right) => right.at - left.at);
 
     return {
       tool,
       global,
-      timeline: migratedTimeline,
+      timeline: limitActivityTimeline(migratedTimeline),
     };
   } catch {
     return emptyStore();
@@ -193,13 +191,14 @@ function asTimeline(value: unknown): ActivityTimelineEntry[] {
     return [];
   }
 
-  return value
+  const entries = value
     .flatMap((entry) => {
       const parsed = asTimelineEntry(entry);
       return parsed ? [parsed] : [];
     })
-    .sort((left, right) => right.at - left.at)
-    .slice(0, MAX_ACTIVITY_ENTRIES);
+    .sort((left, right) => right.at - left.at);
+
+  return limitActivityTimeline(entries);
 }
 
 function asLastCommandResult(value: unknown): LastCommandResult | null {

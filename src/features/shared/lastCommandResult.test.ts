@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-const STORAGE_KEY = "ai-switch.desktop.activity-log";
+import {
+  ACTIVITY_STORE_KEY,
+  ACTIVITY_TIMELINE_LIMIT,
+} from "./activity-store";
 
 type StorageMock = {
   getItem: (key: string) => string | null;
@@ -48,7 +50,7 @@ describe("lastCommandResult store", () => {
       { label: "Use set", status: "error", message: "Workspace mismatch.", remediation: "Open Sets." },
     );
 
-    const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}");
+    const stored = JSON.parse(window.localStorage.getItem(ACTIVITY_STORE_KEY) ?? "{}");
 
     expect(stored.tool.claude.message).toBe("Switched Claude.");
     expect(stored.global.workspace.message).toBe("Workspace mismatch.");
@@ -67,11 +69,11 @@ describe("lastCommandResult store", () => {
       { label: "Switch profile", status: "success", message: "Switched Codex." },
     );
 
-    expect(window.localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+    expect(window.localStorage.getItem(ACTIVITY_STORE_KEY)).not.toBeNull();
 
     module.clearLastCommandResults();
 
-    expect(window.localStorage.getItem(STORAGE_KEY)).toBe(
+    expect(window.localStorage.getItem(ACTIVITY_STORE_KEY)).toBe(
       JSON.stringify({ tool: {}, global: {}, timeline: [] }),
     );
   });
@@ -80,7 +82,7 @@ describe("lastCommandResult store", () => {
     Object.defineProperty(window, "localStorage", {
       configurable: true,
       value: createStorageMock({
-        [STORAGE_KEY]: JSON.stringify({
+        [ACTIVITY_STORE_KEY]: JSON.stringify({
           tool: {
             claude: {
               label: "Switch profile",
@@ -109,7 +111,7 @@ describe("lastCommandResult store", () => {
       { label: "Switch profile", status: "success", message: "Switched Gemini." },
     );
 
-    const migrated = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}");
+    const migrated = JSON.parse(window.localStorage.getItem(ACTIVITY_STORE_KEY) ?? "{}");
     expect(migrated.timeline[0].scope).toEqual({ type: "tool", tool: "gemini" });
     expect(migrated.timeline.some((entry: { scope: { type: string; id?: string } }) => entry.scope.id === "context")).toBe(
       true,
@@ -118,16 +120,16 @@ describe("lastCommandResult store", () => {
     vi.resetModules();
     Object.defineProperty(window, "localStorage", {
       configurable: true,
-      value: createStorageMock({ [STORAGE_KEY]: "{not json" }),
+      value: createStorageMock({ [ACTIVITY_STORE_KEY]: "{not json" }),
     });
-    window.localStorage.setItem(STORAGE_KEY, "{not json");
+    window.localStorage.setItem(ACTIVITY_STORE_KEY, "{not json");
     const invalidModule = await import("./lastCommandResult");
     invalidModule.recordCommandResult(
       { type: "global", id: "switch-all" },
       { label: "Switch all tools", status: "success", message: "Switched all." },
     );
 
-    const recovered = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}");
+    const recovered = JSON.parse(window.localStorage.getItem(ACTIVITY_STORE_KEY) ?? "{}");
     expect(recovered.timeline).toHaveLength(1);
     expect(recovered.global["switch-all"].message).toBe("Switched all.");
   });
@@ -145,10 +147,10 @@ describe("lastCommandResult store", () => {
       );
     }
 
-    const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}");
-    expect(stored.timeline).toHaveLength(100);
+    const stored = JSON.parse(window.localStorage.getItem(ACTIVITY_STORE_KEY) ?? "{}");
+    expect(stored.timeline).toHaveLength(ACTIVITY_TIMELINE_LIMIT);
     expect(stored.timeline[0].message).toBe("Message 104");
-    expect(stored.timeline.at(-1).message).toBe("Message 5");
+    expect(stored.timeline[ACTIVITY_TIMELINE_LIMIT - 1].message).toBe("Message 5");
   });
 
   it("survives localStorage write failures without throwing", async () => {

@@ -1,4 +1,5 @@
 import { DATE_UNAVAILABLE_LABEL } from "../../lib/display-copy";
+import { calendarDayStarts } from "../../lib/calendar-time";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { toolDisplayName } from "../../lib/tool-display";
 import type { ActivityTimelineEntry } from "../shared/lastCommandResult";
@@ -7,7 +8,6 @@ export type ActivityFilter = "all" | "success" | "error";
 type ActivityStatus = ActivityEntry["status"];
 type ActivityStatusVariant = "row" | "inspector";
 
-const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const GENERIC_ACTIVITY_RESULT = "snapshot updated successfully.";
 const ACTIVITY_SCOPE_FALLBACK_LABEL = "App";
 const ACTIVITY_RECOVERY_AVAILABLE_LABEL = "Recovery available";
@@ -223,8 +223,7 @@ export function filterActivity(entries: ActivityEntry[], search: string, filter:
 }
 
 export function groupActivityEntries(entries: ActivityEntry[], now = new Date()) {
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const yesterdayStart = todayStart - DAY_IN_MS;
+  const { todayStart, yesterdayStart } = calendarDayStarts(now);
 
   const groups = [
     { label: "Today", entries: [] as ActivityEntry[] },
@@ -283,8 +282,7 @@ export function formatFullActivityTimestamp(timestamp: number, now = new Date())
     return DATE_UNAVAILABLE_LABEL;
   }
 
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const yesterdayStart = todayStart - DAY_IN_MS;
+  const { todayStart, yesterdayStart } = calendarDayStarts(now);
   const value = date.getTime();
   const time = formatActivityTimestamp(value);
 
