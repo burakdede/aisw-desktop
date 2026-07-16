@@ -23,6 +23,7 @@ import {
   contextDisplayLabel,
   toolProfileDisplayLabel,
 } from "../../../lib/profile-display";
+import { EXPECTED_SET_PREFIX } from "../../../lib/sets-display";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { eventTargetWithinSelector } from "../../../lib/dom-events";
 import { BACKEND_UNAVAILABLE_LABEL } from "../../../lib/display-copy";
@@ -167,7 +168,7 @@ export function OverviewPanel({
           <strong>{overviewSummary.headline}</strong>
         </div>
         <p className="overview-status-meta">
-          {hasWorkspaceMismatch ? `Expected set: ${expectedWorkspaceDisplay}` : overviewSummary.metaLabel}
+          {hasWorkspaceMismatch ? `${EXPECTED_SET_PREFIX}${expectedWorkspaceDisplay}` : overviewSummary.metaLabel}
         </p>
       </div>
 

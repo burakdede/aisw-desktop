@@ -25,6 +25,7 @@ import { toolProfileDisplayLabel } from "./profile-display";
 import { formatMessageWithRemediation } from "./remediation-text";
 import {
   CHOOSE_SET_LABEL,
+  CURRENT_SET_LABEL,
   OPEN_SETS_LABEL,
   noRecentSetWorkspaceChangesMessage,
   projectResultSummary,
@@ -94,7 +95,7 @@ export type OverviewStateSummary = {
   overallState: OverviewHealthState;
 };
 
-export const OVERVIEW_CURRENT_SET_LABEL = "Current set:";
+export const OVERVIEW_CURRENT_SET_LABEL = CURRENT_SET_LABEL;
 export const OVERVIEW_EMPTY_SELECTION_COPY =
   "Choose a tool to inspect its active profile and switching state.";
 export const OVERVIEW_NO_TOOL_SELECTED_HEADING = noSelectionHeading("tool");

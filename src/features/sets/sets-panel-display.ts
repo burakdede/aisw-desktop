@@ -24,6 +24,8 @@ import {
 } from "../../lib/profile-display";
 import type { AppSnapshot, DesktopSettings } from "../../lib/schemas";
 import {
+  CURRENT_SET_PREFIX,
+  EXPECTED_SET_PREFIX,
   OPEN_SETS_LABEL,
   importedContextActionLabel,
   importedContextStatus,
@@ -129,8 +131,8 @@ export const SETS_PANEL_COPY = {
   noSetsSecondaryDetail:
     "You can also switch individual profiles from Quick Switch.",
   projectMismatchTitle: "Project mismatch",
-  expectedSetPrefix: "Expected set: ",
-  currentSetPrefix: "Current set: ",
+  expectedSetPrefix: EXPECTED_SET_PREFIX,
+  currentSetPrefix: CURRENT_SET_PREFIX,
   keepCurrentSetLabel: "Keep current set",
   projectRulesAriaLabel: "Project Rules",
   projectRulesTitle: "Project Rules",

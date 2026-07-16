@@ -18,6 +18,10 @@ export const OPEN_SETS_LABEL = "Open Sets";
 export const CHOOSE_SET_LABEL = "Choose Set…";
 export const USE_EXPECTED_SET_LABEL = "Use Expected Set";
 export const USE_EXPECTED_SET_NOW_LABEL = "Use expected set now";
+export const EXPECTED_SET_LABEL = "Expected set:";
+export const EXPECTED_SET_PREFIX = `${EXPECTED_SET_LABEL} `;
+export const CURRENT_SET_LABEL = "Current set:";
+export const CURRENT_SET_PREFIX = `${CURRENT_SET_LABEL} `;
 
 const SETS_DISPLAY_COPY = {
   importedContextPrefix: "Use CLI Context ",
@@ -37,6 +41,8 @@ const SETS_DISPLAY_COPY = {
     git_remote: "git remote pattern",
   },
   ruleTargetWarningSuffix: " before saving or removing this rule.",
+  expectedSetPrefix: EXPECTED_SET_PREFIX,
+  currentSetPrefix: CURRENT_SET_PREFIX,
   workspaceActionUseExpectedSet: USE_EXPECTED_SET_LABEL,
   workspaceActionOpenSets: OPEN_SETS_LABEL,
   selectedRuleSubtitles: {
