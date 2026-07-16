@@ -7,6 +7,7 @@ import {
   inspectItemLabel,
   moreActionsLabel,
   openedItemMessage,
+  quotedActionHeading,
   savedItemMessage,
 } from "./display-copy";
 
@@ -28,5 +29,6 @@ describe("display-copy", () => {
     expect(openedItemMessage("/tmp/aisw")).toBe("Opened /tmp/aisw.");
     expect(inspectItemLabel("Claude")).toBe("Inspect Claude");
     expect(moreActionsLabel("Client Acme")).toBe("More actions for Client Acme");
+    expect(quotedActionHeading("Remove", "Work Laptop")).toBe("Remove “Work Laptop”?");
   });
 });

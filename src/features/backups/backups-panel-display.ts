@@ -8,6 +8,7 @@ import {
 import {
   clipboardCopiedMessage,
   clipboardUnavailableManualMessage,
+  quotedActionHeading,
 } from "../../lib/display-copy";
 import { toolProfileDisplayLabel } from "../../lib/profile-display";
 import type { AppSnapshot, BackupEntry, DesktopSettings } from "../../lib/schemas";
@@ -258,14 +259,14 @@ export function buildBackupRestoreSheetCopy(
   return mode === "files"
     ? {
         kicker: BACKUPS_PANEL_COPY.restoreSheet.kicker,
-        heading: `Restore “${profileLabel}”?`,
+        heading: quotedActionHeading("Restore", profileLabel),
         detail: `This replaces the stored ${toolLabel} profile files with the selected restore point.`,
         followup: `The active ${toolLabel} account will not change until you activate the profile.`,
         confirmLabel: BACKUPS_PANEL_COPY.restoreSheet.restoreFilesLabel,
       }
     : {
         kicker: BACKUPS_PANEL_COPY.restoreSheet.kicker,
-        heading: `Restore and Activate “${profileLabel}”?`,
+        heading: quotedActionHeading("Restore and Activate", profileLabel),
         detail: `AI Switch will restore the stored files and then activate ${profileLabel} for ${toolLabel}.`,
         followup: "This restores the files first and only then switches the live profile.",
         confirmLabel: BACKUPS_PANEL_COPY.restoreSheet.restoreAndActivateLabel,

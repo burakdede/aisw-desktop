@@ -31,3 +31,7 @@ export function inspectItemLabel(item: string) {
 export function moreActionsLabel(item: string) {
   return `More actions for ${item}`;
 }
+
+export function quotedActionHeading(action: string, item: string) {
+  return `${action} “${item}”?`;
+}

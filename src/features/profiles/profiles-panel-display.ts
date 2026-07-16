@@ -11,6 +11,7 @@ import {
   DEFAULT_ACTION_FAILURE_MESSAGE,
   inspectItemLabel,
   moreActionsLabel,
+  quotedActionHeading,
 } from "../../lib/display-copy";
 import { resolveErrorDetails } from "../../lib/error-details";
 import { formatDateTimeWithZone } from "../../lib/date-format";
@@ -247,7 +248,7 @@ export function buildProfileSavedAsLabel(name: string) {
 }
 
 export function buildProfileRemovalHeading(label: string) {
-  return `Remove “${label}”?`;
+  return quotedActionHeading("Remove", label);
 }
 
 export function buildProfileFileBackendNote(tool: SupportedTool) {
