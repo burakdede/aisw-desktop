@@ -10,6 +10,7 @@ import { DEFAULT_ACTION_FAILURE_MESSAGE } from "../../lib/display-copy";
 import { formatDateTimeWithZone } from "../../lib/date-format";
 import { profileLastCheckedLabel } from "../../lib/profile-detail-display";
 import { effectiveToolProfileLabel, mergeProfileLabel } from "../../lib/profile-display";
+import { formatMessageWithRemediation } from "../../lib/remediation-text";
 import { toolDisplayName } from "../../lib/tool-display";
 import { DesktopCommandError } from "../../lib/tauri";
 import { titleCase } from "../../lib/utils";
@@ -650,9 +651,10 @@ export function profileMutationError(...errors: Array<unknown>) {
 
 export function formatDesktopError(error: unknown) {
   if (error instanceof DesktopCommandError) {
-    return error.remediation
-      ? `${normalizeRuntimeLanguage(error.message)} Remediation: ${normalizeRuntimeLanguage(error.remediation)}`
-      : normalizeRuntimeLanguage(error.message);
+    return formatMessageWithRemediation(
+      normalizeRuntimeLanguage(error.message),
+      error.remediation ? normalizeRuntimeLanguage(error.remediation) : undefined,
+    );
   }
   if (error instanceof Error) {
     return normalizeRuntimeLanguage(error.message);
@@ -660,9 +662,10 @@ export function formatDesktopError(error: unknown) {
   if (typeof error === "object" && error && "message" in error && typeof error.message === "string") {
     const remediation =
       "remediation" in error && typeof error.remediation === "string" ? error.remediation : undefined;
-    return remediation
-      ? `${normalizeRuntimeLanguage(error.message)} Remediation: ${normalizeRuntimeLanguage(remediation)}`
-      : normalizeRuntimeLanguage(error.message);
+    return formatMessageWithRemediation(
+      normalizeRuntimeLanguage(error.message),
+      remediation ? normalizeRuntimeLanguage(remediation) : undefined,
+    );
   }
   return DEFAULT_ACTION_FAILURE_MESSAGE;
 }

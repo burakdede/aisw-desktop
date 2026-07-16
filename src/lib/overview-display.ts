@@ -3,6 +3,7 @@ import { normalizeRuntimeLanguage } from "../features/shared/runtime-language";
 import { fixedStateModeDescription, stateModeDescription, stateModeLabel } from "../features/shared/state-modes";
 import { toolInspectorEmptyLabel, overviewHealthLabel, overviewHealthText, resolveOverviewHealthState, type OverviewHealthState } from "./status-display";
 import { toolProfileDisplayLabel } from "./profile-display";
+import { formatMessageWithRemediation } from "./remediation-text";
 import type { AppSnapshot, DesktopSettings, ToolStatus } from "./schemas";
 import {
   formatTokenWarning,
@@ -273,21 +274,24 @@ export function overviewRecentSummary(input: {
   };
 }) {
   if (input.bulkResult) {
-    return `Last set result: ${input.bulkResult.message}${
-      input.bulkResult.remediation ? ` Remediation: ${input.bulkResult.remediation}` : ""
-    }`;
+    return formatMessageWithRemediation(
+      `Last set result: ${input.bulkResult.message}`,
+      input.bulkResult.remediation,
+    );
   }
   if (input.workspaceResult) {
-    return `Last project result: ${input.workspaceResult.message}${
-      input.workspaceResult.remediation ? ` Remediation: ${input.workspaceResult.remediation}` : ""
-    }`;
+    return formatMessageWithRemediation(
+      `Last project result: ${input.workspaceResult.message}`,
+      input.workspaceResult.remediation,
+    );
   }
   if (input.contextResult) {
-    return `Last set result: ${normalizeRuntimeLanguage(input.contextResult.message)}${
+    return formatMessageWithRemediation(
+      `Last set result: ${normalizeRuntimeLanguage(input.contextResult.message)}`,
       input.contextResult.remediation
-        ? ` Remediation: ${normalizeRuntimeLanguage(input.contextResult.remediation)}`
-        : ""
-    }`;
+        ? normalizeRuntimeLanguage(input.contextResult.remediation)
+        : undefined,
+    );
   }
   return "No recent set or workspace changes are recorded in this session.";
 }
@@ -296,9 +300,10 @@ export function overviewLastResultMessage(lastResult: {
   message: string;
   remediation?: string;
 }) {
-  return `Last result: ${lastResult.message}${
-    lastResult.remediation ? ` Remediation: ${lastResult.remediation}` : ""
-  }`;
+  return formatMessageWithRemediation(
+    `Last result: ${lastResult.message}`,
+    lastResult.remediation,
+  );
 }
 
 export function overviewTokenWarning(status: ToolStatus) {

@@ -7,6 +7,7 @@ import {
   NEEDS_ATTENTION_LABEL,
   SAVED_LABEL,
 } from "./status-copy";
+import { formatMessageWithRemediation } from "./remediation-text";
 import { countLabel } from "./utils";
 
 type CommandResult = {
@@ -67,7 +68,7 @@ export function setCommandResultLabel(
     ? normalizeSetPanelResultText(result.remediation, kind)
     : null;
 
-  return `Last ${kind} result: ${message}${remediation ? ` Remediation: ${remediation}` : ""}`;
+  return formatMessageWithRemediation(`Last ${kind} result: ${message}`, remediation);
 }
 
 export function duplicateSetNameWarning(name: string) {
