@@ -5,6 +5,7 @@ import {
   ONBOARDING_ACCOUNTS_STEP_COPY,
   ONBOARDING_DONE_STEP_COPY,
   ONBOARDING_IMPORT_DIALOG_COPY,
+  ONBOARDING_OVERVIEW_COPY,
   ONBOARDING_RUNTIME_NEXT_STEPS,
   ONBOARDING_RUNTIME_STEP_COPY,
   ONBOARDING_SETUP_STEPS,
@@ -31,9 +32,11 @@ import {
   onboardingMissingToolHeading,
   onboardingMissingToolNoteParts,
   onboardingNeedsProfileNote,
+  onboardingOverviewBadgeLabel,
   onboardingPrimaryActionLabel,
   onboardingAccountBadge,
   onboardingAccountSummary,
+  onboardingRuntimeVersionDetail,
   onboardingSecureStorageStatus,
   onboardingStepProgressLabel,
   onboardingSwitchSubmitLabel,
@@ -135,6 +138,9 @@ describe("onboarding-display", () => {
     ]);
     expect(ONBOARDING_SETUP_SCREEN_COPY.toolbarKicker).toBe("Local-only setup");
     expect(ONBOARDING_SETUP_SCREEN_COPY.closeLabel).toBe("Close setup");
+    expect(ONBOARDING_OVERVIEW_COPY.heading).toBe("Switch accounts safely");
+    expect(ONBOARDING_OVERVIEW_COPY.installedNowEmpty).toBe("No supported tools detected yet");
+    expect(ONBOARDING_OVERVIEW_COPY.readyBadgeLabel).toBe("Ready");
     expect(ONBOARDING_RUNTIME_STEP_COPY.welcomeHeading).toBe("Desktop engine");
     expect(ONBOARDING_RUNTIME_STEP_COPY.settingsButtonLabel).toBe("Engine Settings");
     expect(ONBOARDING_RUNTIME_STEP_COPY.healthFallback).toBe(
@@ -363,6 +369,10 @@ describe("onboarding-display", () => {
       "Refresh Setup",
     );
     expect(onboardingPrimaryActionLabel(false, undefined)).toBe("Get Started");
+    expect(onboardingOverviewBadgeLabel(2)).toBe("2 actions");
+    expect(onboardingOverviewBadgeLabel(0)).toBe("Ready");
+    expect(onboardingRuntimeVersionDetail("0.3.7")).toBe("Version 0.3.7");
+    expect(onboardingRuntimeVersionDetail(null)).toBe("Version unknown");
     expect(onboardingImportedProfileLabel("work laptop")).toBe("Work Laptop account");
     expect(onboardingImportSubmitLabel(true)).toBe("Importing…");
     expect(onboardingImportSubmitLabel(false)).toBe("Import");

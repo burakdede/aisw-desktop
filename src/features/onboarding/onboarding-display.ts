@@ -117,6 +117,26 @@ export const ONBOARDING_SETUP_SCREEN_COPY = {
   closeLabel: "Close setup",
 } as const;
 
+export const ONBOARDING_OVERVIEW_COPY = {
+  kicker: "Setup",
+  heading: "Switch accounts safely",
+  listAriaLabel: "Setup steps",
+  note:
+    "Manage Claude Code, Codex CLI, and Gemini CLI identities from one local control app.",
+  trustListAriaLabel: "Why AI Switch is safe to use",
+  secureStorageActionLabel: "How credentials stay local",
+  installedNowLabel: "Installed now",
+  installedNowEmpty: "No supported tools detected yet",
+  installedNowNote:
+    "Missing tools are optional. You can finish setup and add them later.",
+  switchReadyLabel: "Ready to switch",
+  runtimeLabel: "Desktop engine",
+  runtimeVersionPrefix: "Version",
+  runtimeVersionUnknown: "unknown",
+  secureStorageLabel: "Secure storage",
+  readyBadgeLabel: "Ready",
+} as const;
+
 export const ONBOARDING_RUNTIME_STEP_COPY = {
   welcomeKicker: "Welcome",
   welcomeHeading: "Desktop engine",
@@ -451,6 +471,12 @@ export function onboardingPrimaryActionLabel(
   return initReport ? "Refresh Setup" : "Get Started";
 }
 
+export function onboardingOverviewBadgeLabel(needsAttentionCount: number) {
+  return needsAttentionCount
+    ? countLabel(needsAttentionCount, "action")
+    : ONBOARDING_OVERVIEW_COPY.readyBadgeLabel;
+}
+
 export function onboardingImportedProfileLabel(name: string) {
   return `${titleCase(name)} account`;
 }
@@ -483,6 +509,12 @@ export function onboardingDetectedShellSummary(shell: string | null | undefined)
   }
 
   return `${ONBOARDING_TERMINAL_STEP_COPY.detectedShellLabel}: ${titleCase(shell)}`;
+}
+
+export function onboardingRuntimeVersionDetail(version: string | null | undefined) {
+  return `${ONBOARDING_OVERVIEW_COPY.runtimeVersionPrefix} ${
+    version ?? ONBOARDING_OVERVIEW_COPY.runtimeVersionUnknown
+  }`;
 }
 
 export function onboardingDoneBadgeLabel(switchReady: boolean) {

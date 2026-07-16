@@ -32,6 +32,7 @@ import {
   ONBOARDING_ACCOUNTS_STEP_COPY,
   ONBOARDING_DONE_STEP_COPY,
   ONBOARDING_IMPORT_DIALOG_COPY,
+  ONBOARDING_OVERVIEW_COPY,
   ONBOARDING_TRUST_ROWS,
   ONBOARDING_RUNTIME_NEXT_STEPS,
   ONBOARDING_RUNTIME_STEP_COPY,
@@ -56,6 +57,7 @@ import {
   onboardingAccountBadge,
   onboardingAccountSummary,
   onboardingImportDialogAriaLabel,
+  onboardingOverviewBadgeLabel,
   onboardingSecureStorageStatus,
   onboardingStepProgressLabel,
   onboardingSwitchSubmitLabel,
@@ -66,6 +68,7 @@ import {
   onboardingNeedsProfileNote,
   restoreIncludedEngineActionLabel,
   restoreIncludedEngineErrorMessage,
+  onboardingRuntimeVersionDetail,
   resolveOnboardingStepState,
   resolveSelectedOnboardingAccountItem,
   selectDefaultAccountItem,
@@ -284,21 +287,22 @@ export function SetupPanel({
           <div className="stack-list desktop-pane-column">
             <article className="diagnostic-card onboarding-overview">
               <SourceListPanel
-                kicker="Setup"
-                title="Switch accounts safely"
-                listLabel="Setup steps"
+                kicker={ONBOARDING_OVERVIEW_COPY.kicker}
+                title={ONBOARDING_OVERVIEW_COPY.heading}
+                listLabel={ONBOARDING_OVERVIEW_COPY.listAriaLabel}
                 listRole="tablist"
                 badge={
                   <span className={`pill ${needsAttentionCount ? "pill-soft" : "pill-ok"}`}>
-                    {needsAttentionCount
-                      ? countLabel(needsAttentionCount, "action")
-                      : "Ready"}
+                    {onboardingOverviewBadgeLabel(needsAttentionCount)}
                   </span>
                 }
-                note="Manage Claude Code, Codex CLI, and Gemini CLI identities from one local control app."
+                note={ONBOARDING_OVERVIEW_COPY.note}
                 meta={
                   <div className="onboarding-welcome-stack">
-                    <ul className="onboarding-trust-list" aria-label="Why AI Switch is safe to use">
+                    <ul
+                      className="onboarding-trust-list"
+                      aria-label={ONBOARDING_OVERVIEW_COPY.trustListAriaLabel}
+                    >
                       {ONBOARDING_TRUST_ROWS.map((item) => (
                         <li key={item}>{item}</li>
                       ))}
@@ -308,11 +312,13 @@ export function SetupPanel({
                       type="button"
                       onClick={() => onOpenSettings("keyring")}
                     >
-                      How credentials stay local
+                      {ONBOARDING_OVERVIEW_COPY.secureStorageActionLabel}
                     </button>
                     <div className="onboarding-overview-meta">
                       <div>
-                        <span className="overview-current-set-cell-label">Installed now</span>
+                        <span className="overview-current-set-cell-label">
+                          {ONBOARDING_OVERVIEW_COPY.installedNowLabel}
+                        </span>
                         <strong>
                           {installedNow.length ? (
                             <span className="tool-brand-list">
@@ -326,23 +332,31 @@ export function SetupPanel({
                               ))}
                             </span>
                           ) : (
-                            "No supported tools detected yet"
+                            ONBOARDING_OVERVIEW_COPY.installedNowEmpty
                           )}
                         </strong>
-                        <p className="inline-note">Missing tools are optional. You can finish setup and add them later.</p>
+                        <p className="inline-note">{ONBOARDING_OVERVIEW_COPY.installedNowNote}</p>
                       </div>
                       <div>
-                        <span className="overview-current-set-cell-label">Ready to switch</span>
+                        <span className="overview-current-set-cell-label">
+                          {ONBOARDING_OVERVIEW_COPY.switchReadyLabel}
+                        </span>
                         <strong>{switchReadiness.label}</strong>
                         <p className="inline-note">{switchReadiness.detail}</p>
                       </div>
                       <div>
-                        <span className="overview-current-set-cell-label">Desktop engine</span>
+                        <span className="overview-current-set-cell-label">
+                          {ONBOARDING_OVERVIEW_COPY.runtimeLabel}
+                        </span>
                         <strong>{runtimeReadinessLabel(bootstrap.runtime_status.compatible, "sentence")}</strong>
-                        <p className="inline-note">Version {bootstrap.runtime_status.version?.version ?? "unknown"}</p>
+                        <p className="inline-note">
+                          {onboardingRuntimeVersionDetail(bootstrap.runtime_status.version?.version)}
+                        </p>
                       </div>
                       <div>
-                        <span className="overview-current-set-cell-label">Secure storage</span>
+                        <span className="overview-current-set-cell-label">
+                          {ONBOARDING_OVERVIEW_COPY.secureStorageLabel}
+                        </span>
                         <strong>{secureStorage.label}</strong>
                         <p className="inline-note">{secureStorage.detail}</p>
                       </div>
@@ -847,7 +861,7 @@ export function SetupPanel({
                     type="button"
                     onClick={onCloseSetup}
                   >
-                    Close setup
+                    {ONBOARDING_SETUP_SCREEN_COPY.closeLabel}
                   </button>
                 ) : null}
               </div>
