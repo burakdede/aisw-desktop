@@ -21,7 +21,6 @@ import { ActivityPanel } from "./features/activity/components/ActivityPanel";
 import { SetsPanel } from "./features/sets/components/SetsPanel";
 import { invalidatePostMutationQueries } from "./features/shared/postMutationRefresh";
 import { SettingsPanel } from "./features/settings/components/SettingsPanel";
-import type { SettingsSection } from "./features/settings/settings-panel-display";
 import { useDesktop } from "./features/shared/useDesktop";
 import { notifyDesktop } from "./lib/notifications";
 import { DEFAULT_ACTION_FAILURE_MESSAGE } from "./lib/display-copy";
@@ -34,7 +33,12 @@ import {
   REFERENCE_DOCUMENT_KIND_DOCUMENTATION,
   REFERENCE_DOCUMENT_KIND_TROUBLESHOOTING,
 } from "./lib/desktop-command-contract";
+import { APP_NAV_IDS, type AppNavId } from "./lib/app-navigation";
 import { activeSetLabel } from "./lib/profile-display";
+import {
+  SETTINGS_SECTION_IDS,
+  type SettingsSection,
+} from "./lib/settings-sections";
 import { listenDesktopEvent } from "./lib/tauri";
 import { subscribeDesktopEvents, type DesktopEventHandler } from "./lib/desktop-events";
 import { buildBundledRuntimeSettingsUpdate } from "./lib/desktop-settings";
@@ -76,7 +80,6 @@ import {
   deriveAppShellState,
   REAPPLY_ACTIVE_PROFILE_LABEL,
   resolveActiveReapplyAction,
-  type AppNavId,
   type ToolbarAction,
   type ProfilesRouteState,
   sectionDetail,
@@ -118,18 +121,18 @@ export function App() {
   function openSettings(section?: SettingsSection) {
     setSettingsRouteState(createSettingsRouteState(section));
     setRuntimeRecoveryOpen(true);
-    setActiveNav("settings");
+    setActiveNav(APP_NAV_IDS.settings);
   }
 
   function openContexts() {
-    setActiveNav("sets");
+    setActiveNav(APP_NAV_IDS.sets);
   }
 
   function selectNav(id: string) {
-    if (id === "profiles") {
+    if (id === APP_NAV_IDS.profiles) {
       setProfilesRouteState(createProfilesRouteState());
     }
-    if (id === "settings") {
+    if (id === APP_NAV_IDS.settings) {
       setSettingsRouteState(createSettingsRouteState());
       setRuntimeRecoveryOpen(true);
     }
@@ -310,47 +313,50 @@ export function App() {
           invalidateDiagnostics();
         },
       },
-      { event: DESKTOP_MENU_EVENTS.openSettings, handler: () => openSettings("runtime") },
+      {
+        event: DESKTOP_MENU_EVENTS.openSettings,
+        handler: () => openSettings(SETTINGS_SECTION_IDS.runtime),
+      },
       {
         event: DESKTOP_MENU_EVENTS.openSettingsUpdates,
-        handler: () => openSettings("updates"),
+        handler: () => openSettings(SETTINGS_SECTION_IDS.updates),
       },
       {
         event: DESKTOP_MENU_EVENTS.openProfiles,
         handler: () => {
           setProfilesRouteState(createProfilesRouteState());
-          setActiveNav("profiles");
+          setActiveNav(APP_NAV_IDS.profiles);
         },
       },
       {
         event: DESKTOP_MENU_EVENTS.openAddProfile,
         handler: () => {
           setProfilesRouteState(createProfilesRouteState({ tool: "claude", expandedProfile: null }));
-          setActiveNav("profiles");
+          setActiveNav(APP_NAV_IDS.profiles);
         },
       },
       {
         event: DESKTOP_MENU_EVENTS.openImportCurrentLogin,
         handler: () => {
           setProfilesRouteState(createImportCurrentLoginRouteState());
-          setActiveNav("profiles");
+          setActiveNav(APP_NAV_IDS.profiles);
         },
       },
-      { event: DESKTOP_MENU_EVENTS.openOverview, handler: () => setActiveNav("overview") },
-      { event: DESKTOP_MENU_EVENTS.openSets, handler: () => setActiveNav("sets") },
+      { event: DESKTOP_MENU_EVENTS.openOverview, handler: () => setActiveNav(APP_NAV_IDS.overview) },
+      { event: DESKTOP_MENU_EVENTS.openSets, handler: () => setActiveNav(APP_NAV_IDS.sets) },
       {
         event: DESKTOP_MENU_EVENTS.openDiagnostics,
-        handler: () => setActiveNav("diagnostics"),
+        handler: () => setActiveNav(APP_NAV_IDS.diagnostics),
       },
       {
         event: DESKTOP_MENU_EVENTS.runVerify,
         handler: () => {
-          setActiveNav("diagnostics");
+          setActiveNav(APP_NAV_IDS.diagnostics);
           invalidateDiagnostics();
         },
       },
-      { event: DESKTOP_MENU_EVENTS.openBackups, handler: () => setActiveNav("backups") },
-      { event: DESKTOP_MENU_EVENTS.openActivity, handler: () => setActiveNav("activity") },
+      { event: DESKTOP_MENU_EVENTS.openBackups, handler: () => setActiveNav(APP_NAV_IDS.backups) },
+      { event: DESKTOP_MENU_EVENTS.openActivity, handler: () => setActiveNav(APP_NAV_IDS.activity) },
       {
         event: DESKTOP_MENU_EVENTS.openQuickSwitch,
         handler: () => setQuickSwitchOpen(true),
@@ -385,7 +391,7 @@ export function App() {
         event: DESKTOP_MENU_EVENTS.openTroubleshooting,
         handler: () => {
           void openReferenceDocument(REFERENCE_DOCUMENT_KIND_TROUBLESHOOTING).catch(() => {
-            setActiveNav("diagnostics");
+            setActiveNav(APP_NAV_IDS.diagnostics);
             invalidateDiagnostics();
           });
         },
@@ -494,13 +500,13 @@ export function App() {
   }
 
   function runVerifyFlow() {
-    setActiveNav("diagnostics");
+    setActiveNav(APP_NAV_IDS.diagnostics);
     invalidateDiagnostics();
   }
 
   function openAddProfile() {
     setProfilesRouteState((current) => createAddProfileRouteState(current));
-    setActiveNav("profiles");
+    setActiveNav(APP_NAV_IDS.profiles);
   }
 
   function reopenSetupAssistant() {
@@ -508,7 +514,7 @@ export function App() {
       ...current,
       reopenSetupAssistant: true,
     }));
-    setActiveNav("overview");
+    setActiveNav(APP_NAV_IDS.overview);
   }
 
   function resetOnboarding() {
@@ -520,10 +526,10 @@ export function App() {
     setRuntimeRecoveryOpen(false);
     setDesktopPreferences((current) => ({
       ...current,
-      defaultSection: "overview",
+      defaultSection: APP_NAV_IDS.overview,
       reopenSetupAssistant: true,
     }));
-    setActiveNav("overview");
+    setActiveNav(APP_NAV_IDS.overview);
   }
 
   function closeSetupAssistant() {
@@ -665,7 +671,7 @@ export function App() {
         <SettingsPanel
           settings={settings}
           runtimeStatus={runtimeStatus}
-          initialSection="runtime"
+          initialSection={SETTINGS_SECTION_IDS.runtime}
           desktopPreferences={desktopPreferences}
           onUpdateDesktopPreferences={setDesktopPreferences}
           onReopenSetupAssistant={reopenSetupAssistant}

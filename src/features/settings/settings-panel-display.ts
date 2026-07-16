@@ -4,17 +4,30 @@ import {
   DEFAULT_DESKTOP_PREFERENCES,
   type DesktopPreferences,
 } from "../../lib/desktop-preferences";
+import { type DefaultAppSection } from "../../lib/app-navigation";
 import {
   DESKTOP_UPDATE_CHANNELS,
   normalizeDesktopUpdateChannel,
   type DesktopUpdateChannel,
 } from "../../lib/desktop-settings";
 import { normalizeResolvedCheckStatus } from "../../lib/check-status";
+import {
+  DEFAULT_SETTINGS_SECTION,
+  SETTINGS_SECTION_IDS,
+  SETTINGS_SECTIONS,
+  type SettingsSection,
+} from "../../lib/settings-sections";
 import type { AppBootstrap, DesktopSettings, ShellHookGuidance } from "../../lib/schemas";
 import { DEFAULT_ACTION_FAILURE_MESSAGE, NOT_FOUND_LABEL, NOT_SET_LABEL } from "../../lib/display-copy";
 import { DesktopCommandError } from "../../lib/tauri";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
+
+export {
+  DEFAULT_SETTINGS_SECTION,
+  SETTINGS_SECTIONS,
+  type SettingsSection,
+} from "../../lib/settings-sections";
 
 export const LAUNCH_AT_LOGIN_ENABLED_MESSAGE = "Launch at login enabled.";
 export const LAUNCH_AT_LOGIN_DISABLED_MESSAGE = "Launch at login disabled.";
@@ -35,16 +48,6 @@ export const SETTINGS_RESET_ONBOARDING_LABEL = "Reset Onboarding";
 export const SETTINGS_RESET_WINDOW_LAYOUT_LABEL = "Reset Window Layout";
 export const SETTINGS_SHELL_NOTE =
   "Current terminal sessions only need the hook when they must receive live environment changes immediately.";
-export const SETTINGS_SECTIONS = [
-  "general",
-  "runtime",
-  "shell",
-  "keyring",
-  "updates",
-  "advanced",
-] as const;
-export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
-export const DEFAULT_SETTINGS_SECTION: SettingsSection = SETTINGS_SECTIONS[0];
 export type SettingsSectionDirection = "next" | "previous" | "first" | "last";
 export type SettingsDraft = {
   runtimeKind: DesktopSettings["runtime_kind"];
@@ -64,14 +67,14 @@ export type SettingsOption<Value extends string> = {
 };
 
 const SETTINGS_SECTION_LABELS: Record<SettingsSection, string> = {
-  general: "General",
-  runtime: "Engine",
-  shell: "Terminal Integration",
-  keyring: "Security",
-  updates: "Updates",
-  advanced: "Advanced",
+  [SETTINGS_SECTION_IDS.general]: "General",
+  [SETTINGS_SECTION_IDS.runtime]: "Engine",
+  [SETTINGS_SECTION_IDS.shell]: "Terminal Integration",
+  [SETTINGS_SECTION_IDS.keyring]: "Security",
+  [SETTINGS_SECTION_IDS.updates]: "Updates",
+  [SETTINGS_SECTION_IDS.advanced]: "Advanced",
 };
-const DEFAULT_SECTION_LABELS: Record<(typeof DEFAULT_SECTIONS)[number], string> = {
+const DEFAULT_SECTION_LABELS: Record<DefaultAppSection, string> = {
   overview: "Overview",
   profiles: "Profiles",
   sets: "Sets",

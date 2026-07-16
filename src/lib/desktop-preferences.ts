@@ -1,15 +1,14 @@
+import {
+  APP_NAV_IDS,
+  DEFAULT_APP_SECTIONS,
+  type DefaultAppSection,
+} from "./app-navigation";
+
 export const DESKTOP_APPEARANCES = ["system", "light", "dark"] as const;
 export type DesktopAppearance = (typeof DESKTOP_APPEARANCES)[number];
 
-export const DEFAULT_SECTIONS = [
-  "overview",
-  "profiles",
-  "sets",
-  "diagnostics",
-  "backups",
-  "activity",
-] as const;
-export type DefaultSection = (typeof DEFAULT_SECTIONS)[number];
+export const DEFAULT_SECTIONS = DEFAULT_APP_SECTIONS;
+export type DefaultSection = DefaultAppSection;
 
 export type DesktopPreferences = {
   appearance: DesktopAppearance;
@@ -29,7 +28,7 @@ let nativeThemeSyncToken = 0;
 
 export const DEFAULT_DESKTOP_PREFERENCES: DesktopPreferences = {
   appearance: "system",
-  defaultSection: "overview",
+  defaultSection: APP_NAV_IDS.overview,
   showMenuBarIcon: true,
   restoreWindowState: true,
   reopenSetupAssistant: false,

@@ -31,6 +31,11 @@ import {
 } from "../../../lib/runtime-display";
 import { type AppBootstrap, type DesktopSettings } from "../../../lib/schemas";
 import { clearPersistedWindowState } from "../../../lib/window-state";
+import {
+  DEFAULT_SETTINGS_SECTION,
+  SETTINGS_SECTIONS,
+  type SettingsSection,
+} from "../../../lib/settings-sections";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import {
@@ -43,7 +48,6 @@ import {
   patchSettingsDraft,
   clipboardSuccessMessage,
   clipboardUnavailableMessage,
-  DEFAULT_SETTINGS_SECTION,
   effectiveRuntimePath,
   exportedDiagnosticMessage,
   findShellHookCheck,
@@ -75,14 +79,12 @@ import {
   SETTINGS_RUNTIME_SOURCE_OPTIONS,
   SETTINGS_SAVE_FAILED_TITLE,
   settingsSectionDirectionForKey,
-  SETTINGS_SECTIONS,
   SETTINGS_SHELL_NOTE,
   SETTINGS_UPDATE_CHECK_FAILED_TITLE,
   SETTINGS_UPDATE_INSTALL_FAILED_TITLE,
   SETTINGS_UPDATE_CHANNEL_OPTIONS,
   type DesktopPreferencesDraft,
   type SettingsDraft,
-  type SettingsSection,
   WINDOW_LAYOUT_RESET_MESSAGE,
 } from "../settings-panel-display";
 import packageJson from "../../../../package.json";

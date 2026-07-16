@@ -20,6 +20,7 @@ import {
   openExternalGuide,
   toolBinaryName,
 } from "../../../lib/tool-guidance";
+import { SETTINGS_SECTION_IDS, type SettingsSection } from "../../../lib/settings-sections";
 import {
   preferredProfileImportMode,
   supportsProfileImportMode,
@@ -75,7 +76,6 @@ import {
   type LiveAccount,
   type SetupStep,
 } from "../onboarding-display";
-import type { SettingsSection } from "../../settings/settings-panel-display";
 import type { ProfileImportMode } from "../../shared/profile-capabilities";
 
 export function SetupPanel({

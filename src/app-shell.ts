@@ -1,7 +1,6 @@
 import { DesktopCommandError, type TrayCommandResultEvent } from "./lib/tauri";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "./lib/schemas";
 import type { ProfileImportMode } from "./features/shared/profile-capabilities";
-import type { SettingsSection } from "./features/settings/settings-panel-display";
 import type {
   CommandResultScope,
   LastCommandResult,
@@ -16,7 +15,14 @@ import {
 } from "./lib/profile-display";
 import { resolveGlobalStateMode, resolveStateModeRequest } from "./features/shared/state-modes";
 import { titleCase } from "./lib/utils";
+import {
+  APP_NAV_IDS,
+  APP_NAV_SHORTCUT_KEYS,
+  APP_NAV_SHORTCUT_LABELS,
+  type AppNavId,
+} from "./lib/app-navigation";
 import { createDesktopSettings } from "./lib/desktop-settings";
+import { type SettingsSection } from "./lib/settings-sections";
 export {
   runtimeSelectionLabel,
   runtimeSourceLabel,
@@ -29,13 +35,13 @@ import {
 } from "./lib/runtime-display";
 
 export const APP_NAV = [
-  { id: "overview", label: "Overview", group: "Main" },
-  { id: "profiles", label: "Profiles", group: "Main" },
-  { id: "sets", label: "Sets", group: "Main" },
-  { id: "diagnostics", label: "Diagnostics", group: "Health" },
-  { id: "backups", label: "Backups", group: "Health" },
-  { id: "activity", label: "Activity", group: "Health" },
-  { id: "settings", label: "Settings", group: "App" },
+  { id: APP_NAV_IDS.overview, label: "Overview", group: "Main" },
+  { id: APP_NAV_IDS.profiles, label: "Profiles", group: "Main" },
+  { id: APP_NAV_IDS.sets, label: "Sets", group: "Main" },
+  { id: APP_NAV_IDS.diagnostics, label: "Diagnostics", group: "Health" },
+  { id: APP_NAV_IDS.backups, label: "Backups", group: "Health" },
+  { id: APP_NAV_IDS.activity, label: "Activity", group: "Health" },
+  { id: APP_NAV_IDS.settings, label: "Settings", group: "App" },
 ] as const;
 
 export const APP_SHELL_COPY = {
@@ -84,8 +90,6 @@ export const APP_SHELL_COPY = {
     detail: "The desktop engine is compatible, but no state snapshot is available yet.",
   },
 } as const;
-
-export type AppNavId = (typeof APP_NAV)[number]["id"];
 
 export type ProfilesRouteState = {
   tool?: string;
@@ -147,42 +151,16 @@ export type ReapplyActiveProfileAction =
 
 export const REAPPLY_ACTIVE_PROFILE_LABEL = "Re-apply active profile";
 
-const NAV_SHORTCUTS: Record<string, AppNavId> = {
-  "1": "overview",
-  "2": "profiles",
-  "3": "sets",
-  "4": "diagnostics",
-  "5": "backups",
-  "6": "activity",
-};
-
 export function settingsForRecovery(settings: AppBootstrap["settings"] | undefined) {
   return createDesktopSettings(settings ?? {});
 }
 
 export function navShortcutLabel(id: AppNavId | string) {
-  switch (id) {
-    case "overview":
-      return "⌘1";
-    case "profiles":
-      return "⌘2";
-    case "sets":
-      return "⌘3";
-    case "diagnostics":
-      return "⌘4";
-    case "backups":
-      return "⌘5";
-    case "activity":
-      return "⌘6";
-    case "settings":
-      return "⌘,";
-    default:
-      return undefined;
-  }
+  return APP_NAV_SHORTCUT_LABELS[id as AppNavId];
 }
 
 export function appNavFromShortcut(key: string) {
-  return NAV_SHORTCUTS[key];
+  return APP_NAV_SHORTCUT_KEYS[key];
 }
 
 export function buildAppNavItems(runtimeBlocked: boolean) {
@@ -232,10 +210,10 @@ export function deriveAppShellState(input: {
   const runtimeRecoveryFocused = input.runtimeBlocked && !input.runtimeRecoveryOpen;
   const activeSection = input.runtimeBlocked
     ? runtimeRecoveryFocused
-      ? "overview"
-      : "settings"
+      ? APP_NAV_IDS.overview
+      : APP_NAV_IDS.settings
     : input.activeNav;
-  const setupFocused = input.setupRequired && activeSection === "overview";
+  const setupFocused = input.setupRequired && activeSection === APP_NAV_IDS.overview;
   const showSetupWindow = setupFocused || runtimeRecoveryFocused;
 
   return {
@@ -253,15 +231,15 @@ export function buildToolbarActions(input: {
 }) {
   if (
     input.showSetupWindow ||
-    input.activeSection === "backups" ||
-    input.activeSection === "activity" ||
-    input.activeSection === "settings" ||
-    input.activeSection === "profiles"
+    input.activeSection === APP_NAV_IDS.backups ||
+    input.activeSection === APP_NAV_IDS.activity ||
+    input.activeSection === APP_NAV_IDS.settings ||
+    input.activeSection === APP_NAV_IDS.profiles
   ) {
     return [];
   }
 
-  if (input.activeSection === "overview") {
+  if (input.activeSection === APP_NAV_IDS.overview) {
     return [
       {
         kind: "quick-switch",
@@ -558,19 +536,19 @@ export function sectionTitle(section: string, setupFocused = false) {
   }
 
   switch (section) {
-    case "overview":
+    case APP_NAV_IDS.overview:
       return "Overview";
-    case "profiles":
+    case APP_NAV_IDS.profiles:
       return "Profiles";
-    case "sets":
+    case APP_NAV_IDS.sets:
       return "Sets";
-    case "diagnostics":
+    case APP_NAV_IDS.diagnostics:
       return "Diagnostics";
-    case "backups":
+    case APP_NAV_IDS.backups:
       return "Backups";
-    case "activity":
+    case APP_NAV_IDS.activity:
       return "Activity";
-    case "settings":
+    case APP_NAV_IDS.settings:
       return "Settings";
     default:
       return "AI Switch";
