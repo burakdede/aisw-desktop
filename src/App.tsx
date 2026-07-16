@@ -97,11 +97,10 @@ import {
 export function App() {
   const queryClient = useQueryClient();
   const lastCommandResults = useLastCommandResults();
-  const [desktopPreferences, setDesktopPreferences] = useState<DesktopPreferences>(() =>
-    loadDesktopPreferences(),
-  );
+  const [desktopPreferences, setDesktopPreferences] =
+    useState<DesktopPreferences>(loadDesktopPreferences);
   const [activeNav, setActiveNav] = useState<AppNavId>(
-    () => loadDesktopPreferences().defaultSection,
+    () => desktopPreferences.defaultSection,
   );
   const [quickSwitchOpen, setQuickSwitchOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);

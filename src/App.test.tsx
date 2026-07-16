@@ -19,7 +19,10 @@ import {
   DESKTOP_TRAY_EVENTS,
   type DesktopEventName,
 } from "./lib/desktop-event-contract";
-import { loadDesktopPreferences } from "./lib/desktop-preferences";
+import {
+  DESKTOP_PREFERENCE_STORAGE_KEYS,
+  loadDesktopPreferences,
+} from "./lib/desktop-preferences";
 import type { UnknownRecord } from "./lib/parse-guards";
 import { desktopSettingsSchema } from "./lib/schemas";
 import type { AppBootstrap, AppSnapshot, DesktopSettings, InitReport } from "./lib/schemas";
@@ -8670,11 +8673,21 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(window.localStorage.getItem("ai-switch.desktop.appearance")).toBe("dark");
-      expect(window.localStorage.getItem("ai-switch.desktop.default-section")).toBe("profiles");
-      expect(window.localStorage.getItem("ai-switch.desktop.show-menu-bar-icon")).toBe("false");
-      expect(window.localStorage.getItem("ai-switch.desktop.restore-window-state")).toBe("false");
-      expect(window.localStorage.getItem("ai-switch.desktop.reopen-setup-assistant")).toBe("false");
+      expect(
+        window.localStorage.getItem(DESKTOP_PREFERENCE_STORAGE_KEYS.appearance),
+      ).toBe("dark");
+      expect(
+        window.localStorage.getItem(DESKTOP_PREFERENCE_STORAGE_KEYS.defaultSection),
+      ).toBe("profiles");
+      expect(
+        window.localStorage.getItem(DESKTOP_PREFERENCE_STORAGE_KEYS.showMenuBarIcon),
+      ).toBe("false");
+      expect(
+        window.localStorage.getItem(DESKTOP_PREFERENCE_STORAGE_KEYS.restoreWindowState),
+      ).toBe("false");
+      expect(
+        window.localStorage.getItem(DESKTOP_PREFERENCE_STORAGE_KEYS.reopenSetupAssistant),
+      ).toBe("false");
       expect(document.documentElement.dataset.appearance).toBe("dark");
       expect(document.documentElement.style.colorScheme).toBe("dark");
       expect(commands).toContain("set_launch_at_login");
@@ -8692,14 +8705,18 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getAllByRole("heading", { name: "Get started" }).length).toBeGreaterThan(0);
-      expect(window.localStorage.getItem("ai-switch.desktop.reopen-setup-assistant")).toBe("true");
+      expect(
+        window.localStorage.getItem(DESKTOP_PREFERENCE_STORAGE_KEYS.reopenSetupAssistant),
+      ).toBe("true");
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Close setup" }));
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
-      expect(window.localStorage.getItem("ai-switch.desktop.reopen-setup-assistant")).toBe("false");
+      expect(
+        window.localStorage.getItem(DESKTOP_PREFERENCE_STORAGE_KEYS.reopenSetupAssistant),
+      ).toBe("false");
     });
   });
 
@@ -8713,7 +8730,9 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(window.localStorage.getItem("ai-switch.desktop.default-section")).toBe("profiles");
+      expect(
+        window.localStorage.getItem(DESKTOP_PREFERENCE_STORAGE_KEYS.defaultSection),
+      ).toBe("profiles");
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Advanced" }));
@@ -8721,8 +8740,12 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(screen.getAllByRole("heading", { name: "Get started" }).length).toBeGreaterThan(0);
-      expect(window.localStorage.getItem("ai-switch.desktop.default-section")).toBe("overview");
-      expect(window.localStorage.getItem("ai-switch.desktop.reopen-setup-assistant")).toBe("true");
+      expect(
+        window.localStorage.getItem(DESKTOP_PREFERENCE_STORAGE_KEYS.defaultSection),
+      ).toBe("overview");
+      expect(
+        window.localStorage.getItem(DESKTOP_PREFERENCE_STORAGE_KEYS.reopenSetupAssistant),
+      ).toBe("true");
     });
   });
 
@@ -8847,7 +8870,10 @@ describe("App", () => {
   });
 
   it("uses the saved default section on launch", async () => {
-    window.localStorage.setItem("ai-switch.desktop.default-section", "profiles");
+    window.localStorage.setItem(
+      DESKTOP_PREFERENCE_STORAGE_KEYS.defaultSection,
+      "profiles",
+    );
 
     await renderApp();
 

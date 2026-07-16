@@ -21,11 +21,14 @@ export type DesktopPreferences = {
   reopenSetupAssistant: boolean;
 };
 
-const APPEARANCE_KEY = "ai-switch.desktop.appearance";
-const DEFAULT_SECTION_KEY = "ai-switch.desktop.default-section";
-const SHOW_MENU_BAR_ICON_KEY = "ai-switch.desktop.show-menu-bar-icon";
-const RESTORE_WINDOW_STATE_KEY = "ai-switch.desktop.restore-window-state";
-const REOPEN_SETUP_ASSISTANT_KEY = "ai-switch.desktop.reopen-setup-assistant";
+export const DESKTOP_PREFERENCE_STORAGE_KEYS = {
+  appearance: "ai-switch.desktop.appearance",
+  defaultSection: "ai-switch.desktop.default-section",
+  showMenuBarIcon: "ai-switch.desktop.show-menu-bar-icon",
+  restoreWindowState: "ai-switch.desktop.restore-window-state",
+  reopenSetupAssistant: "ai-switch.desktop.reopen-setup-assistant",
+} as const;
+
 const memoryStorage = createMemoryStorage();
 let nativeThemeSyncToken = 0;
 
@@ -43,11 +46,15 @@ export function loadDesktopPreferences(): DesktopPreferences {
     return DEFAULT_DESKTOP_PREFERENCES;
   }
 
-  const storedAppearance = storage.getItem(APPEARANCE_KEY);
-  const storedSection = storage.getItem(DEFAULT_SECTION_KEY);
-  const storedShowMenuBarIcon = storage.getItem(SHOW_MENU_BAR_ICON_KEY);
-  const storedRestoreWindowState = storage.getItem(RESTORE_WINDOW_STATE_KEY);
-  const storedReopenSetupAssistant = storage.getItem(REOPEN_SETUP_ASSISTANT_KEY);
+  const storedAppearance = storage.getItem(DESKTOP_PREFERENCE_STORAGE_KEYS.appearance);
+  const storedSection = storage.getItem(DESKTOP_PREFERENCE_STORAGE_KEYS.defaultSection);
+  const storedShowMenuBarIcon = storage.getItem(DESKTOP_PREFERENCE_STORAGE_KEYS.showMenuBarIcon);
+  const storedRestoreWindowState = storage.getItem(
+    DESKTOP_PREFERENCE_STORAGE_KEYS.restoreWindowState,
+  );
+  const storedReopenSetupAssistant = storage.getItem(
+    DESKTOP_PREFERENCE_STORAGE_KEYS.reopenSetupAssistant,
+  );
 
   return {
     appearance: normalizeDesktopAppearance(storedAppearance),
@@ -73,15 +80,21 @@ export function saveDesktopPreferences(preferences: DesktopPreferences) {
     return;
   }
 
-  storage.setItem(APPEARANCE_KEY, preferences.appearance);
-  storage.setItem(DEFAULT_SECTION_KEY, preferences.defaultSection);
-  storage.setItem(SHOW_MENU_BAR_ICON_KEY, String(preferences.showMenuBarIcon));
+  storage.setItem(DESKTOP_PREFERENCE_STORAGE_KEYS.appearance, preferences.appearance);
   storage.setItem(
-    RESTORE_WINDOW_STATE_KEY,
+    DESKTOP_PREFERENCE_STORAGE_KEYS.defaultSection,
+    preferences.defaultSection,
+  );
+  storage.setItem(
+    DESKTOP_PREFERENCE_STORAGE_KEYS.showMenuBarIcon,
+    String(preferences.showMenuBarIcon),
+  );
+  storage.setItem(
+    DESKTOP_PREFERENCE_STORAGE_KEYS.restoreWindowState,
     String(preferences.restoreWindowState),
   );
   storage.setItem(
-    REOPEN_SETUP_ASSISTANT_KEY,
+    DESKTOP_PREFERENCE_STORAGE_KEYS.reopenSetupAssistant,
     String(preferences.reopenSetupAssistant),
   );
 }
