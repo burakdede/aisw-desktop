@@ -10,8 +10,10 @@ import {
   buildSelectedRepairFixes,
   buildRecentFailureCards,
   diagnosticBundlePathCopyMessage,
+  diagnosticFindingAriaLabel,
   diagnosticInspectorStatusLabel,
   diagnosticsApplyRepairsLabel,
+  diagnosticsPassedChecksSummary,
   diagnosticsRepairPlanSummary,
   diagnosticsRepairSelectionLabel,
   diagnosticTechnicalCommandBlock,
@@ -121,8 +123,16 @@ describe("diagnostics-panel-display", () => {
       "Suggested commands for validation and recovery.",
     );
     expect(DIAGNOSTICS_PANEL_COPY.copyReportPathLabel).toBe("Copy report path");
+    expect(DIAGNOSTICS_PANEL_COPY.inspectorBackLabel).toBe("Back");
+    expect(DIAGNOSTICS_PANEL_COPY.exportReportFailedMessage).toBe(
+      "Support report export failed.",
+    );
     expect(diagnosticInspectorStatusLabel("fail")).toBe("Blocked");
     expect(diagnosticInspectorStatusLabel("warn")).toBe("Needs attention");
+    expect(diagnosticFindingAriaLabel({ title: "Keyring unavailable" })).toBe(
+      "Inspect Keyring unavailable",
+    );
+    expect(diagnosticsPassedChecksSummary(3)).toBe("3 checks passed");
     expect(diagnosticTechnicalCommandBlock("Re-apply Work")).toContain("# Re-apply Work");
     expect(diagnosticTechnicalCommandBlock(null)).toContain(
       "# Review the explicit action above",

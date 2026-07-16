@@ -40,8 +40,10 @@ import {
   buildSelectedRepairFixes,
   buildRecentFailureCards,
   diagnosticBundlePathCopyMessage,
+  diagnosticFindingAriaLabel,
   diagnosticInspectorStatusLabel,
   diagnosticsApplyRepairsLabel,
+  diagnosticsPassedChecksSummary,
   diagnosticsRepairPlanSummary,
   diagnosticsRepairSelectionLabel,
   diagnosticTechnicalCommandBlock,
@@ -198,7 +200,7 @@ export function DiagnosticsPanel({
     exportErrorMessage: exportBundle.error
       ? exportBundle.error instanceof Error
         ? exportBundle.error.message
-        : "Support report export failed."
+        : DIAGNOSTICS_PANEL_COPY.exportReportFailedMessage
       : undefined,
     appliedFixCount: applyRepair.data ? lastAppliedCount : undefined,
   });
@@ -380,7 +382,7 @@ export function DiagnosticsPanel({
                           <button
                             key={finding.key}
                             type="button"
-                            aria-label={`Inspect ${finding.title}`}
+                            aria-label={diagnosticFindingAriaLabel(finding)}
                             aria-pressed={selectedFinding?.key === finding.key}
                             className={`list-row diagnostic-finding-row ${
                               selectedFinding?.key === finding.key ? "diagnostic-finding-row-selected" : ""
@@ -409,7 +411,7 @@ export function DiagnosticsPanel({
                 ))}
                 {passedChecks.length ? (
                   <details className="diagnostics-passed-section">
-                    <summary>{passedChecks.length} checks passed</summary>
+                    <summary>{diagnosticsPassedChecksSummary(passedChecks.length)}</summary>
                     <div className="stack-list">
                       {passedChecks.map((row) => (
                         <div key={row.label} className="diagnostics-passed-row">
@@ -459,7 +461,7 @@ export function DiagnosticsPanel({
                         type="button"
                         onClick={() => setCompactInspectorOpen(false)}
                       >
-                        Back
+                        {DIAGNOSTICS_PANEL_COPY.inspectorBackLabel}
                       </button>
                     ) : null}
                     <h3>{selectedFinding.title}</h3>

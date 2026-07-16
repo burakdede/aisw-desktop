@@ -140,6 +140,7 @@ type LastCommandResultsInput = {
 
 export const DIAGNOSTICS_PANEL_COPY = {
   verifyButtonLabel: DESKTOP_ACTION_COPY.verifyLabel,
+  inspectorBackLabel: "Back",
   verifyAgainAriaLabel: "Verify Again",
   reviewSafeFixesAriaLabel: "Review Safe Fixes",
   applySafeFixesAriaLabel: "Apply Safe Fixes",
@@ -179,6 +180,9 @@ export const DIAGNOSTICS_PANEL_COPY = {
     "Profile re-apply, restore, and removal actions still require their own explicit flow.",
   repairPlanCancelLabel: "Cancel",
   copyReportPathLabel: "Copy report path",
+  passedChecksSuffix: "checks passed",
+  findingInspectPrefix: "Inspect",
+  exportReportFailedMessage: "Support report export failed.",
 } as const;
 
 const RECENT_FAILURE_TITLES = {
@@ -495,6 +499,16 @@ export function diagnosticBundlePathCopyMessage(path: string, clipboardAvailable
 
 export function diagnosticInspectorStatusLabel(status: DiagnosticFinding["status"]) {
   return status === "fail" ? BLOCKED_LABEL : NEEDS_ATTENTION_SENTENCE_LABEL;
+}
+
+export function diagnosticFindingAriaLabel(
+  finding: Pick<DiagnosticFinding, "title">,
+) {
+  return `${DIAGNOSTICS_PANEL_COPY.findingInspectPrefix} ${finding.title}`;
+}
+
+export function diagnosticsPassedChecksSummary(count: number) {
+  return `${count} ${DIAGNOSTICS_PANEL_COPY.passedChecksSuffix}`;
 }
 
 export function diagnosticTechnicalCommandBlock(primaryLabel?: string | null) {
