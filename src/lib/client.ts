@@ -30,7 +30,13 @@ import {
   workspaceStatusReportSchema,
   verifyReportSchema,
 } from "./schemas";
+import {
+  DESKTOP_COMMANDS,
+  type DesktopCommandName,
+  type ReferenceDocumentKind,
+} from "./desktop-command-contract";
 import { invokeDesktop } from "./tauri";
+import type { output, ZodTypeAny } from "zod";
 
 export interface AddProfileInput {
   tool: string;
@@ -116,21 +122,31 @@ export interface WorkspaceUnbindInput {
   pattern?: string;
 }
 
+async function invokeParsed<Schema extends ZodTypeAny>(
+  command: DesktopCommandName,
+  schema: Schema,
+  args?: Record<string, unknown>,
+): Promise<output<Schema>> {
+  return schema.parse(await invokeDesktop(command, args));
+}
+
 export async function getBootstrap(): Promise<AppBootstrap> {
-  return appBootstrapSchema.parse(await invokeDesktop("get_bootstrap"));
+  return invokeParsed(DESKTOP_COMMANDS.getBootstrap, appBootstrapSchema);
 }
 
 export async function getSnapshot(): Promise<AppSnapshot> {
-  return appSnapshotSchema.parse(await invokeDesktop("get_snapshot"));
+  return invokeParsed(DESKTOP_COMMANDS.getSnapshot, appSnapshotSchema);
 }
 
 export async function openIssueTracker(): Promise<string> {
-  return openedPathSchema.parse(await invokeDesktop("open_issue_tracker"));
+  return invokeParsed(DESKTOP_COMMANDS.openIssueTracker, openedPathSchema);
 }
 
 export async function addProfile(input: AddProfileInput): Promise<MutationResponse> {
-  return mutationResponseSchema.parse(
-    await invokeDesktop("add_profile", {
+  return invokeParsed(
+    DESKTOP_COMMANDS.addProfile,
+    mutationResponseSchema,
+    {
       request: {
         tool: input.tool,
         profile: input.profile,
@@ -139,15 +155,17 @@ export async function addProfile(input: AddProfileInput): Promise<MutationRespon
         credential_backend: input.credentialBackend ?? null,
         import_mode: input.importMode,
       },
-    }),
+    },
   );
 }
 
 export async function addProfileOAuth(
   input: AddOAuthProfileInput,
 ): Promise<MutationResponse> {
-  return mutationResponseSchema.parse(
-    await invokeDesktop("add_profile_oauth", {
+  return invokeParsed(
+    DESKTOP_COMMANDS.addProfileOAuth,
+    mutationResponseSchema,
+    {
       request: {
         tool: input.tool,
         profile: input.profile,
@@ -155,139 +173,161 @@ export async function addProfileOAuth(
         state_mode: input.stateMode ?? null,
         credential_backend: input.credentialBackend ?? null,
       },
-    }),
+    },
   );
 }
 
 export async function useProfile(input: UseProfileInput): Promise<MutationResponse> {
-  return mutationResponseSchema.parse(
-    await invokeDesktop("use_profile", {
+  return invokeParsed(
+    DESKTOP_COMMANDS.useProfile,
+    mutationResponseSchema,
+    {
       request: {
         tool: input.tool,
         profile: input.profile,
         state_mode: input.stateMode ?? null,
       },
-    }),
+    },
   );
 }
 
 export async function useAllProfiles(
   input: UseAllProfilesInput,
 ): Promise<MutationResponse> {
-  return mutationResponseSchema.parse(
-    await invokeDesktop("use_all_profiles", {
+  return invokeParsed(
+    DESKTOP_COMMANDS.useAllProfiles,
+    mutationResponseSchema,
+    {
       request: {
         profile: input.profile,
         state_mode: input.stateMode ?? null,
       },
-    }),
+    },
   );
 }
 
 export async function useContext(input: UseContextInput): Promise<MutationResponse> {
-  return mutationResponseSchema.parse(
-    await invokeDesktop("use_context", {
+  return invokeParsed(
+    DESKTOP_COMMANDS.useContext,
+    mutationResponseSchema,
+    {
       request: {
         context: input.context,
         state_mode: input.stateMode ?? null,
       },
-    }),
+    },
   );
 }
 
 export async function activateProfileSet(
   input: ActivateProfileSetInput,
 ): Promise<MutationResponse> {
-  return mutationResponseSchema.parse(
-    await invokeDesktop("activate_profile_set", {
+  return invokeParsed(
+    DESKTOP_COMMANDS.activateProfileSet,
+    mutationResponseSchema,
+    {
       name: input.name,
-    }),
+    },
   );
 }
 
 export async function renameProfile(
   input: RenameProfileInput,
 ): Promise<MutationResponse> {
-  return mutationResponseSchema.parse(
-    await invokeDesktop("rename_profile", {
+  return invokeParsed(
+    DESKTOP_COMMANDS.renameProfile,
+    mutationResponseSchema,
+    {
       tool: input.tool,
       old_name: input.oldName,
       new_name: input.newName,
-    }),
+    },
   );
 }
 
 export async function removeProfile(
   input: RemoveProfileInput,
 ): Promise<MutationResponse> {
-  return mutationResponseSchema.parse(
-    await invokeDesktop("remove_profile", {
+  return invokeParsed(
+    DESKTOP_COMMANDS.removeProfile,
+    mutationResponseSchema,
+    {
       tool: input.tool,
       profile: input.profile,
       force: input.force,
-    }),
+    },
   );
 }
 
 export async function listBackups(): Promise<BackupEntry[]> {
-  return backupEntrySchema.array().parse(await invokeDesktop("list_backups"));
+  return invokeParsed(DESKTOP_COMMANDS.listBackups, backupEntrySchema.array());
 }
 
 export async function runDoctor() {
-  return doctorReportSchema.parse(await invokeDesktop("run_doctor"));
+  return invokeParsed(DESKTOP_COMMANDS.runDoctor, doctorReportSchema);
 }
 
 export async function runInit(): Promise<InitReport> {
-  return initReportSchema.parse(await invokeDesktop("run_init"));
+  return invokeParsed(DESKTOP_COMMANDS.runInit, initReportSchema);
 }
 
 export async function runVerify() {
-  return verifyReportSchema.parse(await invokeDesktop("run_verify"));
+  return invokeParsed(DESKTOP_COMMANDS.runVerify, verifyReportSchema);
 }
 
 export async function runRepair(request: { apply: boolean; fixes: string[] }) {
-  return repairReportSchema.parse(await invokeDesktop("run_repair", { request }));
+  return invokeParsed(DESKTOP_COMMANDS.runRepair, repairReportSchema, { request });
 }
 
 export async function exportDiagnosticBundle(): Promise<DiagnosticBundleExport> {
-  return diagnosticBundleExportSchema.parse(await invokeDesktop("export_diagnostic_bundle"));
+  return invokeParsed(
+    DESKTOP_COMMANDS.exportDiagnosticBundle,
+    diagnosticBundleExportSchema,
+  );
 }
 
 export async function exportActivityLog(contents: string): Promise<DiagnosticBundleExport> {
-  return diagnosticBundleExportSchema.parse(
-    await invokeDesktop("export_activity_log", { contents }),
+  return invokeParsed(
+    DESKTOP_COMMANDS.exportActivityLog,
+    diagnosticBundleExportSchema,
+    { contents },
   );
 }
 
 export async function openAppDataFolder(): Promise<string> {
-  return openedPathSchema.parse(await invokeDesktop("open_app_data_folder"));
+  return invokeParsed(DESKTOP_COMMANDS.openAppDataFolder, openedPathSchema);
 }
 
 export async function openReferenceDocument(
-  kind: "documentation" | "troubleshooting",
+  kind: ReferenceDocumentKind,
 ): Promise<string> {
-  return openedPathSchema.parse(await invokeDesktop("open_reference_document", { kind }));
+  return invokeParsed(DESKTOP_COMMANDS.openReferenceDocument, openedPathSchema, { kind });
 }
 
 export async function getSettings(): Promise<DesktopSettings> {
-  return desktopSettingsSchema.parse(await invokeDesktop("get_settings"));
+  return invokeParsed(DESKTOP_COMMANDS.getSettings, desktopSettingsSchema);
 }
 
 export async function setTrayVisibility(visible: boolean): Promise<void> {
-  await invokeDesktop("set_tray_visibility", { visible });
+  await invokeDesktop(DESKTOP_COMMANDS.setTrayVisibility, { visible });
 }
 
 export async function getShellGuidance(): Promise<ShellHookGuidance> {
-  return shellHookGuidanceSchema.parse(await invokeDesktop("get_shell_guidance"));
+  return invokeParsed(DESKTOP_COMMANDS.getShellGuidance, shellHookGuidanceSchema);
 }
 
 export async function getLaunchAtLoginStatus(): Promise<LaunchAtLoginStatus> {
-  return launchAtLoginStatusSchema.parse(await invokeDesktop("get_launch_at_login_status"));
+  return invokeParsed(
+    DESKTOP_COMMANDS.getLaunchAtLoginStatus,
+    launchAtLoginStatusSchema,
+  );
 }
 
 export async function setLaunchAtLogin(enabled: boolean): Promise<LaunchAtLoginStatus> {
-  return launchAtLoginStatusSchema.parse(
-    await invokeDesktop("set_launch_at_login", { enabled }),
+  return invokeParsed(
+    DESKTOP_COMMANDS.setLaunchAtLogin,
+    launchAtLoginStatusSchema,
+    { enabled },
   );
 }
 
@@ -296,45 +336,47 @@ export function parseOAuthProgressEvent(payload: unknown): OAuthProgressEvent {
 }
 
 export async function checkForUpdates(): Promise<UpdateCheckReport> {
-  return updateCheckReportSchema.parse(await invokeDesktop("check_for_updates"));
+  return invokeParsed(DESKTOP_COMMANDS.checkForUpdates, updateCheckReportSchema);
 }
 
 export async function installUpdate(): Promise<InstallUpdateReport> {
-  return installUpdateReportSchema.parse(await invokeDesktop("install_update"));
+  return invokeParsed(DESKTOP_COMMANDS.installUpdate, installUpdateReportSchema);
 }
 
 export async function getWorkspaceStatus() {
-  return workspaceStatusReportSchema.parse(await invokeDesktop("get_workspace_status"));
+  return invokeParsed(DESKTOP_COMMANDS.getWorkspaceStatus, workspaceStatusReportSchema);
 }
 
 export async function getProjectBindings() {
-  return projectBindingsReportSchema.parse(await invokeDesktop("get_project_bindings"));
+  return invokeParsed(DESKTOP_COMMANDS.getProjectBindings, projectBindingsReportSchema);
 }
 
 export async function workspaceBind(
   request: WorkspaceBindInput,
 ): Promise<MutationResponse> {
-  return mutationResponseSchema.parse(await invokeDesktop("workspace_bind", { request }));
+  return invokeParsed(DESKTOP_COMMANDS.workspaceBind, mutationResponseSchema, { request });
 }
 
 export async function workspaceUnbind(
   target: WorkspaceUnbindInput,
 ): Promise<MutationResponse> {
-  return mutationResponseSchema.parse(await invokeDesktop("workspace_unbind", { target }));
+  return invokeParsed(DESKTOP_COMMANDS.workspaceUnbind, mutationResponseSchema, { target });
 }
 
 export async function workspaceGuard(mode: "warn" | "strict"): Promise<MutationResponse> {
-  return mutationResponseSchema.parse(await invokeDesktop("workspace_guard", { mode }));
+  return invokeParsed(DESKTOP_COMMANDS.workspaceGuard, mutationResponseSchema, { mode });
 }
 
 export async function restoreBackup(backupId: string): Promise<MutationResponse> {
-  return mutationResponseSchema.parse(
-    await invokeDesktop("restore_backup", { backup_id: backupId }),
+  return invokeParsed(
+    DESKTOP_COMMANDS.restoreBackup,
+    mutationResponseSchema,
+    { backup_id: backupId },
   );
 }
 
 export async function updateSettings(
   request: UpdateSettingsInput,
 ): Promise<DesktopSettings> {
-  return desktopSettingsSchema.parse(await invokeDesktop("update_settings", { request }));
+  return invokeParsed(DESKTOP_COMMANDS.updateSettings, desktopSettingsSchema, { request });
 }
