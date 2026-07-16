@@ -34,6 +34,10 @@ import {
 import { toolSupportsEditableStateModes } from "../../lib/tool-registry";
 import type { LastCommandResult } from "../shared/lastCommandResult";
 import { COMMAND_RESULT_GLOBAL_IDS } from "../shared/command-result-scope";
+import {
+  COMMAND_RESULT_SCOPE_TYPES,
+  type CommandResultScopeType,
+} from "../shared/command-result-scope";
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import {
@@ -321,7 +325,7 @@ export function buildRecentFailureCards(
       key: `tool:${tool}`,
       title: recentFailureTitle({
         kind: result.kind,
-        scope: "tool",
+        scope: COMMAND_RESULT_SCOPE_TYPES.tool,
         tool,
         label: result.label,
       }),
@@ -341,7 +345,7 @@ export function buildRecentFailureCards(
       key: `global:${id}`,
       title: recentFailureTitle({
         kind: result.kind,
-        scope: "global",
+        scope: COMMAND_RESULT_SCOPE_TYPES.global,
         id,
         label: result.label,
       }),
@@ -357,7 +361,7 @@ export function buildRecentFailureCards(
 
 export function recentFailureTitle(input: {
   kind?: string;
-  scope: "tool" | "global";
+  scope: CommandResultScopeType;
   tool?: string;
   id?: string;
   label: string;
@@ -382,7 +386,10 @@ export function recentFailureTitle(input: {
         ? RECENT_FAILURE_TITLES.geminiInvalidStateMode
         : RECENT_FAILURE_TITLES.invalidStateMode;
     default:
-      if (input.scope === "global" && input.id === COMMAND_RESULT_GLOBAL_IDS.backup) {
+      if (
+        input.scope === COMMAND_RESULT_SCOPE_TYPES.global &&
+        input.id === COMMAND_RESULT_GLOBAL_IDS.backup
+      ) {
         return RECENT_FAILURE_TITLES.backupNeedsAttention;
       }
       return input.tool ? `${titleCase(input.tool)} · ${input.label}` : input.label;

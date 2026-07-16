@@ -7,9 +7,14 @@ import {
   openedItemMessage,
 } from "../../lib/display-copy";
 import { calendarDayStarts } from "../../lib/calendar-time";
-import { toolDisplayName } from "../../lib/tool-display";
 import type { CommandResultStatus } from "../shared/command-result-shape";
-import { commandResultGlobalScopeLabel } from "../shared/command-result-scope";
+import {
+  COMMAND_RESULT_SCOPE_TYPES,
+  commandResultGlobalScopeLabel,
+  commandResultScopeLabel,
+  type CommandResultScope,
+  type CommandResultScopeType,
+} from "../shared/command-result-scope";
 import type { ActivityTimelineEntry } from "../shared/lastCommandResult";
 
 export type ActivityFilter = "all" | CommandResultStatus;
@@ -111,7 +116,7 @@ const ACTIVITY_STATUS_SYMBOLS: Record<ActivityStatus, Record<ActivityStatusVaria
 export type ActivityEntry = {
   key: string;
   scopeLabel: string;
-  scopeType: "tool" | "global";
+  scopeType: CommandResultScopeType;
   scopeTool?: string;
   label: string;
   status: CommandResultStatus;
@@ -173,8 +178,8 @@ export function resolveSelectedActivityEntryKey(
   return entries[0]?.key ?? null;
 }
 
-export function activityScopeLabel(scope: { type: "tool"; tool: string } | { type: "global"; id: string }) {
-  return scope.type === "tool" ? toolDisplayName(scope.tool) : activityGlobalScopeLabel(scope.id);
+export function activityScopeLabel(scope: CommandResultScope) {
+  return commandResultScopeLabel(scope);
 }
 
 export function activityGlobalScopeLabel(id: string) {
@@ -337,7 +342,12 @@ export function activityRecordedResult(entry: ActivityEntry) {
 }
 
 export function buildActivityScopeValue(entry: ActivityEntry) {
-  return entry.scopeType === "tool" && entry.scopeTool ? toolDisplayName(entry.scopeTool) : entry.scopeLabel;
+  return entry.scopeType === COMMAND_RESULT_SCOPE_TYPES.tool && entry.scopeTool
+    ? commandResultScopeLabel({
+        type: COMMAND_RESULT_SCOPE_TYPES.tool,
+        tool: entry.scopeTool,
+      })
+    : entry.scopeLabel;
 }
 
 export function activityEntryAriaLabel(entry: Pick<ActivityEntry, "label">) {
@@ -349,8 +359,11 @@ function activityPreview(entry: ActivityEntry) {
 }
 
 function parseActivityTargetSummary(entry: ActivityEntry) {
-  if (entry.scopeType === "tool" && entry.scopeTool) {
-    const toolLabel = toolDisplayName(entry.scopeTool);
+  if (entry.scopeType === COMMAND_RESULT_SCOPE_TYPES.tool && entry.scopeTool) {
+    const toolLabel = commandResultScopeLabel({
+      type: COMMAND_RESULT_SCOPE_TYPES.tool,
+      tool: entry.scopeTool,
+    });
     const switchedMatch = entry.message.match(/\b(?:switched|re-applied)\b.*?\bto\s+([^.;]+)/i);
     if (switchedMatch?.[1]) {
       return `${toolLabel} → ${switchedMatch[1].trim()}`;

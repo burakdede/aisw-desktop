@@ -1,5 +1,6 @@
 import { asObject, asOptionalString } from "../../lib/parse-guards";
 import {
+  COMMAND_RESULT_SCOPE_TYPES,
   isCommandResultGlobalId,
   type CommandResultGlobalId,
 } from "./command-result-scope";
@@ -21,7 +22,7 @@ export type ParsedStoredCommandResult = {
 
 export type ParsedTrayCommandResultEvent =
   | {
-      scope: "tool";
+      scope: typeof COMMAND_RESULT_SCOPE_TYPES.tool;
       tool: string;
       label: string;
       status: CommandResultStatus;
@@ -30,7 +31,7 @@ export type ParsedTrayCommandResultEvent =
       remediation?: string;
     }
   | {
-      scope: "global";
+      scope: typeof COMMAND_RESULT_SCOPE_TYPES.global;
       id: CommandResultGlobalId;
       label: string;
       status: CommandResultStatus;
@@ -63,15 +64,15 @@ export function parseTrayCommandResultEvent(
     return null;
   }
 
-  if (record.scope === "tool") {
+  if (record.scope === COMMAND_RESULT_SCOPE_TYPES.tool) {
     const tool = asOptionalString(record.tool);
-    return tool ? { ...base, scope: "tool", tool } : null;
+    return tool ? { ...base, scope: COMMAND_RESULT_SCOPE_TYPES.tool, tool } : null;
   }
 
-  if (record.scope === "global") {
+  if (record.scope === COMMAND_RESULT_SCOPE_TYPES.global) {
     const id = asOptionalString(record.id);
     return id && isCommandResultGlobalId(id)
-      ? { ...base, scope: "global", id }
+      ? { ...base, scope: COMMAND_RESULT_SCOPE_TYPES.global, id }
       : null;
   }
 

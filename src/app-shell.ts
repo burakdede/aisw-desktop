@@ -14,7 +14,10 @@ import {
   parseTrayCommandResultEvent,
   type ParsedTrayCommandResultEvent,
 } from "./features/shared/command-result-shape";
-import { COMMAND_RESULT_GLOBAL_IDS } from "./features/shared/command-result-scope";
+import {
+  COMMAND_RESULT_GLOBAL_IDS,
+  COMMAND_RESULT_SCOPE_TYPES,
+} from "./features/shared/command-result-scope";
 import { normalizeRuntimeLanguage } from "./features/shared/runtime-language";
 import {
   profileDisplayLabel,
@@ -488,14 +491,14 @@ export function buildTrayCommandFeedback(input: unknown) {
   const message = normalizeRuntimeLanguage(event.message);
   const remediation = normalizeRuntimeLanguage(event.remediation);
   const label =
-    event.scope === "global" && event.id === COMMAND_RESULT_GLOBAL_IDS.context
+    event.scope === COMMAND_RESULT_SCOPE_TYPES.global && event.id === COMMAND_RESULT_GLOBAL_IDS.context
       ? "Use set"
       : normalizeRuntimeLanguage(event.label);
   let scope: CommandResultScope;
-  if (event.scope === "tool") {
-    scope = { type: "tool", tool: event.tool };
+  if (event.scope === COMMAND_RESULT_SCOPE_TYPES.tool) {
+    scope = { type: COMMAND_RESULT_SCOPE_TYPES.tool, tool: event.tool };
   } else {
-    scope = { type: "global", id: event.id };
+    scope = { type: COMMAND_RESULT_SCOPE_TYPES.global, id: event.id };
   }
 
   return {

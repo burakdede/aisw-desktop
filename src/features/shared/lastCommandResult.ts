@@ -2,17 +2,17 @@ import { useSyncExternalStore } from "react";
 import { resolveBrowserStorage } from "../../lib/browser-storage";
 import { ACTIVITY_STORE_KEY, limitActivityTimeline } from "./activity-store";
 import {
+  COMMAND_RESULT_SCOPE_TYPES,
+  commandResultScopeValue,
   isCommandResultGlobalId,
+  type CommandResultScope,
   type CommandResultGlobalId,
 } from "./command-result-scope";
+export type { CommandResultScope } from "./command-result-scope";
 import {
   parseStoredCommandResult,
   type CommandResultStatus,
 } from "./command-result-shape";
-
-export type CommandResultScope =
-  | { type: "tool"; tool: string }
-  | { type: "global"; id: CommandResultGlobalId };
 
 export type LastCommandResult = {
   label: string;
@@ -251,25 +251,31 @@ function asTimelineEntry(value: unknown): ActivityTimelineEntry | null {
   }
 
   if (
-    (scope as Partial<CommandResultScope>).type === "tool" &&
+    (scope as Partial<CommandResultScope>).type === COMMAND_RESULT_SCOPE_TYPES.tool &&
     typeof (scope as { tool?: unknown }).tool === "string"
   ) {
     return {
       ...result,
       key: candidate.key,
-      scope: { type: "tool", tool: (scope as { tool: string }).tool },
+      scope: {
+        type: COMMAND_RESULT_SCOPE_TYPES.tool,
+        tool: (scope as { tool: string }).tool,
+      },
     };
   }
 
   if (
-    (scope as Partial<CommandResultScope>).type === "global" &&
+    (scope as Partial<CommandResultScope>).type === COMMAND_RESULT_SCOPE_TYPES.global &&
     typeof (scope as { id?: unknown }).id === "string" &&
     isCommandResultGlobalId((scope as { id: string }).id)
   ) {
     return {
       ...result,
       key: candidate.key,
-      scope: { type: "global", id: (scope as { id: CommandResultGlobalId }).id },
+      scope: {
+        type: COMMAND_RESULT_SCOPE_TYPES.global,
+        id: (scope as { id: CommandResultGlobalId }).id,
+      },
     };
   }
 
@@ -293,8 +299,12 @@ function buildTimelineEntryKey(
   timestamp: number,
   suffix: string,
 ) {
-  const scopeValue = scope.type === "tool" ? scope.tool : scope.id;
-  return [scope.type, scopeValue, String(timestamp), suffix].join(TIMELINE_KEY_SEPARATOR);
+  return [
+    scope.type,
+    commandResultScopeValue(scope),
+    String(timestamp),
+    suffix,
+  ].join(TIMELINE_KEY_SEPARATOR);
 }
 
 function createTimelineKeySuffix() {
