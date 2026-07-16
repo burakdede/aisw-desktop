@@ -1,11 +1,22 @@
 import { describe, expect, it } from "vitest";
 import {
+  ACTIVITY_CLEAR_DIALOG,
+  ACTIVITY_EMPTY_SELECTION_STATE,
+  ACTIVITY_EMPTY_STATE,
   ACTIVITY_FILTER_OPTIONS,
+  ACTIVITY_INSPECTOR_COPY,
+  ACTIVITY_STATUS_NOTIFICATION,
+  ACTIVITY_TOOLBAR_COPY,
+  activityFooterMessage,
+  activityRecordedCommand,
+  activityRecordedResult,
   activityGlobalScopeLabel,
   activitySecondaryLine,
   activityScopeLabel,
   activityStatusLabel,
   activityStatusSymbol,
+  buildActivityInspectorRows,
+  buildActivityScopeValue,
   activityTrailingLine,
   buildActivityEntries,
   buildActivityExportBody,
@@ -52,6 +63,16 @@ describe("activity-display", () => {
     expect(activityStatusSymbol("success", "row")).toBe("✓");
     expect(activityStatusSymbol("success", "inspector")).toBe("●");
     expect(activityStatusSymbol("error", "row")).toBe("▲");
+    expect(buildActivityScopeValue(makeEntry())).toBe("Claude Code");
+    expect(
+      buildActivityScopeValue(
+        makeEntry({
+          scopeType: "global",
+          scopeTool: undefined,
+          scopeLabel: "Settings",
+        }),
+      ),
+    ).toBe("Settings");
   });
 
   it("filters and groups activity entries", () => {
@@ -147,6 +168,47 @@ describe("activity-display", () => {
       }),
     ]);
     expect(buildActivityExportMessage("activity-log-123.json")).toBe("Opened activity-log-123.json.");
+  });
+
+  it("shares copy and inspector fallbacks", () => {
+    expect(ACTIVITY_TOOLBAR_COPY.searchPlaceholder).toBe("Search activity…");
+    expect(ACTIVITY_TOOLBAR_COPY.clearLabel).toBe("Clear Activity History…");
+    expect(ACTIVITY_STATUS_NOTIFICATION.logOpened).toBe("Activity log opened");
+    expect(ACTIVITY_STATUS_NOTIFICATION.clearMessage).toBe("Cleared locally stored desktop activity.");
+    expect(ACTIVITY_EMPTY_STATE.heading).toBe("No recent activity");
+    expect(ACTIVITY_EMPTY_SELECTION_STATE.heading).toBe("No event selected");
+    expect(ACTIVITY_CLEAR_DIALOG.confirmLabel).toBe("Clear History");
+    expect(ACTIVITY_INSPECTOR_COPY.commandHeading).toBe("Recorded Command");
+
+    expect(activityFooterMessage("Opened activity-log.json.")).toBe(
+      "Activity is stored locally and credentials are always redacted. Opened activity-log.json.",
+    );
+    expect(activityFooterMessage("")).toBe(
+      "Activity is stored locally and credentials are always redacted.",
+    );
+
+    expect(activityRecordedCommand(makeEntry())).toBe(
+      "Command details were not recorded for this event.",
+    );
+    expect(activityRecordedResult(makeEntry())).toBe("Snapshot updated successfully.");
+    expect(activityRecordedResult(makeEntry({ status: "error" }))).toBe(
+      "No redacted result payload was recorded for this event.",
+    );
+
+    expect(
+      buildActivityInspectorRows(
+        makeEntry({
+          remediation: "Retry with a valid profile.",
+          at: new Date("2026-07-15T12:05:00.000Z").getTime(),
+        }),
+        new Date("2026-07-15T15:00:00.000Z"),
+      ),
+    ).toEqual([
+      { label: "Recorded", value: expect.stringContaining("Today at") },
+      { label: "Duration", value: "Not Recorded" },
+      { label: "Initiated by", value: "Desktop app" },
+      { label: "Recovery", value: "Retry with a valid profile." },
+    ]);
   });
 
   it("shares secondary lines, trailing lines, and timestamps", () => {

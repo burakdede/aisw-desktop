@@ -18,7 +18,18 @@ import {
 } from "../../shared/lastCommandResult";
 import {
   ACTIVITY_FILTER_OPTIONS,
+  ACTIVITY_CLEAR_DIALOG,
+  ACTIVITY_EMPTY_SELECTION_STATE,
+  ACTIVITY_EMPTY_STATE,
+  ACTIVITY_INSPECTOR_COPY,
+  ACTIVITY_STATUS_NOTIFICATION,
+  ACTIVITY_TOOLBAR_COPY,
+  activityFooterMessage,
+  activityRecordedCommand,
+  activityRecordedResult,
   activitySecondaryLine,
+  buildActivityInspectorRows,
+  buildActivityScopeValue,
   activityStatusLabel,
   activityStatusSymbol,
   buildActivityEntries,
@@ -103,11 +114,11 @@ export function ActivityPanel({
   }, [entries.length, externalOpenLogSignal]);
 
   async function openActivityLog() {
-    await exportActivity("Activity log opened");
+    await exportActivity(ACTIVITY_STATUS_NOTIFICATION.logOpened);
   }
 
   async function exportRedactedActivity() {
-    await exportActivity("Redacted activity exported");
+    await exportActivity(ACTIVITY_STATUS_NOTIFICATION.redactedExported);
   }
 
   async function exportActivity(notificationTitle: string) {
@@ -129,7 +140,7 @@ export function ActivityPanel({
     clearLastCommandResults();
     setSelectedEntryKey(null);
     setPendingClear(false);
-    setClearMessage("Cleared locally stored desktop activity.");
+    setClearMessage(ACTIVITY_STATUS_NOTIFICATION.clearMessage);
     setLogMessage("");
     setMenuOpen(false);
   }
@@ -148,13 +159,13 @@ export function ActivityPanel({
         <SearchField
           className="search-field activity-search-field"
           inputClassName="search-field-input"
-          ariaLabel="Search activity"
-          placeholder="Search activity…"
+          ariaLabel={ACTIVITY_TOOLBAR_COPY.searchAriaLabel}
+          placeholder={ACTIVITY_TOOLBAR_COPY.searchPlaceholder}
           value={search}
           onChange={setSearch}
         />
         <SegmentedControl
-          ariaLabel="Activity filters"
+          ariaLabel={ACTIVITY_TOOLBAR_COPY.filterAriaLabel}
           options={ACTIVITY_FILTER_OPTIONS}
           value={filter}
           onChange={(value) => setFilter(value as ActivityFilter)}
@@ -166,7 +177,7 @@ export function ActivityPanel({
             type="button"
             aria-haspopup="menu"
             aria-expanded={menuOpen}
-            aria-label="Activity more actions"
+            aria-label={ACTIVITY_TOOLBAR_COPY.menuAriaLabel}
             onClick={() => setMenuOpen((open) => !open)}
           >
             <SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />
@@ -176,10 +187,10 @@ export function ActivityPanel({
               anchorRef={menuAnchorRef}
               className="profile-row-actions-menu"
               role="menu"
-              aria-label="Activity actions"
+              aria-label={ACTIVITY_TOOLBAR_COPY.menuLabel}
             >
               <button className="ghost-button" role="menuitem" type="button" onClick={refreshActivity}>
-                Refresh
+                {ACTIVITY_TOOLBAR_COPY.refreshLabel}
               </button>
               <button
                 className="ghost-button"
@@ -191,7 +202,7 @@ export function ActivityPanel({
                   void openActivityLog();
                 }}
               >
-                Open Log File
+                {ACTIVITY_TOOLBAR_COPY.openLogLabel}
               </button>
               <button
                 className="ghost-button"
@@ -203,7 +214,7 @@ export function ActivityPanel({
                   void exportRedactedActivity();
                 }}
               >
-                Export Redacted Activity…
+                {ACTIVITY_TOOLBAR_COPY.exportLabel}
               </button>
               <div className="menu-divider" aria-hidden="true" />
               <button
@@ -216,7 +227,7 @@ export function ActivityPanel({
                   setPendingClear(true);
                 }}
               >
-                Clear Activity History…
+                {ACTIVITY_TOOLBAR_COPY.clearLabel}
               </button>
             </AnchoredMenu>
           ) : null}
@@ -273,10 +284,8 @@ export function ActivityPanel({
                 ))
               ) : (
                 <div className="activity-empty-state">
-                  <h3>No recent activity</h3>
-                  <p className="inline-note">
-                    Local switch, verification, and setup events will appear here as soon as you use the app.
-                  </p>
+                  <h3>{ACTIVITY_EMPTY_STATE.heading}</h3>
+                  <p className="inline-note">{ACTIVITY_EMPTY_STATE.detail}</p>
                 </div>
               )}
             </div>
@@ -309,11 +318,7 @@ export function ActivityPanel({
                   variant="plain"
                   rows={[
                     {
-                      label: "Recorded",
-                      value: formatFullActivityTimestamp(selectedEntry.at),
-                    },
-                    {
-                      label: "Scope",
+                      label: ACTIVITY_INSPECTOR_COPY.scopeLabel,
                       value:
                         selectedEntry.scopeType === "tool" && selectedEntry.scopeTool ? (
                           <ToolBrand
@@ -322,48 +327,29 @@ export function ActivityPanel({
                             logoSize={16}
                           />
                         ) : (
-                          selectedEntry.scopeLabel
+                          buildActivityScopeValue(selectedEntry)
                         ),
                     },
-                    {
-                      label: "Duration",
-                      value: "Not Recorded",
-                    },
-                    {
-                      label: "Initiated by",
-                      value: "Desktop app",
-                    },
-                    {
-                      label: "Recovery",
-                      value: selectedEntry.remediation ?? "None required",
-                    },
+                    ...buildActivityInspectorRows(selectedEntry),
                   ]}
                 />
                 <details className="activity-disclosure">
-                  <summary>Recorded Command</summary>
-                  {selectedEntry.command ? (
-                    <pre>{selectedEntry.command}</pre>
-                  ) : (
-                    <p className="inline-note">Command details were not recorded for this event.</p>
+                  <summary>{ACTIVITY_INSPECTOR_COPY.commandHeading}</summary>
+                  {selectedEntry.command ? <pre>{selectedEntry.command}</pre> : (
+                    <p className="inline-note">{activityRecordedCommand(selectedEntry)}</p>
                   )}
                 </details>
                 <details className="activity-disclosure">
-                  <summary>Redacted Result</summary>
-                  {selectedEntry.resultSummary ? (
-                    <pre>{selectedEntry.resultSummary}</pre>
-                  ) : (
-                    <p className="inline-note">
-                      {selectedEntry.status === "success"
-                        ? "Snapshot updated successfully."
-                        : "No redacted result payload was recorded for this event."}
-                    </p>
+                  <summary>{ACTIVITY_INSPECTOR_COPY.resultHeading}</summary>
+                  {selectedEntry.resultSummary ? <pre>{selectedEntry.resultSummary}</pre> : (
+                    <p className="inline-note">{activityRecordedResult(selectedEntry)}</p>
                   )}
                 </details>
               </div>
             ) : (
               <div className="activity-empty-state activity-empty-state-compact">
-                <h3>No event selected</h3>
-                <p className="inline-note">Choose an event to inspect its recorded details.</p>
+                <h3>{ACTIVITY_EMPTY_SELECTION_STATE.heading}</h3>
+                <p className="inline-note">{ACTIVITY_EMPTY_SELECTION_STATE.detail}</p>
               </div>
             )}
           </aside>
@@ -371,26 +357,21 @@ export function ActivityPanel({
       />
 
       <div className="activity-footer-line">
-        <p>
-          Activity is stored locally and credentials are always redacted.
-          {footerMessage ? ` ${footerMessage}` : ""}
-        </p>
+        <p>{activityFooterMessage(footerMessage)}</p>
       </div>
 
       {pendingClear ? (
         <DialogSurface
-          ariaLabel="Clear Activity History"
+          ariaLabel={ACTIVITY_CLEAR_DIALOG.ariaLabel}
           className="quick-switch-palette profile-sheet"
           initialFocusSelector="button:not([disabled])"
           onClose={() => setPendingClear(false)}
         >
           <div className="quick-switch-header">
             <div>
-              <p className="card-kicker">History</p>
-              <h3>Clear Activity History?</h3>
-              <p className="inline-note">
-                This removes the locally stored desktop timeline for this Mac. Credentials remain untouched.
-              </p>
+              <p className="card-kicker">{ACTIVITY_CLEAR_DIALOG.kicker}</p>
+              <h3>{ACTIVITY_CLEAR_DIALOG.heading}</h3>
+              <p className="inline-note">{ACTIVITY_CLEAR_DIALOG.detail}</p>
             </div>
           </div>
           <footer className="quick-switch-footer">
@@ -399,7 +380,7 @@ export function ActivityPanel({
                 Cancel
               </button>
               <button className="ghost-button danger-button" type="button" onClick={applyClear}>
-                Clear History
+                {ACTIVITY_CLEAR_DIALOG.confirmLabel}
               </button>
             </div>
           </footer>
