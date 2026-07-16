@@ -380,7 +380,7 @@ describe("diagnostics-panel-display", () => {
     const primaryFindingFix = {
       title: "Claude live mismatch",
       label: "Re-apply Work",
-      importTarget: { tool: "claude", stateMode: "isolated" },
+      importTarget: { tool: "claude", stateMode: "isolated" as const },
       importFallbackMode: DEFAULT_PROFILE_IMPORT_MODE,
       secondaryAction: { label: "Open Settings" },
     };
@@ -481,7 +481,7 @@ describe("diagnostics-panel-display", () => {
       primaryFindingFix: {
         title: "Claude live mismatch",
         label: "Re-apply Work",
-        importTarget: { tool: "claude", stateMode: "isolated" },
+        importTarget: { tool: "claude", stateMode: "isolated" as const },
       },
       secondaryFindingFixes: [],
       importCurrentLabel: "Open Account Setup",

@@ -46,7 +46,12 @@ import {
   type ExplicitProfileCredentialBackend,
   type ProfileImportMode,
 } from "../shared/profile-capabilities";
-import { DEFAULT_EDITABLE_STATE_MODE } from "../shared/state-modes";
+import {
+  EDITABLE_STATE_MODES,
+  DEFAULT_EDITABLE_STATE_MODE,
+  type StateModeRequest,
+  type ToolStateModeTarget,
+} from "../shared/state-modes";
 import type { IssueCardData } from "./diagnostic-parsers";
 import { diagnosticFindingTitle } from "../../lib/diagnostic-display";
 import { parseWorkspaceStatus } from "../workspaces/workspace-parsers";
@@ -54,6 +59,7 @@ import {
   resolveWorkspaceActivationTarget,
   type WorkspaceActivationTarget,
 } from "../workspaces/workspace-activation";
+import type { SettingsSection } from "../../lib/settings-sections";
 
 export type DiagnosticQuickFixInput = {
   title: string;
@@ -67,7 +73,7 @@ export type DiagnosticInspectorQuickFix = Pick<
   DiagnosticQuickFixInput,
   "title" | "label"
 > & {
-  importTarget?: { tool: string; stateMode: string | null };
+  importTarget?: ToolStateModeTarget;
   importFallbackMode?: ProfileImportMode;
   secondaryAction?: {
     label: string;
@@ -105,8 +111,8 @@ export type DiagnosticInspectorAction = {
     | "open_profile_details";
   label: string;
   quickFixKey?: string;
-  importTarget?: { tool: string; stateMode: string | null };
-  importFallbackMode?: string;
+  importTarget?: ToolStateModeTarget;
+  importFallbackMode?: ProfileImportMode;
   profileTarget?: { tool: string; profile: string | null };
 };
 
@@ -119,11 +125,11 @@ export type DiagnosticQuickFixModel = DiagnosticQuickFixInput & {
     | "reapply_profile"
     | "resolve_workspace";
   repairFix?: string;
-  settingsSection?: "shell" | "keyring";
+  settingsSection?: SettingsSection;
   setupMode?: ProfileImportMode;
   credentialBackend?: ExplicitProfileCredentialBackend | null;
   toolTarget?: string;
-  importTarget?: { tool: string; stateMode: string | null };
+  importTarget?: ToolStateModeTarget;
   importFallbackMode?: ProfileImportMode;
   workspaceActivationTarget?: WorkspaceActivationTarget | null;
   matchedWorkspaceTarget?: string;
@@ -878,11 +884,14 @@ function keyringDoctorIssue(doctor: Record<string, unknown> | undefined) {
   return null;
 }
 
-function resolveStateMode(status: ToolStatus) {
+function resolveStateMode(status: ToolStatus): StateModeRequest {
   if (!toolSupportsEditableStateModes(status.tool)) {
     return null;
   }
-  return status.state_mode ?? DEFAULT_EDITABLE_STATE_MODE;
+  return status.state_mode &&
+    EDITABLE_STATE_MODES.includes(status.state_mode as (typeof EDITABLE_STATE_MODES)[number])
+    ? (status.state_mode as (typeof EDITABLE_STATE_MODES)[number])
+    : DEFAULT_EDITABLE_STATE_MODE;
 }
 
 function resolveIssueProfileTarget(title: string, snapshot: AppSnapshot) {

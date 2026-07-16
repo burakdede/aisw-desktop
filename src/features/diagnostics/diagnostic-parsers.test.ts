@@ -66,14 +66,12 @@ describe("parseRepairActions", () => {
       {
         title: "Repair permissions",
         detail: "2 AISW-managed items need permission repair.",
-        status: "planned",
         fix: "permissions",
         count: 2,
       },
       {
         title: "Unlock keyring integration",
         detail: "Reconnect AI Switch to the local system keyring service.",
-        status: "planned",
         fix: "keyring",
         count: 1,
       },

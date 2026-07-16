@@ -1,10 +1,13 @@
 import { AppSnapshot, DesktopSettings } from "../../lib/schemas";
 import { profileSetHasUsableSelections } from "../../lib/profile-display";
-import { resolveGlobalStateMode } from "../shared/state-modes";
+import {
+  resolveGlobalStateMode,
+  type StateModeRequest,
+} from "../shared/state-modes";
 
 export type WorkspaceActivationTarget =
   | { kind: "profile_set"; name: string; label: string }
-  | { kind: "context"; name: string; stateMode: string | null };
+  | { kind: "context"; name: string; stateMode: StateModeRequest };
 
 export function resolveWorkspaceActivationTarget(
   expectedContext: string,

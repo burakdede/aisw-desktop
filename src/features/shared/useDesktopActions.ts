@@ -51,6 +51,7 @@ import {
 } from "./desktop-action-result-copy";
 import { enqueueMutation, useMutationQueueState } from "./mutationQueue";
 import { invalidatePostMutationQueries } from "./postMutationRefresh";
+import type { StateModeRequest } from "./state-modes";
 
 type WorkspaceTargetInput =
   | {
@@ -63,7 +64,7 @@ type WorkspaceTargetInput =
       kind: "context";
       name: string;
       matchedTarget: string;
-      stateMode: string | null;
+      stateMode: StateModeRequest;
     };
 
 export function useDesktopActions() {

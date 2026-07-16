@@ -25,10 +25,17 @@ export interface IssueCardData {
 export interface RepairActionData {
   title: string;
   detail: string;
-  status: string;
   fix: string;
   count: number;
 }
+
+type GroupedRepairAction = {
+  kind: string;
+  fix: string;
+  path: string;
+  detail: string;
+  count: number;
+};
 
 function asStringArray(value: unknown): string[] {
   if (typeof value === "string") {
@@ -112,17 +119,7 @@ export function parseVerifyIssues(payload: Record<string, unknown> | undefined):
 
 export function parseRepairActions(payload: Record<string, unknown> | undefined): RepairActionData[] {
   const result = asObject(payload?.result);
-  const grouped = new Map<
-    string,
-    {
-      kind: string;
-      fix: string;
-      path: string;
-      detail: string;
-      status: string;
-      count: number;
-    }
-  >();
+  const grouped = new Map<string, GroupedRepairAction>();
 
   asArray(result?.actions)
     .map((action) => asObject(action))
@@ -135,7 +132,6 @@ export function parseRepairActions(payload: Record<string, unknown> | undefined)
       const profile = asString(action.profile, "");
       const target = [tool, profile].filter(Boolean).join("/");
       const detail = asString(action.detail, "");
-      const status = asString(action.status);
       const key = [kind, fix, target || path].join("|").toLowerCase();
       const current = grouped.get(key);
 
@@ -149,7 +145,6 @@ export function parseRepairActions(payload: Record<string, unknown> | undefined)
         fix,
         path,
         detail,
-        status,
         count: 1,
       });
     });
@@ -157,14 +152,7 @@ export function parseRepairActions(payload: Record<string, unknown> | undefined)
   return [...grouped.values()].map((action) => formatRepairAction(action));
 }
 
-function formatRepairAction(action: {
-  kind: string;
-  fix: string;
-  path: string;
-  detail: string;
-  status: string;
-  count: number;
-}): RepairActionData {
+function formatRepairAction(action: GroupedRepairAction): RepairActionData {
   switch (action.fix.toLowerCase()) {
     case "permissions":
       return {
@@ -173,7 +161,6 @@ function formatRepairAction(action: {
           action.count > 1
             ? `${action.count} AISW-managed items need permission repair.`
             : "Repair incorrect permissions for AISW-managed files.",
-        status: action.status,
         fix: action.fix,
         count: action.count,
       };
@@ -181,7 +168,6 @@ function formatRepairAction(action: {
       return {
         title: "Unlock keyring integration",
         detail: "Reconnect AI Switch to the local system keyring service.",
-        status: action.status,
         fix: action.fix,
         count: action.count,
       };
@@ -189,7 +175,6 @@ function formatRepairAction(action: {
       return {
         title: "Retry OAuth recovery",
         detail: "Retry the OAuth recovery flow for the affected tool.",
-        status: action.status,
         fix: action.fix,
         count: action.count,
       };
@@ -197,7 +182,6 @@ function formatRepairAction(action: {
       return {
         title: "Create missing AISW data directory",
         detail: action.path || "Create the missing AISW data directory.",
-        status: action.status,
         fix: action.fix,
         count: action.count,
       };
@@ -210,7 +194,6 @@ function formatRepairAction(action: {
             : action.path && action.detail
               ? `${action.path} — ${action.detail}`
               : action.detail || action.path || "Safe repair available.",
-        status: action.status,
         fix: action.fix,
         count: action.count,
       };

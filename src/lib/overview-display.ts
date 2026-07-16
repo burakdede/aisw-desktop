@@ -3,8 +3,20 @@ import { DESKTOP_ACTION_COPY } from "./desktop-action-copy";
 import { BACK_LABEL, inspectItemLabel, noSelectionHeading } from "./display-copy";
 import type { CommandResultStatus } from "../features/shared/command-result-shape";
 import { normalizeRuntimeLanguage } from "../features/shared/runtime-language";
-import { fixedStateModeDescription, stateModeDescription, stateModeLabel } from "../features/shared/state-modes";
-import { toolInspectorEmptyLabel, overviewHealthLabel, overviewHealthText, resolveOverviewHealthState, type OverviewHealthState } from "./status-display";
+import {
+  fixedStateModeDescription,
+  stateModeDescription,
+  stateModeLabel,
+  type EditableStateMode,
+  type StateModeRequest,
+} from "../features/shared/state-modes";
+import {
+  toolInspectorEmptyLabel,
+  overviewHealthLabel,
+  overviewHealthText,
+  resolveOverviewHealthState,
+  type OverviewHealthState,
+} from "./status-display";
 import { toolProfileDisplayLabel } from "./profile-display";
 import { formatMessageWithRemediation } from "./remediation-text";
 import {
@@ -174,13 +186,13 @@ export function resolveOverviewSelectedTool(
 
 export function resolveOverviewStateMode(
   currentMode: string,
-  stateModes: string[],
+  stateModes: EditableStateMode[],
 ) {
   if (!stateModes.length) {
     return currentMode;
   }
-  if (stateModes.includes(currentMode)) {
-    return currentMode;
+  if (stateModes.includes(currentMode as EditableStateMode)) {
+    return currentMode as EditableStateMode;
   }
   return stateModes[0] ?? currentMode;
 }
@@ -236,19 +248,30 @@ export function overviewInspectorEmptyHeading(
   return compactLayout ? selectedToolName : OVERVIEW_NO_TOOL_SELECTED_HEADING;
 }
 
-export function overviewStateModeCopy(options: string[], selected: string, tool: string) {
+export function overviewStateModeCopy(
+  options: EditableStateMode[],
+  selected: string,
+  tool: string,
+) {
   if (!options.length) {
     return fixedStateModeDescription(tool);
   }
-  const effective = options.includes(selected) ? selected : options[0] ?? selected;
+  const effective = options.includes(selected as EditableStateMode)
+    ? (selected as EditableStateMode)
+    : (options[0] ?? selected);
   return stateModeDescription(effective);
 }
 
 export function overviewSelectedStateMode(
-  options: string[],
+  options: EditableStateMode[],
   selected: string,
-) {
-  return options.length ? selected : null;
+): StateModeRequest {
+  if (!options.length) {
+    return null;
+  }
+  return options.includes(selected as EditableStateMode)
+    ? (selected as EditableStateMode)
+    : (options[0] ?? null);
 }
 
 export function overviewRecentSummary(input: {
@@ -463,7 +486,7 @@ export function buildOverviewInspectorPresentation(input: {
   selectedProfile: string;
   settings: DesktopSettings;
   snapshot: AppSnapshot;
-  stateModes: string[];
+  stateModes: EditableStateMode[];
   status: ToolStatus;
   supportsLiveImport: boolean;
   workspaceMismatchCanResolveDirectly: boolean;

@@ -19,6 +19,10 @@ import {
   supportsProfileImportMode,
   type ProfileImportMode,
 } from "../../shared/profile-capabilities";
+import type {
+  StateModeRequest,
+  ToolStateModeTarget,
+} from "../../shared/state-modes";
 import {
   parseDoctorIssues,
   parseDoctorSummary,
@@ -268,8 +272,7 @@ export function DiagnosticsPanel({
         }
         onOpenProfileSetup({
           tool: action.importTarget.tool,
-          mode: (action.importFallbackMode as ProfileImportMode | undefined)
-            ?? DEFAULT_PROFILE_IMPORT_MODE,
+          mode: action.importFallbackMode ?? DEFAULT_PROFILE_IMPORT_MODE,
         });
         return;
       case "open_profile_details":
@@ -691,11 +694,11 @@ export function DiagnosticsPanel({
 type QuickFixCard = DiagnosticQuickFixInput & {
   kind: DiagnosticQuickFixModel["kind"];
   repairFix?: string;
-  settingsSection?: "shell" | "keyring";
+  settingsSection?: SettingsSection;
   setupMode?: ProfileImportMode;
   credentialBackend?: ExplicitProfileCredentialBackend | null;
   toolTarget?: string;
-  importTarget?: { tool: string; stateMode: string | null };
+  importTarget?: ToolStateModeTarget;
   importFallbackMode?: ProfileImportMode;
   workspaceActivationTarget?: DiagnosticQuickFixModel["workspaceActivationTarget"];
   matchedWorkspaceTarget?: string;
@@ -731,7 +734,7 @@ function buildQuickFixes(
     useProfile: (request: {
       tool: string;
       profile: string;
-      stateMode: string | null;
+      stateMode: StateModeRequest;
       label?: string;
     }) => void;
     activateWorkspaceTarget: (request: {
@@ -742,7 +745,7 @@ function buildQuickFixes(
       kind: "context";
       name: string;
       matchedTarget: string;
-      stateMode: string | null;
+      stateMode: StateModeRequest;
     }) => void;
     applyRepairFixes: (fixes: string[]) => void;
     onOpenSettings: (section?: SettingsSection) => void;
@@ -788,7 +791,7 @@ function runQuickFixAction(
     useProfile: (request: {
       tool: string;
       profile: string;
-      stateMode: string | null;
+      stateMode: StateModeRequest;
       label?: string;
     }) => void;
     activateWorkspaceTarget: (request: {
@@ -799,7 +802,7 @@ function runQuickFixAction(
       kind: "context";
       name: string;
       matchedTarget: string;
-      stateMode: string | null;
+      stateMode: StateModeRequest;
     }) => void;
     applyRepairFixes: (fixes: string[]) => void;
     onOpenSettings: (section?: SettingsSection) => void;

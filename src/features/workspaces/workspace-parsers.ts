@@ -11,8 +11,11 @@ import {
   type UnknownRecord,
 } from "../../lib/parse-guards";
 
+export const WORKSPACE_STATUSES = ["match", "mismatch", "drifted", "unknown"] as const;
+export type WorkspaceStatus = (typeof WORKSPACE_STATUSES)[number];
+
 export interface WorkspaceStatusCard {
-  status: string;
+  status: WorkspaceStatus;
   currentContext: string;
   expectedContext: string;
   scope: string;
@@ -35,6 +38,16 @@ function pickRecord(payload: Record<string, unknown> | undefined) {
   return asObject(payload?.result) ?? asObject(payload);
 }
 
+function normalizeWorkspaceStatus(
+  value: unknown,
+  fallback: WorkspaceStatus = "unknown",
+): WorkspaceStatus {
+  return typeof value === "string" &&
+    WORKSPACE_STATUSES.includes(value as WorkspaceStatus)
+    ? (value as WorkspaceStatus)
+    : fallback;
+}
+
 export function parseWorkspaceStatus(
   payload: Record<string, unknown> | undefined,
 ): WorkspaceStatusCard {
@@ -43,7 +56,7 @@ export function parseWorkspaceStatus(
     asObject(record?.matched_binding) ?? asObject(record?.binding) ?? asObject(record?.match);
 
   return {
-    status: asNonEmptyString(record?.status),
+    status: normalizeWorkspaceStatus(record?.status),
     currentContext: asNonEmptyString(
       record?.current_context ?? record?.active_context,
       WORKSPACE_NO_CONTEXT,

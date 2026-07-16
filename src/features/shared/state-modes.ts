@@ -5,6 +5,11 @@ import { titleCase } from "../../lib/utils";
 
 export const EDITABLE_STATE_MODES = ["isolated", "shared"] as const;
 export type EditableStateMode = (typeof EDITABLE_STATE_MODES)[number];
+export type StateModeRequest = EditableStateMode | null;
+export type ToolStateModeTarget = {
+  tool: string;
+  stateMode: StateModeRequest;
+};
 export const DEFAULT_EDITABLE_STATE_MODE: EditableStateMode = EDITABLE_STATE_MODES[0];
 
 const EDITABLE_STATE_MODE_SET = new Set<string>(EDITABLE_STATE_MODES);
@@ -41,7 +46,7 @@ export function resolveStateModeRequest(
   tool: string,
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"],
   preferred: string | null | undefined,
-) {
+): StateModeRequest {
   const modes = supportedStateModes(tool, toolCapabilities);
   if (!modes.length) {
     return null;

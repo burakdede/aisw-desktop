@@ -12,7 +12,11 @@ import {
 } from "../../../lib/tool-guidance";
 import type { CommandResultStatus } from "../../shared/command-result-shape";
 import { COMMAND_RESULT_GLOBAL_IDS } from "../../shared/command-result-scope";
-import { supportedStateModes } from "../../shared/state-modes";
+import {
+  supportedStateModes,
+  type EditableStateMode,
+  type StateModeRequest,
+} from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import {
   activeSetLabel,
@@ -351,13 +355,13 @@ function ToolInspector({
   mutationLocked: boolean;
   refreshLocked: boolean;
   onRefresh: () => void;
-  stateModes: string[];
+  stateModes: EditableStateMode[];
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
   settings: DesktopSettings;
   snapshot: AppSnapshot;
   compactLayout: boolean;
   onImport: (tool: string) => void;
-  onUse: (tool: string, profile: string, stateMode: string | null) => void;
+  onUse: (tool: string, profile: string, stateMode: StateModeRequest) => void;
   onAddProfile: (tool: string) => void;
   onOpenDetails: (tool: string, profile: string | null | undefined) => void;
   workspaceMismatch: {
