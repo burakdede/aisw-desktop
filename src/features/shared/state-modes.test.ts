@@ -5,6 +5,8 @@ import {
   DEFAULT_EDITABLE_STATE_MODE,
   EDITABLE_STATE_MODES,
   fixedStateModeDescription,
+  isEditableStateMode,
+  resolvePreferredEditableStateMode,
   resolveGlobalStateMode,
   resolveStateModeRequest,
   stateModeDescription,
@@ -43,6 +45,11 @@ describe("state-modes", () => {
 
     expect(supportedStateModes("claude", toolCapabilities)).toEqual(["shared", "isolated"]);
     expect(supportedStateModes("gemini", toolCapabilities)).toEqual([]);
+    expect(isEditableStateMode("shared")).toBe(true);
+    expect(isEditableStateMode("portable")).toBe(false);
+    expect(resolvePreferredEditableStateMode(["shared", "isolated"], "shared")).toBe("shared");
+    expect(resolvePreferredEditableStateMode(["shared", "isolated"], "portable")).toBe("shared");
+    expect(resolvePreferredEditableStateMode([], "shared")).toBeNull();
     expect(resolveStateModeRequest("claude", toolCapabilities, "shared")).toBe("shared");
     expect(resolveStateModeRequest("claude", toolCapabilities, "portable")).toBe("shared");
     expect(resolveStateModeRequest("gemini", toolCapabilities, "shared")).toBeNull();

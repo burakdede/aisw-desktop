@@ -8,6 +8,7 @@ import type {
 import { normalizeRuntimeLanguage } from "../features/shared/runtime-language";
 import {
   fixedStateModeDescription,
+  resolvePreferredEditableStateMode,
   stateModeDescription,
   stateModeLabel,
   type EditableStateMode,
@@ -191,13 +192,7 @@ export function resolveOverviewStateMode(
   currentMode: string,
   stateModes: EditableStateMode[],
 ) {
-  if (!stateModes.length) {
-    return currentMode;
-  }
-  if (stateModes.includes(currentMode as EditableStateMode)) {
-    return currentMode as EditableStateMode;
-  }
-  return stateModes[0] ?? currentMode;
+  return resolvePreferredEditableStateMode(stateModes, currentMode) ?? currentMode;
 }
 
 export function resolveOverviewSelectedProfile(
@@ -259,9 +254,7 @@ export function overviewStateModeCopy(
   if (!options.length) {
     return fixedStateModeDescription(tool);
   }
-  const effective = options.includes(selected as EditableStateMode)
-    ? (selected as EditableStateMode)
-    : (options[0] ?? selected);
+  const effective = resolvePreferredEditableStateMode(options, selected) ?? selected;
   return stateModeDescription(effective);
 }
 
@@ -269,12 +262,7 @@ export function overviewSelectedStateMode(
   options: EditableStateMode[],
   selected: string,
 ): StateModeRequest {
-  if (!options.length) {
-    return null;
-  }
-  return options.includes(selected as EditableStateMode)
-    ? (selected as EditableStateMode)
-    : (options[0] ?? null);
+  return resolvePreferredEditableStateMode(options, selected);
 }
 
 export function overviewRecentSummary(input: {

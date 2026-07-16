@@ -18,6 +18,23 @@ const STATE_MODE_COPY: Record<EditableStateMode, string> = {
   shared: "Keep the normal tool config and history while switching credentials only.",
 };
 
+export function isEditableStateMode(value: string | null | undefined): value is EditableStateMode {
+  return typeof value === "string" && EDITABLE_STATE_MODE_SET.has(value);
+}
+
+export function resolvePreferredEditableStateMode(
+  modes: EditableStateMode[],
+  preferred: string | null | undefined,
+): StateModeRequest {
+  if (!modes.length) {
+    return null;
+  }
+
+  return preferred && isEditableStateMode(preferred) && modes.includes(preferred)
+    ? preferred
+    : (modes[0] ?? null);
+}
+
 export function stateModeLabel(mode: string) {
   return titleCase(mode);
 }
@@ -48,13 +65,7 @@ export function resolveStateModeRequest(
   preferred: string | null | undefined,
 ): StateModeRequest {
   const modes = supportedStateModes(tool, toolCapabilities);
-  if (!modes.length) {
-    return null;
-  }
-  if (preferred && modes.includes(preferred as EditableStateMode)) {
-    return preferred as EditableStateMode;
-  }
-  return modes[0] ?? null;
+  return resolvePreferredEditableStateMode(modes, preferred);
 }
 
 export function resolveGlobalStateMode(snapshot: AppSnapshot) {
@@ -68,8 +79,9 @@ export function resolveGlobalStateMode(snapshot: AppSnapshot) {
 }
 
 export function stateModeDescription(mode: string) {
-  return STATE_MODE_COPY[mode as EditableStateMode]
-    ?? "Use the runtime-supported state handling for this profile.";
+  return isEditableStateMode(mode)
+    ? STATE_MODE_COPY[mode]
+    : "Use the runtime-supported state handling for this profile.";
 }
 
 export function fixedStateModeDescription(tool: string) {
