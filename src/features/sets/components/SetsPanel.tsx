@@ -60,9 +60,11 @@ import {
   duplicateEditableProfileSetDraft,
   hasDuplicateSetName,
   importedContextActivationResultLabel,
+  ruleRowAriaLabel,
   RULE_SCOPE_OPTIONS,
   savedSetActionLabel,
   savedSetActivationLabel,
+  setRowAriaLabel,
   ruleEditorDialogLabel,
   ruleEditorSubmitLabel,
   ruleEditorTitle,
@@ -454,7 +456,7 @@ export function SetsPanel({
         type="button"
         className={`list-row sets-library-row ${row.selected ? "sets-library-row-selected" : ""} ${row.active ? "sets-library-row-active" : ""}`}
         aria-pressed={row.selected}
-        aria-label={`Inspect set ${row.displayLabel}`}
+        aria-label={setRowAriaLabel(row.displayLabel)}
         onClick={() => {
           setSelectedSetName(row.name);
           if (compactLayout) {
@@ -823,7 +825,9 @@ export function SetsPanel({
                             selectedRule?.key === binding.key ? "sets-rule-table-row-selected" : ""
                           } ${matchedBindingKey === binding.key ? "sets-rule-table-row-active" : ""}`}
                           aria-pressed={selectedRule?.key === binding.key}
-                          aria-label={`Inspect rule for ${contextDisplayLabel(settings, binding.context)}`}
+                          aria-label={ruleRowAriaLabel(
+                            contextDisplayLabel(settings, binding.context),
+                          )}
                           onClick={() => {
                             setSelectedBindingKey(binding.key);
                             if (compactLayout) {

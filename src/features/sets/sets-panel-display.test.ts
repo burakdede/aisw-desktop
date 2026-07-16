@@ -17,9 +17,11 @@ import {
   duplicateEditableProfileSetDraft,
   hasDuplicateSetName,
   importedContextActivationResultLabel,
+  ruleRowAriaLabel,
   RULE_SCOPE_OPTIONS,
   savedSetActionLabel,
   savedSetActivationLabel,
+  setRowAriaLabel,
   ruleEditorDialogLabel,
   ruleEditorSubmitLabel,
   ruleEditorTitle,
@@ -154,6 +156,8 @@ describe("sets-panel-display", () => {
       { value: "git_remote", label: "Git remote pattern" },
     ]);
     expect(setActionsTriggerLabel("Client Acme")).toBe("More actions for Client Acme");
+    expect(setRowAriaLabel("Client Acme")).toBe("Inspect set Client Acme");
+    expect(ruleRowAriaLabel("Client Acme")).toBe("Inspect rule for Client Acme");
     expect(setEditorDialogLabel(true)).toBe("Edit Set");
     expect(setEditorDialogLabel(false)).toBe("New Set");
     expect(setEditorKicker(true)).toBe("Edit set");

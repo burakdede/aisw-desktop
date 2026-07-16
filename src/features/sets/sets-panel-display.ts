@@ -1,4 +1,5 @@
 import type { WorkspaceBindInput, WorkspaceUnbindInput } from "../../lib/client";
+import { inspectItemLabel, moreActionsLabel } from "../../lib/display-copy";
 import {
   DEFAULT_WORKSPACE_BINDING_SCOPE,
   normalizeWorkspaceBindingScope,
@@ -20,7 +21,6 @@ import {
   profileSetStatus,
   setSelectionCountLabel,
 } from "../../lib/sets-display";
-import { moreActionsLabel } from "../../lib/display-copy";
 import { toolShortName } from "../../lib/tool-registry";
 
 export type EditableProfileSet = {
@@ -196,6 +196,14 @@ const RULE_EDITOR_COPY = {
 
 export function setActionsTriggerLabel(displayLabel: string) {
   return moreActionsLabel(displayLabel);
+}
+
+export function setRowAriaLabel(displayLabel: string) {
+  return inspectItemLabel(`set ${displayLabel}`);
+}
+
+export function ruleRowAriaLabel(contextLabel: string) {
+  return inspectItemLabel(`rule for ${contextLabel}`);
 }
 
 export function setEditorDialogLabel(isEditingSet: boolean) {
