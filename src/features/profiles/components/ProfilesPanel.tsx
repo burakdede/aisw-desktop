@@ -16,6 +16,7 @@ import {
 } from "../../../lib/schemas";
 import { credentialBackendLabel as formatCredentialBackendLabel } from "../../../lib/credential-backends";
 import { formatDateTimeWithZone } from "../../../lib/date-format";
+import { disposeSafely, type AsyncDispose } from "../../../lib/async-dispose";
 import { BACKEND_UNAVAILABLE_LABEL } from "../../../lib/display-copy";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import {
@@ -385,18 +386,20 @@ export function ProfilesPanel({
 
   useEffect(() => {
     let active = true;
-    let unlisten: (() => void) | undefined;
+    let unlisten: AsyncDispose | undefined;
     void listenDesktopEvent<unknown>("oauth-progress", (payload) => {
       if (!active) return;
       const event = parseOAuthProgressEvent(payload);
       setOauthEvents((current) => [...current, event]);
     }).then((dispose) => {
       unlisten = typeof dispose === "function" ? dispose : undefined;
+    }).catch(() => {
+      unlisten = undefined;
     });
 
     return () => {
       active = false;
-      unlisten?.();
+      disposeSafely(unlisten);
     };
   }, []);
 

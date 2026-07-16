@@ -1,4 +1,5 @@
 import { MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH } from "./layout";
+import { disposeSafely, type AsyncDispose } from "./async-dispose";
 
 type PersistedWindowState = {
   width: number;
@@ -7,7 +8,7 @@ type PersistedWindowState = {
   y: number;
 };
 
-type Unlisten = () => void;
+type Unlisten = AsyncDispose;
 
 type WindowGeometryHandle = {
   setSize: (size: unknown) => Promise<void>;
@@ -61,8 +62,8 @@ export async function syncWindowState(): Promise<Unlisten> {
     if (persistTimer !== null) {
       window.clearTimeout(persistTimer);
     }
-    unlistenResize();
-    unlistenMove();
+    disposeSafely(unlistenResize);
+    disposeSafely(unlistenMove);
   };
 }
 

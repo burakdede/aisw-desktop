@@ -1,3 +1,5 @@
+import { disposeSafely, type AsyncDispose } from "./async-dispose";
+
 export type DesktopEventHandler<T = unknown> = {
   event: string;
   handler: (payload: T) => void;
@@ -6,14 +8,14 @@ export type DesktopEventHandler<T = unknown> = {
 export type DesktopEventListener = <T>(
   event: string,
   handler: (payload: T) => void,
-) => Promise<(() => void) | void> | (() => void) | void;
+) => Promise<AsyncDispose | void> | AsyncDispose | void;
 
 export function subscribeDesktopEvents(
   definitions: DesktopEventHandler[],
   listen: DesktopEventListener,
 ) {
   let active = true;
-  const disposers: Array<() => void> = [];
+  const disposers: AsyncDispose[] = [];
 
   for (const definition of definitions) {
     void Promise.resolve(
@@ -33,14 +35,16 @@ export function subscribeDesktopEvents(
         return;
       }
 
-      dispose();
+      disposeSafely(dispose);
+    }).catch(() => {
+      // Keep the renderer interactive even when a native event subscription fails.
     });
   }
 
   return () => {
     active = false;
     for (const dispose of disposers) {
-      dispose();
+      disposeSafely(dispose);
     }
   };
 }
