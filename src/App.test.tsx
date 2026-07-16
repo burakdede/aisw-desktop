@@ -13,6 +13,11 @@ import { normalizeTerminalIntegrationText } from "./features/shared/terminal-int
 import { useDesktopActions } from "./features/shared/useDesktopActions";
 import { enqueueMutation, resetMutationQueueForTests } from "./features/shared/mutationQueue";
 import { SettingsPanel } from "./features/settings/components/SettingsPanel";
+import {
+  DESKTOP_MENU_EVENTS,
+  DESKTOP_TRAY_EVENTS,
+  type DesktopEventName,
+} from "./lib/desktop-event-contract";
 import { loadDesktopPreferences } from "./lib/desktop-preferences";
 import { desktopSettingsSchema } from "./lib/schemas";
 import type { AppBootstrap, AppSnapshot, DesktopSettings, InitReport } from "./lib/schemas";
@@ -148,11 +153,11 @@ async function renderOverviewApp() {
 
 function desktopEventHandlers() {
   return (window as typeof window & {
-    __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+    __AISW_DESKTOP_EVENT_HANDLERS__?: Record<DesktopEventName, (payload: unknown) => void>;
   }).__AISW_DESKTOP_EVENT_HANDLERS__;
 }
 
-async function dispatchDesktopEvent(event: string, payload: unknown = {}) {
+async function dispatchDesktopEvent(event: DesktopEventName, payload: unknown = {}) {
   await act(async () => {
     desktopEventHandlers()?.[event]?.(payload);
     await Promise.resolve();

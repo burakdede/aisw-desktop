@@ -25,6 +25,11 @@ import type { SettingsSection } from "./features/settings/settings-panel-display
 import { useDesktop } from "./features/shared/useDesktop";
 import { notifyDesktop } from "./lib/notifications";
 import { DEFAULT_ACTION_FAILURE_MESSAGE } from "./lib/display-copy";
+import {
+  DESKTOP_DIAGNOSTIC_QUERY_KEYS,
+  DESKTOP_MENU_EVENTS,
+  DESKTOP_TRAY_EVENTS,
+} from "./lib/desktop-event-contract";
 import { activeSetLabel } from "./lib/profile-display";
 import { listenDesktopEvent } from "./lib/tauri";
 import { subscribeDesktopEvents, type DesktopEventHandler } from "./lib/desktop-events";
@@ -74,14 +79,6 @@ import {
   settingsForRecovery,
   type SettingsRouteState,
 } from "./app-shell";
-
-const DIAGNOSTICS_QUERY_KEYS = [
-  ["doctor"],
-  ["verify"],
-  ["repair", "dry-run"],
-  ["snapshot"],
-  ["bootstrap"],
-] as const;
 
 export function App() {
   const queryClient = useQueryClient();
@@ -294,59 +291,71 @@ export function App() {
   });
 
   function invalidateDiagnostics() {
-    for (const queryKey of DIAGNOSTICS_QUERY_KEYS) {
+    for (const queryKey of DESKTOP_DIAGNOSTIC_QUERY_KEYS) {
       void queryClient.invalidateQueries({ queryKey: [...queryKey] });
     }
   }
 
   useEffect(() => {
     const desktopEventHandlers: DesktopEventHandler[] = [
-      { event: "tray-open-diagnostics", handler: () => setActiveNav("diagnostics") },
       {
-        event: "tray-run-diagnostics",
+        event: DESKTOP_TRAY_EVENTS.openDiagnostics,
+        handler: () => setActiveNav("diagnostics"),
+      },
+      {
+        event: DESKTOP_TRAY_EVENTS.runDiagnostics,
         handler: () => {
           setActiveNav("diagnostics");
           invalidateDiagnostics();
         },
       },
-      { event: "menu-open-settings", handler: () => openSettings("runtime") },
-      { event: "menu-open-settings-updates", handler: () => openSettings("updates") },
+      { event: DESKTOP_MENU_EVENTS.openSettings, handler: () => openSettings("runtime") },
       {
-        event: "menu-open-profiles",
+        event: DESKTOP_MENU_EVENTS.openSettingsUpdates,
+        handler: () => openSettings("updates"),
+      },
+      {
+        event: DESKTOP_MENU_EVENTS.openProfiles,
         handler: () => {
           setProfilesRouteState(createProfilesRouteState());
           setActiveNav("profiles");
         },
       },
       {
-        event: "menu-open-add-profile",
+        event: DESKTOP_MENU_EVENTS.openAddProfile,
         handler: () => {
           setProfilesRouteState(createProfilesRouteState({ tool: "claude", expandedProfile: null }));
           setActiveNav("profiles");
         },
       },
       {
-        event: "menu-open-import-current-login",
+        event: DESKTOP_MENU_EVENTS.openImportCurrentLogin,
         handler: () => {
           setProfilesRouteState(createImportCurrentLoginRouteState());
           setActiveNav("profiles");
         },
       },
-      { event: "menu-open-overview", handler: () => setActiveNav("overview") },
-      { event: "menu-open-sets", handler: () => setActiveNav("sets") },
-      { event: "menu-open-diagnostics", handler: () => setActiveNav("diagnostics") },
+      { event: DESKTOP_MENU_EVENTS.openOverview, handler: () => setActiveNav("overview") },
+      { event: DESKTOP_MENU_EVENTS.openSets, handler: () => setActiveNav("sets") },
       {
-        event: "menu-run-verify",
+        event: DESKTOP_MENU_EVENTS.openDiagnostics,
+        handler: () => setActiveNav("diagnostics"),
+      },
+      {
+        event: DESKTOP_MENU_EVENTS.runVerify,
         handler: () => {
           setActiveNav("diagnostics");
           invalidateDiagnostics();
         },
       },
-      { event: "menu-open-backups", handler: () => setActiveNav("backups") },
-      { event: "menu-open-activity", handler: () => setActiveNav("activity") },
-      { event: "menu-open-quick-switch", handler: () => setQuickSwitchOpen(true) },
+      { event: DESKTOP_MENU_EVENTS.openBackups, handler: () => setActiveNav("backups") },
+      { event: DESKTOP_MENU_EVENTS.openActivity, handler: () => setActiveNav("activity") },
       {
-        event: "menu-open-help",
+        event: DESKTOP_MENU_EVENTS.openQuickSwitch,
+        handler: () => setQuickSwitchOpen(true),
+      },
+      {
+        event: DESKTOP_MENU_EVENTS.openHelp,
         handler: () => {
           void openReferenceDocument("documentation").catch(() => {
             setHelpOpen(true);
@@ -354,7 +363,7 @@ export function App() {
         },
       },
       {
-        event: "menu-export-diagnostics",
+        event: DESKTOP_MENU_EVENTS.exportDiagnostics,
         handler: () => {
           void exportDiagnosticBundle()
             .then((result) =>
@@ -372,7 +381,7 @@ export function App() {
         },
       },
       {
-        event: "menu-open-troubleshooting",
+        event: DESKTOP_MENU_EVENTS.openTroubleshooting,
         handler: () => {
           void openReferenceDocument("troubleshooting").catch(() => {
             setActiveNav("diagnostics");
@@ -381,7 +390,7 @@ export function App() {
         },
       },
       {
-        event: "menu-open-issues",
+        event: DESKTOP_MENU_EVENTS.openIssues,
         handler: () => {
           void openIssueTracker().catch(() => {
             exportDiagnosticBundleMutation.mutate();
@@ -389,13 +398,13 @@ export function App() {
         },
       },
       {
-        event: "menu-reapply-active-profile",
+        event: DESKTOP_MENU_EVENTS.reapplyActiveProfile,
         handler: () => {
           reapplyActiveProfileMutation.mutate();
         },
       },
       {
-        event: "tray-command-result",
+        event: DESKTOP_TRAY_EVENTS.commandResult,
         handler: (payload) => {
           const feedback = buildTrayCommandFeedback(payload);
           recordCommandResult(feedback.scope, feedback.result);
