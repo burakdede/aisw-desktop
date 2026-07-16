@@ -1,6 +1,6 @@
 import { AUTH_METHOD_NOT_CONFIGURED_LABEL, authMethodLabel } from "./auth-method-display";
 import { DESKTOP_ACTION_COPY } from "./desktop-action-copy";
-import { inspectItemLabel, noSelectionHeading } from "./display-copy";
+import { BACK_LABEL, inspectItemLabel, noSelectionHeading } from "./display-copy";
 import { normalizeRuntimeLanguage } from "../features/shared/runtime-language";
 import { fixedStateModeDescription, stateModeDescription, stateModeLabel } from "../features/shared/state-modes";
 import { toolInspectorEmptyLabel, overviewHealthLabel, overviewHealthText, resolveOverviewHealthState, type OverviewHealthState } from "./status-display";
@@ -88,7 +88,7 @@ export const OVERVIEW_PANEL_COPY = {
   noToolsHeading: "No tools detected",
   noToolsBody: "Install or configure a supported tool before switching can begin.",
   footerActionLabel: "View Activity",
-  backLabel: "Back",
+  backLabel: BACK_LABEL,
   liveMismatchFallbackProfileLabel: "the saved profile",
   missingBinaryActionLabel: "Installation Help",
   missingBinaryRefreshLabel: DESKTOP_ACTION_COPY.refreshLabel,

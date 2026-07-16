@@ -1,5 +1,6 @@
 import { APP_NAV_IDS } from "../lib/app-navigation";
 import { DESKTOP_ACTION_COPY } from "../lib/desktop-action-copy";
+import { CLOSE_LABEL } from "../lib/display-copy";
 import { SUPPORTED_TOOLS, type SupportedTool } from "../lib/tool-registry";
 
 export const HELP_SHEET_COPY = {
@@ -8,7 +9,7 @@ export const HELP_SHEET_COPY = {
   heading: "Using AI Switch",
   intro:
     "AI Switch keeps account switching local to this computer and focused on profile changes, verification, and recovery.",
-  closeLabel: "Close",
+  closeLabel: CLOSE_LABEL,
   supportedToolsKicker: "Supported tools",
   supportedToolsHeading: "Desktop control center",
   supportedToolsAriaLabel: "Supported tools",

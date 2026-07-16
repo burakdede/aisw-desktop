@@ -1,4 +1,6 @@
 import {
+  BACK_LABEL,
+  CANCEL_LABEL,
   DATE_UNAVAILABLE_LABEL,
   inspectItemLabel,
   noSelectionHeading,
@@ -80,8 +82,8 @@ export const ACTIVITY_TOOLBAR_COPY = {
 
 export const ACTIVITY_PANEL_COPY = {
   listAriaLabel: "Activity timeline",
-  backLabel: "Back",
-  cancelLabel: "Cancel",
+  backLabel: BACK_LABEL,
+  cancelLabel: CANCEL_LABEL,
 } as const;
 
 export const ACTIVITY_STATUS_NOTIFICATION = {

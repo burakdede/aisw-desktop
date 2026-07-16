@@ -6,6 +6,8 @@ import {
   resolveBackupTarget,
 } from "../../lib/backups";
 import {
+  BACK_LABEL,
+  CANCEL_LABEL,
   clipboardCopiedMessage,
   clipboardUnavailableManualMessage,
   noSelectionHeading,
@@ -63,7 +65,7 @@ export const BACKUPS_PANEL_COPY = {
     },
   },
   inspector: {
-    backLabel: "Back",
+    backLabel: BACK_LABEL,
     restoreLabel: "Restore…",
     menuAriaLabel: "Backup actions",
     restoreAndActivateLabel: "Restore and Activate…",
@@ -86,7 +88,7 @@ export const BACKUPS_PANEL_COPY = {
     profileLabel: "Profile",
     toolLabel: "Tool",
     createdLabel: "Created",
-    cancelLabel: "Cancel",
+    cancelLabel: CANCEL_LABEL,
     restoreFilesLabel: "Restore Files",
     restoreAndActivateLabel: "Restore and Activate",
   },

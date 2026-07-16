@@ -9,6 +9,7 @@ import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { toolDisplayName } from "../../lib/tool-display";
 import { toolBinaryName } from "../../lib/tool-guidance";
 import { resolveErrorDetails, resolveErrorMessage } from "../../lib/error-details";
+import { BACK_LABEL, CANCEL_LABEL, CLOSE_LABEL } from "../../lib/display-copy";
 import { asArray, asObject, asOptionalString } from "../../lib/parse-guards";
 import { runtimeSummary } from "../../lib/runtime-display";
 import {
@@ -212,7 +213,7 @@ export const ONBOARDING_ACCOUNTS_STEP_COPY = {
 
 export const ONBOARDING_IMPORT_DIALOG_COPY = {
   kicker: "Import current account",
-  closeLabel: "Close",
+  closeLabel: CLOSE_LABEL,
   headingPrefix: "Import",
   headingSuffix: "profile",
   introPrefix: "Save the account that ",
@@ -220,7 +221,7 @@ export const ONBOARDING_IMPORT_DIALOG_COPY = {
     " is already using as a reusable profile. This imported profile becomes the active saved account for this tool.",
   profileNameLabel: "Profile name",
   labelFieldLabel: "Label",
-  cancelLabel: "Cancel",
+  cancelLabel: CANCEL_LABEL,
 } as const;
 
 export const ONBOARDING_SWITCH_STEP_COPY = {
@@ -259,7 +260,7 @@ export const ONBOARDING_DONE_STEP_COPY = {
 } as const;
 
 export const ONBOARDING_STEP_FOOTER_COPY = {
-  backLabel: "Back",
+  backLabel: BACK_LABEL,
   continuePrefix: "Continue to ",
 } as const;
 

@@ -8,6 +8,7 @@ import { compareBackupsNewestFirst } from "../../lib/backups";
 import { credentialBackendLabel as formatCredentialBackendLabel } from "../../lib/credential-backends";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import {
+  CANCEL_LABEL,
   DEFAULT_ACTION_FAILURE_MESSAGE,
   inspectItemLabel,
   moreActionsLabel,
@@ -131,7 +132,7 @@ export const PROFILE_EDIT_SHEET_COPY = {
   currentNameLabel: "Current name",
   newNameLabel: "New name",
   displayLabelLabel: "Display label",
-  cancelLabel: "Cancel",
+  cancelLabel: CANCEL_LABEL,
   saveLabel: "Save",
 } as const;
 
@@ -140,7 +141,7 @@ export const PROFILE_REMOVAL_SHEET_COPY = {
   kicker: "Removal",
   warning:
     "AI Switch creates a backup before removal. Current live credentials are not removed automatically.",
-  cancelLabel: "Cancel",
+  cancelLabel: CANCEL_LABEL,
   confirmLabel: "Remove Profile",
 } as const;
 
@@ -163,7 +164,7 @@ export const PROFILE_ADD_SHEET_COPY = {
   oauthProgressHeading: "OAuth progress",
   oauthProgressEmptyNote:
     "Start OAuth to stream each login step before the profile is captured and saved.",
-  cancelLabel: "Cancel",
+  cancelLabel: CANCEL_LABEL,
 } as const;
 
 export const PROFILE_INSPECTOR_FIELD_LABELS = {

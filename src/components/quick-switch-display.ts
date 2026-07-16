@@ -1,4 +1,5 @@
 import type { AppSnapshot, DesktopSettings } from "../lib/schemas";
+import { CLOSE_LABEL } from "../lib/display-copy";
 import {
   profileSetDisplayLabel,
   profileSetHasUsableSelections,
@@ -49,7 +50,7 @@ export const QUICK_SWITCH_COPY = {
   dialogAriaLabel: "Quick Switch",
   kicker: "Quick Switch",
   heading: "Search sets or profiles",
-  closeLabel: "Close",
+  closeLabel: CLOSE_LABEL,
   searchAriaLabel: "Search Quick Switch",
   searchPlaceholder: "Search profiles or sets",
   resultsAriaLabel: "Quick Switch results",
@@ -65,7 +66,7 @@ export const QUICK_SWITCH_SHORTCUT_HINTS = [
   { keys: ["↑", "↓"], label: "Move" },
   { keys: ["Enter"], label: "Switch" },
   { keys: ["⌘", "Enter"], label: "Match all" },
-  { keys: ["Esc"], label: "Close" },
+  { keys: ["Esc"], label: CLOSE_LABEL },
 ] as const;
 
 export function buildQuickSwitchItems(settings: DesktopSettings, snapshot: AppSnapshot): QuickSwitchItem[] {
