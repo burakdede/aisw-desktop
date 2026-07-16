@@ -1,7 +1,10 @@
 import { useSyncExternalStore } from "react";
 import { resolveBrowserStorage } from "../../lib/browser-storage";
 import { ACTIVITY_STORE_KEY, limitActivityTimeline } from "./activity-store";
-import { parseStoredCommandResult } from "./command-result-shape";
+import {
+  parseStoredCommandResult,
+  type CommandResultStatus,
+} from "./command-result-shape";
 
 export type CommandResultScope =
   | { type: "tool"; tool: string }
@@ -9,7 +12,7 @@ export type CommandResultScope =
 
 export type LastCommandResult = {
   label: string;
-  status: "success" | "error";
+  status: CommandResultStatus;
   message: string;
   kind?: string;
   remediation?: string;

@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type Event } from "@tauri-apps/api/event";
 import type { AsyncDispose } from "./async-dispose";
+import type { CommandResultStatus } from "../features/shared/command-result-shape";
 import {
   DESKTOP_RUNTIME_WAIT_INTERVAL_MS,
   DESKTOP_RUNTIME_WAIT_TIMEOUT_MS,
@@ -27,7 +28,7 @@ export type TrayCommandResultEvent =
       scope: "tool";
       tool: string;
       label: string;
-      status: "success" | "error";
+      status: CommandResultStatus;
       message: string;
       kind?: string;
       remediation?: string;
@@ -36,7 +37,7 @@ export type TrayCommandResultEvent =
       scope: "global";
       id: string;
       label: string;
-      status: "success" | "error";
+      status: CommandResultStatus;
       message: string;
       kind?: string;
       remediation?: string;

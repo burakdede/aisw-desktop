@@ -10,6 +10,7 @@ import {
   installGuideUrlForTool,
   openExternalGuide,
 } from "../../../lib/tool-guidance";
+import type { CommandResultStatus } from "../../shared/command-result-shape";
 import { supportedStateModes } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import {
@@ -340,7 +341,7 @@ function ToolInspector({
   profiles: AppSnapshot["profiles"][string]["profiles"];
   lastResult?: {
     label: string;
-    status: "success" | "error";
+    status: CommandResultStatus;
     message: string;
     remediation?: string;
   };

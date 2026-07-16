@@ -1,4 +1,5 @@
 import { normalizeRuntimeLanguage } from "../features/shared/runtime-language";
+import type { CommandResultStatus } from "../features/shared/command-result-shape";
 import {
   ACTIVE_LABEL,
   AVAILABLE_LABEL,
@@ -11,7 +12,7 @@ import { formatMessageWithRemediation } from "./remediation-text";
 import { countLabel } from "./utils";
 
 type CommandResult = {
-  status: "success" | "error";
+  status: CommandResultStatus;
   message: string;
   remediation?: string;
 };

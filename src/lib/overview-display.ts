@@ -1,6 +1,7 @@
 import { AUTH_METHOD_NOT_CONFIGURED_LABEL, authMethodLabel } from "./auth-method-display";
 import { DESKTOP_ACTION_COPY } from "./desktop-action-copy";
 import { BACK_LABEL, inspectItemLabel, noSelectionHeading } from "./display-copy";
+import type { CommandResultStatus } from "../features/shared/command-result-shape";
 import { normalizeRuntimeLanguage } from "../features/shared/runtime-language";
 import { fixedStateModeDescription, stateModeDescription, stateModeLabel } from "../features/shared/state-modes";
 import { toolInspectorEmptyLabel, overviewHealthLabel, overviewHealthText, resolveOverviewHealthState, type OverviewHealthState } from "./status-display";
@@ -61,7 +62,7 @@ export type OverviewInspectorNotice = {
 
 export type OverviewLastResult = {
   label: string;
-  status: "success" | "error";
+  status: CommandResultStatus;
   message: string;
   remediation?: string;
 };
@@ -252,17 +253,17 @@ export function overviewSelectedStateMode(
 
 export function overviewRecentSummary(input: {
   bulkResult?: {
-    status: "success" | "error";
+    status: CommandResultStatus;
     message: string;
     remediation?: string;
   };
   workspaceResult?: {
-    status: "success" | "error";
+    status: CommandResultStatus;
     message: string;
     remediation?: string;
   };
   contextResult?: {
-    status: "success" | "error";
+    status: CommandResultStatus;
     message: string;
     remediation?: string;
   };

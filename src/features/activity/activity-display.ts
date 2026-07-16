@@ -10,9 +10,10 @@ import { APP_NAV_IDS, APP_NAV_LABELS } from "../../lib/app-navigation";
 import { calendarDayStarts } from "../../lib/calendar-time";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { toolDisplayName } from "../../lib/tool-display";
+import type { CommandResultStatus } from "../shared/command-result-shape";
 import type { ActivityTimelineEntry } from "../shared/lastCommandResult";
 
-export type ActivityFilter = "all" | "success" | "error";
+export type ActivityFilter = "all" | CommandResultStatus;
 type ActivityStatus = ActivityEntry["status"];
 type ActivityStatusVariant = "row" | "inspector";
 
@@ -125,7 +126,7 @@ export type ActivityEntry = {
   scopeType: "tool" | "global";
   scopeTool?: string;
   label: string;
-  status: "success" | "error";
+  status: CommandResultStatus;
   message: string;
   remediation?: string;
   command?: string;
