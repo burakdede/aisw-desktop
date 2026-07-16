@@ -1,6 +1,7 @@
 import { DesktopCommandError, type TrayCommandResultEvent } from "./lib/tauri";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "./lib/schemas";
 import { resolveErrorDetails } from "./lib/error-details";
+import { DEFAULT_ACTION_FAILURE_MESSAGE } from "./lib/display-copy";
 import type {
   ExplicitProfileCredentialBackend,
   ProfileImportMode,
@@ -102,11 +103,28 @@ export const APP_SHELL_COPY = {
     },
     statusLabel: "Status",
     nextStepLabel: "Next step",
+    loadStateFallback: "AI Switch could not load its local desktop state.",
   },
   waitingSnapshot: {
     title: "Waiting for snapshot",
     kicker: "Bootstrap",
     detail: "The desktop engine is compatible, but no state snapshot is available yet.",
+  },
+  runtimeBlocker: {
+    missingDesktopContractSummary:
+      "The current engine works outside the app, but it does not expose the desktop features AI Switch requires.",
+    missingDesktopContractNextStep:
+      "Use the included desktop engine, or choose a newer desktop-compatible engine in Engine Settings.",
+    incompatibleSummary: "The current engine was found, but it is not compatible with this app.",
+    incompatibleNextStep:
+      "Use the included desktop engine, or choose a compatible engine in Engine Settings.",
+    unavailableSummary: "AI Switch could not use the current desktop engine source.",
+    unavailableNextStep:
+      "Use the included desktop engine, or choose a working engine source in Engine Settings.",
+  },
+  reapplyProfile: {
+    unavailableSnapshot: "No active desktop snapshot is available yet.",
+    unavailableSelection: "AI Switch could not determine a single active profile to re-apply.",
   },
 } as const;
 
@@ -400,7 +418,7 @@ export function buildBootstrapErrorSurface(error: unknown) {
 export function describeBootstrapError(error: unknown) {
   return resolveErrorDetails(
     error,
-    "AI Switch could not load its local desktop state.",
+    APP_SHELL_COPY.bootstrapSurface.loadStateFallback,
   );
 }
 
@@ -422,32 +440,28 @@ export function describeRuntimeBlocker(runtimeStatus: {
 
   if (hasResolvedRuntime && missingDesktopContract) {
     return {
-      summary:
-        "The current engine works outside the app, but it does not expose the desktop features AI Switch requires.",
-      nextStep:
-        "Use the included desktop engine, or choose a newer desktop-compatible engine in Engine Settings.",
+      summary: APP_SHELL_COPY.runtimeBlocker.missingDesktopContractSummary,
+      nextStep: APP_SHELL_COPY.runtimeBlocker.missingDesktopContractNextStep,
     };
   }
 
   if (hasResolvedRuntime) {
     return {
-      summary: "The current engine was found, but it is not compatible with this app.",
-      nextStep:
-        "Use the included desktop engine, or choose a compatible engine in Engine Settings.",
+      summary: APP_SHELL_COPY.runtimeBlocker.incompatibleSummary,
+      nextStep: APP_SHELL_COPY.runtimeBlocker.incompatibleNextStep,
     };
   }
 
   return {
-    summary: "AI Switch could not use the current desktop engine source.",
-    nextStep:
-      "Use the included desktop engine, or choose a working engine source in Engine Settings.",
+    summary: APP_SHELL_COPY.runtimeBlocker.unavailableSummary,
+    nextStep: APP_SHELL_COPY.runtimeBlocker.unavailableNextStep,
   };
 }
 
 export function buildReapplyActiveProfileError(error: unknown) {
   const details = resolveErrorDetails(
     error,
-    "AI Switch could not complete that action.",
+    DEFAULT_ACTION_FAILURE_MESSAGE,
   );
 
   return {
@@ -503,7 +517,7 @@ export function resolveActiveReapplyAction(input: {
   runtimeBlocked: boolean;
 }): ReapplyActiveProfileAction {
   if (!input.snapshot || !input.settings || input.runtimeBlocked) {
-    throw new Error("No active desktop snapshot is available yet.");
+    throw new Error(APP_SHELL_COPY.reapplyProfile.unavailableSnapshot);
   }
 
   const { snapshot, settings, toolCapabilities } = input;
@@ -574,7 +588,7 @@ export function resolveActiveReapplyAction(input: {
     };
   }
 
-  throw new Error("AI Switch could not determine a single active profile to re-apply.");
+  throw new Error(APP_SHELL_COPY.reapplyProfile.unavailableSelection);
 }
 
 export function sectionTitle(section: string, setupFocused = false) {
