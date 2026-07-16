@@ -13,7 +13,7 @@ import {
 import { AppBootstrap, AppSnapshot, InitReport } from "../../../lib/schemas";
 import { toolSupportsEditableStateModes } from "../../../lib/tool-registry";
 import { toolDisplayName } from "../../../lib/tool-display";
-import { countLabel, titleCase } from "../../../lib/utils";
+import { countLabel } from "../../../lib/utils";
 import {
   installGuideUrlForTool,
   openExternalGuide,
@@ -29,14 +29,21 @@ import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { invalidatePostMutationQueries } from "../../shared/postMutationRefresh";
 import {
   ONBOARDING_ACCOUNTS_STEP_COPY,
+  ONBOARDING_DONE_STEP_COPY,
   ONBOARDING_IMPORT_DIALOG_COPY,
   ONBOARDING_TRUST_ROWS,
   ONBOARDING_RUNTIME_NEXT_STEPS,
   ONBOARDING_RUNTIME_STEP_COPY,
   ONBOARDING_SETUP_SCREEN_COPY,
+  ONBOARDING_STEP_FOOTER_COPY,
+  ONBOARDING_SWITCH_STEP_COPY,
+  ONBOARDING_TERMINAL_STEP_COPY,
   accountItemTool,
   buildOnboardingInventory,
   onboardingCompletionState,
+  onboardingContinueLabel,
+  onboardingDetectedShellSummary,
+  onboardingDoneBadgeLabel,
   buildOnboardingHealthItems,
   onboardingHealthStatusSymbol,
   buildOnboardingRuntimeRows,
@@ -48,6 +55,8 @@ import {
   onboardingAccountSummary,
   onboardingImportDialogAriaLabel,
   onboardingSecureStorageStatus,
+  onboardingStepProgressLabel,
+  onboardingSwitchSubmitLabel,
   onboardingSwitchReadinessStatus,
   onboardingLiveAccountImportNote,
   onboardingMissingToolHeading,
@@ -710,21 +719,18 @@ export function SetupPanel({
               <article className="diagnostic-card">
                 <div className="desktop-pane-section-header">
                   <div>
-                    <p className="card-kicker">First switch</p>
-                    <h3>Try one safe switch</h3>
+                    <p className="card-kicker">{ONBOARDING_SWITCH_STEP_COPY.kicker}</p>
+                    <h3>{ONBOARDING_SWITCH_STEP_COPY.heading}</h3>
                   </div>
-                  <p className="inline-note">
-                    Re-apply one saved set across installed tools so you know switching works
-                    before you start coding.
-                  </p>
+                  <p className="inline-note">{ONBOARDING_SWITCH_STEP_COPY.note}</p>
                 </div>
                 <div className="inline-form">
                   <select
-                    aria-label="First switch profile"
+                    aria-label={ONBOARDING_SWITCH_STEP_COPY.selectAriaLabel}
                     value={firstSwitchProfile}
                     onChange={(event) => setFirstSwitchProfile(event.target.value)}
                   >
-                    <option value="">Select profile</option>
+                    <option value="">{ONBOARDING_SWITCH_STEP_COPY.selectPlaceholder}</option>
                     {switchableProfiles.map((profile) => (
                       <option key={profile.name} value={profile.name}>
                         {profile.label}
@@ -745,18 +751,15 @@ export function SetupPanel({
                       })
                     }
                   >
-                    {useAllProfilesMutation.isPending ? "Switching…" : "Switch now"}
+                    {onboardingSwitchSubmitLabel(useAllProfilesMutation.isPending)}
                   </button>
                 </div>
                 {!switchableProfiles.length ? (
                   <div className="stack-list">
-                    <p className="inline-note">
-                      Import or create matching profile names across tools before running a shared
-                      switch check.
-                    </p>
+                    <p className="inline-note">{ONBOARDING_SWITCH_STEP_COPY.emptyDetail}</p>
                     <div className="button-row">
                       <button className="ghost-button" type="button" onClick={() => onOpenProfiles("claude")}>
-                        Open Profiles
+                        {ONBOARDING_SWITCH_STEP_COPY.openProfilesLabel}
                       </button>
                     </div>
                   </div>
@@ -768,30 +771,21 @@ export function SetupPanel({
               <article className="diagnostic-card">
                 <div className="desktop-pane-section-header">
                   <div>
-                    <p className="card-kicker">Optional</p>
-                    <h3>Terminal integration</h3>
+                    <p className="card-kicker">{ONBOARDING_TERMINAL_STEP_COPY.kicker}</p>
+                    <h3>{ONBOARDING_TERMINAL_STEP_COPY.heading}</h3>
                   </div>
-                  <p className="inline-note">
-                    Optional. AI Switch updates live credential files without terminal integration.
-                    Turn this on later only if already-open terminal sessions need to pick up changes
-                    immediately.
-                  </p>
+                  <p className="inline-note">{ONBOARDING_TERMINAL_STEP_COPY.intro}</p>
                 </div>
                 {shellGuidance.data?.detected_shell ? (
                   <p className="inline-note">
-                    Detected shell: <strong>{titleCase(shellGuidance.data.detected_shell)}</strong>
+                    <strong>{onboardingDetectedShellSummary(shellGuidance.data.detected_shell)}</strong>
                   </p>
                 ) : null}
-                <p className="inline-note">
-                  This app writes live credential files directly. Most people can skip this and
-                  still switch accounts normally.
-                </p>
-                <p className="inline-note">
-                  Shell files should only be updated explicitly from guided setup, never silently.
-                </p>
+                <p className="inline-note">{ONBOARDING_TERMINAL_STEP_COPY.primaryDetail}</p>
+                <p className="inline-note">{ONBOARDING_TERMINAL_STEP_COPY.secondaryDetail}</p>
                 <div className="button-row">
                   <button className="ghost-button" type="button" onClick={() => onOpenSettings("shell")}>
-                    Open terminal setup
+                    {ONBOARDING_TERMINAL_STEP_COPY.openSetupLabel}
                   </button>
                 </div>
               </article>
@@ -801,18 +795,15 @@ export function SetupPanel({
               <article className="diagnostic-card onboarding-complete-card">
                 <div className="desktop-pane-section-header">
                   <div>
-                    <p className="card-kicker">Done</p>
-                    <h3>You&apos;re ready</h3>
+                    <p className="card-kicker">{ONBOARDING_DONE_STEP_COPY.kicker}</p>
+                    <h3>{ONBOARDING_DONE_STEP_COPY.heading}</h3>
                   </div>
                   <span className={`pill ${switchReady ? "pill-ok" : "pill-soft"}`}>
-                    {switchReady ? "Ready to switch" : "Setup can continue later"}
+                    {onboardingDoneBadgeLabel(switchReady)}
                   </span>
                 </div>
-                <p className="inline-note">
-                  AI Switch is ready to manage saved local accounts on this computer. Missing tools stay optional,
-                  and you can add more profiles whenever you need them.
-                </p>
-                <div className="onboarding-complete-grid" aria-label="Setup completion status">
+                <p className="inline-note">{ONBOARDING_DONE_STEP_COPY.note}</p>
+                <div className="onboarding-complete-grid" aria-label={ONBOARDING_DONE_STEP_COPY.gridAriaLabel}>
                   {snapshot.statuses.map((status) => {
                     const profileCount = snapshot.profiles[status.tool]?.profiles.length ?? 0;
                     const completion = onboardingCompletionState(status, profileCount);
@@ -832,9 +823,7 @@ export function SetupPanel({
 
             <article className="diagnostic-card onboarding-step-footer-card">
               <div className="onboarding-step-footer-copy">
-                <p className="card-kicker">
-                  Step {activeStepIndex + 1} of {setupSteps.length}
-                </p>
+                <p className="card-kicker">{onboardingStepProgressLabel(activeStepIndex, setupSteps.length)}</p>
                 <h3>{setupStepFooterTitle(activeStep)}</h3>
                 <p className="inline-note">{setupStepFooterNote(activeStep, switchReady)}</p>
               </div>
@@ -845,7 +834,7 @@ export function SetupPanel({
                     type="button"
                     onClick={() => setActiveStep(previousStep.value)}
                   >
-                    Back
+                    {ONBOARDING_STEP_FOOTER_COPY.backLabel}
                   </button>
                 ) : null}
                 {nextStep ? (
@@ -854,7 +843,7 @@ export function SetupPanel({
                     type="button"
                     onClick={() => setActiveStep(nextStep.value)}
                   >
-                    Continue to {nextStep.label}
+                    {onboardingContinueLabel(nextStep.label)}
                   </button>
                 ) : forcedOpen ? (
                   <button

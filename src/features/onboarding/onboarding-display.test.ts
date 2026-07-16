@@ -2,14 +2,21 @@ import { describe, expect, it } from "vitest";
 import type { AppBootstrap, AppSnapshot, InitReport } from "../../lib/schemas";
 import {
   ONBOARDING_ACCOUNTS_STEP_COPY,
+  ONBOARDING_DONE_STEP_COPY,
   ONBOARDING_IMPORT_DIALOG_COPY,
   ONBOARDING_RUNTIME_NEXT_STEPS,
   ONBOARDING_RUNTIME_STEP_COPY,
   ONBOARDING_SETUP_STEPS,
   ONBOARDING_SETUP_SCREEN_COPY,
+  ONBOARDING_STEP_FOOTER_COPY,
+  ONBOARDING_SWITCH_STEP_COPY,
+  ONBOARDING_TERMINAL_STEP_COPY,
   ONBOARDING_TRUST_ROWS,
   accountItemTool,
   onboardingCompletionState,
+  onboardingContinueLabel,
+  onboardingDetectedShellSummary,
+  onboardingDoneBadgeLabel,
   buildOnboardingInventory,
   buildOnboardingHealthItems,
   buildOnboardingRuntimeRows,
@@ -26,6 +33,8 @@ import {
   onboardingAccountBadge,
   onboardingAccountSummary,
   onboardingSecureStorageStatus,
+  onboardingStepProgressLabel,
+  onboardingSwitchSubmitLabel,
   onboardingSwitchReadinessStatus,
   readLiveAccounts,
   restoreIncludedEngineActionLabel,
@@ -171,6 +180,14 @@ describe("onboarding-display", () => {
     );
     expect(ONBOARDING_IMPORT_DIALOG_COPY.kicker).toBe("Import current account");
     expect(ONBOARDING_IMPORT_DIALOG_COPY.headingSuffix).toBe("profile");
+    expect(ONBOARDING_SWITCH_STEP_COPY.heading).toBe("Try one safe switch");
+    expect(ONBOARDING_SWITCH_STEP_COPY.openProfilesLabel).toBe("Open Profiles");
+    expect(ONBOARDING_TERMINAL_STEP_COPY.heading).toBe("Terminal integration");
+    expect(ONBOARDING_TERMINAL_STEP_COPY.openSetupLabel).toBe("Open terminal setup");
+    expect(ONBOARDING_DONE_STEP_COPY.heading).toBe("You're ready");
+    expect(ONBOARDING_DONE_STEP_COPY.gridAriaLabel).toBe("Setup completion status");
+    expect(ONBOARDING_STEP_FOOTER_COPY.backLabel).toBe("Back");
+    expect(ONBOARDING_STEP_FOOTER_COPY.continuePrefix).toBe("Continue to ");
   });
 
   it("shares switch readiness copy", () => {
@@ -368,6 +385,14 @@ describe("onboarding-display", () => {
       binary: "gemini",
       afterBinary: " tool later when you want to manage that provider here.",
     });
+    expect(onboardingSwitchSubmitLabel(true)).toBe("Switching…");
+    expect(onboardingSwitchSubmitLabel(false)).toBe("Switch now");
+    expect(onboardingDetectedShellSummary("zsh")).toBe("Detected shell: Zsh");
+    expect(onboardingDetectedShellSummary(null)).toBeNull();
+    expect(onboardingDoneBadgeLabel(true)).toBe("Ready to switch");
+    expect(onboardingDoneBadgeLabel(false)).toBe("Setup can continue later");
+    expect(onboardingStepProgressLabel(0, 5)).toBe("Step 1 of 5");
+    expect(onboardingContinueLabel("Terminal")).toBe("Continue to Terminal");
     expect(restoreIncludedEngineActionLabel(true)).toBe("Switching to Included Engine…");
     expect(restoreIncludedEngineActionLabel(false)).toBe("Use Included Engine");
     expect(restoreIncludedEngineErrorMessage(new Error("No bundled engine found."))).toBe(

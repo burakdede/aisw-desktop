@@ -146,6 +146,46 @@ export const ONBOARDING_IMPORT_DIALOG_COPY = {
   cancelLabel: "Cancel",
 } as const;
 
+export const ONBOARDING_SWITCH_STEP_COPY = {
+  kicker: "First switch",
+  heading: "Try one safe switch",
+  note:
+    "Re-apply one saved set across installed tools so you know switching works before you start coding.",
+  selectAriaLabel: "First switch profile",
+  selectPlaceholder: "Select profile",
+  emptyDetail:
+    "Import or create matching profile names across tools before running a shared switch check.",
+  openProfilesLabel: "Open Profiles",
+} as const;
+
+export const ONBOARDING_TERMINAL_STEP_COPY = {
+  kicker: "Optional",
+  heading: "Terminal integration",
+  intro:
+    "Optional. AI Switch updates live credential files without terminal integration. Turn this on later only if already-open terminal sessions need to pick up changes immediately.",
+  detectedShellLabel: "Detected shell",
+  primaryDetail:
+    "This app writes live credential files directly. Most people can skip this and still switch accounts normally.",
+  secondaryDetail:
+    "Shell files should only be updated explicitly from guided setup, never silently.",
+  openSetupLabel: "Open terminal setup",
+} as const;
+
+export const ONBOARDING_DONE_STEP_COPY = {
+  kicker: "Done",
+  heading: "You're ready",
+  readyBadge: "Ready to switch",
+  laterBadge: "Setup can continue later",
+  note:
+    "AI Switch is ready to manage saved local accounts on this computer. Missing tools stay optional, and you can add more profiles whenever you need them.",
+  gridAriaLabel: "Setup completion status",
+} as const;
+
+export const ONBOARDING_STEP_FOOTER_COPY = {
+  backLabel: "Back",
+  continuePrefix: "Continue to ",
+} as const;
+
 export type OnboardingInventory = {
   liveAccounts: LiveAccount[];
   installedToolsNeedingProfile: ToolStatus[];
@@ -353,6 +393,10 @@ export function onboardingImportSubmitLabel(isPending: boolean) {
   return isPending ? "Importing…" : "Import";
 }
 
+export function onboardingSwitchSubmitLabel(isPending: boolean) {
+  return isPending ? "Switching…" : "Switch now";
+}
+
 export function restoreIncludedEngineActionLabel(isPending: boolean) {
   return isPending ? "Switching to Included Engine…" : "Use Included Engine";
 }
@@ -371,6 +415,28 @@ export function onboardingHealthStatusSymbol(status: OnboardingHealthItem["statu
     return "!";
   }
   return "✕";
+}
+
+export function onboardingDetectedShellSummary(shell: string | null | undefined) {
+  if (!shell) {
+    return null;
+  }
+
+  return `${ONBOARDING_TERMINAL_STEP_COPY.detectedShellLabel}: ${titleCase(shell)}`;
+}
+
+export function onboardingDoneBadgeLabel(switchReady: boolean) {
+  return switchReady
+    ? ONBOARDING_DONE_STEP_COPY.readyBadge
+    : ONBOARDING_DONE_STEP_COPY.laterBadge;
+}
+
+export function onboardingStepProgressLabel(activeStepIndex: number, totalSteps: number) {
+  return `Step ${activeStepIndex + 1} of ${totalSteps}`;
+}
+
+export function onboardingContinueLabel(stepLabel: string) {
+  return `${ONBOARDING_STEP_FOOTER_COPY.continuePrefix}${stepLabel}`;
 }
 
 export function onboardingImportDialogAriaLabel(tool: string) {
