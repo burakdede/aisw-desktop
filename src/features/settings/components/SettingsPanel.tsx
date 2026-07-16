@@ -54,15 +54,30 @@ import {
   nextRuntimeSourceSelection,
   openedAppDataFolderMessage,
   appDataFolderErrorMessage,
+  releaseChannelDescription,
   resolveSelectedShell,
   resolveSelectedShellVariant,
   sectionLabel,
   selectedRuntimePath,
+  SETTINGS_CHECK_FOR_UPDATES_LABEL,
+  SETTINGS_COPY_REDACTED_REPORT_LABEL,
   SETTINGS_APPEARANCE_OPTIONS,
   SETTINGS_DEFAULT_SECTION_OPTIONS,
+  SETTINGS_EXPORT_REDACTED_SUPPORT_BUNDLE_LABEL,
+  SETTINGS_INSTALLING_UPDATE_LABEL,
+  SETTINGS_INSTALL_UPDATE_LABEL,
+  SETTINGS_OPEN_APP_DATA_FOLDER_LABEL,
+  SETTINGS_RESET_ONBOARDING_LABEL,
+  SETTINGS_RESET_WINDOW_LAYOUT_LABEL,
+  SETTINGS_REOPEN_SETUP_ASSISTANT_LABEL,
+  SETTINGS_REVEAL_IN_FINDER_LABEL,
   SETTINGS_RUNTIME_SOURCE_OPTIONS,
+  SETTINGS_SAVE_FAILED_TITLE,
   settingsSectionDirectionForKey,
   SETTINGS_SECTIONS,
+  SETTINGS_SHELL_NOTE,
+  SETTINGS_UPDATE_CHECK_FAILED_TITLE,
+  SETTINGS_UPDATE_INSTALL_FAILED_TITLE,
   SETTINGS_UPDATE_CHANNEL_OPTIONS,
   type DesktopPreferencesDraft,
   type SettingsDraft,
@@ -564,7 +579,7 @@ export function SettingsPanel({
                     label="Local data folder"
                     action={
                       <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
-                        Reveal in Finder
+                        {SETTINGS_REVEAL_IN_FINDER_LABEL}
                       </button>
                     }
                   />
@@ -572,7 +587,7 @@ export function SettingsPanel({
                 {updateSettingsMutation.error ? (
                   <SettingsFeedback
                     tone="error"
-                    title="Settings could not be saved"
+                    title={SETTINGS_SAVE_FAILED_TITLE}
                     details={formatSettingsMutationError(updateSettingsMutation.error)}
                   />
                 ) : null}
@@ -625,7 +640,7 @@ export function SettingsPanel({
                   )}
                 </SettingsGroup>
                 <p className="inline-note settings-feedback-note settings-section-note">
-                  Current terminal sessions only need the hook when they must receive live environment changes immediately.
+                  {SETTINGS_SHELL_NOTE}
                 </p>
 
                 {copyMessage ? <p className="inline-note settings-feedback-note">{copyMessage}</p> : null}
@@ -647,7 +662,7 @@ export function SettingsPanel({
                     label="Finder"
                     action={
                       <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
-                        Reveal in Finder
+                        {SETTINGS_REVEAL_IN_FINDER_LABEL}
                       </button>
                     }
                   />
@@ -658,7 +673,7 @@ export function SettingsPanel({
                     label="Support bundle"
                     action={
                       <button className="ghost-button" type="button" onClick={() => void exportReport()}>
-                        Copy Redacted Report…
+                        {SETTINGS_COPY_REDACTED_REPORT_LABEL}
                       </button>
                     }
                   />
@@ -698,7 +713,7 @@ export function SettingsPanel({
                   </SettingsRow>
                   <SettingsActionRow
                     label="Available releases"
-                    description={`Check for a signed desktop release on the selected ${updateChannel} channel.`}
+                    description={releaseChannelDescription(updateChannel)}
                     action={
                       <div className="button-row">
                         <button
@@ -707,7 +722,7 @@ export function SettingsPanel({
                           disabled={mutationLock.isBusy || checkForUpdatesMutation.isPending}
                           onClick={() => checkForUpdatesMutation.mutate()}
                         >
-                          Check for Updates
+                          {SETTINGS_CHECK_FOR_UPDATES_LABEL}
                         </button>
                         <button
                           className="ghost-button"
@@ -719,7 +734,9 @@ export function SettingsPanel({
                           }
                           onClick={() => installUpdateMutation.mutate()}
                         >
-                          {installUpdateMutation.isPending ? "Installing…" : "Install Update"}
+                          {installUpdateMutation.isPending
+                            ? SETTINGS_INSTALLING_UPDATE_LABEL
+                            : SETTINGS_INSTALL_UPDATE_LABEL}
                         </button>
                       </div>
                     }
@@ -764,21 +781,21 @@ export function SettingsPanel({
                 {updateSettingsMutation.error ? (
                   <SettingsFeedback
                     tone="error"
-                    title="Settings could not be saved"
+                    title={SETTINGS_SAVE_FAILED_TITLE}
                     details={formatSettingsMutationError(updateSettingsMutation.error)}
                   />
                 ) : null}
                 {checkForUpdatesMutation.error ? (
                   <SettingsFeedback
                     tone="error"
-                    title="Update check failed"
+                    title={SETTINGS_UPDATE_CHECK_FAILED_TITLE}
                     details={formatSettingsMutationError(checkForUpdatesMutation.error)}
                   />
                 ) : null}
                 {installUpdateMutation.error ? (
                   <SettingsFeedback
                     tone="error"
-                    title="Update install failed"
+                    title={SETTINGS_UPDATE_INSTALL_FAILED_TITLE}
                     details={formatSettingsMutationError(installUpdateMutation.error)}
                   />
                 ) : null}
@@ -797,7 +814,7 @@ export function SettingsPanel({
                         disabled={!onReopenSetupAssistant}
                         onClick={onReopenSetupAssistant}
                       >
-                        Reopen Setup Assistant
+                        {SETTINGS_REOPEN_SETUP_ASSISTANT_LABEL}
                       </button>
                     }
                   />
@@ -805,7 +822,7 @@ export function SettingsPanel({
                     label="Setup state"
                     action={
                       <button className="ghost-button" type="button" onClick={resetOnboarding}>
-                        Reset Onboarding
+                        {SETTINGS_RESET_ONBOARDING_LABEL}
                       </button>
                     }
                   />
@@ -816,7 +833,7 @@ export function SettingsPanel({
                     label="Window layout"
                     action={
                       <button className="ghost-button" type="button" onClick={resetWindowLayout}>
-                        Reset Window Layout
+                        {SETTINGS_RESET_WINDOW_LAYOUT_LABEL}
                       </button>
                     }
                   />
@@ -824,7 +841,7 @@ export function SettingsPanel({
                     label="App data folder"
                     action={
                       <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
-                        Open App Data Folder
+                        {SETTINGS_OPEN_APP_DATA_FOLDER_LABEL}
                       </button>
                     }
                   />
@@ -832,7 +849,7 @@ export function SettingsPanel({
                     label="Support bundle"
                     action={
                       <button className="ghost-button" type="button" onClick={() => void exportReport()}>
-                        Export Redacted Support Bundle…
+                        {SETTINGS_EXPORT_REDACTED_SUPPORT_BUNDLE_LABEL}
                       </button>
                     }
                   />
@@ -860,7 +877,7 @@ export function SettingsPanel({
                 {updateSettingsMutation.error ? (
                   <SettingsFeedback
                     tone="error"
-                    title="Settings could not be saved"
+                    title={SETTINGS_SAVE_FAILED_TITLE}
                     details={formatSettingsMutationError(updateSettingsMutation.error)}
                   />
                 ) : null}

@@ -13,6 +13,22 @@ import { normalizeTerminalIntegrationText } from "../shared/terminal-integration
 export const LAUNCH_AT_LOGIN_ENABLED_MESSAGE = "Launch at login enabled.";
 export const LAUNCH_AT_LOGIN_DISABLED_MESSAGE = "Launch at login disabled.";
 export const WINDOW_LAYOUT_RESET_MESSAGE = "Cleared the saved window size and position.";
+export const SETTINGS_SAVE_FAILED_TITLE = "Settings could not be saved";
+export const SETTINGS_UPDATE_CHECK_FAILED_TITLE = "Update check failed";
+export const SETTINGS_UPDATE_INSTALL_FAILED_TITLE = "Update install failed";
+export const SETTINGS_REVEAL_IN_FINDER_LABEL = "Reveal in Finder";
+export const SETTINGS_OPEN_APP_DATA_FOLDER_LABEL = "Open App Data Folder";
+export const SETTINGS_COPY_REDACTED_REPORT_LABEL = "Copy Redacted Report…";
+export const SETTINGS_EXPORT_REDACTED_SUPPORT_BUNDLE_LABEL =
+  "Export Redacted Support Bundle…";
+export const SETTINGS_CHECK_FOR_UPDATES_LABEL = "Check for Updates";
+export const SETTINGS_INSTALL_UPDATE_LABEL = "Install Update";
+export const SETTINGS_INSTALLING_UPDATE_LABEL = "Installing…";
+export const SETTINGS_REOPEN_SETUP_ASSISTANT_LABEL = "Reopen Setup Assistant";
+export const SETTINGS_RESET_ONBOARDING_LABEL = "Reset Onboarding";
+export const SETTINGS_RESET_WINDOW_LAYOUT_LABEL = "Reset Window Layout";
+export const SETTINGS_SHELL_NOTE =
+  "Current terminal sessions only need the hook when they must receive live environment changes immediately.";
 export const SETTINGS_SECTIONS = [
   "general",
   "runtime",
@@ -261,6 +277,10 @@ export function launchAtLoginSuccessMessage(enabled: boolean) {
   return enabled
     ? LAUNCH_AT_LOGIN_ENABLED_MESSAGE
     : LAUNCH_AT_LOGIN_DISABLED_MESSAGE;
+}
+
+export function releaseChannelDescription(channel: string) {
+  return `Check for a signed desktop release on the selected ${channel} channel.`;
 }
 
 export function createSettingsDraft(settings: DesktopSettings): SettingsDraft {

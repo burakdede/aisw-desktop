@@ -31,12 +31,27 @@ import {
   sectionLabel,
   selectedRuntimePath,
   SETTINGS_APPEARANCE_OPTIONS,
+  SETTINGS_CHECK_FOR_UPDATES_LABEL,
+  SETTINGS_COPY_REDACTED_REPORT_LABEL,
   SETTINGS_DEFAULT_SECTION_OPTIONS,
+  SETTINGS_EXPORT_REDACTED_SUPPORT_BUNDLE_LABEL,
+  SETTINGS_INSTALLING_UPDATE_LABEL,
+  SETTINGS_INSTALL_UPDATE_LABEL,
+  SETTINGS_OPEN_APP_DATA_FOLDER_LABEL,
+  SETTINGS_RESET_ONBOARDING_LABEL,
+  SETTINGS_RESET_WINDOW_LAYOUT_LABEL,
+  SETTINGS_REOPEN_SETUP_ASSISTANT_LABEL,
+  SETTINGS_REVEAL_IN_FINDER_LABEL,
   SETTINGS_RUNTIME_SOURCE_OPTIONS,
+  SETTINGS_SAVE_FAILED_TITLE,
   settingsSectionDirectionForKey,
   SETTINGS_SECTIONS,
+  SETTINGS_SHELL_NOTE,
+  SETTINGS_UPDATE_CHECK_FAILED_TITLE,
+  SETTINGS_UPDATE_INSTALL_FAILED_TITLE,
   SETTINGS_UPDATE_CHANNEL_OPTIONS,
   WINDOW_LAYOUT_RESET_MESSAGE,
+  releaseChannelDescription,
 } from "./settings-panel-display";
 
 function makeSettings(overrides: Partial<DesktopSettings> = {}): DesktopSettings {
@@ -118,6 +133,27 @@ describe("settings-panel-display", () => {
     expect(LAUNCH_AT_LOGIN_ENABLED_MESSAGE).toBe("Launch at login enabled.");
     expect(LAUNCH_AT_LOGIN_DISABLED_MESSAGE).toBe("Launch at login disabled.");
     expect(WINDOW_LAYOUT_RESET_MESSAGE).toBe("Cleared the saved window size and position.");
+    expect(SETTINGS_SAVE_FAILED_TITLE).toBe("Settings could not be saved");
+    expect(SETTINGS_UPDATE_CHECK_FAILED_TITLE).toBe("Update check failed");
+    expect(SETTINGS_UPDATE_INSTALL_FAILED_TITLE).toBe("Update install failed");
+    expect(SETTINGS_REVEAL_IN_FINDER_LABEL).toBe("Reveal in Finder");
+    expect(SETTINGS_OPEN_APP_DATA_FOLDER_LABEL).toBe("Open App Data Folder");
+    expect(SETTINGS_COPY_REDACTED_REPORT_LABEL).toBe("Copy Redacted Report…");
+    expect(SETTINGS_EXPORT_REDACTED_SUPPORT_BUNDLE_LABEL).toBe(
+      "Export Redacted Support Bundle…",
+    );
+    expect(SETTINGS_CHECK_FOR_UPDATES_LABEL).toBe("Check for Updates");
+    expect(SETTINGS_INSTALL_UPDATE_LABEL).toBe("Install Update");
+    expect(SETTINGS_INSTALLING_UPDATE_LABEL).toBe("Installing…");
+    expect(SETTINGS_REOPEN_SETUP_ASSISTANT_LABEL).toBe("Reopen Setup Assistant");
+    expect(SETTINGS_RESET_ONBOARDING_LABEL).toBe("Reset Onboarding");
+    expect(SETTINGS_RESET_WINDOW_LAYOUT_LABEL).toBe("Reset Window Layout");
+    expect(SETTINGS_SHELL_NOTE).toBe(
+      "Current terminal sessions only need the hook when they must receive live environment changes immediately.",
+    );
+    expect(releaseChannelDescription("beta")).toBe(
+      "Check for a signed desktop release on the selected beta channel.",
+    );
   });
 
   it("shares normalized mutation errors and shell checks", () => {
