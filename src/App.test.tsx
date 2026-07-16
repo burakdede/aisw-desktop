@@ -7282,6 +7282,7 @@ describe("App", () => {
           active_profile_applied: true,
           credentials_present: true,
           permissions_ok: true,
+          warnings: [],
         },
       ],
       contexts: [],
@@ -7753,7 +7754,7 @@ describe("App", () => {
         return { command, snapshot: activatedSnapshot };
       }
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: {
             ...bootstrap,
             settings: {
@@ -7786,7 +7787,7 @@ describe("App", () => {
               },
             ],
           },
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -7816,7 +7817,7 @@ describe("App", () => {
 
     window.__AISW_DESKTOP_MOCK__ = async (command) =>
       (
-        {
+        desktopMockRecord({
           get_bootstrap: {
             ...bootstrap,
             settings: settingsWithSet,
@@ -7831,7 +7832,7 @@ describe("App", () => {
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
           get_settings: settingsWithSet,
-        } as Record<string, unknown>
+        })
       )[command];
 
     await renderApp();
@@ -7872,7 +7873,7 @@ describe("App", () => {
         return { command, snapshot: bootstrap.snapshot };
       }
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: {
             ...bootstrap,
             settings: settingsWithSet,
@@ -7886,7 +7887,7 @@ describe("App", () => {
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
           get_settings: settingsWithSet,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -7912,7 +7913,7 @@ describe("App", () => {
 
     window.__AISW_DESKTOP_MOCK__ = async (command) =>
       (
-        {
+        desktopMockRecord({
           get_bootstrap: {
             ...bootstrap,
             settings: settingsWithOverride,
@@ -7926,7 +7927,7 @@ describe("App", () => {
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
           get_settings: settingsWithOverride,
-        } as Record<string, unknown>
+        })
       )[command];
 
     await renderApp();
@@ -8010,7 +8011,7 @@ describe("App", () => {
         },
       ],
     };
-    const snapshotWithMatchingSet = {
+    const snapshotWithMatchingSet: AppSnapshot = {
       ...bootstrap.snapshot,
       statuses: [
         ...bootstrap.snapshot.statuses,
@@ -8025,6 +8026,7 @@ describe("App", () => {
           active_profile_applied: true,
           credentials_present: true,
           permissions_ok: true,
+          warnings: [],
         },
       ],
       profiles: {
@@ -8038,7 +8040,7 @@ describe("App", () => {
 
     window.__AISW_DESKTOP_MOCK__ = async (command) =>
       (
-        {
+        desktopMockRecord({
           get_bootstrap: {
             ...bootstrap,
             settings: settingsWithOverride,
@@ -8057,7 +8059,7 @@ describe("App", () => {
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
           get_settings: settingsWithOverride,
-        } as Record<string, unknown>
+        })
       )[command];
 
     await renderApp();
@@ -8073,7 +8075,7 @@ describe("App", () => {
         ...bootstrap,
         settings: settingsWithOverride,
         snapshot: snapshotWithMatchingSet,
-      } as unknown as AppBootstrap,
+      },
       initReport: {
         result: {
           live_accounts: [{ tool: "claude", outcome: "detected", auth_method: "oauth" }],
@@ -8108,7 +8110,7 @@ describe("App", () => {
 
     window.__AISW_DESKTOP_MOCK__ = async (command) =>
       (
-        {
+        desktopMockRecord({
           get_bootstrap: {
             ...bootstrap,
             settings: settingsWithOverride,
@@ -8130,7 +8132,7 @@ describe("App", () => {
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
           get_settings: settingsWithOverride,
-        } as Record<string, unknown>
+        })
       )[command];
 
     await renderApp();
@@ -8174,7 +8176,7 @@ describe("App", () => {
         };
       }
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: bootstrap,
           get_snapshot: bootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
@@ -8185,7 +8187,7 @@ describe("App", () => {
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
           get_settings: bootstrap.settings,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -8232,7 +8234,7 @@ describe("App", () => {
         };
       }
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: bootstrap,
           get_snapshot: bootstrap.snapshot,
           run_init: { result: { live_accounts: [] } },
@@ -8243,7 +8245,7 @@ describe("App", () => {
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
           get_settings: bootstrap.settings,
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -8352,7 +8354,7 @@ describe("App", () => {
     window.__AISW_DESKTOP_MOCK__ = async (command) => {
       calls.push(command);
       return (
-        {
+        desktopMockRecord({
           run_doctor: { summary: { status: "pass" }, checks: [] },
           get_shell_guidance: {
             detected_shell: "zsh",
@@ -8372,7 +8374,7 @@ describe("App", () => {
               },
             ],
           },
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
@@ -8413,7 +8415,7 @@ describe("App", () => {
     window.__AISW_DESKTOP_MOCK__ = async (command) => {
       calls.push(command);
       return (
-        {
+        desktopMockRecord({
           get_bootstrap: bootstrap,
           get_snapshot: bootstrap.snapshot,
           run_doctor: { summary: { status: "pass" }, checks: [] },
@@ -8453,7 +8455,7 @@ describe("App", () => {
               },
             ],
           },
-        } as Record<string, unknown>
+        })
       )[command];
     };
 
