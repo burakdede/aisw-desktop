@@ -18,6 +18,7 @@ import { credentialBackendLabel as formatCredentialBackendLabel } from "../../..
 import { formatDateTimeWithZone } from "../../../lib/date-format";
 import { disposeSafely, type AsyncDispose } from "../../../lib/async-dispose";
 import { BACKEND_UNAVAILABLE_LABEL } from "../../../lib/display-copy";
+import { eventTargetWithinSelector } from "../../../lib/dom-events";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import {
   AVAILABLE_AFTER_ACTIVATION_LABEL,
@@ -417,8 +418,7 @@ export function ProfilesPanel({
     }
 
     function closeActions(event: MouseEvent) {
-      const target = event.target as HTMLElement | null;
-      if (target?.closest("[data-profile-row-actions]")) {
+      if (eventTargetWithinSelector(event.target, "[data-profile-row-actions]")) {
         return;
       }
       setOpenRowActions(null);

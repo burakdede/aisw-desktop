@@ -24,6 +24,7 @@ import {
   toolProfileDisplayLabel,
 } from "../../../lib/profile-display";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
+import { eventTargetWithinSelector } from "../../../lib/dom-events";
 import { BACKEND_UNAVAILABLE_LABEL } from "../../../lib/display-copy";
 import {
   buildOverviewInspectorNotices,
@@ -427,8 +428,7 @@ function ToolInspector({
     }
 
     function closeActions(event: MouseEvent) {
-      const target = event.target as HTMLElement | null;
-      if (target?.closest("[data-overview-actions]")) {
+      if (eventTargetWithinSelector(event.target, "[data-overview-actions]")) {
         return;
       }
       setActionsMenuOpen(false);
