@@ -1,8 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { AppSnapshot, BackupEntry, DesktopSettings } from "../../lib/schemas";
 import {
+  BACKUPS_DATE_FILTER_OPTIONS,
+  BACKUPS_PANEL_COPY,
+  BACKUPS_TOOL_FILTER_OPTIONS,
   backupIdCopyMessage,
+  backupRowAriaLabel,
+  buildBackupsEmptyState,
   buildBackupInspectorState,
+  buildBackupRestoreSheetCopy,
   buildRestoreSheetState,
   filterBackups,
   resolveSelectedBackupId,
@@ -84,6 +90,34 @@ function makeSnapshot(overrides: Partial<AppSnapshot> = {}): AppSnapshot {
 }
 
 describe("backups-panel-display", () => {
+  it("shares filter options and static panel copy", () => {
+    expect(BACKUPS_TOOL_FILTER_OPTIONS).toEqual([
+      { value: "all", label: "All tools" },
+      { value: "claude", label: "Claude" },
+      { value: "codex", label: "Codex" },
+      { value: "gemini", label: "Gemini" },
+    ]);
+    expect(BACKUPS_DATE_FILTER_OPTIONS).toEqual([
+      { value: "newest", label: "Newest first" },
+      { value: "oldest", label: "Oldest first" },
+    ]);
+    expect(BACKUPS_PANEL_COPY.toolbarAriaLabel).toBe("Backups filters");
+    expect(BACKUPS_PANEL_COPY.inspector.restoreLabel).toBe("Restore…");
+    expect(BACKUPS_PANEL_COPY.restoreSheet.cancelLabel).toBe("Cancel");
+    expect(backupRowAriaLabel("Claude Code", "Work Claude")).toBe(
+      "Inspect backup for Claude Code Work Claude",
+    );
+    expect(buildBackupsEmptyState(true)).toEqual({
+      heading: "Loading backups…",
+      detail: "Loading local restore points.",
+    });
+    expect(buildBackupsEmptyState(false)).toEqual({
+      heading: "No backups found",
+      detail:
+        "Restore points appear here automatically before AI Switch changes a saved profile.",
+    });
+  });
+
   it("sorts and filters backups by tool and search query", () => {
     const settings = makeSettings();
     const snapshot = makeSnapshot();
@@ -162,6 +196,7 @@ describe("backups-panel-display", () => {
     expect(
       buildRestoreSheetState(
         "20260325T114502Z-claude-work",
+        "files",
         filteredBackups,
         sortedBackups,
         settings,
@@ -171,15 +206,31 @@ describe("backups-panel-display", () => {
       expect.objectContaining({
         profileLabel: "Work Claude",
         toolLabel: "Claude Code",
+        heading: "Restore “Work Claude”?",
+        confirmLabel: "Restore Files",
       }),
     );
     expect(
-      buildRestoreSheetState(null, filteredBackups, sortedBackups, settings, snapshot),
+      buildRestoreSheetState(
+        null,
+        null,
+        filteredBackups,
+        sortedBackups,
+        settings,
+        snapshot,
+      ),
     ).toBeNull();
 
     expect(backupIdCopyMessage(true, "backup-123")).toBe("Copied backup ID.");
     expect(backupIdCopyMessage(false, "backup-123")).toBe(
       "Clipboard access is unavailable. Copy backup id backup-123 manually.",
     );
+    expect(buildBackupRestoreSheetCopy("activate", "Work Claude", "Claude Code")).toEqual({
+      kicker: "Restore point",
+      heading: "Restore and Activate “Work Claude”?",
+      detail: "AI Switch will restore the stored files and then activate Work Claude for Claude Code.",
+      followup: "This restores the files first and only then switches the live profile.",
+      confirmLabel: "Restore and Activate",
+    });
   });
 });

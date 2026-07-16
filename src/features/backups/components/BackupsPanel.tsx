@@ -23,7 +23,12 @@ import { resolveStateModeRequest } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import {
+  BACKUPS_DATE_FILTER_OPTIONS,
+  BACKUPS_PANEL_COPY,
+  BACKUPS_TOOL_FILTER_OPTIONS,
   backupIdCopyMessage,
+  backupRowAriaLabel,
+  buildBackupsEmptyState,
   buildBackupInspectorState,
   buildRestoreSheetState,
   filterBackups,
@@ -93,11 +98,13 @@ export function BackupsPanel({
     settings,
     snapshot,
   );
+  const emptyState = buildBackupsEmptyState(backups.isLoading);
   const showInspector = !compactLayout || compactInspectorOpen;
   const showTable = !compactLayout || !compactInspectorOpen;
 
   const restoreSheet = buildRestoreSheetState(
     pendingRestore?.backupId ?? null,
+    pendingRestore?.mode ?? null,
     filteredBackups,
     sortedBackups,
     settings,
@@ -144,37 +151,45 @@ export function BackupsPanel({
 
   return (
     <div ref={rootRef} className="backups-screen screen-content">
-      <div className="backups-filter-row" role="toolbar" aria-label="Backups filters">
+      <div
+        className="backups-filter-row"
+        role="toolbar"
+        aria-label={BACKUPS_PANEL_COPY.toolbarAriaLabel}
+      >
         <label className="visually-hidden" htmlFor="backups-tool-filter">
-          Tool
+          {BACKUPS_PANEL_COPY.toolFilterLabel}
         </label>
         <select
           id="backups-tool-filter"
-          aria-label="Tool"
+          aria-label={BACKUPS_PANEL_COPY.toolFilterLabel}
           value={toolFilter}
           onChange={(event) => setToolFilter(event.target.value as ToolFilter)}
         >
-          <option value="all">All tools</option>
-          <option value="claude">Claude</option>
-          <option value="codex">Codex</option>
-          <option value="gemini">Gemini</option>
+          {BACKUPS_TOOL_FILTER_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
         </select>
         <label className="visually-hidden" htmlFor="backups-date-filter">
-          Date
+          {BACKUPS_PANEL_COPY.dateFilterLabel}
         </label>
         <select
           id="backups-date-filter"
-          aria-label="Date"
+          aria-label={BACKUPS_PANEL_COPY.dateFilterLabel}
           value={dateFilter}
           onChange={(event) => setDateFilter(event.target.value as DateFilter)}
         >
-          <option value="newest">Newest first</option>
-          <option value="oldest">Oldest first</option>
+          {BACKUPS_DATE_FILTER_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
         </select>
         <SearchField
-          ariaLabel="Search backups"
+          ariaLabel={BACKUPS_PANEL_COPY.searchAriaLabel}
           ariaControls="backups-table"
-          placeholder="Search backups…"
+          placeholder={BACKUPS_PANEL_COPY.searchPlaceholder}
           value={search}
           onChange={setSearch}
           className="search-field backups-search-field"
@@ -186,7 +201,7 @@ export function BackupsPanel({
             type="button"
             aria-haspopup="menu"
             aria-expanded={toolbarMenuOpen}
-            aria-label="Backups more actions"
+            aria-label={BACKUPS_PANEL_COPY.toolbarMenuMoreAriaLabel}
             onClick={() => setToolbarMenuOpen((open) => !open)}
           >
             <SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />
@@ -196,7 +211,7 @@ export function BackupsPanel({
               anchorRef={toolbarMenuAnchorRef}
               className="profile-row-actions-menu"
               role="menu"
-              aria-label="Backups actions"
+              aria-label={BACKUPS_PANEL_COPY.toolbarMenuAriaLabel}
             >
               <button
                 className="ghost-button"
@@ -207,7 +222,7 @@ export function BackupsPanel({
                   void backups.refetch();
                 }}
               >
-                Refresh
+                {BACKUPS_PANEL_COPY.refreshLabel}
               </button>
             </AnchoredMenu>
           ) : null}
@@ -223,14 +238,20 @@ export function BackupsPanel({
             {filteredBackups.length ? (
               <div className="backups-table-wrap">
                 <div className="backups-table-header" aria-hidden="true">
-                  <span>Created</span>
-                  <span>Tool</span>
-                  <span>Profile</span>
-                  <span className="backups-table-reason">Reason</span>
+                  <span>{BACKUPS_PANEL_COPY.columns.created}</span>
+                  <span>{BACKUPS_PANEL_COPY.columns.tool}</span>
+                  <span>{BACKUPS_PANEL_COPY.columns.profile}</span>
+                  <span className="backups-table-reason">{BACKUPS_PANEL_COPY.columns.reason}</span>
                 </div>
-                <div className="backups-table-body" role="list" id="backups-table" aria-label="Backups list">
+                <div
+                  className="backups-table-body"
+                  role="list"
+                  id="backups-table"
+                  aria-label={BACKUPS_PANEL_COPY.tableAriaLabel}
+                >
                   {filteredBackups.map((entry) => {
                     const target = resolveBackupTarget(entry.tool, entry.profile);
+                    const toolLabel = toolDisplayName(target.tool);
                     const profileLabel = toolProfileDisplayLabel(
                       settings,
                       snapshot,
@@ -253,7 +274,7 @@ export function BackupsPanel({
                             ? "backups-table-row-selected"
                             : ""
                         }`}
-                        aria-label={`Inspect backup for ${toolDisplayName(target.tool)} ${profileLabel}`}
+                        aria-label={backupRowAriaLabel(toolLabel, profileLabel)}
                         aria-pressed={selectedInspector?.entry.backup_id === entry.backup_id}
                         onClick={() => {
                           setSelectedBackupId(entry.backup_id);
@@ -277,12 +298,8 @@ export function BackupsPanel({
               </div>
             ) : (
               <div className="backups-empty-state">
-                <h3>{backups.isLoading ? "Loading backups…" : "No backups found"}</h3>
-                <p className="inline-note">
-                  {backups.isLoading
-                    ? "Loading local restore points."
-                    : "Restore points appear here automatically before AI Switch changes a saved profile."}
-                </p>
+                <h3>{emptyState.heading}</h3>
+                <p className="inline-note">{emptyState.detail}</p>
               </div>
             )}
           </section>
@@ -299,7 +316,7 @@ export function BackupsPanel({
                         type="button"
                         onClick={() => setCompactInspectorOpen(false)}
                       >
-                        Back
+                        {BACKUPS_PANEL_COPY.inspector.backLabel}
                       </button>
                     ) : null}
                     <h3>{selectedInspector.title}</h3>
@@ -317,7 +334,7 @@ export function BackupsPanel({
                         })
                       }
                     >
-                      Restore…
+                      {BACKUPS_PANEL_COPY.inspector.restoreLabel}
                     </button>
                     <div className="backups-toolbar-menu-wrap">
                       <button
@@ -326,7 +343,7 @@ export function BackupsPanel({
                         type="button"
                         aria-haspopup="menu"
                         aria-expanded={inspectorMenuOpen}
-                        aria-label="Backup actions"
+                        aria-label={BACKUPS_PANEL_COPY.inspector.menuAriaLabel}
                         onClick={() => setInspectorMenuOpen((open) => !open)}
                       >
                         <SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />
@@ -338,7 +355,7 @@ export function BackupsPanel({
                           align="start"
                           containmentSelector=".backups-inspector-surface"
                           role="menu"
-                          aria-label="Backup actions"
+                          aria-label={BACKUPS_PANEL_COPY.inspector.menuAriaLabel}
                         >
                           <button
                             className="ghost-button"
@@ -353,7 +370,7 @@ export function BackupsPanel({
                               });
                             }}
                           >
-                            Restore and Activate…
+                            {BACKUPS_PANEL_COPY.inspector.restoreAndActivateLabel}
                           </button>
                           <button
                             className="ghost-button"
@@ -367,7 +384,7 @@ export function BackupsPanel({
                               );
                             }}
                           >
-                            Open Profile
+                            {BACKUPS_PANEL_COPY.inspector.openProfileLabel}
                           </button>
                           <button
                             className="ghost-button"
@@ -378,7 +395,7 @@ export function BackupsPanel({
                               void copyBackupId(selectedInspector.entry.backup_id);
                             }}
                           >
-                            Copy Backup ID
+                            {BACKUPS_PANEL_COPY.inspector.copyBackupIdLabel}
                           </button>
                           <button
                             className="ghost-button"
@@ -389,7 +406,7 @@ export function BackupsPanel({
                               void revealBackupFolder();
                             }}
                           >
-                            Reveal Backup Folder
+                            {BACKUPS_PANEL_COPY.inspector.revealBackupFolderLabel}
                           </button>
                         </AnchoredMenu>
                       ) : null}
@@ -401,16 +418,28 @@ export function BackupsPanel({
                   <KeyValueGrid
                     variant="plain"
                     rows={[
-                      { label: "Created", value: selectedInspector.created },
                       {
-                        label: "Reason",
-                        value: selectedInspector.reason ?? "Created restore point",
+                        label: BACKUPS_PANEL_COPY.inspector.infoLabels.created,
+                        value: selectedInspector.created,
                       },
-                      { label: "Contains", value: selectedInspector.contains ?? "Profile files" },
+                      {
+                        label: BACKUPS_PANEL_COPY.inspector.infoLabels.reason,
+                        value:
+                          selectedInspector.reason ??
+                          BACKUPS_PANEL_COPY.inspector.reasonFallback,
+                      },
+                      {
+                        label: BACKUPS_PANEL_COPY.inspector.infoLabels.contains,
+                        value:
+                          selectedInspector.contains ??
+                          BACKUPS_PANEL_COPY.inspector.containsFallback,
+                      },
                     ]}
                   />
                   <section className="backups-inspector-section">
-                    <p className="overview-current-set-cell-label">Backup ID</p>
+                    <p className="overview-current-set-cell-label">
+                      {BACKUPS_PANEL_COPY.inspector.infoLabels.backupId}
+                    </p>
                     <div className="backups-id-row">
                       <code>{selectedInspector.entry.backup_id}</code>
                       <button
@@ -418,7 +447,7 @@ export function BackupsPanel({
                         type="button"
                         onClick={() => void copyBackupId(selectedInspector.entry.backup_id)}
                       >
-                        Copy
+                        {BACKUPS_PANEL_COPY.inspector.copyLabel}
                       </button>
                     </div>
                   </section>
@@ -427,10 +456,8 @@ export function BackupsPanel({
               </>
             ) : (
               <div className="backups-empty-state backups-empty-state-compact">
-                <h3>No backup selected</h3>
-                <p className="inline-note">
-                  Choose a restore point to inspect its contents and restore options.
-                </p>
+                <h3>{BACKUPS_PANEL_COPY.emptyStates.unselected.heading}</h3>
+                <p className="inline-note">{BACKUPS_PANEL_COPY.emptyStates.unselected.detail}</p>
               </div>
             )}
           </aside>
@@ -439,31 +466,26 @@ export function BackupsPanel({
 
       {restoreSheet ? (
         <DialogSurface
-          ariaLabel="Restore Backup"
+          ariaLabel={BACKUPS_PANEL_COPY.restoreSheet.ariaLabel}
           className="quick-switch-palette profile-sheet"
           initialFocusSelector="button:not([disabled])"
           onClose={() => setPendingRestore(null)}
         >
           <div className="quick-switch-header">
             <div>
-              <p className="card-kicker">Restore point</p>
-              <h3>
-                {pendingRestore?.mode === "files"
-                  ? `Restore “${restoreSheet.profileLabel}”?`
-                  : `Restore and Activate “${restoreSheet.profileLabel}”?`}
-              </h3>
-              <p className="inline-note">
-                {pendingRestore?.mode === "files"
-                  ? `This replaces the stored ${restoreSheet.toolLabel} profile files with the selected restore point.`
-                  : `AI Switch will restore the stored files and then activate ${restoreSheet.profileLabel} for ${restoreSheet.toolLabel}.`}
-              </p>
+              <p className="card-kicker">{restoreSheet.kicker}</p>
+              <h3>{restoreSheet.heading}</h3>
+              <p className="inline-note">{restoreSheet.detail}</p>
             </div>
           </div>
           <KeyValueGrid
             rows={[
-              { label: "Profile", value: restoreSheet.profileLabel },
               {
-                label: "Tool",
+                label: BACKUPS_PANEL_COPY.restoreSheet.profileLabel,
+                value: restoreSheet.profileLabel,
+              },
+              {
+                label: BACKUPS_PANEL_COPY.restoreSheet.toolLabel,
                 value: (
                   <ToolBrand
                     tool={restoreSheet.target.tool}
@@ -473,27 +495,25 @@ export function BackupsPanel({
                 ),
               },
               {
-                label: "Created",
+                label: BACKUPS_PANEL_COPY.restoreSheet.createdLabel,
                 value: formatBackupInspectorTimestamp(
                   restoreSheet.entry.created_at ?? restoreSheet.entry.backup_id,
                 ),
               },
             ]}
           />
-          <p className="inline-note">
-            {pendingRestore?.mode === "files"
-              ? `The active ${restoreSheet.toolLabel} account will not change until you activate the profile.`
-              : `This restores the files first and only then switches the live profile.`}
-          </p>
+          <p className="inline-note">{restoreSheet.followup}</p>
           <footer className="quick-switch-footer">
             <div className="button-row">
-              <button className="ghost-button" type="button" onClick={() => setPendingRestore(null)}>
-                Cancel
+              <button
+                className="ghost-button"
+                type="button"
+                onClick={() => setPendingRestore(null)}
+              >
+                {BACKUPS_PANEL_COPY.restoreSheet.cancelLabel}
               </button>
               <button
-                className={
-                  pendingRestore?.mode === "files" ? "primary-button" : "primary-button"
-                }
+                className="primary-button"
                 type="button"
                 disabled={mutationLock.isBusy}
                 onClick={() =>
@@ -503,9 +523,7 @@ export function BackupsPanel({
                   )
                 }
               >
-                {pendingRestore?.mode === "files"
-                  ? "Restore Files"
-                  : "Restore and Activate"}
+                {restoreSheet.confirmLabel}
               </button>
             </div>
           </footer>

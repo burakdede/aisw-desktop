@@ -13,6 +13,78 @@ export type ToolFilter = "all" | "claude" | "codex" | "gemini";
 export type DateFilter = "newest" | "oldest";
 export type PendingRestoreMode = "files" | "activate";
 
+export const BACKUPS_TOOL_FILTER_OPTIONS = [
+  { value: "all", label: "All tools" },
+  { value: "claude", label: "Claude" },
+  { value: "codex", label: "Codex" },
+  { value: "gemini", label: "Gemini" },
+] as const satisfies ReadonlyArray<{ value: ToolFilter; label: string }>;
+
+export const BACKUPS_DATE_FILTER_OPTIONS = [
+  { value: "newest", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
+] as const satisfies ReadonlyArray<{ value: DateFilter; label: string }>;
+
+export const BACKUPS_PANEL_COPY = {
+  toolbarAriaLabel: "Backups filters",
+  toolFilterLabel: "Tool",
+  dateFilterLabel: "Date",
+  searchAriaLabel: "Search backups",
+  searchPlaceholder: "Search backups…",
+  toolbarMenuMoreAriaLabel: "Backups more actions",
+  toolbarMenuAriaLabel: "Backups actions",
+  tableAriaLabel: "Backups list",
+  refreshLabel: "Refresh",
+  columns: {
+    created: "Created",
+    tool: "Tool",
+    profile: "Profile",
+    reason: "Reason",
+  },
+  emptyStates: {
+    loading: {
+      heading: "Loading backups…",
+      detail: "Loading local restore points.",
+    },
+    none: {
+      heading: "No backups found",
+      detail: "Restore points appear here automatically before AI Switch changes a saved profile.",
+    },
+    unselected: {
+      heading: "No backup selected",
+      detail: "Choose a restore point to inspect its contents and restore options.",
+    },
+  },
+  inspector: {
+    backLabel: "Back",
+    restoreLabel: "Restore…",
+    menuAriaLabel: "Backup actions",
+    restoreAndActivateLabel: "Restore and Activate…",
+    openProfileLabel: "Open Profile",
+    copyBackupIdLabel: "Copy Backup ID",
+    revealBackupFolderLabel: "Reveal Backup Folder",
+    infoLabels: {
+      created: "Created",
+      reason: "Reason",
+      contains: "Contains",
+      backupId: "Backup ID",
+    },
+    reasonFallback: "Created restore point",
+    containsFallback: "Profile files",
+    copyLabel: "Copy",
+  },
+  restoreSheet: {
+    ariaLabel: "Restore Backup",
+    kicker: "Restore point",
+    profileLabel: "Profile",
+    toolLabel: "Tool",
+    createdLabel: "Created",
+    cancelLabel: "Cancel",
+    restoreFilesLabel: "Restore Files",
+    restoreAndActivateLabel: "Restore and Activate",
+  },
+} as const;
+
 export type BackupInspectorState = {
   entry: BackupEntry;
   target: ReturnType<typeof resolveBackupTarget>;
@@ -28,6 +100,11 @@ export type BackupInspectorState = {
 export type BackupRestoreSheetState = {
   entry: BackupEntry;
   target: ReturnType<typeof resolveBackupTarget>;
+  confirmLabel: string;
+  detail: string;
+  followup: string;
+  heading: string;
+  kicker: string;
   profileLabel: string;
   toolLabel: string;
 };
@@ -124,12 +201,13 @@ export function buildBackupInspectorState(
 
 export function buildRestoreSheetState(
   pendingRestoreBackupId: string | null,
+  pendingRestoreMode: PendingRestoreMode | null,
   filteredBackups: BackupEntry[],
   sortedBackups: BackupEntry[],
   settings: DesktopSettings,
   snapshot: AppSnapshot,
 ): BackupRestoreSheetState | null {
-  if (!pendingRestoreBackupId) {
+  if (!pendingRestoreBackupId || !pendingRestoreMode) {
     return null;
   }
 
@@ -141,13 +219,53 @@ export function buildRestoreSheetState(
     return null;
   }
 
-  return buildBackupPresentation(entry, settings, snapshot);
+  const presentation = buildBackupPresentation(entry, settings, snapshot);
+  return {
+    ...presentation,
+    ...buildBackupRestoreSheetCopy(
+      pendingRestoreMode,
+      presentation.profileLabel,
+      presentation.toolLabel,
+    ),
+  };
 }
 
 export function backupIdCopyMessage(clipboardAvailable: boolean, backupId: string) {
   return clipboardAvailable
     ? "Copied backup ID."
     : `Clipboard access is unavailable. Copy backup id ${backupId} manually.`;
+}
+
+export function buildBackupsEmptyState(isLoading: boolean) {
+  return isLoading
+    ? BACKUPS_PANEL_COPY.emptyStates.loading
+    : BACKUPS_PANEL_COPY.emptyStates.none;
+}
+
+export function backupRowAriaLabel(toolLabel: string, profileLabel: string) {
+  return `Inspect backup for ${toolLabel} ${profileLabel}`;
+}
+
+export function buildBackupRestoreSheetCopy(
+  mode: PendingRestoreMode,
+  profileLabel: string,
+  toolLabel: string,
+) {
+  return mode === "files"
+    ? {
+        kicker: BACKUPS_PANEL_COPY.restoreSheet.kicker,
+        heading: `Restore “${profileLabel}”?`,
+        detail: `This replaces the stored ${toolLabel} profile files with the selected restore point.`,
+        followup: `The active ${toolLabel} account will not change until you activate the profile.`,
+        confirmLabel: BACKUPS_PANEL_COPY.restoreSheet.restoreFilesLabel,
+      }
+    : {
+        kicker: BACKUPS_PANEL_COPY.restoreSheet.kicker,
+        heading: `Restore and Activate “${profileLabel}”?`,
+        detail: `AI Switch will restore the stored files and then activate ${profileLabel} for ${toolLabel}.`,
+        followup: "This restores the files first and only then switches the live profile.",
+        confirmLabel: BACKUPS_PANEL_COPY.restoreSheet.restoreAndActivateLabel,
+      };
 }
 
 function buildBackupPresentation(
