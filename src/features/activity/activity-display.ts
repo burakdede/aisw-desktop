@@ -3,9 +3,17 @@ import { toolDisplayName } from "../../lib/tool-display";
 import type { ActivityTimelineEntry } from "../shared/lastCommandResult";
 
 export type ActivityFilter = "all" | "success" | "error";
+type ActivityStatus = ActivityEntry["status"];
+type ActivityStatusVariant = "row" | "inspector";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const GENERIC_ACTIVITY_RESULT = "snapshot updated successfully.";
+const ACTIVITY_SCOPE_FALLBACK_LABEL = "App";
+const ACTIVITY_RECOVERY_AVAILABLE_LABEL = "Recovery available";
+const ACTIVITY_TIME_PREFIX = {
+  today: "Today at",
+  yesterday: "Yesterday at",
+} as const;
 
 export const ACTIVITY_EMPTY_STATE = {
   heading: "No recent activity",
@@ -69,6 +77,32 @@ export const ACTIVITY_STATUS_NOTIFICATION = {
   redactedExported: "Redacted activity exported",
   clearMessage: "Cleared locally stored desktop activity.",
 } as const;
+
+const ACTIVITY_GLOBAL_SCOPE_LABELS = {
+  "switch-all": "Quick Switch",
+  "profile-set": "Saved set",
+  context: "Sets",
+  workspace: "Project rules",
+  backup: "Backups",
+  settings: "Settings",
+  setup: "Setup",
+} as const;
+
+const ACTIVITY_STATUS_LABELS: Record<ActivityStatus, string> = {
+  success: "Success",
+  error: "Failed",
+};
+
+const ACTIVITY_STATUS_SYMBOLS: Record<ActivityStatus, Record<ActivityStatusVariant, string>> = {
+  success: {
+    row: "✓",
+    inspector: "●",
+  },
+  error: {
+    row: "▲",
+    inspector: "▲",
+  },
+};
 
 export type ActivityEntry = {
   key: string;
@@ -140,38 +174,19 @@ export function activityScopeLabel(scope: { type: "tool"; tool: string } | { typ
 }
 
 export function activityGlobalScopeLabel(id: string) {
-  switch (id) {
-    case "switch-all":
-      return "Quick Switch";
-    case "profile-set":
-      return "Saved set";
-    case "context":
-      return "Sets";
-    case "workspace":
-      return "Project rules";
-    case "backup":
-      return "Backups";
-    case "settings":
-      return "Settings";
-    case "setup":
-      return "Setup";
-    default:
-      return "App";
-  }
+  return ACTIVITY_GLOBAL_SCOPE_LABELS[id as keyof typeof ACTIVITY_GLOBAL_SCOPE_LABELS]
+    ?? ACTIVITY_SCOPE_FALLBACK_LABEL;
 }
 
-export function activityStatusLabel(status: ActivityEntry["status"]) {
-  return status === "success" ? "Success" : "Failed";
+export function activityStatusLabel(status: ActivityStatus) {
+  return ACTIVITY_STATUS_LABELS[status];
 }
 
 export function activityStatusSymbol(
-  status: ActivityEntry["status"],
-  variant: "row" | "inspector",
+  status: ActivityStatus,
+  variant: ActivityStatusVariant,
 ) {
-  if (status === "error") {
-    return "▲";
-  }
-  return variant === "inspector" ? "●" : "✓";
+  return ACTIVITY_STATUS_SYMBOLS[status][variant];
 }
 
 export function filterActivity(entries: ActivityEntry[], search: string, filter: ActivityFilter) {
@@ -241,7 +256,7 @@ export function activityTrailingLine(entry: ActivityEntry) {
   }
 
   if (entry.remediation) {
-    return "Recovery available";
+    return ACTIVITY_RECOVERY_AVAILABLE_LABEL;
   }
 
   return activityStatusLabel(entry.status);
@@ -266,11 +281,11 @@ export function formatFullActivityTimestamp(timestamp: number, now = new Date())
   const time = formatActivityTimestamp(value);
 
   if (value >= todayStart) {
-    return `Today at ${time}`;
+    return `${ACTIVITY_TIME_PREFIX.today} ${time}`;
   }
 
   if (value >= yesterdayStart) {
-    return `Yesterday at ${time}`;
+    return `${ACTIVITY_TIME_PREFIX.yesterday} ${time}`;
   }
 
   return new Intl.DateTimeFormat(undefined, {
