@@ -13,12 +13,31 @@ use crate::shell;
 use crate::state::{incompatible_runtime_error, AppState};
 use crate::tray;
 use crate::updater;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use tauri::Emitter;
 
 const DEFAULT_ISSUE_TRACKER_URL: &str =
     "https://github.com/issues?q=%22AI+Switch%22+desktop+is%3Aissue";
+const MENU_BAR_VISIBILITY_ERROR_MESSAGE: &str =
+    "The menu bar icon visibility could not be updated.";
+const REFERENCE_DOCUMENT_RESOLUTION_ERROR_MESSAGE: &str =
+    "AI Switch could not resolve that reference document.";
+const REFERENCE_DOCUMENT_RESOLUTION_REMEDIATION: &str =
+    "Choose a supported help action and try again.";
+const REFERENCE_DOCUMENT_MISSING_ERROR_MESSAGE: &str =
+    "AI Switch could not find the requested reference document.";
+const LAUNCH_AT_LOGIN_ITEM_NAME: &str = "AI Switch";
+#[cfg(any(not(target_os = "macos"), test))]
+const LAUNCH_AT_LOGIN_UNSUPPORTED_DETAIL: &str =
+    "Launch at login is currently available on macOS builds.";
+#[cfg(any(not(target_os = "macos"), test))]
+const LAUNCH_AT_LOGIN_UNSUPPORTED_MESSAGE: &str =
+    "Launch at login is not available on this platform yet.";
+#[cfg(any(not(target_os = "macos"), test))]
+const LAUNCH_AT_LOGIN_UNSUPPORTED_REMEDIATION: &str =
+    "Use a macOS build of AI Switch for this setting.";
+const MACOS_LOGIN_ITEM_ERROR_MESSAGE: &str = "AI Switch could not update the macOS login item.";
 
 #[tauri::command]
 pub async fn get_bootstrap(state: tauri::State<'_, AppState>) -> DesktopResult<AppBootstrap> {
@@ -55,24 +74,10 @@ pub async fn open_reference_document(kind: String) -> DesktopResult<String> {
     let current_dir = std::env::current_dir()
         .map_err(DesktopError::from)
         .map_err(ErrorPayload::from)?;
-    let path = match kind.as_str() {
-        "documentation" => current_dir.join("README.md"),
-        "troubleshooting" => current_dir.join("docs").join("release-runbook.md"),
-        _ => {
-            return Err(ErrorPayload {
-                kind: GuiErrorKind::Unknown,
-                message: "AI Switch could not resolve that reference document.".to_owned(),
-                remediation: Some("Choose a supported help action and try again.".to_owned()),
-            });
-        }
-    };
+    let path = reference_document_path(&current_dir, &kind)?;
 
     if !path.exists() {
-        return Err(ErrorPayload {
-            kind: GuiErrorKind::Unknown,
-            message: "AI Switch could not find the requested reference document.".to_owned(),
-            remediation: Some(path.display().to_string()),
-        });
+        return Err(missing_reference_document_error(&path));
     }
 
     open_path_with_default_app(&path)?;
@@ -90,11 +95,8 @@ pub async fn open_issue_tracker() -> DesktopResult<String> {
 #[tauri::command]
 pub async fn set_tray_visibility(app: tauri::AppHandle, visible: bool) -> DesktopResult<()> {
     if let Some(tray) = app.tray_by_id("main-tray") {
-        tray.set_visible(visible).map_err(|error| ErrorPayload {
-            kind: GuiErrorKind::Unknown,
-            message: "The menu bar icon visibility could not be updated.".to_owned(),
-            remediation: Some(error.to_string()),
-        })?;
+        tray.set_visible(visible)
+            .map_err(|error| command_error(MENU_BAR_VISIBILITY_ERROR_MESSAGE, error.to_string()))?;
     }
     Ok(())
 }
@@ -607,9 +609,52 @@ fn resolve_issue_tracker_url() -> String {
         .unwrap_or_else(|| DEFAULT_ISSUE_TRACKER_URL.to_owned())
 }
 
+fn reference_document_path(current_dir: &Path, kind: &str) -> DesktopResult<PathBuf> {
+    match kind {
+        "documentation" => Ok(current_dir.join("README.md")),
+        "troubleshooting" => Ok(current_dir.join("docs").join("release-runbook.md")),
+        _ => Err(command_error(
+            REFERENCE_DOCUMENT_RESOLUTION_ERROR_MESSAGE,
+            REFERENCE_DOCUMENT_RESOLUTION_REMEDIATION,
+        )),
+    }
+}
+
+fn missing_reference_document_error(path: &Path) -> ErrorPayload {
+    command_error(
+        REFERENCE_DOCUMENT_MISSING_ERROR_MESSAGE,
+        path.display().to_string(),
+    )
+}
+
+fn command_error(message: &str, remediation: impl Into<String>) -> ErrorPayload {
+    ErrorPayload {
+        kind: GuiErrorKind::Unknown,
+        message: message.to_owned(),
+        remediation: Some(remediation.into()),
+    }
+}
+
+#[cfg(any(not(target_os = "macos"), test))]
+fn unsupported_launch_at_login_status() -> LaunchAtLoginStatus {
+    LaunchAtLoginStatus {
+        supported: false,
+        enabled: false,
+        detail: Some(LAUNCH_AT_LOGIN_UNSUPPORTED_DETAIL.to_owned()),
+    }
+}
+
+#[cfg(any(not(target_os = "macos"), test))]
+fn unsupported_launch_at_login_error() -> ErrorPayload {
+    command_error(
+        LAUNCH_AT_LOGIN_UNSUPPORTED_MESSAGE,
+        LAUNCH_AT_LOGIN_UNSUPPORTED_REMEDIATION,
+    )
+}
+
 #[cfg(target_os = "macos")]
 fn launch_at_login_status(app: &tauri::AppHandle) -> DesktopResult<LaunchAtLoginStatus> {
-    let item_name = "AI Switch";
+    let item_name = LAUNCH_AT_LOGIN_ITEM_NAME;
     let target_path = launch_at_login_target_path(app)?;
     let script = format!(
         "tell application \"System Events\" to return exists login item \"{}\"",
@@ -628,48 +673,22 @@ fn launch_at_login_status(app: &tauri::AppHandle) -> DesktopResult<LaunchAtLogin
 
 #[cfg(not(target_os = "macos"))]
 fn launch_at_login_status(_app: &tauri::AppHandle) -> DesktopResult<LaunchAtLoginStatus> {
-    Ok(LaunchAtLoginStatus {
-        supported: false,
-        enabled: false,
-        detail: Some("Launch at login is currently available on macOS builds.".to_owned()),
-    })
+    Ok(unsupported_launch_at_login_status())
 }
 
 #[cfg(target_os = "macos")]
 fn set_launch_at_login_status(app: &tauri::AppHandle, enabled: bool) -> DesktopResult<()> {
-    let item_name = "AI Switch";
+    let item_name = LAUNCH_AT_LOGIN_ITEM_NAME;
     let path = escape_applescript_string(&launch_at_login_target_path(app)?.display().to_string());
     let item_name = escape_applescript_string(item_name);
-    let script = if enabled {
-        format!(
-            "tell application \"System Events\"\n\
-             if exists login item \"{item_name}\" then\n\
-             set properties of login item \"{item_name}\" to {{path:\"{path}\", hidden:false}}\n\
-             else\n\
-             make login item at end with properties {{name:\"{item_name}\", path:\"{path}\", hidden:false}}\n\
-             end if\n\
-             end tell"
-        )
-    } else {
-        format!(
-            "tell application \"System Events\"\n\
-             if exists login item \"{item_name}\" then\n\
-             delete login item \"{item_name}\"\n\
-             end if\n\
-             end tell"
-        )
-    };
+    let script = launch_at_login_script(&item_name, &path, enabled);
 
     run_osascript(&script).map(|_| ())
 }
 
 #[cfg(not(target_os = "macos"))]
 fn set_launch_at_login_status(_app: &tauri::AppHandle, _enabled: bool) -> DesktopResult<()> {
-    Err(ErrorPayload {
-        kind: GuiErrorKind::Unknown,
-        message: "Launch at login is not available on this platform yet.".to_owned(),
-        remediation: Some("Use a macOS build of AI Switch for this setting.".to_owned()),
-    })
+    Err(unsupported_launch_at_login_error())
 }
 
 #[cfg(target_os = "macos")]
@@ -691,21 +710,39 @@ fn run_osascript(script: &str) -> DesktopResult<String> {
         .arg("-e")
         .arg(script)
         .output()
-        .map_err(|error| ErrorPayload {
-            kind: GuiErrorKind::Unknown,
-            message: "AI Switch could not update the macOS login item.".to_owned(),
-            remediation: Some(error.to_string()),
-        })?;
+        .map_err(|error| command_error(MACOS_LOGIN_ITEM_ERROR_MESSAGE, error.to_string()))?;
 
     if !output.status.success() {
-        return Err(ErrorPayload {
-            kind: GuiErrorKind::Unknown,
-            message: "AI Switch could not update the macOS login item.".to_owned(),
-            remediation: Some(String::from_utf8_lossy(&output.stderr).trim().to_owned()),
-        });
+        return Err(command_error(
+            MACOS_LOGIN_ITEM_ERROR_MESSAGE,
+            String::from_utf8_lossy(&output.stderr).trim().to_owned(),
+        ));
     }
 
     Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
+}
+
+#[cfg(target_os = "macos")]
+fn launch_at_login_script(item_name: &str, path: &str, enabled: bool) -> String {
+    if enabled {
+        format!(
+            "tell application \"System Events\"\n\
+             if exists login item \"{item_name}\" then\n\
+             set properties of login item \"{item_name}\" to {{path:\"{path}\", hidden:false}}\n\
+             else\n\
+             make login item at end with properties {{name:\"{item_name}\", path:\"{path}\", hidden:false}}\n\
+             end if\n\
+             end tell"
+        )
+    } else {
+        format!(
+            "tell application \"System Events\"\n\
+             if exists login item \"{item_name}\" then\n\
+             delete login item \"{item_name}\"\n\
+             end if\n\
+             end tell"
+        )
+    }
 }
 
 #[cfg(target_os = "macos")]
@@ -715,10 +752,26 @@ fn escape_applescript_string(value: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{resolve_issue_tracker_url, DEFAULT_ISSUE_TRACKER_URL};
+    #[cfg(target_os = "macos")]
+    use super::launch_at_login_script;
+    use super::{
+        command_error, missing_reference_document_error, reference_document_path,
+        resolve_issue_tracker_url, unsupported_launch_at_login_error,
+        unsupported_launch_at_login_status, DEFAULT_ISSUE_TRACKER_URL,
+        LAUNCH_AT_LOGIN_UNSUPPORTED_DETAIL, LAUNCH_AT_LOGIN_UNSUPPORTED_MESSAGE,
+        LAUNCH_AT_LOGIN_UNSUPPORTED_REMEDIATION, MACOS_LOGIN_ITEM_ERROR_MESSAGE,
+        REFERENCE_DOCUMENT_MISSING_ERROR_MESSAGE, REFERENCE_DOCUMENT_RESOLUTION_ERROR_MESSAGE,
+        REFERENCE_DOCUMENT_RESOLUTION_REMEDIATION,
+    };
+    use crate::errors::GuiErrorKind;
+    use std::path::Path;
+    use std::sync::Mutex;
+
+    static ISSUE_TRACKER_ENV_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn issue_tracker_prefers_primary_env_override() {
+        let _guard = ISSUE_TRACKER_ENV_LOCK.lock().unwrap();
         let primary_key = "AI_SWITCH_DESKTOP_ISSUES_URL";
         let legacy_key = "AISW_DESKTOP_ISSUES_URL";
         let primary_previous = std::env::var(primary_key).ok();
@@ -735,6 +788,7 @@ mod tests {
 
     #[test]
     fn issue_tracker_uses_legacy_env_override_when_primary_is_missing() {
+        let _guard = ISSUE_TRACKER_ENV_LOCK.lock().unwrap();
         let primary_key = "AI_SWITCH_DESKTOP_ISSUES_URL";
         let legacy_key = "AISW_DESKTOP_ISSUES_URL";
         let primary_previous = std::env::var(primary_key).ok();
@@ -751,6 +805,7 @@ mod tests {
 
     #[test]
     fn issue_tracker_falls_back_to_default_search_url() {
+        let _guard = ISSUE_TRACKER_ENV_LOCK.lock().unwrap();
         let primary_key = "AI_SWITCH_DESKTOP_ISSUES_URL";
         let legacy_key = "AISW_DESKTOP_ISSUES_URL";
         let primary_previous = std::env::var(primary_key).ok();
@@ -763,6 +818,86 @@ mod tests {
 
         restore_env(primary_key, primary_previous);
         restore_env(legacy_key, legacy_previous);
+    }
+
+    #[test]
+    fn reference_document_paths_follow_supported_kinds() {
+        let root = Path::new("/tmp/aisw-desktop");
+        assert_eq!(
+            reference_document_path(root, "documentation").unwrap(),
+            root.join("README.md")
+        );
+        assert_eq!(
+            reference_document_path(root, "troubleshooting").unwrap(),
+            root.join("docs").join("release-runbook.md")
+        );
+    }
+
+    #[test]
+    fn unsupported_reference_document_reports_shared_guidance() {
+        let error = reference_document_path(Path::new("/tmp/aisw-desktop"), "unknown")
+            .expect_err("expected unsupported reference document kind to fail");
+
+        assert!(matches!(error.kind, GuiErrorKind::Unknown));
+        assert_eq!(error.message, REFERENCE_DOCUMENT_RESOLUTION_ERROR_MESSAGE);
+        assert_eq!(
+            error.remediation.as_deref(),
+            Some(REFERENCE_DOCUMENT_RESOLUTION_REMEDIATION)
+        );
+    }
+
+    #[test]
+    fn missing_reference_document_reports_requested_path() {
+        let path = Path::new("/tmp/aisw-desktop/docs/missing.md");
+        let error = missing_reference_document_error(path);
+
+        assert!(matches!(error.kind, GuiErrorKind::Unknown));
+        assert_eq!(error.message, REFERENCE_DOCUMENT_MISSING_ERROR_MESSAGE);
+        assert_eq!(
+            error.remediation.as_deref(),
+            Some(path.to_string_lossy().as_ref())
+        );
+    }
+
+    #[test]
+    fn command_error_wraps_message_and_remediation() {
+        let error = command_error(MACOS_LOGIN_ITEM_ERROR_MESSAGE, "stderr");
+
+        assert!(matches!(error.kind, GuiErrorKind::Unknown));
+        assert_eq!(error.message, MACOS_LOGIN_ITEM_ERROR_MESSAGE);
+        assert_eq!(error.remediation.as_deref(), Some("stderr"));
+    }
+
+    #[test]
+    fn launch_at_login_fallbacks_share_copy() {
+        let status = unsupported_launch_at_login_status();
+        assert!(!status.supported);
+        assert!(!status.enabled);
+        assert_eq!(
+            status.detail.as_deref(),
+            Some(LAUNCH_AT_LOGIN_UNSUPPORTED_DETAIL)
+        );
+
+        let error = unsupported_launch_at_login_error();
+        assert!(matches!(error.kind, GuiErrorKind::Unknown));
+        assert_eq!(error.message, LAUNCH_AT_LOGIN_UNSUPPORTED_MESSAGE);
+        assert_eq!(
+            error.remediation.as_deref(),
+            Some(LAUNCH_AT_LOGIN_UNSUPPORTED_REMEDIATION)
+        );
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn launch_at_login_scripts_share_the_item_name_logic() {
+        let enabled = launch_at_login_script("AI Switch", "/Applications/AI Switcher.app", true);
+        assert!(enabled.contains("exists login item \"AI Switch\""));
+        assert!(enabled.contains("path:\"/Applications/AI Switcher.app\""));
+        assert!(enabled.contains("make login item at end"));
+
+        let disabled = launch_at_login_script("AI Switch", "/Applications/AI Switcher.app", false);
+        assert!(disabled.contains("delete login item \"AI Switch\""));
+        assert!(!disabled.contains("make login item at end"));
     }
 
     fn restore_env(key: &str, value: Option<String>) {
