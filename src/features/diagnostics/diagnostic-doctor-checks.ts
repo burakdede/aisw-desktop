@@ -1,5 +1,7 @@
 import {
+  isAttentionCheckStatus,
   normalizeResolvedCheckStatus,
+  type AttentionCheckStatus,
   type ResolvedCheckStatus,
 } from "../../lib/check-status";
 import { asArray, asObject, asOptionalString } from "../../lib/parse-guards";
@@ -13,7 +15,7 @@ export type DoctorReportCheck = {
 };
 
 export type ParsedDoctorCheck = DoctorReportCheck & {
-  status: Extract<ResolvedCheckStatus, "warn" | "fail">;
+  status: AttentionCheckStatus;
 };
 
 export function parseDoctorReportChecks(
@@ -37,12 +39,11 @@ export function parseDoctorChecks(
   options?: {
     defaultDetail?: string;
     detailTransform?: (detail: string) => string;
-    defaultStatus?: Extract<ResolvedCheckStatus, "warn" | "fail">;
+    defaultStatus?: AttentionCheckStatus;
   },
 ) {
   return parseDoctorReportChecks(doctor, options).filter(
-    (check): check is ParsedDoctorCheck =>
-      check.status === "warn" || check.status === "fail",
+    (check): check is ParsedDoctorCheck => isAttentionCheckStatus(check.status),
   );
 }
 

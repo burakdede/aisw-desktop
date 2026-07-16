@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  ATTENTION_CHECK_STATUSES,
   CHECK_STATUSES,
   CHECK_STATUS_SYMBOLS,
   checkStatusSymbol,
   countCheckStatuses,
+  isAttentionCheckStatus,
+  normalizeAttentionCheckStatus,
   normalizeCheckStatus,
   normalizeResolvedCheckStatus,
   summarizeCheckStatus,
@@ -12,6 +15,7 @@ import {
 describe("check-status", () => {
   it("shares supported status values and symbols", () => {
     expect(CHECK_STATUSES).toEqual(["pass", "warn", "fail", "unknown"]);
+    expect(ATTENTION_CHECK_STATUSES).toEqual(["warn", "fail"]);
     expect(CHECK_STATUS_SYMBOLS).toEqual({
       pass: "✓",
       warn: "!",
@@ -27,6 +31,12 @@ describe("check-status", () => {
     expect(normalizeCheckStatus("bad", "warn")).toBe("warn");
     expect(normalizeResolvedCheckStatus("unknown")).toBe("pass");
     expect(normalizeResolvedCheckStatus("bad", "warn")).toBe("warn");
+    expect(normalizeAttentionCheckStatus("fail")).toBe("fail");
+    expect(normalizeAttentionCheckStatus("pass")).toBe("warn");
+    expect(normalizeAttentionCheckStatus("bad", "fail")).toBe("fail");
+    expect(isAttentionCheckStatus("warn")).toBe(true);
+    expect(isAttentionCheckStatus("fail")).toBe(true);
+    expect(isAttentionCheckStatus("pass")).toBe(false);
   });
 
   it("counts and summarizes statuses", () => {

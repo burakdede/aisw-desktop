@@ -1,8 +1,10 @@
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
 import {
   countCheckStatuses,
+  normalizeAttentionCheckStatus,
   normalizeCheckStatus,
   summarizeCheckStatus,
+  type AttentionCheckStatus,
   type CheckStatus,
 } from "../../lib/check-status";
 import { asArray, asNumber, asObject, asString } from "../../lib/parse-guards";
@@ -15,7 +17,7 @@ export interface SummaryCardData {
 
 export interface IssueCardData {
   title: string;
-  status: CheckStatus;
+  status: AttentionCheckStatus;
   issues: string[];
   remediation: string[];
 }
@@ -89,7 +91,7 @@ export function parseDoctorIssues(payload: Record<string, unknown> | undefined):
     .filter((check) => normalizeCheckStatus(check.status) !== "pass")
     .map((check) => ({
       title: asString(check.name),
-      status: normalizeCheckStatus(check.status, "warn"),
+      status: normalizeAttentionCheckStatus(check.status, "warn"),
       issues: [normalizeUserFacingIssueText(asString(check.detail))],
       remediation: asStringArray(check.remediation).map(normalizeUserFacingIssueText),
     }));
@@ -102,7 +104,7 @@ export function parseVerifyIssues(payload: Record<string, unknown> | undefined):
     .filter((tool) => normalizeCheckStatus(tool.status) !== "pass")
     .map((tool) => ({
       title: asString(tool.tool),
-      status: normalizeCheckStatus(tool.status, "warn"),
+      status: normalizeAttentionCheckStatus(tool.status, "warn"),
       issues: asArray(tool.issues).map((issue) => normalizeUserFacingIssueText(asString(issue))),
       remediation: asArray(tool.remediation).map((item) => normalizeUserFacingIssueText(asString(item))),
     }));

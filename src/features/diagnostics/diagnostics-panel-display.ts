@@ -10,6 +10,7 @@ import { contextDisplayLabel, toolProfileDisplayLabel } from "../../lib/profile-
 import { isSupportedTool } from "../../lib/tool-registry";
 import { countLabel, pluralChoice, titleCase } from "../../lib/utils";
 import { BLOCKED_LABEL, NEEDS_ATTENTION_SENTENCE_LABEL } from "../../lib/status-copy";
+import type { AttentionCheckStatus } from "../../lib/check-status";
 import {
   doctorCheckHasKeyword,
   doctorCheckNameHasAll,
@@ -54,7 +55,7 @@ export type DiagnosticQuickFixInput = {
   title: string;
   detail: string;
   label: string;
-  status: "warn" | "fail";
+  status: AttentionCheckStatus;
   profileTarget?: { tool: string; profile: string | null };
 };
 
@@ -75,7 +76,7 @@ export type DiagnosticFinding = {
   preview: string;
   lines: string[];
   remediation: string[];
-  status: "warn" | "fail";
+  status: AttentionCheckStatus;
   scopeLabel: string;
   countLabel: string;
   profileTarget?: { tool: string; profile: string | null };
@@ -249,7 +250,7 @@ export function buildDiagnosticFindings(
     preview: normalizeRuntimeLanguage(card.issues[0] ?? "Review diagnostic details."),
     lines: card.issues,
     remediation: card.remediation,
-    status: card.status === "fail" ? "fail" : "warn",
+    status: card.status,
     scopeLabel: "Check",
     countLabel: countLabel(card.issues.length, "detail"),
     profileTarget: snapshot ? resolveIssueProfileTarget(card.title, snapshot) ?? undefined : undefined,
@@ -661,7 +662,7 @@ function buildRepairFixMap(repair: Record<string, unknown> | undefined) {
 
 function buildShellHookQuickFix(issue: {
   detail: string;
-  status: "warn" | "fail";
+  status: AttentionCheckStatus;
 }): DiagnosticQuickFixModel {
   return {
     kind: "open_settings",
@@ -674,7 +675,7 @@ function buildShellHookQuickFix(issue: {
 }
 
 function buildKeyringQuickFixes(issue: {
-  status: "warn" | "fail";
+  status: AttentionCheckStatus;
 }): DiagnosticQuickFixModel[] {
   return [
     {
@@ -783,7 +784,7 @@ function repairableDoctorIssues(
   detail: string;
   label: string;
   fix: string;
-  status: "warn" | "fail";
+  status: AttentionCheckStatus;
   primary?: boolean;
 }> {
   return parseDoctorChecks(doctor, {
@@ -824,7 +825,7 @@ function doctorRepairFixCard(
   title: string,
   detail: string,
   label: string,
-  status: "warn" | "fail",
+  status: AttentionCheckStatus,
   fix: string,
 ) {
   return {

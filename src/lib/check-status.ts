@@ -1,6 +1,8 @@
 export const CHECK_STATUSES = ["pass", "warn", "fail", "unknown"] as const;
 export type CheckStatus = (typeof CHECK_STATUSES)[number];
 export type ResolvedCheckStatus = Exclude<CheckStatus, "unknown">;
+export const ATTENTION_CHECK_STATUSES = ["warn", "fail"] as const;
+export type AttentionCheckStatus = (typeof ATTENTION_CHECK_STATUSES)[number];
 
 export const CHECK_STATUS_SYMBOLS: Record<CheckStatus, string> = {
   pass: "✓",
@@ -25,6 +27,17 @@ export function normalizeResolvedCheckStatus(
 ): ResolvedCheckStatus {
   const status = normalizeCheckStatus(value, fallback);
   return status === "warn" || status === "fail" ? status : "pass";
+}
+
+export function isAttentionCheckStatus(status: CheckStatus): status is AttentionCheckStatus {
+  return status === "warn" || status === "fail";
+}
+
+export function normalizeAttentionCheckStatus(
+  value: unknown,
+  fallback: AttentionCheckStatus = "warn",
+): AttentionCheckStatus {
+  return normalizeCheckStatus(value, fallback) === "fail" ? "fail" : "warn";
 }
 
 export function countCheckStatuses(statuses: Iterable<unknown>) {
