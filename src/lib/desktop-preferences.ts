@@ -3,6 +3,7 @@ import {
   DEFAULT_APP_SECTIONS,
   type DefaultAppSection,
 } from "./app-navigation";
+import { resolveBrowserStorage, type BrowserStorage } from "./browser-storage";
 
 export const DESKTOP_APPEARANCES = ["system", "light", "dark"] as const;
 export type DesktopAppearance = (typeof DESKTOP_APPEARANCES)[number];
@@ -107,15 +108,7 @@ function isDefaultSection(value: string | null): value is DefaultSection {
 }
 
 function getStorage(): Pick<Storage, "getItem" | "setItem" | "clear" | "removeItem"> | null {
-  if (typeof window === "undefined") {
-    return memoryStorage;
-  }
-
-  try {
-    return window.localStorage ?? memoryStorage;
-  } catch {
-    return memoryStorage;
-  }
+  return resolveBrowserStorage(memoryStorage as BrowserStorage);
 }
 
 function createMemoryStorage() {

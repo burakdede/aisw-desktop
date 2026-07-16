@@ -1,5 +1,6 @@
 import { MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH } from "./layout";
 import { disposeSafely, type AsyncDispose } from "./async-dispose";
+import { resolveBrowserStorage } from "./browser-storage";
 
 type PersistedWindowState = {
   width: number;
@@ -68,12 +69,13 @@ export async function syncWindowState(): Promise<Unlisten> {
 }
 
 export function clearPersistedWindowState() {
-  if (typeof window === "undefined") {
+  const storage = resolveBrowserStorage();
+  if (!storage) {
     return;
   }
 
   try {
-    window.localStorage.removeItem(WINDOW_STATE_KEY);
+    storage.removeItem(WINDOW_STATE_KEY);
   } catch {
     // Ignore storage failures and allow the app to continue.
   }
@@ -94,6 +96,11 @@ async function restoreWindowState(module: WindowModule, appWindow: WindowGeometr
 }
 
 async function persistWindowState(appWindow: WindowGeometryHandle) {
+  const storage = resolveBrowserStorage();
+  if (!storage) {
+    return;
+  }
+
   try {
     if (await appWindow.isMaximized()) {
       return;
@@ -111,19 +118,20 @@ async function persistWindowState(appWindow: WindowGeometryHandle) {
       y: Math.round(position.y),
     };
 
-    window.localStorage.setItem(WINDOW_STATE_KEY, JSON.stringify(nextState));
+    storage.setItem(WINDOW_STATE_KEY, JSON.stringify(nextState));
   } catch {
     // Ignore persistence failures and keep the window interactive.
   }
 }
 
 function loadWindowState(): PersistedWindowState | null {
-  if (typeof window === "undefined") {
+  const storage = resolveBrowserStorage();
+  if (!storage) {
     return null;
   }
 
   try {
-    const raw = window.localStorage.getItem(WINDOW_STATE_KEY);
+    const raw = storage.getItem(WINDOW_STATE_KEY);
     if (!raw) {
       return null;
     }

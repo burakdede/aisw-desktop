@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { resolveBrowserStorage } from "../../lib/browser-storage";
 
 export type CommandResultScope =
   | { type: "tool"; tool: string }
@@ -171,11 +172,7 @@ function persistStore(store: CommandResultStore) {
 }
 
 function resolveStorage(): Storage | null {
-  if (typeof window === "undefined" || !window.localStorage) {
-    return null;
-  }
-
-  return window.localStorage;
+  return resolveBrowserStorage() as Storage | null;
 }
 
 function asResultMap(value: unknown): Record<string, LastCommandResult | undefined> {
