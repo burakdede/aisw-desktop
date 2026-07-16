@@ -3,13 +3,16 @@ import {
   buildBundledRuntimeSettingsUpdate,
   createDesktopSettings,
   DEFAULT_DESKTOP_SETTINGS,
+  DESKTOP_RUNTIME_KINDS,
   DEFAULT_DESKTOP_UPDATE_CHANNEL,
   DESKTOP_UPDATE_CHANNELS,
+  normalizeDesktopRuntimeKind,
   normalizeDesktopUpdateChannel,
 } from "./desktop-settings";
 
 describe("desktop-settings", () => {
   it("shares the supported desktop update channels", () => {
+    expect(DESKTOP_RUNTIME_KINDS).toEqual(["bundled", "system", "custom"]);
     expect(DESKTOP_UPDATE_CHANNELS).toEqual(["stable", "beta"]);
     expect(DEFAULT_DESKTOP_UPDATE_CHANNEL).toBe("stable");
   });
@@ -31,6 +34,9 @@ describe("desktop-settings", () => {
       profile_sets: [],
     });
     expect(normalizeDesktopUpdateChannel("nightly")).toBe("stable");
+    expect(normalizeDesktopRuntimeKind("custom")).toBe("custom");
+    expect(normalizeDesktopRuntimeKind("bad")).toBe("bundled");
+    expect(normalizeDesktopRuntimeKind("bad", "system")).toBe("system");
   });
 
   it("builds the bundled runtime settings update from existing settings", () => {

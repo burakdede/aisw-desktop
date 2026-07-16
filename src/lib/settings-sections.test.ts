@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_SETTINGS_SECTION,
+  normalizeSettingsSection,
   SETTINGS_SECTION_IDS,
   SETTINGS_SECTIONS,
 } from "./settings-sections";
@@ -24,5 +25,8 @@ describe("settings-sections", () => {
       "advanced",
     ]);
     expect(DEFAULT_SETTINGS_SECTION).toBe("general");
+    expect(normalizeSettingsSection("runtime")).toBe("runtime");
+    expect(normalizeSettingsSection("bad")).toBe("general");
+    expect(normalizeSettingsSection("bad", "updates")).toBe("updates");
   });
 });

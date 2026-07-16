@@ -9,9 +9,14 @@ import {
   setLaunchAtLogin,
 } from "../../../lib/client";
 import {
+  normalizeDefaultSection,
+  normalizeDesktopAppearance,
   type DesktopPreferences,
 } from "../../../lib/desktop-preferences";
-import { normalizeDesktopUpdateChannel } from "../../../lib/desktop-settings";
+import {
+  normalizeDesktopRuntimeKind,
+  normalizeDesktopUpdateChannel,
+} from "../../../lib/desktop-settings";
 import {
   DATE_UNAVAILABLE_LABEL,
   DEFAULT_ACTION_FAILURE_MESSAGE,
@@ -37,6 +42,7 @@ import { clearPersistedWindowState } from "../../../lib/window-state";
 import {
   DEFAULT_SETTINGS_SECTION,
   SETTINGS_SECTIONS,
+  normalizeSettingsSection,
   type SettingsSection,
 } from "../../../lib/settings-sections";
 import { useDesktopActions } from "../../shared/useDesktopActions";
@@ -372,7 +378,9 @@ export function SettingsPanel({
           <select
             aria-label={SETTINGS_PANEL_COPY.mobilePickerAriaLabel}
             value={selectedSection}
-            onChange={(event) => setSelectedSection(event.target.value as SettingsSection)}
+            onChange={(event) =>
+              setSelectedSection(normalizeSettingsSection(event.target.value, selectedSection))
+            }
           >
             {SETTINGS_SECTIONS.map((section) => (
               <option key={section} value={section}>
@@ -420,7 +428,7 @@ export function SettingsPanel({
                       value={appearance}
                       onChange={(event) =>
                         updateGeneralPreferences({
-                          appearance: event.target.value as DesktopPreferences["appearance"],
+                          appearance: normalizeDesktopAppearance(event.target.value, appearance),
                         })
                       }
                     >
@@ -477,7 +485,10 @@ export function SettingsPanel({
                       value={defaultSection}
                       onChange={(event) =>
                         updateGeneralPreferences({
-                          defaultSection: event.target.value as DesktopPreferences["defaultSection"],
+                          defaultSection: normalizeDefaultSection(
+                            event.target.value,
+                            defaultSection,
+                          ),
                         })
                       }
                     >
@@ -533,7 +544,10 @@ export function SettingsPanel({
                       aria-label={SETTINGS_PANEL_COPY.runtime.rows.runtimeSource}
                       value={runtimeKind}
                       onChange={(event) => {
-                        const nextRuntimeKind = event.target.value as typeof runtimeKind;
+                        const nextRuntimeKind = normalizeDesktopRuntimeKind(
+                          event.target.value,
+                          runtimeKind,
+                        );
                         const nextSelection = nextRuntimeSourceSelection(
                           nextRuntimeKind,
                           runtimePath,

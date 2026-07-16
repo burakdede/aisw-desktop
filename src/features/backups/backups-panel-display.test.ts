@@ -11,6 +11,8 @@ import {
   buildBackupRestoreSheetCopy,
   buildRestoreSheetState,
   filterBackups,
+  normalizeBackupsDateFilter,
+  normalizeBackupsToolFilter,
   resolveSelectedBackupId,
   sortBackups,
 } from "./backups-panel-display";
@@ -101,6 +103,10 @@ describe("backups-panel-display", () => {
       { value: "newest", label: "Newest first" },
       { value: "oldest", label: "Oldest first" },
     ]);
+    expect(normalizeBackupsToolFilter("codex")).toBe("codex");
+    expect(normalizeBackupsToolFilter("bad")).toBe("all");
+    expect(normalizeBackupsDateFilter("oldest")).toBe("oldest");
+    expect(normalizeBackupsDateFilter("bad", "oldest")).toBe("oldest");
     expect(BACKUPS_PANEL_COPY.toolbarAriaLabel).toBe("Backups filters");
     expect(BACKUPS_PANEL_COPY.inspector.restoreLabel).toBe("Restore…");
     expect(BACKUPS_PANEL_COPY.restoreSheet.cancelLabel).toBe("Cancel");

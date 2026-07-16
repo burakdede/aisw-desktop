@@ -1,6 +1,8 @@
 import { isOneOf } from "./parse-guards";
 import type { DesktopSettings } from "./schemas";
 
+export const DESKTOP_RUNTIME_KINDS = ["bundled", "system", "custom"] as const;
+export type DesktopRuntimeKind = (typeof DESKTOP_RUNTIME_KINDS)[number];
 export const DESKTOP_UPDATE_CHANNELS = ["stable", "beta"] as const;
 export type DesktopUpdateChannel = (typeof DESKTOP_UPDATE_CHANNELS)[number];
 export const DEFAULT_DESKTOP_UPDATE_CHANNEL: DesktopUpdateChannel =
@@ -27,6 +29,13 @@ export function normalizeDesktopUpdateChannel(
   return isDesktopUpdateChannel(value)
     ? value
     : DEFAULT_DESKTOP_UPDATE_CHANNEL;
+}
+
+export function normalizeDesktopRuntimeKind(
+  value: unknown,
+  fallback: DesktopRuntimeKind = DEFAULT_DESKTOP_SETTINGS.runtime_kind,
+): DesktopRuntimeKind {
+  return isOneOf(DESKTOP_RUNTIME_KINDS, value) ? value : fallback;
 }
 
 export function createDesktopSettings(

@@ -14,6 +14,7 @@ import {
   quotedActionHeading,
 } from "../../lib/display-copy";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
+import { normalizeOneOf } from "../../lib/parse-guards";
 import { toolProfileDisplayLabel } from "../../lib/profile-display";
 import type { AppSnapshot, BackupEntry, DesktopSettings } from "../../lib/schemas";
 import { toolDisplayName } from "../../lib/tool-display";
@@ -33,6 +34,28 @@ export const BACKUPS_DATE_FILTER_OPTIONS = [
   { value: "newest", label: "Newest first" },
   { value: "oldest", label: "Oldest first" },
 ] as const satisfies ReadonlyArray<{ value: DateFilter; label: string }>;
+
+export function normalizeBackupsToolFilter(
+  value: unknown,
+  fallback: ToolFilter = BACKUPS_TOOL_FILTER_OPTIONS[0].value,
+): ToolFilter {
+  return normalizeOneOf(
+    BACKUPS_TOOL_FILTER_OPTIONS.map((option) => option.value),
+    value,
+    fallback,
+  );
+}
+
+export function normalizeBackupsDateFilter(
+  value: unknown,
+  fallback: DateFilter = BACKUPS_DATE_FILTER_OPTIONS[0].value,
+): DateFilter {
+  return normalizeOneOf(
+    BACKUPS_DATE_FILTER_OPTIONS.map((option) => option.value),
+    value,
+    fallback,
+  );
+}
 
 export const BACKUPS_PANEL_COPY = {
   toolbarAriaLabel: "Backups filters",

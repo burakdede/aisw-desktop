@@ -50,12 +50,8 @@ export function loadDesktopPreferences(): DesktopPreferences {
   const storedReopenSetupAssistant = storage.getItem(REOPEN_SETUP_ASSISTANT_KEY);
 
   return {
-    appearance: isDesktopAppearance(storedAppearance)
-      ? storedAppearance
-      : DEFAULT_DESKTOP_PREFERENCES.appearance,
-    defaultSection: isDefaultSection(storedSection)
-      ? storedSection
-      : DEFAULT_DESKTOP_PREFERENCES.defaultSection,
+    appearance: normalizeDesktopAppearance(storedAppearance),
+    defaultSection: normalizeDefaultSection(storedSection),
     showMenuBarIcon:
       storedShowMenuBarIcon === null
         ? DEFAULT_DESKTOP_PREFERENCES.showMenuBarIcon
@@ -101,12 +97,18 @@ export function applyAppearancePreference(appearance: DesktopAppearance) {
   void syncNativeWindowTheme(appearance);
 }
 
-function isDesktopAppearance(value: string | null): value is DesktopAppearance {
-  return isOneOf(DESKTOP_APPEARANCES, value);
+export function normalizeDesktopAppearance(
+  value: unknown,
+  fallback: DesktopAppearance = DEFAULT_DESKTOP_PREFERENCES.appearance,
+): DesktopAppearance {
+  return isOneOf(DESKTOP_APPEARANCES, value) ? value : fallback;
 }
 
-function isDefaultSection(value: string | null): value is DefaultSection {
-  return isOneOf(DEFAULT_SECTIONS, value);
+export function normalizeDefaultSection(
+  value: unknown,
+  fallback: DefaultSection = DEFAULT_DESKTOP_PREFERENCES.defaultSection,
+): DefaultSection {
+  return isOneOf(DEFAULT_SECTIONS, value) ? value : fallback;
 }
 
 function getStorage(): Pick<Storage, "getItem" | "setItem" | "clear" | "removeItem"> | null {

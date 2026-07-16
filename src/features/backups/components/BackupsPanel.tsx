@@ -32,6 +32,8 @@ import {
   buildBackupInspectorState,
   buildRestoreSheetState,
   filterBackups,
+  normalizeBackupsDateFilter,
+  normalizeBackupsToolFilter,
   resolveSelectedBackupId,
   sortBackups,
   type DateFilter,
@@ -163,7 +165,7 @@ export function BackupsPanel({
           id="backups-tool-filter"
           aria-label={BACKUPS_PANEL_COPY.toolFilterLabel}
           value={toolFilter}
-          onChange={(event) => setToolFilter(event.target.value as ToolFilter)}
+          onChange={(event) => setToolFilter(normalizeBackupsToolFilter(event.target.value, toolFilter))}
         >
           {BACKUPS_TOOL_FILTER_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
@@ -178,7 +180,7 @@ export function BackupsPanel({
           id="backups-date-filter"
           aria-label={BACKUPS_PANEL_COPY.dateFilterLabel}
           value={dateFilter}
-          onChange={(event) => setDateFilter(event.target.value as DateFilter)}
+          onChange={(event) => setDateFilter(normalizeBackupsDateFilter(event.target.value, dateFilter))}
         >
           {BACKUPS_DATE_FILTER_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
