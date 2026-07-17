@@ -200,7 +200,8 @@ export function SetsPanel({
     setDraft.sourceName,
   );
 
-  const selectedSet = resolveSelectionItem(selectedSetName, localSets, (entry) => entry.name);
+  const resolvedSelectedSetName = resolveSelectedSetName(selectedSetName, localSets);
+  const selectedSet = resolveSelectionItem(resolvedSelectedSetName, localSets, (entry) => entry.name);
   const profileOptions = useMemo(
     () =>
       buildKeyedRecord(TOOLS, (tool) =>
@@ -448,7 +449,7 @@ export function SetsPanel({
   const setRowModels = buildSavedSetRows({
     localSets,
     ruleUsageCountByContext,
-    selectedSetName: selectedSet?.name ?? null,
+    selectedSetName: resolvedSelectedSetName,
     settings,
     snapshot,
     tools: TOOLS,

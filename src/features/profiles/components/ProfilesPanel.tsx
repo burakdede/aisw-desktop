@@ -272,13 +272,22 @@ export function ProfilesPanel({
     () => buildOauthWizardSteps(tool, oauthEvents, oauthError),
     [tool, oauthEvents, oauthError],
   );
+  const selectedProfileName = useMemo(
+    () =>
+      defaultExpandedProfileName({
+        expandedDetails,
+        activeProfile: snapshot.profiles[tool]?.active,
+        profiles,
+      }),
+    [expandedDetails, profiles, snapshot.profiles, tool],
+  );
   const selectedInventoryEntry = useMemo(
-    () => findSelectedInventoryEntry(inventoryProfiles, tool, expandedDetails),
-    [expandedDetails, inventoryProfiles, tool],
+    () => findSelectedInventoryEntry(inventoryProfiles, tool, selectedProfileName),
+    [inventoryProfiles, selectedProfileName, tool],
   );
   const selectedProfileEntry = useMemo(
-    () => findMatchingItem(expandedDetails, profiles, (entry) => entry.name),
-    [expandedDetails, profiles],
+    () => findMatchingItem(selectedProfileName, profiles, (entry) => entry.name),
+    [profiles, selectedProfileName],
   );
   const selectedProfileDisplay = useMemo(
     () =>
@@ -303,7 +312,7 @@ export function ProfilesPanel({
     activeProfileApplied: toolStatus?.active_profile_applied,
     activeProfileName: snapshot.profiles[tool]?.active,
     selectedProfileDisplay,
-    selectedProfileName: selectedProfileEntry?.name ?? null,
+    selectedProfileName,
   });
   const editSheetState = buildProfileEditSheetState({
     pendingEdit,
@@ -729,7 +738,7 @@ export function ProfilesPanel({
             </div>
             <div className="profiles-table-body" role="listbox" aria-label={PROFILE_PANEL_COPY.listAriaLabel}>
               {filteredInventoryProfiles.map((inventoryEntry, index) => {
-                const rowSelected = expandedDetails === inventoryEntry.name && tool === inventoryEntry.tool;
+                const rowSelected = selectedProfileName === inventoryEntry.name && tool === inventoryEntry.tool;
                 const menuKey = `${inventoryEntry.tool}:${inventoryEntry.name}`;
                 const rowActions = buildProfileActionMenu({
                   active: inventoryEntry.active,
@@ -758,7 +767,7 @@ export function ProfilesPanel({
                       aria-label={buildProfileInspectAriaLabel(inventoryEntry.tool, inventoryEntry.label)}
                       role="option"
                       aria-selected={rowSelected}
-                      tabIndex={rowSelected || (!expandedDetails && index === 0) ? 0 : -1}
+                      tabIndex={rowSelected || (!selectedProfileName && index === 0) ? 0 : -1}
                       onClick={() => selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name)}
                       onDoubleClick={() => selectInventoryEntry(inventoryEntry.tool, inventoryEntry.name)}
                       onKeyDown={(event) => handleInventoryKeyDown(event, index, inventoryEntry)}
