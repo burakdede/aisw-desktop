@@ -12,6 +12,7 @@ import {
   asArray,
   asNonEmptyString,
   asObject,
+  asObjectArray,
   isOneOf,
   type UnknownRecord,
 } from "../../lib/parse-guards";
@@ -126,10 +127,7 @@ export function parseWorkspaceBindings(
       DEFAULT_WORKSPACE_GUARD_MODE,
     ),
     defaultContext: asNonEmptyString(userBindings?.default_context, WORKSPACE_NO_CONTEXT),
-    bindings: bindingItems
-      .map((entry) => asObject(entry))
-      .filter((entry): entry is UnknownRecord => Boolean(entry))
-      .map((entry) => ({
+    bindings: asObjectArray(bindingItems).map((entry) => ({
         context: asNonEmptyString(
           firstDefinedField(entry, ["context"]),
           WORKSPACE_NO_CONTEXT,

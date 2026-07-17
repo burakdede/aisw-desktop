@@ -16,8 +16,8 @@ import {
   asArray,
   asNumber,
   asObject,
+  asObjectArray,
   asString,
-  type UnknownRecord,
 } from "../../lib/parse-guards";
 import { DIAGNOSTICS_REPAIR_PLAN_LABEL } from "./diagnostics-copy";
 
@@ -50,9 +50,7 @@ type GroupedRepairAction = {
 };
 
 function asRecordArray(value: unknown) {
-  return asArray(value)
-    .map((entry) => asObject(entry))
-    .filter((entry): entry is UnknownRecord => Boolean(entry));
+  return asObjectArray(value);
 }
 
 function payloadSummaryRecord(payload: { summary?: unknown } | undefined) {

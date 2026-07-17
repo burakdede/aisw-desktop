@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   asArray,
+  asObjectArray,
   asFiniteNumber,
   asNonEmptyString,
   asNumber,
@@ -25,6 +26,11 @@ describe("parse-guards", () => {
     expect(asObject(["invalid"])).toBeUndefined();
     expect(asArray(["value"])).toEqual(["value"]);
     expect(asArray("invalid")).toEqual([]);
+    expect(asObjectArray([{ value: true }, "invalid", { count: 2 }])).toEqual([
+      { value: true },
+      { count: 2 },
+    ]);
+    expect(asObjectArray("invalid")).toEqual([]);
     expect(asString("value")).toBe("value");
     expect(asString(42, "fallback")).toBe("fallback");
     expect(asNonEmptyString("value")).toBe("value");

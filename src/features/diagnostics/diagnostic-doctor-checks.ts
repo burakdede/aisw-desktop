@@ -6,8 +6,7 @@ import {
 } from "../../lib/check-status";
 import type { DoctorReport } from "../../lib/schemas";
 import {
-  asArray,
-  asObject,
+  asObjectArray,
   asOptionalStringFieldOr,
   nullishToEmptyString,
   type UnknownRecord,
@@ -35,9 +34,7 @@ export function parseDoctorReportChecks(
 ) {
   const defaultStatus = options?.defaultStatus ?? "warn";
 
-  return asArray(doctor?.checks)
-    .map((check) => asObject(check))
-    .filter((check): check is UnknownRecord => Boolean(check))
+  return asObjectArray(doctor?.checks)
     .map((check) => buildDoctorReportCheck(check, options, defaultStatus));
 }
 

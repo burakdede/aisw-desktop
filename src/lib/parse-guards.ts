@@ -10,6 +10,12 @@ export function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
+export function asObjectArray(value: unknown): UnknownRecord[] {
+  return asArray(value)
+    .map((entry) => asObject(entry))
+    .filter((entry): entry is UnknownRecord => Boolean(entry));
+}
+
 export function asString(value: unknown, fallback = "unknown") {
   return typeof value === "string" ? value : fallback;
 }
