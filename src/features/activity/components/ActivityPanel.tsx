@@ -12,7 +12,7 @@ import { SheetFooter } from "../../../components/SheetFooter";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
-import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "../../../components/ToolBrand";
+import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { exportActivityLog } from "../../../lib/client";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
@@ -298,8 +298,7 @@ export function ActivityPanel({
                         selectedEntryScope?.brandTool ? (
                           <ToolBrand
                             tool={selectedEntryScope.brandTool}
-                            className="tool-brand-inline"
-                            logoSize={TOOL_BRAND_LOGO_SIZES.inline}
+                            variant="inline"
                           />
                         ) : (
                           selectedEntryScope?.value ?? ""

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { DIALOG_FOCUS_SELECTORS, DialogSurface } from "./DialogSurface";
 import { SearchField } from "./SearchField";
 import { SheetFooter } from "./SheetFooter";
-import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "./ToolBrand";
+import { ToolBrand } from "./ToolBrand";
 import { QUICK_SWITCH_FOCUS_DELAY_MS } from "../lib/desktop-timing";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "../lib/schemas";
 import { resolveGlobalStateMode, supportedStateModes } from "../features/shared/state-modes";
@@ -293,8 +293,7 @@ export function QuickSwitchPalette({
                               {optionPresentation.brandTool ? (
                                 <ToolBrand
                                   tool={optionPresentation.brandTool}
-                                  className="tool-brand-inline"
-                                  logoSize={TOOL_BRAND_LOGO_SIZES.compact}
+                                  variant="inlineCompact"
                                   shortName
                                 />
                               ) : (

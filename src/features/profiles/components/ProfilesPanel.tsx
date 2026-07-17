@@ -20,7 +20,7 @@ import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SheetFooter } from "../../../components/SheetFooter";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
-import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "../../../components/ToolBrand";
+import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import {
   AppBootstrap,
@@ -693,8 +693,7 @@ export function ProfilesPanel({
               ) : (
                 <ToolBrand
                   tool={entry}
-                  className="tool-brand-inline"
-                  logoSize={TOOL_BRAND_LOGO_SIZES.compact}
+                  variant="inlineCompact"
                   shortName
                 />
               ),
@@ -766,8 +765,7 @@ export function ProfilesPanel({
                       <span className="profiles-table-column">
                         <ToolBrand
                           tool={inventoryEntry.tool}
-                          className="tool-brand-compact"
-                          logoSize={TOOL_BRAND_LOGO_SIZES.inline}
+                          variant="compact"
                           shortName
                         />
                       </span>
@@ -839,8 +837,7 @@ export function ProfilesPanel({
                       <span aria-hidden="true">
                         <ToolBrand
                           tool={tool}
-                          className="tool-brand-inline"
-                          logoSize={TOOL_BRAND_LOGO_SIZES.section}
+                          variant="inlineSection"
                           shortName
                         />
                       </span>

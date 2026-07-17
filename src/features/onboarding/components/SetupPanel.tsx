@@ -8,7 +8,7 @@ import {
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SourceListPanel } from "../../../components/SourceListPanel";
 import { SplitView } from "../../../components/SplitView";
-import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "../../../components/ToolBrand";
+import { ToolBrand } from "../../../components/ToolBrand";
 import { getShellGuidance, runDoctor, updateSettings } from "../../../lib/client";
 import { buildBundledRuntimeSettingsUpdate } from "../../../lib/desktop-settings";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
@@ -327,8 +327,7 @@ export function SetupPanel({
                                 <ToolBrand
                                   key={tool}
                                   tool={tool}
-                                  className="tool-brand-inline"
-                                  logoSize={TOOL_BRAND_LOGO_SIZES.compact}
+                                  variant="inlineCompact"
                                 />
                               ))}
                             </span>
@@ -529,8 +528,7 @@ export function SetupPanel({
                                     <strong>
                                       <ToolBrand
                                         tool={tool}
-                                        className="tool-brand-inline"
-                                        logoSize={TOOL_BRAND_LOGO_SIZES.inline}
+                                        variant="inline"
                                       />
                                     </strong>
                                     <p className="inline-note">{summary}</p>
@@ -669,8 +667,7 @@ export function SetupPanel({
                         <span className="overview-current-set-cell-label">
                           <ToolBrand
                             tool={status.tool}
-                            className="tool-brand-inline"
-                            logoSize={TOOL_BRAND_LOGO_SIZES.compact}
+                            variant="inlineCompact"
                           />
                         </span>
                         <strong>{completion.state}</strong>
@@ -734,8 +731,7 @@ export function SetupPanel({
                 {ONBOARDING_IMPORT_DIALOG_COPY.headingPrefix}{" "}
                 <ToolBrand
                   tool={pendingLiveImport.tool}
-                  className="tool-brand-inline"
-                  logoSize={TOOL_BRAND_LOGO_SIZES.section}
+                  variant="inlineSection"
                   shortName
                 />{" "}
                 {ONBOARDING_IMPORT_DIALOG_COPY.headingSuffix}
@@ -847,8 +843,7 @@ function OnboardingAccountDetailCard({
             {state.headingKind === "brand" ? (
               <ToolBrand
                 tool={state.tool}
-                className="tool-brand-heading"
-                logoSize={TOOL_BRAND_LOGO_SIZES.section}
+                variant="headingSection"
               />
             ) : (
               state.headingText
@@ -861,8 +856,7 @@ function OnboardingAccountDetailCard({
         <p className="inline-note">
           <ToolBrand
             tool={state.tool}
-            className="tool-brand-inline"
-            logoSize={TOOL_BRAND_LOGO_SIZES.inline}
+            variant="inline"
           />
         </p>
       ) : null}

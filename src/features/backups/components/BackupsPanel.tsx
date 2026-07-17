@@ -11,7 +11,7 @@ import { SearchField } from "../../../components/SearchField";
 import { SheetFooter } from "../../../components/SheetFooter";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
-import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "../../../components/ToolBrand";
+import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { listBackups, openAppDataFolder } from "../../../lib/client";
 import {
@@ -287,8 +287,7 @@ export function BackupsPanel({
                         <span>
                           <ToolBrand
                             tool={target.tool}
-                            className="tool-brand-compact"
-                            logoSize={TOOL_BRAND_LOGO_SIZES.inline}
+                            variant="compact"
                             shortName
                           />
                         </span>
@@ -466,8 +465,7 @@ export function BackupsPanel({
                 value: (
                   <ToolBrand
                     tool={restoreSheet.target.tool}
-                    className="tool-brand-inline"
-                    logoSize={TOOL_BRAND_LOGO_SIZES.inline}
+                    variant="inline"
                   />
                 ),
               },

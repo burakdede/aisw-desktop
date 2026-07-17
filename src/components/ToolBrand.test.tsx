@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { ToolBrand, ToolLogo } from "./ToolBrand";
+import { TOOL_BRAND_VARIANTS, ToolBrand, ToolLogo } from "./ToolBrand";
 
 describe("ToolBrand", () => {
   it("merges shared and custom classes for the brand label", () => {
@@ -29,5 +29,26 @@ describe("ToolBrand", () => {
     expect(logo).toHaveClass("tool-logo");
     expect(logo).toHaveClass("tool-logo-fallback");
     expect(logo).toHaveClass("fallback-logo");
+  });
+
+  it("applies named presentation variants while still merging custom classes", () => {
+    render(
+      <ToolBrand
+        tool="codex"
+        variant="inlineSection"
+        className="custom-brand"
+        shortName
+      />,
+    );
+
+    const name = screen.getByText("Codex");
+    const label = name.parentElement;
+
+    expect(label).toHaveClass("tool-brand-inline");
+    expect(label).toHaveClass("custom-brand");
+    expect(document.querySelector(".tool-logo")).toHaveAttribute(
+      "style",
+      expect.stringContaining(`${TOOL_BRAND_VARIANTS.inlineSection.logoSize}px`),
+    );
   });
 });

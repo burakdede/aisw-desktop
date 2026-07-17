@@ -10,7 +10,7 @@ import { SheetFooter } from "../../../components/SheetFooter";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SplitView } from "../../../components/SplitView";
-import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "../../../components/ToolBrand";
+import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { getProjectBindings, getWorkspaceStatus } from "../../../lib/client";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
@@ -911,8 +911,7 @@ export function SetsPanel({
                 <label key={tool}>
                   <ToolBrand
                     tool={tool}
-                    className="tool-brand-inline"
-                    logoSize={TOOL_BRAND_LOGO_SIZES.inline}
+                    variant="inline"
                   />
                   <select
                     value={setDraft.profiles[tool] ?? ""}
@@ -1097,8 +1096,7 @@ function SetInspectorDetailList({
             {row.kind === "tool" ? (
               <ToolBrand
                 tool={row.tool}
-                className="tool-brand-inline"
-                logoSize={TOOL_BRAND_LOGO_SIZES.inline}
+                variant="inline"
               />
             ) : (
               row.label

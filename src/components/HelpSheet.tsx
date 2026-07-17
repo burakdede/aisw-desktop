@@ -1,6 +1,6 @@
 import { DIALOG_FOCUS_SELECTORS, DIALOG_SURFACE_CLASS_NAMES, DialogSurface } from "./DialogSurface";
 import { SheetHeader } from "./SheetHeader";
-import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "./ToolBrand";
+import { ToolBrand } from "./ToolBrand";
 import {
   HELP_SHEET_ACTIONS,
   HELP_SHEET_COPY,
@@ -64,8 +64,7 @@ export function HelpSheet({
               <ToolBrand
                 key={tool}
                 tool={tool}
-                className="tool-brand-inline"
-                logoSize={TOOL_BRAND_LOGO_SIZES.section}
+                variant="inlineSection"
               />
             ))}
           </div>

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
-import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "../../../components/ToolBrand";
+import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import { credentialBackendLabel as formatCredentialBackendLabel } from "../../../lib/credential-backends";
@@ -238,8 +238,7 @@ export function OverviewPanel({
                     <div className="overview-tool-list-cell overview-tool-list-cell-main">
                       <ToolBrand
                         tool={status.tool}
-                        className="tool-brand-inline"
-                        logoSize={TOOL_BRAND_LOGO_SIZES.section}
+                        variant="inlineSection"
                       />
                     </div>
                     <span className="overview-tool-list-profile">{activeProfileLabel}</span>
@@ -518,8 +517,7 @@ function ToolInspector({
           <h3>
             <ToolBrand
               tool={status.tool}
-              className="tool-brand-heading"
-              logoSize={TOOL_BRAND_LOGO_SIZES.prominent}
+              variant="headingProminent"
             />
           </h3>
           <p className="inline-note">{inspector.summaryLabel}</p>

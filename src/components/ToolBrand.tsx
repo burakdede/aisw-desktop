@@ -14,8 +14,36 @@ export const TOOL_BRAND_LOGO_SIZES = {
   prominent: 20,
 } as const;
 
+export const TOOL_BRAND_VARIANTS = {
+  inlineCompact: {
+    className: "tool-brand-inline",
+    logoSize: TOOL_BRAND_LOGO_SIZES.compact,
+  },
+  inline: {
+    className: "tool-brand-inline",
+    logoSize: TOOL_BRAND_LOGO_SIZES.inline,
+  },
+  inlineSection: {
+    className: "tool-brand-inline",
+    logoSize: TOOL_BRAND_LOGO_SIZES.section,
+  },
+  compact: {
+    className: "tool-brand-compact",
+    logoSize: TOOL_BRAND_LOGO_SIZES.inline,
+  },
+  headingSection: {
+    className: "tool-brand-heading",
+    logoSize: TOOL_BRAND_LOGO_SIZES.section,
+  },
+  headingProminent: {
+    className: "tool-brand-heading",
+    logoSize: TOOL_BRAND_LOGO_SIZES.prominent,
+  },
+} as const;
+
 export function ToolBrand({
   tool,
+  variant,
   className,
   logoClassName,
   nameClassName,
@@ -23,15 +51,20 @@ export function ToolBrand({
   shortName = false,
 }: {
   tool: string;
+  variant?: keyof typeof TOOL_BRAND_VARIANTS;
   className?: string;
   logoClassName?: string;
   nameClassName?: string;
   logoSize?: number;
   shortName?: boolean;
 }) {
+  const presentation = variant ? TOOL_BRAND_VARIANTS[variant] : null;
+  const resolvedClassName = cn(presentation?.className, className);
+  const resolvedLogoSize = presentation?.logoSize ?? logoSize;
+
   return (
-    <span className={cn("tool-brand", className)}>
-      <ToolLogo tool={tool} size={logoSize} className={logoClassName} />
+    <span className={cn("tool-brand", resolvedClassName)}>
+      <ToolLogo tool={tool} size={resolvedLogoSize} className={logoClassName} />
       <span className={cn("tool-brand-name", nameClassName)}>{formatToolBrandName(tool, shortName)}</span>
     </span>
   );
