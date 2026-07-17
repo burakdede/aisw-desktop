@@ -116,6 +116,8 @@ export function App() {
   const [activityClearSignal, setActivityClearSignal] = useState(0);
   const [activityOpenLogSignal, setActivityOpenLogSignal] = useState(0);
   const { bootstrap, snapshot, init } = useDesktop();
+  type ProfilesRouteInput = Parameters<typeof createProfilesRouteState>[0];
+  type ProfileSetupRouteInput = Parameters<typeof createProfileSetupRouteState>[0];
   const reapplyContextRef = useRef<{
     snapshot: AppSnapshot | null;
     settings: DesktopSettings | null;
@@ -170,6 +172,30 @@ export function App() {
 
   function openImportCurrentLogin() {
     openProfiles(createImportCurrentLoginRouteState());
+  }
+
+  function openQuickSwitch() {
+    setQuickSwitchOpen(true);
+  }
+
+  function openDiagnosticsRefresh() {
+    openDiagnostics({ refresh: true });
+  }
+
+  function openProfilesAt(routeState: ProfilesRouteInput = {}) {
+    openProfiles(createProfilesRouteState(routeState));
+  }
+
+  function openToolProfile(
+    tool?: string,
+    expandedProfile?: string | null,
+    options?: { mode?: ProfilesRouteState["mode"] },
+  ) {
+    openProfilesAt({ tool, expandedProfile, mode: options?.mode });
+  }
+
+  function openToolProfileSetup(routeState: ProfileSetupRouteInput = {}) {
+    openProfileSetup(routeState);
   }
 
   function selectNav(id: AppNavId) {
@@ -229,7 +255,7 @@ export function App() {
       event.preventDefault();
 
       if (action === "quick-switch") {
-        setQuickSwitchOpen(true);
+        openQuickSwitch();
         return;
       }
       if (action === "settings") {
@@ -338,7 +364,7 @@ export function App() {
       },
       {
         event: DESKTOP_TRAY_EVENTS.runDiagnostics,
-        handler: () => openDiagnostics({ refresh: true }),
+        handler: () => openDiagnosticsRefresh(),
       },
       {
         event: DESKTOP_MENU_EVENTS.openSettings,
@@ -370,13 +396,13 @@ export function App() {
       },
       {
         event: DESKTOP_MENU_EVENTS.runVerify,
-        handler: () => openDiagnostics({ refresh: true }),
+        handler: () => openDiagnosticsRefresh(),
       },
       { event: DESKTOP_MENU_EVENTS.openBackups, handler: () => openBackups() },
       { event: DESKTOP_MENU_EVENTS.openActivity, handler: () => openActivity() },
       {
         event: DESKTOP_MENU_EVENTS.openQuickSwitch,
-        handler: () => setQuickSwitchOpen(true),
+        handler: () => openQuickSwitch(),
       },
       {
         event: DESKTOP_MENU_EVENTS.openHelp,
@@ -398,7 +424,7 @@ export function App() {
         event: DESKTOP_MENU_EVENTS.openTroubleshooting,
         handler: () => {
           void openReferenceDocument(REFERENCE_DOCUMENT_KIND_TROUBLESHOOTING).catch(() => {
-            openDiagnostics({ refresh: true });
+            openDiagnosticsRefresh();
           });
         },
       },
@@ -504,7 +530,7 @@ export function App() {
   }
 
   function runVerifyFlow() {
-    openDiagnostics({ refresh: true });
+    openDiagnosticsRefresh();
   }
 
   function openAddProfile() {
@@ -545,7 +571,7 @@ export function App() {
   function runToolbarAction(action: ToolbarAction) {
     switch (action.kind) {
       case "quick-switch":
-        setQuickSwitchOpen(true);
+        openQuickSwitch();
         break;
       case "verify":
         runVerifyFlow();
@@ -581,227 +607,233 @@ export function App() {
 
   return (
     <>
-    <AppFrame
-      mode={showSetupWindow ? APP_FRAME_MODES.setup : APP_FRAME_MODES.standard}
-      title={
-        runtimeRecoveryFocused ? APP_SHELL_COPY.runtimeRecovery.frameTitle : sectionTitle(activeSection, setupFocused)
-      }
-      subtitle={APP_SHELL_COPY.appSubtitle}
-      detail={
-        runtimeRecoveryFocused
-          ? APP_SHELL_COPY.runtimeRecovery.frameDetail
-          : sectionDetail(activeSection, setupFocused)
-      }
-      nav={navItems}
-      activeNav={activeSection}
-      onSelectNav={selectNav}
-      toolbar={renderToolbar()}
-      statusBadge={showSetupWindow ? undefined : (
-        <div className="sidebar-status-stack">
-          <div className="sidebar-status-header">
-            <span className="sidebar-status-kicker">{APP_SHELL_COPY.currentStateKicker}</span>
-          </div>
-          <div className="sidebar-status-grid">
-            {sidebarStatusRows.map((row) => (
-              <div key={row.label} className="sidebar-status-row">
-                <span className="sidebar-status-label">{row.label}</span>
-                {row.label === "Active set" ? <strong>{row.value}</strong> : <p>{row.value}</p>}
+      <AppFrame
+        mode={showSetupWindow ? APP_FRAME_MODES.setup : APP_FRAME_MODES.standard}
+        title={
+          runtimeRecoveryFocused
+            ? APP_SHELL_COPY.runtimeRecovery.frameTitle
+            : sectionTitle(activeSection, setupFocused)
+        }
+        subtitle={APP_SHELL_COPY.appSubtitle}
+        detail={
+          runtimeRecoveryFocused
+            ? APP_SHELL_COPY.runtimeRecovery.frameDetail
+            : sectionDetail(activeSection, setupFocused)
+        }
+        nav={navItems}
+        activeNav={activeSection}
+        onSelectNav={selectNav}
+        toolbar={renderToolbar()}
+        statusBadge={
+          showSetupWindow ? undefined : (
+            <div className="sidebar-status-stack">
+              <div className="sidebar-status-header">
+                <span className="sidebar-status-kicker">
+                  {APP_SHELL_COPY.currentStateKicker}
+                </span>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-    >
-      {runtimeRecoveryFocused ? (
-        <SectionCard
-          title={APP_SHELL_COPY.runtimeRecovery.cardTitle}
-          kicker={APP_SHELL_COPY.runtimeRecovery.cardKicker}
-        >
-          <div className="stack-list">
-            <p className="inline-note">{APP_SHELL_COPY.runtimeRecovery.intro}</p>
-            <p className="inline-note">{APP_SHELL_COPY.runtimeRecovery.guidance}</p>
-            <div className="settings-summary-grid">
-              {runtimeRecoveryRows.map((row) => (
-                <div key={row.label}>
-                  <span className="overview-current-set-cell-label">{row.label}</span>
-                  <strong>{row.value}</strong>
-                </div>
-              ))}
+              <div className="sidebar-status-grid">
+                {sidebarStatusRows.map((row) => (
+                  <div key={row.label} className="sidebar-status-row">
+                    <span className="sidebar-status-label">{row.label}</span>
+                    {row.label === "Active set" ? <strong>{row.value}</strong> : <p>{row.value}</p>}
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="button-row">
-              {settings.runtime_kind !== "bundled" ? (
+          )
+        }
+      >
+        {runtimeRecoveryFocused ? (
+          <SectionCard
+            title={APP_SHELL_COPY.runtimeRecovery.cardTitle}
+            kicker={APP_SHELL_COPY.runtimeRecovery.cardKicker}
+          >
+            <div className="stack-list">
+              <p className="inline-note">{APP_SHELL_COPY.runtimeRecovery.intro}</p>
+              <p className="inline-note">{APP_SHELL_COPY.runtimeRecovery.guidance}</p>
+              <div className="settings-summary-grid">
+                {runtimeRecoveryRows.map((row) => (
+                  <div key={row.label}>
+                    <span className="overview-current-set-cell-label">{row.label}</span>
+                    <strong>{row.value}</strong>
+                  </div>
+                ))}
+              </div>
+              <div className="button-row">
+                {settings.runtime_kind !== "bundled" ? (
+                  <button
+                    className="primary-button"
+                    type="button"
+                    disabled={restoreBundledRuntimeMutation.isPending}
+                    onClick={() => restoreBundledRuntimeMutation.mutate()}
+                  >
+                    {runtimeRecoveryPrimaryActionLabel(restoreBundledRuntimeMutation.isPending)}
+                  </button>
+                ) : null}
                 <button
-                  className="primary-button"
+                  className="ghost-button"
                   type="button"
-                  disabled={restoreBundledRuntimeMutation.isPending}
-                  onClick={() => restoreBundledRuntimeMutation.mutate()}
+                  onClick={() => void retryRuntimeCheck()}
                 >
-                  {runtimeRecoveryPrimaryActionLabel(restoreBundledRuntimeMutation.isPending)}
+                  {APP_SHELL_COPY.runtimeRecovery.retryLabel}
                 </button>
-              ) : null}
-              <button className="ghost-button" type="button" onClick={() => void retryRuntimeCheck()}>
-                {APP_SHELL_COPY.runtimeRecovery.retryLabel}
-              </button>
-              <button className="ghost-button" type="button" onClick={() => setRuntimeRecoveryOpen(true)}>
-                {APP_SHELL_COPY.runtimeRecovery.settingsLabel}
-              </button>
-            </div>
-            {restoreBundledRuntimeMutation.error ? (
-              <p className="inline-note">
-                {describeBootstrapError(restoreBundledRuntimeMutation.error).message}
-              </p>
-            ) : null}
-            <details className="diagnostic-card runtime-blocker-details">
-              <summary>{APP_SHELL_COPY.runtimeRecovery.detailsSummary}</summary>
-              <div className="stack-list">
-                <p className="inline-note">{normalizeRuntimeLanguage(runtimeBlocker.summary)}</p>
-                {runtimeStatus.issues.length ? (
-                  runtimeStatus.issues.map((issue) => (
-                    <p key={issue} className="inline-note">
-                      {normalizeRuntimeLanguage(issue)}
-                    </p>
-                  ))
-                ) : (
-                  <p className="inline-note">{APP_SHELL_COPY.runtimeRecovery.noIssuesLabel}</p>
-                )}
+                <button
+                  className="ghost-button"
+                  type="button"
+                  onClick={() => setRuntimeRecoveryOpen(true)}
+                >
+                  {APP_SHELL_COPY.runtimeRecovery.settingsLabel}
+                </button>
               </div>
-            </details>
-          </div>
-        </SectionCard>
-      ) : null}
+              {restoreBundledRuntimeMutation.error ? (
+                <p className="inline-note">
+                  {describeBootstrapError(restoreBundledRuntimeMutation.error).message}
+                </p>
+              ) : null}
+              <details className="diagnostic-card runtime-blocker-details">
+                <summary>{APP_SHELL_COPY.runtimeRecovery.detailsSummary}</summary>
+                <div className="stack-list">
+                  <p className="inline-note">{normalizeRuntimeLanguage(runtimeBlocker.summary)}</p>
+                  {runtimeStatus.issues.length ? (
+                    runtimeStatus.issues.map((issue) => (
+                      <p key={issue} className="inline-note">
+                        {normalizeRuntimeLanguage(issue)}
+                      </p>
+                    ))
+                  ) : (
+                    <p className="inline-note">{APP_SHELL_COPY.runtimeRecovery.noIssuesLabel}</p>
+                  )}
+                </div>
+              </details>
+            </div>
+          </SectionCard>
+        ) : null}
 
-      {runtimeBlocked && !runtimeRecoveryFocused ? (
-        <SettingsPanel
+        {runtimeBlocked && !runtimeRecoveryFocused ? (
+          <SettingsPanel
+            settings={settings}
+            runtimeStatus={runtimeStatus}
+            initialSection={SETTINGS_SECTION_IDS.runtime}
+            desktopPreferences={desktopPreferences}
+            onUpdateDesktopPreferences={setDesktopPreferences}
+            onReopenSetupAssistant={reopenSetupAssistant}
+            onResetOnboarding={resetOnboarding}
+          />
+        ) : resolvedSnapshot ? (
+          <>
+            {setupFocused ? (
+              <SetupPanel
+                bootstrap={bootstrap.data}
+                snapshot={resolvedSnapshot}
+                initReport={init.data}
+                forcedOpen={setupForced}
+                onCloseSetup={closeSetupAssistant}
+                onOpenProfiles={(tool, options) => {
+                  openToolProfileSetup({ tool, mode: options?.mode });
+                }}
+                onOpenSettings={openSettings}
+              />
+            ) : null}
+            {activeSection === APP_NAV_IDS.overview && !setupFocused ? (
+              <OverviewPanel
+                snapshot={resolvedSnapshot}
+                settings={settings}
+                toolCapabilities={toolCapabilities}
+                onOpenContexts={openContexts}
+                onOpenQuickSwitch={openQuickSwitch}
+                onOpenActivity={openActivity}
+                onOpenProfiles={openToolProfile}
+              />
+            ) : null}
+            {activeSection === APP_NAV_IDS.profiles ? (
+              <ProfilesPanel
+                snapshot={resolvedSnapshot}
+                settings={settings}
+                toolCapabilities={toolCapabilities}
+                initialTool={profilesRouteState.tool}
+                initialExpandedProfile={profilesRouteState.expandedProfile}
+                initialMode={profilesRouteState.mode}
+                initialCredentialBackend={profilesRouteState.credentialBackend}
+                openToken={profilesRouteState.openToken}
+                onOpenBackups={openBackups}
+              />
+            ) : null}
+            {activeSection === APP_NAV_IDS.sets ? (
+              <SetsPanel
+                snapshot={resolvedSnapshot}
+                settings={settings}
+                onOpenContexts={openContexts}
+              />
+            ) : null}
+            {activeSection === APP_NAV_IDS.diagnostics ? (
+              <DiagnosticsPanel
+                settings={settings}
+                snapshot={resolvedSnapshot}
+                toolCapabilities={toolCapabilities}
+                onOpenSettings={openSettings}
+                onOpenContexts={openContexts}
+                onOpenProfiles={openToolProfile}
+                onOpenProfileSetup={(options) => {
+                  openToolProfileSetup({
+                    tool: options?.tool,
+                    mode: options?.mode,
+                    credentialBackend: options?.credentialBackend ?? null,
+                  });
+                }}
+              />
+            ) : null}
+            {activeSection === APP_NAV_IDS.backups ? (
+              <BackupsPanel
+                snapshot={resolvedSnapshot}
+                settings={settings}
+                toolCapabilities={toolCapabilities}
+                onOpenProfiles={openToolProfile}
+              />
+            ) : null}
+            {activeSection === APP_NAV_IDS.activity ? (
+              <ActivityPanel
+                externalClearSignal={activityClearSignal}
+                externalOpenLogSignal={activityOpenLogSignal}
+              />
+            ) : null}
+            {activeSection === APP_NAV_IDS.settings ? (
+              <SettingsPanel
+                settings={settings}
+                runtimeStatus={runtimeStatus}
+                initialSection={settingsRouteState.section}
+                desktopPreferences={desktopPreferences}
+                onUpdateDesktopPreferences={setDesktopPreferences}
+                onReopenSetupAssistant={reopenSetupAssistant}
+                onResetOnboarding={resetOnboarding}
+              />
+            ) : null}
+          </>
+        ) : (
+          <SectionCard
+            title={APP_SHELL_COPY.waitingSnapshot.title}
+            kicker={APP_SHELL_COPY.waitingSnapshot.kicker}
+          >
+            <p className="inline-note">{APP_SHELL_COPY.waitingSnapshot.detail}</p>
+          </SectionCard>
+        )}
+      </AppFrame>
+      {!runtimeBlocked && resolvedSnapshot ? (
+        <QuickSwitchPalette
+          open={quickSwitchOpen}
+          onClose={() => setQuickSwitchOpen(false)}
           settings={settings}
-          runtimeStatus={runtimeStatus}
-          initialSection={SETTINGS_SECTION_IDS.runtime}
-          desktopPreferences={desktopPreferences}
-          onUpdateDesktopPreferences={setDesktopPreferences}
-          onReopenSetupAssistant={reopenSetupAssistant}
-          onResetOnboarding={resetOnboarding}
+          snapshot={resolvedSnapshot}
+          toolCapabilities={toolCapabilities}
         />
-      ) : resolvedSnapshot ? (
-        <>
-          {setupFocused ? (
-            <SetupPanel
-              bootstrap={bootstrap.data}
-              snapshot={resolvedSnapshot}
-              initReport={init.data}
-              forcedOpen={setupForced}
-              onCloseSetup={closeSetupAssistant}
-              onOpenProfiles={(tool, options) => {
-                openProfileSetup({ tool, mode: options?.mode });
-              }}
-              onOpenSettings={openSettings}
-            />
-          ) : null}
-          {activeSection === APP_NAV_IDS.overview && !setupFocused ? (
-            <OverviewPanel
-              snapshot={resolvedSnapshot}
-              settings={settings}
-              toolCapabilities={toolCapabilities}
-              onOpenContexts={openContexts}
-              onOpenQuickSwitch={() => setQuickSwitchOpen(true)}
-              onOpenActivity={openActivity}
-              onOpenProfiles={(tool, expandedProfile, options) => {
-                openProfiles(
-                  createProfilesRouteState({ tool, expandedProfile, mode: options?.mode }),
-                );
-              }}
-            />
-          ) : null}
-          {activeSection === APP_NAV_IDS.profiles ? (
-            <ProfilesPanel
-              snapshot={resolvedSnapshot}
-              settings={settings}
-              toolCapabilities={toolCapabilities}
-              initialTool={profilesRouteState.tool}
-              initialExpandedProfile={profilesRouteState.expandedProfile}
-              initialMode={profilesRouteState.mode}
-              initialCredentialBackend={profilesRouteState.credentialBackend}
-              openToken={profilesRouteState.openToken}
-              onOpenBackups={openBackups}
-            />
-          ) : null}
-          {activeSection === APP_NAV_IDS.sets ? (
-            <SetsPanel
-              snapshot={resolvedSnapshot}
-              settings={settings}
-              onOpenContexts={openContexts}
-            />
-          ) : null}
-          {activeSection === APP_NAV_IDS.diagnostics ? (
-            <DiagnosticsPanel
-              settings={settings}
-              snapshot={resolvedSnapshot}
-              toolCapabilities={toolCapabilities}
-              onOpenSettings={openSettings}
-              onOpenContexts={openContexts}
-              onOpenProfiles={(tool, expandedProfile) => {
-                openProfiles(createProfilesRouteState({ tool, expandedProfile }));
-              }}
-              onOpenProfileSetup={(options) => {
-                openProfileSetup({
-                  tool: options?.tool,
-                  mode: options?.mode,
-                  credentialBackend: options?.credentialBackend ?? null,
-                });
-              }}
-            />
-          ) : null}
-          {activeSection === APP_NAV_IDS.backups ? (
-            <BackupsPanel
-              snapshot={resolvedSnapshot}
-              settings={settings}
-              toolCapabilities={toolCapabilities}
-              onOpenProfiles={(tool, expandedProfile) => {
-                openProfiles(createProfilesRouteState({ tool, expandedProfile }));
-              }}
-            />
-          ) : null}
-          {activeSection === APP_NAV_IDS.activity ? (
-            <ActivityPanel
-              externalClearSignal={activityClearSignal}
-              externalOpenLogSignal={activityOpenLogSignal}
-            />
-          ) : null}
-          {activeSection === APP_NAV_IDS.settings ? (
-            <SettingsPanel
-              settings={settings}
-              runtimeStatus={runtimeStatus}
-              initialSection={settingsRouteState.section}
-              desktopPreferences={desktopPreferences}
-              onUpdateDesktopPreferences={setDesktopPreferences}
-              onReopenSetupAssistant={reopenSetupAssistant}
-              onResetOnboarding={resetOnboarding}
-            />
-          ) : null}
-        </>
-      ) : (
-        <SectionCard
-          title={APP_SHELL_COPY.waitingSnapshot.title}
-          kicker={APP_SHELL_COPY.waitingSnapshot.kicker}
-        >
-          <p className="inline-note">{APP_SHELL_COPY.waitingSnapshot.detail}</p>
-        </SectionCard>
-      )}
-    </AppFrame>
-    {!runtimeBlocked && resolvedSnapshot ? (
-      <QuickSwitchPalette
-        open={quickSwitchOpen}
-        onClose={() => setQuickSwitchOpen(false)}
-        settings={settings}
-        snapshot={resolvedSnapshot}
-        toolCapabilities={toolCapabilities}
-      />
-    ) : null}
+      ) : null}
       <HelpSheet
-      open={helpOpen}
-      onClose={() => setHelpOpen(false)}
-      onOpenProfiles={() => openProfiles()}
-      onOpenDiagnostics={() => openDiagnostics()}
-      onOpenSettings={() => openSettings()}
-    />
+        open={helpOpen}
+        onClose={() => setHelpOpen(false)}
+        onOpenProfiles={openProfiles}
+        onOpenDiagnostics={openDiagnostics}
+        onOpenSettings={openSettings}
+      />
     </>
   );
 }
