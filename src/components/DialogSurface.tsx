@@ -11,6 +11,16 @@ type DialogSurfaceProps = {
 const DEFAULT_FOCUS_SELECTOR =
   'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
 
+export const DIALOG_FOCUS_SELECTORS = {
+  default: DEFAULT_FOCUS_SELECTOR,
+  action: 'button:not([disabled])',
+  inputThenAction: 'input:not([disabled]), button:not([disabled])',
+  inputThenSelectThenAction:
+    'input:not([disabled]), select:not([disabled]), button:not([disabled])',
+  selectThenInputThenAction:
+    'select:not([disabled]), input:not([disabled]), button:not([disabled])',
+} as const;
+
 export function DialogSurface({
   ariaLabel,
   children,
@@ -31,7 +41,7 @@ export function DialogSurface({
         return;
       }
 
-      const selector = initialFocusSelector ?? DEFAULT_FOCUS_SELECTOR;
+      const selector = initialFocusSelector ?? DIALOG_FOCUS_SELECTORS.default;
       const initialTarget = panel.querySelector<HTMLElement>(selector);
       (initialTarget ?? panel).focus();
     });
@@ -102,7 +112,7 @@ export function DialogSurface({
 }
 
 function getFocusableElements(panel: HTMLElement) {
-  return [...panel.querySelectorAll<HTMLElement>(DEFAULT_FOCUS_SELECTOR)].filter(
+  return [...panel.querySelectorAll<HTMLElement>(DIALOG_FOCUS_SELECTORS.default)].filter(
     (element) =>
       !element.hasAttribute("disabled") &&
       element.tabIndex !== -1 &&

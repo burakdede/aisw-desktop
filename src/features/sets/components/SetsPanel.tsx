@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { DialogSurface } from "../../../components/DialogSurface";
+import { DIALOG_FOCUS_SELECTORS, DialogSurface } from "../../../components/DialogSurface";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SegmentedControl } from "../../../components/SegmentedControl";
@@ -876,7 +876,7 @@ export function SetsPanel({
         <DialogSurface
           ariaLabel={setEditorDialogLabel(isEditingSet)}
           className="quick-switch-palette profile-sheet set-sheet"
-          initialFocusSelector="input:not([disabled]), select:not([disabled]), button:not([disabled])"
+          initialFocusSelector={DIALOG_FOCUS_SELECTORS.inputThenSelectThenAction}
           onClose={closeSetEditor}
         >
           <form className="stack-list" onSubmit={saveSet}>
@@ -959,7 +959,7 @@ export function SetsPanel({
         <DialogSurface
           ariaLabel={ruleEditorDialogLabel(isEditingRule)}
           className="quick-switch-palette profile-sheet set-sheet"
-          initialFocusSelector="select:not([disabled]), input:not([disabled]), button:not([disabled])"
+          initialFocusSelector={DIALOG_FOCUS_SELECTORS.selectThenInputThenAction}
           onClose={closeRuleEditor}
         >
           <form className="stack-list" onSubmit={submitRule}>

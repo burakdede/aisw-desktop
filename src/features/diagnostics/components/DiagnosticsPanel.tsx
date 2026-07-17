@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { DialogSurface } from "../../../components/DialogSurface";
+import { DIALOG_FOCUS_SELECTORS, DialogSurface } from "../../../components/DialogSurface";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
@@ -561,7 +561,7 @@ export function DiagnosticsPanel({
         <DialogSurface
           ariaLabel={DIAGNOSTICS_PANEL_COPY.repairPlanDialogAriaLabel}
           className="quick-switch-palette profile-sheet"
-          initialFocusSelector="button:not([disabled])"
+          initialFocusSelector={DIALOG_FOCUS_SELECTORS.action}
           onClose={() => setRepairPlanOpen(false)}
         >
           <SheetHeader

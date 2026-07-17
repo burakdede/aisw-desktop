@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
-import { DialogSurface } from "../../../components/DialogSurface";
+import { DIALOG_FOCUS_SELECTORS, DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SearchField } from "../../../components/SearchField";
@@ -441,7 +441,7 @@ export function BackupsPanel({
         <DialogSurface
           ariaLabel={BACKUPS_PANEL_COPY.restoreSheet.ariaLabel}
           className="quick-switch-palette profile-sheet"
-          initialFocusSelector="button:not([disabled])"
+          initialFocusSelector={DIALOG_FOCUS_SELECTORS.action}
           onClose={() => setPendingRestore(null)}
         >
           <SheetHeader

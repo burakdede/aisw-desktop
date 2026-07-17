@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import type { RefObject } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AnchoredMenu } from "./AnchoredMenu";
-import { DialogSurface } from "./DialogSurface";
+import { DIALOG_FOCUS_SELECTORS, DialogSurface } from "./DialogSurface";
 import { OverflowMenuButton } from "./OverflowMenuButton";
 
 function mockRect(
@@ -197,7 +197,11 @@ describe("DialogSurface", () => {
 
     const onClose = vi.fn();
     const { unmount } = render(
-      <DialogSurface ariaLabel="Quick Switch" initialFocusSelector='input[name="search"]' onClose={onClose}>
+      <DialogSurface
+        ariaLabel="Quick Switch"
+        initialFocusSelector={DIALOG_FOCUS_SELECTORS.inputThenAction}
+        onClose={onClose}
+      >
         <input name="search" aria-label="Search" />
         <button type="button">Confirm</button>
       </DialogSurface>,

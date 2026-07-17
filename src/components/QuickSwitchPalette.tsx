@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { DialogSurface } from "./DialogSurface";
+import { DIALOG_FOCUS_SELECTORS, DialogSurface } from "./DialogSurface";
 import { SearchField } from "./SearchField";
 import { ToolBrand } from "./ToolBrand";
 import { QUICK_SWITCH_FOCUS_DELAY_MS } from "../lib/desktop-timing";
@@ -204,7 +204,7 @@ export function QuickSwitchPalette({
     <DialogSurface
       ariaLabel={QUICK_SWITCH_COPY.dialogAriaLabel}
       className="quick-switch-palette"
-      initialFocusSelector="input, button:not([disabled])"
+      initialFocusSelector={DIALOG_FOCUS_SELECTORS.inputThenAction}
       onClose={onClose}
     >
         <div className="quick-switch-header quick-switch-header-compact">

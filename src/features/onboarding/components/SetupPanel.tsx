@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { DialogSurface } from "../../../components/DialogSurface";
+import { DIALOG_FOCUS_SELECTORS, DialogSurface } from "../../../components/DialogSurface";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SourceListPanel } from "../../../components/SourceListPanel";
 import { SplitView } from "../../../components/SplitView";
@@ -712,7 +712,7 @@ export function SetupPanel({
         <DialogSurface
           ariaLabel={onboardingImportDialogAriaLabel(pendingLiveImport.tool)}
           className="quick-switch-palette profile-sheet"
-          initialFocusSelector="input:not([disabled]), button:not([disabled])"
+          initialFocusSelector={DIALOG_FOCUS_SELECTORS.inputThenAction}
           onClose={closeLiveImport}
         >
           <SheetHeader
