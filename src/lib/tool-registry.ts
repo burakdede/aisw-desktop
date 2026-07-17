@@ -4,6 +4,8 @@ export const SUPPORTED_TOOLS = ["claude", "codex", "gemini"] as const;
 export type SupportedTool = (typeof SUPPORTED_TOOLS)[number];
 
 const SUPPORTED_TOOL_SET = new Set<string>(SUPPORTED_TOOLS);
+const DEFAULT_TOOL_API_KEY_ENV_VAR = "API_KEY";
+const DEFAULT_INSTALL_GUIDE_URL = "https://www.npmjs.com/";
 
 const TOOL_METADATA: Record<
   SupportedTool,
@@ -54,34 +56,38 @@ export function isSupportedTool(tool: string): tool is SupportedTool {
   return SUPPORTED_TOOL_SET.has(tool);
 }
 
+function toolMetadata(tool: string) {
+  return isSupportedTool(tool) ? TOOL_METADATA[tool] : null;
+}
+
 export function toolDisplayName(tool: string) {
-  return isSupportedTool(tool) ? TOOL_METADATA[tool].displayName : titleCase(tool);
+  return toolMetadata(tool)?.displayName ?? titleCase(tool);
 }
 
 export function toolShortName(tool: string) {
-  return isSupportedTool(tool) ? TOOL_METADATA[tool].shortName : toolDisplayName(tool);
+  return toolMetadata(tool)?.shortName ?? toolDisplayName(tool);
 }
 
 export function toolBinaryName(tool: string) {
-  return isSupportedTool(tool) ? TOOL_METADATA[tool].binaryName : tool;
+  return toolMetadata(tool)?.binaryName ?? tool;
 }
 
 export function toolApiKeyEnvVar(tool: string) {
-  return isSupportedTool(tool) ? TOOL_METADATA[tool].apiKeyEnvVar : "API_KEY";
+  return toolMetadata(tool)?.apiKeyEnvVar ?? DEFAULT_TOOL_API_KEY_ENV_VAR;
 }
 
 export function installCommandForTool(tool: string) {
-  return isSupportedTool(tool) ? TOOL_METADATA[tool].installCommand : `install ${tool}`;
+  return toolMetadata(tool)?.installCommand ?? `install ${tool}`;
 }
 
 export function installGuideUrlForTool(tool: string) {
-  return isSupportedTool(tool) ? TOOL_METADATA[tool].installGuideUrl : "https://www.npmjs.com/";
+  return toolMetadata(tool)?.installGuideUrl ?? DEFAULT_INSTALL_GUIDE_URL;
 }
 
 export function toolSupportsEditableStateModes(tool: string) {
-  return !isSupportedTool(tool) || TOOL_METADATA[tool].supportsEditableStateModes;
+  return toolMetadata(tool)?.supportsEditableStateModes ?? true;
 }
 
 export function toolSupportsSystemKeyringCredentials(tool: string) {
-  return !isSupportedTool(tool) || TOOL_METADATA[tool].supportsSystemKeyringCredentials;
+  return toolMetadata(tool)?.supportsSystemKeyringCredentials ?? true;
 }
