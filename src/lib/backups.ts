@@ -38,9 +38,13 @@ export type BackupTarget = {
 export type BackupEntryLike = BackupLike & BackupTarget;
 
 export function compareBackupsNewestFirst(left: BackupLike, right: BackupLike) {
-  const leftSortKey = backupSortKey(left.created_at ?? left.backup_id);
-  const rightSortKey = backupSortKey(right.created_at ?? right.backup_id);
+  const leftSortKey = backupSortKey(backupTimestampValue(left));
+  const rightSortKey = backupSortKey(backupTimestampValue(right));
   return rightSortKey.localeCompare(leftSortKey);
+}
+
+export function backupTimestampValue(backup: BackupLike) {
+  return backup.created_at ?? backup.backup_id;
 }
 
 export function resolveBackupTarget(tool: string, profile: string): BackupTarget {

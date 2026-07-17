@@ -17,6 +17,7 @@ import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactInspectorLayout } from "../../../components/useCompactInspectorLayout";
 import { listBackups, openAppDataFolder } from "../../../lib/client";
 import {
+  backupTimestampValue,
   backupReasonLabel,
   formatBackupInspectorTimestamp,
   formatBackupListTimestamp,
@@ -24,7 +25,7 @@ import {
 } from "../../../lib/backups";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
-import { toolProfileDisplayLabel } from "../../../lib/profile-display";
+import { findSnapshotToolStatus, toolProfileDisplayLabel } from "../../../lib/profile-display";
 import { AppBootstrap, AppSnapshot, DesktopSettings, type BackupEntry } from "../../../lib/schemas";
 import { toolDisplayName } from "../../../lib/tool-display";
 import { resolveStateModeRequest } from "../../shared/state-modes";
@@ -139,8 +140,7 @@ export function BackupsPanel({
   function confirmRestore(entry: BackupEntry, mode: "files" | "activate") {
     const target = resolveBackupTarget(entry.tool, entry.profile);
     const profileLabel = toolProfileDisplayLabel(settings, snapshot, target.tool, target.profile);
-    const preferredStateMode =
-      snapshot.statuses.find((status) => status.tool === target.tool)?.state_mode ?? null;
+    const preferredStateMode = findSnapshotToolStatus(snapshot, target.tool)?.state_mode ?? null;
 
     restoreBackupMutation.mutate(entry.backup_id, {
       onSuccess: () => {
@@ -256,10 +256,9 @@ export function BackupsPanel({
                       target.tool,
                       target.profile,
                     );
-                    const createdLabel = formatBackupListTimestamp(entry.created_at ?? entry.backup_id);
-                    const createdDetail = formatBackupInspectorTimestamp(
-                      entry.created_at ?? entry.backup_id,
-                    );
+                    const createdAt = backupTimestampValue(entry);
+                    const createdLabel = formatBackupListTimestamp(createdAt);
+                    const createdDetail = formatBackupInspectorTimestamp(createdAt);
                     const reasonLabel = backupReasonLabel(entry);
 
                     return (
@@ -464,9 +463,7 @@ export function BackupsPanel({
               },
               {
                 label: BACKUPS_PANEL_COPY.restoreSheet.createdLabel,
-                value: formatBackupInspectorTimestamp(
-                  restoreSheet.entry.created_at ?? restoreSheet.entry.backup_id,
-                ),
+                value: formatBackupInspectorTimestamp(backupTimestampValue(restoreSheet.entry)),
               },
             ]}
           />

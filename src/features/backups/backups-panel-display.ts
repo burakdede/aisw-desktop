@@ -1,4 +1,5 @@
 import {
+  backupTimestampValue,
   backupContainsLabel,
   backupReasonLabel,
   compareBackupsNewestFirst,
@@ -220,9 +221,7 @@ export function buildBackupInspectorState(
   }
 
   const presentation = buildBackupPresentation(selectedBackup, settings, snapshot);
-  const created = formatBackupInspectorTimestamp(
-    selectedBackup.created_at ?? selectedBackup.backup_id,
-  );
+  const created = formatBackupInspectorTimestamp(backupTimestampValue(selectedBackup));
 
   return {
     ...presentation,

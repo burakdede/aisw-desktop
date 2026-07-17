@@ -3,6 +3,7 @@ import { DATE_UNAVAILABLE_LABEL } from "./date-format";
 import {
   backupContainsLabel,
   backupReasonLabel,
+  backupTimestampValue,
   compareBackupsNewestFirst,
   formatBackupInspectorTimestamp,
   formatBackupListTimestamp,
@@ -48,6 +49,16 @@ describe("backups", () => {
 
   it("formats backup timestamps for list and inspector views", () => {
     const now = new Date("2026-07-15T12:00:00Z");
+
+    expect(
+      backupTimestampValue({
+        backup_id: "2026-07-15T08:30:00Z-claude-work",
+        created_at: "2026-07-15T08:30:00Z",
+      }),
+    ).toBe("2026-07-15T08:30:00Z");
+    expect(backupTimestampValue({ backup_id: "2026-07-15T08:30:00Z-claude-work" })).toBe(
+      "2026-07-15T08:30:00Z-claude-work",
+    );
 
     expect(formatBackupListTimestamp("2026-07-15T08:30:00Z", now)).toMatch(/^Today, /);
     expect(formatBackupListTimestamp("2026-07-14T08:30:00Z", now)).toMatch(/^Yesterday, /);
