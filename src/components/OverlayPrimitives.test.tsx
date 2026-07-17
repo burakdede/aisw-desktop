@@ -309,7 +309,9 @@ describe("OverflowMenuButton", () => {
         open
         anchorRef={anchorRef}
         triggerAriaLabel="More actions"
+        containerClassName="custom-wrap"
         triggerClassName="profile-row-actions-trigger-visible"
+        triggerContent={<span>Open</span>}
         menuAriaLabel="Actions"
         items={[
           {
@@ -323,9 +325,11 @@ describe("OverflowMenuButton", () => {
     );
 
     const trigger = screen.getByRole("button", { name: "More actions" });
+    expect(trigger).toHaveTextContent("Open");
     expect(trigger).toHaveAttribute("aria-haspopup", "menu");
     expect(trigger).toHaveAttribute("aria-expanded", "true");
     expect(trigger).toHaveClass("profile-row-actions-trigger-visible");
+    expect(trigger.closest(".custom-wrap")).not.toBeNull();
 
     fireEvent.click(trigger);
     expect(onToggle).toHaveBeenCalledTimes(1);

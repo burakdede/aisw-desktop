@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
-import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
+import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SearchField } from "../../../components/SearchField";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
@@ -201,39 +201,26 @@ export function BackupsPanel({
           onChange={setSearch}
           className="search-field backups-search-field"
         />
-        <div className="backups-toolbar-menu-wrap">
-          <button
-            ref={toolbarMenuAnchorRef}
-            className="ghost-button icon-button"
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={toolbarMenuOpen}
-            aria-label={BACKUPS_PANEL_COPY.toolbarMenuMoreAriaLabel}
-            onClick={() => setToolbarMenuOpen((open) => !open)}
-          >
-            <SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />
-          </button>
-          {toolbarMenuOpen ? (
-            <AnchoredMenu
-              anchorRef={toolbarMenuAnchorRef}
-              className="profile-row-actions-menu"
-              role="menu"
-              aria-label={BACKUPS_PANEL_COPY.toolbarMenuAriaLabel}
-            >
-              <button
-                className="ghost-button"
-                role="menuitem"
-                type="button"
-                onClick={() => {
-                  setToolbarMenuOpen(false);
-                  void backups.refetch();
-                }}
-              >
-                {BACKUPS_PANEL_COPY.refreshLabel}
-              </button>
-            </AnchoredMenu>
-          ) : null}
-        </div>
+        <OverflowMenuButton
+          open={toolbarMenuOpen}
+          anchorRef={toolbarMenuAnchorRef}
+          containerClassName="backups-toolbar-menu-wrap"
+          triggerClassName="icon-button"
+          triggerContent={<SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />}
+          triggerAriaLabel={BACKUPS_PANEL_COPY.toolbarMenuMoreAriaLabel}
+          menuAriaLabel={BACKUPS_PANEL_COPY.toolbarMenuAriaLabel}
+          items={[
+            {
+              key: "refresh",
+              label: BACKUPS_PANEL_COPY.refreshLabel,
+              onSelect: () => {
+                setToolbarMenuOpen(false);
+                void backups.refetch();
+              },
+            },
+          ]}
+          onToggle={() => setToolbarMenuOpen((open) => !open)}
+        />
       </div>
 
       <SplitView
@@ -343,81 +330,59 @@ export function BackupsPanel({
                     >
                       {BACKUPS_PANEL_COPY.inspector.restoreLabel}
                     </button>
-                    <div className="backups-toolbar-menu-wrap">
-                      <button
-                        ref={inspectorMenuAnchorRef}
-                        className="ghost-button icon-button"
-                        type="button"
-                        aria-haspopup="menu"
-                        aria-expanded={inspectorMenuOpen}
-                        aria-label={BACKUPS_PANEL_COPY.inspector.menuAriaLabel}
-                        onClick={() => setInspectorMenuOpen((open) => !open)}
-                      >
-                        <SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />
-                      </button>
-                      {inspectorMenuOpen ? (
-                        <AnchoredMenu
-                          anchorRef={inspectorMenuAnchorRef}
-                          className="profile-row-actions-menu"
-                          align="start"
-                          containmentSelector=".backups-inspector-surface"
-                          role="menu"
-                          aria-label={BACKUPS_PANEL_COPY.inspector.menuAriaLabel}
-                        >
-                          <button
-                            className="ghost-button"
-                            role="menuitem"
-                            type="button"
-                            disabled={mutationLock.isBusy}
-                            onClick={() => {
-                              setInspectorMenuOpen(false);
-                              setPendingRestore({
-                                backupId: selectedInspector.entry.backup_id,
-                                mode: "activate",
-                              });
-                            }}
-                          >
-                            {BACKUPS_PANEL_COPY.inspector.restoreAndActivateLabel}
-                          </button>
-                          <button
-                            className="ghost-button"
-                            role="menuitem"
-                            type="button"
-                            onClick={() => {
-                              setInspectorMenuOpen(false);
-                              onOpenProfiles(
-                                selectedInspector.target.tool,
-                                selectedInspector.target.profile,
-                              );
-                            }}
-                          >
-                            {BACKUPS_PANEL_COPY.inspector.openProfileLabel}
-                          </button>
-                          <button
-                            className="ghost-button"
-                            role="menuitem"
-                            type="button"
-                            onClick={() => {
-                              setInspectorMenuOpen(false);
-                              void copyBackupId(selectedInspector.entry.backup_id);
-                            }}
-                          >
-                            {BACKUPS_PANEL_COPY.inspector.copyBackupIdLabel}
-                          </button>
-                          <button
-                            className="ghost-button"
-                            role="menuitem"
-                            type="button"
-                            onClick={() => {
-                              setInspectorMenuOpen(false);
-                              void revealBackupFolder();
-                            }}
-                          >
-                            {BACKUPS_PANEL_COPY.inspector.revealBackupFolderLabel}
-                          </button>
-                        </AnchoredMenu>
-                      ) : null}
-                    </div>
+                    <OverflowMenuButton
+                      open={inspectorMenuOpen}
+                      anchorRef={inspectorMenuAnchorRef}
+                      align="start"
+                      containerClassName="backups-toolbar-menu-wrap"
+                      triggerClassName="icon-button"
+                      triggerContent={<SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />}
+                      triggerAriaLabel={BACKUPS_PANEL_COPY.inspector.menuAriaLabel}
+                      menuAriaLabel={BACKUPS_PANEL_COPY.inspector.menuAriaLabel}
+                      containmentSelector=".backups-inspector-surface"
+                      items={[
+                        {
+                          key: "restore-activate",
+                          label: BACKUPS_PANEL_COPY.inspector.restoreAndActivateLabel,
+                          disabled: mutationLock.isBusy,
+                          onSelect: () => {
+                            setInspectorMenuOpen(false);
+                            setPendingRestore({
+                              backupId: selectedInspector.entry.backup_id,
+                              mode: "activate",
+                            });
+                          },
+                        },
+                        {
+                          key: "open-profile",
+                          label: BACKUPS_PANEL_COPY.inspector.openProfileLabel,
+                          onSelect: () => {
+                            setInspectorMenuOpen(false);
+                            onOpenProfiles(
+                              selectedInspector.target.tool,
+                              selectedInspector.target.profile,
+                            );
+                          },
+                        },
+                        {
+                          key: "copy-backup-id",
+                          label: BACKUPS_PANEL_COPY.inspector.copyBackupIdLabel,
+                          onSelect: () => {
+                            setInspectorMenuOpen(false);
+                            void copyBackupId(selectedInspector.entry.backup_id);
+                          },
+                        },
+                        {
+                          key: "reveal-backup-folder",
+                          label: BACKUPS_PANEL_COPY.inspector.revealBackupFolderLabel,
+                          onSelect: () => {
+                            setInspectorMenuOpen(false);
+                            void revealBackupFolder();
+                          },
+                        },
+                      ]}
+                      onToggle={() => setInspectorMenuOpen((open) => !open)}
+                    />
                   </div>
                 </header>
 

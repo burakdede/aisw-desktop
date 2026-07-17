@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type MutableRefObject, ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
-import { AnchoredMenu } from "../../../components/AnchoredMenu";
+import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
@@ -635,32 +635,32 @@ function ToolInspector({
             </button>
           ) : null}
           {inspector.showActionsMenu ? (
-            <OverviewActionsMenu
+            <OverflowMenuButton
               open={actionsMenuOpen}
               anchorRef={actionsMenuAnchorRef}
+              align="start"
+              containerClassName="overview-actions-menu-wrap"
+              triggerClassName="icon-button"
+              triggerContent={<SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />}
+              triggerAriaLabel={OVERVIEW_MORE_ACTIONS_LABEL}
               menuAriaLabel={OVERVIEW_PANEL_COPY.actionsMenuAriaLabel}
+              boundaryAttribute={OVERVIEW_ACTIONS_BOUNDARY_ATTRIBUTE}
+              containmentSelector=".overview-inspector-pane"
+              items={inspector.menuActions.map((action) => ({
+                key: action.kind,
+                label: action.label,
+                disabled: overviewInspectorActionDisabled(
+                  action.kind,
+                  mutationLocked,
+                  refreshLocked,
+                ),
+                onSelect: () => {
+                  setActionsMenuOpen(false);
+                  runInspectorAction(action.kind);
+                },
+              }))}
               onToggle={() => setActionsMenuOpen((open) => !open)}
-            >
-              {inspector.menuActions.map((action) => (
-                <button
-                  key={action.kind}
-                  className="ghost-button"
-                  role="menuitem"
-                  type="button"
-                  disabled={overviewInspectorActionDisabled(
-                    action.kind,
-                    mutationLocked,
-                    refreshLocked,
-                  )}
-                  onClick={() => {
-                    setActionsMenuOpen(false);
-                    runInspectorAction(action.kind);
-                  }}
-                >
-                  {action.label}
-                </button>
-              ))}
-            </OverviewActionsMenu>
+            />
           ) : null}
         </div>
       </div>
@@ -715,52 +715,6 @@ function OverviewInlineNotice({
           <p>{notice.summary}</p>
         )}
       </div>
-    </div>
-  );
-}
-
-function OverviewActionsMenu({
-  open,
-  anchorRef,
-  menuAriaLabel,
-  onToggle,
-  children,
-}: {
-  open: boolean;
-  anchorRef: MutableRefObject<HTMLButtonElement | null>;
-  menuAriaLabel: string;
-  onToggle: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <div
-      className="overview-actions-menu-wrap"
-      {...{ [OVERVIEW_ACTIONS_BOUNDARY_ATTRIBUTE]: "" }}
-    >
-      <button
-        ref={anchorRef}
-        className="ghost-button icon-button"
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-label={OVERVIEW_MORE_ACTIONS_LABEL}
-        onClick={onToggle}
-      >
-        <SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />
-      </button>
-      {open ? (
-        <AnchoredMenu
-          anchorRef={anchorRef}
-          className="profile-row-actions-menu"
-          align="start"
-          boundaryAttribute={OVERVIEW_ACTIONS_BOUNDARY_ATTRIBUTE}
-          containmentSelector=".overview-inspector-pane"
-          role="menu"
-          aria-label={menuAriaLabel}
-        >
-          {children}
-        </AnchoredMenu>
-      ) : null}
     </div>
   );
 }

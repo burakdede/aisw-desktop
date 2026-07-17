@@ -1,4 +1,4 @@
-import type { MutableRefObject } from "react";
+import type { MutableRefObject, ReactNode } from "react";
 import { AnchoredMenu } from "./AnchoredMenu";
 import { cn } from "../lib/utils";
 
@@ -16,6 +16,8 @@ export function OverflowMenuButton({
   align = "start",
   triggerAriaLabel,
   triggerClassName,
+  containerClassName,
+  triggerContent = "•••",
   menuAriaLabel,
   items,
   containmentSelector,
@@ -27,6 +29,8 @@ export function OverflowMenuButton({
   align?: "start" | "end";
   triggerAriaLabel: string;
   triggerClassName?: string;
+  containerClassName?: string;
+  triggerContent?: ReactNode;
   menuAriaLabel: string;
   items: readonly OverflowMenuItem[];
   containmentSelector?: string;
@@ -36,7 +40,7 @@ export function OverflowMenuButton({
   const boundaryProps = boundaryAttribute ? { [boundaryAttribute]: "" } : {};
 
   return (
-    <div className="profile-row-actions" {...boundaryProps}>
+    <div className={cn("profile-row-actions", containerClassName)} {...boundaryProps}>
       <button
         ref={(node) => {
           anchorRef.current = node;
@@ -48,7 +52,7 @@ export function OverflowMenuButton({
         aria-expanded={open}
         onClick={onToggle}
       >
-        •••
+        {triggerContent}
       </button>
       {open && items.length ? (
         <AnchoredMenu
