@@ -24,7 +24,6 @@ import {
   ruleTargetLabel,
   savedRuleStatusLabel,
   setCommandResultLabel,
-  workspaceSetActionLabel,
 } from "../../../lib/sets-display";
 import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
@@ -53,6 +52,7 @@ import {
   buildSelectedRuleInspectorState,
   buildSetSettingsUpdate,
   buildSelectedSetInspectorState,
+  buildWorkspaceMismatchBannerState,
   buildWorkspaceBindingTarget,
   countRuleUsageByContext,
   createEditableProfileSetDraft,
@@ -450,6 +450,15 @@ export function SetsPanel({
         matched: Boolean(selectedRuleMatched),
       })
     : null;
+  const workspaceMismatchBanner = hasWorkspaceMismatch
+    ? buildWorkspaceMismatchBannerState({
+        expectedContextDisplay,
+        currentContextDisplay,
+        scope: workspaceCard.scope,
+        target: workspaceCard.target,
+        canResolveDirectly: Boolean(expectedWorkspaceTarget),
+      })
+    : null;
   const importedContextRows = buildImportedContextRows({
     activeContext,
     importedContexts,
@@ -691,12 +700,9 @@ export function SetsPanel({
               <div className="sets-rules-banner-copy">
                 <div>
                   <h3>{SETS_PANEL_COPY.projectMismatchTitle}</h3>
-                  <p className="inline-note">{SETS_PANEL_COPY.expectedSetPrefix}{expectedContextDisplay}</p>
-                  <p className="inline-note">{SETS_PANEL_COPY.currentSetPrefix}{currentContextDisplay}</p>
-                  <p className="inline-note">
-                    Matched by this {ruleScopeLabel(workspaceCard.scope).toLowerCase()} rule:{" "}
-                    {ruleTargetLabel(workspaceCard.scope, workspaceCard.target)}
-                  </p>
+                  <p className="inline-note">{workspaceMismatchBanner?.expectedSetLine}</p>
+                  <p className="inline-note">{workspaceMismatchBanner?.currentSetLine}</p>
+                  <p className="inline-note">{workspaceMismatchBanner?.matchedRuleLine}</p>
                 </div>
               </div>
               <div className="button-row">
@@ -706,7 +712,7 @@ export function SetsPanel({
                   disabled={mutationLock.isBusy}
                   onClick={activateExpectedWorkspaceMatch}
                 >
-                  {workspaceSetActionLabel(Boolean(expectedWorkspaceTarget))}
+                  {workspaceMismatchBanner?.primaryActionLabel}
                 </button>
                 <button
                   className="ghost-button"

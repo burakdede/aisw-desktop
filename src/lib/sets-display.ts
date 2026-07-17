@@ -49,6 +49,8 @@ const SETS_DISPLAY_COPY = {
     matched: "This rule currently matches",
     saved: "Saved project rule",
   },
+  workspaceRuleMatchPrefix: "Matched by this ",
+  workspaceRuleMatchSuffix: " rule: ",
 } as const;
 
 const SET_SUMMARY_PREFIXES: Record<SetSummaryKind, string> = {
@@ -192,6 +194,10 @@ export function workspaceSetActionLabel(canResolveDirectly: boolean) {
   return canResolveDirectly
     ? SETS_DISPLAY_COPY.workspaceActionUseExpectedSet
     : SETS_DISPLAY_COPY.workspaceActionOpenSets;
+}
+
+export function workspaceRuleMatchLabel(scope: string, target: string) {
+  return `${SETS_DISPLAY_COPY.workspaceRuleMatchPrefix}${ruleScopeLabel(scope).toLowerCase()}${SETS_DISPLAY_COPY.workspaceRuleMatchSuffix}${ruleTargetLabel(scope, target)}`;
 }
 
 export function savedRuleStatusLabel(active: boolean) {

@@ -9,6 +9,7 @@ import {
   buildSelectedSetInspectorState,
   buildSelectedRuleInspectorState,
   buildWorkspaceBindingTarget,
+  buildWorkspaceMismatchBannerState,
   countRuleUsageByContext,
   createEditableProfileSetDraft,
   createEditableRuleDraft,
@@ -509,5 +510,32 @@ describe("sets-panel-display", () => {
         { label: "Last matched", value: "Current project" },
       ],
     });
+  });
+
+  it("builds workspace mismatch banner state from shared display helpers", () => {
+    expect(
+      buildWorkspaceMismatchBannerState({
+        expectedContextDisplay: "Client Acme",
+        currentContextDisplay: "Personal",
+        scope: "path",
+        target: "/code/acme",
+        canResolveDirectly: true,
+      }),
+    ).toEqual({
+      expectedSetLine: "Expected set: Client Acme",
+      currentSetLine: "Current set: Personal",
+      matchedRuleLine: "Matched by this folder rule: /code/acme",
+      primaryActionLabel: "Use Expected Set",
+    });
+
+    expect(
+      buildWorkspaceMismatchBannerState({
+        expectedContextDisplay: "Fallback",
+        currentContextDisplay: "None",
+        scope: "default",
+        target: "default",
+        canResolveDirectly: false,
+      }).primaryActionLabel,
+    ).toBe("Open Sets");
   });
 });

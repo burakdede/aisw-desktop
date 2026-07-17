@@ -19,6 +19,7 @@ import {
   setResultSummary,
   setSelectionCountLabel,
   USE_EXPECTED_SET_LABEL,
+  workspaceRuleMatchLabel,
   workspaceSetActionLabel,
 } from "./sets-display";
 
@@ -84,6 +85,12 @@ describe("sets-display", () => {
     expect(ruleTargetLabel("path", "/code/acme")).toBe("/code/acme");
     expect(workspaceSetActionLabel(true)).toBe(USE_EXPECTED_SET_LABEL);
     expect(workspaceSetActionLabel(false)).toBe("Open Sets");
+    expect(workspaceRuleMatchLabel("path", "/code/acme")).toBe(
+      "Matched by this folder rule: /code/acme",
+    );
+    expect(workspaceRuleMatchLabel("default", "default")).toBe(
+      "Matched by this default rule: Default set",
+    );
     expect(savedRuleStatusLabel(true)).toBe("Active");
     expect(savedRuleStatusLabel(false)).toBe("Saved");
     expect(selectedRuleSubtitle(true)).toBe("This rule currently matches");

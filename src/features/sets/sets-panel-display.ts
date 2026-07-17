@@ -37,6 +37,8 @@ import {
   selectedRulePriorityLabel,
   selectedRuleSubtitle,
   setSelectionCountLabel,
+  workspaceRuleMatchLabel,
+  workspaceSetActionLabel,
 } from "../../lib/sets-display";
 import { CURRENT_LABEL } from "../../lib/status-copy";
 import { toolShortName } from "../../lib/tool-registry";
@@ -89,6 +91,13 @@ export type SelectedRuleInspectorState = {
   displayLabel: string;
   subtitle: string;
   detailRows: RuleInspectorDetailRow[];
+};
+
+export type WorkspaceMismatchBannerState = {
+  expectedSetLine: string;
+  currentSetLine: string;
+  matchedRuleLine: string;
+  primaryActionLabel: string;
 };
 
 export type RuleInspectorDetailRow = {
@@ -257,6 +266,21 @@ export function setRowAriaLabel(displayLabel: string) {
 
 export function ruleRowAriaLabel(contextLabel: string) {
   return inspectItemLabel(`rule for ${contextLabel}`);
+}
+
+export function buildWorkspaceMismatchBannerState(input: {
+  expectedContextDisplay: string;
+  currentContextDisplay: string;
+  scope: string;
+  target: string;
+  canResolveDirectly: boolean;
+}): WorkspaceMismatchBannerState {
+  return {
+    expectedSetLine: `${SETS_PANEL_COPY.expectedSetPrefix}${input.expectedContextDisplay}`,
+    currentSetLine: `${SETS_PANEL_COPY.currentSetPrefix}${input.currentContextDisplay}`,
+    matchedRuleLine: workspaceRuleMatchLabel(input.scope, input.target),
+    primaryActionLabel: workspaceSetActionLabel(input.canResolveDirectly),
+  };
 }
 
 export function setEditorDialogLabel(isEditingSet: boolean) {
