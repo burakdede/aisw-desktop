@@ -8,6 +8,7 @@ import {
 } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
+import { PaneInspectorHeader } from "../../../components/PaneInspectorHeader";
 import { SearchField } from "../../../components/SearchField";
 import { SheetFooter } from "../../../components/SheetFooter";
 import { SegmentedControl } from "../../../components/SegmentedControl";
@@ -274,21 +275,14 @@ export function ActivityPanel({
           <aside className="activity-pane activity-inspector-surface">
             {selectedEntry ? (
               <div className="activity-inspector-content">
-                <header className="activity-inspector-header">
-                  <div>
-                    {compactLayout ? (
-                      <button
-                        className="ghost-button activity-inspector-back"
-                        type="button"
-                        onClick={() => setCompactInspectorOpen(false)}
-                      >
-                        {ACTIVITY_PANEL_COPY.backLabel}
-                      </button>
-                    ) : null}
-                    <h3>{selectedEntry.label}</h3>
-                    <ActivityInspectorStatus status={selectedEntry.status} />
-                  </div>
-                </header>
+                <PaneInspectorHeader
+                  className="activity-inspector-header"
+                  title={selectedEntry.label}
+                  backLabel={compactLayout ? ACTIVITY_PANEL_COPY.backLabel : undefined}
+                  backButtonClassName="activity-inspector-back"
+                  onBack={compactLayout ? () => setCompactInspectorOpen(false) : undefined}
+                  supporting={<ActivityInspectorStatus status={selectedEntry.status} />}
+                />
                 <p className="inline-note activity-inspector-message">{selectedEntry.message}</p>
                 <KeyValueGrid
                   variant="plain"

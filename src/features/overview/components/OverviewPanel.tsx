@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ButtonRow } from "../../../components/ButtonRow";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
+import { PaneInspectorHeader } from "../../../components/PaneInspectorHeader";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
@@ -508,28 +509,28 @@ function ToolInspector({
 
   return (
     <aside className="overview-pane overview-inspector-pane tool-card">
-      <header className="overview-inspector-header">
-        <div className="overview-inspector-title-block">
-          {compactLayout && onBack ? (
-            <button className="ghost-button overview-inspector-back" type="button" onClick={onBack}>
-              {OVERVIEW_PANEL_COPY.backLabel}
-            </button>
-          ) : null}
-          <h3>
-            <ToolBrand
-              tool={status.tool}
-              variant="headingProminent"
-            />
-          </h3>
-          <p className="inline-note">{inspector.summaryLabel}</p>
-        </div>
-        <div className={`overview-inspector-status overview-inspector-status-${inspector.state}`}>
-          <span className={`overview-status-symbol overview-status-symbol-${inspector.state}`} aria-hidden="true">
-            {inspectorHealthPresentation.symbol}
-          </span>
-          <span>{inspector.statusLabel}</span>
-        </div>
-      </header>
+      <PaneInspectorHeader
+        className="overview-inspector-header"
+        title={
+          <ToolBrand
+            tool={status.tool}
+            variant="headingProminent"
+          />
+        }
+        backLabel={compactLayout && onBack ? OVERVIEW_PANEL_COPY.backLabel : undefined}
+        backButtonClassName="overview-inspector-back"
+        onBack={compactLayout ? onBack : undefined}
+        titleBlockClassName="overview-inspector-title-block"
+        supporting={<p className="inline-note">{inspector.summaryLabel}</p>}
+        trailing={
+          <div className={`overview-inspector-status overview-inspector-status-${inspector.state}`}>
+            <span className={`overview-status-symbol overview-status-symbol-${inspector.state}`} aria-hidden="true">
+              {inspectorHealthPresentation.symbol}
+            </span>
+            <span>{inspector.statusLabel}</span>
+          </div>
+        }
+      />
 
       {notices.map((notice, index) => (
         <OverviewInlineNotice key={`${notice.symbol}-${index}`} notice={notice} />

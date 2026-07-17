@@ -7,6 +7,7 @@ import {
   DialogSurface,
 } from "../../../components/DialogSurface";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
+import { PaneInspectorHeader } from "../../../components/PaneInspectorHeader";
 import { SheetFooter } from "../../../components/SheetFooter";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
@@ -448,21 +449,14 @@ export function DiagnosticsPanel({
           <aside className="diagnostics-pane diagnostics-inspector-surface">
             {selectedFinding ? (
               <>
-                <header className="diagnostics-pane-header diagnostics-inspector-header">
-                  <div>
-                    {compactLayout ? (
-                      <button
-                        className="ghost-button diagnostics-inspector-back"
-                        type="button"
-                        onClick={() => setCompactInspectorOpen(false)}
-                      >
-                        {DIAGNOSTICS_PANEL_COPY.inspectorBackLabel}
-                      </button>
-                    ) : null}
-                    <h3>{selectedFinding.title}</h3>
-                    <DiagnosticInspectorStatus status={selectedFinding.status} />
-                  </div>
-                </header>
+                <PaneInspectorHeader
+                  className="diagnostics-pane-header diagnostics-inspector-header"
+                  title={selectedFinding.title}
+                  backLabel={compactLayout ? DIAGNOSTICS_PANEL_COPY.inspectorBackLabel : undefined}
+                  backButtonClassName="diagnostics-inspector-back"
+                  onBack={compactLayout ? () => setCompactInspectorOpen(false) : undefined}
+                  supporting={<DiagnosticInspectorStatus status={selectedFinding.status} />}
+                />
                 <section className="diagnostics-inspector-section">
                   <p className="card-kicker">{DIAGNOSTICS_PANEL_COPY.inspectorWhatHappenedKicker}</p>
                   <p className="inline-note">{normalizeRuntimeLanguage(selectedFinding.preview)}</p>

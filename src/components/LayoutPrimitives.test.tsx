@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { ButtonRow } from "./ButtonRow";
 import { KeyValueGrid } from "./KeyValueGrid";
+import { PaneInspectorHeader } from "./PaneInspectorHeader";
 import { PaneSectionHeader } from "./PaneSectionHeader";
 import { SectionCard } from "./SectionCard";
 import { SheetFooter } from "./SheetFooter";
@@ -144,5 +145,35 @@ describe("PaneSectionHeader", () => {
     render(<PaneSectionHeader kicker="Shortcuts" title="Keyboard" titleTag="h4" />);
 
     expect(screen.getByRole("heading", { level: 4, name: "Keyboard" })).toBeVisible();
+  });
+});
+
+describe("PaneInspectorHeader", () => {
+  it("renders title, supporting content, and trailing actions", () => {
+    render(
+      <PaneInspectorHeader
+        className="activity-inspector-header"
+        title="Restore point"
+        supporting={<p>Captured 2 minutes ago</p>}
+        trailing={<button type="button">Restore</button>}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Restore point" })).toBeVisible();
+    expect(screen.getByText("Captured 2 minutes ago")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Restore" })).toBeVisible();
+  });
+
+  it("shows a compact back action when provided", () => {
+    render(
+      <PaneInspectorHeader
+        title="Diagnostics"
+        backLabel="Back"
+        onBack={() => undefined}
+        backButtonClassName="diagnostics-inspector-back"
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Back" })).toBeVisible();
   });
 });

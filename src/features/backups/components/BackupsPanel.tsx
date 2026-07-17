@@ -8,6 +8,7 @@ import {
 } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
+import { PaneInspectorHeader } from "../../../components/PaneInspectorHeader";
 import { SearchField } from "../../../components/SearchField";
 import { SheetFooter } from "../../../components/SheetFooter";
 import { SheetHeader } from "../../../components/SheetHeader";
@@ -311,21 +312,14 @@ export function BackupsPanel({
           <aside className="backups-pane backups-inspector-surface">
             {selectedInspector ? (
               <>
-                <header className="backups-pane-header backups-inspector-header">
-                  <div>
-                    {compactLayout ? (
-                      <button
-                        className="ghost-button backups-inspector-back"
-                        type="button"
-                        onClick={() => setCompactInspectorOpen(false)}
-                      >
-                        {BACKUPS_PANEL_COPY.inspector.backLabel}
-                      </button>
-                    ) : null}
-                    <h3>{selectedInspector.title}</h3>
-                    <p className="inline-note">{selectedInspector.subtitle}</p>
-                  </div>
-                  <div className="backups-inspector-header-actions">
+                <PaneInspectorHeader
+                  className="backups-pane-header backups-inspector-header"
+                  title={selectedInspector.title}
+                  backLabel={compactLayout ? BACKUPS_PANEL_COPY.inspector.backLabel : undefined}
+                  backButtonClassName="backups-inspector-back"
+                  onBack={compactLayout ? () => setCompactInspectorOpen(false) : undefined}
+                  supporting={<p className="inline-note">{selectedInspector.subtitle}</p>}
+                  trailing={<div className="backups-inspector-header-actions">
                     <button
                       className="primary-button"
                       type="button"
@@ -390,8 +384,8 @@ export function BackupsPanel({
                       ]}
                       onToggle={() => setInspectorMenuOpen((open) => !open)}
                     />
-                  </div>
-                </header>
+                  </div>}
+                />
 
                 <div className="backups-inspector-content">
                   <KeyValueGrid
