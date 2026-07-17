@@ -6,6 +6,7 @@ import {
   DIALOG_SURFACE_CLASS_NAMES,
   DialogSurface,
 } from "../../../components/DialogSurface";
+import { PaneSectionHeader } from "../../../components/PaneSectionHeader";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SourceListPanel } from "../../../components/SourceListPanel";
 import { SplitView } from "../../../components/SplitView";
@@ -401,15 +402,15 @@ export function SetupPanel({
             {activeStep === "runtime" ? (
               <>
                 <article className="diagnostic-card">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">{ONBOARDING_RUNTIME_STEP_COPY.welcomeKicker}</p>
-                      <h3>{ONBOARDING_RUNTIME_STEP_COPY.welcomeHeading}</h3>
-                    </div>
-                    <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
+                  <PaneSectionHeader
+                    kicker={ONBOARDING_RUNTIME_STEP_COPY.welcomeKicker}
+                    title={ONBOARDING_RUNTIME_STEP_COPY.welcomeHeading}
+                    actions={
+                      <span className={`pill ${bootstrap.runtime_status.compatible ? "pill-ok" : "pill-soft"}`}>
                       {runtimeReadinessLabel(bootstrap.runtime_status.compatible, "sentence")}
-                    </span>
-                  </div>
+                      </span>
+                    }
+                  />
                   <p className="inline-note">{ONBOARDING_RUNTIME_STEP_COPY.welcomePrimaryNote}</p>
                   <p className="inline-note">{currentRuntimeSummary.description}</p>
                   <p className="inline-note">{ONBOARDING_RUNTIME_STEP_COPY.welcomeSecondaryNote}</p>
@@ -450,12 +451,10 @@ export function SetupPanel({
                 </article>
 
                 <article className="diagnostic-card">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">{ONBOARDING_RUNTIME_STEP_COPY.nextKicker}</p>
-                      <h3>{ONBOARDING_RUNTIME_STEP_COPY.nextHeading}</h3>
-                    </div>
-                  </div>
+                  <PaneSectionHeader
+                    kicker={ONBOARDING_RUNTIME_STEP_COPY.nextKicker}
+                    title={ONBOARDING_RUNTIME_STEP_COPY.nextHeading}
+                  />
                   <div className="stack-list">
                     {ONBOARDING_RUNTIME_NEXT_STEPS.map((item) => (
                       <div key={item.label}>
@@ -482,13 +481,11 @@ export function SetupPanel({
             {activeStep === "accounts" ? (
               <>
                 <div className="desktop-pane-section onboarding-detection-stack">
-                  <div className="desktop-pane-section-header">
-                    <div>
-                      <p className="card-kicker">{ONBOARDING_ACCOUNTS_STEP_COPY.sectionKicker}</p>
-                      <h3>{ONBOARDING_ACCOUNTS_STEP_COPY.sectionHeading}</h3>
-                    </div>
-                    <p className="inline-note">{ONBOARDING_ACCOUNTS_STEP_COPY.sectionNote}</p>
-                  </div>
+                  <PaneSectionHeader
+                    kicker={ONBOARDING_ACCOUNTS_STEP_COPY.sectionKicker}
+                    title={ONBOARDING_ACCOUNTS_STEP_COPY.sectionHeading}
+                    actions={<p className="inline-note">{ONBOARDING_ACCOUNTS_STEP_COPY.sectionNote}</p>}
+                  />
                   {accountItems.length ? (
                     <SplitView
                       className="onboarding-account-layout"
@@ -496,15 +493,12 @@ export function SetupPanel({
                       secondaryClassName="onboarding-account-detail-pane"
                       primary={
                         <article className="diagnostic-card onboarding-account-list-card">
-                          <div className="desktop-pane-section-header">
-                            <div>
-                              <p className="card-kicker">{ONBOARDING_ACCOUNTS_STEP_COPY.listKicker}</p>
-                              <h4>{ONBOARDING_ACCOUNTS_STEP_COPY.listHeading}</h4>
-                            </div>
-                            <span className="pill pill-soft">
-                              {countLabel(accountItems.length, "item")}
-                            </span>
-                          </div>
+                          <PaneSectionHeader
+                            kicker={ONBOARDING_ACCOUNTS_STEP_COPY.listKicker}
+                            title={ONBOARDING_ACCOUNTS_STEP_COPY.listHeading}
+                            titleTag="h4"
+                            actions={<span className="pill pill-soft">{countLabel(accountItems.length, "item")}</span>}
+                          />
                           <div className="desktop-source-list" aria-label={ONBOARDING_ACCOUNTS_STEP_COPY.listAriaLabel}>
                             {accountItems.map((item) => {
                               const tool = accountItemTool(item);
@@ -573,13 +567,11 @@ export function SetupPanel({
 
             {activeStep === "switch" ? (
               <article className="diagnostic-card">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">{ONBOARDING_SWITCH_STEP_COPY.kicker}</p>
-                    <h3>{ONBOARDING_SWITCH_STEP_COPY.heading}</h3>
-                  </div>
-                  <p className="inline-note">{ONBOARDING_SWITCH_STEP_COPY.note}</p>
-                </div>
+                <PaneSectionHeader
+                  kicker={ONBOARDING_SWITCH_STEP_COPY.kicker}
+                  title={ONBOARDING_SWITCH_STEP_COPY.heading}
+                  actions={<p className="inline-note">{ONBOARDING_SWITCH_STEP_COPY.note}</p>}
+                />
                 <div className="inline-form">
                   <select
                     aria-label={ONBOARDING_SWITCH_STEP_COPY.selectAriaLabel}
@@ -625,13 +617,11 @@ export function SetupPanel({
 
             {activeStep === "terminal" ? (
               <article className="diagnostic-card">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">{ONBOARDING_TERMINAL_STEP_COPY.kicker}</p>
-                    <h3>{ONBOARDING_TERMINAL_STEP_COPY.heading}</h3>
-                  </div>
-                  <p className="inline-note">{ONBOARDING_TERMINAL_STEP_COPY.intro}</p>
-                </div>
+                <PaneSectionHeader
+                  kicker={ONBOARDING_TERMINAL_STEP_COPY.kicker}
+                  title={ONBOARDING_TERMINAL_STEP_COPY.heading}
+                  actions={<p className="inline-note">{ONBOARDING_TERMINAL_STEP_COPY.intro}</p>}
+                />
                 {shellGuidance.data?.detected_shell ? (
                   <p className="inline-note">
                     <strong>{onboardingDetectedShellSummary(shellGuidance.data.detected_shell)}</strong>
@@ -649,15 +639,15 @@ export function SetupPanel({
 
             {activeStep === "done" ? (
               <article className="diagnostic-card onboarding-complete-card">
-                <div className="desktop-pane-section-header">
-                  <div>
-                    <p className="card-kicker">{ONBOARDING_DONE_STEP_COPY.kicker}</p>
-                    <h3>{ONBOARDING_DONE_STEP_COPY.heading}</h3>
-                  </div>
-                  <span className={`pill ${switchReady ? "pill-ok" : "pill-soft"}`}>
-                    {onboardingDoneBadgeLabel(switchReady)}
-                  </span>
-                </div>
+                <PaneSectionHeader
+                  kicker={ONBOARDING_DONE_STEP_COPY.kicker}
+                  title={ONBOARDING_DONE_STEP_COPY.heading}
+                  actions={
+                    <span className={`pill ${switchReady ? "pill-ok" : "pill-soft"}`}>
+                      {onboardingDoneBadgeLabel(switchReady)}
+                    </span>
+                  }
+                />
                 <p className="inline-note">{ONBOARDING_DONE_STEP_COPY.note}</p>
                 <div className="onboarding-complete-grid" aria-label={ONBOARDING_DONE_STEP_COPY.gridAriaLabel}>
                   {snapshot.statuses.map((status) => {
@@ -837,22 +827,20 @@ function OnboardingAccountDetailCard({
 
   return (
     <>
-      <div className="desktop-pane-section-header">
-        <div>
-          <p className="card-kicker">{state.kicker}</p>
-          <h3>
-            {state.headingKind === "brand" ? (
-              <ToolBrand
-                tool={state.tool}
-                variant="headingSection"
-              />
-            ) : (
-              state.headingText
-            )}
-          </h3>
-        </div>
-        <span className={`pill pill-${state.badge.tone}`}>{state.badge.label}</span>
-      </div>
+      <PaneSectionHeader
+        kicker={state.kicker}
+        title={
+          state.headingKind === "brand" ? (
+            <ToolBrand
+              tool={state.tool}
+              variant="headingSection"
+            />
+          ) : (
+            state.headingText
+          )
+        }
+        actions={<span className={`pill pill-${state.badge.tone}`}>{state.badge.label}</span>}
+      />
       {state.kind === "missing" ? (
         <p className="inline-note">
           <ToolBrand

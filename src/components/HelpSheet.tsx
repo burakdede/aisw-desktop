@@ -1,5 +1,6 @@
 import { DIALOG_FOCUS_SELECTORS, DIALOG_SURFACE_CLASS_NAMES, DialogSurface } from "./DialogSurface";
 import { ButtonRow } from "./ButtonRow";
+import { PaneSectionHeader } from "./PaneSectionHeader";
 import { SheetHeader } from "./SheetHeader";
 import { ToolBrand } from "./ToolBrand";
 import {
@@ -54,12 +55,11 @@ export function HelpSheet({
 
       <div className="stack-list">
         <article className="diagnostic-card">
-          <div className="desktop-pane-section-header">
-            <div>
-              <p className="card-kicker">{HELP_SHEET_COPY.supportedToolsKicker}</p>
-              <h4>{HELP_SHEET_COPY.supportedToolsHeading}</h4>
-            </div>
-          </div>
+          <PaneSectionHeader
+            kicker={HELP_SHEET_COPY.supportedToolsKicker}
+            title={HELP_SHEET_COPY.supportedToolsHeading}
+            titleTag="h4"
+          />
           <div className="tool-brand-list" aria-label={HELP_SHEET_COPY.supportedToolsAriaLabel}>
             {HELP_SHEET_SUPPORTED_TOOLS.map((tool) => (
               <ToolBrand
@@ -74,12 +74,11 @@ export function HelpSheet({
         </article>
 
         <article className="diagnostic-card">
-          <div className="desktop-pane-section-header">
-            <div>
-              <p className="card-kicker">{HELP_SHEET_COPY.shortcutsKicker}</p>
-              <h4>{HELP_SHEET_COPY.shortcutsHeading}</h4>
-            </div>
-          </div>
+          <PaneSectionHeader
+            kicker={HELP_SHEET_COPY.shortcutsKicker}
+            title={HELP_SHEET_COPY.shortcutsHeading}
+            titleTag="h4"
+          />
           <div className="settings-summary-grid">
             {HELP_SHEET_SHORTCUTS.map((item) => (
               <div key={`${item.label}-${item.shortcut}`}>
@@ -91,12 +90,11 @@ export function HelpSheet({
         </article>
 
         <article className="diagnostic-card">
-          <div className="desktop-pane-section-header">
-            <div>
-              <p className="card-kicker">{HELP_SHEET_COPY.nextStepsKicker}</p>
-              <h4>{HELP_SHEET_COPY.nextStepsHeading}</h4>
-            </div>
-          </div>
+          <PaneSectionHeader
+            kicker={HELP_SHEET_COPY.nextStepsKicker}
+            title={HELP_SHEET_COPY.nextStepsHeading}
+            titleTag="h4"
+          />
           <p className="inline-note">{HELP_SHEET_COPY.nextStepsNote}</p>
           <ButtonRow>
             {HELP_SHEET_ACTIONS.map((action) => (

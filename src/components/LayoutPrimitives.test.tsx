@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { ButtonRow } from "./ButtonRow";
 import { KeyValueGrid } from "./KeyValueGrid";
+import { PaneSectionHeader } from "./PaneSectionHeader";
 import { SectionCard } from "./SectionCard";
 import { SheetFooter } from "./SheetFooter";
 import { SheetHeader } from "./SheetHeader";
@@ -119,5 +120,29 @@ describe("ButtonRow", () => {
     );
 
     expect(container.querySelector("div.profiles-inspector-action-row")).not.toBeNull();
+  });
+});
+
+describe("PaneSectionHeader", () => {
+  it("renders kicker, title, detail, and actions", () => {
+    render(
+      <PaneSectionHeader
+        kicker="Runtime"
+        title="Included engine"
+        detail="Use the bundled runtime when the custom binary is unavailable."
+        actions={<span>Ready</span>}
+      />,
+    );
+
+    expect(screen.getByText("Runtime")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Included engine" })).toBeVisible();
+    expect(screen.getByText("Use the bundled runtime when the custom binary is unavailable.")).toBeVisible();
+    expect(screen.getByText("Ready")).toBeVisible();
+  });
+
+  it("supports an alternate heading level", () => {
+    render(<PaneSectionHeader kicker="Shortcuts" title="Keyboard" titleTag="h4" />);
+
+    expect(screen.getByRole("heading", { level: 4, name: "Keyboard" })).toBeVisible();
   });
 });
