@@ -34,6 +34,10 @@ export function nullishToEmptyString(value: string | null | undefined) {
   return value ?? "";
 }
 
+export function nullishToUndefined<Value>(value: Value | null | undefined): Value | undefined {
+  return value ?? undefined;
+}
+
 export function asNumber(value: unknown, fallback = 0) {
   return typeof value === "number" ? value : fallback;
 }

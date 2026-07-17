@@ -5,6 +5,7 @@ import {
   desktopBootstrapRetryDelay,
 } from "../../lib/desktop-timing";
 import { DESKTOP_QUERY_KEYS } from "../../lib/desktop-query-keys";
+import { nullishToUndefined } from "../../lib/parse-guards";
 import { isDesktopRuntimeUnavailableError } from "../../lib/tauri";
 import { useMutationAwareQueryEnabled } from "./mutationQueue";
 
@@ -23,7 +24,7 @@ export function useDesktop() {
     queryKey: DESKTOP_QUERY_KEYS.snapshot,
     queryFn: getSnapshot,
     enabled: useMutationAwareQueryEnabled(bootstrap.data?.runtime_status.compatible ?? false),
-    initialData: bootstrap.data?.snapshot ?? undefined,
+    initialData: nullishToUndefined(bootstrap.data?.snapshot),
   });
 
   const init = useQuery({

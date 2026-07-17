@@ -6,6 +6,7 @@ import {
   asNumber,
   nullishToEmptyString,
   nullishToNull,
+  nullishToUndefined,
   asObject,
   asOptionalString,
   asOptionalStringOr,
@@ -35,6 +36,9 @@ describe("parse-guards", () => {
     expect(nullishToNull("value")).toBe("value");
     expect(nullishToNull(null)).toBeNull();
     expect(nullishToNull(undefined)).toBeNull();
+    expect(nullishToUndefined("value")).toBe("value");
+    expect(nullishToUndefined(null)).toBeUndefined();
+    expect(nullishToUndefined(undefined)).toBeUndefined();
     expect(asNumber(12)).toBe(12);
     expect(asNumber("12", 7)).toBe(7);
     expect(asFiniteNumber(12)).toBe(12);

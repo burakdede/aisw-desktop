@@ -1,5 +1,6 @@
 import type { ShellHookGuidance } from "./schemas";
 import { normalizeCheckStatus } from "./check-status";
+import { nullishToUndefined } from "./parse-guards";
 import { NOT_INSTALLED_LABEL, UNAVAILABLE_LABEL } from "./status-copy";
 import {
   resolvePreferredSelectionValueOrEmpty,
@@ -57,7 +58,7 @@ export function selectedShellVariant<Variant extends ShellGuidanceVariantLike>(
     return undefined;
   }
 
-  return resolveSelectionItem(selectedShell, variants, (variant) => variant.shell) ?? undefined;
+  return nullishToUndefined(resolveSelectionItem(selectedShell, variants, (variant) => variant.shell));
 }
 
 export function selectedShellValue(

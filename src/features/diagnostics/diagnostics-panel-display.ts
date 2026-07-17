@@ -16,6 +16,7 @@ import {
   asArray,
   asObject,
   asOptionalString,
+  nullishToUndefined,
   type UnknownRecord,
 } from "../../lib/parse-guards";
 import {
@@ -387,7 +388,9 @@ export function buildDiagnosticFindings(
     status: card.status,
     scopeLabel: "Check",
     countLabel: countLabel(card.issues.length, "detail"),
-    profileTarget: snapshot ? resolveIssueProfileTarget(card.title, snapshot) ?? undefined : undefined,
+    profileTarget: snapshot
+      ? nullishToUndefined(resolveIssueProfileTarget(card.title, snapshot))
+      : undefined,
   }));
 
   recentFailures.forEach((failure) => {

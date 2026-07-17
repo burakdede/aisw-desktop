@@ -1,5 +1,6 @@
 import type { AppSnapshot, DesktopSettings } from "../lib/schemas";
 import { CLOSE_LABEL } from "../lib/display-copy";
+import { nullishToEmptyString, nullishToUndefined } from "../lib/parse-guards";
 import {
   profileSetDisplayLabel,
   profileSetHasUsableSelections,
@@ -10,7 +11,6 @@ import {
 import { CURRENT_LABEL } from "../lib/status-copy";
 import { toolDisplayName } from "../lib/tool-display";
 import { countLabel } from "../lib/utils";
-import { nullishToEmptyString } from "../lib/parse-guards";
 
 export type QuickSwitchItem =
   | {
@@ -97,7 +97,7 @@ export function buildQuickSwitchItems(settings: DesktopSettings, snapshot: AppSn
       searchText: `${set.name} ${nullishToEmptyString(set.label)} ${subtitle}`.toLowerCase(),
       active,
       name: set.name,
-      label: set.label ?? undefined,
+      label: nullishToUndefined(set.label),
     });
   }
 
