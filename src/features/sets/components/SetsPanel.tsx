@@ -14,6 +14,7 @@ import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
+import { useCompactPaneVisibility } from "../../../components/useCompactPaneVisibility";
 import { getProjectBindings, getWorkspaceStatus } from "../../../lib/client";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
 import {
@@ -144,8 +145,18 @@ export function SetsPanel({
   const rulesMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const compactLayout = useCompactLayout(rootRef, WIDE_PANEL_COMPACT_BREAKPOINT);
-  const [compactSetInspectorOpen, setCompactSetInspectorOpen] = useState(false);
-  const [compactRuleInspectorOpen, setCompactRuleInspectorOpen] = useState(false);
+  const {
+    compactPaneOpen: compactSetInspectorOpen,
+    setCompactPaneOpen: setCompactSetInspectorOpen,
+    showPrimary: showSetLibrary,
+    showSecondary: showSetInspector,
+  } = useCompactPaneVisibility(compactLayout);
+  const {
+    compactPaneOpen: compactRuleInspectorOpen,
+    setCompactPaneOpen: setCompactRuleInspectorOpen,
+    showPrimary: showRuleTable,
+    showSecondary: showRuleInspector,
+  } = useCompactPaneVisibility(compactLayout);
   const [workspaceOverrideDismissed, setWorkspaceOverrideDismissed] = useState(false);
   const [scope, setScope] = useState<WorkspaceBindingScope>(
     DEFAULT_WORKSPACE_BINDING_SCOPE,
@@ -267,13 +278,6 @@ export function SetsPanel({
   useEffect(() => {
     setRulesMenuOpen(false);
   }, [mode, selectedBindingKey]);
-
-  useEffect(() => {
-    if (!compactLayout) {
-      setCompactSetInspectorOpen(false);
-      setCompactRuleInspectorOpen(false);
-    }
-  }, [compactLayout]);
 
   function resetSetDraft() {
     setSetDraft(createEmptyEditableProfileSet(TOOLS));
@@ -555,11 +559,6 @@ export function SetsPanel({
         </div>
       </button>
     ));
-
-  const showSetLibrary = !compactLayout || !compactSetInspectorOpen;
-  const showSetInspector = !compactLayout || compactSetInspectorOpen;
-  const showRuleTable = !compactLayout || !compactRuleInspectorOpen;
-  const showRuleInspector = !compactLayout || compactRuleInspectorOpen;
 
   return (
     <div ref={rootRef} className="sets-screen screen-content">

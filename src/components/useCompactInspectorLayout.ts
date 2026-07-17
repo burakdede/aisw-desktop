@@ -1,5 +1,6 @@
-import { useEffect, useState, type Dispatch, type RefObject, type SetStateAction } from "react";
+import type { Dispatch, RefObject, SetStateAction } from "react";
 import { useCompactLayout } from "./useCompactLayout";
+import { useCompactPaneVisibility } from "./useCompactPaneVisibility";
 
 type CompactInspectorLayoutState = {
   compactLayout: boolean;
@@ -14,19 +15,14 @@ export function useCompactInspectorLayout(
   breakpoint: number,
 ): CompactInspectorLayoutState {
   const compactLayout = useCompactLayout(rootRef, breakpoint);
-  const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
-
-  useEffect(() => {
-    if (!compactLayout && compactInspectorOpen) {
-      setCompactInspectorOpen(false);
-    }
-  }, [compactInspectorOpen, compactLayout]);
+  const { compactPaneOpen, setCompactPaneOpen, showPrimary, showSecondary } =
+    useCompactPaneVisibility(compactLayout);
 
   return {
     compactLayout,
-    compactInspectorOpen,
-    setCompactInspectorOpen,
-    showPrimary: !compactLayout || !compactInspectorOpen,
-    showInspector: !compactLayout || compactInspectorOpen,
+    compactInspectorOpen: compactPaneOpen,
+    setCompactInspectorOpen: setCompactPaneOpen,
+    showPrimary,
+    showInspector: showSecondary,
   };
 }
