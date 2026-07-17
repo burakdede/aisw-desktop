@@ -18,6 +18,11 @@ export const CORE_DESKTOP_QUERY_KEYS = [
   DESKTOP_QUERY_KEYS.init,
 ] as const;
 
+export const SNAPSHOT_DESKTOP_QUERY_KEYS = [
+  DESKTOP_QUERY_KEYS.bootstrap,
+  DESKTOP_QUERY_KEYS.snapshot,
+] as const;
+
 export const DESKTOP_DIAGNOSTIC_QUERY_KEYS = [
   DESKTOP_QUERY_KEYS.doctor,
   DESKTOP_QUERY_KEYS.verify,

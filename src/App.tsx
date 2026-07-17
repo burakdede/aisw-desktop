@@ -25,12 +25,15 @@ import {
   diagnosticExportFailureNotification,
   diagnosticExportSuccessNotification,
 } from "./features/diagnostics/diagnostics-copy";
-import { invalidatePostMutationQueries } from "./features/shared/postMutationRefresh";
+import {
+  invalidateCoreDesktopQueries,
+  invalidateDiagnosticDesktopQueries,
+  invalidatePostMutationQueries,
+} from "./features/shared/postMutationRefresh";
 import { SettingsPanel } from "./features/settings/components/SettingsPanel";
 import { useDesktop } from "./features/shared/useDesktop";
 import { notifyDesktop } from "./lib/notifications";
 import {
-  DESKTOP_DIAGNOSTIC_QUERY_KEYS,
   DESKTOP_MENU_EVENTS,
   DESKTOP_TRAY_EVENTS,
 } from "./lib/desktop-event-contract";
@@ -39,7 +42,6 @@ import {
   REFERENCE_DOCUMENT_KIND_TROUBLESHOOTING,
 } from "./lib/desktop-command-contract";
 import { APP_NAV_IDS, type AppNavId } from "./lib/app-navigation";
-import { CORE_DESKTOP_QUERY_KEYS } from "./lib/desktop-query-keys";
 import { activeSetLabel } from "./lib/profile-display";
 import {
   SETTINGS_SECTION_IDS,
@@ -324,9 +326,7 @@ export function App() {
   });
 
   function invalidateDiagnostics() {
-    for (const queryKey of DESKTOP_DIAGNOSTIC_QUERY_KEYS) {
-      void queryClient.invalidateQueries({ queryKey: [...queryKey] });
-    }
+    void invalidateDiagnosticDesktopQueries(queryClient);
   }
 
   useEffect(() => {
@@ -499,9 +499,7 @@ export function App() {
   };
 
   async function retryRuntimeCheck() {
-    for (const queryKey of CORE_DESKTOP_QUERY_KEYS) {
-      await queryClient.invalidateQueries({ queryKey: [...queryKey] });
-    }
+    await invalidateCoreDesktopQueries(queryClient);
   }
 
   function runVerifyFlow() {

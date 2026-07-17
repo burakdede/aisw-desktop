@@ -18,6 +18,7 @@ import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { useLastCommandResults } from "../../shared/lastCommandResult";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
+import { invalidateDiagnosticDesktopQueries } from "../../shared/postMutationRefresh";
 import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import {
   DEFAULT_PROFILE_IMPORT_MODE,
@@ -129,11 +130,7 @@ export function DiagnosticsPanel({
     mutationFn: (fixes: string[]) => runRepair({ apply: true, fixes }),
     onSuccess: async () => {
       setRepairPlanOpen(false);
-      await queryClient.invalidateQueries({ queryKey: DESKTOP_QUERY_KEYS.repairDryRun });
-      await queryClient.invalidateQueries({ queryKey: DESKTOP_QUERY_KEYS.doctor });
-      await queryClient.invalidateQueries({ queryKey: DESKTOP_QUERY_KEYS.verify });
-      await queryClient.invalidateQueries({ queryKey: DESKTOP_QUERY_KEYS.snapshot });
-      await queryClient.invalidateQueries({ queryKey: DESKTOP_QUERY_KEYS.bootstrap });
+      await invalidateDiagnosticDesktopQueries(queryClient);
     },
   });
   const exportBundle = useMutation({

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { DESKTOP_QUERY_KEYS } from "../../lib/desktop-query-keys";
+import { SNAPSHOT_DESKTOP_QUERY_KEYS } from "../../lib/desktop-query-keys";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "../../lib/schemas";
 import { makeRuntimeToolCapabilities } from "../../test-support/runtime-tool-capabilities";
 import { makeToolStatus } from "../../test-support/runtime-tool-statuses";
@@ -112,13 +112,10 @@ describe("diagnostics-panel-actions", () => {
 
     await refreshDiagnosticsData(queryClient, refetchDoctor, refetchVerify, refetchRepair);
 
-    expect(invalidateQueries).toHaveBeenCalledTimes(2);
-    expect(invalidateQueries).toHaveBeenNthCalledWith(1, {
-      queryKey: DESKTOP_QUERY_KEYS.bootstrap,
-    });
-    expect(invalidateQueries).toHaveBeenNthCalledWith(2, {
-      queryKey: DESKTOP_QUERY_KEYS.snapshot,
-    });
+    expect(invalidateQueries).toHaveBeenCalledTimes(SNAPSHOT_DESKTOP_QUERY_KEYS.length);
+    expect(invalidateQueries.mock.calls).toEqual(
+      SNAPSHOT_DESKTOP_QUERY_KEYS.map((queryKey) => [{ queryKey }]),
+    );
     expect(refetchDoctor).toHaveBeenCalledOnce();
     expect(refetchVerify).toHaveBeenCalledOnce();
     expect(refetchRepair).toHaveBeenCalledOnce();

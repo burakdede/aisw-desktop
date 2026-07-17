@@ -1,10 +1,10 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "../../lib/schemas";
-import { DESKTOP_QUERY_KEYS } from "../../lib/desktop-query-keys";
 import { openExternalGuide, installGuideUrlForTool } from "../../lib/tool-guidance";
 import type { SettingsSection } from "../../lib/settings-sections";
 import { DEFAULT_PROFILE_IMPORT_MODE, type ExplicitProfileCredentialBackend, type ProfileImportMode } from "../shared/profile-capabilities";
 import type { StateModeRequest, ToolStateModeTarget } from "../shared/state-modes";
+import { invalidateSnapshotDesktopQueries } from "../shared/postMutationRefresh";
 import {
   buildDiagnosticQuickFixModels,
   diagnosticBundlePathCopyMessage,
@@ -71,11 +71,6 @@ type BuildDiagnosticsQuickFixCardsInput = {
   handlers: DiagnosticsQuickFixHandlers;
   onRefreshDiagnostics: () => void;
 };
-
-const DIAGNOSTICS_REFRESH_QUERY_KEYS = [
-  DESKTOP_QUERY_KEYS.bootstrap,
-  DESKTOP_QUERY_KEYS.snapshot,
-] as const;
 
 export function buildDiagnosticsQuickFixCards(
   input: BuildDiagnosticsQuickFixCardsInput,
@@ -147,11 +142,7 @@ export async function refreshDiagnosticsData(
   refetchVerify: () => Promise<unknown>,
   refetchRepair: () => Promise<unknown>,
 ) {
-  await Promise.all(
-    DIAGNOSTICS_REFRESH_QUERY_KEYS.map((queryKey) =>
-      queryClient.invalidateQueries({ queryKey }),
-    ),
-  );
+  await invalidateSnapshotDesktopQueries(queryClient);
   await Promise.all([refetchDoctor(), refetchVerify(), refetchRepair()]);
 }
 

@@ -4,6 +4,7 @@ import {
   DESKTOP_DIAGNOSTIC_QUERY_KEYS,
   DESKTOP_QUERY_KEYS,
   POST_MUTATION_QUERY_KEYS,
+  SNAPSHOT_DESKTOP_QUERY_KEYS,
 } from "./desktop-query-keys";
 
 describe("desktop-query-keys", () => {
@@ -25,6 +26,10 @@ describe("desktop-query-keys", () => {
       ["bootstrap"],
       ["snapshot"],
       ["init"],
+    ]);
+    expect(SNAPSHOT_DESKTOP_QUERY_KEYS).toEqual([
+      ["bootstrap"],
+      ["snapshot"],
     ]);
     expect(DESKTOP_DIAGNOSTIC_QUERY_KEYS).toEqual([
       ["doctor"],
