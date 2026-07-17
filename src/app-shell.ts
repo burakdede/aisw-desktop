@@ -28,6 +28,7 @@ import {
 } from "./lib/profile-display";
 import { resolveGlobalStateMode, resolveStateModeRequest } from "./features/shared/state-modes";
 import { titleCase } from "./lib/utils";
+import { formatMessageWithRemediation } from "./lib/remediation-text";
 import {
   APP_NAV_IDS,
   APP_NAV_ITEMS,
@@ -457,9 +458,11 @@ export function buildReapplyActiveProfileError(error: unknown) {
   );
 
   return {
-    notificationBody: details.remediation
-      ? `${details.message} ${details.remediation}`
-      : details.message,
+    notificationBody: formatMessageWithRemediation(
+      details.message,
+      details.remediation,
+      { prefix: "" },
+    ),
     result: {
       label: REAPPLY_ACTIVE_PROFILE_LABEL,
       status: "error" as const,
@@ -491,7 +494,7 @@ export function buildTrayCommandFeedback(input: unknown) {
       body:
         event.status === "success"
           ? message
-          : [message, remediation].filter(Boolean).join(" "),
+          : formatMessageWithRemediation(message, remediation, { prefix: "" }),
     },
     result: {
       label,

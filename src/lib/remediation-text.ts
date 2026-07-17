@@ -1,6 +1,11 @@
 export function formatMessageWithRemediation(
   message: string,
   remediation?: string | null,
+  options?: { prefix?: string },
 ) {
-  return remediation ? `${message} Remediation: ${remediation}` : message;
+  if (!remediation) {
+    return message;
+  }
+
+  return `${message} ${options?.prefix ?? "Remediation: "}${remediation}`;
 }

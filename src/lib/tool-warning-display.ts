@@ -1,4 +1,5 @@
 import type { ToolStatus } from "./schemas";
+import { formatMessageWithRemediation } from "./remediation-text";
 
 export const TOKEN_WARNING_FALLBACK_DETAIL = "Token state needs attention.";
 export const RUNTIME_WARNING_FALLBACK_DETAIL = "Warning reported by the runtime.";
@@ -32,7 +33,7 @@ export function formatToolWarning(
   options?: { prefix?: string; fallbackDetail?: string },
 ) {
   const detail = warning.message ?? warning.code ?? options?.fallbackDetail ?? APP_WARNING_FALLBACK_DETAIL;
-  const content = warning.remediation ? `${detail} Remediation: ${warning.remediation}` : detail;
+  const content = formatMessageWithRemediation(detail, warning.remediation);
 
   return options?.prefix ? `${options.prefix}${content}` : content;
 }

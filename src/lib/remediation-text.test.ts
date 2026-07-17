@@ -9,4 +9,10 @@ describe("remediation-text", () => {
     );
     expect(formatMessageWithRemediation("Switch failed.", null)).toBe("Switch failed.");
   });
+
+  it("supports unlabeled remediation joins for notification copy", () => {
+    expect(
+      formatMessageWithRemediation("Switch failed.", "Retry.", { prefix: "" }),
+    ).toBe("Switch failed. Retry.");
+  });
 });
