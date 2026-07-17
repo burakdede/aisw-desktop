@@ -23,41 +23,41 @@ const SERVER_READY_TIMEOUT_MS = 30_000;
 const SERVER_READY_POLL_MS = 250;
 const GIF_FPS = 18;
 const GIF_LOOP = "0";
-const OVERLAY_BOTTOM_OFFSET_PX = 18;
-const OVERLAY_CARD_SIZE = { width: 360, height: 78 };
+const OVERLAY_BOTTOM_OFFSET_PX = 10;
+const OVERLAY_CARD_SIZE = { width: 420, height: 72 };
 const OVERLAY_CARD_FRAME = {
-  left: 4,
-  top: 4,
-  right: 356,
-  bottom: 74,
-  radius: 24,
+  left: 3,
+  top: 3,
+  right: 417,
+  bottom: 69,
+  radius: 22,
 };
 const OVERLAY_SHADOW_FRAME = {
-  left: 10,
-  top: 12,
-  right: 350,
-  bottom: 76,
-  radius: 24,
+  left: 8,
+  top: 10,
+  right: 412,
+  bottom: 70,
+  radius: 22,
 };
 const OVERLAY_TITLE = {
   font: "/System/Library/Fonts/SFNSRounded.ttf",
-  pointSize: 42,
+  pointSize: 34,
   weight: "700",
-  offsetY: 2,
+  offsetY: 0,
   color: "#ffffff",
 };
 const OVERLAY_DETAIL = {
   font: "/System/Library/Fonts/SFNSRounded.ttf",
   pointSize: 18,
-  offsetY: 20,
+  offsetY: 16,
   color: "#f5f8ff",
   interlineSpacing: 3,
 };
 const OVERLAY_CARD_COLORS = {
-  fill: "rgba(7,11,19,0.985)",
-  shadow: "rgba(3,7,13,0.4)",
-  stroke: "rgba(255,255,255,0.18)",
-  strokeWidth: "2",
+  fill: "rgba(7,11,19,0.96)",
+  shadow: "rgba(3,7,13,0.24)",
+  stroke: "rgba(255,255,255,0.12)",
+  strokeWidth: "1.5",
 };
 const QUICK_SWITCH_CAPTURE = {
   openDelayMs: 700,
