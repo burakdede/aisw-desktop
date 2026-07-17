@@ -57,15 +57,33 @@ export function createDesktopSettings(
   };
 }
 
+export function buildDesktopSettingsUpdate(
+  settings: DesktopSettings,
+  overrides: Partial<DesktopSettings> = {},
+): DesktopSettings {
+  return {
+    runtime_kind: overrides.runtime_kind ?? settings.runtime_kind,
+    runtime_path:
+      overrides.runtime_path !== undefined
+        ? overrides.runtime_path
+        : settings.runtime_path ?? null,
+    aisw_home:
+      overrides.aisw_home !== undefined
+        ? overrides.aisw_home
+        : settings.aisw_home ?? null,
+    update_channel: normalizeDesktopUpdateChannel(
+      overrides.update_channel ?? settings.update_channel,
+    ),
+    profile_labels: overrides.profile_labels ?? settings.profile_labels ?? {},
+    profile_sets: overrides.profile_sets ?? settings.profile_sets ?? [],
+  };
+}
+
 export function buildBundledRuntimeSettingsUpdate(
   settings: DesktopSettings,
 ): DesktopSettings {
-  return {
+  return buildDesktopSettingsUpdate(settings, {
     runtime_kind: "bundled",
     runtime_path: null,
-    aisw_home: settings.aisw_home ?? null,
-    update_channel: normalizeDesktopUpdateChannel(settings.update_channel),
-    profile_labels: settings.profile_labels ?? {},
-    profile_sets: settings.profile_sets ?? [],
-  };
+  });
 }

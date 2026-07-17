@@ -6,6 +6,7 @@ import type {
 } from "../../lib/schemas";
 import { backupTimestampValue, compareBackupsNewestFirst } from "../../lib/backups";
 import { credentialBackendLabel as formatCredentialBackendLabel } from "../../lib/credential-backends";
+import { buildDesktopSettingsUpdate } from "../../lib/desktop-settings";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import {
   LOCAL_PERMISSIONS_LABEL,
@@ -663,11 +664,7 @@ export function buildProfileLabelUpdateRequest(input: {
     return null;
   }
 
-  return {
-    runtime_kind: input.settings.runtime_kind,
-    runtime_path: input.settings.runtime_path ?? null,
-    aisw_home: input.settings.aisw_home ?? null,
-    update_channel: input.settings.update_channel,
+  return buildDesktopSettingsUpdate(input.settings, {
     profile_sets: input.settings.profile_sets,
     profile_labels: mergeProfileLabel(
       input.settings,
@@ -675,7 +672,7 @@ export function buildProfileLabelUpdateRequest(input: {
       input.profileName,
       input.nextLabel || null,
     ),
-  };
+  });
 }
 
 export function latestBackupForProfile(

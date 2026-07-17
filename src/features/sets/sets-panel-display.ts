@@ -26,6 +26,7 @@ import {
   toolProfileDisplayLabel,
 } from "../../lib/profile-display";
 import type { AppSnapshot, DesktopSettings } from "../../lib/schemas";
+import { buildDesktopSettingsUpdate } from "../../lib/desktop-settings";
 import {
   CURRENT_SET_PREFIX,
   EXPECTED_SET_PREFIX,
@@ -415,14 +416,9 @@ export function buildSetSettingsUpdate(
   settings: DesktopSettings,
   profileSets: NonNullable<DesktopSettings["profile_sets"]>,
 ): SetSettingsUpdate {
-  return {
-    runtime_kind: settings.runtime_kind,
-    runtime_path: settings.runtime_path ?? null,
-    aisw_home: settings.aisw_home ?? null,
-    update_channel: settings.update_channel,
-    profile_labels: settings.profile_labels ?? {},
+  return buildDesktopSettingsUpdate(settings, {
     profile_sets: profileSets,
-  };
+  });
 }
 
 export function buildSavedSetCollection(

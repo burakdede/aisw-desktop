@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildDesktopSettingsUpdate,
   buildBundledRuntimeSettingsUpdate,
   createDesktopSettings,
   DEFAULT_DESKTOP_SETTINGS,
@@ -40,18 +41,30 @@ describe("desktop-settings", () => {
   });
 
   it("builds the bundled runtime settings update from existing settings", () => {
+    const settings = createDesktopSettings({
+      runtime_kind: "custom",
+      runtime_path: "/tmp/aisw",
+      aisw_home: "/tmp/home",
+      update_channel: "beta",
+      profile_labels: { claude: { work: "Work" } },
+      profile_sets: [{ name: "work", label: "Work", profiles: { claude: "work" } }],
+    });
+
     expect(
-      buildBundledRuntimeSettingsUpdate(
-        createDesktopSettings({
-          runtime_kind: "custom",
-          runtime_path: "/tmp/aisw",
-          aisw_home: "/tmp/home",
-          update_channel: "beta",
-          profile_labels: { claude: { work: "Work" } },
-          profile_sets: [{ name: "work", label: "Work", profiles: { claude: "work" } }],
-        }),
-      ),
+      buildDesktopSettingsUpdate(settings, {
+        runtime_kind: "system",
+        runtime_path: null,
+      }),
     ).toEqual({
+      runtime_kind: "system",
+      runtime_path: null,
+      aisw_home: "/tmp/home",
+      update_channel: "beta",
+      profile_labels: { claude: { work: "Work" } },
+      profile_sets: [{ name: "work", label: "Work", profiles: { claude: "work" } }],
+    });
+
+    expect(buildBundledRuntimeSettingsUpdate(settings)).toEqual({
       runtime_kind: "bundled",
       runtime_path: null,
       aisw_home: "/tmp/home",
