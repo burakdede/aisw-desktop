@@ -1,5 +1,10 @@
 import type { AppSnapshot, DesktopSettings } from "./schemas";
-import { findMatchingItem, titleCase } from "./utils";
+import {
+  findMatchingItem,
+  hasTrimmedText,
+  titleCase,
+  trimmedStringValues,
+} from "./utils";
 
 export function snapshotHasToolProfile(
   snapshot: AppSnapshot,
@@ -132,9 +137,9 @@ export function activeSetLabel(settings: DesktopSettings, snapshot: AppSnapshot)
     return profileSetDisplayLabel(activeProfileSet);
   }
 
-  const activeProfiles = snapshot.statuses
-    .map((status) => status.active_profile?.trim())
-    .filter((profile): profile is string => Boolean(profile));
+  const activeProfiles = trimmedStringValues(
+    snapshot.statuses.map((status) => status.active_profile),
+  );
   const uniqueProfiles = [...new Set(activeProfiles)].sort((left, right) => left.localeCompare(right));
   if (uniqueProfiles.length !== 1) {
     return null;
@@ -149,9 +154,7 @@ export function profileSetDisplayLabel(set: NonNullable<DesktopSettings["profile
 export function profileSetHasSelections(
   set: NonNullable<DesktopSettings["profile_sets"]>[number],
 ) {
-  return Object.values(set.profiles).some(
-    (profile) => typeof profile === "string" && profile.trim().length > 0,
-  );
+  return Object.values(set.profiles).some((profile) => hasTrimmedText(profile));
 }
 
 export function missingProfileSetSelections(
@@ -159,7 +162,7 @@ export function missingProfileSetSelections(
   set: NonNullable<DesktopSettings["profile_sets"]>[number],
 ) {
   return Object.entries(set.profiles)
-    .filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].trim().length > 0)
+    .filter((entry): entry is [string, string] => hasTrimmedText(entry[1]))
     .filter(([tool, profile]) => !snapshotHasToolProfile(snapshot, tool, profile));
 }
 

@@ -22,7 +22,12 @@ import {
 import { AppBootstrap, AppSnapshot, InitReport } from "../../../lib/schemas";
 import { toolSupportsEditableStateModes } from "../../../lib/tool-registry";
 import { toolDisplayName } from "../../../lib/tool-display";
-import { countLabel, findMatchingItem, stringRecordValue } from "../../../lib/utils";
+import {
+  countLabel,
+  findMatchingItem,
+  hasTrimmedText,
+  stringRecordValue,
+} from "../../../lib/utils";
 import { inspectItemLabel } from "../../../lib/display-copy";
 import {
   installGuideUrlForTool,
@@ -184,7 +189,7 @@ export function SetupPanel({
     }
 
     const currentLabel = stringRecordValue(profileLabels, pendingLiveImport.tool);
-    if (currentLabel.trim().length > 0) {
+    if (hasTrimmedText(currentLabel)) {
       return;
     }
 

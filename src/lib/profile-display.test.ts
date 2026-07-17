@@ -11,6 +11,8 @@ import {
   mergeProfileLabel,
   profileDisplayLabel,
   profileSetDisplayLabel,
+  profileSetHasSelections,
+  missingProfileSetSelections,
   sharedProfileEntries,
   snapshotHasContext,
   snapshotHasToolProfile,
@@ -164,5 +166,30 @@ describe("profile-display", () => {
         "personal",
       ),
     ).toBe(true);
+  });
+
+  it("treats whitespace-only set selections as empty", () => {
+    const set = {
+      name: "draft",
+      label: null,
+      profiles: {
+        claude: "   ",
+        codex: "personal",
+      },
+    };
+
+    expect(profileSetHasSelections(set)).toBe(true);
+    expect(
+      missingProfileSetSelections(
+        makeSnapshot({
+          statuses: [],
+          profiles: {
+            claude: { active: null, profiles: [] },
+            codex: { active: "personal", profiles: [{ name: "personal", auth: "oauth", label: "" }] },
+          },
+        }),
+        set,
+      ),
+    ).toEqual([]);
   });
 });

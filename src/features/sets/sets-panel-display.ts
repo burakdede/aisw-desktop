@@ -48,6 +48,7 @@ import { CURRENT_LABEL } from "../../lib/status-copy";
 import { toolShortName } from "../../lib/tool-registry";
 import {
   buildKeyedRecord,
+  hasTrimmedText,
   resolvePreferredSelectionItem,
   resolvePreferredSelectionValue,
   resolveSelectionValue,
@@ -669,7 +670,7 @@ export function buildSelectedSetInspectorState(input: {
   tools: readonly string[];
 }): SelectedSetInspectorState {
   const selectedCount = Object.values(input.selectedSet.profiles).filter(
-    (profile) => typeof profile === "string" && profile.trim().length > 0,
+    (profile) => hasTrimmedText(profile),
   ).length;
   const missing = missingProfileSetSelections(input.snapshot, input.selectedSet);
   const isCurrent = profileSetIsActive(input.snapshot, input.selectedSet);

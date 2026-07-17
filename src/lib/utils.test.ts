@@ -2,7 +2,9 @@ import {
   buildKeyedRecord,
   countLabel,
   findMatchingItem,
+  hasTrimmedText,
   hasMatchingSelection,
+  trimmedStringValues,
   itemAtIndexOrNull,
   itemKeyOrNull,
   humanizeIdentifierLabel,
@@ -62,6 +64,12 @@ describe("utils", () => {
     expect(trimmedStringOrNull("")).toBeNull();
     expect(trimmedStringOrNull("   ")).toBeNull();
     expect(trimmedStringOrNull("  work  ")).toBe("work");
+    expect(hasTrimmedText("  work  ")).toBe(true);
+    expect(hasTrimmedText("   ")).toBe(false);
+    expect(trimmedStringValues([" work ", "", null, " personal "])).toEqual([
+      "work",
+      "personal",
+    ]);
   });
 
   it("builds typed records from fixed key lists", () => {

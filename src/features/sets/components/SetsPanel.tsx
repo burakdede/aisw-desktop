@@ -40,6 +40,7 @@ import { SUPPORTED_TOOLS } from "../../../lib/tool-registry";
 import {
   buildKeyedRecord,
   countLabel,
+  hasTrimmedText,
   resolveSelectionItem,
   stringRecordValue,
 } from "../../../lib/utils";
@@ -195,7 +196,9 @@ export function SetsPanel({
 
   const trimmedDraftName = setDraft.name.trim();
   const isEditingSet = setDraft.sourceName !== null;
-  const draftHasSelections = Object.values(setDraft.profiles).some((profile) => profile.trim().length > 0);
+  const draftHasSelections = Object.values(setDraft.profiles).some((profile) =>
+    hasTrimmedText(profile),
+  );
   const duplicateSetName = hasDuplicateSetName(
     localSets,
     trimmedDraftName,

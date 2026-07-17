@@ -54,6 +54,18 @@ export function trimmedStringOrNull(value: string | null | undefined) {
   return normalized ? normalized : null;
 }
 
+export function hasTrimmedText(value: string | null | undefined): value is string {
+  return trimmedStringOrNull(value) !== null;
+}
+
+export function trimmedStringValues(
+  values: ReadonlyArray<string | null | undefined>,
+) {
+  return values
+    .map((value) => trimmedStringOrNull(value))
+    .filter((value): value is string => Boolean(value));
+}
+
 export function buildKeyedRecord<const Key extends string, Value>(
   keys: readonly Key[],
   createValue: (key: Key) => Value,

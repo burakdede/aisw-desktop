@@ -33,6 +33,7 @@ import {
 import { toolDisplayName } from "../../lib/tool-display";
 import {
   findMatchingItem,
+  hasTrimmedText,
   hasMatchingSelection,
   normalizeSearchText,
   resolveSelectionValue,
@@ -611,9 +612,8 @@ export function buildProfileEditSheetState(input: {
     profile.name,
     effectiveToolProfileLabel(input.settings, input.tool, profile.name, profile.label),
   );
-  const renameDuplicate =
-    renameDraft.trim().length > 0 &&
-    isDuplicateProfileName(input.profiles, profile.name, renameDraft);
+  const renameDuplicate = hasTrimmedText(renameDraft)
+    && isDuplicateProfileName(input.profiles, profile.name, renameDraft);
 
   return {
     display,

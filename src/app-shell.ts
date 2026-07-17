@@ -32,7 +32,11 @@ import {
 } from "./lib/profile-display";
 import { resolveGlobalStateMode, resolveStateModeRequest } from "./features/shared/state-modes";
 import { toolDisplayName } from "./lib/tool-display";
-import { hasMatchingSelection } from "./lib/utils";
+import {
+  hasMatchingSelection,
+  hasTrimmedText,
+  trimmedStringValues,
+} from "./lib/utils";
 import { nullishToNull } from "./lib/parse-guards";
 import { formatMessageWithRemediation } from "./lib/remediation-text";
 import {
@@ -544,9 +548,9 @@ export function resolveActiveReapplyAction(input: {
     };
   }
 
-  const activeProfiles = snapshot.statuses
-    .map((status) => status.active_profile?.trim())
-    .filter((profile): profile is string => Boolean(profile));
+  const activeProfiles = trimmedStringValues(
+    snapshot.statuses.map((status) => status.active_profile),
+  );
   const uniqueProfiles = [...new Set(activeProfiles)].sort((left, right) =>
     left.localeCompare(right),
   );
@@ -572,7 +576,7 @@ export function resolveActiveReapplyAction(input: {
 
   const activeStatuses = snapshot.statuses.filter(
     (status): status is (typeof snapshot.statuses)[number] & { active_profile: string } =>
-      Boolean(status.active_profile?.trim()),
+      hasTrimmedText(status.active_profile),
   );
 
   if (activeStatuses.length === 1) {
