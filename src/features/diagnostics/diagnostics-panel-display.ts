@@ -183,6 +183,16 @@ type DiagnosticRepairAction = {
   fix?: string;
 };
 
+type ParsedDoctorCheck = ReturnType<typeof parseDoctorChecks>[number];
+
+type DoctorRepairDefinition = {
+  keyword: string;
+  title: string;
+  label: string;
+  repairKey: string;
+  primary?: boolean;
+};
+
 type DiagnosticBundleResult = {
   filename: string;
   path: string;
@@ -246,6 +256,49 @@ const RECENT_FAILURE_TITLES = {
   invalidStateMode: "Unsupported state mode",
   backupNeedsAttention: "Backup restore needs attention",
 } as const;
+
+const DIAGNOSTIC_QUICK_FIX_COPY = {
+  defaultDoctorDetail: "AI Switch reported an issue.",
+  shellHookDefaultDetail: "Terminal integration guidance needs attention.",
+  keyringDefaultDetail: "Keyring access needs attention.",
+  terminalIntegrationTitle: "Terminal integration not active",
+  fileBackedStorageTitle: "Use file-backed storage",
+  fileBackedStorageDetail:
+    "Open account setup with file-backed credential storage preselected for the next import or add flow.",
+  fileBackedStorageLabel: "Use file-backed storage",
+  keyringSetupTitle: "Keyring setup instructions",
+  keyringSetupDetail:
+    "Review the supported local keyring services for macOS, Windows, and Linux.",
+  keyringSetupLabel: "Show keyring setup",
+  installationGuideLabel: "Open installation guide",
+  projectSetMismatchTitle: "Project set mismatch",
+} as const;
+
+const DOCTOR_REPAIR_DEFINITIONS = [
+  {
+    keyword: "keyring",
+    title: "Keyring unavailable",
+    label: "Apply keyring repair",
+    repairKey: "keyring",
+  },
+  {
+    keyword: "permission",
+    title: "Permission issue",
+    label: "Repair permissions",
+    repairKey: "permissions",
+  },
+  {
+    keyword: "oauth",
+    title: "OAuth failure",
+    label: "Retry OAuth repair",
+    repairKey: "oauth",
+  },
+] as const satisfies readonly DoctorRepairDefinition[];
+
+const SHELL_HOOK_KEYWORDS = [
+  "shell hook",
+  "terminal integration",
+] as const;
 
 const DIAGNOSTIC_IMPACT_RULES = [
   {
@@ -732,7 +785,7 @@ function buildShellHookQuickFix(issue: {
 }): DiagnosticQuickFixModel {
   return {
     kind: "open_settings",
-    title: "Terminal integration not active",
+    title: DIAGNOSTIC_QUICK_FIX_COPY.terminalIntegrationTitle,
     detail: issue.detail,
     label: DESKTOP_ACTION_COPY.openTerminalSetupLabel,
     status: issue.status,
@@ -746,18 +799,18 @@ function buildKeyringQuickFixes(issue: {
   return [
     {
       kind: "open_profile_setup",
-      title: "Use file-backed storage",
-      detail: "Open account setup with file-backed credential storage preselected for the next import or add flow.",
-      label: "Use file-backed storage",
+      title: DIAGNOSTIC_QUICK_FIX_COPY.fileBackedStorageTitle,
+      detail: DIAGNOSTIC_QUICK_FIX_COPY.fileBackedStorageDetail,
+      label: DIAGNOSTIC_QUICK_FIX_COPY.fileBackedStorageLabel,
       status: issue.status,
       setupMode: DEFAULT_PROFILE_IMPORT_MODE,
       credentialBackend: "file",
     },
     {
       kind: "open_settings",
-      title: "Keyring setup instructions",
-      detail: "Review the supported local keyring services for macOS, Windows, and Linux.",
-      label: "Show keyring setup",
+      title: DIAGNOSTIC_QUICK_FIX_COPY.keyringSetupTitle,
+      detail: DIAGNOSTIC_QUICK_FIX_COPY.keyringSetupDetail,
+      label: DIAGNOSTIC_QUICK_FIX_COPY.keyringSetupLabel,
       status: issue.status,
       settingsSection: "keyring",
     },
@@ -769,13 +822,13 @@ function buildMissingToolQuickFix(tool: string): DiagnosticQuickFixModel {
     kind: "open_installation_guide",
     title: `${tool} is missing`,
     detail: `Open the install guide for ${tool} and then refresh diagnostics.`,
-    label: "Open installation guide",
+    label: DIAGNOSTIC_QUICK_FIX_COPY.installationGuideLabel,
     status: "warn",
     toolTarget: tool,
-      secondaryAction: {
-        kind: "refresh_diagnostics",
-        label: DIAGNOSTICS_REFRESH_DIAGNOSTICS_LABEL,
-      },
+    secondaryAction: {
+      kind: "refresh_diagnostics",
+      label: DIAGNOSTICS_REFRESH_DIAGNOSTICS_LABEL,
+    },
   };
 }
 
@@ -830,7 +883,7 @@ function buildWorkspaceMismatchQuickFix(
 
   return {
     kind: "resolve_workspace",
-    title: "Project set mismatch",
+    title: DIAGNOSTIC_QUICK_FIX_COPY.projectSetMismatchTitle,
     detail: target
       ? `This folder wants ${expectedContextLabel}, but ${currentContextLabel} is currently active.`
       : `This folder wants ${expectedContextLabel}, but no matching detected set or ready saved set is currently available.`,
@@ -854,87 +907,45 @@ function repairableDoctorIssues(
   primary?: boolean;
 }> {
   return parseDoctorChecks(doctor, {
-    defaultDetail: "AI Switch reported an issue.",
+    defaultDetail: DIAGNOSTIC_QUICK_FIX_COPY.defaultDoctorDetail,
   }).flatMap((check) => {
-      if (doctorCheckHasKeyword(check, "keyring")) {
-        return [doctorRepairFixCard(
-          "Keyring unavailable",
-          check.detail,
-          "Apply keyring repair",
-          check.status,
-          repairFixMap.get("keyring") ?? "keyring",
-        )];
-      }
-      if (doctorCheckHasKeyword(check, "permission")) {
-        return [doctorRepairFixCard(
-          "Permission issue",
-          check.detail,
-          "Repair permissions",
-          check.status,
-          repairFixMap.get("permissions") ?? "permissions",
-        )];
-      }
-      if (doctorCheckHasKeyword(check, "oauth")) {
-        return [doctorRepairFixCard(
-          "OAuth failure",
-          check.detail,
-          "Retry OAuth repair",
-          check.status,
-          repairFixMap.get("oauth") ?? "oauth",
-        )];
-      }
-      return [];
-    });
+    const repairAction = resolveDoctorRepairAction(check, repairFixMap);
+    return repairAction ? [repairAction] : [];
+  });
 }
 
 function doctorRepairFixCard(
-  title: string,
+  definition: DoctorRepairDefinition,
   detail: string,
-  label: string,
   status: AttentionCheckStatus,
-  fix: string,
+  repairFixMap: Map<string, string>,
 ) {
   return {
-    title,
+    title: definition.title,
     detail,
-    label,
+    label: definition.label,
     status,
-    fix,
-    primary: true,
+    fix: repairFixMap.get(definition.repairKey) ?? definition.repairKey,
+    primary: definition.primary ?? true,
   };
 }
 
 function shellHookDoctorIssue(doctor: DoctorReport | undefined) {
-  const checks = parseDoctorChecks(doctor, {
-    defaultDetail: "Terminal integration guidance needs attention.",
+  return findDoctorIssue(doctor, {
+    defaultDetail: DIAGNOSTIC_QUICK_FIX_COPY.shellHookDefaultDetail,
     detailTransform: normalizeTerminalIntegrationText,
-  });
-
-  for (const check of checks) {
-    if (
-      doctorCheckNameHasAll(check, ["shell", "hook"]) ||
-      doctorCheckHasKeyword(check, "shell hook") ||
-      doctorCheckHasKeyword(check, "terminal integration")
-    ) {
-      return { detail: check.detail, status: check.status };
-    }
-  }
-
-  return null;
+  }, (check) =>
+    doctorCheckNameHasAll(check, ["shell", "hook"]) ||
+    SHELL_HOOK_KEYWORDS.some((keyword) => doctorCheckHasKeyword(check, keyword)),
+  );
 }
 
 function keyringDoctorIssue(doctor: DoctorReport | undefined) {
-  const checks = parseDoctorChecks(doctor, {
-    defaultDetail: "Keyring access needs attention.",
-  });
-
-  for (const check of checks) {
-    if (doctorCheckHasKeyword(check, "keyring")) {
-      return { detail: check.detail, status: check.status };
-    }
-  }
-
-  return null;
+  return findDoctorIssue(
+    doctor,
+    { defaultDetail: DIAGNOSTIC_QUICK_FIX_COPY.keyringDefaultDetail },
+    (check) => doctorCheckHasKeyword(check, "keyring"),
+  );
 }
 
 function resolveStateMode(status: ToolStatus): StateModeRequest {
@@ -965,6 +976,31 @@ function resolveDiagnosticTool(title: string) {
   const normalized = title.trim().toLowerCase();
   const candidate = normalized.startsWith("tool/") ? normalized.slice("tool/".length) : normalized;
   return isSupportedTool(candidate) ? candidate : null;
+}
+
+function resolveDoctorRepairAction(
+  check: ParsedDoctorCheck,
+  repairFixMap: Map<string, string>,
+) {
+  const definition = DOCTOR_REPAIR_DEFINITIONS.find((entry) =>
+    doctorCheckHasKeyword(check, entry.keyword),
+  );
+
+  if (!definition) {
+    return null;
+  }
+
+  return doctorRepairFixCard(definition, check.detail, check.status, repairFixMap);
+}
+
+function findDoctorIssue(
+  doctor: DoctorReport | undefined,
+  options: Parameters<typeof parseDoctorChecks>[1],
+  matcher: (check: ParsedDoctorCheck) => boolean,
+) {
+  const checks = parseDoctorChecks(doctor, options);
+  const match = checks.find(matcher);
+  return match ? { detail: match.detail, status: match.status } : null;
 }
 
 function buildQuickFixAction(
