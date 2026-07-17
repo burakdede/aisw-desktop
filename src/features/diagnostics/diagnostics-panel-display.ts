@@ -177,6 +177,11 @@ export type DiagnosticQuickFixModel = DiagnosticQuickFixInput & {
   primary?: boolean;
 };
 
+type DiagnosticStatusPresentation = {
+  label: string;
+  symbol: "▲" | "⨯";
+};
+
 type DiagnosticRepairAction = {
   title: string;
   detail: string;
@@ -256,6 +261,20 @@ const RECENT_FAILURE_TITLES = {
   invalidStateMode: "Unsupported state mode",
   backupNeedsAttention: "Backup restore needs attention",
 } as const;
+
+const DIAGNOSTIC_STATUS_PRESENTATION: Record<
+  AttentionCheckStatus,
+  DiagnosticStatusPresentation
+> = {
+  fail: {
+    label: BLOCKED_LABEL,
+    symbol: "⨯",
+  },
+  warn: {
+    label: NEEDS_ATTENTION_SENTENCE_LABEL,
+    symbol: "▲",
+  },
+};
 
 const DIAGNOSTIC_QUICK_FIX_COPY = {
   defaultDoctorDetail: "AI Switch reported an issue.",
@@ -624,7 +643,13 @@ export function diagnosticBundlePathCopyMessage(path: string, clipboardAvailable
 }
 
 export function diagnosticInspectorStatusLabel(status: DiagnosticFinding["status"]) {
-  return status === "fail" ? BLOCKED_LABEL : NEEDS_ATTENTION_SENTENCE_LABEL;
+  return diagnosticStatusPresentation(status).label;
+}
+
+export function diagnosticStatusPresentation(
+  status: DiagnosticFinding["status"],
+): DiagnosticStatusPresentation {
+  return DIAGNOSTIC_STATUS_PRESENTATION[status];
 }
 
 export function diagnosticFindingAriaLabel(

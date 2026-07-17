@@ -14,6 +14,7 @@ import {
   diagnosticBundlePathCopyMessage,
   diagnosticFindingAriaLabel,
   diagnosticInspectorStatusLabel,
+  diagnosticStatusPresentation,
   diagnosticsApplyRepairsLabel,
   diagnosticsPassedChecksSummary,
   diagnosticsRepairPlanSummary,
@@ -129,6 +130,14 @@ describe("diagnostics-panel-display", () => {
     );
     expect(diagnosticInspectorStatusLabel("fail")).toBe("Blocked");
     expect(diagnosticInspectorStatusLabel("warn")).toBe("Needs attention");
+    expect(diagnosticStatusPresentation("fail")).toEqual({
+      label: "Blocked",
+      symbol: "⨯",
+    });
+    expect(diagnosticStatusPresentation("warn")).toEqual({
+      label: "Needs attention",
+      symbol: "▲",
+    });
     expect(diagnosticFindingAriaLabel({ title: "Keyring unavailable" })).toBe(
       "Inspect Keyring unavailable",
     );
@@ -309,10 +318,14 @@ describe("diagnostics-panel-display", () => {
     expect(buildDiagnosticsSummary(2, 1)).toEqual({
       title: "2 issues need attention",
       detail: "1 repair can be applied safely. 1 issue requires a decision.",
+      tone: "warn",
+      symbol: "▲",
     });
     expect(buildDiagnosticsSummary(0, 0)).toEqual({
       title: DIAGNOSTICS_HEALTHY_TITLE,
       detail: DIAGNOSTICS_HEALTHY_PRIMARY_DETAIL,
+      tone: "ok",
+      symbol: "✓",
     });
 
     expect(

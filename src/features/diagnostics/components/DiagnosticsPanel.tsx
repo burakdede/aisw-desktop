@@ -45,6 +45,7 @@ import {
   buildDiagnosticFindings,
   buildDiagnosticsStatusMessage,
   buildDiagnosticsSummary,
+  diagnosticStatusPresentation,
   buildSelectedRepairFixes,
   buildRecentFailureCards,
   diagnosticBundlePathCopyMessage,
@@ -358,11 +359,13 @@ export function DiagnosticsPanel({
         </div>
       </div>
 
-      <section className={`diagnostics-summary-strip ${totalIssues ? "diagnostics-summary-strip-warn" : "diagnostics-summary-strip-ok"}`}>
+      <section
+        className={`diagnostics-summary-strip diagnostics-summary-strip-${diagnosticsSummary.tone}`}
+      >
         <div className="diagnostics-summary-copy">
           <div className="diagnostics-summary-headline">
             <span className="diagnostics-summary-symbol" aria-hidden="true">
-              {totalIssues ? "▲" : "✓"}
+              {diagnosticsSummary.symbol}
             </span>
             <strong>{diagnosticsSummary.title}</strong>
           </div>
@@ -394,31 +397,17 @@ export function DiagnosticsPanel({
                       </div>
                       <div className="stack-list">
                         {group.items.map((finding) => (
-                          <button
+                          <DiagnosticFindingRow
                             key={finding.key}
-                            type="button"
-                            aria-label={diagnosticFindingAriaLabel(finding)}
-                            aria-pressed={selectedFinding?.key === finding.key}
-                            className={`list-row diagnostic-finding-row ${
-                              selectedFinding?.key === finding.key ? "diagnostic-finding-row-selected" : ""
-                            }`}
-                            onClick={() => {
+                            finding={finding}
+                            selected={selectedFinding?.key === finding.key}
+                            onSelect={() => {
                               setSelectedFindingKey(finding.key);
                               if (compactLayout) {
                                 setCompactInspectorOpen(true);
                               }
                             }}
-                          >
-                            <div className="diagnostic-finding-main">
-                              <div className="diagnostic-finding-title">
-                                <span className={`diagnostic-finding-symbol diagnostic-finding-symbol-${finding.status}`} aria-hidden="true">
-                                  {finding.status === "fail" ? "⨯" : "▲"}
-                                </span>
-                                <strong>{finding.title}</strong>
-                              </div>
-                              <p className="inline-note">{finding.preview}</p>
-                            </div>
-                          </button>
+                          />
                         ))}
                       </div>
                     </section>
@@ -440,7 +429,7 @@ export function DiagnosticsPanel({
               </div>
             ) : (
               <div className="diagnostics-healthy-state">
-                <span aria-hidden="true">✓</span>
+                <span aria-hidden="true">{diagnosticsSummary.symbol}</span>
                 <h3>{DIAGNOSTICS_PANEL_COPY.healthyTitle}</h3>
                 <p className="inline-note">
                   {DIAGNOSTICS_PANEL_COPY.healthyPrimaryDetail}
@@ -478,10 +467,7 @@ export function DiagnosticsPanel({
                       </button>
                     ) : null}
                     <h3>{selectedFinding.title}</h3>
-                    <p className={`diagnostics-inspector-status diagnostics-inspector-status-${selectedFinding.status}`}>
-                      <span aria-hidden="true">{selectedFinding.status === "fail" ? "⨯" : "▲"}</span>
-                      <span>{diagnosticInspectorStatusLabel(selectedFinding.status)}</span>
-                    </p>
+                    <DiagnosticInspectorStatus status={selectedFinding.status} />
                   </div>
                 </header>
                 <section className="diagnostics-inspector-section">
@@ -594,7 +580,7 @@ export function DiagnosticsPanel({
               </>
             ) : (
               <div className="diagnostics-healthy-state diagnostics-healthy-state-compact">
-                <span aria-hidden="true">✓</span>
+                <span aria-hidden="true">{diagnosticsSummary.symbol}</span>
                 <h3>{DIAGNOSTICS_PANEL_COPY.healthyTitle}</h3>
                 <p className="inline-note">
                   {DIAGNOSTICS_PANEL_COPY.healthyCompactDetail}
@@ -699,5 +685,57 @@ export function DiagnosticsPanel({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function DiagnosticFindingRow({
+  finding,
+  selected,
+  onSelect,
+}: {
+  finding: DiagnosticFinding;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const statusPresentation = diagnosticStatusPresentation(finding.status);
+
+  return (
+    <button
+      type="button"
+      aria-label={diagnosticFindingAriaLabel(finding)}
+      aria-pressed={selected}
+      className={`list-row diagnostic-finding-row ${
+        selected ? "diagnostic-finding-row-selected" : ""
+      }`}
+      onClick={onSelect}
+    >
+      <div className="diagnostic-finding-main">
+        <div className="diagnostic-finding-title">
+          <span
+            className={`diagnostic-finding-symbol diagnostic-finding-symbol-${finding.status}`}
+            aria-hidden="true"
+          >
+            {statusPresentation.symbol}
+          </span>
+          <strong>{finding.title}</strong>
+        </div>
+        <p className="inline-note">{finding.preview}</p>
+      </div>
+    </button>
+  );
+}
+
+function DiagnosticInspectorStatus({
+  status,
+}: {
+  status: DiagnosticFinding["status"];
+}) {
+  const statusPresentation = diagnosticStatusPresentation(status);
+
+  return (
+    <p className={`diagnostics-inspector-status diagnostics-inspector-status-${status}`}>
+      <span aria-hidden="true">{statusPresentation.symbol}</span>
+      <span>{diagnosticInspectorStatusLabel(status)}</span>
+    </p>
   );
 }

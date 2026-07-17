@@ -6,6 +6,13 @@ import {
   DIAGNOSTICS_HEALTHY_TITLE,
 } from "./diagnostics-copy";
 
+export type DiagnosticsSummaryPresentation = {
+  title: string;
+  detail: string;
+  tone: "ok" | "warn";
+  symbol: "✓" | "▲";
+};
+
 type DiagnosticBundleResult = {
   filename: string;
   path: string;
@@ -24,7 +31,10 @@ function pluralRequires(count: number) {
   return count === 1 ? "requires" : "require";
 }
 
-export function buildDiagnosticsSummary(totalIssues: number, repairCount: number) {
+export function buildDiagnosticsSummary(
+  totalIssues: number,
+  repairCount: number,
+): DiagnosticsSummaryPresentation {
   const remainingIssues = Math.max(totalIssues - repairCount, 0);
   return {
     title: totalIssues
@@ -36,6 +46,8 @@ export function buildDiagnosticsSummary(totalIssues: number, repairCount: number
           "issue",
         )} ${pluralRequires(remainingIssues)} a decision.`
       : DIAGNOSTICS_HEALTHY_PRIMARY_DETAIL,
+    tone: totalIssues ? "warn" : "ok",
+    symbol: totalIssues ? "▲" : "✓",
   };
 }
 
