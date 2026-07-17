@@ -1,4 +1,4 @@
-import type { DesktopSettings } from "./schemas";
+import type { DesktopRuntimeKind } from "./desktop-settings";
 import {
   NEEDS_ATTENTION_LABEL,
   NEEDS_ATTENTION_SENTENCE_LABEL,
@@ -14,50 +14,59 @@ export const INCLUDED_WITH_APP_RUNTIME_SOURCE_LABEL = "Included with this app";
 export const SYSTEM_OVERRIDE_LABEL = "System override";
 export const CUSTOM_OVERRIDE_LABEL = "Custom override";
 
-type RuntimeKind = DesktopSettings["runtime_kind"];
-
-export function runtimeSelectionLabel(runtimeKind: RuntimeKind) {
-  switch (runtimeKind) {
-    case "bundled":
-      return INCLUDED_DESKTOP_ENGINE_LABEL;
-    case "system":
-      return SYSTEM_ENGINE_LABEL;
-    case "custom":
-      return CUSTOM_ENGINE_LABEL;
+const RUNTIME_KIND_METADATA: Record<
+  DesktopRuntimeKind,
+  {
+    selectionLabel: string;
+    sourceLabel: string;
+    summary: {
+      source: string;
+      description: string;
+    };
   }
+> = {
+  bundled: {
+    selectionLabel: INCLUDED_DESKTOP_ENGINE_LABEL,
+    sourceLabel: INCLUDED_RUNTIME_SOURCE_LABEL,
+    summary: {
+      source: INCLUDED_WITH_APP_RUNTIME_SOURCE_LABEL,
+      description: "AI Switch is already set to use the desktop engine bundled with this app.",
+    },
+  },
+  system: {
+    selectionLabel: SYSTEM_ENGINE_LABEL,
+    sourceLabel: SYSTEM_OVERRIDE_LABEL,
+    summary: {
+      source: SYSTEM_OVERRIDE_LABEL,
+      description:
+        "AI Switch is currently pointing at a system-installed engine instead of the included one.",
+    },
+  },
+  custom: {
+    selectionLabel: CUSTOM_ENGINE_LABEL,
+    sourceLabel: CUSTOM_OVERRIDE_LABEL,
+    summary: {
+      source: CUSTOM_OVERRIDE_LABEL,
+      description:
+        "AI Switch is currently pointing at a custom engine path instead of the included one.",
+    },
+  },
+};
+
+function runtimeKindMetadata(runtimeKind: DesktopRuntimeKind) {
+  return RUNTIME_KIND_METADATA[runtimeKind];
 }
 
-export function runtimeSourceLabel(runtimeKind: RuntimeKind) {
-  switch (runtimeKind) {
-    case "bundled":
-      return INCLUDED_RUNTIME_SOURCE_LABEL;
-    case "system":
-      return SYSTEM_OVERRIDE_LABEL;
-    case "custom":
-      return CUSTOM_OVERRIDE_LABEL;
-  }
+export function runtimeSelectionLabel(runtimeKind: DesktopRuntimeKind) {
+  return runtimeKindMetadata(runtimeKind).selectionLabel;
 }
 
-export function runtimeSummary(runtimeKind: RuntimeKind) {
-  switch (runtimeKind) {
-    case "bundled":
-      return {
-        source: INCLUDED_WITH_APP_RUNTIME_SOURCE_LABEL,
-        description: "AI Switch is already set to use the desktop engine bundled with this app.",
-      };
-    case "system":
-      return {
-        source: SYSTEM_OVERRIDE_LABEL,
-        description:
-          "AI Switch is currently pointing at a system-installed engine instead of the included one.",
-      };
-    case "custom":
-      return {
-        source: CUSTOM_OVERRIDE_LABEL,
-        description:
-          "AI Switch is currently pointing at a custom engine path instead of the included one.",
-      };
-  }
+export function runtimeSourceLabel(runtimeKind: DesktopRuntimeKind) {
+  return runtimeKindMetadata(runtimeKind).sourceLabel;
+}
+
+export function runtimeSummary(runtimeKind: DesktopRuntimeKind) {
+  return runtimeKindMetadata(runtimeKind).summary;
 }
 
 export function runtimeReadinessLabel(
