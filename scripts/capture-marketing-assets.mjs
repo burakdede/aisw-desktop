@@ -23,31 +23,31 @@ const SERVER_READY_TIMEOUT_MS = 30_000;
 const SERVER_READY_POLL_MS = 250;
 const GIF_FPS = 18;
 const GIF_LOOP = "0";
-const OVERLAY_BOTTOM_OFFSET_PX = 42;
-const OVERLAY_CARD_SIZE = { width: 520, height: 92 };
+const OVERLAY_BOTTOM_OFFSET_PX = 18;
+const OVERLAY_CARD_SIZE = { width: 440, height: 76 };
 const OVERLAY_CARD_FRAME = {
   left: 1,
   top: 1,
-  right: 518,
-  bottom: 90,
-  radius: 24,
+  right: 438,
+  bottom: 74,
+  radius: 22,
 };
 const OVERLAY_TITLE = {
-  font: "/System/Library/Fonts/SFNS.ttf",
-  pointSize: 34,
+  font: "/System/Library/Fonts/SFNSRounded.ttf",
+  pointSize: 36,
   offsetY: 0,
   color: "#ffffff",
 };
 const OVERLAY_DETAIL = {
-  font: "/System/Library/Fonts/SFNS.ttf",
-  pointSize: 20,
-  offsetY: 24,
+  font: "/System/Library/Fonts/SFNSRounded.ttf",
+  pointSize: 18,
+  offsetY: 20,
   color: "#f5f8ff",
   interlineSpacing: 3,
 };
 const OVERLAY_CARD_COLORS = {
-  fill: "rgba(12,16,24,0.94)",
-  stroke: "rgba(255,255,255,0.14)",
+  fill: "rgba(10,14,22,0.96)",
+  stroke: "rgba(255,255,255,0.22)",
   strokeWidth: "2",
 };
 const QUICK_SWITCH_CAPTURE = {
