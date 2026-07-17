@@ -199,7 +199,7 @@ export const ONBOARDING_OVERVIEW_COPY = {
   heading: "Switch accounts safely",
   listAriaLabel: "Setup steps",
   note:
-    "Manage Claude Code, Codex CLI, and Gemini CLI identities from one local control app.",
+    "Manage supported coding-agent identities from one local control app.",
   trustListAriaLabel: "Why AI Switch is safe to use",
   secureStorageActionLabel: "How credentials stay local",
   installedNowLabel: "Installed now",
@@ -276,7 +276,7 @@ export const ONBOARDING_ACCOUNTS_STEP_COPY = {
   missingStatusValue: "Optional for now",
   binaryLabel: "Binary",
   installationGuideLabel: "Open installation guide",
-  emptyDetail: "Run the setup scan to detect live Claude, Codex, and Gemini accounts.",
+  emptyDetail: "Run the setup scan to detect live accounts for installed supported tools.",
 } as const;
 
 export const ONBOARDING_IMPORT_DIALOG_COPY = {

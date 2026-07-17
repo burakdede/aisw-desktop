@@ -181,7 +181,7 @@ describe("onboarding-display", () => {
     expect(ONBOARDING_ACCOUNTS_STEP_COPY.sectionHeading).toBe("Detected tools");
     expect(ONBOARDING_ACCOUNTS_STEP_COPY.importActionLabel).toBe("Import as profile");
     expect(ONBOARDING_ACCOUNTS_STEP_COPY.emptyDetail).toBe(
-      "Run the setup scan to detect live Claude, Codex, and Gemini accounts.",
+      "Run the setup scan to detect live accounts for installed supported tools.",
     );
     expect(ONBOARDING_IMPORT_DIALOG_COPY.kicker).toBe("Import current account");
     expect(ONBOARDING_IMPORT_DIALOG_COPY.headingSuffix).toBe("profile");

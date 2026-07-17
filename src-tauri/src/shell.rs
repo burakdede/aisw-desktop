@@ -7,7 +7,7 @@ pub fn shell_hook_guidance() -> ShellHookGuidance {
         detected_shell: detect_shell(),
         capabilities: vec![
             "Apply CLAUDE_CONFIG_DIR, CODEX_HOME, and GEMINI_API_KEY into the current shell session when you switch profiles from AI Switch.".to_owned(),
-            "Enforce workspace guardrails before `claude`, `codex`, or `gemini` launch from that shell.".to_owned(),
+            "Enforce workspace guardrails before supported agent CLIs launch from that shell.".to_owned(),
         ],
         note: "Without terminal integration, AI Switch still updates local credential files and its managed configuration. Terminal integration is only required for current-shell exports and workspace checks."
             .to_owned(),

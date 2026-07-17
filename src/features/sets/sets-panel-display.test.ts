@@ -48,7 +48,7 @@ import {
   workspaceBindingTargetChanged,
 } from "./sets-panel-display";
 
-const TOOLS = ["claude", "codex", "gemini"] as const;
+const TOOLS = ["claude", "codex", "gemini", "antigravity"] as const;
 
 function makeSet(
   overrides: Partial<NonNullable<DesktopSettings["profile_sets"]>[number]> = {},
@@ -175,6 +175,7 @@ describe("sets-panel-display", () => {
       name: "",
       label: "",
       profiles: {
+        antigravity: "",
         claude: "",
         codex: "",
         gemini: "",
@@ -186,6 +187,7 @@ describe("sets-panel-display", () => {
       name: "client-acme",
       label: "Client Acme",
       profiles: {
+        antigravity: "",
         claude: "work",
         codex: "work",
         gemini: "",
@@ -205,6 +207,7 @@ describe("sets-panel-display", () => {
       name: "client-acme-copy-3",
       label: "Client Acme Copy",
       profiles: {
+        antigravity: "",
         claude: "work",
         codex: "work",
         gemini: "",
@@ -365,7 +368,7 @@ describe("sets-panel-display", () => {
         selected: false,
         active: true,
         status: { label: "Current", tone: "ready", symbol: "●" },
-        summary: "Claude: Work Claude · Codex: Work Codex · Gemini: —",
+        summary: "Claude: Work Claude · Codex: Work Codex · Gemini: — · Antigravity: —",
         missingSummary: null,
         usageCount: 2,
       },
@@ -375,7 +378,7 @@ describe("sets-panel-display", () => {
         selected: true,
         active: false,
         status: { label: "Needs Attention", tone: "warn", symbol: "▲" },
-        summary: "Claude: Missing · Codex: — · Gemini: —",
+        summary: "Claude: Missing · Codex: — · Gemini: — · Antigravity: —",
         missingSummary: "claude: missing",
         usageCount: 1,
       },
@@ -418,7 +421,7 @@ describe("sets-panel-display", () => {
         name: "client-acme",
         displayLabel: "Client Acme",
         status: { label: "Current", tone: "ready", symbol: "●" },
-        summary: "Claude: Work Claude · Codex: Work Codex · Gemini: —",
+        summary: "Claude: Work Claude · Codex: Work Codex · Gemini: — · Antigravity: —",
         actionLabel: "Current",
         active: true,
       },
@@ -426,7 +429,7 @@ describe("sets-panel-display", () => {
         name: "fallback",
         displayLabel: "fallback",
         status: { label: "Imported", tone: "available", symbol: "○" },
-        summary: "Claude: — · Codex: — · Gemini: Personal Gemini",
+        summary: "Claude: — · Codex: — · Gemini: Personal Gemini · Antigravity: —",
         actionLabel: "Use CLI Context fallback",
         active: false,
       },
@@ -512,6 +515,7 @@ describe("sets-panel-display", () => {
         { kind: "tool", tool: "claude", value: "Work Claude" },
         { kind: "tool", tool: "codex", value: "Work Codex" },
         { kind: "tool", tool: "gemini", value: "Not included" },
+        { kind: "tool", tool: "antigravity", value: "Not included" },
         { kind: "text", label: "Project rules", value: "1 active" },
       ],
       warning: null,

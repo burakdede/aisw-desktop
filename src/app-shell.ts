@@ -67,7 +67,7 @@ export const APP_NAV = APP_NAV_ITEMS;
 const DEFAULT_PROFILE_SETUP_TOOL = "claude";
 
 export const APP_SHELL_COPY = {
-  appSubtitle: "Manage Claude Code, Codex CLI, and Gemini CLI identities locally.",
+  appSubtitle: "Manage supported coding-agent identities locally.",
   currentStateKicker: "Current state",
   runtimeRecovery: {
     frameTitle: "Finish Setup",

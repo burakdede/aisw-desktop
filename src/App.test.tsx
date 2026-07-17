@@ -6010,7 +6010,7 @@ describe("App", () => {
     );
     openSetupStep("Accounts");
     await waitFor(() => {
-      expect(screen.getByText("Run the setup scan to detect live Claude, Codex, and Gemini accounts.")).toBeInTheDocument();
+      expect(screen.getByText("Run the setup scan to detect live accounts for installed supported tools.")).toBeInTheDocument();
     });
     expect(initCalls).toBe(0);
 

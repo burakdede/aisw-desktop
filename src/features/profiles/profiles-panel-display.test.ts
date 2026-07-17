@@ -134,7 +134,7 @@ function makeSnapshot(overrides: Partial<AppSnapshot> = {}): AppSnapshot {
 
 describe("profiles-panel-display", () => {
   it("builds, filters, and selects inventory entries", () => {
-    expect(INVENTORY_FILTERS).toEqual(["all", "claude", "codex", "gemini"]);
+    expect(INVENTORY_FILTERS).toEqual(["all", "claude", "codex", "gemini", "antigravity"]);
     expect(normalizeInventoryFilter("codex")).toBe("codex");
     expect(normalizeInventoryFilter("bad")).toBe("all");
     expect(normalizeProfileSheetTool("gemini")).toBe("gemini");
@@ -224,7 +224,7 @@ describe("profiles-panel-display", () => {
       tool: "codex",
       name: "personal",
       auth: "oauth",
-      label: "",
+      label: "Personal",
       active: false,
       backend: "File",
       state: "stored",

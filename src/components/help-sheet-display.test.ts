@@ -13,7 +13,7 @@ describe("help-sheet-display", () => {
     expect(HELP_SHEET_COPY.supportedToolsAriaLabel).toBe("Supported tools");
     expect(HELP_SHEET_COPY.nextStepsHeading).toBe("Open the right surface");
 
-    expect(HELP_SHEET_SUPPORTED_TOOLS).toEqual(["claude", "codex", "gemini"]);
+    expect(HELP_SHEET_SUPPORTED_TOOLS).toEqual(["claude", "codex", "gemini", "antigravity"]);
     expect(HELP_SHEET_SHORTCUTS).toEqual([
       { label: "Quick Switch", shortcut: "⌘K" },
       { label: "Diagnostics", shortcut: "⌘4" },
