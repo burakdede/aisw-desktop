@@ -6,20 +6,33 @@ import {
 import { isOneOf } from "../../lib/parse-guards";
 import { toolSupportsSystemKeyringCredentials } from "../../lib/tool-registry";
 
-export const PROFILE_IMPORT_MODES = ["from_live", "from_env", "api_key", "oauth"] as const;
-export const PROFILE_CREDENTIAL_BACKENDS = [
-  CREDENTIAL_BACKENDS.auto,
-  CREDENTIAL_BACKENDS.systemKeyring,
-  CREDENTIAL_BACKENDS.file,
+const PROFILE_IMPORT_MODE_DEFINITIONS = [
+  { id: "from_live" },
+  { id: "from_env" },
+  { id: "api_key" },
+  { id: "oauth" },
 ] as const;
+
+export type ProfileImportMode = (typeof PROFILE_IMPORT_MODE_DEFINITIONS)[number]["id"];
+export const PROFILE_IMPORT_MODES: readonly ProfileImportMode[] =
+  PROFILE_IMPORT_MODE_DEFINITIONS.map((mode) => mode.id);
+
+const PROFILE_CREDENTIAL_BACKEND_DEFINITIONS = [
+  { id: CREDENTIAL_BACKENDS.auto },
+  { id: CREDENTIAL_BACKENDS.systemKeyring },
+  { id: CREDENTIAL_BACKENDS.file },
+] as const;
+
+export type ProfileCredentialBackend =
+  (typeof PROFILE_CREDENTIAL_BACKEND_DEFINITIONS)[number]["id"];
+export const PROFILE_CREDENTIAL_BACKENDS: readonly ProfileCredentialBackend[] =
+  PROFILE_CREDENTIAL_BACKEND_DEFINITIONS.map((backend) => backend.id);
 
 type ToolCapabilities = NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"];
 
-export type ProfileImportMode = (typeof PROFILE_IMPORT_MODES)[number];
-export type ProfileCredentialBackend = (typeof PROFILE_CREDENTIAL_BACKENDS)[number];
 export type ExplicitProfileCredentialBackend = Exclude<ProfileCredentialBackend, "auto">;
 
-export const DEFAULT_PROFILE_IMPORT_MODE = PROFILE_IMPORT_MODES[0];
+export const DEFAULT_PROFILE_IMPORT_MODE = PROFILE_IMPORT_MODE_DEFINITIONS[0].id;
 export const DEFAULT_PROFILE_CREDENTIAL_BACKEND = PROFILE_CREDENTIAL_BACKENDS[0];
 
 export function supportedProfileImportModes(
@@ -27,11 +40,7 @@ export function supportedProfileImportModes(
   toolCapabilities: ToolCapabilities,
 ): ProfileImportMode[] {
   const configured = toolCapabilities[tool]?.auth_methods ?? [];
-  const normalized = configured
-    .map(normalizeImportMode)
-    .filter((mode, index, array): mode is ProfileImportMode =>
-      Boolean(mode) && array.indexOf(mode) === index,
-    );
+  const normalized = dedupeNormalizedValues(configured, normalizeImportMode);
 
   if (normalized.length) {
     return normalized;
@@ -65,11 +74,7 @@ export function supportedCredentialBackends(
   toolCapabilities: ToolCapabilities,
 ): ProfileCredentialBackend[] {
   const configured = toolCapabilities[tool]?.credential_backends ?? [];
-  const normalized = configured
-    .map(normalizeCredentialBackend)
-    .filter((backend, index, array): backend is ExplicitProfileCredentialBackend =>
-      Boolean(backend) && array.indexOf(backend) === index,
-    );
+  const normalized = dedupeNormalizedValues(configured, normalizeCredentialBackend);
 
   if (normalized.length === 1) {
     return [...normalized];
@@ -105,4 +110,18 @@ function normalizeCredentialBackend(
     return normalized;
   }
   return null;
+}
+
+function dedupeNormalizedValues<InputValue, OutputValue extends string>(
+  values: readonly InputValue[],
+  normalize: (value: InputValue) => OutputValue | null,
+) {
+  const normalized: OutputValue[] = [];
+  values.forEach((value) => {
+    const candidate = normalize(value);
+    if (candidate && !normalized.includes(candidate)) {
+      normalized.push(candidate);
+    }
+  });
+  return normalized;
 }
