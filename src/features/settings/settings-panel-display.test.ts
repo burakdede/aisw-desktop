@@ -317,6 +317,7 @@ describe("settings-panel-display", () => {
     expect(effectiveRuntimePath("bundled", "/tmp/aisw")).toBe("");
     expect(effectiveRuntimePath("custom", "/tmp/aisw")).toBe("/tmp/aisw");
     expect(persistedRuntimePath("bundled", "/tmp/aisw")).toBeNull();
+    expect(persistedRuntimePath("custom", "")).toBeNull();
     expect(persistedRuntimePath("custom", "/tmp/aisw")).toBe("/tmp/aisw");
 
     expect(selectedRuntimePath(makeSettings(), makeRuntimeStatus())).toBe(
@@ -472,6 +473,24 @@ describe("settings-panel-display", () => {
       update_channel: "beta",
       profile_labels: {},
       profile_sets: [{ name: "work", label: null, profiles: {} }],
+    });
+    expect(
+      buildSettingsRequest({
+        settings: makeSettings(),
+        draft: {
+          runtimeKind: "custom",
+          runtimePath: "",
+          aiswHome: "",
+          updateChannel: "stable",
+        },
+      }),
+    ).toEqual({
+      runtime_kind: "custom",
+      runtime_path: null,
+      aisw_home: null,
+      update_channel: "stable",
+      profile_labels: {},
+      profile_sets: [],
     });
 
     expect(

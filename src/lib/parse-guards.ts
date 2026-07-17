@@ -34,6 +34,10 @@ export function nullishToEmptyString(value: string | null | undefined) {
   return value ?? "";
 }
 
+export function emptyStringToNull(value: string | null | undefined) {
+  return value === "" || value == null ? null : value;
+}
+
 export function nullishToUndefined<Value>(value: Value | null | undefined): Value | undefined {
   return value ?? undefined;
 }

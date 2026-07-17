@@ -11,7 +11,7 @@ import {
   normalizeDesktopUpdateChannel,
   type DesktopUpdateChannel,
 } from "../../lib/desktop-settings";
-import { nullishToEmptyString } from "../../lib/parse-guards";
+import { emptyStringToNull, nullishToEmptyString } from "../../lib/parse-guards";
 import { resolveErrorDetails, resolveErrorMessage } from "../../lib/error-details";
 import { normalizeResolvedCheckStatus } from "../../lib/check-status";
 import {
@@ -290,7 +290,7 @@ export function persistedRuntimePath(
   runtimeKind: DesktopSettings["runtime_kind"],
   runtimePath: string,
 ) {
-  return effectiveRuntimePath(runtimeKind, runtimePath) || null;
+  return emptyStringToNull(effectiveRuntimePath(runtimeKind, runtimePath));
 }
 
 export function sectionLabel(section: SettingsSection) {
@@ -472,7 +472,7 @@ export function buildSettingsRequest(input: {
   return buildDesktopSettingsUpdate(input.settings, {
     runtime_kind: nextDraft.runtimeKind,
     runtime_path: persistedRuntimePath(nextDraft.runtimeKind, nextDraft.runtimePath),
-    aisw_home: nextDraft.aiswHome || null,
+    aisw_home: emptyStringToNull(nextDraft.aiswHome),
     update_channel: nextDraft.updateChannel,
   });
 }
