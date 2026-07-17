@@ -1,3 +1,5 @@
+import { DESKTOP_DIAGNOSTIC_QUERY_KEYS as SHARED_DESKTOP_DIAGNOSTIC_QUERY_KEYS } from "./desktop-query-keys";
+
 export const DESKTOP_MENU_EVENTS = {
   openSettings: "menu-open-settings",
   openSettingsUpdates: "menu-open-settings-updates",
@@ -25,11 +27,7 @@ export const DESKTOP_TRAY_EVENTS = {
 } as const;
 
 export const DESKTOP_DIAGNOSTIC_QUERY_KEYS = [
-  ["doctor"],
-  ["verify"],
-  ["repair", "dry-run"],
-  ["snapshot"],
-  ["bootstrap"],
+  ...SHARED_DESKTOP_DIAGNOSTIC_QUERY_KEYS,
 ] as const;
 
 export const DESKTOP_EVENTS = {

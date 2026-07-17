@@ -37,6 +37,7 @@ import {
   REFERENCE_DOCUMENT_KIND_TROUBLESHOOTING,
 } from "./lib/desktop-command-contract";
 import { APP_NAV_IDS, type AppNavId } from "./lib/app-navigation";
+import { CORE_DESKTOP_QUERY_KEYS } from "./lib/desktop-query-keys";
 import { activeSetLabel } from "./lib/profile-display";
 import {
   SETTINGS_SECTION_IDS,
@@ -490,9 +491,9 @@ export function App() {
   };
 
   async function retryRuntimeCheck() {
-    await queryClient.invalidateQueries({ queryKey: ["bootstrap"] });
-    await queryClient.invalidateQueries({ queryKey: ["snapshot"] });
-    await queryClient.invalidateQueries({ queryKey: ["init"] });
+    for (const queryKey of CORE_DESKTOP_QUERY_KEYS) {
+      await queryClient.invalidateQueries({ queryKey: [...queryKey] });
+    }
   }
 
   function runVerifyFlow() {

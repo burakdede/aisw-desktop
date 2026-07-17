@@ -7,6 +7,7 @@ import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { getProjectBindings, getWorkspaceStatus } from "../../../lib/client";
+import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
 import {
   contextDisplayLabel,
   profileSetDisplayLabel,
@@ -100,12 +101,12 @@ export function SetsPanel({
 }) {
   const readEnabled = useMutationAwareQueryEnabled();
   const projectBindings = useQuery({
-    queryKey: ["project-bindings"],
+    queryKey: DESKTOP_QUERY_KEYS.projectBindings,
     queryFn: getProjectBindings,
     enabled: readEnabled,
   });
   const workspaceStatus = useQuery({
-    queryKey: ["workspace-status"],
+    queryKey: DESKTOP_QUERY_KEYS.workspaceStatus,
     queryFn: getWorkspaceStatus,
     enabled: readEnabled,
   });

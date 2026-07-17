@@ -25,6 +25,7 @@ import {
 } from "../../../lib/profile-display";
 import { EXPECTED_SET_PREFIX } from "../../../lib/sets-display";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
+import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
 import { eventTargetWithinSelector } from "../../../lib/dom-events";
 import { BACKEND_UNAVAILABLE_LABEL } from "../../../lib/display-copy";
 import {
@@ -101,8 +102,8 @@ export function OverviewPanel({
   } = useDesktopActions();
 
   const refreshSnapshot = () => {
-    void queryClient.invalidateQueries({ queryKey: ["bootstrap"] });
-    void queryClient.invalidateQueries({ queryKey: ["snapshot"] });
+    void queryClient.invalidateQueries({ queryKey: DESKTOP_QUERY_KEYS.bootstrap });
+    void queryClient.invalidateQueries({ queryKey: DESKTOP_QUERY_KEYS.snapshot });
   };
 
   const workspaceStatus = parseWorkspaceStatus(snapshot.workspace_status ?? undefined);

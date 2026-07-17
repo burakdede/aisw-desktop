@@ -13,6 +13,7 @@ import type {
 } from "../../../lib/schemas";
 import { exportDiagnosticBundle, runDoctor, runRepair, runVerify } from "../../../lib/client";
 import { DESKTOP_ACTION_COPY } from "../../../lib/desktop-action-copy";
+import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
 import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { openExternalGuide, installGuideUrlForTool } from "../../../lib/tool-guidance";
 import { useLastCommandResults } from "../../shared/lastCommandResult";
@@ -100,10 +101,18 @@ export function DiagnosticsPanel({
     useDesktopActions();
   const lastCommandResults = useLastCommandResults();
   const readEnabled = useMutationAwareQueryEnabled();
-  const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor, enabled: readEnabled });
-  const verify = useQuery({ queryKey: ["verify"], queryFn: runVerify, enabled: readEnabled });
+  const doctor = useQuery({
+    queryKey: DESKTOP_QUERY_KEYS.doctor,
+    queryFn: runDoctor,
+    enabled: readEnabled,
+  });
+  const verify = useQuery({
+    queryKey: DESKTOP_QUERY_KEYS.verify,
+    queryFn: runVerify,
+    enabled: readEnabled,
+  });
   const repair = useQuery({
-    queryKey: ["repair", "dry-run"],
+    queryKey: DESKTOP_QUERY_KEYS.repairDryRun,
     queryFn: () => runRepair({ apply: false, fixes: [] }),
     enabled: readEnabled,
   });
@@ -122,11 +131,11 @@ export function DiagnosticsPanel({
     mutationFn: (fixes: string[]) => runRepair({ apply: true, fixes }),
     onSuccess: async () => {
       setRepairPlanOpen(false);
-      await queryClient.invalidateQueries({ queryKey: ["repair", "dry-run"] });
-      await queryClient.invalidateQueries({ queryKey: ["doctor"] });
-      await queryClient.invalidateQueries({ queryKey: ["verify"] });
-      await queryClient.invalidateQueries({ queryKey: ["snapshot"] });
-      await queryClient.invalidateQueries({ queryKey: ["bootstrap"] });
+      await queryClient.invalidateQueries({ queryKey: DESKTOP_QUERY_KEYS.repairDryRun });
+      await queryClient.invalidateQueries({ queryKey: DESKTOP_QUERY_KEYS.doctor });
+      await queryClient.invalidateQueries({ queryKey: DESKTOP_QUERY_KEYS.verify });
+      await queryClient.invalidateQueries({ queryKey: DESKTOP_QUERY_KEYS.snapshot });
+      await queryClient.invalidateQueries({ queryKey: DESKTOP_QUERY_KEYS.bootstrap });
     },
   });
   const exportBundle = useMutation({
@@ -869,8 +878,8 @@ async function refreshDiagnostics(
   refetchVerify: () => Promise<unknown>,
   refetchRepair: () => Promise<unknown>,
 ) {
-  await queryClient.invalidateQueries({ queryKey: ["bootstrap"] });
-  await queryClient.invalidateQueries({ queryKey: ["snapshot"] });
+  await queryClient.invalidateQueries({ queryKey: DESKTOP_QUERY_KEYS.bootstrap });
+  await queryClient.invalidateQueries({ queryKey: DESKTOP_QUERY_KEYS.snapshot });
   await Promise.all([refetchDoctor(), refetchVerify(), refetchRepair()]);
 }
 

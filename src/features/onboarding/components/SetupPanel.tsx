@@ -6,6 +6,7 @@ import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { getShellGuidance, runDoctor, updateSettings } from "../../../lib/client";
 import { buildBundledRuntimeSettingsUpdate } from "../../../lib/desktop-settings";
+import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
 import { sharedProfileEntries } from "../../../lib/profile-display";
 import {
   runtimeReadinessLabel,
@@ -107,9 +108,13 @@ export function SetupPanel({
   const { initMutation, addProfileMutation, useAllProfilesMutation, mutationLock } =
     useDesktopActions();
   const readEnabled = useMutationAwareQueryEnabled();
-  const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor, enabled: readEnabled });
+  const doctor = useQuery({
+    queryKey: DESKTOP_QUERY_KEYS.doctor,
+    queryFn: runDoctor,
+    enabled: readEnabled,
+  });
   const shellGuidance = useQuery({
-    queryKey: ["shell-guidance"],
+    queryKey: DESKTOP_QUERY_KEYS.shellGuidance,
     queryFn: getShellGuidance,
     enabled: readEnabled,
   });

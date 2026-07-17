@@ -22,6 +22,7 @@ import {
   DEFAULT_ACTION_FAILURE_MESSAGE,
   NOT_FOUND_LABEL,
 } from "../../../lib/display-copy";
+import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
 import { resolveErrorMessage } from "../../../lib/error-details";
 import { notifyDesktop } from "../../../lib/notifications";
 import {
@@ -149,13 +150,17 @@ export function SettingsPanel({
   );
   const readEnabled = useMutationAwareQueryEnabled();
   const shellGuidance = useQuery({
-    queryKey: ["shell-guidance"],
+    queryKey: DESKTOP_QUERY_KEYS.shellGuidance,
     queryFn: getShellGuidance,
     enabled: readEnabled,
   });
-  const doctor = useQuery({ queryKey: ["doctor"], queryFn: runDoctor, enabled: readEnabled });
+  const doctor = useQuery({
+    queryKey: DESKTOP_QUERY_KEYS.doctor,
+    queryFn: runDoctor,
+    enabled: readEnabled,
+  });
   const launchAtLogin = useQuery({
-    queryKey: ["launch-at-login"],
+    queryKey: DESKTOP_QUERY_KEYS.launchAtLogin,
     queryFn: getLaunchAtLoginStatus,
     enabled: readEnabled,
   });
@@ -177,7 +182,7 @@ export function SettingsPanel({
   const launchAtLoginMutation = useMutation({
     mutationFn: setLaunchAtLogin,
     onSuccess: (status) => {
-      queryClient.setQueryData(["launch-at-login"], status);
+      queryClient.setQueryData(DESKTOP_QUERY_KEYS.launchAtLogin, status);
       setLaunchMessage(launchAtLoginSuccessMessage(status.enabled));
     },
     onError: (error) => {

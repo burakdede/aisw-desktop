@@ -16,6 +16,7 @@ import {
 } from "../../../lib/schemas";
 import { credentialBackendLabel as formatCredentialBackendLabel } from "../../../lib/credential-backends";
 import { formatDateTimeWithZone } from "../../../lib/date-format";
+import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
 import { disposeSafely, type AsyncDispose } from "../../../lib/async-dispose";
 import { BACKEND_UNAVAILABLE_LABEL } from "../../../lib/display-copy";
 import { eventTargetWithinSelector } from "../../../lib/dom-events";
@@ -199,7 +200,11 @@ export function ProfilesPanel({
 
   const profiles = useMemo(() => snapshot.profiles[tool]?.profiles ?? [], [snapshot, tool]);
   const readEnabled = useMutationAwareQueryEnabled();
-  const backups = useQuery({ queryKey: ["backups"], queryFn: listBackups, enabled: readEnabled });
+  const backups = useQuery({
+    queryKey: DESKTOP_QUERY_KEYS.backups,
+    queryFn: listBackups,
+    enabled: readEnabled,
+  });
   const inventoryProfiles = useMemo(
     () =>
       buildInventoryProfiles({

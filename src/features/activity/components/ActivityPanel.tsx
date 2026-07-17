@@ -10,6 +10,7 @@ import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { exportActivityLog } from "../../../lib/client";
+import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { notifyDesktop } from "../../../lib/notifications";
 import {
@@ -152,7 +153,7 @@ export function ActivityPanel({
     setClearMessage("");
     setLogMessage("");
     setSelectedEntryKey(filteredEntries[0]?.key ?? null);
-    void queryClient.invalidateQueries({ queryKey: ["bootstrap"] });
+    void queryClient.invalidateQueries({ queryKey: DESKTOP_QUERY_KEYS.bootstrap });
   }
 
   return (

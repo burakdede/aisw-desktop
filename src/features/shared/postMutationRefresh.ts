@@ -1,15 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { POST_MUTATION_QUERY_KEYS } from "../../lib/desktop-query-keys";
 
-export const POST_MUTATION_QUERY_KEYS = [
-  ["bootstrap"],
-  ["snapshot"],
-  ["doctor"],
-  ["verify"],
-  ["backups"],
-  ["init"],
-  ["workspace-status"],
-  ["project-bindings"],
-] as const;
+export { POST_MUTATION_QUERY_KEYS } from "../../lib/desktop-query-keys";
 
 export type PostMutationQueryInvalidator = Pick<QueryClient, "invalidateQueries">;
 

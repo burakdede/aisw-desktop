@@ -15,6 +15,7 @@ import {
   formatBackupListTimestamp,
   resolveBackupTarget,
 } from "../../../lib/backups";
+import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { toolProfileDisplayLabel } from "../../../lib/profile-display";
 import { AppBootstrap, AppSnapshot, DesktopSettings, type BackupEntry } from "../../../lib/schemas";
@@ -54,7 +55,11 @@ export function BackupsPanel({
 }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const readEnabled = useMutationAwareQueryEnabled();
-  const backups = useQuery({ queryKey: ["backups"], queryFn: listBackups, enabled: readEnabled });
+  const backups = useQuery({
+    queryKey: DESKTOP_QUERY_KEYS.backups,
+    queryFn: listBackups,
+    enabled: readEnabled,
+  });
   const { restoreBackupMutation, useProfileMutation, mutationLock } = useDesktopActions();
   const [toolFilter, setToolFilter] = useState<ToolFilter>("all");
   const [dateFilter, setDateFilter] = useState<DateFilter>("newest");

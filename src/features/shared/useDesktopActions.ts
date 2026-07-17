@@ -21,6 +21,7 @@ import {
 import type { AddProfileInput } from "../../lib/client";
 import { DesktopCommandError } from "../../lib/tauri";
 import { notifyDesktop } from "../../lib/notifications";
+import { DESKTOP_QUERY_KEYS } from "../../lib/desktop-query-keys";
 import {
   recordCommandResult,
   useLastCommandResults,
@@ -322,7 +323,7 @@ export function useDesktopActions() {
         }
       },
       onSuccess: async (result) => {
-        queryClient.setQueryData(["init"], result);
+        queryClient.setQueryData(DESKTOP_QUERY_KEYS.init, result);
         await invalidate();
       },
     }),
