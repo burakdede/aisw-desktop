@@ -23,31 +23,31 @@ const SERVER_READY_TIMEOUT_MS = 30_000;
 const SERVER_READY_POLL_MS = 250;
 const GIF_FPS = 18;
 const GIF_LOOP = "0";
-const OVERLAY_BOTTOM_OFFSET_PX = 28;
-const OVERLAY_CARD_SIZE = { width: 520, height: 88 };
+const OVERLAY_BOTTOM_OFFSET_PX = 18;
+const OVERLAY_CARD_SIZE = { width: 500, height: 78 };
 const OVERLAY_CARD_FRAME = {
   left: 1,
   top: 1,
-  right: 518,
-  bottom: 86,
-  radius: 20,
+  right: 498,
+  bottom: 76,
+  radius: 24,
 };
 const OVERLAY_TITLE = {
   font: "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
-  pointSize: 34,
-  offsetY: -10,
+  pointSize: 30,
+  offsetY: 0,
   color: "#ffffff",
 };
 const OVERLAY_DETAIL = {
   font: "/System/Library/Fonts/Supplemental/Arial.ttf",
-  pointSize: 22,
-  offsetY: 18,
+  pointSize: 21,
+  offsetY: 20,
   color: "#f5f8ff",
   interlineSpacing: 3,
 };
 const OVERLAY_CARD_COLORS = {
-  fill: "rgba(8,12,20,0.98)",
-  stroke: "rgba(255,255,255,0.2)",
+  fill: "rgba(8,12,20,0.96)",
+  stroke: "rgba(255,255,255,0.16)",
   strokeWidth: "2",
 };
 const QUICK_SWITCH_CAPTURE = {
@@ -192,8 +192,7 @@ async function captureQuickSwitchGif(browser) {
     videoPath,
     path.join(mediaDir, "desktop-quick-switch.gif"),
     {
-      title: "Quick switch",
-      detail: "Type. Select. Enter.",
+      title: "Type. Select. Enter.",
       trimStartSeconds: QUICK_SWITCH_CAPTURE.trimStartSeconds,
     },
   );
@@ -218,8 +217,7 @@ async function captureWorkspaceSwitchGif(browser) {
     videoPath,
     path.join(mediaDir, "desktop-workspace-switch.gif"),
     {
-      title: "Workspace restore",
-      detail: "Restore the expected set.",
+      title: "Restore the expected set.",
       trimStartSeconds: WORKSPACE_SWITCH_CAPTURE.trimStartSeconds,
     },
   );
@@ -331,7 +329,7 @@ async function transcodeGif(videoPath, outputPath, overlay) {
 }
 
 async function renderOverlayCard(pngPath, { title, detail }) {
-  await runCommand("/opt/homebrew/bin/magick", [
+  const command = [
     "-size",
     `${OVERLAY_CARD_SIZE.width}x${OVERLAY_CARD_SIZE.height}`,
     "xc:none",
@@ -354,21 +352,29 @@ async function renderOverlayCard(pngPath, { title, detail }) {
     "-annotate",
     `+0${OVERLAY_TITLE.offsetY >= 0 ? "+" : ""}${OVERLAY_TITLE.offsetY}`,
     title,
-    "-font",
-    OVERLAY_DETAIL.font,
-    "-fill",
-    OVERLAY_DETAIL.color,
-    "-pointsize",
-    String(OVERLAY_DETAIL.pointSize),
-    "-interline-spacing",
-    String(OVERLAY_DETAIL.interlineSpacing),
-    "-gravity",
-    "center",
-    "-annotate",
-    `+0${OVERLAY_DETAIL.offsetY >= 0 ? "+" : ""}${OVERLAY_DETAIL.offsetY}`,
-    detail.replace(/\\n/g, "\n"),
-    pngPath,
-  ]);
+  ];
+
+  if (detail) {
+    command.push(
+      "-font",
+      OVERLAY_DETAIL.font,
+      "-fill",
+      OVERLAY_DETAIL.color,
+      "-pointsize",
+      String(OVERLAY_DETAIL.pointSize),
+      "-interline-spacing",
+      String(OVERLAY_DETAIL.interlineSpacing),
+      "-gravity",
+      "center",
+      "-annotate",
+      `+0${OVERLAY_DETAIL.offsetY >= 0 ? "+" : ""}${OVERLAY_DETAIL.offsetY}`,
+      detail.replace(/\\n/g, "\n"),
+    );
+  }
+
+  command.push(pngPath);
+
+  await runCommand("/opt/homebrew/bin/magick", command);
 }
 
 async function waitForServer(url) {
