@@ -8,7 +8,7 @@ import {
   SIGN_IN_FLOW_LABEL,
   TERMINAL_INTEGRATION_LABEL,
 } from "../../lib/desktop-domain-copy";
-import { titleCase } from "../../lib/utils";
+import { humanizeIdentifierLabel, normalizeIdentifierLabel } from "../../lib/utils";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
 
@@ -25,7 +25,7 @@ const ONBOARDING_HEALTH_LABEL_RULES = [
 ] as const;
 
 export function normalizeOnboardingHealthLabel(value: string | undefined) {
-  const normalized = value?.trim().toLowerCase().replace(/[_-]+/g, " ");
+  const normalized = normalizeIdentifierLabel(value, { lowercase: true });
   if (!normalized) {
     return ONBOARDING_HEALTH_SETUP_CHECK_LABEL;
   }
@@ -37,7 +37,7 @@ export function normalizeOnboardingHealthLabel(value: string | undefined) {
     return matchedRule.label;
   }
 
-  return titleCase(normalized);
+  return humanizeIdentifierLabel(normalized);
 }
 
 export function normalizeOnboardingHealthDetail(value: string | undefined) {

@@ -5,6 +5,8 @@ import {
   hasMatchingSelection,
   itemAtIndexOrNull,
   itemKeyOrNull,
+  humanizeIdentifierLabel,
+  normalizeIdentifierLabel,
   pluralChoice,
   pluralSuffix,
   resolvePriorityItem,
@@ -22,6 +24,18 @@ import {
 describe("utils", () => {
   it("formats title case values", () => {
     expect(titleCase("hello_world-test")).toBe("Hello World Test");
+  });
+
+  it("shares identifier normalization helpers", () => {
+    expect(normalizeIdentifierLabel("  system_keyring-test  ")).toBe("system keyring test");
+    expect(normalizeIdentifierLabel("  system_keyring-test  ", { lowercase: true })).toBe(
+      "system keyring test",
+    );
+    expect(normalizeIdentifierLabel("   ")).toBe("");
+    expect(humanizeIdentifierLabel("service_account")).toBe("Service Account");
+    expect(humanizeIdentifierLabel("RUNTIME_OVERRIDE", { lowercase: true })).toBe(
+      "Runtime Override",
+    );
   });
 
   it("shares pluralization helpers", () => {

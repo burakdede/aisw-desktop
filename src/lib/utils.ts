@@ -10,6 +10,25 @@ export function titleCase(value: string) {
     .replace(/\b\w/g, (match) => match.toUpperCase());
 }
 
+export function normalizeIdentifierLabel(
+  value: string | null | undefined,
+  options?: { lowercase?: boolean },
+) {
+  const normalized = value?.trim().replace(/[_-]+/g, " ");
+  if (!normalized) {
+    return "";
+  }
+
+  return options?.lowercase ? normalized.toLowerCase() : normalized;
+}
+
+export function humanizeIdentifierLabel(
+  value: string | null | undefined,
+  options?: { lowercase?: boolean },
+) {
+  return titleCase(normalizeIdentifierLabel(value, options));
+}
+
 export function pluralSuffix(count: number) {
   return count === 1 ? "" : "s";
 }

@@ -134,4 +134,27 @@ describe("parseRepairActions", () => {
     expect(actions.every((action) => action.title === "Repair permissions")).toBe(true);
     expect(actions.every((action) => action.count === 1)).toBe(true);
   });
+
+  it("shares fallback repair title humanization for unknown fixes", () => {
+    expect(
+      parseRepairActions({
+        result: {
+          actions: [
+            {
+              kind: "repair_step",
+              fix: "custom_fix",
+              detail: "Review the generated fix.",
+            },
+          ],
+        },
+      }),
+    ).toEqual([
+      {
+        title: "Custom Fix",
+        detail: "Review the generated fix.",
+        fix: "custom_fix",
+        count: 1,
+      },
+    ]);
+  });
 });

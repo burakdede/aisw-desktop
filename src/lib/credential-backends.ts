@@ -1,5 +1,5 @@
 import { BACKEND_UNAVAILABLE_LABEL } from "./display-copy";
-import { titleCase } from "./utils";
+import { humanizeIdentifierLabel } from "./utils";
 
 type CredentialBackendLabelVariant = "default" | "inventory" | "overview";
 
@@ -33,7 +33,7 @@ export function credentialBackendLabel(
       }
       return "System keyring";
     default:
-      return titleCase(normalized.split("_").join(" ").split("-").join(" "));
+      return humanizeIdentifierLabel(normalized);
   }
 }
 

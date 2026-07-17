@@ -19,6 +19,7 @@ import {
   asObjectArray,
   asString,
 } from "../../lib/parse-guards";
+import { humanizeIdentifierLabel, normalizeIdentifierLabel } from "../../lib/utils";
 import { DIAGNOSTICS_REPAIR_PLAN_LABEL } from "./diagnostics-copy";
 
 export interface SummaryCardData {
@@ -226,16 +227,7 @@ function formatRepairAction(action: GroupedRepairAction): RepairActionData {
 
 function humanizeRepairActionTitle(kind: string, fix: string) {
   const parts = [fix, kind]
-    .filter(Boolean)
-    .map((value) =>
-      value
-        .replace(/[_-]+/g, " ")
-        .trim(),
-    )
+    .map((value) => normalizeIdentifierLabel(value))
     .filter(Boolean);
-  const label = parts[0] || "repair";
-  return label
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+  return humanizeIdentifierLabel(parts[0] || "repair");
 }
