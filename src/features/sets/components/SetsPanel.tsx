@@ -36,7 +36,12 @@ import {
 import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { SUPPORTED_TOOLS } from "../../../lib/tool-registry";
-import { buildKeyedRecord, countLabel, resolveSelectionItem } from "../../../lib/utils";
+import {
+  buildKeyedRecord,
+  countLabel,
+  resolveSelectionItem,
+  stringRecordValue,
+} from "../../../lib/utils";
 import {
   DEFAULT_WORKSPACE_BINDING_SCOPE,
   normalizeWorkspaceBindingScope,
@@ -925,7 +930,7 @@ export function SetsPanel({
                     variant="inline"
                   />
                   <select
-                    value={setDraft.profiles[tool] ?? ""}
+                    value={stringRecordValue(setDraft.profiles, tool)}
                     onChange={(event) =>
                       setSetDraft((current) => ({
                         ...current,

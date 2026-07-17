@@ -52,6 +52,7 @@ import {
   resolvePreferredSelectionValue,
   resolveSelectionValue,
   resolveSelectionValueOrEmpty,
+  stringRecordValue,
   trimmedStringOrNull,
 } from "../../lib/utils";
 
@@ -376,7 +377,7 @@ export function createEditableProfileSetDraft(
     sourceName: set.name,
     name: set.name,
     label: set.label ?? "",
-    profiles: buildKeyedRecord(tools, (tool) => set.profiles[tool] ?? ""),
+    profiles: buildKeyedRecord(tools, (tool) => stringRecordValue(set.profiles, tool)),
   };
 }
 
@@ -399,7 +400,7 @@ export function duplicateEditableProfileSetDraft(
     label: existingSet.label
       ? `${existingSet.label} Copy`
       : `${profileSetDisplayLabel(existingSet)} Copy`,
-    profiles: buildKeyedRecord(tools, (tool) => existingSet.profiles[tool] ?? ""),
+    profiles: buildKeyedRecord(tools, (tool) => stringRecordValue(existingSet.profiles, tool)),
   };
 }
 

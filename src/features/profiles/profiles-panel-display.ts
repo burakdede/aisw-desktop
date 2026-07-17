@@ -36,6 +36,7 @@ import {
   findMatchingItem,
   hasMatchingSelection,
   resolveSelectionValue,
+  stringRecordValue,
   trimmedStringOrNull,
 } from "../../lib/utils";
 import { normalizeOneOf } from "../../lib/parse-guards";
@@ -593,11 +594,12 @@ export function buildProfileEditSheetState(input: {
     profile.name,
     profile.label,
   );
-  const renameDraft = input.renameDrafts[profile.name] ?? profile.name;
-  const labelDraft =
-    input.labelDrafts[profile.name] ??
-    effectiveToolProfileLabel(input.settings, input.tool, profile.name, profile.label) ??
-    "";
+  const renameDraft = stringRecordValue(input.renameDrafts, profile.name, profile.name);
+  const labelDraft = stringRecordValue(
+    input.labelDrafts,
+    profile.name,
+    effectiveToolProfileLabel(input.settings, input.tool, profile.name, profile.label),
+  );
   const renameDuplicate =
     renameDraft.trim().length > 0 &&
     isDuplicateProfileName(input.profiles, profile.name, renameDraft);

@@ -36,6 +36,14 @@ export function buildKeyedRecord<const Key extends string, Value>(
   return record;
 }
 
+export function stringRecordValue(
+  record: Record<string, string | null | undefined> | null | undefined,
+  key: string,
+  fallback = "",
+) {
+  return record?.[key] ?? fallback;
+}
+
 export function hasMatchingSelection<T>(
   selection: string | null | undefined,
   items: readonly T[],

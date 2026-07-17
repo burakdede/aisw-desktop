@@ -12,6 +12,7 @@ import {
   resolveSelectionItem,
   resolveSelectionValue,
   resolveSelectionValueOrEmpty,
+  stringRecordValue,
   trimmedStringOrNull,
   titleCase,
 } from "./utils";
@@ -46,6 +47,13 @@ describe("utils", () => {
       claude: "claude-profile",
       codex: "codex-profile",
     });
+  });
+
+  it("reads keyed string records with shared fallbacks", () => {
+    expect(stringRecordValue({ claude: "personal" }, "claude")).toBe("personal");
+    expect(stringRecordValue({ claude: "personal" }, "codex")).toBe("");
+    expect(stringRecordValue({ claude: "personal" }, "codex", "release")).toBe("release");
+    expect(stringRecordValue(null, "codex")).toBe("");
   });
 
   it("shares keyed selection helpers", () => {

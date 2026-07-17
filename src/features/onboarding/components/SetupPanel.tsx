@@ -22,7 +22,7 @@ import {
 import { AppBootstrap, AppSnapshot, InitReport } from "../../../lib/schemas";
 import { toolSupportsEditableStateModes } from "../../../lib/tool-registry";
 import { toolDisplayName } from "../../../lib/tool-display";
-import { countLabel, findMatchingItem } from "../../../lib/utils";
+import { countLabel, findMatchingItem, stringRecordValue } from "../../../lib/utils";
 import { inspectItemLabel } from "../../../lib/display-copy";
 import {
   installGuideUrlForTool,
@@ -159,8 +159,12 @@ export function SetupPanel({
       await invalidatePostMutationQueries(queryClient);
     },
   });
-  const pendingProfileName = pendingLiveImport ? profileNames[pendingLiveImport.tool] ?? "" : "";
-  const pendingProfileLabel = pendingLiveImport ? profileLabels[pendingLiveImport.tool] ?? "" : "";
+  const pendingProfileName = pendingLiveImport
+    ? stringRecordValue(profileNames, pendingLiveImport.tool)
+    : "";
+  const pendingProfileLabel = pendingLiveImport
+    ? stringRecordValue(profileLabels, pendingLiveImport.tool)
+    : "";
   const setupPrimaryActionLabel = onboardingPrimaryActionLabel(
     initMutation.isPending,
     initReport,
@@ -174,12 +178,12 @@ export function SetupPanel({
       return;
     }
 
-    const name = profileNames[pendingLiveImport.tool]?.trim() ?? "";
+    const name = stringRecordValue(profileNames, pendingLiveImport.tool).trim();
     if (!name) {
       return;
     }
 
-    const currentLabel = profileLabels[pendingLiveImport.tool] ?? "";
+    const currentLabel = stringRecordValue(profileLabels, pendingLiveImport.tool);
     if (currentLabel.trim().length > 0) {
       return;
     }
@@ -199,7 +203,7 @@ export function SetupPanel({
 
   function submitImport(event: FormEvent<HTMLFormElement>, tool: string) {
     event.preventDefault();
-    const value = profileNames[tool]?.trim();
+    const value = stringRecordValue(profileNames, tool).trim();
     if (!value) return;
     const importAction = onboardingLiveImportAction(tool, toolCapabilities);
     if (importAction.kind === "open_profiles") {
@@ -211,7 +215,7 @@ export function SetupPanel({
     addProfileMutation.mutate({
       tool,
       profile: value,
-      label: profileLabels[tool]?.trim() || onboardingImportedProfileLabel(value),
+      label: stringRecordValue(profileLabels, tool).trim() || onboardingImportedProfileLabel(value),
       stateMode: toolSupportsEditableStateModes(tool) ? DEFAULT_EDITABLE_STATE_MODE : null,
       importMode: { kind: DEFAULT_PROFILE_IMPORT_MODE },
     });
@@ -221,11 +225,11 @@ export function SetupPanel({
     setPendingLiveImport(account);
     setProfileNames((current) => ({
       ...current,
-      [account.tool]: current[account.tool] ?? "",
+      [account.tool]: stringRecordValue(current, account.tool),
     }));
     setProfileLabels((current) => ({
       ...current,
-      [account.tool]: current[account.tool] ?? "",
+      [account.tool]: stringRecordValue(current, account.tool),
     }));
   }
 
