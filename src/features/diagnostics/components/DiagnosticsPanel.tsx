@@ -328,6 +328,7 @@ export function DiagnosticsPanel({
           <OverflowMenuButton
             open={toolbarMenuOpen}
             anchorRef={toolbarMenuAnchorRef}
+            variant="toolbar"
             containerClassName="diagnostics-toolbar-menu-wrap"
             triggerAriaLabel={DIAGNOSTICS_PANEL_COPY.diagnosticsActionsTriggerAriaLabel}
             menuAriaLabel={DIAGNOSTICS_PANEL_COPY.diagnosticsActionsAriaLabel}
@@ -505,9 +506,8 @@ export function DiagnosticsPanel({
                       <OverflowMenuButton
                         open={inspectorMenuOpen}
                         anchorRef={inspectorMenuAnchorRef}
-                        align="start"
+                        variant="visible"
                         triggerAriaLabel={DIAGNOSTICS_PANEL_COPY.inspectorOverflowTriggerAriaLabel}
-                        triggerClassName="profile-row-actions-trigger-visible"
                         menuAriaLabel={DIAGNOSTICS_PANEL_COPY.inspectorOverflowMenuAriaLabel}
                         containmentSelector=".diagnostics-inspector-surface"
                         items={inspectorOverflowActions.map((action) => ({

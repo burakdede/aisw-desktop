@@ -673,7 +673,6 @@ export function SetsPanel({
                       <OverflowMenuButton
                         open={setMenuOpen}
                         anchorRef={setMenuAnchorRef}
-                        align="start"
                         triggerAriaLabel={setActionsTriggerLabel(profileSetDisplayLabel(selectedSet))}
                         menuAriaLabel={SETS_PANEL_COPY.setActionsMenuAriaLabel}
                         containmentSelector=".sets-inspector"
@@ -767,9 +766,8 @@ export function SetsPanel({
                     <OverflowMenuButton
                       open={rulesMenuOpen}
                       anchorRef={rulesMenuAnchorRef}
-                      align="start"
+                      variant="visible"
                       triggerAriaLabel={SETS_PANEL_COPY.projectRulesActionsAriaLabel}
-                      triggerClassName="profile-row-actions-trigger-visible"
                       menuAriaLabel={SETS_PANEL_COPY.projectRulesActionsAriaLabel}
                       containmentSelector=".sets-rules-list-panel"
                       items={rulesMenuItems}

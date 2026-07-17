@@ -182,8 +182,8 @@ export function ActivityPanel({
         <OverflowMenuButton
           open={menuOpen}
           anchorRef={menuAnchorRef}
+          variant="toolbar"
           containerClassName="activity-toolbar-menu-wrap"
-          triggerClassName="icon-button"
           triggerAriaLabel={ACTIVITY_TOOLBAR_COPY.menuAriaLabel}
           menuAriaLabel={ACTIVITY_TOOLBAR_COPY.menuLabel}
           items={[

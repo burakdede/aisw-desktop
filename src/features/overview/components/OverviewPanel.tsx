@@ -645,9 +645,8 @@ function ToolInspector({
             <OverflowMenuButton
               open={actionsMenuOpen}
               anchorRef={actionsMenuAnchorRef}
-              align="start"
+              variant="toolbar"
               containerClassName="overview-actions-menu-wrap"
-              triggerClassName="icon-button"
               triggerAriaLabel={OVERVIEW_MORE_ACTIONS_LABEL}
               menuAriaLabel={OVERVIEW_PANEL_COPY.actionsMenuAriaLabel}
               boundaryAttribute={OVERVIEW_ACTIONS_BOUNDARY_ATTRIBUTE}

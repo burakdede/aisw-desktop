@@ -13,6 +13,11 @@ export type OverflowMenuItem = {
 };
 
 export const OVERFLOW_MENU_ICON_SIZE = 16;
+const OVERFLOW_MENU_TRIGGER_VARIANT_CLASS_NAMES = {
+  default: "",
+  toolbar: "icon-button",
+  visible: "profile-row-actions-trigger-visible",
+} as const;
 
 export function OverflowMenuIcon() {
   return <SFEllipsisCircle aria-hidden="true" focusable="false" size={OVERFLOW_MENU_ICON_SIZE} />;
@@ -23,6 +28,7 @@ export function OverflowMenuButton({
   anchorRef,
   setAnchorNode,
   align = "start",
+  variant = "default",
   triggerAriaLabel,
   triggerClassName,
   containerClassName,
@@ -37,6 +43,7 @@ export function OverflowMenuButton({
   anchorRef: MutableRefObject<HTMLButtonElement | null>;
   setAnchorNode?: (node: HTMLButtonElement | null) => void;
   align?: "start" | "end";
+  variant?: keyof typeof OVERFLOW_MENU_TRIGGER_VARIANT_CLASS_NAMES;
   triggerAriaLabel: string;
   triggerClassName?: string;
   containerClassName?: string;
@@ -56,7 +63,11 @@ export function OverflowMenuButton({
           anchorRef.current = node;
           setAnchorNode?.(node);
         }}
-        className={cn("ghost-button profile-row-actions-trigger", triggerClassName)}
+        className={cn(
+          "ghost-button profile-row-actions-trigger",
+          OVERFLOW_MENU_TRIGGER_VARIANT_CLASS_NAMES[variant],
+          triggerClassName,
+        )}
         type="button"
         aria-label={triggerAriaLabel}
         aria-haspopup="menu"

@@ -208,8 +208,8 @@ export function BackupsPanel({
         <OverflowMenuButton
           open={toolbarMenuOpen}
           anchorRef={toolbarMenuAnchorRef}
+          variant="toolbar"
           containerClassName="backups-toolbar-menu-wrap"
-          triggerClassName="icon-button"
           triggerAriaLabel={BACKUPS_PANEL_COPY.toolbarMenuMoreAriaLabel}
           menuAriaLabel={BACKUPS_PANEL_COPY.toolbarMenuAriaLabel}
           items={[
@@ -341,9 +341,8 @@ export function BackupsPanel({
                     <OverflowMenuButton
                       open={inspectorMenuOpen}
                       anchorRef={inspectorMenuAnchorRef}
-                      align="start"
+                      variant="toolbar"
                       containerClassName="backups-toolbar-menu-wrap"
-                      triggerClassName="icon-button"
                       triggerAriaLabel={BACKUPS_PANEL_COPY.inspector.menuAriaLabel}
                       menuAriaLabel={BACKUPS_PANEL_COPY.inspector.menuAriaLabel}
                       containmentSelector=".backups-inspector-surface"
