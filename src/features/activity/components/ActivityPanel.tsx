@@ -161,7 +161,7 @@ export function ActivityPanel({
     setMenuOpen(false);
     setClearMessage("");
     setLogMessage("");
-    setSelectedEntryKey(filteredEntries[0]?.key ?? null);
+    setSelectedEntryKey(resolveSelectedActivityEntryKey(null, filteredEntries));
     void queryClient.invalidateQueries({ queryKey: DESKTOP_QUERY_KEYS.bootstrap });
   }
 

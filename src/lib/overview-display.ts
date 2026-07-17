@@ -204,6 +204,14 @@ export function resolveOverviewSelectedProfile(
   return resolveSelectionValue(activeProfile, profiles, (profile) => profile.name) ?? "";
 }
 
+export function resolveOverviewActionProfileLabel(
+  selectedProfileLabel: string | null,
+  activeProfileLabel: string | null,
+  fallbackProfile: string | null | undefined,
+) {
+  return selectedProfileLabel ?? activeProfileLabel ?? fallbackProfile ?? "profile";
+}
+
 export function overviewToolListProfileLabel(
   status: ToolStatus,
   settings: DesktopSettings,
@@ -493,7 +501,11 @@ export function buildOverviewInspectorPresentation(input: {
   const hasAlternateSelection = Boolean(selectedProfile && selectedProfile !== status.active_profile);
   const canSwitch = Boolean(hasAlternateSelection && selectedProfile);
   const canReapplyActiveProfile = Boolean(status.active_profile && status.active_profile_applied === false);
-  const currentSelectionLabel = selectedProfileLabel ?? activeProfileLabel ?? "profile";
+  const currentSelectionLabel = resolveOverviewActionProfileLabel(
+    selectedProfileLabel,
+    activeProfileLabel,
+    status.active_profile,
+  );
 
   const primaryAction: OverviewInspectorAction | null = !hasProfiles
     ? null
@@ -538,7 +550,11 @@ export function buildOverviewInspectorPresentation(input: {
     canReapplyActiveProfile
       ? {
           kind: "reapply",
-          label: `Re-apply ${activeProfileLabel ?? status.active_profile}`,
+          label: `Re-apply ${resolveOverviewActionProfileLabel(
+            activeProfileLabel,
+            null,
+            status.active_profile,
+          )}`,
         }
       : null,
     status.active_profile

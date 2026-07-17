@@ -34,6 +34,7 @@ import {
   overviewStateModeCopy,
   overviewTokenWarning,
   overviewWorkspaceActionLabel,
+  resolveOverviewActionProfileLabel,
   resolveOverviewSelectedProfile,
   resolveOverviewSelectedTool,
   resolveOverviewStateMode,
@@ -158,6 +159,10 @@ describe("overview-display", () => {
     expect(resolveOverviewStateMode("unknown", ["isolated", "shared"])).toBe("isolated");
     expect(overviewSelectedStateMode(["isolated", "shared"], "shared")).toBe("shared");
     expect(overviewSelectedStateMode([], "isolated")).toBeNull();
+    expect(resolveOverviewActionProfileLabel("Work", "Personal", "personal")).toBe("Work");
+    expect(resolveOverviewActionProfileLabel(null, "Personal", "personal")).toBe("Personal");
+    expect(resolveOverviewActionProfileLabel(null, null, "personal")).toBe("personal");
+    expect(resolveOverviewActionProfileLabel(null, null, null)).toBe("profile");
     expect(resolveOverviewSelectedProfile("work", makeSnapshot().profiles.claude.profiles, "personal")).toBe("work");
     expect(resolveOverviewSelectedProfile("missing", makeSnapshot().profiles.claude.profiles, "personal")).toBe("personal");
     expect(resolveOverviewSelectedProfile("missing", makeSnapshot().profiles.claude.profiles, "unknown")).toBe("personal");
