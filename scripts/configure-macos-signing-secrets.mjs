@@ -2,13 +2,14 @@ import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { consumeStringOption } from "./cli-arg-utils.mjs";
 import {
   resolveRepository,
   resolveValue,
   setEnvironmentSecret,
 } from "./github-secret-utils.mjs";
 
-const DEFAULT_ENVIRONMENT = "production";
+export const DEFAULT_ENVIRONMENT = "production";
 
 const SECRET_NAMES = {
   appleId: "APPLE_ID",
@@ -22,6 +23,18 @@ const SECRET_NAMES = {
 function base64Encode(bytes) {
   return Buffer.from(bytes).toString("base64");
 }
+
+const STRING_ARGUMENT_KEYS = {
+  "--apple-id": "appleId",
+  "--apple-password": "applePassword",
+  "--cert": "cert",
+  "--cert-password": "certPassword",
+  "--env": "environment",
+  "--env-file": "envFile",
+  "--repo": "repo",
+  "--signing-identity": "signingIdentity",
+  "--team-id": "teamId",
+};
 
 function parseEnvFileContents(contents) {
   const values = {};
@@ -57,7 +70,7 @@ export function loadEnvFile(path) {
   return parseEnvFileContents(readFileSync(path, "utf8"));
 }
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const options = {
     appleId: "",
     applePassword: "",
@@ -73,49 +86,9 @@ function parseArgs(argv) {
 
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
-    if (argument === "--repo") {
-      options.repo = argv[index + 1] ?? "";
-      index += 1;
-      continue;
-    }
-    if (argument === "--env") {
-      options.environment = argv[index + 1] ?? "";
-      index += 1;
-      continue;
-    }
-    if (argument === "--env-file") {
-      options.envFile = argv[index + 1] ?? "";
-      index += 1;
-      continue;
-    }
-    if (argument === "--cert") {
-      options.cert = argv[index + 1] ?? "";
-      index += 1;
-      continue;
-    }
-    if (argument === "--cert-password") {
-      options.certPassword = argv[index + 1] ?? "";
-      index += 1;
-      continue;
-    }
-    if (argument === "--signing-identity") {
-      options.signingIdentity = argv[index + 1] ?? "";
-      index += 1;
-      continue;
-    }
-    if (argument === "--apple-id") {
-      options.appleId = argv[index + 1] ?? "";
-      index += 1;
-      continue;
-    }
-    if (argument === "--apple-password") {
-      options.applePassword = argv[index + 1] ?? "";
-      index += 1;
-      continue;
-    }
-    if (argument === "--team-id") {
-      options.teamId = argv[index + 1] ?? "";
-      index += 1;
+    const optionKey = STRING_ARGUMENT_KEYS[argument];
+    if (optionKey) {
+      index = consumeStringOption(options, optionKey, argv, index);
       continue;
     }
     if (argument === "--dry-run") {

@@ -3,9 +3,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  DEFAULT_ENVIRONMENT,
   collectMacosSigningSecrets,
   configureMacosSigningSecrets,
   loadEnvFile,
+  parseArgs,
 } from "./configure-macos-signing-secrets.mjs";
 
 const tempDirs = [];
@@ -36,6 +38,56 @@ function makeEnv(overrides = {}) {
 }
 
 describe("configure-macos-signing-secrets", () => {
+  it("parses CLI arguments", () => {
+    expect(
+      parseArgs([
+        "--repo",
+        "burakdede/aisw-desktop",
+        "--env",
+        "staging",
+        "--env-file",
+        ".env.macos-signing",
+        "--cert",
+        "/tmp/certificate.p12",
+        "--cert-password",
+        "cert-password",
+        "--signing-identity",
+        "Developer ID Application: Example, Inc. (TEAMID1234)",
+        "--apple-id",
+        "ship@example.com",
+        "--apple-password",
+        "app-specific-password",
+        "--team-id",
+        "TEAMID1234",
+        "--dry-run",
+      ]),
+    ).toEqual({
+      appleId: "ship@example.com",
+      applePassword: "app-specific-password",
+      cert: "/tmp/certificate.p12",
+      certPassword: "cert-password",
+      dryRun: true,
+      environment: "staging",
+      envFile: ".env.macos-signing",
+      repo: "burakdede/aisw-desktop",
+      signingIdentity: "Developer ID Application: Example, Inc. (TEAMID1234)",
+      teamId: "TEAMID1234",
+    });
+
+    expect(parseArgs([])).toEqual({
+      appleId: "",
+      applePassword: "",
+      cert: "",
+      certPassword: "",
+      dryRun: false,
+      environment: DEFAULT_ENVIRONMENT,
+      envFile: "",
+      repo: "",
+      signingIdentity: "",
+      teamId: "",
+    });
+  });
+
   it("collects a base64 certificate and the remaining Apple signing values", () => {
     const certPath = makeTempFile("certificate.p12", "binary-p12-contents");
     const secrets = collectMacosSigningSecrets({ cert: certPath }, makeEnv());

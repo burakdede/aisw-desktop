@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { consumeStringOption } from "./cli-arg-utils.mjs";
 import {
   createEnvironment,
   resolveRepository,
@@ -31,6 +32,11 @@ export const optionalReleaseSecrets = [
   "APPLE_TEAM_ID",
 ];
 
+const STRING_ARGUMENT_KEYS = {
+  "--env": "environment",
+  "--repo": "repo",
+};
+
 export function parseArgs(argv) {
   const options = {
     environment: DEFAULT_ENVIRONMENT,
@@ -40,14 +46,9 @@ export function parseArgs(argv) {
 
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
-    if (argument === "--repo") {
-      options.repo = argv[index + 1] ?? "";
-      index += 1;
-      continue;
-    }
-    if (argument === "--env") {
-      options.environment = argv[index + 1] ?? "";
-      index += 1;
+    const optionKey = STRING_ARGUMENT_KEYS[argument];
+    if (optionKey) {
+      index = consumeStringOption(options, optionKey, argv, index);
       continue;
     }
     if (argument === "--dry-run") {
