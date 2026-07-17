@@ -25,6 +25,7 @@ import {
 } from "../../../lib/backups";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
+import { nullishToNull } from "../../../lib/parse-guards";
 import { findSnapshotToolStatus, toolProfileDisplayLabel } from "../../../lib/profile-display";
 import { AppBootstrap, AppSnapshot, DesktopSettings, type BackupEntry } from "../../../lib/schemas";
 import { toolDisplayName } from "../../../lib/tool-display";
@@ -116,8 +117,8 @@ export function BackupsPanel({
   const emptyState = buildBackupsEmptyState(backups.isLoading);
 
   const restoreSheet = buildRestoreSheetState(
-    pendingRestore?.backupId ?? null,
-    pendingRestore?.mode ?? null,
+    nullishToNull(pendingRestore?.backupId),
+    nullishToNull(pendingRestore?.mode),
     filteredBackups,
     sortedBackups,
     settings,
@@ -140,7 +141,9 @@ export function BackupsPanel({
   function confirmRestore(entry: BackupEntry, mode: "files" | "activate") {
     const target = resolveBackupTarget(entry.tool, entry.profile);
     const profileLabel = toolProfileDisplayLabel(settings, snapshot, target.tool, target.profile);
-    const preferredStateMode = findSnapshotToolStatus(snapshot, target.tool)?.state_mode ?? null;
+    const preferredStateMode = nullishToNull(
+      findSnapshotToolStatus(snapshot, target.tool)?.state_mode,
+    );
 
     restoreBackupMutation.mutate(entry.backup_id, {
       onSuccess: () => {

@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "../../lib/schemas";
-import { nullishToNull } from "../../lib/parse-guards";
+import { nullishToEmptyString, nullishToNull } from "../../lib/parse-guards";
 import { openExternalGuide, installGuideUrlForTool } from "../../lib/tool-guidance";
 import type { SettingsSection } from "../../lib/settings-sections";
 import { DEFAULT_PROFILE_IMPORT_MODE, type ExplicitProfileCredentialBackend, type ProfileImportMode } from "../shared/profile-capabilities";
@@ -111,7 +111,7 @@ export function runDiagnosticsQuickFixAction(
       });
       return;
     case "open_installation_guide":
-      openExternalGuide(installGuideUrlForTool(fix.toolTarget ?? ""));
+      openExternalGuide(installGuideUrlForTool(nullishToEmptyString(fix.toolTarget)));
       return;
     case "reapply_profile":
       if (!fix.profileTarget) {
@@ -119,7 +119,7 @@ export function runDiagnosticsQuickFixAction(
       }
       handlers.useProfile({
         tool: fix.profileTarget.tool,
-        profile: fix.profileTarget.profile ?? "",
+        profile: nullishToEmptyString(fix.profileTarget.profile),
         stateMode: nullishToNull(fix.importTarget?.stateMode),
         label: fix.label.replace(/^Re-apply\s+/u, ""),
       });
