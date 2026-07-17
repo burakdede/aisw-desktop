@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ButtonRow } from "../../../components/ButtonRow";
 import {
   DIALOG_FOCUS_SELECTORS,
   DIALOG_SURFACE_CLASS_NAMES,
@@ -307,7 +308,7 @@ export function DiagnosticsPanel({
   return (
     <div ref={rootRef} className="diagnostics-screen screen-content">
       <div className="diagnostics-toolbar-row">
-        <div className="button-row">
+        <ButtonRow>
           <button
             className="primary-button"
             aria-label={DIAGNOSTICS_PANEL_COPY.verifyAgainAriaLabel}
@@ -348,7 +349,7 @@ export function DiagnosticsPanel({
             ]}
             onToggle={() => setToolbarMenuOpen((open) => !open)}
           />
-        </div>
+        </ButtonRow>
       </div>
 
       <section
@@ -429,7 +430,7 @@ export function DiagnosticsPanel({
                 <p className="inline-note">
                   {DIAGNOSTICS_PANEL_COPY.verifiedPrefix} {verifiedLabel.toLowerCase()}
                 </p>
-                <div className="button-row">
+                <ButtonRow>
                   <button
                     className="ghost-button"
                     aria-label={DIAGNOSTICS_PANEL_COPY.verifyAgainAriaLabel}
@@ -438,7 +439,7 @@ export function DiagnosticsPanel({
                   >
                     {DIAGNOSTICS_PANEL_COPY.verifyAgainAriaLabel}
                   </button>
-                </div>
+                </ButtonRow>
               </div>
             )}
           </section>
@@ -482,7 +483,7 @@ export function DiagnosticsPanel({
                   </p>
                 </section>
                 {primaryFindingFix || secondaryInspectorAction || inspectorOverflowActions.length ? (
-                  <div className="button-row diagnostics-inspector-actions">
+                  <ButtonRow className="diagnostics-inspector-actions">
                     {primaryFindingFix ? (
                       <button
                         className={primaryFindingFix.primary ? "primary-button" : "ghost-button"}
@@ -523,7 +524,7 @@ export function DiagnosticsPanel({
                         onToggle={() => setInspectorMenuOpen((open) => !open)}
                       />
                     ) : null}
-                  </div>
+                  </ButtonRow>
                 ) : null}
                 <details className="diagnostics-disclosure">
                   <summary>{DIAGNOSTICS_PANEL_COPY.evidenceSummary}</summary>
@@ -615,7 +616,7 @@ export function DiagnosticsPanel({
               <strong>{diagnosticsRepairSelectionLabel(selectedSafeFixes.length)}</strong>
               <p>{DIAGNOSTICS_PANEL_COPY.repairPlanSelectionDetail}</p>
             </div>
-            <div className="button-row">
+            <ButtonRow>
               <button className="ghost-button" type="button" onClick={() => setRepairPlanOpen(false)}>
                 {DIAGNOSTICS_PANEL_COPY.repairPlanCancelLabel}
               </button>
@@ -630,7 +631,7 @@ export function DiagnosticsPanel({
               >
                 {diagnosticsApplyRepairsLabel(selectedSafeFixes.length, applyRepair.isPending)}
               </button>
-            </div>
+            </ButtonRow>
           </SheetFooter>
         </DialogSurface>
       ) : null}

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ButtonRow } from "../../../components/ButtonRow";
 import {
   DIALOG_FOCUS_SELECTORS,
   DIALOG_SURFACE_CLASS_NAMES,
@@ -479,7 +480,7 @@ export function BackupsPanel({
           />
           <p className="inline-note">{restoreSheet.followup}</p>
           <SheetFooter>
-            <div className="button-row">
+            <ButtonRow>
               <button
                 className="ghost-button"
                 type="button"
@@ -500,7 +501,7 @@ export function BackupsPanel({
               >
                 {restoreSheet.confirmLabel}
               </button>
-            </div>
+            </ButtonRow>
           </SheetFooter>
         </DialogSurface>
       ) : null}

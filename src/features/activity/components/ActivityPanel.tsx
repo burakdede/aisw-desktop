@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { ButtonRow } from "../../../components/ButtonRow";
 import {
   DIALOG_FOCUS_SELECTORS,
   DIALOG_SURFACE_CLASS_NAMES,
@@ -347,14 +348,14 @@ export function ActivityPanel({
             detail={ACTIVITY_CLEAR_DIALOG.detail}
           />
           <SheetFooter>
-            <div className="button-row">
+            <ButtonRow>
               <button className="ghost-button" type="button" onClick={() => setPendingClear(false)}>
                 {ACTIVITY_PANEL_COPY.cancelLabel}
               </button>
               <button className="ghost-button danger-button" type="button" onClick={applyClear}>
                 {ACTIVITY_CLEAR_DIALOG.confirmLabel}
               </button>
-            </div>
+            </ButtonRow>
           </SheetFooter>
         </DialogSurface>
       ) : null}

@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { ButtonRow } from "./ButtonRow";
 import { KeyValueGrid } from "./KeyValueGrid";
 import { SectionCard } from "./SectionCard";
 import { SheetFooter } from "./SheetFooter";
@@ -95,5 +96,28 @@ describe("SheetFooter", () => {
     );
 
     expect(container.querySelector("footer.quick-switch-footer-compact")).not.toBeNull();
+  });
+});
+
+describe("ButtonRow", () => {
+  it("renders children with the shared button row class", () => {
+    const { container } = render(
+      <ButtonRow>
+        <button type="button">Confirm</button>
+      </ButtonRow>,
+    );
+
+    expect(container.querySelector("div.button-row")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Confirm" })).toBeVisible();
+  });
+
+  it("merges an optional class name", () => {
+    const { container } = render(
+      <ButtonRow className="profiles-inspector-action-row">
+        <button type="button">Open</button>
+      </ButtonRow>,
+    );
+
+    expect(container.querySelector("div.profiles-inspector-action-row")).not.toBeNull();
   });
 });

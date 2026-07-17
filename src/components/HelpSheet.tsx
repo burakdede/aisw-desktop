@@ -1,4 +1,5 @@
 import { DIALOG_FOCUS_SELECTORS, DIALOG_SURFACE_CLASS_NAMES, DialogSurface } from "./DialogSurface";
+import { ButtonRow } from "./ButtonRow";
 import { SheetHeader } from "./SheetHeader";
 import { ToolBrand } from "./ToolBrand";
 import {
@@ -97,7 +98,7 @@ export function HelpSheet({
             </div>
           </div>
           <p className="inline-note">{HELP_SHEET_COPY.nextStepsNote}</p>
-          <div className="button-row">
+          <ButtonRow>
             {HELP_SHEET_ACTIONS.map((action) => (
               <button
                 key={action.id}
@@ -111,7 +112,7 @@ export function HelpSheet({
                 {action.label}
               </button>
             ))}
-          </div>
+          </ButtonRow>
         </article>
       </div>
     </DialogSurface>

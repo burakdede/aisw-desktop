@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ButtonRow } from "../../../components/ButtonRow";
 import {
   DIALOG_FOCUS_SELECTORS,
   DIALOG_SURFACE_CLASS_NAMES,
@@ -570,11 +571,11 @@ export function SetsPanel({
           onChange={(value) => setMode(normalizeSetPanelMode(value, mode))}
         />
         {mode === "sets" ? (
-          <div className="button-row">
+          <ButtonRow>
             <button className="primary-button" type="button" onClick={openNewSetEditor}>
               {SETS_PANEL_COPY.newSetButtonLabel}
             </button>
-          </div>
+          </ButtonRow>
         ) : null}
       </div>
 
@@ -656,7 +657,7 @@ export function SetsPanel({
                       subtitle={selectedSetInspector?.selectionCountLabel ?? ""}
                       onBack={() => setCompactSetInspectorOpen(false)}
                     />
-                    <div className="button-row sets-inspector-actions">
+                    <ButtonRow className="sets-inspector-actions">
                       <button
                         className="primary-button"
                         type="button"
@@ -680,7 +681,7 @@ export function SetsPanel({
                         items={selectedSetMenuItems}
                         onToggle={() => setSetMenuOpen((open) => !open)}
                       />
-                    </div>
+                    </ButtonRow>
                     <SetInspectorDetailList state={selectedSetInspector} />
                     {selectedSetInspector?.warning ? (
                       <p className="inline-note">{selectedSetInspector.warning}</p>
@@ -704,11 +705,11 @@ export function SetsPanel({
             </div>
             <h3>{SETS_PANEL_COPY.noSetsTitle}</h3>
             <p className="inline-note">{SETS_PANEL_COPY.noSetsPrimaryDetail}</p>
-            <div className="button-row">
+            <ButtonRow>
               <button className="primary-button" type="button" onClick={openNewSetEditor}>
                 {SETS_PANEL_COPY.createSetButtonLabel}
               </button>
-            </div>
+            </ButtonRow>
             <p className="inline-note">{SETS_PANEL_COPY.noSetsSecondaryDetail}</p>
           </section>
         )
@@ -724,7 +725,7 @@ export function SetsPanel({
                   <p className="inline-note">{workspaceMismatchBanner?.matchedRuleLine}</p>
                 </div>
               </div>
-              <div className="button-row">
+              <ButtonRow>
                 <button
                   className="primary-button"
                   type="button"
@@ -740,7 +741,7 @@ export function SetsPanel({
                 >
                   {SETS_PANEL_COPY.keepCurrentSetLabel}
                 </button>
-              </div>
+              </ButtonRow>
             </section>
           ) : null}
 
@@ -760,7 +761,7 @@ export function SetsPanel({
                       {SETS_PANEL_COPY.projectRulesDetail}
                     </p>
                   </div>
-                  <div className="button-row">
+                  <ButtonRow>
                     <button className="primary-button" type="button" onClick={openRuleEditor}>
                       {SETS_PANEL_COPY.addRuleButtonLabel}
                     </button>
@@ -774,7 +775,7 @@ export function SetsPanel({
                       items={rulesMenuItems}
                       onToggle={() => setRulesMenuOpen((open) => !open)}
                     />
-                  </div>
+                  </ButtonRow>
                 </header>
                 {currentRuleCount ? (
                   <div className="sets-rule-table">
@@ -841,7 +842,7 @@ export function SetsPanel({
                       onBack={() => setCompactRuleInspectorOpen(false)}
                     />
                     <RuleInspectorDetailList state={selectedRuleInspector} />
-                    <div className="button-row sets-inspector-actions">
+                    <ButtonRow className="sets-inspector-actions">
                       <button
                         className="ghost-button"
                         type="button"
@@ -859,7 +860,7 @@ export function SetsPanel({
                       >
                         {SETS_PANEL_COPY.removeRuleLabel}
                       </button>
-                    </div>
+                    </ButtonRow>
                   </>
                 ) : (
                   <div className="sets-empty-state-inline">
@@ -944,7 +945,7 @@ export function SetsPanel({
               ) : null}
             </div>
             <SheetFooter>
-              <div className="button-row">
+              <ButtonRow>
                 <button className="ghost-button" type="button" onClick={closeSetEditor}>
                   {SETS_PANEL_COPY.cancelLabel}
                 </button>
@@ -955,7 +956,7 @@ export function SetsPanel({
                 >
                   {setEditorSubmitLabel(isEditingSet)}
                 </button>
-              </div>
+              </ButtonRow>
             </SheetFooter>
           </form>
         </DialogSurface>
@@ -1038,14 +1039,14 @@ export function SetsPanel({
               ) : null}
             </div>
             <SheetFooter>
-              <div className="button-row">
+              <ButtonRow>
                 <button className="ghost-button" type="button" onClick={closeRuleEditor}>
                   {SETS_PANEL_COPY.cancelLabel}
                 </button>
                 <button className="primary-button" type="submit" disabled={mutationLock.isBusy || !canSaveBinding}>
                   {ruleEditorSubmitLabel(isEditingRule)}
                 </button>
-              </div>
+              </ButtonRow>
             </SheetFooter>
           </form>
         </DialogSurface>

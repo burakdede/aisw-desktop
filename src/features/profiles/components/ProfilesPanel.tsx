@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ButtonRow } from "../../../components/ButtonRow";
 import {
   DIALOG_FOCUS_SELECTORS,
   DIALOG_SURFACE_CLASS_NAMES,
@@ -856,7 +857,7 @@ export function ProfilesPanel({
                       <span>{profileSwitchLabel(selectedProfileInspectorState.state)}</span>
                     </div>
                   </div>
-                  <div className="button-row profiles-inspector-action-row">
+                  <ButtonRow className="profiles-inspector-action-row">
                     {selectedProfileInspectorState.primaryActionLabel ? (
                       <button
                         className="primary-button"
@@ -913,7 +914,7 @@ export function ProfilesPanel({
                       }
                       onAction={handleProfileAction}
                     />
-                  </div>
+                  </ButtonRow>
                 </header>
                 <KeyValueGrid
                   variant="plain"
@@ -1110,7 +1111,7 @@ export function ProfilesPanel({
                 }
               />
             </label>
-            <div className="button-row">
+            <ButtonRow>
               <button className="ghost-button" type="button" onClick={() => setPendingEdit(null)}>
                 {PROFILE_EDIT_SHEET_COPY.cancelLabel}
               </button>
@@ -1121,7 +1122,7 @@ export function ProfilesPanel({
               >
                 {PROFILE_EDIT_SHEET_COPY.saveLabel}
               </button>
-            </div>
+            </ButtonRow>
           </form>
         </DialogSurface>
       ) : null}
@@ -1140,7 +1141,7 @@ export function ProfilesPanel({
               {PROFILE_REMOVAL_SHEET_COPY.warning}
             </p>
             <SheetFooter>
-              <div className="button-row">
+              <ButtonRow>
                 <button className="ghost-button" type="button" onClick={() => setPendingRemoval(null)}>
                   {PROFILE_REMOVAL_SHEET_COPY.cancelLabel}
                 </button>
@@ -1159,7 +1160,7 @@ export function ProfilesPanel({
                 >
                   {PROFILE_REMOVAL_SHEET_COPY.confirmLabel}
                 </button>
-              </div>
+              </ButtonRow>
             </SheetFooter>
         </DialogSurface>
       ) : null}
@@ -1326,7 +1327,7 @@ export function ProfilesPanel({
                   {oauthError ? <p className="inline-note">{oauthError}</p> : null}
                 </article>
               ) : null}
-              <div className="button-row">
+              <ButtonRow>
                 <button
                   className="ghost-button"
                   type="button"
@@ -1352,7 +1353,7 @@ export function ProfilesPanel({
                     apiKeyPending: apiKeyProfileAction.isPending,
                   })}
                 </button>
-              </div>
+              </ButtonRow>
               {mutationErrorMessage ? <p className="inline-note">{mutationErrorMessage}</p> : null}
             </form>
         </DialogSurface>
