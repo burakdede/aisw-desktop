@@ -51,6 +51,7 @@ import {
   resolvePreferredSelectionItem,
   resolvePreferredSelectionValue,
   resolveSelectionValue,
+  resolveSelectionValueOrEmpty,
   trimmedStringOrNull,
 } from "../../lib/utils";
 
@@ -626,7 +627,7 @@ export function resolveSelectedSetName(
 export function resolveSelectedBindingContext<
   Option extends { value: string },
 >(context: string, bindingOptions: readonly Option[]) {
-  return resolveSelectionValue(context, bindingOptions, (entry) => entry.value) ?? "";
+  return resolveSelectionValueOrEmpty(context, bindingOptions, (entry) => entry.value);
 }
 
 export function resolveSelectedBindingKey<

@@ -8,8 +8,10 @@ import {
   resolvePriorityItem,
   resolvePreferredSelectionItem,
   resolvePreferredSelectionValue,
+  resolvePreferredSelectionValueOrEmpty,
   resolveSelectionItem,
   resolveSelectionValue,
+  resolveSelectionValueOrEmpty,
   trimmedStringOrNull,
   titleCase,
 } from "./utils";
@@ -61,6 +63,8 @@ describe("utils", () => {
     expect(resolveSelectionValue("missing", items, (item) => item.key)).toBe("first");
     expect(resolveSelectionValue(undefined, items, (item) => item.key)).toBe("first");
     expect(resolveSelectionValue(null, noItems, (item) => item.key)).toBeNull();
+    expect(resolveSelectionValueOrEmpty("second", items, (item) => item.key)).toBe("second");
+    expect(resolveSelectionValueOrEmpty(null, noItems, (item) => item.key)).toBe("");
 
     expect(resolveSelectionItem("second", items, (item) => item.key)).toEqual(items[1]);
     expect(resolveSelectionItem("missing", items, (item) => item.key)).toEqual(items[0]);
@@ -89,6 +93,12 @@ describe("utils", () => {
       "first",
     );
     expect(resolvePreferredSelectionValue(null, null, noItems, (item) => item.key)).toBeNull();
+    expect(
+      resolvePreferredSelectionValueOrEmpty("missing", "second", items, (item) => item.key),
+    ).toBe("second");
+    expect(resolvePreferredSelectionValueOrEmpty(null, null, noItems, (item) => item.key)).toBe(
+      "",
+    );
 
     expect(resolvePreferredSelectionItem("second", "first", items, (item) => item.key)).toEqual(
       items[1],

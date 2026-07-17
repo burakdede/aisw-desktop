@@ -111,6 +111,28 @@ export function resolvePreferredSelectionValue<T>(
   return resolveSelectionValue(preferredSelection, items, getKey);
 }
 
+export function resolveSelectionValueOrEmpty<T>(
+  selection: string | null | undefined,
+  items: readonly T[],
+  getKey: (item: T) => string,
+) {
+  return resolveSelectionValue(selection, items, getKey) ?? "";
+}
+
+export function resolvePreferredSelectionValueOrEmpty<T>(
+  selection: string | null | undefined,
+  preferredSelection: string | null | undefined,
+  items: readonly T[],
+  getKey: (item: T) => string,
+) {
+  return resolvePreferredSelectionValue(
+    selection,
+    preferredSelection,
+    items,
+    getKey,
+  ) ?? "";
+}
+
 export function resolvePreferredSelectionItem<T>(
   selection: string | null | undefined,
   preferredSelection: string | null | undefined,

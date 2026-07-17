@@ -42,6 +42,8 @@ import {
   countLabel,
   pluralChoice,
   resolvePreferredSelectionValue,
+  resolvePreferredSelectionValueOrEmpty,
+  resolveSelectionValueOrEmpty,
   resolveSelectionValue,
   titleCase,
 } from "./utils";
@@ -187,7 +189,7 @@ export function resolveOverviewSelectedTool(
   currentTool: string,
   statuses: ToolStatus[],
 ) {
-  return resolveSelectionValue(currentTool, statuses, (status) => status.tool) ?? "";
+  return resolveSelectionValueOrEmpty(currentTool, statuses, (status) => status.tool);
 }
 
 export function resolveOverviewStateMode(
@@ -202,13 +204,11 @@ export function resolveOverviewSelectedProfile(
   profiles: AppSnapshot["profiles"][string]["profiles"],
   activeProfile: string | null | undefined,
 ) {
-  return (
-    resolvePreferredSelectionValue(
-      currentProfile,
-      activeProfile,
-      profiles,
-      (profile) => profile.name,
-    ) ?? ""
+  return resolvePreferredSelectionValueOrEmpty(
+    currentProfile,
+    activeProfile,
+    profiles,
+    (profile) => profile.name,
   );
 }
 

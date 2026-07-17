@@ -2,7 +2,7 @@ import type { ShellHookGuidance } from "./schemas";
 import { normalizeCheckStatus } from "./check-status";
 import { NOT_INSTALLED_LABEL, UNAVAILABLE_LABEL } from "./status-copy";
 import {
-  resolvePreferredSelectionValue,
+  resolvePreferredSelectionValueOrEmpty,
   resolveSelectionItem,
   titleCase,
 } from "./utils";
@@ -69,13 +69,11 @@ export function selectedShellValue(
     return "";
   }
 
-  return (
-    resolvePreferredSelectionValue(
-      currentShell,
-      shellGuidance?.detected_shell ?? "",
-      variants,
-      (variant) => variant.shell,
-    ) ?? ""
+  return resolvePreferredSelectionValueOrEmpty(
+    currentShell,
+    shellGuidance?.detected_shell ?? "",
+    variants,
+    (variant) => variant.shell,
   );
 }
 
