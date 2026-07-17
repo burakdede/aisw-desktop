@@ -946,7 +946,10 @@ export function ProfilesPanel({
                     },
                     {
                       label: PROFILE_INSPECTOR_FIELD_LABELS.lastChecked,
-                      value: selectedInventoryEntry?.lastChecked ?? profileLastCheckedLabel(null, selectedProfileInspectorState.isActive),
+                      value: profileLastCheckedLabel(
+                        selectedInventoryEntry?.lastChecked,
+                        selectedProfileInspectorState.isActive,
+                      ),
                     },
                     ...(!availableStateModes.length
                       ? [
