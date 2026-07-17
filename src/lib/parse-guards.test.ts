@@ -4,6 +4,7 @@ import {
   asFiniteNumber,
   asNonEmptyString,
   asNumber,
+  nullishToEmptyString,
   nullishToNull,
   asObject,
   asOptionalString,
@@ -28,6 +29,9 @@ describe("parse-guards", () => {
     expect(asOptionalString(42)).toBeUndefined();
     expect(asOptionalStringOr("value", "fallback")).toBe("value");
     expect(asOptionalStringOr(42, "fallback")).toBe("fallback");
+    expect(nullishToEmptyString("value")).toBe("value");
+    expect(nullishToEmptyString(null)).toBe("");
+    expect(nullishToEmptyString(undefined)).toBe("");
     expect(nullishToNull("value")).toBe("value");
     expect(nullishToNull(null)).toBeNull();
     expect(nullishToNull(undefined)).toBeNull();

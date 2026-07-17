@@ -11,6 +11,7 @@ import {
   normalizeDesktopUpdateChannel,
   type DesktopUpdateChannel,
 } from "../../lib/desktop-settings";
+import { nullishToEmptyString } from "../../lib/parse-guards";
 import { resolveErrorDetails, resolveErrorMessage } from "../../lib/error-details";
 import { normalizeResolvedCheckStatus } from "../../lib/check-status";
 import {
@@ -397,8 +398,8 @@ export function buildUpdateCheckResultLines(report: UpdateCheckReport) {
 export function createSettingsDraft(settings: DesktopSettings): SettingsDraft {
   return {
     runtimeKind: settings.runtime_kind,
-    runtimePath: settings.runtime_path ?? "",
-    aiswHome: settings.aisw_home ?? "",
+    runtimePath: nullishToEmptyString(settings.runtime_path),
+    aiswHome: nullishToEmptyString(settings.aisw_home),
     updateChannel: normalizeDesktopUpdateChannel(settings.update_channel),
   };
 }

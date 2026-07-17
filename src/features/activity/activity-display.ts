@@ -19,6 +19,7 @@ import { SNAPSHOT_UPDATED_RESULT_SUMMARY } from "../shared/command-result-payloa
 import type { ActivityTimelineEntry } from "../shared/lastCommandResult";
 import type { CommandResultRecord } from "../shared/command-result-shape";
 import { resolveSelectionValue } from "../../lib/utils";
+import { nullishToEmptyString } from "../../lib/parse-guards";
 
 export type ActivityFilter = "all" | CommandResultStatus;
 type ActivityStatus = ActivityEntry["status"];
@@ -232,7 +233,7 @@ export function filterActivity(entries: ActivityEntry[], search: string, filter:
     return [
       entry.label,
       entry.message,
-      entry.remediation ?? "",
+      nullishToEmptyString(entry.remediation),
       entry.scopeLabel,
       activityPreview(entry),
     ]

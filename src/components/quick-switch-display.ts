@@ -10,6 +10,7 @@ import {
 import { CURRENT_LABEL } from "../lib/status-copy";
 import { toolDisplayName } from "../lib/tool-display";
 import { countLabel } from "../lib/utils";
+import { nullishToEmptyString } from "../lib/parse-guards";
 
 export type QuickSwitchItem =
   | {
@@ -93,7 +94,7 @@ export function buildQuickSwitchItems(settings: DesktopSettings, snapshot: AppSn
       group: "Sets",
       title: profileSetDisplayLabel(set),
       subtitle,
-      searchText: `${set.name} ${set.label ?? ""} ${subtitle}`.toLowerCase(),
+      searchText: `${set.name} ${nullishToEmptyString(set.label)} ${subtitle}`.toLowerCase(),
       active,
       name: set.name,
       label: set.label ?? undefined,
