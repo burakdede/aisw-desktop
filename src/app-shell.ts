@@ -149,6 +149,7 @@ export type DesktopShortcutAction = "quick-switch" | "settings" | AppNavId;
 export type SidebarStatusRow = {
   label: string;
   value: string;
+  valueTone: "default" | "emphasis";
 };
 
 export type ReapplyActiveProfileAction =
@@ -358,14 +359,17 @@ export function buildSidebarStatusRows(input: {
     {
       label: "Active set",
       value: input.currentActiveSet ?? "None",
+      valueTone: "emphasis",
     },
     {
       label: "Switching",
       value: runtimeReadinessLabel(input.runtimeCompatible, "sentence"),
+      valueTone: "default",
     },
     {
       label: "Engine source",
       value: runtimeSourceLabel(input.runtimeKind),
+      valueTone: "default",
     },
   ] satisfies SidebarStatusRow[];
 }

@@ -636,7 +636,7 @@ export function App() {
                 {sidebarStatusRows.map((row) => (
                   <div key={row.label} className="sidebar-status-row">
                     <span className="sidebar-status-label">{row.label}</span>
-                    {row.label === "Active set" ? <strong>{row.value}</strong> : <p>{row.value}</p>}
+                    {row.valueTone === "emphasis" ? <strong>{row.value}</strong> : <p>{row.value}</p>}
                   </div>
                 ))}
               </div>

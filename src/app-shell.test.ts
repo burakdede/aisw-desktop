@@ -296,9 +296,9 @@ describe("app-shell helpers", () => {
         runtimeKind: "custom",
       }),
     ).toEqual([
-      { label: "Active set", value: "None" },
-      { label: "Switching", value: "Ready" },
-      { label: "Engine source", value: CUSTOM_OVERRIDE_LABEL },
+      { label: "Active set", value: "None", valueTone: "emphasis" },
+      { label: "Switching", value: "Ready", valueTone: "default" },
+      { label: "Engine source", value: CUSTOM_OVERRIDE_LABEL, valueTone: "default" },
     ]);
 
     expect(APP_SHELL_COPY.currentStateKicker).toBe("Current state");
