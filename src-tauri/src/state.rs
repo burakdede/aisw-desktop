@@ -154,6 +154,7 @@ impl AppState {
                         "Refresh settings or recreate the profile set before trying again."
                             .to_owned(),
                     ),
+                    code: Some("context_missing".to_owned()),
                 })?;
 
             let contexts = bridge.list_contexts().await.unwrap_or_default();
@@ -279,6 +280,7 @@ pub fn incompatible_runtime_error() -> ErrorPayload {
         remediation: Some(
             "Select a compatible engine build or switch back to the bundled engine.".to_owned(),
         ),
+        code: Some("aisw_incompatible".to_owned()),
     }
 }
 
@@ -340,6 +342,7 @@ async fn activate_profile_set_on_bridge(
                 "Refresh profile state or recreate the missing mapped profiles before trying this profile set again."
                     .to_owned(),
             ),
+            code: Some("profile_not_found".to_owned()),
         });
     }
 
@@ -421,7 +424,7 @@ pub(crate) fn preferred_global_state_mode(snapshot: Option<&AppSnapshot>) -> Opt
     let editable_statuses = snapshot
         .statuses
         .iter()
-        .filter(|status| status.tool != "gemini")
+        .filter(|status| status.state_mode.is_some())
         .collect::<Vec<_>>();
 
     if editable_statuses.is_empty() {
@@ -442,15 +445,18 @@ pub(crate) fn preferred_tool_state_mode(
     tool: &str,
     snapshot: Option<&AppSnapshot>,
 ) -> Option<String> {
-    if tool == "gemini" {
-        return None;
-    }
-
     match snapshot
         .and_then(|entry| entry.statuses.iter().find(|status| status.tool == tool))
         .and_then(|status| status.state_mode.as_deref())
     {
         Some("shared") => Some("shared".to_owned()),
+        Some(_) => Some("isolated".to_owned()),
+        None if snapshot
+            .and_then(|entry| entry.statuses.iter().find(|status| status.tool == tool))
+            .is_some() =>
+        {
+            None
+        }
         _ => Some("isolated".to_owned()),
     }
 }
@@ -478,6 +484,9 @@ mod tests {
             active_profile: Some("work".to_owned()),
             auth_method: None,
             credential_backend: None,
+            claude_auth_classification: None,
+            codex_auth_classification: None,
+            antigravity_auth_classification: None,
             state_mode: state_mode.map(str::to_owned),
             active_profile_applied: None,
             credentials_present: None,
@@ -524,7 +533,7 @@ mod tests {
             .iter()
             .map(|feature| ((*feature).to_owned(), true))
             .collect::<HashMap<_, _>>();
-        let tools = ["claude", "codex", "gemini"]
+        let tools = ["claude", "codex", "gemini", "antigravity"]
             .into_iter()
             .map(|tool| {
                 (
@@ -631,6 +640,10 @@ mod tests {
             Some("isolated")
         );
         assert_eq!(preferred_tool_state_mode("gemini", Some(&snapshot)), None);
+        assert_eq!(
+            preferred_tool_state_mode("antigravity", Some(&snapshot)).as_deref(),
+            Some("isolated")
+        );
     }
 
     #[test]

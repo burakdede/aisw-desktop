@@ -16,11 +16,13 @@ describe("tool guidance helpers", () => {
     expect(installCommandForTool("claude")).toBe("npm install -g @anthropic-ai/claude-code");
     expect(installCommandForTool("codex")).toBe("npm install -g @openai/codex");
     expect(installCommandForTool("gemini")).toBe("npm install -g @google/gemini-cli");
+    expect(installCommandForTool("antigravity")).toBe("install agy");
     expect(installCommandForTool("custom-tool")).toBe("install custom-tool");
 
     expect(installGuideUrlForTool("claude")).toContain("@anthropic-ai/claude-code");
     expect(installGuideUrlForTool("codex")).toContain("@openai/codex");
     expect(installGuideUrlForTool("gemini")).toContain("@google/gemini-cli");
+    expect(installGuideUrlForTool("antigravity")).toBe("https://www.npmjs.com/");
     expect(installGuideUrlForTool("custom-tool")).toBe("https://www.npmjs.com/");
   });
 
@@ -28,6 +30,8 @@ describe("tool guidance helpers", () => {
     expect(toolBinaryName("claude")).toBe("claude");
     expect(toolBinaryName("codex")).toBe("codex");
     expect(toolBinaryName("gemini")).toBe("gemini");
+    expect(toolBinaryName("antigravity")).toBe("agy");
+    expect(toolBinaryName("agy")).toBe("agy");
     expect(toolBinaryName("custom-tool")).toBe("custom-tool");
 
     vi.spyOn(window.navigator, "userAgent", "get").mockReturnValue("Mozilla/5.0 (Macintosh)");

@@ -11,12 +11,14 @@ import {
 
 export class DesktopCommandError extends Error {
   kind?: ErrorMetadata["kind"];
+  code?: ErrorMetadata["code"];
   remediation?: ErrorMetadata["remediation"];
 
   constructor(message: string, options?: ErrorMetadata) {
     super(message);
     this.name = "DesktopCommandError";
     this.kind = options?.kind;
+    this.code = options?.code;
     this.remediation = options?.remediation;
   }
 }
@@ -117,12 +119,14 @@ function normalizeDesktopError(error: unknown) {
       ? error.message
       : "Desktop command failed.";
     const maybeKind = "kind" in error && typeof error.kind === "string" ? error.kind : undefined;
+    const maybeCode = "code" in error && typeof error.code === "string" ? error.code : undefined;
     const maybeRemediation =
       "remediation" in error && typeof error.remediation === "string"
         ? error.remediation
         : undefined;
     return new DesktopCommandError(maybeMessage, {
       kind: maybeKind,
+      code: maybeCode,
       remediation: maybeRemediation,
     });
   }

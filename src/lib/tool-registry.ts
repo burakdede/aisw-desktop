@@ -1,9 +1,12 @@
 import { titleCase } from "./utils";
 
-export const SUPPORTED_TOOLS = ["claude", "codex", "gemini"] as const;
+export const SUPPORTED_TOOLS = ["claude", "codex", "gemini", "antigravity"] as const;
 export type SupportedTool = (typeof SUPPORTED_TOOLS)[number];
 
 const SUPPORTED_TOOL_SET = new Set<string>(SUPPORTED_TOOLS);
+const TOOL_ALIAS_MAP: Record<string, SupportedTool> = {
+  agy: "antigravity",
+};
 const DEFAULT_TOOL_API_KEY_ENV_VAR = "API_KEY";
 const DEFAULT_INSTALL_GUIDE_URL = "https://www.npmjs.com/";
 
@@ -50,14 +53,29 @@ const TOOL_METADATA: Record<
     supportsEditableStateModes: false,
     supportsSystemKeyringCredentials: false,
   },
+  antigravity: {
+    apiKeyEnvVar: DEFAULT_TOOL_API_KEY_ENV_VAR,
+    binaryName: "agy",
+    displayName: "Antigravity CLI",
+    installCommand: "install agy",
+    installGuideUrl: DEFAULT_INSTALL_GUIDE_URL,
+    shortName: "Antigravity",
+    supportsEditableStateModes: false,
+    supportsSystemKeyringCredentials: true,
+  },
 };
 
+export function canonicalToolId(tool: string) {
+  return TOOL_ALIAS_MAP[tool] ?? tool;
+}
+
 export function isSupportedTool(tool: string): tool is SupportedTool {
-  return SUPPORTED_TOOL_SET.has(tool);
+  return SUPPORTED_TOOL_SET.has(canonicalToolId(tool));
 }
 
 function toolMetadata(tool: string) {
-  return isSupportedTool(tool) ? TOOL_METADATA[tool] : null;
+  const canonical = canonicalToolId(tool);
+  return isSupportedTool(canonical) ? TOOL_METADATA[canonical] : null;
 }
 
 export function toolDisplayName(tool: string) {

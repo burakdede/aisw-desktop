@@ -596,7 +596,7 @@ fn tray_status_items(
 }
 
 fn tray_tool_order(snapshot: &AppSnapshot) -> Vec<String> {
-    let preferred = ["claude", "codex", "gemini"];
+    let preferred = ["claude", "codex", "gemini", "antigravity"];
     let mut ordered = preferred
         .iter()
         .filter(|tool| {
@@ -707,6 +707,7 @@ fn tool_display_name(tool: &str) -> String {
         "claude" => "Claude Code".to_owned(),
         "codex" => "Codex CLI".to_owned(),
         "gemini" => "Gemini CLI".to_owned(),
+        "antigravity" | "agy" => "Antigravity CLI".to_owned(),
         _ => title_case(tool),
     }
 }
@@ -1078,6 +1079,9 @@ mod tests {
                     active_profile: Some("work".to_owned()),
                     auth_method: None,
                     credential_backend: None,
+                    claude_auth_classification: None,
+                    codex_auth_classification: None,
+                    antigravity_auth_classification: None,
                     state_mode: None,
                     active_profile_applied: None,
                     credentials_present: None,
@@ -1092,6 +1096,9 @@ mod tests {
                     active_profile: Some("personal".to_owned()),
                     auth_method: None,
                     credential_backend: None,
+                    claude_auth_classification: None,
+                    codex_auth_classification: None,
+                    antigravity_auth_classification: None,
                     state_mode: None,
                     active_profile_applied: None,
                     credentials_present: None,
@@ -1167,6 +1174,9 @@ mod tests {
                     active_profile: Some("work".to_owned()),
                     auth_method: None,
                     credential_backend: None,
+                    claude_auth_classification: None,
+                    codex_auth_classification: None,
+                    antigravity_auth_classification: None,
                     state_mode: None,
                     active_profile_applied: None,
                     credentials_present: None,
@@ -1181,6 +1191,9 @@ mod tests {
                     active_profile: Some("work".to_owned()),
                     auth_method: None,
                     credential_backend: None,
+                    claude_auth_classification: None,
+                    codex_auth_classification: None,
+                    antigravity_auth_classification: None,
                     state_mode: None,
                     active_profile_applied: None,
                     credentials_present: None,
@@ -1404,6 +1417,9 @@ mod tests {
                     active_profile: Some("work".to_owned()),
                     auth_method: None,
                     credential_backend: None,
+                    claude_auth_classification: None,
+                    codex_auth_classification: None,
+                    antigravity_auth_classification: None,
                     state_mode: None,
                     active_profile_applied: None,
                     credentials_present: None,
@@ -1418,6 +1434,9 @@ mod tests {
                     active_profile: Some("work".to_owned()),
                     auth_method: None,
                     credential_backend: None,
+                    claude_auth_classification: None,
+                    codex_auth_classification: None,
+                    antigravity_auth_classification: None,
                     state_mode: None,
                     active_profile_applied: None,
                     credentials_present: None,
@@ -1581,6 +1600,9 @@ mod tests {
                 active_profile: Some("work".to_owned()),
                 auth_method: None,
                 credential_backend: None,
+                claude_auth_classification: None,
+                codex_auth_classification: None,
+                antigravity_auth_classification: None,
                 state_mode: None,
                 active_profile_applied: None,
                 credentials_present: None,
@@ -1654,6 +1676,9 @@ mod tests {
                 active_profile: Some("work".to_owned()),
                 auth_method: None,
                 credential_backend: None,
+                claude_auth_classification: None,
+                codex_auth_classification: None,
+                antigravity_auth_classification: None,
                 state_mode: None,
                 active_profile_applied: None,
                 credentials_present: None,
@@ -1735,6 +1760,9 @@ mod tests {
                     active_profile: Some("work".to_owned()),
                     auth_method: Some("oauth".to_owned()),
                     credential_backend: Some("system_keyring".to_owned()),
+                    claude_auth_classification: None,
+                    codex_auth_classification: None,
+                    antigravity_auth_classification: None,
                     state_mode: Some("isolated".to_owned()),
                     active_profile_applied: Some(true),
                     credentials_present: Some(true),
@@ -1749,6 +1777,9 @@ mod tests {
                     active_profile: Some("work".to_owned()),
                     auth_method: Some("api_key".to_owned()),
                     credential_backend: Some("file".to_owned()),
+                    claude_auth_classification: None,
+                    codex_auth_classification: None,
+                    antigravity_auth_classification: None,
                     state_mode: Some("isolated".to_owned()),
                     active_profile_applied: Some(true),
                     credentials_present: Some(true),
@@ -1838,6 +1869,9 @@ mod tests {
                 active_profile: Some("work".to_owned()),
                 auth_method: None,
                 credential_backend: None,
+                claude_auth_classification: None,
+                codex_auth_classification: None,
+                antigravity_auth_classification: None,
                 state_mode: Some("shared".to_owned()),
                 active_profile_applied: None,
                 credentials_present: None,
@@ -1860,7 +1894,7 @@ mod tests {
             tray_use_profile_request("gemini".to_owned(), "travel".to_owned(), Some(&snapshot));
         assert_eq!(gemini.tool, "gemini");
         assert_eq!(gemini.profile, "travel");
-        assert_eq!(gemini.state_mode, None);
+        assert_eq!(gemini.state_mode.as_deref(), Some("isolated"));
     }
 
     #[test]
@@ -1905,6 +1939,7 @@ mod tests {
                     "Refresh profile state or recreate the missing profile before retrying."
                         .to_owned(),
                 ),
+                code: Some("profile_not_found".to_owned()),
             }),
             TrayCommandScope::Tool {
                 tool: "claude".to_owned(),
@@ -2065,6 +2100,9 @@ mod tests {
                     active_profile: Some("work".to_owned()),
                     auth_method: None,
                     credential_backend: None,
+                    claude_auth_classification: None,
+                    codex_auth_classification: None,
+                    antigravity_auth_classification: None,
                     state_mode: Some("shared".to_owned()),
                     active_profile_applied: None,
                     credentials_present: None,
@@ -2079,6 +2117,9 @@ mod tests {
                     active_profile: Some("work".to_owned()),
                     auth_method: None,
                     credential_backend: None,
+                    claude_auth_classification: None,
+                    codex_auth_classification: None,
+                    antigravity_auth_classification: None,
                     state_mode: Some("shared".to_owned()),
                     active_profile_applied: None,
                     credentials_present: None,
@@ -2115,6 +2156,9 @@ mod tests {
                     active_profile: Some("work".to_owned()),
                     auth_method: None,
                     credential_backend: None,
+                    claude_auth_classification: None,
+                    codex_auth_classification: None,
+                    antigravity_auth_classification: None,
                     state_mode: None,
                     active_profile_applied: None,
                     credentials_present: None,
@@ -2129,6 +2173,9 @@ mod tests {
                     active_profile: Some("personal".to_owned()),
                     auth_method: None,
                     credential_backend: None,
+                    claude_auth_classification: None,
+                    codex_auth_classification: None,
+                    antigravity_auth_classification: None,
                     state_mode: None,
                     active_profile_applied: None,
                     credentials_present: None,

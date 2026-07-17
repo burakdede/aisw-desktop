@@ -16,6 +16,8 @@ use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
 use tracing::{debug, warn};
 
+const TOOL_ID_ALIAS_PAIRS: [(&str, &str); 1] = [("agy", "antigravity")];
+
 #[async_trait]
 pub trait AiswBridge: Send + Sync {
     async fn resolve_binary(&self) -> Result<PathBuf, DesktopError>;
@@ -119,6 +121,15 @@ impl CliAiswBridge {
         Err(map_command_failure(command_name, &stderr))
     }
 
+    async fn run_json_value(
+        &self,
+        command_name: &str,
+        args: &[&str],
+        stdin_payload: Option<&str>,
+    ) -> Result<serde_json::Value, DesktopError> {
+        self.run_json(command_name, args, stdin_payload).await
+    }
+
     async fn run_command(
         &self,
         command_name: &str,
@@ -148,6 +159,7 @@ impl CliAiswBridge {
                         kind: GuiErrorKind::Unknown,
                         message: format!("Failed writing sensitive input: {err}"),
                         remediation: None,
+                        code: None,
                     }
                 })?;
             }
@@ -161,6 +173,7 @@ impl CliAiswBridge {
                 kind: GuiErrorKind::Unknown,
                 message: err.to_string(),
                 remediation: None,
+                code: None,
             })?;
 
         Ok(CommandOutput {
@@ -217,6 +230,7 @@ impl CliAiswBridge {
                 kind: GuiErrorKind::Unknown,
                 message: "OAuth progress stream was not available.".to_owned(),
                 remediation: None,
+                code: None,
             })?;
         let stderr = child
             .stderr
@@ -226,6 +240,7 @@ impl CliAiswBridge {
                 kind: GuiErrorKind::Unknown,
                 message: "OAuth stderr stream was not available.".to_owned(),
                 remediation: None,
+                code: None,
             })?;
 
         let stdout_task = async move {
@@ -240,6 +255,7 @@ impl CliAiswBridge {
                         kind: GuiErrorKind::Unknown,
                         message: err.to_string(),
                         remediation: None,
+                        code: None,
                     })?
             {
                 let trimmed = line.trim();
@@ -268,6 +284,7 @@ impl CliAiswBridge {
                     kind: GuiErrorKind::Unknown,
                     message: err.to_string(),
                     remediation: None,
+                    code: None,
                 })?;
             Ok::<Vec<u8>, DesktopError>(bytes)
         };
@@ -283,6 +300,7 @@ impl CliAiswBridge {
                 kind: GuiErrorKind::Unknown,
                 message: err.to_string(),
                 remediation: None,
+                code: None,
             })?;
 
         if status.success() {
@@ -316,6 +334,7 @@ impl CliAiswBridge {
             kind: GuiErrorKind::Unknown,
             message: "OAuth capture failed without a machine-readable error.".to_owned(),
             remediation: None,
+            code: None,
         })
     }
 }
@@ -368,11 +387,21 @@ impl AiswBridge for CliAiswBridge {
     }
 
     async fn status(&self) -> Result<Vec<ToolStatus>, DesktopError> {
-        self.run_json("status", &["status", "--json"], None).await
+        let raw = self
+            .run_json_value("status", &["status", "--json"], None)
+            .await?;
+        serde_json::from_value(normalize_status_json(raw)).map_err(|_| DesktopError::InvalidJson {
+            command: "status".to_owned(),
+        })
     }
 
     async fn list_profiles(&self) -> Result<HashMap<String, ToolProfiles>, DesktopError> {
-        self.run_json("list", &["list", "--json"], None).await
+        let raw = self
+            .run_json_value("list", &["list", "--json"], None)
+            .await?;
+        serde_json::from_value(normalize_list_json(raw)).map_err(|_| DesktopError::InvalidJson {
+            command: "list".to_owned(),
+        })
     }
 
     async fn list_contexts(&self) -> Result<Vec<ContextSummary>, DesktopError> {
@@ -725,6 +754,7 @@ fn map_command_failure(command: &str, stderr: &str) -> DesktopError {
         remediation: remediation_for_kind(&kind),
         kind,
         message: stderr.trim().to_owned(),
+        code: None,
     }
 }
 
@@ -739,10 +769,20 @@ fn map_machine_failure(command: &str, value: &serde_json::Value) -> Option<Deskt
         .and_then(|item| item.as_str())
         .unwrap_or("unknown");
     let lower = kind_value.to_ascii_lowercase();
-    let kind = if lower.contains("profile_missing") || lower.contains("profile_not_found") {
+    let kind = if lower == "unsupported_codex_shared_chatgpt_auth_switch" {
+        GuiErrorKind::UnsupportedCodexSharedChatgptAuthSwitch
+    } else if lower == "unsupported_claude_macos_oauth_isolation" {
+        GuiErrorKind::UnsupportedClaudeMacosOauthIsolation
+    } else if lower.contains("profile_missing") || lower.contains("profile_not_found") {
         GuiErrorKind::ProfileMissing
     } else if lower.contains("context_missing") || lower.contains("context_not_found") {
         GuiErrorKind::ContextMissing
+    } else if lower.contains("backup_missing") || lower.contains("backup_not_found") {
+        GuiErrorKind::BackupMissing
+    } else if lower.contains("config_corrupt") {
+        GuiErrorKind::ConfigCorrupt
+    } else if lower.contains("tool_not_installed") || lower.contains("tool_missing") {
+        GuiErrorKind::ToolMissing
     } else if lower.contains("not_found") || lower.contains("tool_missing") {
         GuiErrorKind::ToolMissing
     } else if lower.contains("duplicate") {
@@ -780,6 +820,7 @@ fn map_machine_failure(command: &str, value: &serde_json::Value) -> Option<Deskt
         kind,
         message,
         remediation,
+        code: Some(kind_value.to_owned()),
     })
 }
 
@@ -794,6 +835,9 @@ fn remediation_for_kind(kind: &GuiErrorKind) -> Option<String> {
         GuiErrorKind::ContextMissing => Some(
             "Refresh settings or recreate the missing context or profile set before retrying."
                 .to_owned(),
+        ),
+        GuiErrorKind::BackupMissing => Some(
+            "Refresh backups or recreate the missing backup before retrying.".to_owned(),
         ),
         GuiErrorKind::DuplicateProfile => Some(
             "Choose a different profile name or rename the existing profile first.".to_owned(),
@@ -817,11 +861,64 @@ fn remediation_for_kind(kind: &GuiErrorKind) -> Option<String> {
             "Close other AI Switch windows or wait for the local config lock to clear, then retry."
                 .to_owned(),
         ),
+        GuiErrorKind::ConfigCorrupt => Some(
+            "Repair or recreate the local AI Switch config before retrying this action."
+                .to_owned(),
+        ),
         GuiErrorKind::InvalidStateMode => Some(
             "Pick a state mode supported by this tool and the selected switching engine.".to_owned(),
         ),
+        GuiErrorKind::UnsupportedCodexSharedChatgptAuthSwitch => Some(
+            "Use isolated mode for this Codex profile, or re-import it as a durable non-ChatGPT profile."
+                .to_owned(),
+        ),
+        GuiErrorKind::UnsupportedClaudeMacosOauthIsolation => Some(
+            "Use shared mode for this Claude profile on macOS, or re-capture it with a supported auth layout."
+                .to_owned(),
+        ),
         _ => None,
     }
+}
+
+fn canonical_tool_id(value: &str) -> String {
+    TOOL_ID_ALIAS_PAIRS
+        .iter()
+        .find_map(|(alias, canonical)| (*alias == value).then_some((*canonical).to_owned()))
+        .unwrap_or_else(|| value.to_owned())
+}
+
+fn normalize_status_json(value: serde_json::Value) -> serde_json::Value {
+    let Some(items) = value.as_array() else {
+        return value;
+    };
+
+    serde_json::Value::Array(
+        items
+            .iter()
+            .map(|item| {
+                let mut record = item.as_object().cloned().unwrap_or_default();
+                if let Some(tool) = record.get("tool").and_then(|entry| entry.as_str()) {
+                    record.insert(
+                        "tool".to_owned(),
+                        serde_json::Value::String(canonical_tool_id(tool)),
+                    );
+                }
+                serde_json::Value::Object(record)
+            })
+            .collect(),
+    )
+}
+
+fn normalize_list_json(value: serde_json::Value) -> serde_json::Value {
+    let Some(root) = value.as_object() else {
+        return value;
+    };
+
+    serde_json::Value::Object(
+        root.iter()
+            .map(|(tool, payload)| (canonical_tool_id(tool), payload.clone()))
+            .collect(),
+    )
 }
 
 #[cfg(test)]

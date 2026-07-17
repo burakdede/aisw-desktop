@@ -137,6 +137,7 @@ where
         kind: GuiErrorKind::Unknown,
         message: format!("Updater endpoint is invalid: {error}"),
         remediation: Some(INVALID_ENDPOINT_REMEDIATION.to_owned()),
+        code: Some("updater_endpoint_invalid".to_owned()),
     })?;
     if endpoint.scheme() != "https" {
         return Err(DesktopError::CommandFailed {
@@ -147,6 +148,7 @@ where
                 endpoint.scheme()
             ),
             remediation: Some(INVALID_ENDPOINT_REMEDIATION.to_owned()),
+            code: Some("updater_endpoint_invalid".to_owned()),
         });
     }
 
@@ -192,6 +194,7 @@ fn map_updater_error(error: tauri_plugin_updater::Error) -> DesktopError {
         kind: GuiErrorKind::Unknown,
         message: format!("Desktop update failed: {error}"),
         remediation: Some(UPDATER_FAILURE_REMEDIATION.to_owned()),
+        code: Some("desktop_update_failed".to_owned()),
     }
 }
 

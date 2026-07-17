@@ -13,6 +13,7 @@ pub enum DesktopError {
         kind: GuiErrorKind,
         message: String,
         remediation: Option<String>,
+        code: Option<String>,
     },
     #[error("settings persistence failed")]
     SettingsIo(#[from] std::io::Error),
@@ -28,12 +29,16 @@ pub enum GuiErrorKind {
     ToolMissing,
     ProfileMissing,
     ContextMissing,
+    BackupMissing,
     DuplicateProfile,
     PermissionDenied,
     KeyringUnavailable,
     OAuthTimeout,
     ConfigLockTimeout,
+    ConfigCorrupt,
     InvalidStateMode,
+    UnsupportedCodexSharedChatgptAuthSwitch,
+    UnsupportedClaudeMacosOauthIsolation,
     NonInteractiveMode,
     CommandContractError,
     Unknown,
@@ -44,6 +49,8 @@ pub struct ErrorPayload {
     pub kind: GuiErrorKind,
     pub message: String,
     pub remediation: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub code: Option<String>,
 }
 
 impl From<DesktopError> for ErrorPayload {
@@ -55,6 +62,7 @@ impl From<DesktopError> for ErrorPayload {
                 remediation: Some(
                     "Select a valid bundled, system, or custom switching engine.".to_owned(),
                 ),
+                code: Some("aisw_not_found".to_owned()),
             },
             DesktopError::InvalidJson { command } => Self {
                 kind: GuiErrorKind::CommandContractError,
@@ -64,16 +72,19 @@ impl From<DesktopError> for ErrorPayload {
                 remediation: Some(
                     "Check engine compatibility and command support before retrying.".to_owned(),
                 ),
+                code: Some("command_contract_error".to_owned()),
             },
             DesktopError::CommandFailed {
                 kind,
                 message,
                 remediation,
+                code,
                 ..
             } => Self {
                 kind,
                 message,
                 remediation,
+                code,
             },
             DesktopError::SettingsIo(_) | DesktopError::Serialization(_) => Self {
                 kind: GuiErrorKind::Unknown,
@@ -81,6 +92,7 @@ impl From<DesktopError> for ErrorPayload {
                 remediation: Some(
                     "Check filesystem permissions for the app settings directory.".to_owned(),
                 ),
+                code: Some("settings_io".to_owned()),
             },
         }
     }

@@ -1,7 +1,6 @@
 import { AppBootstrap, AppSnapshot } from "../../lib/schemas";
 import { isOneOf, nullishToNull } from "../../lib/parse-guards";
 import { toolDisplayName } from "../../lib/tool-display";
-import { toolSupportsEditableStateModes } from "../../lib/tool-registry";
 import { titleCase } from "../../lib/utils";
 
 const EDITABLE_STATE_MODE_DEFINITIONS = [
@@ -54,23 +53,23 @@ export function supportedStateModes(
   tool: string,
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"],
 ) {
-  if (!toolSupportsEditableStateModes(tool)) {
+  const capability = toolCapabilities[tool];
+  if (!capability) {
+    return [...EDITABLE_STATE_MODES];
+  }
+
+  const configured = capability.state_modes ?? [];
+  if (!configured.length) {
     return [];
   }
 
-  const configured = toolCapabilities[tool]?.state_modes ?? [];
   const normalized: EditableStateMode[] = [];
   configured.forEach((mode) => {
     if (isEditableStateMode(mode) && !normalized.includes(mode)) {
       normalized.push(mode);
     }
   });
-
-  if (normalized.length) {
-    return normalized;
-  }
-
-  return [...EDITABLE_STATE_MODES];
+  return normalized;
 }
 
 export function resolveStateModeRequest(
@@ -83,7 +82,7 @@ export function resolveStateModeRequest(
 }
 
 export function resolveGlobalStateMode(snapshot: AppSnapshot) {
-  const editableStatuses = snapshot.statuses.filter((status) => toolSupportsEditableStateModes(status.tool));
+  const editableStatuses = snapshot.statuses.filter((status) => status.state_mode);
   if (!editableStatuses.length) {
     return DEFAULT_EDITABLE_STATE_MODE;
   }

@@ -592,6 +592,7 @@ fn open_target_with_default_app(target: &str, failure_message: &str) -> DesktopR
         kind: GuiErrorKind::Unknown,
         message: failure_message.to_owned(),
         remediation: Some(error.to_string()),
+        code: Some("open_failed".to_owned()),
     })?;
 
     Ok(())
@@ -632,6 +633,7 @@ fn command_error(message: &str, remediation: impl Into<String>) -> ErrorPayload 
         kind: GuiErrorKind::Unknown,
         message: message.to_owned(),
         remediation: Some(remediation.into()),
+        code: Some("command_error".to_owned()),
     }
 }
 

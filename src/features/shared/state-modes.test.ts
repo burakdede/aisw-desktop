@@ -38,13 +38,19 @@ describe("state-modes", () => {
       },
       gemini: {
         auth_methods: [],
-        state_modes: ["shared"],
+        state_modes: ["isolated"],
+        credential_backends: [],
+      },
+      antigravity: {
+        auth_methods: [],
+        state_modes: [],
         credential_backends: [],
       },
     });
 
     expect(supportedStateModes("claude", toolCapabilities)).toEqual(["shared", "isolated"]);
-    expect(supportedStateModes("gemini", toolCapabilities)).toEqual([]);
+    expect(supportedStateModes("gemini", toolCapabilities)).toEqual(["isolated"]);
+    expect(supportedStateModes("antigravity", toolCapabilities)).toEqual([]);
     expect(isEditableStateMode("shared")).toBe(true);
     expect(isEditableStateMode("portable")).toBe(false);
     expect(resolvePreferredEditableStateMode(["shared", "isolated"], "shared")).toBe("shared");
@@ -52,7 +58,8 @@ describe("state-modes", () => {
     expect(resolvePreferredEditableStateMode([], "shared")).toBeNull();
     expect(resolveStateModeRequest("claude", toolCapabilities, "shared")).toBe("shared");
     expect(resolveStateModeRequest("claude", toolCapabilities, "portable")).toBe("shared");
-    expect(resolveStateModeRequest("gemini", toolCapabilities, "shared")).toBeNull();
+    expect(resolveStateModeRequest("gemini", toolCapabilities, "shared")).toBe("isolated");
+    expect(resolveStateModeRequest("antigravity", toolCapabilities, "shared")).toBeNull();
   });
 
   it("resolves the global state mode across editable tools", () => {
@@ -60,7 +67,6 @@ describe("state-modes", () => {
       statuses: [
         { tool: "claude", state_mode: "shared" },
         { tool: "codex", state_mode: "shared" },
-        { tool: "gemini", state_mode: "isolated" },
       ],
     } as AppSnapshot;
 
@@ -73,9 +79,12 @@ describe("state-modes", () => {
         ],
       } as AppSnapshot),
     ).toBe(DEFAULT_EDITABLE_STATE_MODE);
-    expect(resolveGlobalStateMode({ statuses: [{ tool: "gemini", state_mode: "isolated" }] } as AppSnapshot)).toBe(
-      DEFAULT_EDITABLE_STATE_MODE,
-    );
+    expect(
+      resolveGlobalStateMode({ statuses: [{ tool: "gemini", state_mode: "isolated" }] } as AppSnapshot),
+    ).toBe(DEFAULT_EDITABLE_STATE_MODE);
+    expect(
+      resolveGlobalStateMode({ statuses: [{ tool: "antigravity", state_mode: null }] } as AppSnapshot),
+    ).toBe(DEFAULT_EDITABLE_STATE_MODE);
     expect(fixedStateModeDescription("gemini")).toBe(
       "Gemini CLI keeps authentication and local state together.",
     );

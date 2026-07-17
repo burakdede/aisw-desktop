@@ -9,6 +9,7 @@ import { formatMessageWithRemediation } from "./remediation-text";
 export type ErrorMetadata = {
   remediation?: string;
   kind?: string;
+  code?: string;
 };
 
 export type ErrorDetails = {
@@ -23,6 +24,7 @@ export function resolveErrorDetails(
     return {
       message: error.message || fallbackMessage,
       kind: asOptionalString((error as { kind?: unknown }).kind),
+      code: asOptionalString((error as { code?: unknown }).code),
       remediation: asOptionalString(
         (error as { remediation?: unknown }).remediation,
       ),
@@ -38,6 +40,7 @@ export function resolveErrorDetails(
     return {
       message: asOptionalStringFieldOr(record, "message", fallbackMessage),
       kind: asOptionalStringField(record, "kind"),
+      code: asOptionalStringField(record, "code"),
       remediation: asOptionalStringField(record, "remediation"),
     };
   }
