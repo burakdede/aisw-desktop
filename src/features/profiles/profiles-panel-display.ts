@@ -12,6 +12,7 @@ import {
   SIGN_IN_FLOW_LABEL,
 } from "../../lib/desktop-domain-copy";
 import {
+  BACK_LABEL,
   CANCEL_LABEL,
   DEFAULT_ACTION_FAILURE_MESSAGE,
   inspectItemLabel,
@@ -123,6 +124,7 @@ export const PROFILE_PANEL_COPY = {
   ],
   actionMenuAriaLabel: "Profile actions",
   inspectorTriggerAriaLabel: "More profile actions",
+  backLabel: BACK_LABEL,
   emptyInventoryHeading: "No matching profiles",
   emptyInventoryDetail: "Adjust the tool filter or search query.",
   emptyInspectorHeading: noSelectionHeading("profile"),

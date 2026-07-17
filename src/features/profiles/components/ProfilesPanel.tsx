@@ -16,6 +16,7 @@ import {
 } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
+import { PaneInspectorHeader } from "../../../components/PaneInspectorHeader";
 import { SearchField } from "../../../components/SearchField";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SheetFooter } from "../../../components/SheetFooter";
@@ -823,18 +824,10 @@ export function ProfilesPanel({
           <aside className="profiles-pane profiles-inspector">
             {selectedProfileEntry ? (
               <>
-                <header className="profiles-inspector-header">
-                  <div className="profiles-inspector-title-block">
-                    {compactLayout ? (
-                      <button
-                        className="ghost-button profiles-inspector-back"
-                        type="button"
-                        onClick={() => setCompactInspectorOpen(false)}
-                      >
-                        Back
-                      </button>
-                    ) : null}
-                    <h3 className="profiles-inspector-heading">
+                <PaneInspectorHeader
+                  className="profiles-inspector-header"
+                  title={
+                    <>
                       <span aria-hidden="true">
                         <ToolBrand
                           tool={tool}
@@ -843,21 +836,30 @@ export function ProfilesPanel({
                         />
                       </span>
                       <span>{selectedProfileDisplay}</span>
-                    </h3>
-                    <p className="inline-note">{toolDisplayName(tool)}</p>
-                    {selectedProfileInspectorState.hasCustomLabel ? (
-                      <p className="inline-note">{buildProfileSavedAsLabel(selectedProfileEntry.name)}</p>
-                    ) : null}
-                    <div
-                      className={`profiles-inspector-status profiles-inspector-status-${profileSwitchTone(
-                        selectedProfileInspectorState.state,
-                      )}`}
-                    >
-                      <span aria-hidden="true">{profileSwitchSymbol(selectedProfileInspectorState.state)}</span>
-                      <span>{profileSwitchLabel(selectedProfileInspectorState.state)}</span>
-                    </div>
-                  </div>
-                  <ButtonRow className="profiles-inspector-action-row">
+                    </>
+                  }
+                  backLabel={compactLayout ? PROFILE_PANEL_COPY.backLabel : undefined}
+                  backButtonClassName="profiles-inspector-back"
+                  onBack={compactLayout ? () => setCompactInspectorOpen(false) : undefined}
+                  titleBlockClassName="profiles-inspector-title-block"
+                  titleClassName="profiles-inspector-heading"
+                  supporting={
+                    <>
+                      <p className="inline-note">{toolDisplayName(tool)}</p>
+                      {selectedProfileInspectorState.hasCustomLabel ? (
+                        <p className="inline-note">{buildProfileSavedAsLabel(selectedProfileEntry.name)}</p>
+                      ) : null}
+                      <div
+                        className={`profiles-inspector-status profiles-inspector-status-${profileSwitchTone(
+                          selectedProfileInspectorState.state,
+                        )}`}
+                      >
+                        <span aria-hidden="true">{profileSwitchSymbol(selectedProfileInspectorState.state)}</span>
+                        <span>{profileSwitchLabel(selectedProfileInspectorState.state)}</span>
+                      </div>
+                    </>
+                  }
+                  trailing={<ButtonRow className="profiles-inspector-action-row">
                     {selectedProfileInspectorState.primaryActionLabel ? (
                       <button
                         className="primary-button"
@@ -912,10 +914,10 @@ export function ProfilesPanel({
                           }),
                         )
                       }
-                      onAction={handleProfileAction}
-                    />
-                  </ButtonRow>
-                </header>
+                        onAction={handleProfileAction}
+                      />
+                  </ButtonRow>}
+                />
                 <KeyValueGrid
                   variant="plain"
                   rows={[

@@ -7,6 +7,7 @@ import {
   DialogSurface,
 } from "../../../components/DialogSurface";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
+import { PaneInspectorHeader } from "../../../components/PaneInspectorHeader";
 import { SheetFooter } from "../../../components/SheetFooter";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SegmentedControl } from "../../../components/SegmentedControl";
@@ -651,11 +652,13 @@ export function SetsPanel({
               <aside className="sets-pane sets-inspector">
                 {selectedSet ? (
                   <>
-                    <SetsInspectorHeader
-                      compactLayout={compactLayout}
+                    <PaneInspectorHeader
+                      className="sets-inspector-header"
                       title={selectedSetInspector?.displayLabel ?? ""}
-                      subtitle={selectedSetInspector?.selectionCountLabel ?? ""}
-                      onBack={() => setCompactSetInspectorOpen(false)}
+                      backLabel={compactLayout ? SETS_PANEL_COPY.backLabel : undefined}
+                      backButtonClassName="sets-inspector-back"
+                      onBack={compactLayout ? () => setCompactSetInspectorOpen(false) : undefined}
+                      supporting={<p className="inline-note sets-inspector-subtitle">{selectedSetInspector?.selectionCountLabel ?? ""}</p>}
                     />
                     <ButtonRow className="sets-inspector-actions">
                       <button
@@ -835,11 +838,13 @@ export function SetsPanel({
               <aside className="sets-pane sets-rules-inspector">
                 {selectedRule ? (
                   <>
-                    <SetsInspectorHeader
-                      compactLayout={compactLayout}
+                    <PaneInspectorHeader
+                      className="sets-inspector-header"
                       title={selectedRuleInspector?.displayLabel ?? ""}
-                      subtitle={selectedRuleInspector?.subtitle ?? ""}
-                      onBack={() => setCompactRuleInspectorOpen(false)}
+                      backLabel={compactLayout ? SETS_PANEL_COPY.backLabel : undefined}
+                      backButtonClassName="sets-inspector-back"
+                      onBack={compactLayout ? () => setCompactRuleInspectorOpen(false) : undefined}
+                      supporting={<p className="inline-note sets-inspector-subtitle">{selectedRuleInspector?.subtitle ?? ""}</p>}
                     />
                     <RuleInspectorDetailList state={selectedRuleInspector} />
                     <ButtonRow className="sets-inspector-actions">
@@ -1052,32 +1057,6 @@ export function SetsPanel({
         </DialogSurface>
       ) : null}
     </div>
-  );
-}
-
-function SetsInspectorHeader({
-  compactLayout,
-  title,
-  subtitle,
-  onBack,
-}: {
-  compactLayout: boolean;
-  title: string;
-  subtitle: string;
-  onBack: () => void;
-}) {
-  return (
-    <header className="sets-inspector-header">
-      <div>
-        {compactLayout ? (
-          <button className="ghost-button sets-inspector-back" type="button" onClick={onBack}>
-            {SETS_PANEL_COPY.backLabel}
-          </button>
-        ) : null}
-        <h3>{title}</h3>
-        <p className="inline-note sets-inspector-subtitle">{subtitle}</p>
-      </div>
-    </header>
   );
 }
 
