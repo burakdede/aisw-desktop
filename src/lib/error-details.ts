@@ -1,4 +1,4 @@
-import { asObject, asOptionalString } from "./parse-guards";
+import { asObject, asOptionalString, asOptionalStringOr } from "./parse-guards";
 
 export type ErrorMetadata = {
   remediation?: string;
@@ -30,7 +30,7 @@ export function resolveErrorDetails(
   const record = asObject(error);
   if (record) {
     return {
-      message: asOptionalString(record.message) ?? fallbackMessage,
+      message: asOptionalStringOr(record.message, fallbackMessage),
       kind: asOptionalString(record.kind),
       remediation: asOptionalString(record.remediation),
     };

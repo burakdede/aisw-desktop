@@ -9,6 +9,7 @@ import {
   asArray,
   asObject,
   asOptionalString,
+  asOptionalStringOr,
   type UnknownRecord,
 } from "../../lib/parse-guards";
 
@@ -78,14 +79,15 @@ function buildDoctorReportCheck(
     | undefined,
   defaultStatus: ResolvedCheckStatus,
 ) {
-  const rawDetail = asOptionalString(check.detail) ?? options?.defaultDetail ?? "";
+  const rawDetail = asOptionalStringOr(check.detail, options?.defaultDetail ?? "");
   const detail = options?.detailTransform ? options.detailTransform(rawDetail) : rawDetail;
+  const name = asOptionalStringOr(check.name, "");
 
   return {
-    name: asOptionalString(check.name) ?? "",
+    name,
     detail,
     status: normalizeResolvedCheckStatus(check.status, defaultStatus),
-    normalizedName: (asOptionalString(check.name) ?? "").toLowerCase(),
+    normalizedName: name.toLowerCase(),
     normalizedDetail: detail.toLowerCase(),
   } satisfies DoctorReportCheck;
 }

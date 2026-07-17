@@ -22,6 +22,10 @@ export function asOptionalString(value: unknown) {
   return typeof value === "string" ? value : undefined;
 }
 
+export function asOptionalStringOr(value: unknown, fallback: string) {
+  return asOptionalString(value) ?? fallback;
+}
+
 export function asNumber(value: unknown, fallback = 0) {
   return typeof value === "number" ? value : fallback;
 }
