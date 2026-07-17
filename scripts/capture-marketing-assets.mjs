@@ -23,31 +23,31 @@ const SERVER_READY_TIMEOUT_MS = 30_000;
 const SERVER_READY_POLL_MS = 250;
 const GIF_FPS = 18;
 const GIF_LOOP = "0";
-const OVERLAY_BOTTOM_OFFSET_PX = 56;
-const OVERLAY_CARD_SIZE = { width: 560, height: 96 };
+const OVERLAY_BOTTOM_OFFSET_PX = 28;
+const OVERLAY_CARD_SIZE = { width: 520, height: 88 };
 const OVERLAY_CARD_FRAME = {
   left: 1,
   top: 1,
-  right: 558,
-  bottom: 94,
-  radius: 22,
+  right: 518,
+  bottom: 86,
+  radius: 20,
 };
 const OVERLAY_TITLE = {
   font: "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
-  pointSize: 32,
-  offsetY: -14,
+  pointSize: 34,
+  offsetY: -10,
   color: "#ffffff",
 };
 const OVERLAY_DETAIL = {
   font: "/System/Library/Fonts/Supplemental/Arial.ttf",
-  pointSize: 20,
+  pointSize: 22,
   offsetY: 18,
-  color: "#eef3ff",
-  interlineSpacing: 4,
+  color: "#f5f8ff",
+  interlineSpacing: 3,
 };
 const OVERLAY_CARD_COLORS = {
-  fill: "rgba(9,13,22,0.96)",
-  stroke: "rgba(92,144,255,0.36)",
+  fill: "rgba(8,12,20,0.98)",
+  stroke: "rgba(255,255,255,0.2)",
   strokeWidth: "2",
 };
 const QUICK_SWITCH_CAPTURE = {
@@ -193,7 +193,7 @@ async function captureQuickSwitchGif(browser) {
     path.join(mediaDir, "desktop-quick-switch.gif"),
     {
       title: "Quick switch",
-      detail: "Type, choose, press Enter.",
+      detail: "Type. Select. Enter.",
       trimStartSeconds: QUICK_SWITCH_CAPTURE.trimStartSeconds,
     },
   );
