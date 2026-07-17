@@ -26,6 +26,10 @@ export function asOptionalStringOr(value: unknown, fallback: string) {
   return asOptionalString(value) ?? fallback;
 }
 
+export function nullishToNull<Value>(value: Value | null | undefined): Value | null {
+  return value ?? null;
+}
+
 export function asNumber(value: unknown, fallback = 0) {
   return typeof value === "number" ? value : fallback;
 }

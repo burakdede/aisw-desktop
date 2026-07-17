@@ -35,7 +35,7 @@ import {
   type DesktopCommandName,
   type ReferenceDocumentKind,
 } from "./desktop-command-contract";
-import type { UnknownRecord } from "./parse-guards";
+import { nullishToNull, type UnknownRecord } from "./parse-guards";
 import { invokeDesktop } from "./tauri";
 import type { WorkspaceBindingScope } from "./workspace-binding-contract";
 import type { WorkspaceGuardMode } from "./workspace-policy";
@@ -341,15 +341,15 @@ export async function setLaunchAtLogin(enabled: boolean): Promise<LaunchAtLoginS
 
 function buildProfileMutationRequest(input: ProfileMutationRequestInput) {
   return {
-    label: input.label ?? null,
-    credential_backend: input.credentialBackend ?? null,
+    label: nullishToNull(input.label),
+    credential_backend: nullishToNull(input.credentialBackend),
     ...buildStateModeRequest(input),
   };
 }
 
 function buildStateModeRequest(input: StateModeRequestInput) {
   return {
-    state_mode: input.stateMode ?? null,
+    state_mode: nullishToNull(input.stateMode),
   };
 }
 

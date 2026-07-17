@@ -39,7 +39,7 @@ import {
   stringRecordValue,
   trimmedStringOrNull,
 } from "../../lib/utils";
-import { normalizeOneOf } from "../../lib/parse-guards";
+import { normalizeOneOf, nullishToNull } from "../../lib/parse-guards";
 import {
   resolveProfileSwitchState,
   type ProfileSwitchState,
@@ -684,7 +684,7 @@ export function buildProfileLabelUpdateRequest(input: {
     input.settings,
     input.tool,
     input.profileName,
-    input.profileLabel ?? null,
+    nullishToNull(input.profileLabel),
   );
   if (input.nextLabel === currentLabel) {
     return null;

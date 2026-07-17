@@ -4,6 +4,7 @@ import {
   asFiniteNumber,
   asNonEmptyString,
   asNumber,
+  nullishToNull,
   asObject,
   asOptionalString,
   asOptionalStringOr,
@@ -27,6 +28,9 @@ describe("parse-guards", () => {
     expect(asOptionalString(42)).toBeUndefined();
     expect(asOptionalStringOr("value", "fallback")).toBe("value");
     expect(asOptionalStringOr(42, "fallback")).toBe("fallback");
+    expect(nullishToNull("value")).toBe("value");
+    expect(nullishToNull(null)).toBeNull();
+    expect(nullishToNull(undefined)).toBeNull();
     expect(asNumber(12)).toBe(12);
     expect(asNumber("12", 7)).toBe(7);
     expect(asFiniteNumber(12)).toBe(12);

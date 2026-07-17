@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "../../lib/schemas";
+import { nullishToNull } from "../../lib/parse-guards";
 import { openExternalGuide, installGuideUrlForTool } from "../../lib/tool-guidance";
 import type { SettingsSection } from "../../lib/settings-sections";
 import { DEFAULT_PROFILE_IMPORT_MODE, type ExplicitProfileCredentialBackend, type ProfileImportMode } from "../shared/profile-capabilities";
@@ -119,7 +120,7 @@ export function runDiagnosticsQuickFixAction(
       handlers.useProfile({
         tool: fix.profileTarget.tool,
         profile: fix.profileTarget.profile ?? "",
-        stateMode: fix.importTarget?.stateMode ?? null,
+        stateMode: nullishToNull(fix.importTarget?.stateMode),
         label: fix.label.replace(/^Re-apply\s+/u, ""),
       });
       return;
