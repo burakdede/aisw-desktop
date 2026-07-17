@@ -39,9 +39,8 @@ import {
 } from "../../lib/status-copy";
 import {
   countLabel,
-  hasMatchingSelection,
+  findMatchingItem,
   resolvePriorityItem,
-  resolveSelectionItem,
   titleCase,
 } from "../../lib/utils";
 import { parseDoctorReportChecks } from "../diagnostics/diagnostic-doctor-checks";
@@ -847,11 +846,14 @@ export function resolveSelectedOnboardingAccountItem(
   items: OnboardingAccountItem[],
   selectedKey: string | null,
 ) {
-  if (hasMatchingSelection(selectedKey, items, (item) => item.key)) {
-    return resolveSelectionItem(selectedKey, items, (item) => item.key);
-  }
+  return findMatchingItem(selectedKey, items, (item) => item.key) ?? selectDefaultAccountItem(items);
+}
 
-  return selectDefaultAccountItem(items) ?? null;
+export function resolveSelectedOnboardingAccountKey(
+  items: OnboardingAccountItem[],
+  selectedKey: string | null,
+) {
+  return resolveSelectedOnboardingAccountItem(items, selectedKey)?.key ?? null;
 }
 
 export function buildOnboardingHealthItems(

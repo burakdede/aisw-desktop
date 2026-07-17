@@ -75,8 +75,8 @@ import {
   buildSelectedOnboardingAccountDetailState,
   onboardingRuntimeVersionDetail,
   resolveOnboardingStepState,
+  resolveSelectedOnboardingAccountKey,
   resolveSelectedOnboardingAccountItem,
-  selectDefaultAccountItem,
   setupStepFooterNote,
   setupStepFooterTitle,
   setupStepSummary,
@@ -166,7 +166,7 @@ export function SetupPanel({
     initReport,
   );
   const [selectedAccountKey, setSelectedAccountKey] = useState<string | null>(() =>
-    selectDefaultAccountItem(accountItems)?.key ?? null,
+    resolveSelectedOnboardingAccountKey(accountItems, null),
   );
 
   useEffect(() => {
@@ -234,11 +234,10 @@ export function SetupPanel({
   }
 
   useEffect(() => {
-    const nextSelectedAccount = resolveSelectedOnboardingAccountItem(
+    const nextSelectedAccountKey = resolveSelectedOnboardingAccountKey(
       accountItems,
       selectedAccountKey,
     );
-    const nextSelectedAccountKey = nextSelectedAccount?.key ?? null;
     if (nextSelectedAccountKey !== selectedAccountKey) {
       setSelectedAccountKey(nextSelectedAccountKey);
     }

@@ -50,6 +50,7 @@ import {
   restoreIncludedEngineActionLabel,
   restoreIncludedEngineErrorMessage,
   resolveOnboardingStepState,
+  resolveSelectedOnboardingAccountKey,
   resolveSelectedOnboardingAccountItem,
   selectDefaultAccountItem,
   setupStepFooterNote,
@@ -316,6 +317,12 @@ describe("onboarding-display", () => {
     );
     expect(resolveSelectedOnboardingAccountItem(inventory.accountItems, "missing:unknown")).toEqual(
       inventory.accountItems[0],
+    );
+    expect(resolveSelectedOnboardingAccountKey(inventory.accountItems, "missing:gemini")).toBe(
+      "missing:gemini",
+    );
+    expect(resolveSelectedOnboardingAccountKey(inventory.accountItems, "missing:unknown")).toBe(
+      "live:claude",
     );
   });
 
