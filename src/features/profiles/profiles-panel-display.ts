@@ -39,7 +39,7 @@ import {
   stringRecordValue,
   trimmedStringOrNull,
 } from "../../lib/utils";
-import { normalizeOneOf, nullishToNull } from "../../lib/parse-guards";
+import { normalizeOneOf, nullishToEmptyString, nullishToNull } from "../../lib/parse-guards";
 import {
   resolveProfileSwitchState,
   type ProfileSwitchState,
@@ -782,7 +782,7 @@ export function buildOauthWizardSteps(
 }
 
 export function oauthEventStage(event: OAuthProgressEvent): OAuthWizardStep["id"] | null {
-  const phase = (event.phase ?? event.type ?? "").toLowerCase();
+  const phase = nullishToEmptyString(event.phase ?? event.type).toLowerCase();
   return OAUTH_EVENT_PHASE_STAGE_MAP[phase as keyof typeof OAUTH_EVENT_PHASE_STAGE_MAP] ?? null;
 }
 

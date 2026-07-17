@@ -39,6 +39,9 @@ import {
 } from "./tool-warning-display";
 import { toolShortName } from "./tool-registry";
 import {
+  nullishToEmptyString,
+} from "./parse-guards";
+import {
   countLabel,
   pluralChoice,
   resolvePreferredSelectionValue,
@@ -196,7 +199,9 @@ export function resolveOverviewStateMode(
   currentMode: string | null | undefined,
   stateModes: EditableStateMode[],
 ) {
-  return resolvePreferredEditableStateMode(stateModes, currentMode) ?? currentMode ?? "";
+  return nullishToEmptyString(
+    resolvePreferredEditableStateMode(stateModes, currentMode) ?? currentMode,
+  );
 }
 
 export function resolveOverviewSelectedProfile(

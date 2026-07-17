@@ -1,6 +1,6 @@
 import type { ShellHookGuidance } from "./schemas";
 import { normalizeCheckStatus } from "./check-status";
-import { nullishToUndefined } from "./parse-guards";
+import { nullishToEmptyString, nullishToUndefined } from "./parse-guards";
 import { NOT_INSTALLED_LABEL, UNAVAILABLE_LABEL } from "./status-copy";
 import {
   resolvePreferredSelectionValueOrEmpty,
@@ -72,7 +72,7 @@ export function selectedShellValue(
 
   return resolvePreferredSelectionValueOrEmpty(
     currentShell,
-    shellGuidance?.detected_shell ?? "",
+    nullishToEmptyString(shellGuidance?.detected_shell),
     variants,
     (variant) => variant.shell,
   );
