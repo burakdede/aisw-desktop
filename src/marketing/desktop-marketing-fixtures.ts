@@ -19,6 +19,12 @@ import {
   findSnapshotToolStatus,
   snapshotHasToolProfile,
 } from "../lib/profile-display";
+import {
+  toolDefaultAuthMethods,
+  toolDefaultCredentialBackends,
+  toolDefaultFailClosedKeyringIdentity,
+  toolDefaultStateModes,
+} from "../lib/tool-registry";
 
 export const MARKETING_SCENES = [
   "overview",
@@ -50,37 +56,29 @@ type SnapshotPayloadRecord = NonNullable<AppSnapshot["workspace_status"]>;
 const baseRuntimeStatus: RuntimeStatus = {
   resolved_path: "/Applications/AI Switcher.app/Contents/Resources/aisw",
   version: {
-    version: "0.3.7",
+    version: "0.3.8",
     cli_api_version: 1,
     json_schema_version: 1,
     progress_schema_version: 1,
   },
   capabilities: {
     features: {
+      api_key_stdin: true,
       mutation_json: true,
-      desktop_contract: true,
-      workspace_rules: true,
-      profile_sets: true,
+      progress_json: true,
+      non_prompting_init: true,
+      detect_live_init: true,
+      verify: true,
+      repair: true,
+      contexts: true,
+      workspace_bindings: true,
+      project_bindings_alias: true,
     },
     tools: {
-      claude: {
-        auth_methods: ["oauth", "api_key"],
-        state_modes: ["isolated", "shared"],
-        credential_backends: ["system_keyring", "file"],
-        fail_closed_keyring_identity: false,
-      },
-      codex: {
-        auth_methods: ["oauth", "api_key"],
-        state_modes: ["isolated", "shared"],
-        credential_backends: ["system_keyring", "file"],
-        fail_closed_keyring_identity: false,
-      },
-      gemini: {
-        auth_methods: ["oauth", "api_key"],
-        state_modes: ["isolated", "shared"],
-        credential_backends: ["system_keyring", "file"],
-        fail_closed_keyring_identity: false,
-      },
+      claude: marketingToolCapability("claude"),
+      codex: marketingToolCapability("codex"),
+      gemini: marketingToolCapability("gemini"),
+      antigravity: marketingToolCapability("antigravity"),
     },
   },
   inventory: {
@@ -91,6 +89,15 @@ const baseRuntimeStatus: RuntimeStatus = {
   compatible: true,
   issues: [],
 };
+
+function marketingToolCapability(tool: "claude" | "codex" | "gemini" | "antigravity") {
+  return {
+    auth_methods: toolDefaultAuthMethods(tool),
+    state_modes: toolDefaultStateModes(tool),
+    credential_backends: toolDefaultCredentialBackends(tool),
+    fail_closed_keyring_identity: toolDefaultFailClosedKeyringIdentity(tool),
+  };
+}
 
 const baseSettings: DesktopSettings = {
   runtime_kind: "bundled",
@@ -113,6 +120,11 @@ const baseSettings: DesktopSettings = {
       personal: "Personal",
       research: "Research",
     },
+    antigravity: {
+      acme: "Acme Main",
+      personal: "Personal",
+      review: "Release Review",
+    },
   },
   profile_sets: [
     {
@@ -122,6 +134,7 @@ const baseSettings: DesktopSettings = {
         claude: "acme",
         codex: "acme",
         gemini: "acme",
+        antigravity: "acme",
       },
     },
     {
@@ -131,6 +144,7 @@ const baseSettings: DesktopSettings = {
         claude: "personal",
         codex: "personal",
         gemini: "personal",
+        antigravity: "personal",
       },
     },
     {
@@ -140,6 +154,7 @@ const baseSettings: DesktopSettings = {
         claude: "review",
         codex: "release",
         gemini: "research",
+        antigravity: "review",
       },
     },
   ],
@@ -170,6 +185,14 @@ const baseProfiles: AppSnapshot["profiles"] = {
       { name: "research", auth: "oauth", label: "Research" },
     ],
   },
+  antigravity: {
+    active: "acme",
+    profiles: [
+      { name: "acme", auth: "oauth", label: "Acme Main" },
+      { name: "personal", auth: "oauth", label: "Personal" },
+      { name: "review", auth: "oauth", label: "Release Review" },
+    ],
+  },
 };
 
 const baseContexts: AppSnapshot["contexts"] = [
@@ -179,6 +202,7 @@ const baseContexts: AppSnapshot["contexts"] = [
       claude: "acme",
       codex: "acme",
       gemini: "acme",
+      antigravity: "acme",
     },
   },
   {
@@ -187,6 +211,7 @@ const baseContexts: AppSnapshot["contexts"] = [
       claude: "personal",
       codex: "personal",
       gemini: "personal",
+      antigravity: "personal",
     },
   },
   {
@@ -195,6 +220,7 @@ const baseContexts: AppSnapshot["contexts"] = [
       claude: "review",
       codex: "release",
       gemini: "research",
+      antigravity: "review",
     },
   },
 ];
@@ -285,6 +311,12 @@ const baseBackups: BackupEntry[] = [
     tool: "gemini",
     profile: "research",
     created_at: "2026-07-14T18:07:33Z",
+  },
+  {
+    backup_id: "2026-07-13T16:20:12Z-before-switch-antigravity-review",
+    tool: "agy",
+    profile: "review",
+    created_at: "2026-07-13T16:20:12Z",
   },
 ];
 
@@ -432,7 +464,7 @@ function buildBaseSnapshot(): AppSnapshot {
         active_profile: "acme",
         auth_method: "oauth",
         credential_backend: "file",
-        state_mode: "shared",
+        state_mode: "isolated",
         active_profile_applied: true,
         credentials_present: true,
         permissions_ok: true,
@@ -444,6 +476,19 @@ function buildBaseSnapshot(): AppSnapshot {
           provider: "Google",
           expires_in_days: 3,
         },
+        warnings: [],
+      },
+      {
+        tool: "antigravity",
+        binary_found: true,
+        stored_profiles: 3,
+        active_profile: "acme",
+        auth_method: "oauth",
+        credential_backend: "system_keyring",
+        state_mode: null,
+        active_profile_applied: true,
+        credentials_present: true,
+        permissions_ok: true,
         warnings: [],
       },
     ],
@@ -589,7 +634,7 @@ function buildDiagnosticsScene(): MarketingSceneData {
       active_profile: "acme",
       auth_method: "oauth",
       credential_backend: "file",
-      state_mode: "shared",
+      state_mode: "isolated",
       active_profile_applied: true,
       credentials_present: true,
       permissions_ok: false,
@@ -601,6 +646,19 @@ function buildDiagnosticsScene(): MarketingSceneData {
           remediation: "Repair permissions before the next switch.",
         },
       ],
+    },
+    {
+      tool: "antigravity",
+      binary_found: true,
+      stored_profiles: 3,
+      active_profile: "review",
+      auth_method: "oauth",
+      credential_backend: "system_keyring",
+      state_mode: null,
+      active_profile_applied: true,
+      credentials_present: true,
+      permissions_ok: true,
+      warnings: [],
     },
   ];
 

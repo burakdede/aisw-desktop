@@ -3,6 +3,7 @@ import {
   SUPPORTED_TOOLS,
   isSupportedTool,
   toolApiKeyEnvVar,
+  toolDefaultFailClosedKeyringIdentity,
   toolShortName,
   toolSupportsEditableStateModes,
   toolSupportsSystemKeyringCredentials,
@@ -36,5 +37,7 @@ describe("toolDisplayName", () => {
     expect(toolSupportsSystemKeyringCredentials("gemini")).toBe(false);
     expect(toolSupportsSystemKeyringCredentials("codex")).toBe(true);
     expect(toolSupportsSystemKeyringCredentials("antigravity")).toBe(true);
+    expect(toolDefaultFailClosedKeyringIdentity("codex")).toBe(true);
+    expect(toolDefaultFailClosedKeyringIdentity("claude")).toBe(false);
   });
 });

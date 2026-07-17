@@ -17,6 +17,7 @@ const TOOL_METADATA: Record<
     binaryName: string;
     credentialBackends: readonly string[];
     defaultAuthMethods: readonly string[];
+    defaultFailClosedKeyringIdentity: boolean;
     defaultStateModes: readonly string[];
     displayName: string;
     installCommand: string;
@@ -31,6 +32,7 @@ const TOOL_METADATA: Record<
     binaryName: "claude",
     credentialBackends: ["file", "system_keyring"],
     defaultAuthMethods: ["oauth", "api_key", "from_env", "from_live"],
+    defaultFailClosedKeyringIdentity: false,
     defaultStateModes: ["isolated", "shared"],
     displayName: "Claude Code",
     installCommand: "npm install -g @anthropic-ai/claude-code",
@@ -44,6 +46,7 @@ const TOOL_METADATA: Record<
     binaryName: "codex",
     credentialBackends: ["file", "system_keyring"],
     defaultAuthMethods: ["oauth", "api_key", "from_env", "from_live"],
+    defaultFailClosedKeyringIdentity: true,
     defaultStateModes: ["isolated", "shared"],
     displayName: "Codex CLI",
     installCommand: "npm install -g @openai/codex",
@@ -57,6 +60,7 @@ const TOOL_METADATA: Record<
     binaryName: "gemini",
     credentialBackends: ["file"],
     defaultAuthMethods: ["oauth", "api_key", "from_env", "from_live"],
+    defaultFailClosedKeyringIdentity: false,
     defaultStateModes: ["isolated"],
     displayName: "Gemini CLI",
     installCommand: "npm install -g @google/gemini-cli",
@@ -70,6 +74,7 @@ const TOOL_METADATA: Record<
     binaryName: "agy",
     credentialBackends: ["file", "system_keyring"],
     defaultAuthMethods: ["oauth", "from_live"],
+    defaultFailClosedKeyringIdentity: false,
     defaultStateModes: [],
     displayName: "Antigravity CLI",
     installCommand: "install agy",
@@ -135,4 +140,8 @@ export function toolDefaultStateModes(tool: string) {
 
 export function toolDefaultCredentialBackends(tool: string) {
   return [...(toolMetadata(tool)?.credentialBackends ?? [])];
+}
+
+export function toolDefaultFailClosedKeyringIdentity(tool: string) {
+  return toolMetadata(tool)?.defaultFailClosedKeyringIdentity ?? false;
 }

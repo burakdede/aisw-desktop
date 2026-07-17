@@ -12,6 +12,7 @@ describe("desktop-marketing-fixtures", () => {
     expect(snapshot.profiles.claude?.active).toBe("review");
     expect(snapshot.profiles.codex?.active).toBe("release");
     expect(snapshot.profiles.gemini?.active).toBe("research");
+    expect(snapshot.profiles.antigravity?.active).toBe("review");
   });
 
   it("applies one shared profile name across matching tools from request args", async () => {
@@ -23,6 +24,7 @@ describe("desktop-marketing-fixtures", () => {
     expect(snapshot.profiles.claude?.active).toBe("personal");
     expect(snapshot.profiles.codex?.active).toBe("personal");
     expect(snapshot.profiles.gemini?.active).toBe("personal");
+    expect(snapshot.profiles.antigravity?.active).toBe("personal");
   });
 
   it("uses a context request to apply the matching set", async () => {
@@ -34,6 +36,7 @@ describe("desktop-marketing-fixtures", () => {
     expect(snapshot.profiles.claude?.active).toBe("personal");
     expect(snapshot.profiles.codex?.active).toBe("personal");
     expect(snapshot.profiles.gemini?.active).toBe("personal");
+    expect(snapshot.profiles.antigravity?.active).toBe("personal");
   });
 
   it("updates settings from a nested request object", async () => {
@@ -56,5 +59,6 @@ describe("desktop-marketing-fixtures", () => {
     expect(snapshot.profiles.claude?.active).toBe("acme");
     expect(snapshot.profiles.codex?.active).toBe("acme");
     expect(snapshot.profiles.gemini?.active).toBe("acme");
+    expect(snapshot.profiles.antigravity?.active).toBe("acme");
   });
 });
