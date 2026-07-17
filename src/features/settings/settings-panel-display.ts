@@ -33,11 +33,13 @@ import {
   NOT_FOUND_LABEL,
   NOT_SET_LABEL,
   openedItemMessage,
-  savedItemMessage,
 } from "../../lib/display-copy";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import { normalizeTerminalIntegrationText } from "../shared/terminal-integration-language";
 import { SYSTEM_ENGINE_LABEL } from "../../lib/runtime-display";
+import {
+  diagnosticExportedMessage,
+} from "../diagnostics/diagnostics-copy";
 
 export {
   DEFAULT_SETTINGS_SECTION,
@@ -320,7 +322,7 @@ export function clipboardSuccessMessage(label: string) {
 }
 
 export function exportedDiagnosticMessage(filename: string) {
-  return savedItemMessage(filename);
+  return diagnosticExportedMessage(filename);
 }
 
 export function openedAppDataFolderMessage(path: string) {

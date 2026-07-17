@@ -21,12 +21,14 @@ import { OverviewPanel } from "./features/overview/components/OverviewPanel";
 import { ProfilesPanel } from "./features/profiles/components/ProfilesPanel";
 import { ActivityPanel } from "./features/activity/components/ActivityPanel";
 import { SetsPanel } from "./features/sets/components/SetsPanel";
+import {
+  diagnosticExportFailureNotification,
+  diagnosticExportSuccessNotification,
+} from "./features/diagnostics/diagnostics-copy";
 import { invalidatePostMutationQueries } from "./features/shared/postMutationRefresh";
 import { SettingsPanel } from "./features/settings/components/SettingsPanel";
 import { useDesktop } from "./features/shared/useDesktop";
 import { notifyDesktop } from "./lib/notifications";
-import { DEFAULT_ACTION_FAILURE_MESSAGE, savedItemMessage } from "./lib/display-copy";
-import { resolveErrorMessage } from "./lib/error-details";
 import {
   DESKTOP_DIAGNOSTIC_QUERY_KEYS,
   DESKTOP_MENU_EVENTS,
@@ -251,16 +253,10 @@ export function App() {
   const exportDiagnosticBundleMutation = useMutation({
     mutationFn: exportDiagnosticBundle,
     onSuccess: async (result) => {
-      await notifyDesktop({
-        title: "Support report exported",
-        body: savedItemMessage(result.filename),
-      });
+      await notifyDesktop(diagnosticExportSuccessNotification(result.filename));
     },
     onError: async (error) => {
-      await notifyDesktop({
-        title: "Support report export failed",
-        body: resolveErrorMessage(error, DEFAULT_ACTION_FAILURE_MESSAGE),
-      });
+      await notifyDesktop(diagnosticExportFailureNotification(error));
     },
   });
 
@@ -393,18 +389,8 @@ export function App() {
         event: DESKTOP_MENU_EVENTS.exportDiagnostics,
         handler: () => {
           void exportDiagnosticBundle()
-            .then((result) =>
-              notifyDesktop({
-                title: "Diagnostic report exported",
-                body: savedItemMessage(result.filename),
-              }),
-            )
-            .catch((error) =>
-              notifyDesktop({
-                title: "Diagnostic export failed",
-                body: resolveErrorMessage(error, DEFAULT_ACTION_FAILURE_MESSAGE),
-              }),
-            );
+            .then((result) => notifyDesktop(diagnosticExportSuccessNotification(result.filename)))
+            .catch((error) => notifyDesktop(diagnosticExportFailureNotification(error)));
         },
       },
       {

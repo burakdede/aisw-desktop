@@ -6761,7 +6761,7 @@ describe("App", () => {
       expect(calls).toContain("open_issue_tracker");
       expect(calls).toContain("export_diagnostic_bundle");
       expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
-        title: "Support report exported",
+        title: "Diagnostic report exported",
         body: "Saved ai-switch-diagnostics-123.json.",
       });
     });

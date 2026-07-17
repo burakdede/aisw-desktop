@@ -19,11 +19,9 @@ import {
 } from "../../../lib/desktop-settings";
 import {
   DATE_UNAVAILABLE_LABEL,
-  DEFAULT_ACTION_FAILURE_MESSAGE,
   NOT_FOUND_LABEL,
 } from "../../../lib/display-copy";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
-import { resolveErrorMessage } from "../../../lib/error-details";
 import { notifyDesktop } from "../../../lib/notifications";
 import {
   detectedShellLabel,
@@ -50,6 +48,10 @@ import {
 import { buildKeyedRecord } from "../../../lib/utils";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
+import {
+  diagnosticExportFailureMessage,
+  diagnosticExportSuccessNotification,
+} from "../../diagnostics/diagnostics-copy";
 import {
   buildDesktopPreferencesUpdate,
   buildRuntimeSelectionSettings,
@@ -289,12 +291,9 @@ export function SettingsPanel({
       const result = await exportDiagnosticBundle();
       const message = exportedDiagnosticMessage(result.filename);
       setSecurityMessage(message);
-      void notifyDesktop({
-        title: "Diagnostic report exported",
-        body: message,
-      });
+      void notifyDesktop(diagnosticExportSuccessNotification(result.filename));
     } catch (error) {
-      const message = resolveErrorMessage(error, DEFAULT_ACTION_FAILURE_MESSAGE);
+      const message = diagnosticExportFailureMessage(error);
       setSecurityMessage(message);
     }
   }
