@@ -20,6 +20,16 @@ import {
 export const WORKSPACE_STATUSES = ["match", "mismatch", "drifted", "unknown"] as const;
 export type WorkspaceStatus = (typeof WORKSPACE_STATUSES)[number];
 
+const WORKSPACE_STATUS_BINDING_KEYS = ["matched_binding", "binding", "match"] as const;
+const WORKSPACE_STATUS_CURRENT_CONTEXT_KEYS = ["current_context", "active_context"] as const;
+const WORKSPACE_STATUS_EXPECTED_CONTEXT_KEYS = ["expected_context"] as const;
+const WORKSPACE_STATUS_CONTEXT_KEYS = ["context"] as const;
+const WORKSPACE_BINDING_SCOPE_KEYS = ["scope"] as const;
+const WORKSPACE_BINDING_TARGET_KEYS = ["path", "pattern", "target"] as const;
+const WORKSPACE_BINDING_COLLECTION_KEYS = ["items", "bindings", "entries"] as const;
+const WORKSPACE_BINDING_NO_MATCH_TARGET = "No path or remote match";
+const WORKSPACE_BINDING_DEFAULT_TARGET = "default";
+
 export interface WorkspaceStatusCard {
   status: WorkspaceStatus;
   currentContext: string;
@@ -71,11 +81,7 @@ function firstDefinedField(
 }
 
 function mergeBindingCollections(record: UnknownRecord | undefined) {
-  return [
-    ...asArray(record?.items),
-    ...asArray(record?.bindings),
-    ...asArray(record?.entries),
-  ];
+  return WORKSPACE_BINDING_COLLECTION_KEYS.flatMap((key) => asArray(record?.[key]));
 }
 
 function normalizeWorkspaceStatus(
@@ -89,27 +95,27 @@ export function parseWorkspaceStatus(
   payload: WorkspaceStatusReport | undefined,
 ): WorkspaceStatusCard {
   const record = pickRecord(payload);
-  const matchedBinding = firstObjectField(record, ["matched_binding", "binding", "match"]);
+  const matchedBinding = firstObjectField(record, WORKSPACE_STATUS_BINDING_KEYS);
 
   return {
     status: normalizeWorkspaceStatus(record?.status),
     currentContext: asNonEmptyString(
-      firstDefinedField(record, ["current_context", "active_context"]),
+      firstDefinedField(record, WORKSPACE_STATUS_CURRENT_CONTEXT_KEYS),
       WORKSPACE_NO_CONTEXT,
     ),
     expectedContext: asNonEmptyString(
-      firstDefinedField(record, ["expected_context"]) ??
-        firstDefinedField(matchedBinding, ["context"]) ??
-        firstDefinedField(record, ["context"]),
+      firstDefinedField(record, WORKSPACE_STATUS_EXPECTED_CONTEXT_KEYS) ??
+        firstDefinedField(matchedBinding, WORKSPACE_STATUS_CONTEXT_KEYS) ??
+        firstDefinedField(record, WORKSPACE_STATUS_CONTEXT_KEYS),
       WORKSPACE_NO_CONTEXT,
     ),
     scope: asNonEmptyString(
-      firstDefinedField(matchedBinding, ["scope"]),
+      firstDefinedField(matchedBinding, WORKSPACE_BINDING_SCOPE_KEYS),
       WORKSPACE_NO_CONTEXT,
     ),
     target: asNonEmptyString(
-      firstDefinedField(matchedBinding, ["path", "pattern", "target"]),
-      "No path or remote match",
+      firstDefinedField(matchedBinding, WORKSPACE_BINDING_TARGET_KEYS),
+      WORKSPACE_BINDING_NO_MATCH_TARGET,
     ),
   };
 }
@@ -128,15 +134,15 @@ export function parseWorkspaceBindings(
     ),
     defaultContext: asNonEmptyString(userBindings?.default_context, WORKSPACE_NO_CONTEXT),
     bindings: asObjectArray(bindingItems).map((entry) => ({
-        context: asNonEmptyString(
-          firstDefinedField(entry, ["context"]),
-          WORKSPACE_NO_CONTEXT,
-        ),
-        scope: asNonEmptyString(firstDefinedField(entry, ["scope"])),
-        target: asNonEmptyString(
-          firstDefinedField(entry, ["path", "pattern", "target"]),
-          "default",
-        ),
-      })),
+      context: asNonEmptyString(
+        firstDefinedField(entry, WORKSPACE_STATUS_CONTEXT_KEYS),
+        WORKSPACE_NO_CONTEXT,
+      ),
+      scope: asNonEmptyString(firstDefinedField(entry, WORKSPACE_BINDING_SCOPE_KEYS)),
+      target: asNonEmptyString(
+        firstDefinedField(entry, WORKSPACE_BINDING_TARGET_KEYS),
+        WORKSPACE_BINDING_DEFAULT_TARGET,
+      ),
+    })),
   };
 }

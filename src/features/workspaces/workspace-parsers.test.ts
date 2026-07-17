@@ -33,6 +33,26 @@ describe("workspace-parsers", () => {
       scope: "path",
       target: "/tmp/project",
     });
+
+    expect(
+      parseWorkspaceStatus({
+        result: {
+          status: "match",
+          active_context: "personal",
+          binding: {
+            context: "shared",
+            scope: "git_remote",
+            target: "github.com/acme/repo",
+          },
+        },
+      }),
+    ).toEqual({
+      status: "match",
+      currentContext: "personal",
+      expectedContext: "shared",
+      scope: "git_remote",
+      target: "github.com/acme/repo",
+    });
   });
 
   it("normalizes workspace binding guard modes and defaults", () => {
@@ -66,6 +86,45 @@ describe("workspace-parsers", () => {
           context: "client-acme",
           scope: "git_remote",
           target: "github.com/acme/*",
+        },
+      ],
+    });
+
+    expect(
+      parseWorkspaceBindings({
+        result: {
+          user_bindings: {
+            guard_mode: "strict",
+            default_context: "work",
+            bindings: [
+              {
+                context: "org",
+                scope: "path",
+                target: "/tmp/org",
+              },
+            ],
+            entries: [
+              {
+                context: "personal",
+                scope: "git_remote",
+              },
+            ],
+          },
+        },
+      }),
+    ).toEqual({
+      guardMode: "strict",
+      defaultContext: "work",
+      bindings: [
+        {
+          context: "org",
+          scope: "path",
+          target: "/tmp/org",
+        },
+        {
+          context: "personal",
+          scope: "git_remote",
+          target: "default",
         },
       ],
     });
