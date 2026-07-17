@@ -42,6 +42,7 @@ import { type AppBootstrap, type DesktopSettings } from "../../../lib/schemas";
 import { clearPersistedWindowState } from "../../../lib/window-state";
 import {
   DEFAULT_SETTINGS_SECTION,
+  SETTINGS_SECTION_IDS,
   SETTINGS_SECTIONS,
   normalizeSettingsSection,
   type SettingsSection,
@@ -263,6 +264,16 @@ export function SettingsPanel({
     setRestoreWindowState(nextDraft.restoreWindowState);
   }
 
+  function saveSettingsPatch(next: Partial<SettingsDraft>) {
+    updateSettingsMutation.mutate(
+      buildSettingsRequest({
+        settings,
+        draft: settingsDraft,
+        next,
+      }),
+    );
+  }
+
   async function copyText(value: string, label: string) {
     if (!navigator.clipboard?.writeText) {
       setCopyMessage(clipboardUnavailableMessage(label));
@@ -330,7 +341,7 @@ export function SettingsPanel({
     });
     onUpdateDesktopPreferences?.(nextPreferences);
     onResetOnboarding?.();
-    setSelectedSection("general");
+    setSelectedSection(SETTINGS_SECTION_IDS.general);
   }
 
   function resetWindowLayout() {
@@ -422,7 +433,7 @@ export function SettingsPanel({
               <h3>{sectionLabel(selectedSection)}</h3>
             </header>
 
-            {selectedSection === "general" ? (
+            {selectedSection === SETTINGS_SECTION_IDS.general ? (
               <div className="settings-section-stack">
                 <SettingsGroup title={SETTINGS_PANEL_COPY.general.groups.appearance}>
                   <SettingsRow label={SETTINGS_PANEL_COPY.general.rows.appearance}>
@@ -527,7 +538,7 @@ export function SettingsPanel({
               </div>
             ) : null}
 
-            {selectedSection === "runtime" ? (
+            {selectedSection === SETTINGS_SECTION_IDS.runtime ? (
               <div className="settings-section-stack">
                 <SettingsGroup title={SETTINGS_PANEL_COPY.runtime.groups.runtime}>
                   <SettingsStaticRow
@@ -558,13 +569,7 @@ export function SettingsPanel({
                         applySettingsDraft(
                           patchSettingsDraft(settingsDraft, nextSelection),
                         );
-                        updateSettingsMutation.mutate(
-                          buildSettingsRequest({
-                            settings,
-                            draft: settingsDraft,
-                            next: nextSelection,
-                          }),
-                        );
+                        saveSettingsPatch(nextSelection);
                       }}
                     >
                       {SETTINGS_RUNTIME_SOURCE_OPTIONS.map((option) => (
@@ -587,15 +592,7 @@ export function SettingsPanel({
                       onChange={(event) => setRuntimePath(event.target.value)}
                       onBlur={() => {
                         if (runtimeKind !== "custom") return;
-                        updateSettingsMutation.mutate(
-                          buildSettingsRequest({
-                            settings,
-                            draft: settingsDraft,
-                            next: {
-                              runtimePath,
-                            },
-                          }),
-                        );
+                        saveSettingsPatch({ runtimePath });
                       }}
                     />
                   </SettingsRow>
@@ -626,7 +623,7 @@ export function SettingsPanel({
               </div>
             ) : null}
 
-            {selectedSection === "shell" ? (
+            {selectedSection === SETTINGS_SECTION_IDS.shell ? (
               <div className="settings-section-stack">
                 <SettingsGroup title={SETTINGS_PANEL_COPY.shell.groupTitle}>
                   <SettingsStaticRow
@@ -681,7 +678,7 @@ export function SettingsPanel({
               </div>
             ) : null}
 
-            {selectedSection === "keyring" ? (
+            {selectedSection === SETTINGS_SECTION_IDS.keyring ? (
               <div className="settings-section-stack">
                 <SettingsGroup title={SETTINGS_PANEL_COPY.keyring.groups.storage}>
                   <SettingsStaticRow
@@ -731,7 +728,7 @@ export function SettingsPanel({
               </div>
             ) : null}
 
-            {selectedSection === "updates" ? (
+            {selectedSection === SETTINGS_SECTION_IDS.updates ? (
               <div className="settings-section-stack">
                 <SettingsGroup title={SETTINGS_PANEL_COPY.updates.groups.desktop}>
                   <SettingsStaticRow
@@ -747,15 +744,7 @@ export function SettingsPanel({
                           event.target.value,
                         );
                         setUpdateChannel(nextUpdateChannel);
-                        updateSettingsMutation.mutate(
-                          buildSettingsRequest({
-                            settings,
-                            draft: settingsDraft,
-                            next: {
-                              updateChannel: nextUpdateChannel,
-                            },
-                          }),
-                        );
+                        saveSettingsPatch({ updateChannel: nextUpdateChannel });
                       }}
                     >
                       {SETTINGS_UPDATE_CHANNEL_OPTIONS.map((option) => (
@@ -846,7 +835,7 @@ export function SettingsPanel({
               </div>
             ) : null}
 
-            {selectedSection === "advanced" ? (
+            {selectedSection === SETTINGS_SECTION_IDS.advanced ? (
               <div className="settings-section-stack">
                 <SettingsGroup title={SETTINGS_PANEL_COPY.advanced.groups.applicationState}>
                   <SettingsActionRow
@@ -902,17 +891,7 @@ export function SettingsPanel({
                       aria-label={SETTINGS_PANEL_COPY.advanced.aiswHomeAriaLabel}
                       value={aiswHome}
                       onChange={(event) => setAiswHome(event.target.value)}
-                      onBlur={() =>
-                        updateSettingsMutation.mutate(
-                          buildSettingsRequest({
-                            settings,
-                            draft: settingsDraft,
-                            next: {
-                              aiswHome,
-                            },
-                          }),
-                        )
-                      }
+                      onBlur={() => saveSettingsPatch({ aiswHome })}
                     />
                   </SettingsRow>
                 </SettingsGroup>
