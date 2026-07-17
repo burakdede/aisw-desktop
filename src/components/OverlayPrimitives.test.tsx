@@ -321,6 +321,13 @@ describe("OverflowMenuButton", () => {
             label: "Rename",
             onSelect,
           },
+          {
+            key: "remove",
+            label: "Remove",
+            separated: true,
+            danger: true,
+            onSelect: vi.fn(),
+          },
         ]}
         onToggle={onToggle}
       />,
@@ -339,5 +346,6 @@ describe("OverflowMenuButton", () => {
 
     fireEvent.click(screen.getByRole("menuitem", { name: "Rename" }));
     expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(document.querySelector(".menu-divider")).not.toBeNull();
   });
 });

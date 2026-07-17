@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SplitView } from "../../../components/SplitView";
@@ -321,42 +320,27 @@ export function DiagnosticsPanel({
               ? DIAGNOSTICS_PANEL_COPY.applyingRepairsLabel
               : DIAGNOSTICS_PANEL_COPY.reviewSafeFixesButtonLabel}
           </button>
-          <div className="diagnostics-toolbar-menu-wrap">
-            <button
-              ref={toolbarMenuAnchorRef}
-              className="ghost-button"
-              type="button"
-              aria-haspopup="menu"
-              aria-expanded={toolbarMenuOpen}
-              aria-label={DIAGNOSTICS_PANEL_COPY.diagnosticsActionsTriggerAriaLabel}
-              onClick={() => setToolbarMenuOpen((open) => !open)}
-            >
-              •••
-            </button>
-            {toolbarMenuOpen ? (
-              <AnchoredMenu
-                anchorRef={toolbarMenuAnchorRef}
-                className="profile-row-actions-menu"
-                role="menu"
-                aria-label={DIAGNOSTICS_PANEL_COPY.diagnosticsActionsAriaLabel}
-              >
-                <button
-                  className="ghost-button"
-                  role="menuitem"
-                  type="button"
-                  onClick={() => {
-                    setToolbarMenuOpen(false);
-                    exportBundle.mutate();
-                  }}
-                  disabled={exportBundle.isPending}
-                >
-                  {exportBundle.isPending
-                    ? DIAGNOSTICS_PANEL_COPY.exportingReportLabel
-                    : DIAGNOSTICS_PANEL_COPY.exportReportLabel}
-                </button>
-              </AnchoredMenu>
-            ) : null}
-          </div>
+          <OverflowMenuButton
+            open={toolbarMenuOpen}
+            anchorRef={toolbarMenuAnchorRef}
+            containerClassName="diagnostics-toolbar-menu-wrap"
+            triggerAriaLabel={DIAGNOSTICS_PANEL_COPY.diagnosticsActionsTriggerAriaLabel}
+            menuAriaLabel={DIAGNOSTICS_PANEL_COPY.diagnosticsActionsAriaLabel}
+            items={[
+              {
+                key: "export-report",
+                label: exportBundle.isPending
+                  ? DIAGNOSTICS_PANEL_COPY.exportingReportLabel
+                  : DIAGNOSTICS_PANEL_COPY.exportReportLabel,
+                disabled: exportBundle.isPending,
+                onSelect: () => {
+                  setToolbarMenuOpen(false);
+                  exportBundle.mutate();
+                },
+              },
+            ]}
+            onToggle={() => setToolbarMenuOpen((open) => !open)}
+          />
         </div>
       </div>
 

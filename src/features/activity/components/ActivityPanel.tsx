@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
-import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
+import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SearchField } from "../../../components/SearchField";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SplitView } from "../../../components/SplitView";
@@ -175,68 +175,52 @@ export function ActivityPanel({
           value={filter}
           onChange={setFilter}
         />
-        <div className="activity-toolbar-menu-wrap">
-          <button
-            ref={menuAnchorRef}
-            className="ghost-button icon-button"
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-            aria-label={ACTIVITY_TOOLBAR_COPY.menuAriaLabel}
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            <SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />
-          </button>
-          {menuOpen ? (
-            <AnchoredMenu
-              anchorRef={menuAnchorRef}
-              className="profile-row-actions-menu"
-              role="menu"
-              aria-label={ACTIVITY_TOOLBAR_COPY.menuLabel}
-            >
-              <button className="ghost-button" role="menuitem" type="button" onClick={refreshActivity}>
-                {ACTIVITY_TOOLBAR_COPY.refreshLabel}
-              </button>
-              <button
-                className="ghost-button"
-                role="menuitem"
-                type="button"
-                disabled={!hasEntries}
-                onClick={() => {
-                  setMenuOpen(false);
-                  void openActivityLog();
-                }}
-              >
-                {ACTIVITY_TOOLBAR_COPY.openLogLabel}
-              </button>
-              <button
-                className="ghost-button"
-                role="menuitem"
-                type="button"
-                disabled={!hasEntries}
-                onClick={() => {
-                  setMenuOpen(false);
-                  void exportRedactedActivity();
-                }}
-              >
-                {ACTIVITY_TOOLBAR_COPY.exportLabel}
-              </button>
-              <div className="menu-divider" aria-hidden="true" />
-              <button
-                className="ghost-button profile-row-actions-danger"
-                role="menuitem"
-                type="button"
-                disabled={!hasEntries}
-                onClick={() => {
-                  setMenuOpen(false);
-                  setPendingClear(true);
-                }}
-              >
-                {ACTIVITY_TOOLBAR_COPY.clearLabel}
-              </button>
-            </AnchoredMenu>
-          ) : null}
-        </div>
+        <OverflowMenuButton
+          open={menuOpen}
+          anchorRef={menuAnchorRef}
+          containerClassName="activity-toolbar-menu-wrap"
+          triggerClassName="icon-button"
+          triggerContent={<SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />}
+          triggerAriaLabel={ACTIVITY_TOOLBAR_COPY.menuAriaLabel}
+          menuAriaLabel={ACTIVITY_TOOLBAR_COPY.menuLabel}
+          items={[
+            {
+              key: "refresh",
+              label: ACTIVITY_TOOLBAR_COPY.refreshLabel,
+              onSelect: refreshActivity,
+            },
+            {
+              key: "open-log",
+              label: ACTIVITY_TOOLBAR_COPY.openLogLabel,
+              disabled: !hasEntries,
+              onSelect: () => {
+                setMenuOpen(false);
+                void openActivityLog();
+              },
+            },
+            {
+              key: "export",
+              label: ACTIVITY_TOOLBAR_COPY.exportLabel,
+              disabled: !hasEntries,
+              onSelect: () => {
+                setMenuOpen(false);
+                void exportRedactedActivity();
+              },
+            },
+            {
+              key: "clear",
+              label: ACTIVITY_TOOLBAR_COPY.clearLabel,
+              disabled: !hasEntries,
+              danger: true,
+              separated: true,
+              onSelect: () => {
+                setMenuOpen(false);
+                setPendingClear(true);
+              },
+            },
+          ]}
+          onToggle={() => setMenuOpen((open) => !open)}
+        />
       </div>
 
       <SplitView

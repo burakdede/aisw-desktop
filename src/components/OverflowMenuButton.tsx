@@ -8,6 +8,7 @@ export type OverflowMenuItem = {
   onSelect: () => void;
   disabled?: boolean;
   danger?: boolean;
+  separated?: boolean;
 };
 
 export function OverflowMenuButton({
@@ -68,16 +69,18 @@ export function OverflowMenuButton({
           aria-label={menuAriaLabel}
         >
           {items.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              role="menuitem"
-              disabled={item.disabled}
-              className={item.danger ? "profile-row-actions-danger" : undefined}
-              onClick={item.onSelect}
-            >
-              {item.label}
-            </button>
+            <div key={item.key}>
+              {item.separated ? <div className="menu-divider" aria-hidden="true" /> : null}
+              <button
+                type="button"
+                role="menuitem"
+                disabled={item.disabled}
+                className={item.danger ? "profile-row-actions-danger" : undefined}
+                onClick={item.onSelect}
+              >
+                {item.label}
+              </button>
+            </div>
           ))}
         </AnchoredMenu>
       ) : null}
