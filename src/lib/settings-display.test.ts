@@ -67,6 +67,7 @@ describe("settings-display", () => {
     expect(selectedShellVariant(shellGuidance, "fish")).toEqual(shellGuidance.variants[0]);
     expect(selectedShellValue(shellGuidance, "")).toBe("zsh");
     expect(selectedShellValue(shellGuidance, "bash")).toBe("bash");
+    expect(selectedShellValue(shellGuidance, "fish")).toBe("zsh");
     expect(selectedShellValue(undefined, "")).toBe("");
   });
 

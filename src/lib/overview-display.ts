@@ -38,6 +38,7 @@ import {
   RUNTIME_WARNING_FALLBACK_DETAIL,
 } from "./tool-warning-display";
 import { toolShortName } from "./tool-registry";
+import { hasMatchingSelection, resolveSelectionValue } from "./utils";
 import { countLabel, pluralChoice, titleCase } from "./utils";
 
 export type OverviewInspectorActionKind =
@@ -181,13 +182,7 @@ export function resolveOverviewSelectedTool(
   currentTool: string,
   statuses: ToolStatus[],
 ) {
-  if (!statuses.length) {
-    return "";
-  }
-  if (currentTool && statuses.some((status) => status.tool === currentTool)) {
-    return currentTool;
-  }
-  return statuses[0]?.tool ?? "";
+  return resolveSelectionValue(currentTool, statuses, (status) => status.tool) ?? "";
 }
 
 export function resolveOverviewStateMode(
@@ -202,11 +197,11 @@ export function resolveOverviewSelectedProfile(
   profiles: AppSnapshot["profiles"][string]["profiles"],
   activeProfile: string | null | undefined,
 ) {
-  const availableProfiles = profiles.map((profile) => profile.name);
-  if (currentProfile && availableProfiles.includes(currentProfile)) {
+  if (hasMatchingSelection(currentProfile, profiles, (profile) => profile.name)) {
     return currentProfile;
   }
-  return activeProfile ?? availableProfiles[0] ?? "";
+
+  return resolveSelectionValue(activeProfile, profiles, (profile) => profile.name) ?? "";
 }
 
 export function overviewToolListProfileLabel(

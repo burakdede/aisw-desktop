@@ -1,7 +1,12 @@
 import type { ShellHookGuidance } from "./schemas";
 import { normalizeCheckStatus } from "./check-status";
 import { NOT_INSTALLED_LABEL, UNAVAILABLE_LABEL } from "./status-copy";
-import { titleCase } from "./utils";
+import {
+  hasMatchingSelection,
+  resolveSelectionItem,
+  resolveSelectionValue,
+  titleCase,
+} from "./utils";
 
 export const SHELL_CONFIG_UNAVAILABLE_LABEL = UNAVAILABLE_LABEL;
 export const SHELL_COMPLETION_AVAILABLE_LABEL = "Available in this build";
@@ -52,24 +57,25 @@ export function selectedShellVariant<Variant extends ShellGuidanceVariantLike>(
   if (!variants) {
     return undefined;
   }
-  return variants.find((variant) => variant.shell === selectedShell) ?? variants[0];
+
+  return resolveSelectionItem(selectedShell, variants, (variant) => variant.shell) ?? undefined;
 }
 
 export function selectedShellValue(
   shellGuidance: ShellGuidanceLike | undefined,
   currentShell: string,
 ) {
-  if (currentShell) {
-    return currentShell;
-  }
-
   const variants = shellGuidanceVariants(shellGuidance);
   if (!variants) {
     return "";
   }
 
+  if (hasMatchingSelection(currentShell, variants, (variant) => variant.shell)) {
+    return currentShell;
+  }
+
   const preferred = shellGuidance?.detected_shell ?? "";
-  return variants.find((variant) => variant.shell === preferred)?.shell ?? variants[0].shell;
+  return resolveSelectionValue(preferred, variants, (variant) => variant.shell) ?? "";
 }
 
 export function shellGuidanceFallbackLabel(isLoading: boolean) {

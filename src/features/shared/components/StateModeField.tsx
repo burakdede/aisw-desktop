@@ -1,4 +1,5 @@
 import { SegmentedControl } from "../../../components/SegmentedControl";
+import { resolveSelectionValue } from "../../../lib/utils";
 import { stateModeDescription, stateModeLabel } from "../state-modes";
 
 export function StateModeField({
@@ -15,7 +16,7 @@ export function StateModeField({
   variant?: "cards" | "compact";
 }) {
   if (variant === "compact") {
-    const selectedOption = options.find((option) => option === value) ?? options[0];
+    const selectedOption = resolveSelectionValue(value, options, (option) => option) ?? "";
     const copy = stateModeDescription(selectedOption);
     return (
       <fieldset className="state-mode-field state-mode-field-compact">

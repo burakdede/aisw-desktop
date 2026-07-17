@@ -242,6 +242,7 @@ describe("settings-panel-display", () => {
     );
     expect(selectedShellValue(makeShellGuidance(), "")).toBe("zsh");
     expect(selectedShellValue(makeShellGuidance(), "bash")).toBe("bash");
+    expect(selectedShellValue(makeShellGuidance(), "fish")).toBe("zsh");
     expect(selectedShellValue(undefined, "")).toBe("");
 
     expect(settingsSectionDirectionForKey("ArrowDown")).toBe("next");

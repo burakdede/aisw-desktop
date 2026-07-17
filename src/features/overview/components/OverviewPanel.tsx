@@ -28,6 +28,7 @@ import { EXPECTED_SET_PREFIX } from "../../../lib/sets-display";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { eventTargetWithinSelector } from "../../../lib/dom-events";
 import { BACKEND_UNAVAILABLE_LABEL } from "../../../lib/display-copy";
+import { resolveSelectionItem } from "../../../lib/utils";
 import { invalidateSnapshotDesktopQueries } from "../../shared/postMutationRefresh";
 import {
   buildOverviewInspectorNotices,
@@ -121,8 +122,11 @@ export function OverviewPanel({
     showPrimary: showToolList,
     showInspector,
   } = useCompactInspectorLayout(rootRef, PANEL_COMPACT_BREAKPOINT);
-  const selectedStatus =
-    snapshot.statuses.find((status) => status.tool === selectedTool) ?? snapshot.statuses[0] ?? null;
+  const selectedStatus = resolveSelectionItem(
+    selectedTool,
+    snapshot.statuses,
+    (status) => status.tool,
+  );
   const overviewStates = snapshot.statuses.map(resolveOverviewHealthState);
   const overviewSummary = useMemo(
     () => buildOverviewStateSummary(overviewStates),
@@ -381,7 +385,9 @@ function ToolInspector({
   onBack?: () => void;
 }) {
   const [stateMode, setStateMode] = useState(status.state_mode ?? stateModes[0] ?? "");
-  const [selectedProfile, setSelectedProfile] = useState(status.active_profile ?? profiles[0]?.name ?? "");
+  const [selectedProfile, setSelectedProfile] = useState(
+    resolveOverviewSelectedProfile("", profiles, status.active_profile),
+  );
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
   const actionsMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
   const supportsLiveImport = supportsProfileImportMode(

@@ -160,6 +160,7 @@ describe("overview-display", () => {
     expect(overviewSelectedStateMode([], "isolated")).toBeNull();
     expect(resolveOverviewSelectedProfile("work", makeSnapshot().profiles.claude.profiles, "personal")).toBe("work");
     expect(resolveOverviewSelectedProfile("missing", makeSnapshot().profiles.claude.profiles, "personal")).toBe("personal");
+    expect(resolveOverviewSelectedProfile("missing", makeSnapshot().profiles.claude.profiles, "unknown")).toBe("personal");
     expect(
       overviewToolListProfileLabel(makeStatus(), makeSettings(), makeSnapshot()),
     ).toBe("Personal");
