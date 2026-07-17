@@ -98,7 +98,7 @@ export async function installDesktopMock(
               ? "/opt/aisw/bin/aisw"
               : "/Applications/AI Switch.app/Contents/Resources/aisw",
           version: {
-            version: "0.3.7",
+            version: "0.3.8",
             cli_api_version: 1,
             json_schema_version: 1,
             progress_schema_version: 1,

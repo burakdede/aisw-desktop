@@ -59,7 +59,7 @@ const bootstrap: AppBootstrapFixture = {
   runtime_status: {
     resolved_path: "/Applications/AI Switch.app/Contents/Resources/aisw",
     version: {
-      version: "0.3.7",
+      version: "0.3.8",
       cli_api_version: 1,
       json_schema_version: 1,
       progress_schema_version: 1,
@@ -8166,7 +8166,9 @@ describe("App", () => {
 
     expect(screen.getAllByText("Client Acme").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("2 profiles mapped")).toBeInTheDocument();
-    expect(screen.getAllByText("Claude: Office · Codex: Code Work · Gemini: —")).toHaveLength(1);
+    expect(
+      screen.getAllByText("Claude: Office · Codex: Code Work · Gemini: — · Antigravity: —"),
+    ).toHaveLength(1);
     fireEvent.click(screen.getAllByRole("button", { name: "New Set…" })[0]);
     expect(screen.getAllByRole("option", { name: "Office" }).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("option", { name: "Code Work" })).toBeInTheDocument();
@@ -8247,7 +8249,7 @@ describe("App", () => {
       expect(screen.getByText("Current version")).toBeInTheDocument();
       expect(screen.getByText(CURRENT_APP_VERSION)).toBeInTheDocument();
       expect(screen.getByText("Bundled AISW Engine")).toBeInTheDocument();
-      expect(screen.getByText("0.3.7")).toBeInTheDocument();
+      expect(screen.getByText("0.3.8")).toBeInTheDocument();
     });
   });
 
@@ -8814,7 +8816,7 @@ describe("App", () => {
     await waitFor(() => {
       const runtimeContent = within(runtimeGroup as HTMLElement);
       expect(runtimeContent.getByText("Bundled runtime")).toBeInTheDocument();
-      expect(runtimeContent.getByText("0.3.7")).toBeInTheDocument();
+      expect(runtimeContent.getByText("0.3.8")).toBeInTheDocument();
       expect(runtimeContent.getByText("Status")).toBeInTheDocument();
       expect(runtimeContent.getByText("Ready")).toBeInTheDocument();
       expect(runtimeContent.getByText("Current path")).toBeInTheDocument();

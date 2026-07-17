@@ -47,7 +47,7 @@ const bootstrap: AppBootstrap = {
     issues: [],
     resolved_path: "/Applications/AI Switcher.app/Contents/Resources/aisw",
     version: {
-      version: "0.3.7",
+      version: "0.3.8",
       cli_api_version: 1,
       json_schema_version: 1,
       progress_schema_version: 1,

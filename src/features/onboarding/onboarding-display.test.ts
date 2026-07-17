@@ -74,7 +74,7 @@ function makeBootstrap(overrides: Partial<AppBootstrap> = {}): AppBootstrap {
     runtime_status: {
       resolved_path: "/Applications/AI Switcher.app/Contents/Resources/aisw",
       version: {
-        version: "0.3.7",
+        version: "0.3.8",
         cli_api_version: 1,
         json_schema_version: 1,
         progress_schema_version: 1,
@@ -534,7 +534,7 @@ describe("onboarding-display", () => {
     expect(onboardingPrimaryActionLabel(false, undefined)).toBe("Get Started");
     expect(onboardingOverviewBadgeLabel(2)).toBe("2 actions");
     expect(onboardingOverviewBadgeLabel(0)).toBe("Ready");
-    expect(onboardingRuntimeVersionDetail("0.3.7")).toBe("Version 0.3.7");
+    expect(onboardingRuntimeVersionDetail("0.3.8")).toBe("Version 0.3.8");
     expect(onboardingRuntimeVersionDetail(null)).toBe("Version unknown");
     expect(onboardingImportedProfileLabel("work laptop")).toBe("Work Laptop account");
     expect(onboardingImportSubmitLabel(true)).toBe("Importing…");
