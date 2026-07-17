@@ -28,7 +28,7 @@ import { EXPECTED_SET_PREFIX } from "../../../lib/sets-display";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { eventTargetWithinSelector } from "../../../lib/dom-events";
 import { BACKEND_UNAVAILABLE_LABEL } from "../../../lib/display-copy";
-import { resolveSelectionItem } from "../../../lib/utils";
+import { resolveSelectionItem, resolveSelectionValue } from "../../../lib/utils";
 import { invalidateSnapshotDesktopQueries } from "../../shared/postMutationRefresh";
 import {
   buildOverviewInspectorNotices,
@@ -384,7 +384,9 @@ function ToolInspector({
   } | null;
   onBack?: () => void;
 }) {
-  const [stateMode, setStateMode] = useState(status.state_mode ?? stateModes[0] ?? "");
+  const [stateMode, setStateMode] = useState(
+    resolveSelectionValue(status.state_mode, stateModes, (mode) => mode) ?? "",
+  );
   const [selectedProfile, setSelectedProfile] = useState(
     resolveOverviewSelectedProfile("", profiles, status.active_profile),
   );

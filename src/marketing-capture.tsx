@@ -11,6 +11,7 @@ import {
   type DesktopPreferences,
 } from "./lib/desktop-preferences";
 import { APP_NAV_IDS, type AppNavId } from "./lib/app-navigation";
+import { findMatchingItem } from "./lib/utils";
 import "./styles/global.css";
 
 declare global {
@@ -39,7 +40,7 @@ seedMarketingStorage(scene, nav);
 bootstrapApplication(root);
 
 function normalizeScene(value: string | null): MarketingSceneName {
-  return MARKETING_SCENES.find((entry) => entry === value) ?? "overview";
+  return findMatchingItem(value, MARKETING_SCENES, (entry) => entry) ?? "overview";
 }
 
 function normalizeNav(value: string | null): AppNavId {
