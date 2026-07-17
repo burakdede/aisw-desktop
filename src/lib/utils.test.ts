@@ -3,6 +3,7 @@ import {
   countLabel,
   findMatchingItem,
   hasMatchingSelection,
+  itemAtIndexOrNull,
   itemKeyOrNull,
   pluralChoice,
   pluralSuffix,
@@ -91,6 +92,9 @@ describe("utils", () => {
     expect(findMatchingItem("second", items, (item) => item.key)).toEqual(items[1]);
     expect(findMatchingItem("missing", items, (item) => item.key)).toBeNull();
     expect(findMatchingItem(null, items, (item) => item.key)).toBeNull();
+    expect(itemAtIndexOrNull(items, 1)).toEqual(items[1]);
+    expect(itemAtIndexOrNull(items, -1)).toBeNull();
+    expect(itemAtIndexOrNull(items, 9)).toBeNull();
     expect(itemKeyOrNull(items[1], (item) => item.key)).toBe("second");
     expect(itemKeyOrNull(null, (item: (typeof items)[number]) => item.key)).toBeNull();
 

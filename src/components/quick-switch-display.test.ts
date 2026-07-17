@@ -10,6 +10,7 @@ import {
   quickSwitchOptionMetaLabel,
   quickSwitchOptionPresentation,
   quickSwitchResultCountLabel,
+  resolveQuickSwitchSelectedItem,
   quickSwitchShortcutSummary,
   quickSwitchStatusCopy,
 } from "./quick-switch-display";
@@ -143,11 +144,14 @@ describe("quick-switch-display", () => {
   });
 
   it("shares result-count and empty-state copy", () => {
+    const items = buildQuickSwitchItems(makeSettings(), makeSnapshot());
     expect(quickSwitchResultCountLabel(1)).toBe("1 result");
     expect(quickSwitchResultCountLabel(3)).toBe("3 results");
     expect(quickSwitchNoMatchesDescription()).toBe(
       "Search by set name, tool, profile name, or saved label.",
     );
+    expect(resolveQuickSwitchSelectedItem(items, 0)).toEqual(items[0]);
+    expect(resolveQuickSwitchSelectedItem(items, 99)).toBeNull();
     expect(nextQuickSwitchSelectionIndex(0, 0, "next")).toBe(0);
     expect(nextQuickSwitchSelectionIndex(0, 3, "next")).toBe(1);
     expect(nextQuickSwitchSelectionIndex(2, 3, "next")).toBe(0);

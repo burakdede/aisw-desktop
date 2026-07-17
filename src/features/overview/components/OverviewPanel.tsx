@@ -115,7 +115,9 @@ export function OverviewPanel({
   const currentSetLabel = activeSetLabel(settings, snapshot);
   const currentSetDisplay = currentSetLabel ?? OVERVIEW_PANEL_COPY.currentSetFallback;
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const [selectedTool, setSelectedTool] = useState(snapshot.statuses[0]?.tool ?? "");
+  const [selectedTool, setSelectedTool] = useState(
+    resolveOverviewSelectedTool("", snapshot.statuses),
+  );
   const {
     compactLayout,
     setCompactInspectorOpen,

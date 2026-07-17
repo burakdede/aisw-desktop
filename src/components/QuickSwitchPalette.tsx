@@ -16,6 +16,7 @@ import {
   quickSwitchOptionMetaLabel,
   quickSwitchOptionPresentation,
   quickSwitchResultCountLabel,
+  resolveQuickSwitchSelectedItem,
   quickSwitchStatusCopy,
   type QuickSwitchItem,
 } from "./quick-switch-display";
@@ -89,7 +90,7 @@ export function QuickSwitchPalette({
     if (!open) {
       return;
     }
-    const selectedItem = filteredItems[selectedIndex];
+    const selectedItem = resolveQuickSwitchSelectedItem(filteredItems, selectedIndex);
     if (!selectedItem) {
       return;
     }
@@ -126,15 +127,16 @@ export function QuickSwitchPalette({
         return;
       }
       if (event.key === "Enter") {
-        if (!filteredItems.length) {
+        const selectedItem = resolveQuickSwitchSelectedItem(filteredItems, selectedIndex);
+        if (!selectedItem) {
           return;
         }
         event.preventDefault();
         if (event.metaKey) {
-          activateMatchingItem(filteredItems[selectedIndex]);
+          activateMatchingItem(selectedItem);
           return;
         }
-        activateItem(filteredItems[selectedIndex]);
+        activateItem(selectedItem);
       }
     };
 
@@ -198,7 +200,7 @@ export function QuickSwitchPalette({
     acc[item.group].push(item);
     return acc;
   }, {});
-  const selectedItem = filteredItems[selectedIndex] ?? null;
+  const selectedItem = resolveQuickSwitchSelectedItem(filteredItems, selectedIndex);
   const statusCopy = quickSwitchStatusCopy(selectedItem);
 
   return (

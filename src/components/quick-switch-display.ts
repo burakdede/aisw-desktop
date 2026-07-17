@@ -10,7 +10,7 @@ import {
 } from "../lib/profile-display";
 import { CURRENT_LABEL } from "../lib/status-copy";
 import { toolDisplayName } from "../lib/tool-display";
-import { countLabel } from "../lib/utils";
+import { countLabel, itemAtIndexOrNull } from "../lib/utils";
 
 export type QuickSwitchItem =
   | {
@@ -186,6 +186,13 @@ export function nextQuickSwitchSelectionIndex(
   }
 
   return (currentIndex - 1 + totalItems) % totalItems;
+}
+
+export function resolveQuickSwitchSelectedItem(
+  items: readonly QuickSwitchItem[],
+  selectedIndex: number,
+) {
+  return itemAtIndexOrNull(items, selectedIndex);
 }
 
 export function quickSwitchOptionMetaLabel(active: boolean) {

@@ -113,6 +113,13 @@ export function itemKeyOrNull<T, Key extends string>(
   return item ? getKey(item) : null;
 }
 
+export function itemAtIndexOrNull<T>(
+  items: readonly T[],
+  index: number,
+): T | null {
+  return items[index] ?? null;
+}
+
 export function resolvePreferredSelectionValue<T>(
   selection: string | null | undefined,
   preferredSelection: string | null | undefined,
