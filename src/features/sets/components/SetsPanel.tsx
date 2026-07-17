@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
+import { SheetHeader } from "../../../components/SheetHeader";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
@@ -879,10 +880,14 @@ export function SetsPanel({
           onClose={closeSetEditor}
         >
           <form className="stack-list" onSubmit={saveSet}>
-            <SetsSheetHeader
+            <SheetHeader
               kicker={setEditorKicker(isEditingSet)}
               title={setEditorTitle(isEditingSet)}
-              onClose={closeSetEditor}
+              actions={
+                <button className="ghost-button" type="button" onClick={closeSetEditor}>
+                  {SETS_PANEL_COPY.closeLabel}
+                </button>
+              }
             />
             <div className="stacked-form diagnostics-body">
               <label>
@@ -958,10 +963,14 @@ export function SetsPanel({
           onClose={closeRuleEditor}
         >
           <form className="stack-list" onSubmit={submitRule}>
-            <SetsSheetHeader
+            <SheetHeader
               kicker={SETS_PANEL_COPY.projectRuleKicker}
               title={ruleEditorTitle(isEditingRule)}
-              onClose={closeRuleEditor}
+              actions={
+                <button className="ghost-button" type="button" onClick={closeRuleEditor}>
+                  {SETS_PANEL_COPY.closeLabel}
+                </button>
+              }
             />
             <div className="stacked-form diagnostics-body">
               <label>
@@ -1035,28 +1044,6 @@ export function SetsPanel({
           </form>
         </DialogSurface>
       ) : null}
-    </div>
-  );
-}
-
-function SetsSheetHeader({
-  kicker,
-  title,
-  onClose,
-}: {
-  kicker?: string;
-  title: string;
-  onClose: () => void;
-}) {
-  return (
-    <div className="quick-switch-header">
-      <div>
-        {kicker ? <p className="card-kicker">{kicker}</p> : null}
-        <h3>{title}</h3>
-      </div>
-      <button className="ghost-button" type="button" onClick={onClose}>
-        {SETS_PANEL_COPY.closeLabel}
-      </button>
     </div>
   );
 }

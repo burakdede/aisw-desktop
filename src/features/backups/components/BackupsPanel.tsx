@@ -5,6 +5,7 @@ import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SearchField } from "../../../components/SearchField";
+import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
@@ -443,13 +444,11 @@ export function BackupsPanel({
           initialFocusSelector="button:not([disabled])"
           onClose={() => setPendingRestore(null)}
         >
-          <div className="quick-switch-header">
-            <div>
-              <p className="card-kicker">{restoreSheet.kicker}</p>
-              <h3>{restoreSheet.heading}</h3>
-              <p className="inline-note">{restoreSheet.detail}</p>
-            </div>
-          </div>
+          <SheetHeader
+            kicker={restoreSheet.kicker}
+            title={restoreSheet.heading}
+            detail={restoreSheet.detail}
+          />
           <KeyValueGrid
             rows={[
               {

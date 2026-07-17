@@ -13,6 +13,7 @@ import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SearchField } from "../../../components/SearchField";
 import { SegmentedControl } from "../../../components/SegmentedControl";
+import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
@@ -1024,9 +1025,9 @@ export function ProfilesPanel({
           initialFocusSelector="input:not([disabled]), button:not([disabled])"
           onClose={() => setPendingEdit(null)}
         >
-          <ProfileSheetHeader
+          <SheetHeader
             kicker={PROFILE_EDIT_SHEET_COPY.kicker}
-            heading={PROFILE_EDIT_SHEET_COPY.heading}
+            title={PROFILE_EDIT_SHEET_COPY.heading}
           />
           <form
             className="stacked-form"
@@ -1119,9 +1120,9 @@ export function ProfilesPanel({
           initialFocusSelector="button:not([disabled])"
           onClose={() => setPendingRemoval(null)}
         >
-            <ProfileSheetHeader
+            <SheetHeader
               kicker={PROFILE_REMOVAL_SHEET_COPY.kicker}
-              heading={buildProfileRemovalHeading(removalSheetState.display)}
+              title={buildProfileRemovalHeading(removalSheetState.display)}
             />
             <p className="inline-note">
               {PROFILE_REMOVAL_SHEET_COPY.warning}
@@ -1157,9 +1158,9 @@ export function ProfilesPanel({
           initialFocusSelector="select:not([disabled]), input:not([disabled]), button:not([disabled])"
           onClose={() => setProfileSheetOpen(false)}
         >
-            <ProfileSheetHeader
+            <SheetHeader
               kicker={PROFILE_PANEL_COPY.addProfileLabel}
-              heading={PROFILE_ADD_SHEET_COPY.heading}
+              title={PROFILE_ADD_SHEET_COPY.heading}
             />
             <form className="stacked-form" onSubmit={submit}>
               <label>
@@ -1344,23 +1345,6 @@ export function ProfilesPanel({
             </form>
         </DialogSurface>
       ) : null}
-    </div>
-  );
-}
-
-function ProfileSheetHeader({
-  kicker,
-  heading,
-}: {
-  kicker: string;
-  heading: string;
-}) {
-  return (
-    <div className="quick-switch-header">
-      <div>
-        <p className="card-kicker">{kicker}</p>
-        <h3>{heading}</h3>
-      </div>
     </div>
   );
 }

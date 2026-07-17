@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
+import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import type {
@@ -563,73 +564,69 @@ export function DiagnosticsPanel({
           initialFocusSelector="button:not([disabled])"
           onClose={() => setRepairPlanOpen(false)}
         >
-            <div className="quick-switch-header">
-              <div>
-                <p className="card-kicker">{DIAGNOSTICS_PANEL_COPY.repairPlanKicker}</p>
-                <h3>{DIAGNOSTICS_PANEL_COPY.repairPlanTitle}</h3>
-                <p className="inline-note">
-                  {diagnosticsRepairPlanSummary(repairActions.length)}
-                </p>
-              </div>
+          <SheetHeader
+            kicker={DIAGNOSTICS_PANEL_COPY.repairPlanKicker}
+            title={DIAGNOSTICS_PANEL_COPY.repairPlanTitle}
+            detail={diagnosticsRepairPlanSummary(repairActions.length)}
+            actions={
               <button className="ghost-button" type="button" onClick={() => setRepairPlanOpen(false)}>
                 {DIAGNOSTICS_PANEL_COPY.repairPlanCloseLabel}
               </button>
+            }
+          />
+          {repairActions.length ? (
+            <div className="stack-list">
+              {repairActions.map((action) => (
+                <label key={`sheet-${action.title}-${action.detail}`} className="diagnostics-safe-fix-row">
+                  <input
+                    type="checkbox"
+                    checked={selectedSafeFixes.includes(diagnosticRepairActionKey(action))}
+                    onChange={(event) =>
+                      setSelectedSafeFixes((current) =>
+                        event.target.checked
+                          ? [...current, diagnosticRepairActionKey(action)]
+                          : current.filter((item) => item !== diagnosticRepairActionKey(action)),
+                      )
+                    }
+                  />
+                  <div>
+                    <strong>{action.title}</strong>
+                    <p className="inline-note">{action.detail}</p>
+                  </div>
+                </label>
+              ))}
             </div>
-            {repairActions.length ? (
-              <div className="stack-list">
-                {repairActions.map((action) => (
-                  <label key={`sheet-${action.title}-${action.detail}`} className="diagnostics-safe-fix-row">
-                    <input
-                      type="checkbox"
-                      checked={selectedSafeFixes.includes(diagnosticRepairActionKey(action))}
-                      onChange={(event) =>
-                        setSelectedSafeFixes((current) =>
-                          event.target.checked
-                            ? [...current, diagnosticRepairActionKey(action)]
-                            : current.filter(
-                                (item) => item !== diagnosticRepairActionKey(action),
-                              ),
-                        )
-                      }
-                    />
-                    <div>
-                      <strong>{action.title}</strong>
-                      <p className="inline-note">{action.detail}</p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            ) : (
-              <div className="diagnostics-sheet-empty">
-                <h3>{DIAGNOSTICS_PANEL_COPY.repairPlanEmptyTitle}</h3>
-                <p className="inline-note">
-                  {DIAGNOSTICS_PANEL_COPY.repairPlanEmptyDetail}
-                </p>
-              </div>
-            )}
-            <footer className="quick-switch-footer">
-              <div className="quick-switch-selection">
-                <p className="card-kicker">{DIAGNOSTICS_PANEL_COPY.repairPlanSelectionKicker}</p>
-                <strong>{diagnosticsRepairSelectionLabel(selectedSafeFixes.length)}</strong>
-                <p>{DIAGNOSTICS_PANEL_COPY.repairPlanSelectionDetail}</p>
-              </div>
-              <div className="button-row">
-                <button className="ghost-button" type="button" onClick={() => setRepairPlanOpen(false)}>
-                  {DIAGNOSTICS_PANEL_COPY.repairPlanCancelLabel}
-                </button>
-                <button
-                  className="primary-button"
-                  aria-label={DIAGNOSTICS_PANEL_COPY.applySafeFixesAriaLabel}
-                  type="button"
-                  disabled={!selectedSafeFixes.length || applyRepair.isPending}
-                  onClick={() =>
-                    applyRepair.mutate(buildSelectedRepairFixes(selectedSafeFixes, repairActions))
-                  }
-                >
-                  {diagnosticsApplyRepairsLabel(selectedSafeFixes.length, applyRepair.isPending)}
-                </button>
-              </div>
-            </footer>
+          ) : (
+            <div className="diagnostics-sheet-empty">
+              <h3>{DIAGNOSTICS_PANEL_COPY.repairPlanEmptyTitle}</h3>
+              <p className="inline-note">
+                {DIAGNOSTICS_PANEL_COPY.repairPlanEmptyDetail}
+              </p>
+            </div>
+          )}
+          <footer className="quick-switch-footer">
+            <div className="quick-switch-selection">
+              <p className="card-kicker">{DIAGNOSTICS_PANEL_COPY.repairPlanSelectionKicker}</p>
+              <strong>{diagnosticsRepairSelectionLabel(selectedSafeFixes.length)}</strong>
+              <p>{DIAGNOSTICS_PANEL_COPY.repairPlanSelectionDetail}</p>
+            </div>
+            <div className="button-row">
+              <button className="ghost-button" type="button" onClick={() => setRepairPlanOpen(false)}>
+                {DIAGNOSTICS_PANEL_COPY.repairPlanCancelLabel}
+              </button>
+              <button
+                className="primary-button"
+                aria-label={DIAGNOSTICS_PANEL_COPY.applySafeFixesAriaLabel}
+                type="button"
+                disabled={!selectedSafeFixes.length || applyRepair.isPending}
+                onClick={() =>
+                  applyRepair.mutate(buildSelectedRepairFixes(selectedSafeFixes, repairActions))
+                }
+              >
+                {diagnosticsApplyRepairsLabel(selectedSafeFixes.length, applyRepair.isPending)}
+              </button>
+            </div>
+          </footer>
         </DialogSurface>
       ) : null}
       {diagnosticsStatusMessage ? (

@@ -6,6 +6,7 @@ import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SearchField } from "../../../components/SearchField";
 import { SegmentedControl } from "../../../components/SegmentedControl";
+import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
@@ -338,13 +339,11 @@ export function ActivityPanel({
           initialFocusSelector="button:not([disabled])"
           onClose={() => setPendingClear(false)}
         >
-          <div className="quick-switch-header">
-            <div>
-              <p className="card-kicker">{ACTIVITY_CLEAR_DIALOG.kicker}</p>
-              <h3>{ACTIVITY_CLEAR_DIALOG.heading}</h3>
-              <p className="inline-note">{ACTIVITY_CLEAR_DIALOG.detail}</p>
-            </div>
-          </div>
+          <SheetHeader
+            kicker={ACTIVITY_CLEAR_DIALOG.kicker}
+            title={ACTIVITY_CLEAR_DIALOG.heading}
+            detail={ACTIVITY_CLEAR_DIALOG.detail}
+          />
           <footer className="quick-switch-footer">
             <div className="button-row">
               <button className="ghost-button" type="button" onClick={() => setPendingClear(false)}>

@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DialogSurface } from "../../../components/DialogSurface";
+import { SheetHeader } from "../../../components/SheetHeader";
 import { SourceListPanel } from "../../../components/SourceListPanel";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
@@ -714,64 +715,68 @@ export function SetupPanel({
           initialFocusSelector="input:not([disabled]), button:not([disabled])"
           onClose={closeLiveImport}
         >
-            <div className="quick-switch-header">
-              <div>
-                <p className="card-kicker">{ONBOARDING_IMPORT_DIALOG_COPY.kicker}</p>
-                <h3>
-                  {ONBOARDING_IMPORT_DIALOG_COPY.headingPrefix}{" "}
-                  <ToolBrand tool={pendingLiveImport.tool} className="tool-brand-inline" logoSize={18} shortName />{" "}
-                  {ONBOARDING_IMPORT_DIALOG_COPY.headingSuffix}
-                </h3>
-              </div>
+          <SheetHeader
+            kicker={ONBOARDING_IMPORT_DIALOG_COPY.kicker}
+            title={
+              <>
+                {ONBOARDING_IMPORT_DIALOG_COPY.headingPrefix}{" "}
+                <ToolBrand tool={pendingLiveImport.tool} className="tool-brand-inline" logoSize={18} shortName />{" "}
+                {ONBOARDING_IMPORT_DIALOG_COPY.headingSuffix}
+              </>
+            }
+            detail={
+              <>
+                {ONBOARDING_IMPORT_DIALOG_COPY.introPrefix}
+                {toolDisplayName(pendingLiveImport.tool)}
+                {ONBOARDING_IMPORT_DIALOG_COPY.introSuffix}
+              </>
+            }
+            actions={
               <button className="ghost-button" type="button" onClick={closeLiveImport}>
                 {ONBOARDING_IMPORT_DIALOG_COPY.closeLabel}
               </button>
+            }
+          />
+          <form className="stacked-form" onSubmit={(event) => submitImport(event, pendingLiveImport.tool)}>
+            <label>
+              {ONBOARDING_IMPORT_DIALOG_COPY.profileNameLabel}
+              <input
+                value={pendingProfileName}
+                onChange={(event) =>
+                  setProfileNames((current) => ({
+                    ...current,
+                    [pendingLiveImport.tool]: event.target.value,
+                  }))
+                }
+              />
+            </label>
+            <label>
+              {ONBOARDING_IMPORT_DIALOG_COPY.labelFieldLabel}
+              <input
+                value={pendingProfileLabel}
+                onChange={(event) =>
+                  setProfileLabels((current) => ({
+                    ...current,
+                    [pendingLiveImport.tool]: event.target.value,
+                  }))
+                }
+              />
+            </label>
+            <div className="button-row">
+              <button className="ghost-button" type="button" onClick={closeLiveImport}>
+                {ONBOARDING_IMPORT_DIALOG_COPY.cancelLabel}
+              </button>
+              <button
+                className="primary-button"
+                type="submit"
+                disabled={mutationLock.isBusy || addProfileMutation.isPending || !pendingProfileName.trim()}
+              >
+                {onboardingImportSubmitLabel(addProfileMutation.isPending)}
+              </button>
             </div>
-            <p className="inline-note">
-              {ONBOARDING_IMPORT_DIALOG_COPY.introPrefix}
-              {toolDisplayName(pendingLiveImport.tool)}
-              {ONBOARDING_IMPORT_DIALOG_COPY.introSuffix}
-            </p>
-            <form className="stacked-form" onSubmit={(event) => submitImport(event, pendingLiveImport.tool)}>
-              <label>
-                {ONBOARDING_IMPORT_DIALOG_COPY.profileNameLabel}
-                <input
-                  value={pendingProfileName}
-                  onChange={(event) =>
-                    setProfileNames((current) => ({
-                      ...current,
-                      [pendingLiveImport.tool]: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-              <label>
-                {ONBOARDING_IMPORT_DIALOG_COPY.labelFieldLabel}
-                <input
-                  value={pendingProfileLabel}
-                  onChange={(event) =>
-                    setProfileLabels((current) => ({
-                      ...current,
-                      [pendingLiveImport.tool]: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-              <div className="button-row">
-                <button className="ghost-button" type="button" onClick={closeLiveImport}>
-                  {ONBOARDING_IMPORT_DIALOG_COPY.cancelLabel}
-                </button>
-                <button
-                  className="primary-button"
-                  type="submit"
-                  disabled={mutationLock.isBusy || addProfileMutation.isPending || !pendingProfileName.trim()}
-                >
-                  {onboardingImportSubmitLabel(addProfileMutation.isPending)}
-                </button>
-              </div>
-              {addProfileMutation.error ? (
-                <p className="inline-note">{addProfileMutation.error.message}</p>
-              ) : null}
+            {addProfileMutation.error ? (
+              <p className="inline-note">{addProfileMutation.error.message}</p>
+            ) : null}
           </form>
         </DialogSurface>
       ) : null}

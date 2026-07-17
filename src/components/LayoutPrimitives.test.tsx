@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { KeyValueGrid } from "./KeyValueGrid";
 import { SectionCard } from "./SectionCard";
+import { SheetHeader } from "./SheetHeader";
 
 describe("SectionCard", () => {
   it("renders optional kicker and actions when provided", () => {
@@ -44,5 +45,31 @@ describe("KeyValueGrid", () => {
     expect(container.querySelector(".kv-grid-plain")).not.toBeNull();
     expect(screen.getByText("Switching")).toBeVisible();
     expect(screen.getByText("Ready")).toBeVisible();
+  });
+});
+
+describe("SheetHeader", () => {
+  it("renders optional kicker, detail, and actions", () => {
+    render(
+      <SheetHeader
+        kicker="Security"
+        title="Export Report"
+        detail="Review the generated bundle before sharing it."
+        actions={<button type="button">Close</button>}
+      />,
+    );
+
+    expect(screen.getByText("Security")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Export Report" })).toBeVisible();
+    expect(screen.getByText("Review the generated bundle before sharing it.")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Close" })).toBeVisible();
+  });
+
+  it("omits optional detail and actions when they are not provided", () => {
+    const { container } = render(<SheetHeader title="Add Rule" />);
+
+    expect(screen.getByRole("heading", { name: "Add Rule" })).toBeVisible();
+    expect(container.querySelector(".card-kicker")).toBeNull();
+    expect(container.querySelector(".ghost-button")).toBeNull();
   });
 });
