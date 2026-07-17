@@ -1,3 +1,5 @@
+import { itemKeyOrNull } from "../lib/utils";
+
 export const COMPACT_SIDEBAR_BREAKPOINT = 880;
 
 export const APP_FRAME_MODES = {
@@ -78,9 +80,9 @@ export function nextAppFrameNavItemId<Id extends string>(
       ? 0
       : direction === "last"
         ? orderedItems.length - 1
-        : direction === "next"
+      : direction === "next"
           ? Math.min(currentIndex + 1, orderedItems.length - 1)
           : Math.max(currentIndex - 1, 0);
 
-  return orderedItems[targetIndex]?.id ?? null;
+  return itemKeyOrNull(orderedItems[targetIndex], (item) => item.id);
 }

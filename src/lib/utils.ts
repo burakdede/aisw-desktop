@@ -106,6 +106,13 @@ export function findMatchingItem<T>(
   return items.find((item) => getKey(item) === selection) ?? null;
 }
 
+export function itemKeyOrNull<T, Key extends string>(
+  item: T | null | undefined,
+  getKey: (item: T) => Key,
+): Key | null {
+  return item ? getKey(item) : null;
+}
+
 export function resolvePreferredSelectionValue<T>(
   selection: string | null | undefined,
   preferredSelection: string | null | undefined,

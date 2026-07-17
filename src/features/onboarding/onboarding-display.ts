@@ -40,6 +40,7 @@ import {
 import {
   countLabel,
   findMatchingItem,
+  itemKeyOrNull,
   resolvePriorityItem,
   titleCase,
 } from "../../lib/utils";
@@ -853,7 +854,10 @@ export function resolveSelectedOnboardingAccountKey(
   items: OnboardingAccountItem[],
   selectedKey: string | null,
 ) {
-  return resolveSelectedOnboardingAccountItem(items, selectedKey)?.key ?? null;
+  return itemKeyOrNull(
+    resolveSelectedOnboardingAccountItem(items, selectedKey),
+    (item) => item.key,
+  );
 }
 
 export function buildOnboardingHealthItems(
