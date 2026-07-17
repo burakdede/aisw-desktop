@@ -7,6 +7,7 @@ import {
 import { APP_NAV_IDS, APP_NAV_LABELS, type DefaultAppSection } from "../../lib/app-navigation";
 import {
   DESKTOP_UPDATE_CHANNELS,
+  buildDesktopSettingsUpdate,
   normalizeDesktopUpdateChannel,
   type DesktopUpdateChannel,
 } from "../../lib/desktop-settings";
@@ -467,14 +468,12 @@ export function buildSettingsRequest(input: {
 }): DesktopSettings {
   const nextDraft = patchSettingsDraft(input.draft, input.next ?? {});
 
-  return {
+  return buildDesktopSettingsUpdate(input.settings, {
     runtime_kind: nextDraft.runtimeKind,
     runtime_path: persistedRuntimePath(nextDraft.runtimeKind, nextDraft.runtimePath),
     aisw_home: nextDraft.aiswHome || null,
     update_channel: nextDraft.updateChannel,
-    profile_labels: input.settings.profile_labels ?? {},
-    profile_sets: input.settings.profile_sets,
-  };
+  });
 }
 
 export function buildDesktopPreferencesUpdate(input: {

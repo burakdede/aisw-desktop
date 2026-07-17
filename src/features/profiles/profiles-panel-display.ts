@@ -691,7 +691,6 @@ export function buildProfileLabelUpdateRequest(input: {
   }
 
   return buildDesktopSettingsUpdate(input.settings, {
-    profile_sets: input.settings.profile_sets,
     profile_labels: mergeProfileLabel(
       input.settings,
       input.tool,
