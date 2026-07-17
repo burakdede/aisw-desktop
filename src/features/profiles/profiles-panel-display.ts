@@ -26,6 +26,7 @@ import { profileLastCheckedLabel } from "../../lib/profile-detail-display";
 import {
   effectiveToolProfileLabel,
   findSnapshotToolStatus,
+  hasCustomProfileLabel,
   mergeProfileLabel,
 } from "../../lib/profile-display";
 import { formatMessageWithRemediation } from "../../lib/remediation-text";
@@ -34,7 +35,6 @@ import {
   findMatchingItem,
   hasMatchingSelection,
   resolveSelectionValue,
-  titleCase,
 } from "../../lib/utils";
 import { normalizeOneOf } from "../../lib/parse-guards";
 import {
@@ -547,10 +547,9 @@ export function buildSelectedProfileInspectorState(input: {
         profileName: selectedName,
       })
     : "stored";
-  const hasCustomLabel = Boolean(
-    selectedName &&
-      input.selectedProfileDisplay &&
-      input.selectedProfileDisplay !== titleCase(selectedName),
+  const hasCustomLabel = hasCustomProfileLabel(
+    selectedName,
+    input.selectedProfileDisplay,
   );
   const canActivate = Boolean(selectedName && !isActive);
   const needsReapply = Boolean(

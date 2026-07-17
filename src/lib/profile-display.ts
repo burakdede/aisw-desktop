@@ -78,6 +78,13 @@ export function effectiveToolProfileLabel(
   return currentLabel ?? titleCase(profile);
 }
 
+export function hasCustomProfileLabel(
+  profile: string | null | undefined,
+  label: string | null | undefined,
+) {
+  return Boolean(profile && label && label !== titleCase(profile));
+}
+
 export function mergeProfileLabel(
   settings: DesktopSettings,
   tool: string,

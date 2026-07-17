@@ -7,6 +7,7 @@ import {
   findProfileSetByName,
   findSnapshotToolProfileEntry,
   findSnapshotToolStatus,
+  hasCustomProfileLabel,
   mergeProfileLabel,
   profileDisplayLabel,
   profileSetDisplayLabel,
@@ -92,6 +93,9 @@ describe("profile-display", () => {
       "Claude Personal",
     );
     expect(effectiveToolProfileLabel(makeSettings(), "codex", "personal", null)).toBe("Personal");
+    expect(hasCustomProfileLabel("personal", "Personal")).toBe(false);
+    expect(hasCustomProfileLabel("personal", "Claude Personal")).toBe(true);
+    expect(hasCustomProfileLabel("personal", null)).toBe(false);
   });
 
   it("merges and removes tool label overrides cleanly", () => {
