@@ -23,31 +23,31 @@ const SERVER_READY_TIMEOUT_MS = 30_000;
 const SERVER_READY_POLL_MS = 250;
 const GIF_FPS = 18;
 const GIF_LOOP = "0";
-const OVERLAY_BOTTOM_OFFSET_PX = 18;
-const OVERLAY_CARD_SIZE = { width: 500, height: 78 };
+const OVERLAY_BOTTOM_OFFSET_PX = 34;
+const OVERLAY_CARD_SIZE = { width: 620, height: 110 };
 const OVERLAY_CARD_FRAME = {
   left: 1,
   top: 1,
-  right: 498,
-  bottom: 76,
-  radius: 24,
+  right: 618,
+  bottom: 108,
+  radius: 28,
 };
 const OVERLAY_TITLE = {
   font: "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
-  pointSize: 30,
+  pointSize: 40,
   offsetY: 0,
   color: "#ffffff",
 };
 const OVERLAY_DETAIL = {
   font: "/System/Library/Fonts/Supplemental/Arial.ttf",
-  pointSize: 21,
-  offsetY: 20,
+  pointSize: 24,
+  offsetY: 28,
   color: "#f5f8ff",
   interlineSpacing: 3,
 };
 const OVERLAY_CARD_COLORS = {
-  fill: "rgba(8,12,20,0.96)",
-  stroke: "rgba(255,255,255,0.16)",
+  fill: "rgba(11,14,22,0.94)",
+  stroke: "rgba(255,255,255,0.2)",
   strokeWidth: "2",
 };
 const QUICK_SWITCH_CAPTURE = {
@@ -56,14 +56,14 @@ const QUICK_SWITCH_CAPTURE = {
   typingDelayMs: 120,
   afterSearchDelayMs: 650,
   afterSubmitDelayMs: 1200,
-  trimStartSeconds: 0.45,
+  trimStartSeconds: 1.35,
   searchText: "personal",
 };
 const WORKSPACE_SWITCH_CAPTURE = {
   initialDelayMs: 650,
   rulePanelDelayMs: 900,
   afterSwitchDelayMs: 1300,
-  trimStartSeconds: 0.85,
+  trimStartSeconds: 1.1,
 };
 
 async function main() {
@@ -192,7 +192,7 @@ async function captureQuickSwitchGif(browser) {
     videoPath,
     path.join(mediaDir, "desktop-quick-switch.gif"),
     {
-      title: "Type. Select. Enter.",
+      title: "Quick switch in seconds",
       trimStartSeconds: QUICK_SWITCH_CAPTURE.trimStartSeconds,
     },
   );
@@ -217,7 +217,7 @@ async function captureWorkspaceSwitchGif(browser) {
     videoPath,
     path.join(mediaDir, "desktop-workspace-switch.gif"),
     {
-      title: "Restore the expected set.",
+      title: "Restore the right set",
       trimStartSeconds: WORKSPACE_SWITCH_CAPTURE.trimStartSeconds,
     },
   );
