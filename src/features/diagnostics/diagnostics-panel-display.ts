@@ -28,6 +28,7 @@ import { isSupportedTool } from "../../lib/tool-registry";
 import {
   countLabel,
   pluralChoice,
+  resolvePriorityItem,
   resolveSelectionValue,
   titleCase,
 } from "../../lib/utils";
@@ -435,7 +436,7 @@ export function resolveSelectedFindingKey(
 export function selectPrimaryFindingFix<Fix extends { primary?: boolean }>(
   fixes: readonly Fix[],
 ): Fix | null {
-  return fixes.find((fix) => fix.primary) ?? fixes[0] ?? null;
+  return resolvePriorityItem(fixes, [(fix) => Boolean(fix.primary)]);
 }
 
 export function buildRecentFailureCards(

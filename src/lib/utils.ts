@@ -67,6 +67,20 @@ export function resolveSelectionItem<T>(
   return items.find((item) => getKey(item) === selection) ?? items[0] ?? null;
 }
 
+export function resolvePriorityItem<T>(
+  items: readonly T[],
+  predicates: ReadonlyArray<(item: T) => boolean>,
+): T | null {
+  for (const predicate of predicates) {
+    const match = items.find((item) => predicate(item));
+    if (match) {
+      return match;
+    }
+  }
+
+  return items[0] ?? null;
+}
+
 export function findMatchingItem<T>(
   selection: string | null | undefined,
   items: readonly T[],

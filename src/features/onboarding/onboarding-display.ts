@@ -40,6 +40,7 @@ import {
 import {
   countLabel,
   hasMatchingSelection,
+  resolvePriorityItem,
   resolveSelectionItem,
   titleCase,
 } from "../../lib/utils";
@@ -519,12 +520,11 @@ export function onboardingMatchedProfileValue(value: string | null | undefined) 
 }
 
 export function selectDefaultAccountItem(items: OnboardingAccountItem[]) {
-  return (
-    items.find((item) => item.kind === "live") ??
-    items.find((item) => item.kind === "missing") ??
-    items.find((item) => item.kind === "needs-profile") ??
-    null
-  );
+  return resolvePriorityItem(items, [
+    (item) => item.kind === "live",
+    (item) => item.kind === "missing",
+    (item) => item.kind === "needs-profile",
+  ]);
 }
 
 export function accountItemTool(item: OnboardingAccountItem): SupportedTool {

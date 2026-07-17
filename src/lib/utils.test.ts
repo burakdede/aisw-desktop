@@ -5,6 +5,7 @@ import {
   hasMatchingSelection,
   pluralChoice,
   pluralSuffix,
+  resolvePriorityItem,
   resolvePreferredSelectionItem,
   resolvePreferredSelectionValue,
   resolveSelectionItem,
@@ -56,6 +57,15 @@ describe("utils", () => {
     expect(resolveSelectionItem("missing", items, (item) => item.key)).toEqual(items[0]);
     expect(resolveSelectionItem(null, items, (item) => item.key)).toEqual(items[0]);
     expect(resolveSelectionItem(undefined, noItems, (item) => item.key)).toBeNull();
+    expect(resolvePriorityItem(items, [(item) => item.key === "second"])).toEqual(items[1]);
+    expect(
+      resolvePriorityItem(items, [
+        (item) => item.key === "missing",
+        (item) => item.key === "second",
+      ]),
+    ).toEqual(items[1]);
+    expect(resolvePriorityItem(items, [(item) => item.key === "missing"])).toEqual(items[0]);
+    expect(resolvePriorityItem(noItems, [(item) => item.key === "missing"])).toBeNull();
     expect(findMatchingItem("second", items, (item) => item.key)).toEqual(items[1]);
     expect(findMatchingItem("missing", items, (item) => item.key)).toBeNull();
     expect(findMatchingItem(null, items, (item) => item.key)).toBeNull();
