@@ -8,6 +8,7 @@ import {
   QUICK_SWITCH_SHORTCUT_HINTS,
   quickSwitchNoMatchesDescription,
   quickSwitchOptionMetaLabel,
+  quickSwitchOptionPresentation,
   quickSwitchResultCountLabel,
   quickSwitchShortcutSummary,
   quickSwitchStatusCopy,
@@ -127,6 +128,15 @@ describe("quick-switch-display", () => {
       title: "No matches",
       subtitle: "Search by set name, tool, profile name, or saved label.",
       shortcut: null,
+    });
+    expect(quickSwitchOptionPresentation(items[0])).toEqual({
+      title: "Client Acme",
+      subtitle: "Claude Code: work  Codex CLI: work",
+    });
+    expect(quickSwitchOptionPresentation(items[2])).toEqual({
+      brandTool: "claude",
+      title: "Office",
+      subtitle: "Office · work",
     });
     expect(quickSwitchOptionMetaLabel(true)).toBe("Selected");
     expect(quickSwitchOptionMetaLabel(false)).toBe("Return");

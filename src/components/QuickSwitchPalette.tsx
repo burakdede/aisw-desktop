@@ -13,6 +13,7 @@ import {
   QUICK_SWITCH_SHORTCUT_HINTS,
   quickSwitchNoMatchesDescription,
   quickSwitchOptionMetaLabel,
+  quickSwitchOptionPresentation,
   quickSwitchResultCountLabel,
   quickSwitchStatusCopy,
   type QuickSwitchItem,
@@ -262,6 +263,7 @@ export function QuickSwitchPalette({
                 <div className="quick-switch-options">
                   {groupItems.map((item) => {
                     const itemIndex = filteredItems.findIndex((entry) => entry.id === item.id);
+                    const optionPresentation = quickSwitchOptionPresentation(item);
                     return (
                       <button
                         key={item.id}
@@ -287,15 +289,15 @@ export function QuickSwitchPalette({
                         <div className="quick-switch-option-copy">
                           <div className="quick-switch-option-line">
                             <strong>
-                              {item.kind === "tool_profile" ? (
+                              {optionPresentation.brandTool ? (
                                 <ToolBrand
-                                  tool={item.tool}
+                                  tool={optionPresentation.brandTool}
                                   className="tool-brand-inline"
                                   logoSize={15}
                                   shortName
                                 />
                               ) : (
-                                item.title
+                                optionPresentation.title
                               )}
                             </strong>
                             {item.active ? (
@@ -304,9 +306,7 @@ export function QuickSwitchPalette({
                               </span>
                             ) : null}
                           </div>
-                          <p>
-                            {item.kind === "tool_profile" ? `${item.title} · ${item.profile}` : item.subtitle}
-                          </p>
+                          <p>{optionPresentation.subtitle}</p>
                         </div>
                         <span className="quick-switch-option-meta">
                           {quickSwitchOptionMetaLabel(item.active)}

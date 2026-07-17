@@ -46,6 +46,12 @@ export type QuickSwitchItem =
       label: string;
     };
 
+export type QuickSwitchOptionPresentation = {
+  brandTool?: string;
+  title: string;
+  subtitle: string;
+};
+
 export const QUICK_SWITCH_COPY = {
   dialogAriaLabel: "Quick Switch",
   kicker: "Quick Switch",
@@ -182,6 +188,23 @@ export function nextQuickSwitchSelectionIndex(
 
 export function quickSwitchOptionMetaLabel(active: boolean) {
   return active ? QUICK_SWITCH_COPY.selectedMetaLabel : QUICK_SWITCH_COPY.inactiveMetaLabel;
+}
+
+export function quickSwitchOptionPresentation(
+  item: QuickSwitchItem,
+): QuickSwitchOptionPresentation {
+  if (item.kind === "tool_profile") {
+    return {
+      brandTool: item.tool,
+      title: item.title,
+      subtitle: `${item.title} · ${item.profile}`,
+    };
+  }
+
+  return {
+    title: item.title,
+    subtitle: item.subtitle,
+  };
 }
 
 function quickSwitchSetSubtitle(set: NonNullable<DesktopSettings["profile_sets"]>[number]) {
