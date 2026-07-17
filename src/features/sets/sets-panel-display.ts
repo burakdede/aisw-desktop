@@ -14,7 +14,7 @@ import {
   normalizeWorkspaceBindingScope,
   type WorkspaceBindingScope,
 } from "../../lib/workspace-binding-contract";
-import { normalizeOneOf } from "../../lib/parse-guards";
+import { normalizeOneOf, nullishToEmptyString } from "../../lib/parse-guards";
 import {
   findProfileSetByName,
   contextDisplayLabel,
@@ -376,7 +376,7 @@ export function createEditableProfileSetDraft(
   return {
     sourceName: set.name,
     name: set.name,
-    label: set.label ?? "",
+    label: nullishToEmptyString(set.label),
     profiles: buildKeyedRecord(tools, (tool) => stringRecordValue(set.profiles, tool)),
   };
 }

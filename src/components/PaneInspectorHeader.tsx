@@ -37,9 +37,9 @@ export function PaneInspectorHeader({
           </button>
         ) : null}
         <h3 className={titleClassName}>{title}</h3>
-        {supporting ?? null}
+        {supporting}
       </div>
-      {trailing ?? null}
+      {trailing}
     </header>
   );
 }

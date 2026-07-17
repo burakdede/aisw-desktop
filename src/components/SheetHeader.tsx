@@ -21,7 +21,7 @@ export function SheetHeader({
         <h3>{title}</h3>
         {detail ? <p className="inline-note">{detail}</p> : null}
       </div>
-      {actions ?? null}
+      {actions}
     </div>
   );
 }

@@ -24,7 +24,7 @@ export function PaneSectionHeader({
         <TitleTag>{title}</TitleTag>
         {detail ? <p className="inline-note">{detail}</p> : null}
       </div>
-      {actions ?? null}
+      {actions}
     </div>
   );
 }

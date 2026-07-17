@@ -16,6 +16,7 @@ import {
   asArray,
   asObject,
   asOptionalString,
+  nullishToNull,
   nullishToUndefined,
   type UnknownRecord,
 } from "../../lib/parse-guards";
@@ -1010,7 +1011,9 @@ function resolveIssueProfileTarget(title: string, snapshot: AppSnapshot) {
   }
 
   const status = findSnapshotToolStatus(snapshot, tool);
-  const activeProfile = status?.active_profile ?? snapshot.profiles[tool]?.active ?? null;
+  const activeProfile = nullishToNull(
+    status?.active_profile ?? snapshot.profiles[tool]?.active,
+  );
   return {
     tool,
     profile: activeProfile,
