@@ -1,3 +1,5 @@
+import { nullishToEmptyString } from "./parse-guards";
+
 export function cn(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
 }
@@ -61,7 +63,7 @@ export function resolveSelectionValue<T>(
     return selection;
   }
 
-  return items[0] ? getKey(items[0]) : null;
+  return itemKeyOrNull(itemAtIndexOrNull(items, 0), getKey);
 }
 
 export function resolveSelectionItem<T>(
@@ -69,15 +71,13 @@ export function resolveSelectionItem<T>(
   items: readonly T[],
   getKey: (item: T) => string,
 ): T | null {
-  if (!items.length) {
-    return null;
-  }
+  const fallbackItem = itemAtIndexOrNull(items, 0);
 
   if (!selection) {
-    return items[0] ?? null;
+    return fallbackItem;
   }
 
-  return items.find((item) => getKey(item) === selection) ?? items[0] ?? null;
+  return findMatchingItem(selection, items, getKey) ?? fallbackItem;
 }
 
 export function resolvePriorityItem<T>(
@@ -91,7 +91,7 @@ export function resolvePriorityItem<T>(
     }
   }
 
-  return items[0] ?? null;
+  return itemAtIndexOrNull(items, 0);
 }
 
 export function findMatchingItem<T>(
@@ -138,7 +138,7 @@ export function resolveSelectionValueOrEmpty<T>(
   items: readonly T[],
   getKey: (item: T) => string,
 ) {
-  return resolveSelectionValue(selection, items, getKey) ?? "";
+  return nullishToEmptyString(resolveSelectionValue(selection, items, getKey));
 }
 
 export function resolvePreferredSelectionValueOrEmpty<T>(
@@ -147,12 +147,9 @@ export function resolvePreferredSelectionValueOrEmpty<T>(
   items: readonly T[],
   getKey: (item: T) => string,
 ) {
-  return resolvePreferredSelectionValue(
-    selection,
-    preferredSelection,
-    items,
-    getKey,
-  ) ?? "";
+  return nullishToEmptyString(
+    resolvePreferredSelectionValue(selection, preferredSelection, items, getKey),
+  );
 }
 
 export function resolvePreferredSelectionItem<T>(
