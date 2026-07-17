@@ -9,6 +9,7 @@ import type {
   VerifyReport,
   WorkspaceStatusReport,
 } from "../lib/schemas";
+import { asObject, asOptionalString, asOptionalStringOr } from "../lib/parse-guards";
 import {
   findProfileSetByName,
   findSnapshotToolStatus,
@@ -804,6 +805,22 @@ function mutationResponse(state: MutableMarketingState, command: string) {
   };
 }
 
+function marketingArgsRecord(args: unknown) {
+  return asObject(args);
+}
+
+function marketingRequestRecord(args: unknown) {
+  return asObject(marketingArgsRecord(args)?.request);
+}
+
+function marketingStringArg(args: unknown, key: string) {
+  return asOptionalStringOr(marketingArgsRecord(args)?.[key], "");
+}
+
+function marketingRequestString(args: unknown, key: string) {
+  return asOptionalStringOr(marketingRequestRecord(args)?.[key], "");
+}
+
 export function createMarketingDesktopMock(sceneName: MarketingSceneName) {
   const scene = buildMarketingScene(sceneName);
   const state: MutableMarketingState = {
@@ -888,10 +905,7 @@ export function createMarketingDesktopMock(sceneName: MarketingSceneName) {
           message: "AI Switcher is already current.",
         };
       case "update_settings": {
-        const request =
-          args && typeof args === "object" && args !== null && "request" in args
-            ? (args as { request?: Partial<DesktopSettings> }).request
-            : null;
+        const request = marketingRequestRecord(args) as Partial<DesktopSettings> | undefined;
         if (request) {
           state.settings = {
             ...state.settings,
@@ -901,37 +915,27 @@ export function createMarketingDesktopMock(sceneName: MarketingSceneName) {
         return deepClone(state.settings);
       }
       case "activate_profile_set": {
-        const setName =
-          args && typeof args === "object" && args !== null && "name" in args
-            ? String((args as { name?: string }).name ?? "")
-            : "";
+        const setName = marketingStringArg(args, "name");
         applySet(state, setName);
         return mutationResponse(state, command);
       }
       case "use_all_profiles": {
-        const profile =
-          args && typeof args === "object" && args !== null && "request" in args
-            ? String(((args as { request?: { profile?: string } }).request?.profile) ?? "")
-            : "";
+        const profile = marketingRequestString(args, "profile");
         applySharedProfile(state, profile);
         return mutationResponse(state, command);
       }
       case "use_profile": {
-        const request =
-          args && typeof args === "object" && args !== null && "request" in args
-            ? (args as { request?: { tool?: string; profile?: string } }).request
-            : undefined;
-        if (request?.tool && request.profile) {
-          setActiveProfile(state, request.tool, request.profile);
+        const request = marketingRequestRecord(args);
+        const tool = asOptionalString(request?.tool);
+        const profile = asOptionalString(request?.profile);
+        if (tool && profile) {
+          setActiveProfile(state, tool, profile);
           syncSnapshotState(state);
         }
         return mutationResponse(state, command);
       }
       case "use_context": {
-        const context =
-          args && typeof args === "object" && args !== null && "request" in args
-            ? String(((args as { request?: { context?: string } }).request?.context) ?? "")
-            : "";
+        const context = marketingRequestString(args, "context");
         applySet(state, context);
         return mutationResponse(state, command);
       }
