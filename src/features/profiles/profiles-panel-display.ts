@@ -783,7 +783,9 @@ export function buildOauthWizardSteps(
 
 export function oauthEventStage(event: OAuthProgressEvent): OAuthWizardStep["id"] | null {
   const phase = nullishToEmptyString(event.phase ?? event.type).toLowerCase();
-  return OAUTH_EVENT_PHASE_STAGE_MAP[phase as keyof typeof OAUTH_EVENT_PHASE_STAGE_MAP] ?? null;
+  return nullishToNull(
+    OAUTH_EVENT_PHASE_STAGE_MAP[phase as keyof typeof OAUTH_EVENT_PHASE_STAGE_MAP],
+  );
 }
 
 export function profileMutationError(...errors: Array<unknown>) {

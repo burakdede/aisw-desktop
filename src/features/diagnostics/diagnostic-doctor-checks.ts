@@ -8,8 +8,8 @@ import type { DoctorReport } from "../../lib/schemas";
 import {
   asArray,
   asObject,
-  asOptionalString,
-  asOptionalStringOr,
+  asOptionalStringFieldOr,
+  nullishToEmptyString,
   type UnknownRecord,
 } from "../../lib/parse-guards";
 
@@ -79,9 +79,13 @@ function buildDoctorReportCheck(
     | undefined,
   defaultStatus: ResolvedCheckStatus,
 ) {
-  const rawDetail = asOptionalStringOr(check.detail, options?.defaultDetail ?? "");
+  const rawDetail = asOptionalStringFieldOr(
+    check,
+    "detail",
+    nullishToEmptyString(options?.defaultDetail),
+  );
   const detail = options?.detailTransform ? options.detailTransform(rawDetail) : rawDetail;
-  const name = asOptionalStringOr(check.name, "");
+  const name = asOptionalStringFieldOr(check, "name", "");
 
   return {
     name,

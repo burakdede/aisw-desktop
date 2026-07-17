@@ -9,7 +9,11 @@ import type {
   VerifyReport,
   WorkspaceStatusReport,
 } from "../lib/schemas";
-import { asObject, asOptionalString, asOptionalStringOr } from "../lib/parse-guards";
+import {
+  asObject,
+  asOptionalString,
+  asOptionalStringFieldOr,
+} from "../lib/parse-guards";
 import {
   findProfileSetByName,
   findSnapshotToolStatus,
@@ -814,11 +818,11 @@ function marketingRequestRecord(args: unknown) {
 }
 
 function marketingStringArg(args: unknown, key: string) {
-  return asOptionalStringOr(marketingArgsRecord(args)?.[key], "");
+  return asOptionalStringFieldOr(marketingArgsRecord(args), key, "");
 }
 
 function marketingRequestString(args: unknown, key: string) {
-  return asOptionalStringOr(marketingRequestRecord(args)?.[key], "");
+  return asOptionalStringFieldOr(marketingRequestRecord(args), key, "");
 }
 
 export function createMarketingDesktopMock(sceneName: MarketingSceneName) {
