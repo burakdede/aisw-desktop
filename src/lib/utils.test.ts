@@ -1,6 +1,7 @@
 import {
   buildKeyedRecord,
   countLabel,
+  firstTrimmedString,
   findMatchingItem,
   hasTrimmedText,
   hasMatchingSelection,
@@ -70,6 +71,8 @@ describe("utils", () => {
       "work",
       "personal",
     ]);
+    expect(firstTrimmedString([null, "   ", "work", "personal"])).toBe("work");
+    expect(firstTrimmedString([null, "   "])).toBeNull();
   });
 
   it("builds typed records from fixed key lists", () => {

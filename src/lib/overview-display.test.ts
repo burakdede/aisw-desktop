@@ -162,6 +162,7 @@ describe("overview-display", () => {
     expect(resolveOverviewActionProfileLabel("Work", "Personal", "personal")).toBe("Work");
     expect(resolveOverviewActionProfileLabel(null, "Personal", "personal")).toBe("Personal");
     expect(resolveOverviewActionProfileLabel(null, null, "personal")).toBe("personal");
+    expect(resolveOverviewActionProfileLabel("   ", "Personal", "personal")).toBe("Personal");
     expect(resolveOverviewActionProfileLabel(null, null, null)).toBe("profile");
     expect(resolveOverviewSelectedProfile("work", makeSnapshot().profiles.claude.profiles, "personal")).toBe("work");
     expect(resolveOverviewSelectedProfile("missing", makeSnapshot().profiles.claude.profiles, "personal")).toBe("personal");

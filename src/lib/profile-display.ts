@@ -2,6 +2,7 @@ import type { AppSnapshot, DesktopSettings } from "./schemas";
 import {
   findMatchingItem,
   hasTrimmedText,
+  trimmedStringOr,
   titleCase,
   trimmedStringValues,
 } from "./utils";
@@ -45,14 +46,14 @@ export function profileDisplayLabel(
   profile: string,
 ): string {
   const override = findProfileOverride(settings, profile);
-  if (override) {
+  if (hasTrimmedText(override)) {
     return override;
   }
 
   const toolNames = Object.keys(snapshot.profiles).sort((left, right) => left.localeCompare(right));
   for (const tool of toolNames) {
     const label = findSnapshotToolProfileEntry(snapshot, tool, profile)?.label;
-    if (label) {
+    if (hasTrimmedText(label)) {
       return label;
     }
   }
@@ -77,10 +78,10 @@ export function effectiveToolProfileLabel(
   currentLabel: string | null | undefined,
 ): string {
   const override = toolProfileLabelOverride(settings, tool, profile);
-  if (override) {
+  if (hasTrimmedText(override)) {
     return override;
   }
-  return currentLabel ?? titleCase(profile);
+  return trimmedStringOr(currentLabel, titleCase(profile));
 }
 
 export function hasCustomProfileLabel(
@@ -148,7 +149,7 @@ export function activeSetLabel(settings: DesktopSettings, snapshot: AppSnapshot)
 }
 
 export function profileSetDisplayLabel(set: NonNullable<DesktopSettings["profile_sets"]>[number]) {
-  return set.label ?? set.name;
+  return trimmedStringOr(set.label, set.name);
 }
 
 export function profileSetHasSelections(
@@ -183,7 +184,7 @@ export function profileSetIsActive(
   set: NonNullable<DesktopSettings["profile_sets"]>[number],
 ) {
   const selectedProfiles = Object.entries(set.profiles).filter(
-    (entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0,
+    (entry): entry is [string, string] => hasTrimmedText(entry[1]),
   );
   return (
     profileSetHasSelections(set) &&
@@ -200,7 +201,7 @@ function findProfileOverride(settings: DesktopSettings, profile: string) {
   );
   for (const tool of toolNames) {
     const label = toolProfileLabelOverride(settings, tool, profile);
-    if (label) {
+    if (hasTrimmedText(label)) {
       return label;
     }
   }

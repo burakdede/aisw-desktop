@@ -95,6 +95,7 @@ describe("profile-display", () => {
       "Claude Personal",
     );
     expect(effectiveToolProfileLabel(makeSettings(), "codex", "personal", null)).toBe("Personal");
+    expect(effectiveToolProfileLabel(makeSettings(), "codex", "personal", "")).toBe("Personal");
     expect(hasCustomProfileLabel("personal", "Personal")).toBe(false);
     expect(hasCustomProfileLabel("personal", "Claude Personal")).toBe(true);
     expect(hasCustomProfileLabel("personal", null)).toBe(false);
@@ -154,6 +155,7 @@ describe("profile-display", () => {
     expect(snapshotHasToolProfile(snapshot, "gemini", "personal")).toBe(false);
     expect(activeSetLabel(settings, snapshot)).toBe("Personal Set");
     expect(profileSetDisplayLabel(settings.profile_sets[0])).toBe("Personal Set");
+    expect(profileSetDisplayLabel({ ...settings.profile_sets[0], label: "   " })).toBe("personal");
     expect(findProfileSetByName(settings.profile_sets, "personal")).toEqual(settings.profile_sets[0]);
     expect(findProfileSetByName(settings.profile_sets, "missing")).toBeNull();
     expect(contextDisplayLabel(settings, "personal")).toBe("Personal Set");

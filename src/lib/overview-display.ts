@@ -43,6 +43,7 @@ import {
 } from "./parse-guards";
 import {
   countLabel,
+  firstTrimmedString,
   pluralChoice,
   resolvePreferredSelectionValue,
   resolvePreferredSelectionValueOrEmpty,
@@ -222,7 +223,11 @@ export function resolveOverviewActionProfileLabel(
   activeProfileLabel: string | null,
   fallbackProfile: string | null | undefined,
 ) {
-  return selectedProfileLabel ?? activeProfileLabel ?? fallbackProfile ?? "profile";
+  return firstTrimmedString([
+    selectedProfileLabel,
+    activeProfileLabel,
+    fallbackProfile,
+  ]) ?? "profile";
 }
 
 export function overviewToolListProfileLabel(

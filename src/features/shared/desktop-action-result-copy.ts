@@ -1,5 +1,6 @@
 import { formatResolvedErrorMessage } from "../../lib/error-details";
 import { toolDisplayName } from "../../lib/tool-display";
+import { trimmedStringOr } from "../../lib/utils";
 
 export const DESKTOP_ACTION_RESULT_COPY = {
   labels: {
@@ -111,5 +112,5 @@ export function workspaceTargetFailureNotification(
 }
 
 function displayLabel(label: string | null | undefined, fallback: string) {
-  return label ?? fallback;
+  return trimmedStringOr(label, fallback);
 }

@@ -589,8 +589,10 @@ describe("onboarding-display", () => {
     expect(onboardingDetectedShellSummary(null)).toBeNull();
     expect(onboardingLiveAccountValue("oauth")).toBe("oauth");
     expect(onboardingLiveAccountValue("")).toBe("unknown");
+    expect(onboardingLiveAccountValue("   ")).toBe("unknown");
     expect(onboardingMatchedProfileValue("personal")).toBe("personal");
     expect(onboardingMatchedProfileValue("")).toBe("Not matched yet");
+    expect(onboardingMatchedProfileValue("   ")).toBe("Not matched yet");
     expect(onboardingDoneBadgeLabel(true)).toBe("Ready to switch");
     expect(onboardingDoneBadgeLabel(false)).toBe("Setup can continue later");
     expect(onboardingStepProgressLabel(0, 5)).toBe("Step 1 of 5");

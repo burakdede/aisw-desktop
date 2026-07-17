@@ -58,6 +58,19 @@ export function hasTrimmedText(value: string | null | undefined): value is strin
   return trimmedStringOrNull(value) !== null;
 }
 
+export function trimmedStringOr(
+  value: string | null | undefined,
+  fallback: string,
+) {
+  return hasTrimmedText(value) ? value : fallback;
+}
+
+export function firstTrimmedString(
+  values: ReadonlyArray<string | null | undefined>,
+) {
+  return values.find((value): value is string => hasTrimmedText(value)) ?? null;
+}
+
 export function trimmedStringValues(
   values: ReadonlyArray<string | null | undefined>,
 ) {

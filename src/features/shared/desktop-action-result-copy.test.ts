@@ -74,6 +74,9 @@ describe("desktop-action-result-copy", () => {
       workspaceTargetLabel({ kind: "profile_set", name: "daily", label: "Daily" }),
     ).toBe("Daily");
     expect(workspaceTargetLabel({ kind: "profile_set", name: "daily" })).toBe("daily");
+    expect(workspaceTargetLabel({ kind: "profile_set", name: "daily", label: "   " })).toBe(
+      "daily",
+    );
     expect(workspaceTargetLabel({ kind: "context", name: "~/project" })).toBe("~/project");
   });
 

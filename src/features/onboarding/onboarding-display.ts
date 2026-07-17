@@ -46,6 +46,7 @@ import {
   findMatchingItem,
   itemKeyOrNull,
   resolvePriorityItem,
+  trimmedStringOr,
   titleCase,
 } from "../../lib/utils";
 import { parseDoctorReportChecks } from "../diagnostics/diagnostic-doctor-checks";
@@ -514,13 +515,11 @@ export function onboardingAccountSummary(item: OnboardingAccountItem) {
 }
 
 export function onboardingLiveAccountValue(value: string | null | undefined) {
-  return value && value.length > 0 ? value : ONBOARDING_ACCOUNTS_STEP_COPY.unknownValue;
+  return trimmedStringOr(value, ONBOARDING_ACCOUNTS_STEP_COPY.unknownValue);
 }
 
 export function onboardingMatchedProfileValue(value: string | null | undefined) {
-  return value && value.length > 0
-    ? value
-    : ONBOARDING_ACCOUNTS_STEP_COPY.unmatchedProfileLabel;
+  return trimmedStringOr(value, ONBOARDING_ACCOUNTS_STEP_COPY.unmatchedProfileLabel);
 }
 
 export function selectDefaultAccountItem(items: OnboardingAccountItem[]) {
