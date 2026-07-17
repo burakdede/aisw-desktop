@@ -28,6 +28,13 @@ export type OverviewHealthState =
   | "not_configured"
   | "not_verified";
 
+export type OverviewHealthPresentation = {
+  state: OverviewHealthState;
+  label: string;
+  text: string;
+  symbol: string;
+};
+
 export type ProfileSwitchState =
   | "stored"
   | "active"
@@ -157,6 +164,25 @@ export function overviewHealthText(status: ToolStatus, state: OverviewHealthStat
 
 export function overviewHealthSymbol(state: OverviewHealthState) {
   return OVERVIEW_HEALTH_SYMBOLS[state];
+}
+
+export function overviewHealthPresentation(
+  state: OverviewHealthState,
+  text: string,
+): OverviewHealthPresentation {
+  return {
+    state,
+    label: overviewHealthLabel(state),
+    text,
+    symbol: overviewHealthSymbol(state),
+  };
+}
+
+export function buildOverviewToolHealthPresentation(
+  status: ToolStatus,
+): OverviewHealthPresentation {
+  const state = resolveOverviewHealthState(status);
+  return overviewHealthPresentation(state, overviewHealthText(status, state));
 }
 
 export function resolveProfileSwitchState(input: {

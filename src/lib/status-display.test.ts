@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { ToolStatus } from "./schemas";
 import {
+  buildOverviewToolHealthPresentation,
   overviewHealthLabel,
+  overviewHealthPresentation,
   overviewHealthSymbol,
   overviewHealthText,
   profileLiveMatchLabel,
@@ -43,6 +45,20 @@ describe("status-display", () => {
     expect(overviewHealthSymbol("not_verified")).toBe("?");
     expect(overviewHealthText(makeStatus({ binary_found: false }), "blocked")).toBe("Not installed");
     expect(overviewHealthText(makeStatus({ active_profile_applied: false }), "needs_attention")).toBe("Live mismatch");
+    expect(overviewHealthPresentation("ready", "Ready")).toEqual({
+      state: "ready",
+      label: "Ready",
+      text: "Ready",
+      symbol: "●",
+    });
+    expect(
+      buildOverviewToolHealthPresentation(makeStatus({ active_profile_applied: false })),
+    ).toEqual({
+      state: "needs_attention",
+      label: "Needs Attention",
+      text: "Live mismatch",
+      symbol: "▲",
+    });
   });
 
   it("resolves profile switch states and presentation", () => {

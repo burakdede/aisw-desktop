@@ -55,9 +55,8 @@ import {
   resolveOverviewStateMode,
 } from "../../../lib/overview-display";
 import {
-  overviewHealthLabel,
-  overviewHealthSymbol,
-  overviewHealthText,
+  buildOverviewToolHealthPresentation,
+  overviewHealthPresentation,
   toolVerificationLabel,
   resolveOverviewHealthState,
   type OverviewHealthState,
@@ -125,6 +124,10 @@ export function OverviewPanel({
     [overviewStates],
   );
   const overallState: OverviewHealthState = overviewSummary.overallState;
+  const overallHealthPresentation = overviewHealthPresentation(
+    overallState,
+    overviewSummary.metaLabel,
+  );
   const workspaceResult = lastCommandResults.global[COMMAND_RESULT_GLOBAL_IDS.workspace];
   const contextResult = lastCommandResults.global[COMMAND_RESULT_GLOBAL_IDS.context];
   const bulkResult =
@@ -163,7 +166,7 @@ export function OverviewPanel({
       <div className={`overview-status-strip overview-status-strip-${overallState}`}>
         <div className="overview-status-summary">
           <span className={`overview-status-symbol overview-status-symbol-${overallState}`} aria-hidden="true">
-            {overviewHealthSymbol(overallState)}
+            {overallHealthPresentation.symbol}
           </span>
           <strong>{overviewSummary.headline}</strong>
         </div>
@@ -205,7 +208,8 @@ export function OverviewPanel({
               aria-label={OVERVIEW_PANEL_COPY.toolsAriaLabel}
             >
               {snapshot.statuses.map((status) => {
-                const state = resolveOverviewHealthState(status);
+                const healthPresentation = buildOverviewToolHealthPresentation(status);
+                const state = healthPresentation.state;
                 const activeProfileLabel = overviewToolListProfileLabel(
                   status,
                   settings,
@@ -229,7 +233,7 @@ export function OverviewPanel({
                   >
                     <div className="overview-tool-list-cell overview-tool-list-cell-status">
                       <span className={`overview-status-symbol overview-status-symbol-${state}`} aria-hidden="true">
-                        {overviewHealthSymbol(state)}
+                        {healthPresentation.symbol}
                       </span>
                     </div>
                     <div className="overview-tool-list-cell overview-tool-list-cell-main">
@@ -237,7 +241,7 @@ export function OverviewPanel({
                     </div>
                     <span className="overview-tool-list-profile">{activeProfileLabel}</span>
                     <span className={`overview-tool-list-status overview-tool-list-status-${state}`}>
-                      {overviewHealthText(status, state)}
+                      {healthPresentation.text}
                     </span>
                     <span className="overview-tool-list-chevron" aria-hidden="true">›</span>
                   </button>
@@ -406,6 +410,7 @@ function ToolInspector({
     status,
     toolName,
   });
+  const inspectorHealthPresentation = buildOverviewToolHealthPresentation(status);
 
   useEffect(() => {
     const nextStateMode = resolveOverviewStateMode(stateMode, stateModes);
@@ -514,7 +519,7 @@ function ToolInspector({
         </div>
         <div className={`overview-inspector-status overview-inspector-status-${inspector.state}`}>
           <span className={`overview-status-symbol overview-status-symbol-${inspector.state}`} aria-hidden="true">
-            {overviewHealthSymbol(inspector.state)}
+            {inspectorHealthPresentation.symbol}
           </span>
           <span>{inspector.statusLabel}</span>
         </div>

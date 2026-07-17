@@ -15,9 +15,8 @@ import {
   type StateModeRequest,
 } from "../features/shared/state-modes";
 import {
+  buildOverviewToolHealthPresentation,
   toolInspectorEmptyLabel,
-  overviewHealthLabel,
-  overviewHealthText,
   resolveOverviewHealthState,
   type OverviewHealthState,
 } from "./status-display";
@@ -492,9 +491,10 @@ export function buildOverviewInspectorPresentation(input: {
     ? toolProfileDisplayLabel(settings, snapshot, status.tool, selectedProfile)
     : null;
   const hasProfiles = profiles.length > 0;
-  const state = resolveOverviewHealthState(status);
-  const statusLabel = overviewHealthLabel(state);
-  const healthText = overviewHealthText(status, state);
+  const healthPresentation = buildOverviewToolHealthPresentation(status);
+  const state = healthPresentation.state;
+  const statusLabel = healthPresentation.label;
+  const healthText = healthPresentation.text;
   const hasAlternateSelection = Boolean(selectedProfile && selectedProfile !== status.active_profile);
   const canSwitch = Boolean(hasAlternateSelection && selectedProfile);
   const canReapplyActiveProfile = Boolean(status.active_profile && status.active_profile_applied === false);
