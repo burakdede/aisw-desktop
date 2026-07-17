@@ -1,17 +1,41 @@
 import { normalizeOneOf } from "./parse-guards";
 
-export const CHECK_STATUSES = ["pass", "warn", "fail", "unknown"] as const;
-export type CheckStatus = (typeof CHECK_STATUSES)[number];
-export type ResolvedCheckStatus = Exclude<CheckStatus, "unknown">;
-export const ATTENTION_CHECK_STATUSES = ["warn", "fail"] as const;
-export type AttentionCheckStatus = (typeof ATTENTION_CHECK_STATUSES)[number];
+const CHECK_STATUS_DEFINITIONS = [
+  {
+    id: "pass",
+    symbol: "✓",
+    attention: false,
+  },
+  {
+    id: "warn",
+    symbol: "!",
+    attention: true,
+  },
+  {
+    id: "fail",
+    symbol: "✕",
+    attention: true,
+  },
+  {
+    id: "unknown",
+    symbol: "?",
+    attention: false,
+  },
+] as const;
 
-export const CHECK_STATUS_SYMBOLS: Record<CheckStatus, string> = {
-  pass: "✓",
-  warn: "!",
-  fail: "✕",
-  unknown: "?",
-};
+export type CheckStatus = (typeof CHECK_STATUS_DEFINITIONS)[number]["id"];
+export const CHECK_STATUSES: readonly CheckStatus[] = CHECK_STATUS_DEFINITIONS.map(
+  (status) => status.id,
+);
+export type ResolvedCheckStatus = Exclude<CheckStatus, "unknown">;
+export type AttentionCheckStatus = Extract<CheckStatus, "warn" | "fail">;
+export const ATTENTION_CHECK_STATUSES = CHECK_STATUS_DEFINITIONS.filter(
+  (status) => status.attention,
+).map((status) => status.id as AttentionCheckStatus);
+
+export const CHECK_STATUS_SYMBOLS: Record<CheckStatus, string> = Object.fromEntries(
+  CHECK_STATUS_DEFINITIONS.map((status) => [status.id, status.symbol]),
+) as Record<CheckStatus, string>;
 
 export function normalizeCheckStatus(
   value: unknown,
@@ -29,7 +53,7 @@ export function normalizeResolvedCheckStatus(
 }
 
 export function isAttentionCheckStatus(status: CheckStatus): status is AttentionCheckStatus {
-  return status === "warn" || status === "fail";
+  return ATTENTION_CHECK_STATUSES.includes(status as AttentionCheckStatus);
 }
 
 export function normalizeAttentionCheckStatus(
