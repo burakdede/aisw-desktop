@@ -280,6 +280,13 @@ describe("profiles-panel-display", () => {
         profiles: [{ name: "work" }],
       }),
     ).toBe("work");
+    expect(
+      defaultExpandedProfileName({
+        expandedDetails: null,
+        activeProfile: "missing",
+        profiles: [{ name: "work" }, { name: "personal" }],
+      }),
+    ).toBe("work");
 
     expect(
       shouldAutoOpenProfileSheet({

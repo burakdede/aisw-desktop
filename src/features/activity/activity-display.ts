@@ -18,6 +18,7 @@ import {
 import { SNAPSHOT_UPDATED_RESULT_SUMMARY } from "../shared/command-result-payload";
 import type { ActivityTimelineEntry } from "../shared/lastCommandResult";
 import type { CommandResultRecord } from "../shared/command-result-shape";
+import { resolveSelectionValue } from "../../lib/utils";
 
 export type ActivityFilter = "all" | CommandResultStatus;
 type ActivityStatus = ActivityEntry["status"];
@@ -183,11 +184,7 @@ export function resolveSelectedActivityEntryKey(
   currentEntryKey: string | null,
   entries: ActivityEntry[],
 ) {
-  if (currentEntryKey && entries.some((entry) => entry.key === currentEntryKey)) {
-    return currentEntryKey;
-  }
-
-  return entries[0]?.key ?? null;
+  return resolveSelectionValue(currentEntryKey, entries, (entry) => entry.key);
 }
 
 export function activityScopeLabel(scope: CommandResultScope) {

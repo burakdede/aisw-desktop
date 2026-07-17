@@ -26,7 +26,7 @@ import { profileLastCheckedLabel } from "../../lib/profile-detail-display";
 import { effectiveToolProfileLabel, mergeProfileLabel } from "../../lib/profile-display";
 import { formatMessageWithRemediation } from "../../lib/remediation-text";
 import { toolDisplayName } from "../../lib/tool-display";
-import { titleCase } from "../../lib/utils";
+import { hasMatchingSelection, resolveSelectionValue, titleCase } from "../../lib/utils";
 import { normalizeOneOf } from "../../lib/parse-guards";
 import {
   resolveProfileSwitchState,
@@ -384,14 +384,11 @@ export function defaultExpandedProfileName(input: {
   activeProfile: string | null | undefined;
   profiles: ProfileEntry[];
 }) {
-  if (
-    input.expandedDetails &&
-    input.profiles.some((entry) => entry.name === input.expandedDetails)
-  ) {
+  if (hasMatchingSelection(input.expandedDetails, input.profiles, (entry) => entry.name)) {
     return input.expandedDetails;
   }
 
-  return input.activeProfile ?? input.profiles[0]?.name ?? null;
+  return resolveSelectionValue(input.activeProfile, input.profiles, (entry) => entry.name);
 }
 
 export function shouldAutoOpenProfileSheet(input: {

@@ -20,6 +20,7 @@ import { exportActivityLog } from "../../../lib/client";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { notifyDesktop } from "../../../lib/notifications";
+import { resolveSelectionItem } from "../../../lib/utils";
 import {
   clearLastCommandResults,
   useLastCommandResults,
@@ -92,8 +93,11 @@ export function ActivityPanel({
     () => groupActivityEntries(filteredEntries),
     [filteredEntries],
   );
-  const selectedEntry =
-    filteredEntries.find((entry) => entry.key === selectedEntryKey) ?? filteredEntries[0] ?? null;
+  const selectedEntry = resolveSelectionItem(
+    selectedEntryKey,
+    filteredEntries,
+    (entry) => entry.key,
+  );
   const hasEntries = entries.length > 0;
   const footerMessage = clearMessage || logMessage;
   const selectedEntryScope = selectedEntry

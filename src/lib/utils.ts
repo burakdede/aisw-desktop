@@ -30,3 +30,39 @@ export function buildKeyedRecord<const Key extends string, Value>(
   });
   return record;
 }
+
+export function hasMatchingSelection<T>(
+  selection: string | null | undefined,
+  items: readonly T[],
+  getKey: (item: T) => string,
+): boolean {
+  return typeof selection === "string" && items.some((item) => getKey(item) === selection);
+}
+
+export function resolveSelectionValue<T>(
+  selection: string | null | undefined,
+  items: readonly T[],
+  getKey: (item: T) => string,
+): string | null {
+  if (typeof selection === "string" && hasMatchingSelection(selection, items, getKey)) {
+    return selection;
+  }
+
+  return items[0] ? getKey(items[0]) : null;
+}
+
+export function resolveSelectionItem<T>(
+  selection: string | null | undefined,
+  items: readonly T[],
+  getKey: (item: T) => string,
+): T | null {
+  if (!items.length) {
+    return null;
+  }
+
+  if (!selection) {
+    return items[0] ?? null;
+  }
+
+  return items.find((item) => getKey(item) === selection) ?? items[0] ?? null;
+}

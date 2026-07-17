@@ -23,6 +23,7 @@ import { exportDiagnosticBundle, runDoctor, runRepair, runVerify } from "../../.
 import { DESKTOP_ACTION_COPY } from "../../../lib/desktop-action-copy";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
 import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
+import { resolveSelectionItem } from "../../../lib/utils";
 import { useLastCommandResults } from "../../shared/lastCommandResult";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
@@ -194,8 +195,11 @@ export function DiagnosticsPanel({
       setSelectedFindingKey(nextFindingKey);
     }
   }, [findings, selectedFindingKey]);
-  const selectedFinding =
-    findings.find((finding) => finding.key === selectedFindingKey) ?? findings[0] ?? null;
+  const selectedFinding = resolveSelectionItem(
+    selectedFindingKey,
+    findings,
+    (finding) => finding.key,
+  );
   const findingGroups = useMemo(() => groupDiagnosticFindings(findings), [findings]);
   const passedChecks = useMemo(
     () => checkRows.filter((row) => row.status === "pass"),

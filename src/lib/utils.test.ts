@@ -1,4 +1,13 @@
-import { buildKeyedRecord, countLabel, pluralChoice, pluralSuffix, titleCase } from "./utils";
+import {
+  buildKeyedRecord,
+  countLabel,
+  hasMatchingSelection,
+  pluralChoice,
+  pluralSuffix,
+  resolveSelectionItem,
+  resolveSelectionValue,
+  titleCase,
+} from "./utils";
 
 describe("utils", () => {
   it("formats title case values", () => {
@@ -22,5 +31,27 @@ describe("utils", () => {
       claude: "claude-profile",
       codex: "codex-profile",
     });
+  });
+
+  it("shares keyed selection helpers", () => {
+    const items = [
+      { key: "first", value: 1 },
+      { key: "second", value: 2 },
+    ];
+    const noItems: typeof items = [];
+
+    expect(hasMatchingSelection("second", items, (item) => item.key)).toBe(true);
+    expect(hasMatchingSelection("missing", items, (item) => item.key)).toBe(false);
+    expect(hasMatchingSelection(null, items, (item) => item.key)).toBe(false);
+
+    expect(resolveSelectionValue("second", items, (item) => item.key)).toBe("second");
+    expect(resolveSelectionValue("missing", items, (item) => item.key)).toBe("first");
+    expect(resolveSelectionValue(undefined, items, (item) => item.key)).toBe("first");
+    expect(resolveSelectionValue(null, noItems, (item) => item.key)).toBeNull();
+
+    expect(resolveSelectionItem("second", items, (item) => item.key)).toEqual(items[1]);
+    expect(resolveSelectionItem("missing", items, (item) => item.key)).toEqual(items[0]);
+    expect(resolveSelectionItem(null, items, (item) => item.key)).toEqual(items[0]);
+    expect(resolveSelectionItem(undefined, noItems, (item) => item.key)).toBeNull();
   });
 });

@@ -18,6 +18,7 @@ import { normalizeOneOf } from "../../lib/parse-guards";
 import { toolProfileDisplayLabel } from "../../lib/profile-display";
 import type { AppSnapshot, BackupEntry, DesktopSettings } from "../../lib/schemas";
 import { toolDisplayName } from "../../lib/tool-display";
+import { resolveSelectionItem, resolveSelectionValue } from "../../lib/utils";
 
 export type ToolFilter = "all" | "claude" | "codex" | "gemini";
 export type DateFilter = "newest" | "oldest";
@@ -198,10 +199,7 @@ export function resolveSelectedBackupId(
   currentBackupId: string | null,
   backups: BackupEntry[],
 ) {
-  if (currentBackupId && backups.some((entry) => entry.backup_id === currentBackupId)) {
-    return currentBackupId;
-  }
-  return backups[0]?.backup_id ?? null;
+  return resolveSelectionValue(currentBackupId, backups, (entry) => entry.backup_id);
 }
 
 export function buildBackupInspectorState(
@@ -210,8 +208,11 @@ export function buildBackupInspectorState(
   settings: DesktopSettings,
   snapshot: AppSnapshot,
 ): BackupInspectorState | null {
-  const selectedBackup =
-    backups.find((entry) => entry.backup_id === selectedBackupId) ?? backups[0] ?? null;
+  const selectedBackup = resolveSelectionItem(
+    selectedBackupId,
+    backups,
+    (entry) => entry.backup_id,
+  );
   if (!selectedBackup) {
     return null;
   }

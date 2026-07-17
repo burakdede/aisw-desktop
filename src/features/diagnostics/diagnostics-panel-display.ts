@@ -20,7 +20,12 @@ import {
 } from "../../lib/parse-guards";
 import { contextDisplayLabel, toolProfileDisplayLabel } from "../../lib/profile-display";
 import { isSupportedTool } from "../../lib/tool-registry";
-import { countLabel, pluralChoice, titleCase } from "../../lib/utils";
+import {
+  countLabel,
+  pluralChoice,
+  resolveSelectionValue,
+  titleCase,
+} from "../../lib/utils";
 import {
   BLOCKED_LABEL,
   NEEDS_ATTENTION_LABEL,
@@ -419,11 +424,7 @@ export function resolveSelectedFindingKey(
   currentFindingKey: string | null,
   findings: DiagnosticFinding[],
 ) {
-  if (currentFindingKey && findings.some((finding) => finding.key === currentFindingKey)) {
-    return currentFindingKey;
-  }
-
-  return findings[0]?.key ?? null;
+  return resolveSelectionValue(currentFindingKey, findings, (finding) => finding.key);
 }
 
 export function buildRecentFailureCards(
