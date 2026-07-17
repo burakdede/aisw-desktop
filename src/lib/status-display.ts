@@ -48,82 +48,105 @@ type ToolVerificationState =
   | "needs_reapply"
   | "not_verified";
 
-const OVERVIEW_HEALTH_LABELS: Record<OverviewHealthState, string> = {
-  ready: READY_LABEL,
-  needs_attention: NEEDS_ATTENTION_LABEL,
-  blocked: BLOCKED_LABEL,
-  not_configured: NOT_CONFIGURED_TITLE_LABEL,
-  not_verified: NOT_VERIFIED_LABEL,
-};
-
-const OVERVIEW_HEALTH_TEXT_LABELS: Record<OverviewHealthState, string> = {
-  ready: READY_LABEL,
-  needs_attention: NEEDS_ATTENTION_SENTENCE_LABEL,
-  blocked: BLOCKED_LABEL,
-  not_configured: NOT_CONFIGURED_LABEL,
-  not_verified: NOT_VERIFIED_LABEL,
-};
-
-const OVERVIEW_HEALTH_SYMBOLS: Record<OverviewHealthState, string> = {
-  ready: "●",
-  needs_attention: "▲",
-  blocked: "⨯",
-  not_configured: "○",
-  not_verified: "?",
-};
-
-const PROFILE_SWITCH_LABELS: Record<ProfileSwitchState, string> = {
-  stored: STORED_LABEL,
-  live_mismatch: NEEDS_ATTENTION_LABEL,
-  not_verified: NOT_VERIFIED_LABEL,
-  active: ACTIVE_LABEL,
-};
-
-const PROFILE_SWITCH_SYMBOLS: Record<ProfileSwitchState, string> = {
-  stored: "○",
-  live_mismatch: "▲",
-  not_verified: "?",
-  active: "●",
-};
-
-const PROFILE_SWITCH_TONES: Record<ProfileSwitchState, "stored" | "warn" | "ok"> = {
-  stored: "stored",
-  not_verified: "stored",
-  live_mismatch: "warn",
-  active: "ok",
-};
-
-const PROFILE_LIVE_MATCH_LABELS: Record<ProfileSwitchState, string> = {
-  stored: AVAILABLE_AFTER_ACTIVATION_LABEL,
-  not_verified: NOT_VERIFIED_LABEL,
-  live_mismatch: NEEDS_ATTENTION_LABEL,
-  active: READY_LABEL,
-};
-
-const TOOL_LIST_EMPTY_LABELS: Record<
-  Extract<ToolVerificationState, "not_installed" | "no_profile" | "not_verified">,
-  string
+const OVERVIEW_HEALTH_METADATA: Record<
+  OverviewHealthState,
+  {
+    label: string;
+    defaultText: string;
+    symbol: string;
+  }
 > = {
-  not_installed: NOT_INSTALLED_LABEL,
-  no_profile: NO_PROFILE_LABEL,
-  not_verified: VERIFICATION_PENDING_LABEL,
+  ready: {
+    label: READY_LABEL,
+    defaultText: READY_LABEL,
+    symbol: "●",
+  },
+  needs_attention: {
+    label: NEEDS_ATTENTION_LABEL,
+    defaultText: NEEDS_ATTENTION_SENTENCE_LABEL,
+    symbol: "▲",
+  },
+  blocked: {
+    label: BLOCKED_LABEL,
+    defaultText: BLOCKED_LABEL,
+    symbol: "⨯",
+  },
+  not_configured: {
+    label: NOT_CONFIGURED_TITLE_LABEL,
+    defaultText: NOT_CONFIGURED_LABEL,
+    symbol: "○",
+  },
+  not_verified: {
+    label: NOT_VERIFIED_LABEL,
+    defaultText: NOT_VERIFIED_LABEL,
+    symbol: "?",
+  },
 };
 
-const TOOL_INSPECTOR_EMPTY_LABELS: Record<
-  Extract<ToolVerificationState, "not_installed" | "no_profile" | "not_verified">,
-  string
+const PROFILE_SWITCH_METADATA: Record<
+  ProfileSwitchState,
+  {
+    label: string;
+    liveMatchLabel: string;
+    symbol: string;
+    tone: "stored" | "warn" | "ok";
+  }
 > = {
-  not_installed: TOOL_NOT_INSTALLED_LABEL,
-  no_profile: NO_SAVED_PROFILE_YET_LABEL,
-  not_verified: NOT_VERIFIED_YET_LABEL,
+  stored: {
+    label: STORED_LABEL,
+    liveMatchLabel: AVAILABLE_AFTER_ACTIVATION_LABEL,
+    symbol: "○",
+    tone: "stored",
+  },
+  live_mismatch: {
+    label: NEEDS_ATTENTION_LABEL,
+    liveMatchLabel: NEEDS_ATTENTION_LABEL,
+    symbol: "▲",
+    tone: "warn",
+  },
+  not_verified: {
+    label: NOT_VERIFIED_LABEL,
+    liveMatchLabel: NOT_VERIFIED_LABEL,
+    symbol: "?",
+    tone: "stored",
+  },
+  active: {
+    label: ACTIVE_LABEL,
+    liveMatchLabel: READY_LABEL,
+    symbol: "●",
+    tone: "ok",
+  },
 };
 
-const TOOL_VERIFICATION_LABELS: Record<ToolVerificationState, string> = {
-  not_installed: UNAVAILABLE_LABEL,
-  no_profile: UNAVAILABLE_LABEL,
-  verified: VERIFIED_IN_THIS_SESSION_LABEL,
-  needs_reapply: NEEDS_REAPPLY_LABEL,
-  not_verified: NOT_VERIFIED_YET_LABEL,
+const TOOL_VERIFICATION_METADATA: Record<
+  ToolVerificationState,
+  {
+    verificationLabel: string;
+    listEmptyLabel?: string;
+    inspectorEmptyLabel?: string;
+  }
+> = {
+  not_installed: {
+    verificationLabel: UNAVAILABLE_LABEL,
+    listEmptyLabel: NOT_INSTALLED_LABEL,
+    inspectorEmptyLabel: TOOL_NOT_INSTALLED_LABEL,
+  },
+  no_profile: {
+    verificationLabel: UNAVAILABLE_LABEL,
+    listEmptyLabel: NO_PROFILE_LABEL,
+    inspectorEmptyLabel: NO_SAVED_PROFILE_YET_LABEL,
+  },
+  verified: {
+    verificationLabel: VERIFIED_IN_THIS_SESSION_LABEL,
+  },
+  needs_reapply: {
+    verificationLabel: NEEDS_REAPPLY_LABEL,
+  },
+  not_verified: {
+    verificationLabel: NOT_VERIFIED_YET_LABEL,
+    listEmptyLabel: VERIFICATION_PENDING_LABEL,
+    inspectorEmptyLabel: NOT_VERIFIED_YET_LABEL,
+  },
 };
 
 const OVERVIEW_LIVE_MISMATCH_TEXT = "Live mismatch";
@@ -145,7 +168,7 @@ export function resolveOverviewHealthState(status: ToolStatus): OverviewHealthSt
 }
 
 export function overviewHealthLabel(state: OverviewHealthState) {
-  return OVERVIEW_HEALTH_LABELS[state];
+  return OVERVIEW_HEALTH_METADATA[state].label;
 }
 
 export function overviewHealthText(status: ToolStatus, state: OverviewHealthState) {
@@ -159,11 +182,11 @@ export function overviewHealthText(status: ToolStatus, state: OverviewHealthStat
   if (verificationState === "needs_reapply") {
     return OVERVIEW_LIVE_MISMATCH_TEXT;
   }
-  return OVERVIEW_HEALTH_TEXT_LABELS[state];
+  return OVERVIEW_HEALTH_METADATA[state].defaultText;
 }
 
 export function overviewHealthSymbol(state: OverviewHealthState) {
-  return OVERVIEW_HEALTH_SYMBOLS[state];
+  return OVERVIEW_HEALTH_METADATA[state].symbol;
 }
 
 export function overviewHealthPresentation(
@@ -203,31 +226,38 @@ export function resolveProfileSwitchState(input: {
 }
 
 export function profileSwitchTone(state: ProfileSwitchState) {
-  return PROFILE_SWITCH_TONES[state];
+  return PROFILE_SWITCH_METADATA[state].tone;
 }
 
 export function profileSwitchLabel(state: ProfileSwitchState) {
-  return PROFILE_SWITCH_LABELS[state];
+  return PROFILE_SWITCH_METADATA[state].label;
 }
 
 export function profileSwitchSymbol(state: ProfileSwitchState) {
-  return PROFILE_SWITCH_SYMBOLS[state];
+  return PROFILE_SWITCH_METADATA[state].symbol;
 }
 
 export function profileLiveMatchLabel(state: ProfileSwitchState) {
-  return PROFILE_LIVE_MATCH_LABELS[state];
+  return PROFILE_SWITCH_METADATA[state].liveMatchLabel;
 }
 
 export function toolListEmptyLabel(status: ToolStatus) {
-  return TOOL_LIST_EMPTY_LABELS[resolveUnverifiedToolState(status)];
+  return toolVerificationMetadata(resolveUnverifiedToolState(status)).listEmptyLabel ?? UNAVAILABLE_LABEL;
 }
 
 export function toolInspectorEmptyLabel(status: ToolStatus) {
-  return TOOL_INSPECTOR_EMPTY_LABELS[resolveUnverifiedToolState(status)];
+  return (
+    toolVerificationMetadata(resolveUnverifiedToolState(status)).inspectorEmptyLabel ??
+    UNAVAILABLE_LABEL
+  );
 }
 
 export function toolVerificationLabel(status: ToolStatus) {
-  return TOOL_VERIFICATION_LABELS[resolveToolVerificationState(status)];
+  return toolVerificationMetadata(resolveToolVerificationState(status)).verificationLabel;
+}
+
+function toolVerificationMetadata(state: ToolVerificationState) {
+  return TOOL_VERIFICATION_METADATA[state];
 }
 
 function resolveToolVerificationState(status: ToolStatus): ToolVerificationState {
