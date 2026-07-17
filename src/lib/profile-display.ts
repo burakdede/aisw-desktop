@@ -71,7 +71,7 @@ export function effectiveToolProfileLabel(
   profile: string,
   currentLabel: string | null | undefined,
 ): string {
-  const override = settings.profile_labels?.[tool]?.[profile];
+  const override = toolProfileLabelOverride(settings, tool, profile);
   if (override) {
     return override;
   }
@@ -91,10 +91,11 @@ export function mergeProfileLabel(
   profile: string,
   label: string | null,
 ) {
+  const currentToolLabels = profileLabelOverridesForTool(settings, tool);
   const next = {
     ...(settings.profile_labels ?? {}),
     [tool]: {
-      ...(settings.profile_labels?.[tool] ?? {}),
+      ...currentToolLabels,
       [profile]: label,
     },
   };
@@ -195,10 +196,22 @@ function findProfileOverride(settings: DesktopSettings, profile: string) {
     left.localeCompare(right),
   );
   for (const tool of toolNames) {
-    const label = settings.profile_labels?.[tool]?.[profile];
+    const label = toolProfileLabelOverride(settings, tool, profile);
     if (label) {
       return label;
     }
   }
   return null;
+}
+
+function profileLabelOverridesForTool(settings: DesktopSettings, tool: string) {
+  return settings.profile_labels?.[tool] ?? {};
+}
+
+function toolProfileLabelOverride(
+  settings: DesktopSettings,
+  tool: string,
+  profile: string,
+) {
+  return profileLabelOverridesForTool(settings, tool)[profile];
 }
