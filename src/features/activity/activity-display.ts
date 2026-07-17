@@ -101,19 +101,26 @@ export const ACTIVITY_STATUS_NOTIFICATION = {
   clearMessage: "Cleared locally stored desktop activity.",
 } as const;
 
-const ACTIVITY_STATUS_LABELS: Record<ActivityStatus, string> = {
-  success: "Success",
-  error: "Failed",
-};
-
-const ACTIVITY_STATUS_SYMBOLS: Record<ActivityStatus, Record<ActivityStatusVariant, string>> = {
+const ACTIVITY_STATUS_METADATA: Record<
+  ActivityStatus,
+  {
+    label: string;
+    symbols: Record<ActivityStatusVariant, string>;
+  }
+> = {
   success: {
-    row: "✓",
-    inspector: "●",
+    label: "Success",
+    symbols: {
+      row: "✓",
+      inspector: "●",
+    },
   },
   error: {
-    row: "▲",
-    inspector: "▲",
+    label: "Failed",
+    symbols: {
+      row: "▲",
+      inspector: "▲",
+    },
   },
 };
 
@@ -197,14 +204,14 @@ export function activityGlobalScopeLabel(id: string) {
 }
 
 export function activityStatusLabel(status: ActivityStatus) {
-  return ACTIVITY_STATUS_LABELS[status];
+  return ACTIVITY_STATUS_METADATA[status].label;
 }
 
 export function activityStatusSymbol(
   status: ActivityStatus,
   variant: ActivityStatusVariant,
 ) {
-  return ACTIVITY_STATUS_SYMBOLS[status][variant];
+  return ACTIVITY_STATUS_METADATA[status].symbols[variant];
 }
 
 export function activityStatusPresentation(
