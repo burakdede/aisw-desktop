@@ -8,7 +8,11 @@ import {
   useState,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { DIALOG_FOCUS_SELECTORS, DialogSurface } from "../../../components/DialogSurface";
+import {
+  DIALOG_FOCUS_SELECTORS,
+  DIALOG_SURFACE_CLASS_NAMES,
+  DialogSurface,
+} from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SearchField } from "../../../components/SearchField";
@@ -1031,7 +1035,7 @@ export function ProfilesPanel({
       {editSheetState ? (
         <DialogSurface
           ariaLabel={PROFILE_EDIT_SHEET_COPY.ariaLabel}
-          className="quick-switch-palette profile-sheet"
+          className={DIALOG_SURFACE_CLASS_NAMES.sheet}
           initialFocusSelector={DIALOG_FOCUS_SELECTORS.inputThenAction}
           onClose={() => setPendingEdit(null)}
         >
@@ -1126,7 +1130,7 @@ export function ProfilesPanel({
       {removalSheetState ? (
         <DialogSurface
           ariaLabel={PROFILE_REMOVAL_SHEET_COPY.ariaLabel}
-          className="quick-switch-palette profile-sheet"
+          className={DIALOG_SURFACE_CLASS_NAMES.sheet}
           initialFocusSelector={DIALOG_FOCUS_SELECTORS.action}
           onClose={() => setPendingRemoval(null)}
         >
@@ -1164,7 +1168,7 @@ export function ProfilesPanel({
       {profileSheetOpen ? (
         <DialogSurface
           ariaLabel={PROFILE_PANEL_COPY.addProfileLabel}
-          className="quick-switch-palette profile-sheet"
+          className={DIALOG_SURFACE_CLASS_NAMES.sheet}
           initialFocusSelector={DIALOG_FOCUS_SELECTORS.selectThenInputThenAction}
           onClose={() => setProfileSheetOpen(false)}
         >

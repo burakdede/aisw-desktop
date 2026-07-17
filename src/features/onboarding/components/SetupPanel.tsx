@@ -1,6 +1,10 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { DIALOG_FOCUS_SELECTORS, DialogSurface } from "../../../components/DialogSurface";
+import {
+  DIALOG_FOCUS_SELECTORS,
+  DIALOG_SURFACE_CLASS_NAMES,
+  DialogSurface,
+} from "../../../components/DialogSurface";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SourceListPanel } from "../../../components/SourceListPanel";
 import { SplitView } from "../../../components/SplitView";
@@ -719,7 +723,7 @@ export function SetupPanel({
       {pendingLiveImport ? (
         <DialogSurface
           ariaLabel={onboardingImportDialogAriaLabel(pendingLiveImport.tool)}
-          className="quick-switch-palette profile-sheet"
+          className={DIALOG_SURFACE_CLASS_NAMES.sheet}
           initialFocusSelector={DIALOG_FOCUS_SELECTORS.inputThenAction}
           onClose={closeLiveImport}
         >

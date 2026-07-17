@@ -21,6 +21,11 @@ export const DIALOG_FOCUS_SELECTORS = {
     'select:not([disabled]), input:not([disabled]), button:not([disabled])',
 } as const;
 
+export const DIALOG_SURFACE_CLASS_NAMES = {
+  sheet: "quick-switch-palette profile-sheet",
+  setSheet: "quick-switch-palette profile-sheet set-sheet",
+} as const;
+
 export function DialogSurface({
   ariaLabel,
   children,

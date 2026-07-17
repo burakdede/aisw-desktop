@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { DIALOG_FOCUS_SELECTORS, DialogSurface } from "../../../components/DialogSurface";
+import {
+  DIALOG_FOCUS_SELECTORS,
+  DIALOG_SURFACE_CLASS_NAMES,
+  DialogSurface,
+} from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SearchField } from "../../../components/SearchField";
@@ -333,7 +337,7 @@ export function ActivityPanel({
       {pendingClear ? (
         <DialogSurface
           ariaLabel={ACTIVITY_CLEAR_DIALOG.ariaLabel}
-          className="quick-switch-palette profile-sheet"
+          className={DIALOG_SURFACE_CLASS_NAMES.sheet}
           initialFocusSelector={DIALOG_FOCUS_SELECTORS.action}
           onClose={() => setPendingClear(false)}
         >

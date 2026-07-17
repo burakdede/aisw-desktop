@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { DIALOG_FOCUS_SELECTORS, DialogSurface } from "../../../components/DialogSurface";
+import {
+  DIALOG_FOCUS_SELECTORS,
+  DIALOG_SURFACE_CLASS_NAMES,
+  DialogSurface,
+} from "../../../components/DialogSurface";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
@@ -560,7 +564,7 @@ export function DiagnosticsPanel({
       {repairPlanOpen ? (
         <DialogSurface
           ariaLabel={DIAGNOSTICS_PANEL_COPY.repairPlanDialogAriaLabel}
-          className="quick-switch-palette profile-sheet"
+          className={DIALOG_SURFACE_CLASS_NAMES.sheet}
           initialFocusSelector={DIALOG_FOCUS_SELECTORS.action}
           onClose={() => setRepairPlanOpen(false)}
         >

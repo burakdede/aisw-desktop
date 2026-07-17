@@ -1,4 +1,4 @@
-import { DIALOG_FOCUS_SELECTORS, DialogSurface } from "./DialogSurface";
+import { DIALOG_FOCUS_SELECTORS, DIALOG_SURFACE_CLASS_NAMES, DialogSurface } from "./DialogSurface";
 import { SheetHeader } from "./SheetHeader";
 import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "./ToolBrand";
 import {
@@ -36,7 +36,7 @@ export function HelpSheet({
   return (
     <DialogSurface
       ariaLabel={HELP_SHEET_COPY.dialogAriaLabel}
-      className="quick-switch-palette profile-sheet"
+      className={DIALOG_SURFACE_CLASS_NAMES.sheet}
       initialFocusSelector={DIALOG_FOCUS_SELECTORS.action}
       onClose={onClose}
     >
