@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type MutableRefObject, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
 import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { ToolBrand } from "../../../components/ToolBrand";
@@ -328,6 +328,8 @@ export function OverviewPanel({
   );
 }
 
+const OVERVIEW_ACTIONS_BOUNDARY_ATTRIBUTE = "data-overview-actions";
+
 function ToolInspector({
   status,
   profiles,
@@ -430,7 +432,12 @@ function ToolInspector({
     }
 
     function closeActions(event: MouseEvent) {
-      if (eventTargetWithinSelector(event.target, "[data-overview-actions]")) {
+      if (
+        eventTargetWithinSelector(
+          event.target,
+          `[${OVERVIEW_ACTIONS_BOUNDARY_ATTRIBUTE}]`,
+        )
+      ) {
         return;
       }
       setActionsMenuOpen(false);
@@ -624,50 +631,32 @@ function ToolInspector({
             </button>
           ) : null}
           {inspector.showActionsMenu ? (
-            <div className="overview-actions-menu-wrap" data-overview-actions>
-              <button
-                ref={actionsMenuAnchorRef}
-                className="ghost-button icon-button"
-                type="button"
-                aria-haspopup="menu"
-                aria-expanded={actionsMenuOpen}
-                aria-label={OVERVIEW_MORE_ACTIONS_LABEL}
-                onClick={() => setActionsMenuOpen((open) => !open)}
-              >
-                <SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />
-              </button>
-              {actionsMenuOpen ? (
-                <AnchoredMenu
-                  anchorRef={actionsMenuAnchorRef}
-                  className="profile-row-actions-menu"
-                  align="start"
-                  boundaryAttribute="data-overview-actions"
-                  containmentSelector=".overview-inspector-pane"
-                  role="menu"
-                  aria-label={OVERVIEW_PANEL_COPY.actionsMenuAriaLabel}
+            <OverviewActionsMenu
+              open={actionsMenuOpen}
+              anchorRef={actionsMenuAnchorRef}
+              menuAriaLabel={OVERVIEW_PANEL_COPY.actionsMenuAriaLabel}
+              onToggle={() => setActionsMenuOpen((open) => !open)}
+            >
+              {inspector.menuActions.map((action) => (
+                <button
+                  key={action.kind}
+                  className="ghost-button"
+                  role="menuitem"
+                  type="button"
+                  disabled={overviewInspectorActionDisabled(
+                    action.kind,
+                    mutationLocked,
+                    refreshLocked,
+                  )}
+                  onClick={() => {
+                    setActionsMenuOpen(false);
+                    runInspectorAction(action.kind);
+                  }}
                 >
-                  {inspector.menuActions.map((action) => (
-                    <button
-                      key={action.kind}
-                      className="ghost-button"
-                      role="menuitem"
-                      type="button"
-                      disabled={overviewInspectorActionDisabled(
-                        action.kind,
-                        mutationLocked,
-                        refreshLocked,
-                      )}
-                      onClick={() => {
-                        setActionsMenuOpen(false);
-                        runInspectorAction(action.kind);
-                      }}
-                    >
-                      {action.label}
-                    </button>
-                  ))}
-                </AnchoredMenu>
-              ) : null}
-            </div>
+                  {action.label}
+                </button>
+              ))}
+            </OverviewActionsMenu>
           ) : null}
         </div>
       </div>
@@ -722,6 +711,52 @@ function OverviewInlineNotice({
           <p>{notice.summary}</p>
         )}
       </div>
+    </div>
+  );
+}
+
+function OverviewActionsMenu({
+  open,
+  anchorRef,
+  menuAriaLabel,
+  onToggle,
+  children,
+}: {
+  open: boolean;
+  anchorRef: MutableRefObject<HTMLButtonElement | null>;
+  menuAriaLabel: string;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className="overview-actions-menu-wrap"
+      {...{ [OVERVIEW_ACTIONS_BOUNDARY_ATTRIBUTE]: "" }}
+    >
+      <button
+        ref={anchorRef}
+        className="ghost-button icon-button"
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={OVERVIEW_MORE_ACTIONS_LABEL}
+        onClick={onToggle}
+      >
+        <SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />
+      </button>
+      {open ? (
+        <AnchoredMenu
+          anchorRef={anchorRef}
+          className="profile-row-actions-menu"
+          align="start"
+          boundaryAttribute={OVERVIEW_ACTIONS_BOUNDARY_ATTRIBUTE}
+          containmentSelector=".overview-inspector-pane"
+          role="menu"
+          aria-label={menuAriaLabel}
+        >
+          {children}
+        </AnchoredMenu>
+      ) : null}
     </div>
   );
 }
