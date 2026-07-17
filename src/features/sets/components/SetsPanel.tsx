@@ -139,7 +139,7 @@ export function SetsPanel({
 
   const [mode, setMode] = useState<SetPanelMode>(DEFAULT_SETS_PANEL_MODE);
   const [selectedSetName, setSelectedSetName] = useState<string | null>(
-    settings.profile_sets?.[0]?.name ?? null,
+    resolveSelectedSetName(null, settings.profile_sets ?? []),
   );
   const [setEditorOpen, setSetEditorOpen] = useState(false);
   const [ruleEditorOpen, setRuleEditorOpen] = useState(false);
@@ -340,7 +340,7 @@ export function SetsPanel({
             closeSetEditor();
           }
           if (selectedSetName === name) {
-            setSelectedSetName(nextSets[0]?.name ?? null);
+            setSelectedSetName(resolveSelectedSetName(null, nextSets));
           }
           setLastSetAction(deletedSetActionLabel(localSets, name));
         },

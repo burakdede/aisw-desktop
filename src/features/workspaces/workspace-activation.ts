@@ -1,5 +1,6 @@
 import { AppSnapshot, DesktopSettings } from "../../lib/schemas";
 import {
+  findProfileSetByName,
   profileSetHasUsableSelections,
   snapshotHasContext,
 } from "../../lib/profile-display";
@@ -32,11 +33,15 @@ export function resolveWorkspaceActivationTarget(
   settings: DesktopSettings,
   snapshot: AppSnapshot,
 ): WorkspaceActivationTarget | null {
-  const profileSet = settings.profile_sets?.find(
-    (set) => set.name === expectedContext && profileSetHasUsableSelections(snapshot, set),
-  );
+  const profileSet = findProfileSetByName(settings.profile_sets ?? [], expectedContext);
   if (profileSet) {
-    return { kind: "profile_set", name: expectedContext, label: profileSet.label ?? profileSet.name };
+    if (profileSetHasUsableSelections(snapshot, profileSet)) {
+      return {
+        kind: "profile_set",
+        name: expectedContext,
+        label: profileSet.label ?? profileSet.name,
+      };
+    }
   }
   if (snapshotHasContext(snapshot, expectedContext)) {
     return {

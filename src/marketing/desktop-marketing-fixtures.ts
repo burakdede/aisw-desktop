@@ -9,7 +9,10 @@ import type {
   VerifyReport,
   WorkspaceStatusReport,
 } from "../lib/schemas";
-import { snapshotHasToolProfile } from "../lib/profile-display";
+import {
+  findSnapshotToolStatus,
+  snapshotHasToolProfile,
+} from "../lib/profile-display";
 
 export const MARKETING_SCENES = [
   "overview",
@@ -742,7 +745,7 @@ function syncSnapshotState(state: MutableMarketingState) {
 
 function setActiveProfile(state: MutableMarketingState, tool: string, profile: string) {
   const profileStore = state.snapshot.profiles[tool];
-  const status = state.snapshot.statuses.find((entry) => entry.tool === tool);
+  const status = findSnapshotToolStatus(state.snapshot, tool);
   if (!profileStore || !status) {
     return;
   }
