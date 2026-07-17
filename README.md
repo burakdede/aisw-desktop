@@ -6,10 +6,14 @@
 
 AI Switch Desktop is a local-first desktop app for switching between coding-agent identities through the [`aisw`](https://github.com/burakdede/aisw) runtime. It uses Tauri 2 for the native shell, Rust for the desktop bridge, and React + TypeScript for the UI.
 
+> `Alpha`: AI Switch Desktop is still in active alpha. Rough edges and runtime integration issues are expected while the desktop app and the `aisw` runtime continue to evolve together.
+
 <p align="center">
-  <img src="docs/media/desktop-overview-hero.png" alt="AI Switch Desktop overview" width="31%">
-  <img src="docs/media/desktop-profiles.png" alt="AI Switch Desktop profiles" width="31%">
-  <img src="docs/media/desktop-diagnostics.png" alt="AI Switch Desktop diagnostics" width="31%">
+  <img src="docs/media/desktop-overview-hero.png" alt="AI Switch Desktop overview" width="88%">
+</p>
+
+<p align="center">
+  <img src="docs/media/desktop-profiles.png" alt="AI Switch Desktop profiles" width="88%">
 </p>
 
 ## What it does
