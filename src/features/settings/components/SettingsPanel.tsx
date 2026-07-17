@@ -78,6 +78,7 @@ import {
   buildUpdateCheckResultLines,
   releaseChannelDescription,
   sectionLabel,
+  selectedAiswHomePath,
   selectedRuntimePath,
   SETTINGS_CHECK_FOR_UPDATES_LABEL,
   SETTINGS_COPY_REDACTED_REPORT_LABEL,
@@ -596,7 +597,7 @@ export function SettingsPanel({
                 <SettingsGroup title={SETTINGS_PANEL_COPY.runtime.groups.data}>
                   <SettingsStaticRow
                     label={SETTINGS_PANEL_COPY.runtime.rows.aiswHome}
-                    value={<code className="settings-path-value">{settings.aisw_home ?? "~/.aisw"}</code>}
+                    value={<code className="settings-path-value">{selectedAiswHomePath(settings)}</code>}
                   />
                   <SettingsActionRow
                     label={SETTINGS_PANEL_COPY.runtime.rows.localDataFolder}
@@ -697,7 +698,7 @@ export function SettingsPanel({
                 <SettingsGroup title={SETTINGS_PANEL_COPY.keyring.groups.localData}>
                   <SettingsStaticRow
                     label={SETTINGS_PANEL_COPY.keyring.rows.aiswDataFolder}
-                    value={<code className="settings-path-value">{settings.aisw_home ?? "~/.aisw"}</code>}
+                    value={<code className="settings-path-value">{selectedAiswHomePath(settings)}</code>}
                   />
                   <SettingsActionRow
                     label={SETTINGS_PANEL_COPY.keyring.rows.finder}

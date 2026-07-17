@@ -33,6 +33,7 @@ import {
   patchDesktopPreferencesDraft,
   patchSettingsDraft,
   sectionLabel,
+  selectedAiswHomePath,
   selectedRuntimePath,
   SETTINGS_APPEARANCE_OPTIONS,
   SETTINGS_CHECK_FOR_UPDATES_LABEL,
@@ -330,6 +331,10 @@ describe("settings-panel-display", () => {
         makeRuntimeStatus(),
       ),
     ).toBe("/Users/test/bin/aisw");
+    expect(selectedAiswHomePath(makeSettings())).toBe("~/.aisw");
+    expect(selectedAiswHomePath(makeSettings({ aisw_home: "/Users/test/.aisw" }))).toBe(
+      "/Users/test/.aisw",
+    );
     expect(
       buildRuntimeSelectionSettings(makeSettings(), {
         runtimeKind: "system",

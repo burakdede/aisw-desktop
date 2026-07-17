@@ -519,6 +519,10 @@ export function selectedRuntimePath(
   return runtimeStatus.inventory?.[inventoryKey] ?? NOT_FOUND_LABEL;
 }
 
+export function selectedAiswHomePath(settings: DesktopSettings) {
+  return settings.aisw_home ?? "~/.aisw";
+}
+
 function resolveSettingsSectionIndex(
   currentIndex: number,
   direction: SettingsSectionDirection,
