@@ -23,7 +23,11 @@ import {
 import { resolveErrorDetails } from "../../lib/error-details";
 import { formatDateTimeWithZone } from "../../lib/date-format";
 import { profileLastCheckedLabel } from "../../lib/profile-detail-display";
-import { effectiveToolProfileLabel, mergeProfileLabel } from "../../lib/profile-display";
+import {
+  effectiveToolProfileLabel,
+  findSnapshotToolStatus,
+  mergeProfileLabel,
+} from "../../lib/profile-display";
 import { formatMessageWithRemediation } from "../../lib/remediation-text";
 import { toolDisplayName } from "../../lib/tool-display";
 import {
@@ -319,7 +323,7 @@ export function buildInventoryProfiles(input: {
 
   return toolEntries.flatMap((entryTool) =>
     (input.snapshot.profiles[entryTool]?.profiles ?? []).map<InventoryEntry>((entry) => {
-      const status = input.snapshot.statuses.find((candidate) => candidate.tool === entryTool);
+      const status = findSnapshotToolStatus(input.snapshot, entryTool);
       const latestBackup = latestBackupForProfile(entryTool, entry.name, input.backups);
       const isActive = input.snapshot.profiles[entryTool]?.active === entry.name;
 
@@ -354,7 +358,7 @@ export function filterInventoryProfiles(entries: InventoryEntry[], search: strin
   }
 
   return entries.filter((entry) =>
-    [entry.label, entry.name, titleCase(entry.tool), entry.auth, entry.backend, entry.state]
+    [entry.label, entry.name, toolDisplayName(entry.tool), entry.auth, entry.backend, entry.state]
       .join(" ")
       .toLowerCase()
       .includes(query),

@@ -231,7 +231,7 @@ describe("profiles-panel-display", () => {
     expect(inventory[1].lastChecked).not.toContain("Active now");
 
     expect(filterInventoryProfiles(inventory, "work laptop")).toEqual([inventory[0]]);
-    expect(filterInventoryProfiles(inventory, "personal codex oauth file stored")).toEqual([
+    expect(filterInventoryProfiles(inventory, "personal codex cli oauth file stored")).toEqual([
       inventory[1],
     ]);
     expect(findSelectedInventoryEntry(inventory, "claude", "work")).toEqual(inventory[0]);
