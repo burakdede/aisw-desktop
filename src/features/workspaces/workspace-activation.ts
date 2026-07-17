@@ -15,7 +15,19 @@ export type WorkspaceActivationTarget =
   | { kind: "profile_set"; name: string; label: string }
   | { kind: "context"; name: string; stateMode: StateModeRequest };
 
-export type WorkspaceBindingOptionKind = "saved_set" | "available_set";
+const WORKSPACE_BINDING_OPTION_DEFINITIONS = [
+  {
+    id: "saved_set",
+    prefix: "Saved set: ",
+  },
+  {
+    id: "available_set",
+    prefix: "Available set: ",
+  },
+] as const;
+
+export type WorkspaceBindingOptionKind =
+  (typeof WORKSPACE_BINDING_OPTION_DEFINITIONS)[number]["id"];
 
 export type WorkspaceBindingOption = {
   value: string;
@@ -24,10 +36,9 @@ export type WorkspaceBindingOption = {
   displayLabel: string;
 };
 
-export const WORKSPACE_BINDING_OPTION_COPY = {
-  savedSetPrefix: "Saved set: ",
-  availableSetPrefix: "Available set: ",
-} as const;
+export const WORKSPACE_BINDING_OPTION_COPY = Object.fromEntries(
+  WORKSPACE_BINDING_OPTION_DEFINITIONS.map((definition) => [definition.id, definition.prefix]),
+) as Record<WorkspaceBindingOptionKind, string>;
 
 export function resolveWorkspaceActivationTarget(
   expectedContext: string,
@@ -99,7 +110,5 @@ function formatWorkspaceBindingOptionLabel(
 }
 
 function workspaceBindingOptionPrefix(kind: WorkspaceBindingOptionKind) {
-  return kind === "saved_set"
-    ? WORKSPACE_BINDING_OPTION_COPY.savedSetPrefix
-    : WORKSPACE_BINDING_OPTION_COPY.availableSetPrefix;
+  return WORKSPACE_BINDING_OPTION_COPY[kind];
 }

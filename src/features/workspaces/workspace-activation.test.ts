@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { resolveWorkspaceActivationTarget } from "./workspace-activation";
+import {
+  resolveWorkspaceActivationTarget,
+  WORKSPACE_BINDING_OPTION_COPY,
+  workspaceBindingOptionSavedSetLabel,
+  workspaceBindingOptions,
+} from "./workspace-activation";
 import type { AppSnapshot, DesktopSettings } from "../../lib/schemas";
 import { makeToolStatus } from "../../test-support/runtime-tool-statuses";
 
@@ -129,5 +134,51 @@ describe("resolveWorkspaceActivationTarget", () => {
     };
 
     expect(resolveWorkspaceActivationTarget("client-acme", settings, snapshotWithoutContext)).toBeNull();
+  });
+
+  it("builds workspace binding options with stable kind prefixes", () => {
+    const settings: DesktopSettings = {
+      runtime_kind: "bundled",
+      runtime_path: null,
+      aisw_home: null,
+      update_channel: "stable",
+      profile_labels: {},
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: {
+            claude: "work",
+            codex: "work",
+            gemini: null,
+          },
+        },
+      ],
+    };
+
+    expect(WORKSPACE_BINDING_OPTION_COPY).toEqual({
+      saved_set: "Saved set: ",
+      available_set: "Available set: ",
+    });
+    expect(workspaceBindingOptions(settings, snapshot)).toEqual([
+      {
+        value: "client-acme",
+        displayLabel: "Client Acme",
+        kind: "saved_set",
+        label: "Saved set: Client Acme",
+      },
+    ]);
+    expect(
+      workspaceBindingOptionSavedSetLabel({
+        displayLabel: "Client Acme",
+        kind: "saved_set",
+      }),
+    ).toBe("Client Acme");
+    expect(
+      workspaceBindingOptionSavedSetLabel({
+        displayLabel: "Other Context",
+        kind: "available_set",
+      }),
+    ).toBeUndefined();
   });
 });
