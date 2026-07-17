@@ -20,6 +20,11 @@ export function countLabel(count: number, singular: string, plural = `${singular
   return `${count} ${pluralChoice(count, singular, plural)}`;
 }
 
+export function trimmedStringOrNull(value: string | null | undefined) {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
+}
+
 export function buildKeyedRecord<const Key extends string, Value>(
   keys: readonly Key[],
   createValue: (key: Key) => Value,

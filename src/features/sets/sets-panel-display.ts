@@ -51,6 +51,7 @@ import {
   resolvePreferredSelectionItem,
   resolvePreferredSelectionValue,
   resolveSelectionValue,
+  trimmedStringOrNull,
 } from "../../lib/utils";
 
 export type EditableProfileSet = {
@@ -428,14 +429,14 @@ export function buildSavedSetCollection(
 ) {
   const profiles: Record<string, string | null> = {};
   Object.entries(draft.profiles).forEach(([tool, profile]) => {
-    profiles[tool] = profile || null;
+    profiles[tool] = trimmedStringOrNull(profile);
   });
 
   return [
     ...localSets.filter((entry) => entry.name !== (draft.sourceName ?? draftName)),
     {
       name: draftName,
-      label: draft.label.trim() || null,
+      label: trimmedStringOrNull(draft.label),
       profiles,
     },
   ].sort((left, right) => left.name.localeCompare(right.name));

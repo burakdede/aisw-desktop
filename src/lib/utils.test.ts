@@ -10,6 +10,7 @@ import {
   resolvePreferredSelectionValue,
   resolveSelectionItem,
   resolveSelectionValue,
+  trimmedStringOrNull,
   titleCase,
 } from "./utils";
 
@@ -26,6 +27,14 @@ describe("utils", () => {
     expect(countLabel(1, "tool")).toBe("1 tool");
     expect(countLabel(2, "tool")).toBe("2 tools");
     expect(countLabel(2, "safe fix", "safe fixes")).toBe("2 safe fixes");
+  });
+
+  it("normalizes empty and whitespace-only strings to null", () => {
+    expect(trimmedStringOrNull(undefined)).toBeNull();
+    expect(trimmedStringOrNull(null)).toBeNull();
+    expect(trimmedStringOrNull("")).toBeNull();
+    expect(trimmedStringOrNull("   ")).toBeNull();
+    expect(trimmedStringOrNull("  work  ")).toBe("work");
   });
 
   it("builds typed records from fixed key lists", () => {

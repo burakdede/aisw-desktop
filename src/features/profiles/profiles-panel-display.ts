@@ -36,6 +36,7 @@ import {
   findMatchingItem,
   hasMatchingSelection,
   resolveSelectionValue,
+  trimmedStringOrNull,
 } from "../../lib/utils";
 import { normalizeOneOf } from "../../lib/parse-guards";
 import {
@@ -659,7 +660,7 @@ export function buildProfileMutationRequest(input: {
   return {
     tool: input.tool,
     profile: input.profileName,
-    label: input.profileLabel || null,
+    label: trimmedStringOrNull(input.profileLabel),
     stateMode: input.availableStateModes.length ? input.selectedStateMode : null,
     credentialBackend: resolveCredentialBackendRequest(input.credentialBackend),
   };
@@ -688,7 +689,7 @@ export function buildProfileLabelUpdateRequest(input: {
       input.settings,
       input.tool,
       input.profileName,
-      input.nextLabel || null,
+      trimmedStringOrNull(input.nextLabel),
     ),
   });
 }

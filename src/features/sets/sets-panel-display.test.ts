@@ -231,10 +231,10 @@ describe("sets-panel-display", () => {
     const draft = {
       sourceName: "client-acme",
       name: "client-beta",
-      label: "Client Beta",
+      label: "  Client Beta  ",
       profiles: {
         claude: "work",
-        codex: "",
+        codex: "   ",
         gemini: "",
       },
     };

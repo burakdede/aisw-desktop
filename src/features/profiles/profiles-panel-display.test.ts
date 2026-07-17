@@ -471,7 +471,7 @@ describe("profiles-panel-display", () => {
       buildProfileMutationRequest({
         tool: "claude",
         profileName: "work",
-        profileLabel: "",
+        profileLabel: "  ",
         selectedStateMode: "shared",
         availableStateModes: ["isolated", "shared"],
         credentialBackend: "auto",
@@ -530,6 +530,23 @@ describe("profiles-panel-display", () => {
           work: "Desk",
         },
       },
+    });
+
+    expect(
+      buildProfileLabelUpdateRequest({
+        settings,
+        tool: "claude",
+        profileName: "work",
+        profileLabel: "Work Laptop",
+        nextLabel: "   ",
+      }),
+    ).toEqual({
+      runtime_kind: "bundled",
+      runtime_path: null,
+      aisw_home: null,
+      update_channel: "stable",
+      profile_sets: [],
+      profile_labels: {},
     });
   });
 
