@@ -2,16 +2,15 @@ import {
   FormEvent,
   KeyboardEvent as ReactKeyboardEvent,
   type MutableRefObject,
-  type RefObject,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
+import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SearchField } from "../../../components/SearchField";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SplitView } from "../../../components/SplitView";
@@ -1394,30 +1393,24 @@ function ProfileActionsControl({
   onAction: (action: ProfileActionMenuItem, target: ProfileActionTarget) => void;
 }) {
   return (
-    <div className="profile-row-actions" data-profile-row-actions>
-      <button
-        ref={setAnchorNode}
-        className="ghost-button profile-row-actions-trigger"
-        type="button"
-        aria-label={triggerAriaLabel}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={onToggle}
-      >
-        •••
-      </button>
-      <ProfileActionMenu
-        open={open}
-        anchorRef={anchorRef}
-        align={align}
-        boundaryAttribute={boundaryAttribute}
-        containmentSelector={containmentSelector}
-        actionTarget={actionTarget}
-        actions={actions}
-        mutationBusy={mutationBusy}
-        onAction={onAction}
-      />
-    </div>
+    <OverflowMenuButton
+      open={open}
+      anchorRef={anchorRef}
+      setAnchorNode={setAnchorNode}
+      align={align}
+      triggerAriaLabel={triggerAriaLabel}
+      menuAriaLabel={PROFILE_PANEL_COPY.actionMenuAriaLabel}
+      boundaryAttribute={boundaryAttribute}
+      containmentSelector={containmentSelector}
+      items={actions.map((action) => ({
+        key: action.kind,
+        label: action.label,
+        disabled: action.kind === "view_backups" ? action.disabled : mutationBusy,
+        danger: action.danger,
+        onSelect: () => onAction(action, actionTarget),
+      }))}
+      onToggle={onToggle}
+    />
   );
 }
 
@@ -1428,56 +1421,5 @@ function StaticStateModeNotice() {
       <strong>{STATIC_STATE_MODE_LABEL}</strong>
       <p className="state-mode-copy">{STATIC_STATE_MODE_COPY}</p>
     </div>
-  );
-}
-
-function ProfileActionMenu({
-  open,
-  anchorRef,
-  align,
-  boundaryAttribute,
-  containmentSelector,
-  actionTarget,
-  actions,
-  mutationBusy,
-  onAction,
-}: {
-  open: boolean;
-  anchorRef: RefObject<HTMLButtonElement | null>;
-  align: "start" | "end";
-  boundaryAttribute: string;
-  containmentSelector?: string;
-  actionTarget: ProfileActionTarget;
-  actions: readonly ProfileActionMenuItem[];
-  mutationBusy: boolean;
-  onAction: (action: ProfileActionMenuItem, target: ProfileActionTarget) => void;
-}) {
-  if (!open) {
-    return null;
-  }
-
-  return (
-    <AnchoredMenu
-      anchorRef={anchorRef}
-      className="profile-row-actions-menu"
-      align={align}
-      boundaryAttribute={boundaryAttribute}
-      containmentSelector={containmentSelector}
-      role="menu"
-      aria-label={PROFILE_PANEL_COPY.actionMenuAriaLabel}
-    >
-      {actions.map((action) => (
-        <button
-          key={action.kind}
-          type="button"
-          role="menuitem"
-          disabled={action.kind === "view_backups" ? action.disabled : mutationBusy}
-          className={action.danger ? "profile-row-actions-danger" : undefined}
-          onClick={() => onAction(action, actionTarget)}
-        >
-          {action.label}
-        </button>
-      ))}
-    </AnchoredMenu>
   );
 }

@@ -303,11 +303,13 @@ describe("OverflowMenuButton", () => {
     const anchorRef = { current: null };
     const onToggle = vi.fn();
     const onSelect = vi.fn();
+    const setAnchorNode = vi.fn();
 
     render(
       <OverflowMenuButton
         open
         anchorRef={anchorRef}
+        setAnchorNode={setAnchorNode}
         triggerAriaLabel="More actions"
         containerClassName="custom-wrap"
         triggerClassName="profile-row-actions-trigger-visible"
@@ -330,6 +332,7 @@ describe("OverflowMenuButton", () => {
     expect(trigger).toHaveAttribute("aria-expanded", "true");
     expect(trigger).toHaveClass("profile-row-actions-trigger-visible");
     expect(trigger.closest(".custom-wrap")).not.toBeNull();
+    expect(setAnchorNode).toHaveBeenCalledWith(trigger);
 
     fireEvent.click(trigger);
     expect(onToggle).toHaveBeenCalledTimes(1);

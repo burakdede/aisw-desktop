@@ -13,6 +13,7 @@ export type OverflowMenuItem = {
 export function OverflowMenuButton({
   open,
   anchorRef,
+  setAnchorNode,
   align = "start",
   triggerAriaLabel,
   triggerClassName,
@@ -26,6 +27,7 @@ export function OverflowMenuButton({
 }: {
   open: boolean;
   anchorRef: MutableRefObject<HTMLButtonElement | null>;
+  setAnchorNode?: (node: HTMLButtonElement | null) => void;
   align?: "start" | "end";
   triggerAriaLabel: string;
   triggerClassName?: string;
@@ -44,6 +46,7 @@ export function OverflowMenuButton({
       <button
         ref={(node) => {
           anchorRef.current = node;
+          setAnchorNode?.(node);
         }}
         className={cn("ghost-button profile-row-actions-trigger", triggerClassName)}
         type="button"
