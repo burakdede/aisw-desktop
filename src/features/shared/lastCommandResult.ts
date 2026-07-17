@@ -17,7 +17,11 @@ import {
   type CommandResultStatus,
   type ParsedStoredCommandResult,
 } from "./command-result-shape";
-import { asObject, asOptionalString, parseJsonObject } from "../../lib/parse-guards";
+import {
+  asObject,
+  asOptionalStringField,
+  parseJsonObject,
+} from "../../lib/parse-guards";
 
 export type LastCommandResult = ParsedStoredCommandResult;
 
@@ -226,7 +230,7 @@ function asTimelineEntry(value: unknown): ActivityTimelineEntry | null {
   }
 
   const result = asLastCommandResult(record);
-  const key = asOptionalString(record.key);
+  const key = asOptionalStringField(record, "key");
   const scope = parseCommandResultScope(record.scope);
   if (!result || !key || !scope) {
     return null;

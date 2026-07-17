@@ -10,6 +10,8 @@ import {
   nullishToUndefined,
   asObject,
   asOptionalString,
+  asOptionalStringField,
+  asOptionalStringFieldOr,
   asOptionalStringOr,
   asString,
   isOneOf,
@@ -29,8 +31,12 @@ describe("parse-guards", () => {
     expect(asNonEmptyString("", "fallback")).toBe("fallback");
     expect(asOptionalString("value")).toBe("value");
     expect(asOptionalString(42)).toBeUndefined();
+    expect(asOptionalStringField({ value: "field" }, "value")).toBe("field");
+    expect(asOptionalStringField({ value: 42 }, "value")).toBeUndefined();
     expect(asOptionalStringOr("value", "fallback")).toBe("value");
     expect(asOptionalStringOr(42, "fallback")).toBe("fallback");
+    expect(asOptionalStringFieldOr({ value: "field" }, "value", "fallback")).toBe("field");
+    expect(asOptionalStringFieldOr({ value: 42 }, "value", "fallback")).toBe("fallback");
     expect(nullishToEmptyString("value")).toBe("value");
     expect(nullishToEmptyString(null)).toBe("");
     expect(nullishToEmptyString(undefined)).toBe("");

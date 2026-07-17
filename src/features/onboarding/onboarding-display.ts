@@ -30,7 +30,11 @@ import {
   CLOSE_LABEL,
   YES_LABEL,
 } from "../../lib/display-copy";
-import { asArray, asObject, asOptionalString } from "../../lib/parse-guards";
+import {
+  asArray,
+  asObject,
+  asOptionalStringField,
+} from "../../lib/parse-guards";
 import { runtimeSummary } from "../../lib/runtime-display";
 import {
   AVAILABLE_LABEL,
@@ -812,19 +816,19 @@ function buildOnboardingMissingToolNoteParts(
 
 function parseLiveAccount(value: unknown): LiveAccount | null {
   const record = asObject(value);
-  const tool = asOptionalString(record?.tool);
+  const tool = asOptionalStringField(record, "tool");
   if (!record || !tool || !isSupportedTool(tool)) {
     return null;
   }
 
   return {
     tool,
-    outcome: asOptionalString(record.outcome),
-    authMethod: asOptionalString(record.auth_method),
+    outcome: asOptionalStringField(record, "outcome"),
+    authMethod: asOptionalStringField(record, "auth_method"),
     matchedProfile:
       record.matched_profile === null
         ? null
-        : asOptionalString(record.matched_profile),
+        : asOptionalStringField(record, "matched_profile"),
   };
 }
 

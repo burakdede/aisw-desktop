@@ -22,8 +22,23 @@ export function asOptionalString(value: unknown) {
   return typeof value === "string" ? value : undefined;
 }
 
+export function asOptionalStringField(
+  record: UnknownRecord | undefined,
+  key: string,
+) {
+  return asOptionalString(record?.[key]);
+}
+
 export function asOptionalStringOr(value: unknown, fallback: string) {
   return asOptionalString(value) ?? fallback;
+}
+
+export function asOptionalStringFieldOr(
+  record: UnknownRecord | undefined,
+  key: string,
+  fallback: string,
+) {
+  return asOptionalStringOr(record?.[key], fallback);
 }
 
 export function nullishToNull<Value>(value: Value | null | undefined): Value | null {
