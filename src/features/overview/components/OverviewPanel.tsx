@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ButtonRow } from "../../../components/ButtonRow";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
@@ -181,7 +182,7 @@ export function OverviewPanel({
             <strong>{currentSetDisplay}</strong>
           </span>
         </div>
-        <div className="button-row overview-set-row-actions">
+        <ButtonRow className="overview-set-row-actions">
           <button
             className="ghost-button"
             type="button"
@@ -190,7 +191,7 @@ export function OverviewPanel({
           >
             {overviewSetButtonLabel(Boolean(currentSetLabel))}
           </button>
-        </div>
+        </ButtonRow>
       </div>
 
       <div className="overview-master-detail">
@@ -537,14 +538,14 @@ function ToolInspector({
       {!status.binary_found ? (
         <div className="overview-missing-binary">
           <p className="inline-note">{overviewMissingBinaryMessage(toolName)}</p>
-          <div className="button-row">
+          <ButtonRow>
             <button className="ghost-button" type="button" onClick={() => openExternalGuide(installGuideUrlForTool(status.tool))}>
               {OVERVIEW_PANEL_COPY.missingBinaryActionLabel}
             </button>
             <button className="ghost-button" type="button" disabled={refreshLocked} onClick={onRefresh}>
               {OVERVIEW_PANEL_COPY.missingBinaryRefreshLabel}
             </button>
-          </div>
+          </ButtonRow>
         </div>
       ) : null}
 
@@ -552,11 +553,11 @@ function ToolInspector({
         <div className="overview-empty-state overview-empty-state-inline">
           <h3>{OVERVIEW_PANEL_COPY.noProfileHeading}</h3>
           <p className="inline-note">{OVERVIEW_PANEL_COPY.noProfileBody}</p>
-          <div className="button-row">
+          <ButtonRow>
             <button className="primary-button" type="button" onClick={() => onAddProfile(status.tool)}>
               {OVERVIEW_PANEL_COPY.addProfileLabel}
             </button>
-          </div>
+          </ButtonRow>
         </div>
       ) : null}
 
@@ -617,7 +618,7 @@ function ToolInspector({
 
       {inspector.showActionArea ? (
       <div className="overview-inspector-actions">
-        <div className="button-row">
+        <ButtonRow>
           {primaryAction ? (
             <button
               className="primary-button"
@@ -665,7 +666,7 @@ function ToolInspector({
               onToggle={() => setActionsMenuOpen((open) => !open)}
             />
           ) : null}
-        </div>
+        </ButtonRow>
       </div>
       ) : null}
 

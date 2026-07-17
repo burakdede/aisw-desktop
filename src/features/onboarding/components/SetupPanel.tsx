@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ButtonRow } from "../../../components/ButtonRow";
 import {
   DIALOG_FOCUS_SELECTORS,
   DIALOG_SURFACE_CLASS_NAMES,
@@ -265,7 +266,7 @@ export function SetupPanel({
           <span className="setup-screen-kicker">{ONBOARDING_SETUP_SCREEN_COPY.toolbarKicker}</span>
           <p className="inline-note">{ONBOARDING_SETUP_SCREEN_COPY.toolbarNote}</p>
         </div>
-        <div className="button-row setup-screen-toolbar-actions">
+        <ButtonRow className="setup-screen-toolbar-actions">
           {forcedOpen ? (
             <button className="ghost-button" type="button" onClick={onCloseSetup}>
               {ONBOARDING_SETUP_SCREEN_COPY.closeLabel}
@@ -278,7 +279,7 @@ export function SetupPanel({
           >
             {setupPrimaryActionLabel}
           </button>
-        </div>
+        </ButtonRow>
       </div>
       <SplitView
         className="onboarding-layout onboarding-layout-compact"
@@ -422,7 +423,7 @@ export function SetupPanel({
                       </div>
                     ))}
                   </div>
-                  <div className="button-row">
+                  <ButtonRow>
                     {settings.runtime_kind !== "bundled" ? (
                       <button
                         className="primary-button"
@@ -438,7 +439,7 @@ export function SetupPanel({
                     <button className="ghost-button" type="button" onClick={() => onOpenSettings("runtime")}>
                       {ONBOARDING_RUNTIME_STEP_COPY.settingsButtonLabel}
                     </button>
-                  </div>
+                  </ButtonRow>
                   {restoreBundledRuntimeMutation.error ? (
                     <p className="inline-note">
                       {restoreIncludedEngineErrorMessage(
@@ -612,11 +613,11 @@ export function SetupPanel({
                 {!switchableProfiles.length ? (
                   <div className="stack-list">
                     <p className="inline-note">{ONBOARDING_SWITCH_STEP_COPY.emptyDetail}</p>
-                    <div className="button-row">
+                    <ButtonRow>
                       <button className="ghost-button" type="button" onClick={() => onOpenProfiles("claude")}>
                         {ONBOARDING_SWITCH_STEP_COPY.openProfilesLabel}
                       </button>
-                    </div>
+                    </ButtonRow>
                   </div>
                 ) : null}
               </article>
@@ -638,11 +639,11 @@ export function SetupPanel({
                 ) : null}
                 <p className="inline-note">{ONBOARDING_TERMINAL_STEP_COPY.primaryDetail}</p>
                 <p className="inline-note">{ONBOARDING_TERMINAL_STEP_COPY.secondaryDetail}</p>
-                <div className="button-row">
+                <ButtonRow>
                   <button className="ghost-button" type="button" onClick={() => onOpenSettings("shell")}>
                     {ONBOARDING_TERMINAL_STEP_COPY.openSetupLabel}
                   </button>
-                </div>
+                </ButtonRow>
               </article>
             ) : null}
 
@@ -685,7 +686,7 @@ export function SetupPanel({
                 <h3>{setupStepFooterTitle(activeStep)}</h3>
                 <p className="inline-note">{setupStepFooterNote(activeStep, switchReady)}</p>
               </div>
-              <div className="button-row onboarding-step-footer-actions">
+              <ButtonRow className="onboarding-step-footer-actions">
                 {previousStep ? (
                   <button
                     className="ghost-button"
@@ -712,7 +713,7 @@ export function SetupPanel({
                     {ONBOARDING_SETUP_SCREEN_COPY.closeLabel}
                   </button>
                 ) : null}
-              </div>
+              </ButtonRow>
             </article>
           </div>
         }
@@ -775,7 +776,7 @@ export function SetupPanel({
                 }
               />
             </label>
-            <div className="button-row">
+            <ButtonRow>
               <button className="ghost-button" type="button" onClick={closeLiveImport}>
                 {ONBOARDING_IMPORT_DIALOG_COPY.cancelLabel}
               </button>
@@ -786,7 +787,7 @@ export function SetupPanel({
               >
                 {onboardingImportSubmitLabel(addProfileMutation.isPending)}
               </button>
-            </div>
+            </ButtonRow>
             {addProfileMutation.error ? (
               <p className="inline-note">{addProfileMutation.error.message}</p>
             ) : null}
@@ -880,7 +881,7 @@ function OnboardingAccountDetailCard({
         )}
       </p>
       {action ? (
-        <div className="button-row">
+        <ButtonRow>
           <button
             className="ghost-button"
             type="button"
@@ -890,7 +891,7 @@ function OnboardingAccountDetailCard({
           >
             {action.label}
           </button>
-        </div>
+        </ButtonRow>
       ) : null}
     </>
   );

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ButtonRow } from "../../../components/ButtonRow";
 import {
   exportDiagnosticBundle,
   getLaunchAtLoginStatus,
@@ -636,7 +637,7 @@ export function SettingsPanel({
                     <SettingsActionRow
                       label={SETTINGS_PANEL_COPY.shell.rows.shellHookActions}
                       action={
-                        <div className="button-row">
+                        <ButtonRow>
                           <button
                             className="ghost-button"
                             type="button"
@@ -651,7 +652,7 @@ export function SettingsPanel({
                           >
                             {SETTINGS_PANEL_COPY.shell.verifyButton}
                           </button>
-                        </div>
+                        </ButtonRow>
                       }
                     />
                   ) : (
@@ -748,7 +749,7 @@ export function SettingsPanel({
                     label={SETTINGS_PANEL_COPY.updates.rows.availableReleases}
                     description={releaseChannelDescription(updateChannel)}
                     action={
-                      <div className="button-row">
+                      <ButtonRow>
                         <button
                           className="ghost-button"
                           type="button"
@@ -771,7 +772,7 @@ export function SettingsPanel({
                             ? SETTINGS_INSTALLING_UPDATE_LABEL
                             : SETTINGS_INSTALL_UPDATE_LABEL}
                         </button>
-                      </div>
+                      </ButtonRow>
                     }
                   />
                 </SettingsGroup>
