@@ -1,5 +1,5 @@
 import type { AppSnapshot, DesktopSettings } from "./schemas";
-import { titleCase } from "./utils";
+import { findMatchingItem, titleCase } from "./utils";
 
 export function snapshotHasToolProfile(
   snapshot: AppSnapshot,
@@ -15,6 +15,25 @@ export function snapshotHasContext(snapshot: AppSnapshot, context: string) {
   return snapshot.contexts.some((entry) => entry.name === context);
 }
 
+export function findSnapshotToolStatus(snapshot: AppSnapshot, tool: string) {
+  return findMatchingItem(tool, snapshot.statuses, (entry) => entry.tool);
+}
+
+export function findSnapshotToolProfileEntry(
+  snapshot: AppSnapshot,
+  tool: string,
+  profile: string,
+) {
+  return findMatchingItem(profile, snapshot.profiles[tool]?.profiles ?? [], (entry) => entry.name);
+}
+
+export function findProfileSetByName(
+  profileSets: NonNullable<DesktopSettings["profile_sets"]>,
+  name: string | null | undefined,
+) {
+  return findMatchingItem(name, profileSets, (entry) => entry.name);
+}
+
 export function profileDisplayLabel(
   settings: DesktopSettings,
   snapshot: AppSnapshot,
@@ -27,7 +46,7 @@ export function profileDisplayLabel(
 
   const toolNames = Object.keys(snapshot.profiles).sort((left, right) => left.localeCompare(right));
   for (const tool of toolNames) {
-    const label = snapshot.profiles[tool]?.profiles.find((entry) => entry.name === profile)?.label;
+    const label = findSnapshotToolProfileEntry(snapshot, tool, profile)?.label;
     if (label) {
       return label;
     }
@@ -42,7 +61,7 @@ export function toolProfileDisplayLabel(
   tool: string,
   profile: string,
 ): string {
-  const label = snapshot.profiles[tool]?.profiles.find((entry) => entry.name === profile)?.label;
+  const label = findSnapshotToolProfileEntry(snapshot, tool, profile)?.label;
   return effectiveToolProfileLabel(settings, tool, profile, label);
 }
 
@@ -144,7 +163,7 @@ export function profileSetHasUsableSelections(
 }
 
 export function contextDisplayLabel(settings: DesktopSettings, context: string) {
-  const profileSet = (settings.profile_sets ?? []).find((entry) => entry.name === context);
+  const profileSet = findProfileSetByName(settings.profile_sets ?? [], context);
   return profileSet ? profileSetDisplayLabel(profileSet) : context;
 }
 
@@ -159,7 +178,7 @@ export function profileSetIsActive(
     profileSetHasSelections(set) &&
     selectedProfiles.every(
       ([tool, profile]) =>
-        snapshot.statuses.find((status) => status.tool === tool)?.active_profile === profile,
+        findSnapshotToolStatus(snapshot, tool)?.active_profile === profile,
     )
   );
 }

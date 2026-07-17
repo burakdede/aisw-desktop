@@ -1,5 +1,6 @@
 import type { IssueCardData, SummaryCardData } from "../features/diagnostics/diagnostic-parsers";
 import type { AppSnapshot, ToolStatus } from "./schemas";
+import { findSnapshotToolStatus } from "./profile-display";
 import { isSupportedTool } from "./tool-registry";
 import { toolDisplayName } from "./tool-display";
 import {
@@ -19,7 +20,7 @@ export function diagnosticFindingTitle(
 ) {
   const tool = resolveDiagnosticTool(card.title);
   if (tool) {
-    const status = snapshot?.statuses.find((entry) => entry.tool === tool);
+    const status = snapshot ? findSnapshotToolStatus(snapshot, tool) : null;
     if (status && status.binary_found === false) {
       return `${tool} is missing`;
     }

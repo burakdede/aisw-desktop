@@ -4,6 +4,9 @@ import {
   activeSetLabel,
   contextDisplayLabel,
   effectiveToolProfileLabel,
+  findProfileSetByName,
+  findSnapshotToolProfileEntry,
+  findSnapshotToolStatus,
   mergeProfileLabel,
   profileDisplayLabel,
   profileSetDisplayLabel,
@@ -130,11 +133,23 @@ describe("profile-display", () => {
     expect(sharedProfileEntries(settings, snapshot)).toEqual([
       { name: "personal", label: "Claude Personal" },
     ]);
+    expect(findSnapshotToolStatus(snapshot, "claude")).toMatchObject({
+      tool: "claude",
+      active_profile: "personal",
+    });
+    expect(findSnapshotToolStatus(snapshot, "gemini")).toBeNull();
+    expect(findSnapshotToolProfileEntry(snapshot, "claude", "personal")).toMatchObject({
+      name: "personal",
+      label: "Claude Personal",
+    });
+    expect(findSnapshotToolProfileEntry(snapshot, "claude", "missing")).toBeNull();
     expect(snapshotHasToolProfile(snapshot, "claude", "personal")).toBe(true);
     expect(snapshotHasToolProfile(snapshot, "claude", "missing")).toBe(false);
     expect(snapshotHasToolProfile(snapshot, "gemini", "personal")).toBe(false);
     expect(activeSetLabel(settings, snapshot)).toBe("Personal Set");
     expect(profileSetDisplayLabel(settings.profile_sets[0])).toBe("Personal Set");
+    expect(findProfileSetByName(settings.profile_sets, "personal")).toEqual(settings.profile_sets[0]);
+    expect(findProfileSetByName(settings.profile_sets, "missing")).toBeNull();
     expect(contextDisplayLabel(settings, "personal")).toBe("Personal Set");
     expect(snapshotHasContext(snapshot, "personal")).toBe(false);
     expect(

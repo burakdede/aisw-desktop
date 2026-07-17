@@ -51,6 +51,7 @@ import {
 } from "../../../lib/profile-detail-display";
 import {
   effectiveToolProfileLabel,
+  findSnapshotToolStatus,
 } from "../../../lib/profile-display";
 import {
   profileLiveMatchLabel,
@@ -246,8 +247,8 @@ export function ProfilesPanel({
     [profiles],
   );
   const toolStatus = useMemo(
-    () => snapshot.statuses.find((entry) => entry.tool === tool),
-    [snapshot.statuses, tool],
+    () => findSnapshotToolStatus(snapshot, tool),
+    [snapshot, tool],
   );
   const availableStateModes = useMemo(
     () => supportedStateModes(tool, toolCapabilities),

@@ -18,7 +18,11 @@ import {
   asOptionalString,
   type UnknownRecord,
 } from "../../lib/parse-guards";
-import { contextDisplayLabel, toolProfileDisplayLabel } from "../../lib/profile-display";
+import {
+  contextDisplayLabel,
+  findSnapshotToolStatus,
+  toolProfileDisplayLabel,
+} from "../../lib/profile-display";
 import { isSupportedTool } from "../../lib/tool-registry";
 import {
   countLabel,
@@ -444,7 +448,7 @@ export function buildRecentFailureCards(
       continue;
     }
     const activeProfile =
-      snapshot?.statuses.find((entry) => entry.tool === tool)?.active_profile ??
+      (snapshot ? findSnapshotToolStatus(snapshot, tool)?.active_profile : null) ??
       snapshot?.profiles[tool]?.active ??
       null;
     failures.push({
@@ -996,7 +1000,7 @@ function resolveIssueProfileTarget(title: string, snapshot: AppSnapshot) {
     return null;
   }
 
-  const status = snapshot.statuses.find((entry) => entry.tool === tool);
+  const status = findSnapshotToolStatus(snapshot, tool);
   const activeProfile = status?.active_profile ?? snapshot.profiles[tool]?.active ?? null;
   return {
     tool,

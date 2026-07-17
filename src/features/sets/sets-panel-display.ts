@@ -16,6 +16,7 @@ import {
 } from "../../lib/workspace-binding-contract";
 import { normalizeOneOf } from "../../lib/parse-guards";
 import {
+  findProfileSetByName,
   contextDisplayLabel,
   missingProfileSetSelections,
   profileSetDisplayLabel,
@@ -458,7 +459,11 @@ export function deletedSetActionLabel(
   name: string,
 ) {
   const displayLabel = profileSetDisplayLabel(
-    localSets.find((entry) => entry.name === name) ?? { name, label: null, profiles: {} },
+    findProfileSetByName(localSets, name) ?? {
+      name,
+      label: null,
+      profiles: {},
+    },
   );
   return `Deleted set ${displayLabel}.`;
 }
