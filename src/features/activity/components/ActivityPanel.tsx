@@ -30,11 +30,10 @@ import {
   activityFooterMessage,
   activityRecordedCommand,
   activityRecordedResult,
+  activityScopePresentation,
   activitySecondaryLine,
+  activityStatusPresentation,
   buildActivityInspectorRows,
-  buildActivityScopeValue,
-  activityStatusLabel,
-  activityStatusSymbol,
   buildActivityEntries,
   buildActivityExportBody,
   buildActivityExportMessage,
@@ -88,6 +87,9 @@ export function ActivityPanel({
   const footerMessage = clearMessage || logMessage;
   const showList = !compactLayout || !compactInspectorOpen;
   const showInspector = !compactLayout || compactInspectorOpen;
+  const selectedEntryScope = selectedEntry
+    ? activityScopePresentation(selectedEntry)
+    : null;
 
   useEffect(() => {
     const nextEntryKey = resolveSelectedActivityEntryKey(selectedEntryKey, filteredEntries);
@@ -253,15 +255,11 @@ export function ActivityPanel({
                     <h3 className="activity-group-heading">{group.label}</h3>
                     <div className="activity-group-list">
                       {group.entries.map((entry) => (
-                        <button
+                        <ActivityEventRow
                           key={entry.key}
-                          type="button"
-                          className={`activity-event-row ${
-                            selectedEntry?.key === entry.key ? "activity-event-row-selected" : ""
-                          }`}
-                          aria-label={activityEntryAriaLabel(entry)}
-                          aria-pressed={selectedEntry?.key === entry.key}
-                          onClick={() => {
+                          entry={entry}
+                          selected={selectedEntry?.key === entry.key}
+                          onSelect={() => {
                             setSelectedEntryKey(entry.key);
                             setClearMessage("");
                             setLogMessage("");
@@ -269,21 +267,7 @@ export function ActivityPanel({
                               setCompactInspectorOpen(true);
                             }
                           }}
-                        >
-                          <div className="activity-event-time">{formatActivityTimestamp(entry.at)}</div>
-                          <div className="activity-event-main">
-                            <div className="activity-event-title-row">
-                              <span className={`activity-event-status activity-event-status-${entry.status}`}>
-                                <span aria-hidden="true">{activityStatusSymbol(entry.status, "row")}</span>
-                                <strong>{entry.label}</strong>
-                              </span>
-                            </div>
-                            <p className="activity-event-detail">{activitySecondaryLine(entry)}</p>
-                          </div>
-                          <div className="activity-event-tail">
-                            <span>{activityTrailingLine(entry)}</span>
-                          </div>
-                        </button>
+                        />
                       ))}
                     </div>
                   </section>
@@ -313,10 +297,7 @@ export function ActivityPanel({
                       </button>
                     ) : null}
                     <h3>{selectedEntry.label}</h3>
-                    <p className={`activity-inspector-status activity-inspector-status-${selectedEntry.status}`}>
-                      <span aria-hidden="true">{activityStatusSymbol(selectedEntry.status, "inspector")}</span>
-                      <span>{activityStatusLabel(selectedEntry.status)}</span>
-                    </p>
+                    <ActivityInspectorStatus status={selectedEntry.status} />
                   </div>
                 </header>
                 <p className="inline-note activity-inspector-message">{selectedEntry.message}</p>
@@ -326,14 +307,14 @@ export function ActivityPanel({
                     {
                       label: ACTIVITY_INSPECTOR_COPY.scopeLabel,
                       value:
-                        selectedEntry.scopeType === "tool" && selectedEntry.scopeTool ? (
+                        selectedEntryScope?.brandTool ? (
                           <ToolBrand
-                            tool={selectedEntry.scopeTool}
+                            tool={selectedEntryScope.brandTool}
                             className="tool-brand-inline"
                             logoSize={16}
                           />
                         ) : (
-                          buildActivityScopeValue(selectedEntry)
+                          selectedEntryScope?.value ?? ""
                         ),
                     },
                     ...buildActivityInspectorRows(selectedEntry),
@@ -393,5 +374,56 @@ export function ActivityPanel({
         </DialogSurface>
       ) : null}
     </div>
+  );
+}
+
+function ActivityEventRow({
+  entry,
+  selected,
+  onSelect,
+}: {
+  entry: ActivityEntry;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const statusPresentation = activityStatusPresentation(entry.status, "row");
+
+  return (
+    <button
+      type="button"
+      className={`activity-event-row ${selected ? "activity-event-row-selected" : ""}`}
+      aria-label={activityEntryAriaLabel(entry)}
+      aria-pressed={selected}
+      onClick={onSelect}
+    >
+      <div className="activity-event-time">{formatActivityTimestamp(entry.at)}</div>
+      <div className="activity-event-main">
+        <div className="activity-event-title-row">
+          <span className={`activity-event-status activity-event-status-${statusPresentation.tone}`}>
+            <span aria-hidden="true">{statusPresentation.symbol}</span>
+            <strong>{entry.label}</strong>
+          </span>
+        </div>
+        <p className="activity-event-detail">{activitySecondaryLine(entry)}</p>
+      </div>
+      <div className="activity-event-tail">
+        <span>{activityTrailingLine(entry)}</span>
+      </div>
+    </button>
+  );
+}
+
+function ActivityInspectorStatus({
+  status,
+}: {
+  status: ActivityEntry["status"];
+}) {
+  const statusPresentation = activityStatusPresentation(status, "inspector");
+
+  return (
+    <p className={`activity-inspector-status activity-inspector-status-${statusPresentation.tone}`}>
+      <span aria-hidden="true">{statusPresentation.symbol}</span>
+      <span>{statusPresentation.label}</span>
+    </p>
   );
 }

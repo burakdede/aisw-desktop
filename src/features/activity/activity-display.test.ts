@@ -13,9 +13,11 @@ import {
   activityRecordedCommand,
   activityRecordedResult,
   activityGlobalScopeLabel,
+  activityScopePresentation,
   activitySecondaryLine,
   activityScopeLabel,
   activityStatusLabel,
+  activityStatusPresentation,
   activityStatusSymbol,
   buildActivityInspectorRows,
   buildActivityScopeValue,
@@ -67,14 +69,39 @@ describe("activity-display", () => {
     expect(activityGlobalScopeLabel("unknown")).toBe("App");
     expect(activityStatusLabel("success")).toBe("Success");
     expect(activityStatusLabel("error")).toBe("Failed");
+    expect(activityStatusPresentation("success", "row")).toEqual({
+      label: "Success",
+      symbol: "✓",
+      tone: "success",
+    });
+    expect(activityStatusPresentation("error", "inspector")).toEqual({
+      label: "Failed",
+      symbol: "▲",
+      tone: "error",
+    });
     expect(activityStatusSymbol("success", "row")).toBe("✓");
     expect(activityStatusSymbol("success", "inspector")).toBe("●");
     expect(activityStatusSymbol("error", "row")).toBe("▲");
     expect(buildActivityScopeValue(makeEntry())).toBe("Claude Code");
+    expect(activityScopePresentation(makeEntry())).toEqual({
+      brandTool: "claude",
+      value: "Claude Code",
+    });
     expect(ACTIVITY_PANEL_COPY.listAriaLabel).toBe("Activity timeline");
     expect(ACTIVITY_PANEL_COPY.backLabel).toBe("Back");
     expect(ACTIVITY_PANEL_COPY.cancelLabel).toBe("Cancel");
     expect(activityEntryAriaLabel(makeEntry())).toBe("Inspect Use profile");
+    expect(
+      activityScopePresentation(
+        makeEntry({
+          scopeType: "global",
+          scopeTool: undefined,
+          scopeLabel: "Settings",
+        }),
+      ),
+    ).toEqual({
+      value: "Settings",
+    });
     expect(
       buildActivityScopeValue(
         makeEntry({

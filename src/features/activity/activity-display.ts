@@ -128,6 +128,17 @@ export type ActivityInspectorRow = {
   value: string;
 };
 
+export type ActivityStatusPresentation = {
+  label: string;
+  symbol: string;
+  tone: ActivityStatus;
+};
+
+export type ActivityScopePresentation = {
+  brandTool?: string;
+  value: string;
+};
+
 type ActivityGroup = {
   label: "Today" | "Yesterday" | "Earlier";
   entries: ActivityEntry[];
@@ -196,6 +207,17 @@ export function activityStatusSymbol(
   variant: ActivityStatusVariant,
 ) {
   return ACTIVITY_STATUS_SYMBOLS[status][variant];
+}
+
+export function activityStatusPresentation(
+  status: ActivityStatus,
+  variant: ActivityStatusVariant,
+): ActivityStatusPresentation {
+  return {
+    label: activityStatusLabel(status),
+    symbol: activityStatusSymbol(status, variant),
+    tone: status,
+  };
 }
 
 export function filterActivity(entries: ActivityEntry[], search: string, filter: ActivityFilter) {
@@ -349,6 +371,19 @@ export function buildActivityScopeValue(entry: ActivityEntry) {
         tool: entry.scopeTool,
       })
     : entry.scopeLabel;
+}
+
+export function activityScopePresentation(
+  entry: ActivityEntry,
+): ActivityScopePresentation {
+  return entry.scopeType === COMMAND_RESULT_SCOPE_TYPES.tool && entry.scopeTool
+    ? {
+        brandTool: entry.scopeTool,
+        value: buildActivityScopeValue(entry),
+      }
+    : {
+        value: buildActivityScopeValue(entry),
+      };
 }
 
 export function activityEntryAriaLabel(entry: Pick<ActivityEntry, "label">) {
