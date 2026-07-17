@@ -23,31 +23,31 @@ const SERVER_READY_TIMEOUT_MS = 30_000;
 const SERVER_READY_POLL_MS = 250;
 const GIF_FPS = 18;
 const GIF_LOOP = "0";
-const OVERLAY_BOTTOM_OFFSET_PX = 34;
-const OVERLAY_CARD_SIZE = { width: 620, height: 110 };
+const OVERLAY_BOTTOM_OFFSET_PX = 42;
+const OVERLAY_CARD_SIZE = { width: 520, height: 92 };
 const OVERLAY_CARD_FRAME = {
   left: 1,
   top: 1,
-  right: 618,
-  bottom: 108,
-  radius: 28,
+  right: 518,
+  bottom: 90,
+  radius: 24,
 };
 const OVERLAY_TITLE = {
-  font: "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
-  pointSize: 40,
+  font: "/System/Library/Fonts/SFNS.ttf",
+  pointSize: 34,
   offsetY: 0,
   color: "#ffffff",
 };
 const OVERLAY_DETAIL = {
-  font: "/System/Library/Fonts/Supplemental/Arial.ttf",
-  pointSize: 24,
-  offsetY: 28,
+  font: "/System/Library/Fonts/SFNS.ttf",
+  pointSize: 20,
+  offsetY: 24,
   color: "#f5f8ff",
   interlineSpacing: 3,
 };
 const OVERLAY_CARD_COLORS = {
-  fill: "rgba(11,14,22,0.94)",
-  stroke: "rgba(255,255,255,0.2)",
+  fill: "rgba(12,16,24,0.94)",
+  stroke: "rgba(255,255,255,0.14)",
   strokeWidth: "2",
 };
 const QUICK_SWITCH_CAPTURE = {
@@ -192,7 +192,7 @@ async function captureQuickSwitchGif(browser) {
     videoPath,
     path.join(mediaDir, "desktop-quick-switch.gif"),
     {
-      title: "Quick switch in seconds",
+      title: "Quick Switch",
       trimStartSeconds: QUICK_SWITCH_CAPTURE.trimStartSeconds,
     },
   );
@@ -217,7 +217,7 @@ async function captureWorkspaceSwitchGif(browser) {
     videoPath,
     path.join(mediaDir, "desktop-workspace-switch.gif"),
     {
-      title: "Restore the right set",
+      title: "Use Expected Set",
       trimStartSeconds: WORKSPACE_SWITCH_CAPTURE.trimStartSeconds,
     },
   );
