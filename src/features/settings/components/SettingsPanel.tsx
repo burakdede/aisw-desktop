@@ -40,7 +40,6 @@ import {
 import { type AppBootstrap, type DesktopSettings } from "../../../lib/schemas";
 import { clearPersistedWindowState } from "../../../lib/window-state";
 import {
-  DEFAULT_SETTINGS_SECTION,
   SETTINGS_SECTION_IDS,
   SETTINGS_SECTIONS,
   normalizeSettingsSection,
@@ -68,6 +67,7 @@ import {
   exportedDiagnosticMessage,
   findShellHookCheck,
   formatSettingsMutationError,
+  initialSettingsSection,
   launchAtLoginDescription,
   launchAtLoginErrorMessage,
   launchAtLoginSuccessMessage,
@@ -134,7 +134,9 @@ export function SettingsPanel({
   const [runtimePath, setRuntimePath] = useState(initialSettingsDraft.runtimePath);
   const [aiswHome, setAiswHome] = useState(initialSettingsDraft.aiswHome);
   const [updateChannel, setUpdateChannel] = useState(initialSettingsDraft.updateChannel);
-  const [selectedSection, setSelectedSection] = useState<SettingsSection>(initialSection ?? DEFAULT_SETTINGS_SECTION);
+  const [selectedSection, setSelectedSection] = useState<SettingsSection>(
+    initialSettingsSection(initialSection),
+  );
   const [selectedShell, setSelectedShell] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
   const [securityMessage, setSecurityMessage] = useState("");
@@ -243,7 +245,7 @@ export function SettingsPanel({
   ]);
 
   useEffect(() => {
-    setSelectedSection(initialSection ?? DEFAULT_SETTINGS_SECTION);
+    setSelectedSection(initialSettingsSection(initialSection));
   }, [initialSection]);
 
   useEffect(() => {

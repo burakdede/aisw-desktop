@@ -307,6 +307,10 @@ export function nextSettingsSection(
   return SETTINGS_SECTIONS[targetIndex] ?? currentSection;
 }
 
+export function initialSettingsSection(section: SettingsSection | null | undefined) {
+  return section ?? DEFAULT_SETTINGS_SECTION;
+}
+
 export function settingsSectionDirectionForKey(key: string): SettingsSectionDirection | null {
   return SETTINGS_SECTION_KEY_DIRECTIONS[
     key as keyof typeof SETTINGS_SECTION_KEY_DIRECTIONS

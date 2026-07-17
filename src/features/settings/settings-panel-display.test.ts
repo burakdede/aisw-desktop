@@ -19,6 +19,7 @@ import {
   exportedDiagnosticMessage,
   findShellHookCheck,
   formatSettingsMutationError,
+  initialSettingsSection,
   launchAtLoginDescription,
   launchAtLoginErrorMessage,
   LAUNCH_AT_LOGIN_DISABLED_MESSAGE,
@@ -328,6 +329,9 @@ describe("settings-panel-display", () => {
       "advanced",
     ]);
     expect(DEFAULT_SETTINGS_SECTION).toBe("general");
+    expect(initialSettingsSection("runtime")).toBe("runtime");
+    expect(initialSettingsSection(null)).toBe("general");
+    expect(initialSettingsSection(undefined)).toBe("general");
     expect(sectionLabel("runtime")).toBe("Engine");
     expect(nextSettingsSection("runtime", "next")).toBe("shell");
     expect(nextSettingsSection("runtime", "previous")).toBe("general");
