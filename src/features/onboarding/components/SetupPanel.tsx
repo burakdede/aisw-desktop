@@ -20,7 +20,6 @@ import { inspectItemLabel } from "../../../lib/display-copy";
 import {
   installGuideUrlForTool,
   openExternalGuide,
-  toolBinaryName,
 } from "../../../lib/tool-guidance";
 import { SETTINGS_SECTION_IDS, type SettingsSection } from "../../../lib/settings-sections";
 import {
@@ -55,8 +54,6 @@ import {
   onboardingImportedProfileLabel,
   onboardingImportSubmitLabel,
   onboardingLiveImportAction,
-  onboardingLiveAccountValue,
-  onboardingMatchedProfileValue,
   onboardingPrimaryActionLabel,
   onboardingAccountBadge,
   onboardingAccountSummary,
@@ -66,12 +63,9 @@ import {
   onboardingStepProgressLabel,
   onboardingSwitchSubmitLabel,
   onboardingSwitchReadinessStatus,
-  onboardingLiveAccountImportNote,
-  onboardingMissingToolHeading,
-  onboardingMissingToolNoteParts,
-  onboardingNeedsProfileNote,
   restoreIncludedEngineActionLabel,
   restoreIncludedEngineErrorMessage,
+  buildSelectedOnboardingAccountDetailState,
   onboardingRuntimeVersionDetail,
   resolveOnboardingStepState,
   resolveSelectedOnboardingAccountItem,
@@ -80,6 +74,8 @@ import {
   setupStepFooterTitle,
   setupStepSummary,
   shouldShowSetupFlow,
+  type OnboardingAccountItem,
+  type OnboardingAccountDetailState,
   type LiveAccount,
   type SetupStep,
 } from "../onboarding-display";
@@ -252,17 +248,9 @@ export function SetupPanel({
     accountItems,
     selectedAccountKey,
   );
-  const selectedLiveImportAction =
-    selectedAccountItem?.kind === "live"
-      ? onboardingLiveImportAction(
-          selectedAccountItem.account.tool,
-          toolCapabilities,
-        )
-      : null;
-  const selectedMissingToolNoteParts =
-    selectedAccountItem?.kind === "missing"
-      ? onboardingMissingToolNoteParts(selectedAccountItem.status.tool)
-      : null;
+  const selectedAccountDetail = selectedAccountItem
+    ? buildSelectedOnboardingAccountDetailState(selectedAccountItem, toolCapabilities)
+    : null;
 
   return (
     <div className="setup-screen screen-content">
@@ -551,174 +539,19 @@ export function SetupPanel({
                         </article>
                       }
                       secondary={
-                        selectedAccountItem ? (
+                        selectedAccountItem && selectedAccountDetail ? (
                           <article
                             className={`diagnostic-card onboarding-account-detail-card ${
-                              selectedAccountItem.kind === "missing" ? "diagnostic-warn" : ""
+                              selectedAccountDetail.warning ? "diagnostic-warn" : ""
                             }`}
                           >
-                            {selectedAccountItem.kind === "live" ? (
-                              <>
-                                <div className="desktop-pane-section-header">
-                                  <div>
-                                    <p className="card-kicker">{ONBOARDING_ACCOUNTS_STEP_COPY.liveKicker}</p>
-                                    <h3>
-                                      <ToolBrand tool={selectedAccountItem.account.tool} className="tool-brand-heading" logoSize={18} />
-                                    </h3>
-                                  </div>
-                                  <span className={`pill pill-${onboardingAccountBadge(selectedAccountItem).tone}`}>
-                                    {onboardingAccountBadge(selectedAccountItem).label}
-                                  </span>
-                                </div>
-                                <div className="onboarding-account-summary">
-                                  <div>
-                                    <span className="overview-current-set-cell-label">
-                                      {ONBOARDING_ACCOUNTS_STEP_COPY.liveStatusLabel}
-                                    </span>
-                                    <strong>
-                                      {onboardingLiveAccountValue(selectedAccountItem.account.outcome)}
-                                    </strong>
-                                  </div>
-                                  <div>
-                                    <span className="overview-current-set-cell-label">
-                                      {ONBOARDING_ACCOUNTS_STEP_COPY.liveSignInMethodLabel}
-                                    </span>
-                                    <strong>
-                                      {onboardingLiveAccountValue(selectedAccountItem.account.authMethod)}
-                                    </strong>
-                                  </div>
-                                  <div>
-                                    <span className="overview-current-set-cell-label">
-                                      {ONBOARDING_ACCOUNTS_STEP_COPY.liveMatchedProfileLabel}
-                                    </span>
-                                    <strong>
-                                      {onboardingMatchedProfileValue(selectedAccountItem.account.matchedProfile)}
-                                    </strong>
-                                  </div>
-                                </div>
-                                <p className="inline-note">
-                                  {onboardingLiveAccountImportNote(
-                                    selectedAccountItem.account.tool,
-                                    selectedLiveImportAction?.kind === "import_sheet",
-                                  )}
-                                </p>
-                                <div className="button-row">
-                                  {selectedLiveImportAction?.kind === "import_sheet" ? (
-                                    <button
-                                      className="ghost-button"
-                                      type="button"
-                                      disabled={mutationLock.isBusy}
-                                      onClick={() => openLiveImport(selectedAccountItem.account)}
-                                    >
-                                      {selectedLiveImportAction.label}
-                                    </button>
-                                  ) : (
-                                    <button
-                                      className="ghost-button"
-                                      type="button"
-                                      disabled={mutationLock.isBusy}
-                                      onClick={() =>
-                                        selectedLiveImportAction &&
-                                        selectedLiveImportAction.kind === "open_profiles"
-                                          ? onOpenProfiles(selectedAccountItem.account.tool, {
-                                              mode: selectedLiveImportAction.mode,
-                                            })
-                                          : undefined
-                                      }
-                                    >
-                                      {selectedLiveImportAction?.label}
-                                    </button>
-                                  )}
-                                </div>
-                              </>
-                            ) : null}
-
-                            {selectedAccountItem.kind === "needs-profile" ? (
-                              <>
-                                <div className="desktop-pane-section-header">
-                                  <div>
-                                    <p className="card-kicker">{ONBOARDING_ACCOUNTS_STEP_COPY.needsProfileKicker}</p>
-                                    <h3>
-                                      <ToolBrand tool={selectedAccountItem.status.tool} className="tool-brand-heading" logoSize={18} />
-                                    </h3>
-                                  </div>
-                                  <span className={`pill pill-${onboardingAccountBadge(selectedAccountItem).tone}`}>
-                                    {onboardingAccountBadge(selectedAccountItem).label}
-                                  </span>
-                                </div>
-                                <div className="onboarding-account-summary">
-                                  <div>
-                                    <span className="overview-current-set-cell-label">
-                                      {ONBOARDING_ACCOUNTS_STEP_COPY.needsProfileStatusLabel}
-                                    </span>
-                                    <strong>{ONBOARDING_ACCOUNTS_STEP_COPY.needsProfileStatusValue}</strong>
-                                  </div>
-                                  <div>
-                                    <span className="overview-current-set-cell-label">
-                                      {ONBOARDING_ACCOUNTS_STEP_COPY.needsProfileCurrentStateLabel}
-                                    </span>
-                                    <strong>{ONBOARDING_ACCOUNTS_STEP_COPY.needsProfileCurrentStateValue}</strong>
-                                  </div>
-                                </div>
-                                <p className="inline-note">{onboardingNeedsProfileNote(selectedAccountItem.status.tool)}</p>
-                                <div className="button-row">
-                                  <button
-                                    className="ghost-button"
-                                    type="button"
-                                    aria-label={`Add ${selectedAccountItem.status.tool} profile`}
-                                    disabled={mutationLock.isBusy}
-                                    onClick={() => onOpenProfiles(selectedAccountItem.status.tool)}
-                                  >
-                                    {ONBOARDING_ACCOUNTS_STEP_COPY.addProfileActionLabel}
-                                  </button>
-                                </div>
-                              </>
-                            ) : null}
-
-                            {selectedAccountItem.kind === "missing" ? (
-                              <>
-                                <div className="desktop-pane-section-header">
-                                  <div>
-                                    <p className="card-kicker">{ONBOARDING_ACCOUNTS_STEP_COPY.missingKicker}</p>
-                                    <h3>{onboardingMissingToolHeading(selectedAccountItem.status.tool)}</h3>
-                                  </div>
-                                  <span className={`pill pill-${onboardingAccountBadge(selectedAccountItem).tone}`}>
-                                    {onboardingAccountBadge(selectedAccountItem).label}
-                                  </span>
-                                </div>
-                                <p className="inline-note">
-                                  <ToolBrand tool={selectedAccountItem.status.tool} className="tool-brand-inline" logoSize={16} />
-                                </p>
-                                <div className="onboarding-account-summary">
-                                  <div>
-                                    <span className="overview-current-set-cell-label">
-                                      {ONBOARDING_ACCOUNTS_STEP_COPY.missingStatusLabel}
-                                    </span>
-                                    <strong>{ONBOARDING_ACCOUNTS_STEP_COPY.missingStatusValue}</strong>
-                                  </div>
-                                  <div>
-                                    <span className="overview-current-set-cell-label">
-                                      {ONBOARDING_ACCOUNTS_STEP_COPY.binaryLabel}
-                                    </span>
-                                    <strong>{toolBinaryName(selectedAccountItem.status.tool)}</strong>
-                                  </div>
-                                </div>
-                                <p className="inline-note">
-                                  {selectedMissingToolNoteParts?.beforeBinary}
-                                  <code>{selectedMissingToolNoteParts?.binary}</code>
-                                  {selectedMissingToolNoteParts?.afterBinary}
-                                </p>
-                                <div className="button-row">
-                                  <button
-                                    className="ghost-button"
-                                    type="button"
-                                    onClick={() => openExternalGuide(installGuideUrlForTool(selectedAccountItem.status.tool))}
-                                  >
-                                    {ONBOARDING_ACCOUNTS_STEP_COPY.installationGuideLabel}
-                                  </button>
-                                </div>
-                              </>
-                            ) : null}
+                            <OnboardingAccountDetailCard
+                              state={selectedAccountDetail}
+                              selectedAccountItem={selectedAccountItem}
+                              mutationBusy={mutationLock.isBusy}
+                              onOpenProfiles={onOpenProfiles}
+                              onOpenLiveImport={openLiveImport}
+                            />
                           </article>
                         ) : null
                       }
@@ -943,5 +776,98 @@ export function SetupPanel({
         </DialogSurface>
       ) : null}
     </div>
+  );
+}
+
+function OnboardingAccountDetailCard({
+  state,
+  selectedAccountItem,
+  mutationBusy,
+  onOpenProfiles,
+  onOpenLiveImport,
+}: {
+  state: OnboardingAccountDetailState;
+  selectedAccountItem: OnboardingAccountItem;
+  mutationBusy: boolean;
+  onOpenProfiles: (tool: string, options?: { mode?: ProfileImportMode }) => void;
+  onOpenLiveImport: (account: LiveAccount) => void;
+}) {
+  const action = state.action;
+
+  function handleAction() {
+    if (!action) {
+      return;
+    }
+
+    switch (action.kind) {
+      case "import_sheet":
+        if (selectedAccountItem.kind === "live") {
+          onOpenLiveImport(selectedAccountItem.account);
+        }
+        return;
+      case "open_profiles":
+        onOpenProfiles(action.tool, {
+          mode: action.mode,
+        });
+        return;
+      case "open_installation_guide":
+        openExternalGuide(installGuideUrlForTool(action.tool));
+        return;
+    }
+  }
+
+  return (
+    <>
+      <div className="desktop-pane-section-header">
+        <div>
+          <p className="card-kicker">{state.kicker}</p>
+          <h3>
+            {state.headingKind === "brand" ? (
+              <ToolBrand tool={state.tool} className="tool-brand-heading" logoSize={18} />
+            ) : (
+              state.headingText
+            )}
+          </h3>
+        </div>
+        <span className={`pill pill-${state.badge.tone}`}>{state.badge.label}</span>
+      </div>
+      {state.kind === "missing" ? (
+        <p className="inline-note">
+          <ToolBrand tool={state.tool} className="tool-brand-inline" logoSize={16} />
+        </p>
+      ) : null}
+      <div className="onboarding-account-summary">
+        {state.summaryRows.map((row) => (
+          <div key={row.label}>
+            <span className="overview-current-set-cell-label">{row.label}</span>
+            <strong>{row.value}</strong>
+          </div>
+        ))}
+      </div>
+      <p className="inline-note">
+        {typeof state.note === "string" ? (
+          state.note
+        ) : (
+          <>
+            {state.note.before}
+            <code>{state.note.code}</code>
+            {state.note.after}
+          </>
+        )}
+      </p>
+      {action ? (
+        <div className="button-row">
+          <button
+            className="ghost-button"
+            type="button"
+            aria-label={action.kind === "open_profiles" ? action.ariaLabel : undefined}
+            disabled={mutationBusy}
+            onClick={handleAction}
+          >
+            {action.label}
+          </button>
+        </div>
+      ) : null}
+    </>
   );
 }

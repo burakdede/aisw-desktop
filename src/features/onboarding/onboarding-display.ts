@@ -76,6 +76,43 @@ export type OnboardingAccountBadge = {
   tone: "ok" | "soft";
 };
 
+export type OnboardingAccountDetailAction =
+  | {
+      kind: "import_sheet";
+      label: string;
+    }
+  | {
+      kind: "open_profiles";
+      label: string;
+      tool: SupportedTool;
+      mode?: ProfileImportMode;
+      ariaLabel?: string;
+    }
+  | {
+      kind: "open_installation_guide";
+      label: string;
+      tool: SupportedTool;
+    };
+
+export type OnboardingAccountDetailState = {
+  kind: OnboardingAccountItem["kind"];
+  tool: SupportedTool;
+  headingKind: "brand" | "text";
+  headingText: string;
+  kicker: string;
+  badge: OnboardingAccountBadge;
+  summaryRows: Array<{ label: string; value: string }>;
+  note:
+    | string
+    | {
+        before: string;
+        code: string;
+        after: string;
+      };
+  action: OnboardingAccountDetailAction | null;
+  warning: boolean;
+};
+
 type OnboardingAccountPresentation = {
   badge: OnboardingAccountBadge;
   summary: string;
@@ -485,8 +522,8 @@ export function selectDefaultAccountItem(items: OnboardingAccountItem[]) {
   );
 }
 
-export function accountItemTool(item: OnboardingAccountItem) {
-  return item.kind === "live" ? item.account.tool : item.status.tool;
+export function accountItemTool(item: OnboardingAccountItem): SupportedTool {
+  return item.kind === "live" ? item.account.tool : item.status.tool as SupportedTool;
 }
 
 export function defaultSetupStep(
@@ -610,6 +647,10 @@ export function onboardingNeedsProfileNote(tool: string) {
   return `Add one reusable ${toolDisplayName(tool)} profile so this computer can switch that tool safely later.`;
 }
 
+export function onboardingAddProfileActionAriaLabel(tool: string) {
+  return `Add ${tool} profile`;
+}
+
 export function onboardingMissingToolHeading(tool: string) {
   return `${toolDisplayName(tool)} is not installed`;
 }
@@ -621,6 +662,111 @@ export function onboardingMissingToolNote(tool: string) {
 
 export function onboardingMissingToolNoteParts(tool: string) {
   return buildOnboardingMissingToolNoteParts(tool);
+}
+
+export function buildSelectedOnboardingAccountDetailState(
+  item: OnboardingAccountItem,
+  toolCapabilities: RuntimeToolCapabilities,
+): OnboardingAccountDetailState {
+  const tool = accountItemTool(item);
+  const badge = onboardingAccountBadge(item);
+
+  if (item.kind === "live") {
+    const importAction = onboardingLiveImportAction(tool, toolCapabilities);
+    return {
+      kind: item.kind,
+      tool,
+      headingKind: "brand",
+      headingText: tool,
+      kicker: ONBOARDING_ACCOUNTS_STEP_COPY.liveKicker,
+      badge,
+      summaryRows: [
+        {
+          label: ONBOARDING_ACCOUNTS_STEP_COPY.liveStatusLabel,
+          value: onboardingLiveAccountValue(item.account.outcome),
+        },
+        {
+          label: ONBOARDING_ACCOUNTS_STEP_COPY.liveSignInMethodLabel,
+          value: onboardingLiveAccountValue(item.account.authMethod),
+        },
+        {
+          label: ONBOARDING_ACCOUNTS_STEP_COPY.liveMatchedProfileLabel,
+          value: onboardingMatchedProfileValue(item.account.matchedProfile),
+        },
+      ],
+      note: onboardingLiveAccountImportNote(tool, importAction.kind === "import_sheet"),
+      action:
+        importAction.kind === "import_sheet"
+          ? importAction
+          : {
+              kind: "open_profiles",
+              label: importAction.label,
+              tool,
+              mode: importAction.mode,
+            },
+      warning: false,
+    };
+  }
+
+  if (item.kind === "needs-profile") {
+    return {
+      kind: item.kind,
+      tool,
+      headingKind: "brand",
+      headingText: tool,
+      kicker: ONBOARDING_ACCOUNTS_STEP_COPY.needsProfileKicker,
+      badge,
+      summaryRows: [
+        {
+          label: ONBOARDING_ACCOUNTS_STEP_COPY.needsProfileStatusLabel,
+          value: ONBOARDING_ACCOUNTS_STEP_COPY.needsProfileStatusValue,
+        },
+        {
+          label: ONBOARDING_ACCOUNTS_STEP_COPY.needsProfileCurrentStateLabel,
+          value: ONBOARDING_ACCOUNTS_STEP_COPY.needsProfileCurrentStateValue,
+        },
+      ],
+      note: onboardingNeedsProfileNote(tool),
+      action: {
+        kind: "open_profiles",
+        label: ONBOARDING_ACCOUNTS_STEP_COPY.addProfileActionLabel,
+        tool,
+        ariaLabel: onboardingAddProfileActionAriaLabel(tool),
+      },
+      warning: false,
+    };
+  }
+
+  const noteParts = onboardingMissingToolNoteParts(tool);
+  return {
+    kind: item.kind,
+    tool,
+    headingKind: "text",
+    headingText: onboardingMissingToolHeading(tool),
+    kicker: ONBOARDING_ACCOUNTS_STEP_COPY.missingKicker,
+    badge,
+    summaryRows: [
+      {
+        label: ONBOARDING_ACCOUNTS_STEP_COPY.missingStatusLabel,
+        value: ONBOARDING_ACCOUNTS_STEP_COPY.missingStatusValue,
+      },
+      {
+        label: ONBOARDING_ACCOUNTS_STEP_COPY.binaryLabel,
+        value: toolBinaryName(tool),
+      },
+    ],
+    note: {
+      before: noteParts.beforeBinary,
+      code: noteParts.binary,
+      after: noteParts.afterBinary,
+    },
+    action: {
+      kind: "open_installation_guide",
+      label: ONBOARDING_ACCOUNTS_STEP_COPY.installationGuideLabel,
+      tool,
+    },
+    warning: true,
+  };
 }
 
 function buildOnboardingAccountPresentation(

@@ -22,12 +22,14 @@ import {
   onboardingDoneBadgeLabel,
   buildOnboardingInventory,
   buildOnboardingHealthItems,
+  buildSelectedOnboardingAccountDetailState,
   buildOnboardingRuntimeRows,
   defaultSetupStep,
   onboardingHealthStatusSymbol,
   onboardingImportDialogAriaLabel,
   onboardingImportedProfileLabel,
   onboardingImportSubmitLabel,
+  onboardingAddProfileActionAriaLabel,
   onboardingLiveAccountImportNote,
   onboardingLiveImportAction,
   onboardingLiveAccountValue,
@@ -317,6 +319,123 @@ describe("onboarding-display", () => {
     );
   });
 
+  it("builds normalized account detail state for each onboarding account kind", () => {
+    const liveItem: OnboardingAccountItem = {
+      key: "live:claude",
+      kind: "live",
+      account: {
+        tool: "claude",
+        outcome: "detected",
+        authMethod: "oauth",
+        matchedProfile: "personal",
+      },
+    };
+    const needsProfileItem: OnboardingAccountItem = {
+      key: "needs-profile:codex",
+      kind: "needs-profile",
+      status: {
+        ...makeSnapshot().statuses[0],
+        tool: "codex",
+        stored_profiles: 0,
+        active_profile: null,
+      },
+    };
+    const missingItem: OnboardingAccountItem = {
+      key: "missing:gemini",
+      kind: "missing",
+      status: {
+        ...makeSnapshot().statuses[0],
+        tool: "gemini",
+        binary_found: false,
+        stored_profiles: 0,
+        active_profile: null,
+      },
+    };
+
+    expect(
+      buildSelectedOnboardingAccountDetailState(
+        liveItem,
+        makeRuntimeToolCapabilities({
+          claude: {
+            auth_methods: ["from_live", "oauth"],
+          },
+        }),
+      ),
+    ).toEqual({
+      kind: "live",
+      tool: "claude",
+      headingKind: "brand",
+      headingText: "claude",
+      kicker: "Detected login",
+      badge: { tone: "ok", label: "Ready to import" },
+      summaryRows: [
+        { label: "Status", value: "detected" },
+        { label: "Sign-in method", value: "oauth" },
+        { label: "Matched profile", value: "personal" },
+      ],
+      note: "Save the current Claude Code login as a reusable profile in a setup sheet.",
+      action: {
+        kind: "import_sheet",
+        label: "Import as profile",
+      },
+      warning: false,
+    });
+
+    expect(
+      buildSelectedOnboardingAccountDetailState(
+        needsProfileItem,
+        makeRuntimeToolCapabilities({
+          codex: {
+            auth_methods: ["oauth"],
+          },
+        }),
+      ),
+    ).toEqual({
+      kind: "needs-profile",
+      tool: "codex",
+      headingKind: "brand",
+      headingText: "codex",
+      kicker: "Saved profile needed",
+      badge: { tone: "soft", label: "Needs profile" },
+      summaryRows: [
+        { label: "Status", value: "Installed, but no saved profile yet" },
+        { label: "Current state", value: "No reusable account saved" },
+      ],
+      note: "Add one reusable Codex CLI profile so this computer can switch that tool safely later.",
+      action: {
+        kind: "open_profiles",
+        label: "Add profile",
+        tool: "codex",
+        ariaLabel: "Add codex profile",
+      },
+      warning: false,
+    });
+
+    expect(buildSelectedOnboardingAccountDetailState(missingItem, {})).toEqual({
+      kind: "missing",
+      tool: "gemini",
+      headingKind: "text",
+      headingText: "Gemini CLI is not installed",
+      kicker: "Optional tool",
+      badge: { tone: "soft", label: "Not installed" },
+      summaryRows: [
+        { label: "Status", value: "Optional for now" },
+        { label: "Binary", value: "gemini" },
+      ],
+      note: {
+        before: "You can finish setup without Gemini CLI. Install the ",
+        code: "gemini",
+        after: " tool later when you want to manage that provider here.",
+      },
+      action: {
+        kind: "open_installation_guide",
+        label: "Open installation guide",
+        tool: "gemini",
+      },
+      warning: true,
+    });
+  });
+
   it("derives live accounts and setup flow visibility from init data", () => {
     const initReport: InitReport = {
       result: {
@@ -450,6 +569,7 @@ describe("onboarding-display", () => {
     expect(onboardingNeedsProfileNote("codex")).toBe(
       "Add one reusable Codex CLI profile so this computer can switch that tool safely later.",
     );
+    expect(onboardingAddProfileActionAriaLabel("codex")).toBe("Add codex profile");
     expect(onboardingMissingToolHeading("gemini")).toBe("Gemini CLI is not installed");
     expect(onboardingMissingToolNoteParts("gemini")).toEqual({
       beforeBinary: "You can finish setup without Gemini CLI. Install the ",
