@@ -23,19 +23,26 @@ const SERVER_READY_TIMEOUT_MS = 30_000;
 const SERVER_READY_POLL_MS = 250;
 const GIF_FPS = 18;
 const GIF_LOOP = "0";
-const OVERLAY_BOTTOM_OFFSET_PX = 18;
-const OVERLAY_CARD_SIZE = { width: 440, height: 76 };
+const OVERLAY_BOTTOM_OFFSET_PX = 34;
+const OVERLAY_CARD_SIZE = { width: 360, height: 84 };
 const OVERLAY_CARD_FRAME = {
-  left: 1,
-  top: 1,
-  right: 438,
-  bottom: 74,
-  radius: 22,
+  left: 4,
+  top: 8,
+  right: 356,
+  bottom: 80,
+  radius: 24,
+};
+const OVERLAY_SHADOW_FRAME = {
+  left: 12,
+  top: 18,
+  right: 348,
+  bottom: 82,
+  radius: 24,
 };
 const OVERLAY_TITLE = {
   font: "/System/Library/Fonts/SFNSRounded.ttf",
-  pointSize: 36,
-  offsetY: 0,
+  pointSize: 32,
+  offsetY: 2,
   color: "#ffffff",
 };
 const OVERLAY_DETAIL = {
@@ -46,8 +53,9 @@ const OVERLAY_DETAIL = {
   interlineSpacing: 3,
 };
 const OVERLAY_CARD_COLORS = {
-  fill: "rgba(10,14,22,0.96)",
-  stroke: "rgba(255,255,255,0.22)",
+  fill: "rgba(10,16,27,0.97)",
+  shadow: "rgba(7,13,24,0.28)",
+  stroke: "rgba(139,180,255,0.32)",
   strokeWidth: "2",
 };
 const QUICK_SWITCH_CAPTURE = {
@@ -217,7 +225,7 @@ async function captureWorkspaceSwitchGif(browser) {
     videoPath,
     path.join(mediaDir, "desktop-workspace-switch.gif"),
     {
-      title: "Use Expected Set",
+      title: "Switch Set",
       trimStartSeconds: WORKSPACE_SWITCH_CAPTURE.trimStartSeconds,
     },
   );
@@ -333,6 +341,10 @@ async function renderOverlayCard(pngPath, { title, detail }) {
     "-size",
     `${OVERLAY_CARD_SIZE.width}x${OVERLAY_CARD_SIZE.height}`,
     "xc:none",
+    "-fill",
+    OVERLAY_CARD_COLORS.shadow,
+    "-draw",
+    `roundrectangle ${OVERLAY_SHADOW_FRAME.left},${OVERLAY_SHADOW_FRAME.top} ${OVERLAY_SHADOW_FRAME.right},${OVERLAY_SHADOW_FRAME.bottom} ${OVERLAY_SHADOW_FRAME.radius},${OVERLAY_SHADOW_FRAME.radius}`,
     "-fill",
     OVERLAY_CARD_COLORS.fill,
     "-stroke",
