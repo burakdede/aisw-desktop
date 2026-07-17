@@ -1,6 +1,7 @@
 import {
   FormEvent,
   KeyboardEvent as ReactKeyboardEvent,
+  type MutableRefObject,
   type RefObject,
   useEffect,
   useMemo,
@@ -773,42 +774,30 @@ export function ProfilesPanel({
                       <span className="profiles-table-column profiles-table-column-low">{inventoryEntry.backend}</span>
                       <span className="profiles-table-column profiles-table-column-low">{inventoryEntry.lastChecked}</span>
                     </button>
-                    <div className="profile-row-actions" data-profile-row-actions>
-                      <button
-                        ref={(node) => {
-                          rowActionAnchorRefs.current[menuKey] = node;
-                        }}
-                        className="ghost-button profile-row-actions-trigger"
-                        type="button"
-                        aria-label={buildProfileRowActionsAriaLabel(
-                          inventoryEntry.tool,
-                          inventoryEntry.label,
-                        )}
-                        aria-haspopup="menu"
-                        aria-expanded={
-                          openRowActions?.tool === inventoryEntry.tool &&
-                          openRowActions?.name === inventoryEntry.name &&
-                          openRowActions?.scope === "table"
-                        }
-                        onClick={() => openProfileActions(inventoryEntry.tool, inventoryEntry.name, "table")}
-                      >
-                        •••
-                      </button>
-                      <ProfileActionMenu
-                        open={
-                          openRowActions?.tool === inventoryEntry.tool &&
-                          openRowActions?.name === inventoryEntry.name &&
-                          openRowActions?.scope === "table"
-                        }
-                        anchorRef={rowActionAnchorRef}
-                        align="end"
-                        boundaryAttribute={PROFILE_ROW_ACTIONS_ATTRIBUTE}
-                        actionTarget={{ tool: inventoryEntry.tool, name: inventoryEntry.name }}
-                        actions={rowActions}
-                        mutationBusy={mutationLock.isBusy}
-                        onAction={handleProfileAction}
-                      />
-                    </div>
+                    <ProfileActionsControl
+                      open={
+                        openRowActions?.tool === inventoryEntry.tool &&
+                        openRowActions?.name === inventoryEntry.name &&
+                        openRowActions?.scope === "table"
+                      }
+                      anchorRef={rowActionAnchorRef}
+                      setAnchorNode={(node) => {
+                        rowActionAnchorRefs.current[menuKey] = node;
+                      }}
+                      align="end"
+                      boundaryAttribute={PROFILE_ROW_ACTIONS_ATTRIBUTE}
+                      actionTarget={{ tool: inventoryEntry.tool, name: inventoryEntry.name }}
+                      triggerAriaLabel={buildProfileRowActionsAriaLabel(
+                        inventoryEntry.tool,
+                        inventoryEntry.label,
+                      )}
+                      actions={rowActions}
+                      mutationBusy={mutationLock.isBusy}
+                      onToggle={() =>
+                        openProfileActions(inventoryEntry.tool, inventoryEntry.name, "table")
+                      }
+                      onAction={handleProfileAction}
+                    />
                   </div>
                 );
               })}
@@ -879,50 +868,39 @@ export function ProfilesPanel({
                     ) : (
                       <span className="profiles-passive-badge">Active</span>
                     )}
-                    <div className="profile-row-actions" data-profile-row-actions>
-                      <button
-                        ref={inspectorMenuAnchorRef}
-                        className="ghost-button profile-row-actions-trigger"
-                        type="button"
-                        aria-label={PROFILE_PANEL_COPY.inspectorTriggerAriaLabel}
-                        aria-expanded={
-                          openRowActions?.tool === tool &&
-                          openRowActions?.name === selectedProfileEntry.name &&
-                          openRowActions?.scope === "inspector"
-                        }
-                        onClick={() =>
-                          setOpenRowActions((current) =>
-                            toggleProfileActionMenu(current, {
-                              tool,
-                              name: selectedProfileEntry.name,
-                              scope: "inspector",
-                            }),
-                          )
-                        }
-                      >
-                        •••
-                      </button>
-                      <ProfileActionMenu
-                        open={
-                          openRowActions?.tool === tool &&
-                          openRowActions?.name === selectedProfileEntry.name &&
-                          openRowActions?.scope === "inspector"
-                        }
-                        anchorRef={inspectorMenuAnchorRef}
-                        align="start"
-                        boundaryAttribute={PROFILE_ROW_ACTIONS_ATTRIBUTE}
-                        containmentSelector=".profiles-inspector"
-                        actionTarget={{ tool, name: selectedProfileEntry.name }}
-                        actions={buildProfileActionMenu({
-                          active: selectedProfileInspectorState.isActive,
-                          hasBackup: Boolean(selectedLatestBackup),
-                          scope: "inspector",
-                          state: selectedProfileInspectorState.state,
-                        })}
-                        mutationBusy={mutationLock.isBusy}
-                        onAction={handleProfileAction}
-                      />
-                    </div>
+                    <ProfileActionsControl
+                      open={
+                        openRowActions?.tool === tool &&
+                        openRowActions?.name === selectedProfileEntry.name &&
+                        openRowActions?.scope === "inspector"
+                      }
+                      anchorRef={inspectorMenuAnchorRef}
+                      setAnchorNode={(node) => {
+                        inspectorMenuAnchorRef.current = node;
+                      }}
+                      align="start"
+                      boundaryAttribute={PROFILE_ROW_ACTIONS_ATTRIBUTE}
+                      containmentSelector=".profiles-inspector"
+                      actionTarget={{ tool, name: selectedProfileEntry.name }}
+                      triggerAriaLabel={PROFILE_PANEL_COPY.inspectorTriggerAriaLabel}
+                      actions={buildProfileActionMenu({
+                        active: selectedProfileInspectorState.isActive,
+                        hasBackup: Boolean(selectedLatestBackup),
+                        scope: "inspector",
+                        state: selectedProfileInspectorState.state,
+                      })}
+                      mutationBusy={mutationLock.isBusy}
+                      onToggle={() =>
+                        setOpenRowActions((current) =>
+                          toggleProfileActionMenu(current, {
+                            tool,
+                            name: selectedProfileEntry.name,
+                            scope: "inspector",
+                          }),
+                        )
+                      }
+                      onAction={handleProfileAction}
+                    />
                   </div>
                 </header>
                 <KeyValueGrid
@@ -1384,6 +1362,61 @@ function ProfileSheetHeader({
         <p className="card-kicker">{kicker}</p>
         <h3>{heading}</h3>
       </div>
+    </div>
+  );
+}
+
+function ProfileActionsControl({
+  open,
+  anchorRef,
+  setAnchorNode,
+  align,
+  boundaryAttribute,
+  containmentSelector,
+  actionTarget,
+  triggerAriaLabel,
+  actions,
+  mutationBusy,
+  onToggle,
+  onAction,
+}: {
+  open: boolean;
+  anchorRef: MutableRefObject<HTMLButtonElement | null>;
+  setAnchorNode: (node: HTMLButtonElement | null) => void;
+  align: "start" | "end";
+  boundaryAttribute: string;
+  containmentSelector?: string;
+  actionTarget: ProfileActionTarget;
+  triggerAriaLabel: string;
+  actions: readonly ProfileActionMenuItem[];
+  mutationBusy: boolean;
+  onToggle: () => void;
+  onAction: (action: ProfileActionMenuItem, target: ProfileActionTarget) => void;
+}) {
+  return (
+    <div className="profile-row-actions" data-profile-row-actions>
+      <button
+        ref={setAnchorNode}
+        className="ghost-button profile-row-actions-trigger"
+        type="button"
+        aria-label={triggerAriaLabel}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={onToggle}
+      >
+        •••
+      </button>
+      <ProfileActionMenu
+        open={open}
+        anchorRef={anchorRef}
+        align={align}
+        boundaryAttribute={boundaryAttribute}
+        containmentSelector={containmentSelector}
+        actionTarget={actionTarget}
+        actions={actions}
+        mutationBusy={mutationBusy}
+        onAction={onAction}
+      />
     </div>
   );
 }
