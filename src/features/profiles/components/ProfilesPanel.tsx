@@ -33,6 +33,7 @@ import {
 import { credentialBackendLabel as formatCredentialBackendLabel } from "../../../lib/credential-backends";
 import { formatDateTimeWithZone } from "../../../lib/date-format";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
+import { findMatchingItem } from "../../../lib/utils";
 import { disposeSafely, type AsyncDispose } from "../../../lib/async-dispose";
 import { BACKEND_UNAVAILABLE_LABEL } from "../../../lib/display-copy";
 import { eventTargetWithinSelector } from "../../../lib/dom-events";
@@ -272,7 +273,7 @@ export function ProfilesPanel({
     [expandedDetails, inventoryProfiles, tool],
   );
   const selectedProfileEntry = useMemo(
-    () => profiles.find((entry) => entry.name === expandedDetails) ?? null,
+    () => findMatchingItem(expandedDetails, profiles, (entry) => entry.name),
     [expandedDetails, profiles],
   );
   const selectedProfileDisplay = useMemo(

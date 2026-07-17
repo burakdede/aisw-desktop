@@ -26,7 +26,12 @@ import { profileLastCheckedLabel } from "../../lib/profile-detail-display";
 import { effectiveToolProfileLabel, mergeProfileLabel } from "../../lib/profile-display";
 import { formatMessageWithRemediation } from "../../lib/remediation-text";
 import { toolDisplayName } from "../../lib/tool-display";
-import { hasMatchingSelection, resolveSelectionValue, titleCase } from "../../lib/utils";
+import {
+  findMatchingItem,
+  hasMatchingSelection,
+  resolveSelectionValue,
+  titleCase,
+} from "../../lib/utils";
 import { normalizeOneOf } from "../../lib/parse-guards";
 import {
   resolveProfileSwitchState,
@@ -361,11 +366,11 @@ export function findSelectedInventoryEntry(
   tool: SupportedTool,
   expandedDetails: string | null,
 ) {
-  if (!expandedDetails) {
-    return null;
-  }
-
-  return entries.find((entry) => entry.tool === tool && entry.name === expandedDetails) ?? null;
+  return findMatchingItem(
+    expandedDetails ? `${tool}:${expandedDetails}` : null,
+    entries,
+    (entry) => `${entry.tool}:${entry.name}`,
+  );
 }
 
 export function resolveAvailableSelection<T extends string>(
@@ -560,9 +565,7 @@ export function buildProfileEditSheetState(input: {
   renameDrafts: Record<string, string>;
   labelDrafts: Record<string, string>;
 }) {
-  const profile = input.pendingEdit
-    ? input.profiles.find((entry) => entry.name === input.pendingEdit?.name) ?? null
-    : null;
+  const profile = findMatchingItem(input.pendingEdit?.name, input.profiles, (entry) => entry.name);
 
   if (!profile) {
     return null;
@@ -598,9 +601,7 @@ export function buildProfileRemovalSheetState(input: {
   settings: DesktopSettings;
   tool: SupportedTool;
 }) {
-  const profile = input.pendingRemoval
-    ? input.profiles.find((entry) => entry.name === input.pendingRemoval) ?? null
-    : null;
+  const profile = findMatchingItem(input.pendingRemoval, input.profiles, (entry) => entry.name);
 
   if (!profile) {
     return null;

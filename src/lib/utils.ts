@@ -67,6 +67,18 @@ export function resolveSelectionItem<T>(
   return items.find((item) => getKey(item) === selection) ?? items[0] ?? null;
 }
 
+export function findMatchingItem<T>(
+  selection: string | null | undefined,
+  items: readonly T[],
+  getKey: (item: T) => string,
+): T | null {
+  if (typeof selection !== "string") {
+    return null;
+  }
+
+  return items.find((item) => getKey(item) === selection) ?? null;
+}
+
 export function resolvePreferredSelectionValue<T>(
   selection: string | null | undefined,
   preferredSelection: string | null | undefined,
