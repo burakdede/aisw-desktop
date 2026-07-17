@@ -1,6 +1,9 @@
 import { DesktopCommandError } from "./lib/tauri";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "./lib/schemas";
-import { resolveErrorDetails } from "./lib/error-details";
+import {
+  formatResolvedErrorMessage,
+  resolveErrorDetails,
+} from "./lib/error-details";
 import { DEFAULT_ACTION_FAILURE_MESSAGE } from "./lib/display-copy";
 import type {
   ExplicitProfileCredentialBackend,
@@ -465,11 +468,9 @@ export function buildReapplyActiveProfileError(error: unknown) {
   );
 
   return {
-    notificationBody: formatMessageWithRemediation(
-      details.message,
-      details.remediation,
-      { prefix: "" },
-    ),
+    notificationBody: formatResolvedErrorMessage(error, DEFAULT_ACTION_FAILURE_MESSAGE, {
+      remediationPrefix: "",
+    }),
     result: {
       label: REAPPLY_ACTIVE_PROFILE_LABEL,
       status: "error" as const,

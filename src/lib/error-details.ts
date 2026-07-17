@@ -4,6 +4,7 @@ import {
   asOptionalStringField,
   asOptionalStringFieldOr,
 } from "./parse-guards";
+import { formatMessageWithRemediation } from "./remediation-text";
 
 export type ErrorMetadata = {
   remediation?: string;
@@ -49,4 +50,34 @@ export function resolveErrorMessage(
   fallbackMessage: string,
 ) {
   return resolveErrorDetails(error, fallbackMessage).message;
+}
+
+export function resolveNormalizedErrorDetails(
+  error: unknown,
+  fallbackMessage: string,
+  normalizeText: (text: string) => string,
+): ErrorDetails {
+  const details = resolveErrorDetails(error, fallbackMessage);
+  return {
+    ...details,
+    message: normalizeText(details.message),
+    remediation: details.remediation ? normalizeText(details.remediation) : undefined,
+  };
+}
+
+export function formatResolvedErrorMessage(
+  error: unknown,
+  fallbackMessage: string,
+  options?: {
+    normalizeText?: (text: string) => string;
+    remediationPrefix?: string;
+  },
+) {
+  const details = options?.normalizeText
+    ? resolveNormalizedErrorDetails(error, fallbackMessage, options.normalizeText)
+    : resolveErrorDetails(error, fallbackMessage);
+
+  return formatMessageWithRemediation(details.message, details.remediation, {
+    prefix: options?.remediationPrefix,
+  });
 }

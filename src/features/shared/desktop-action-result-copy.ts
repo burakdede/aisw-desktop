@@ -1,5 +1,4 @@
-import { resolveErrorDetails } from "../../lib/error-details";
-import { formatMessageWithRemediation } from "../../lib/remediation-text";
+import { formatResolvedErrorMessage } from "../../lib/error-details";
 import { toolDisplayName } from "../../lib/tool-display";
 
 export const DESKTOP_ACTION_RESULT_COPY = {
@@ -103,11 +102,10 @@ export function workspaceTargetFailureNotification(
   error: unknown,
   fallbackMessage: string,
 ) {
-  const details = resolveErrorDetails(error, fallbackMessage);
   return {
     title: DESKTOP_ACTION_RESULT_COPY.fallbackMessages.projectSwitchTitle,
-    body: formatMessageWithRemediation(details.message, details.remediation, {
-      prefix: "",
+    body: formatResolvedErrorMessage(error, fallbackMessage, {
+      remediationPrefix: "",
     }),
   };
 }

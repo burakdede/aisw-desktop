@@ -17,7 +17,10 @@ import {
   nullishToEmptyString,
   nullishToNull,
 } from "../../lib/parse-guards";
-import { resolveErrorDetails, resolveErrorMessage } from "../../lib/error-details";
+import {
+  resolveErrorMessage,
+  resolveNormalizedErrorDetails,
+} from "../../lib/error-details";
 import { normalizeResolvedCheckStatus } from "../../lib/check-status";
 import {
   DEFAULT_SETTINGS_SECTION,
@@ -259,13 +262,11 @@ export const SETTINGS_UPDATE_CHANNEL_OPTIONS = DESKTOP_UPDATE_CHANNELS.map((valu
 })) satisfies SettingsOption<SettingsDraft["updateChannel"]>[];
 
 export function formatSettingsMutationError(error: unknown) {
-  const details = resolveErrorDetails(error, DEFAULT_ACTION_FAILURE_MESSAGE);
-  return {
-    message: normalizeRuntimeLanguage(details.message),
-    remediation: details.remediation
-      ? normalizeRuntimeLanguage(details.remediation)
-      : undefined,
-  };
+  return resolveNormalizedErrorDetails(
+    error,
+    DEFAULT_ACTION_FAILURE_MESSAGE,
+    normalizeRuntimeLanguage,
+  );
 }
 
 export function findShellHookCheck(report: DoctorReport | undefined) {

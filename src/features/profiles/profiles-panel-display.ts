@@ -21,7 +21,7 @@ import {
   noSelectionHeading,
   quotedActionHeading,
 } from "../../lib/display-copy";
-import { resolveErrorDetails } from "../../lib/error-details";
+import { formatResolvedErrorMessage } from "../../lib/error-details";
 import { formatDateTimeWithZone } from "../../lib/date-format";
 import { profileLastCheckedLabel } from "../../lib/profile-detail-display";
 import {
@@ -30,7 +30,6 @@ import {
   hasCustomProfileLabel,
   mergeProfileLabel,
 } from "../../lib/profile-display";
-import { formatMessageWithRemediation } from "../../lib/remediation-text";
 import { toolDisplayName } from "../../lib/tool-display";
 import {
   findMatchingItem,
@@ -798,13 +797,9 @@ export function profileMutationError(...errors: Array<unknown>) {
 }
 
 export function formatDesktopError(error: unknown) {
-  const details = resolveErrorDetails(error, DEFAULT_ACTION_FAILURE_MESSAGE);
-  return formatMessageWithRemediation(
-    normalizeRuntimeLanguage(details.message),
-    details.remediation
-      ? normalizeRuntimeLanguage(details.remediation)
-      : undefined,
-  );
+  return formatResolvedErrorMessage(error, DEFAULT_ACTION_FAILURE_MESSAGE, {
+    normalizeText: normalizeRuntimeLanguage,
+  });
 }
 
 export function isDuplicateProfileName(
