@@ -30,6 +30,7 @@ import {
 import { resolveGlobalStateMode, resolveStateModeRequest } from "./features/shared/state-modes";
 import { toolDisplayName } from "./lib/tool-display";
 import { hasMatchingSelection } from "./lib/utils";
+import { nullishToNull } from "./lib/parse-guards";
 import { formatMessageWithRemediation } from "./lib/remediation-text";
 import {
   APP_NAV_IDS,
@@ -220,7 +221,7 @@ export function resolveDesktopShortcutAction(input: {
   if (input.runtimeBlocked) {
     return null;
   }
-  return appNavFromShortcut(key) ?? null;
+  return nullishToNull(appNavFromShortcut(key));
 }
 
 export function buildAppNavItems(runtimeBlocked: boolean) {

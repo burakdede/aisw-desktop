@@ -34,6 +34,7 @@ import {
   savedRuleStatusLabel,
 } from "../../../lib/sets-display";
 import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
+import { nullishToNull } from "../../../lib/parse-guards";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { SUPPORTED_TOOLS } from "../../../lib/tool-registry";
 import {
@@ -184,12 +185,13 @@ export function SetsPanel({
   const localSets = settings.profile_sets ?? [];
   const importedContexts = snapshot.contexts;
   const activeContext = parseWorkspaceStatus(snapshot.workspace_status ?? undefined).currentContext;
-  const setCommandResult =
+  const setCommandResult = nullishToNull(
     lastCommandResults.global[COMMAND_RESULT_GLOBAL_IDS.profileSet]
-    ?? lastCommandResults.global[COMMAND_RESULT_GLOBAL_IDS.context]
-    ?? null;
-  const workspaceCommandResult =
-    lastCommandResults.global[COMMAND_RESULT_GLOBAL_IDS.workspace] ?? null;
+      ?? lastCommandResults.global[COMMAND_RESULT_GLOBAL_IDS.context],
+  );
+  const workspaceCommandResult = nullishToNull(
+    lastCommandResults.global[COMMAND_RESULT_GLOBAL_IDS.workspace],
+  );
 
   const trimmedDraftName = setDraft.name.trim();
   const isEditingSet = setDraft.sourceName !== null;

@@ -68,6 +68,7 @@ import {
   saveDesktopPreferences,
   type DesktopPreferences,
 } from "./lib/desktop-preferences";
+import { nullishToNull } from "./lib/parse-guards";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "./lib/schemas";
 import {
   APP_SHELL_COPY,
@@ -519,7 +520,7 @@ export function App() {
     Object.values(lastCommandResults.global).some(Boolean) ||
     Object.values(lastCommandResults.tool).some(Boolean);
   reapplyContextRef.current = {
-    snapshot: resolvedSnapshot ?? null,
+    snapshot: nullishToNull(resolvedSnapshot),
     settings,
     toolCapabilities,
     runtimeBlocked,
@@ -778,7 +779,7 @@ export function App() {
                   openToolProfileSetup({
                     tool: options?.tool,
                     mode: options?.mode,
-                    credentialBackend: options?.credentialBackend ?? null,
+                    credentialBackend: nullishToNull(options?.credentialBackend),
                   });
                 }}
               />

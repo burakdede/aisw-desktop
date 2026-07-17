@@ -1,5 +1,5 @@
 import { AppBootstrap, AppSnapshot } from "../../lib/schemas";
-import { isOneOf } from "../../lib/parse-guards";
+import { isOneOf, nullishToNull } from "../../lib/parse-guards";
 import { toolDisplayName } from "../../lib/tool-display";
 import { toolSupportsEditableStateModes } from "../../lib/tool-registry";
 import { titleCase } from "../../lib/utils";
@@ -32,7 +32,7 @@ export function resolvePreferredEditableStateMode(
 
   return preferred && isEditableStateMode(preferred) && modes.includes(preferred)
     ? preferred
-    : (modes[0] ?? null);
+    : nullishToNull(modes[0]);
 }
 
 export function stateModeLabel(mode: string) {
