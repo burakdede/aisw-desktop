@@ -43,6 +43,40 @@ function pickRecord(payload: UnknownRecord | undefined) {
   return asObject(payload?.result) ?? asObject(payload);
 }
 
+function firstObjectField(
+  record: UnknownRecord | undefined,
+  keys: readonly string[],
+) {
+  for (const key of keys) {
+    const value = asObject(record?.[key]);
+    if (value) {
+      return value;
+    }
+  }
+  return undefined;
+}
+
+function firstDefinedField(
+  record: UnknownRecord | undefined,
+  keys: readonly string[],
+) {
+  for (const key of keys) {
+    const value = record?.[key];
+    if (value !== undefined && value !== null) {
+      return value;
+    }
+  }
+  return undefined;
+}
+
+function mergeBindingCollections(record: UnknownRecord | undefined) {
+  return [
+    ...asArray(record?.items),
+    ...asArray(record?.bindings),
+    ...asArray(record?.entries),
+  ];
+}
+
 function normalizeWorkspaceStatus(
   value: unknown,
   fallback: WorkspaceStatus = "unknown",
@@ -54,22 +88,26 @@ export function parseWorkspaceStatus(
   payload: WorkspaceStatusReport | undefined,
 ): WorkspaceStatusCard {
   const record = pickRecord(payload);
-  const matchedBinding =
-    asObject(record?.matched_binding) ?? asObject(record?.binding) ?? asObject(record?.match);
+  const matchedBinding = firstObjectField(record, ["matched_binding", "binding", "match"]);
 
   return {
     status: normalizeWorkspaceStatus(record?.status),
     currentContext: asNonEmptyString(
-      record?.current_context ?? record?.active_context,
+      firstDefinedField(record, ["current_context", "active_context"]),
       WORKSPACE_NO_CONTEXT,
     ),
     expectedContext: asNonEmptyString(
-      record?.expected_context ?? matchedBinding?.context ?? record?.context,
+      firstDefinedField(record, ["expected_context"]) ??
+        firstDefinedField(matchedBinding, ["context"]) ??
+        firstDefinedField(record, ["context"]),
       WORKSPACE_NO_CONTEXT,
     ),
-    scope: asNonEmptyString(matchedBinding?.scope, WORKSPACE_NO_CONTEXT),
+    scope: asNonEmptyString(
+      firstDefinedField(matchedBinding, ["scope"]),
+      WORKSPACE_NO_CONTEXT,
+    ),
     target: asNonEmptyString(
-      matchedBinding?.path ?? matchedBinding?.pattern ?? matchedBinding?.target,
+      firstDefinedField(matchedBinding, ["path", "pattern", "target"]),
       "No path or remote match",
     ),
   };
@@ -80,11 +118,7 @@ export function parseWorkspaceBindings(
 ): WorkspaceBindingsSummary {
   const record = pickRecord(payload);
   const userBindings = asObject(record?.user_bindings) ?? record;
-  const bindingItems = [
-    ...asArray(userBindings?.items),
-    ...asArray(userBindings?.bindings),
-    ...asArray(userBindings?.entries),
-  ];
+  const bindingItems = mergeBindingCollections(userBindings);
 
   return {
     guardMode: normalizeWorkspaceGuardMode(
@@ -96,9 +130,15 @@ export function parseWorkspaceBindings(
       .map((entry) => asObject(entry))
       .filter((entry): entry is UnknownRecord => Boolean(entry))
       .map((entry) => ({
-        context: asNonEmptyString(entry.context, WORKSPACE_NO_CONTEXT),
-        scope: asNonEmptyString(entry.scope),
-        target: asNonEmptyString(entry.path ?? entry.pattern ?? entry.target, "default"),
+        context: asNonEmptyString(
+          firstDefinedField(entry, ["context"]),
+          WORKSPACE_NO_CONTEXT,
+        ),
+        scope: asNonEmptyString(firstDefinedField(entry, ["scope"])),
+        target: asNonEmptyString(
+          firstDefinedField(entry, ["path", "pattern", "target"]),
+          "default",
+        ),
       })),
   };
 }
