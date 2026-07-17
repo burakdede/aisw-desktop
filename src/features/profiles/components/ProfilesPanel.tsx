@@ -17,6 +17,7 @@ import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SearchField } from "../../../components/SearchField";
 import { SegmentedControl } from "../../../components/SegmentedControl";
+import { SheetFooter } from "../../../components/SheetFooter";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
 import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "../../../components/ToolBrand";
@@ -1141,7 +1142,7 @@ export function ProfilesPanel({
             <p className="inline-note">
               {PROFILE_REMOVAL_SHEET_COPY.warning}
             </p>
-            <footer className="quick-switch-footer">
+            <SheetFooter>
               <div className="button-row">
                 <button className="ghost-button" type="button" onClick={() => setPendingRemoval(null)}>
                   {PROFILE_REMOVAL_SHEET_COPY.cancelLabel}
@@ -1162,7 +1163,7 @@ export function ProfilesPanel({
                   {PROFILE_REMOVAL_SHEET_COPY.confirmLabel}
                 </button>
               </div>
-            </footer>
+            </SheetFooter>
         </DialogSurface>
       ) : null}
       {profileSheetOpen ? (

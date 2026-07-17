@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DIALOG_FOCUS_SELECTORS, DialogSurface } from "./DialogSurface";
 import { SearchField } from "./SearchField";
+import { SheetFooter } from "./SheetFooter";
 import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "./ToolBrand";
 import { QUICK_SWITCH_FOCUS_DELAY_MS } from "../lib/desktop-timing";
 import type { AppBootstrap, AppSnapshot, DesktopSettings } from "../lib/schemas";
@@ -326,8 +327,8 @@ export function QuickSwitchPalette({
             </article>
           )}
         </div>
-        <footer
-          className="quick-switch-footer quick-switch-footer-compact"
+        <SheetFooter
+          className="quick-switch-footer-compact"
           aria-label={QUICK_SWITCH_COPY.shortcutsAriaLabel}
         >
           {QUICK_SWITCH_SHORTCUT_HINTS.map((hint) => (
@@ -338,7 +339,7 @@ export function QuickSwitchPalette({
               {hint.label}
             </span>
           ))}
-        </footer>
+        </SheetFooter>
     </DialogSurface>
   );
 }

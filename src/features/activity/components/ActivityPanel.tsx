@@ -8,6 +8,7 @@ import {
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SearchField } from "../../../components/SearchField";
+import { SheetFooter } from "../../../components/SheetFooter";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
@@ -346,7 +347,7 @@ export function ActivityPanel({
             title={ACTIVITY_CLEAR_DIALOG.heading}
             detail={ACTIVITY_CLEAR_DIALOG.detail}
           />
-          <footer className="quick-switch-footer">
+          <SheetFooter>
             <div className="button-row">
               <button className="ghost-button" type="button" onClick={() => setPendingClear(false)}>
                 {ACTIVITY_PANEL_COPY.cancelLabel}
@@ -355,7 +356,7 @@ export function ActivityPanel({
                 {ACTIVITY_CLEAR_DIALOG.confirmLabel}
               </button>
             </div>
-          </footer>
+          </SheetFooter>
         </DialogSurface>
       ) : null}
     </div>

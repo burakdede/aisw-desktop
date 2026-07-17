@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { KeyValueGrid } from "./KeyValueGrid";
 import { SectionCard } from "./SectionCard";
+import { SheetFooter } from "./SheetFooter";
 import { SheetHeader } from "./SheetHeader";
 
 describe("SectionCard", () => {
@@ -71,5 +72,28 @@ describe("SheetHeader", () => {
     expect(screen.getByRole("heading", { name: "Add Rule" })).toBeVisible();
     expect(container.querySelector(".card-kicker")).toBeNull();
     expect(container.querySelector(".ghost-button")).toBeNull();
+  });
+});
+
+describe("SheetFooter", () => {
+  it("renders footer content with the shared footer class", () => {
+    const { container } = render(
+      <SheetFooter>
+        <div className="button-row">Actions</div>
+      </SheetFooter>,
+    );
+
+    expect(container.querySelector("footer.quick-switch-footer")).not.toBeNull();
+    expect(screen.getByText("Actions")).toBeVisible();
+  });
+
+  it("merges an optional class name", () => {
+    const { container } = render(
+      <SheetFooter className="quick-switch-footer-compact">
+        <p>Hint</p>
+      </SheetFooter>,
+    );
+
+    expect(container.querySelector("footer.quick-switch-footer-compact")).not.toBeNull();
   });
 });

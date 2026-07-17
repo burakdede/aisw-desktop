@@ -8,6 +8,7 @@ import {
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SearchField } from "../../../components/SearchField";
+import { SheetFooter } from "../../../components/SheetFooter";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
 import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "../../../components/ToolBrand";
@@ -479,7 +480,7 @@ export function BackupsPanel({
             ]}
           />
           <p className="inline-note">{restoreSheet.followup}</p>
-          <footer className="quick-switch-footer">
+          <SheetFooter>
             <div className="button-row">
               <button
                 className="ghost-button"
@@ -502,7 +503,7 @@ export function BackupsPanel({
                 {restoreSheet.confirmLabel}
               </button>
             </div>
-          </footer>
+          </SheetFooter>
         </DialogSurface>
       ) : null}
     </div>

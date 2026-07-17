@@ -6,6 +6,7 @@ import {
   DialogSurface,
 } from "../../../components/DialogSurface";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
+import { SheetFooter } from "../../../components/SheetFooter";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
 import { useCompactLayout } from "../../../components/useCompactLayout";
@@ -608,7 +609,7 @@ export function DiagnosticsPanel({
               </p>
             </div>
           )}
-          <footer className="quick-switch-footer">
+          <SheetFooter>
             <div className="quick-switch-selection">
               <p className="card-kicker">{DIAGNOSTICS_PANEL_COPY.repairPlanSelectionKicker}</p>
               <strong>{diagnosticsRepairSelectionLabel(selectedSafeFixes.length)}</strong>
@@ -630,7 +631,7 @@ export function DiagnosticsPanel({
                 {diagnosticsApplyRepairsLabel(selectedSafeFixes.length, applyRepair.isPending)}
               </button>
             </div>
-          </footer>
+          </SheetFooter>
         </DialogSurface>
       ) : null}
       {diagnosticsStatusMessage ? (

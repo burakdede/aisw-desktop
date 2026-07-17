@@ -6,6 +6,7 @@ import {
   DialogSurface,
 } from "../../../components/DialogSurface";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
+import { SheetFooter } from "../../../components/SheetFooter";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SplitView } from "../../../components/SplitView";
@@ -943,7 +944,7 @@ export function SetsPanel({
                 <p className="inline-note">{emptySetSelectionWarning()}</p>
               ) : null}
             </div>
-            <footer className="quick-switch-footer">
+            <SheetFooter>
               <div className="button-row">
                 <button className="ghost-button" type="button" onClick={closeSetEditor}>
                   {SETS_PANEL_COPY.cancelLabel}
@@ -956,7 +957,7 @@ export function SetsPanel({
                   {setEditorSubmitLabel(isEditingSet)}
                 </button>
               </div>
-            </footer>
+            </SheetFooter>
           </form>
         </DialogSurface>
       ) : null}
@@ -1037,7 +1038,7 @@ export function SetsPanel({
                 <p className="inline-note">{explicitRuleTargetWarning(ruleDraft.scope)}</p>
               ) : null}
             </div>
-            <footer className="quick-switch-footer">
+            <SheetFooter>
               <div className="button-row">
                 <button className="ghost-button" type="button" onClick={closeRuleEditor}>
                   {SETS_PANEL_COPY.cancelLabel}
@@ -1046,7 +1047,7 @@ export function SetsPanel({
                   {ruleEditorSubmitLabel(isEditingRule)}
                 </button>
               </div>
-            </footer>
+            </SheetFooter>
           </form>
         </DialogSurface>
       ) : null}
