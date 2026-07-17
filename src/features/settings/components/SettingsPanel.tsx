@@ -460,18 +460,15 @@ export function SettingsPanel({
                     label={SETTINGS_PANEL_COPY.general.rows.launchAtLogin}
                     description={launchAtLoginDescription(launchAtLoginSupported, launchAtLoginDetail)}
                     control={
-                      <button
-                        type="button"
-                        role="switch"
-                        className="settings-switch"
-                        aria-label={SETTINGS_PANEL_COPY.general.rows.launchAtLogin}
-                        aria-checked={launchAtLoginEnabled}
+                      <SettingsSwitch
+                        ariaLabel={SETTINGS_PANEL_COPY.general.rows.launchAtLogin}
+                        checked={launchAtLoginEnabled}
                         disabled={
                           launchAtLogin.isLoading ||
                           launchAtLoginMutation.isPending ||
                           !launchAtLoginSupported
                         }
-                        onClick={() => {
+                        onToggle={() => {
                           setLaunchMessage("");
                           launchAtLoginMutation.mutate(!launchAtLoginEnabled);
                         }}
@@ -481,13 +478,10 @@ export function SettingsPanel({
                   <ToggleRow
                     label={SETTINGS_PANEL_COPY.general.rows.showMenuBarIcon}
                     control={
-                      <button
-                        type="button"
-                        role="switch"
-                        className="settings-switch"
-                        aria-label={SETTINGS_PANEL_COPY.general.rows.showMenuBarIcon}
-                        aria-checked={showMenuBarIcon}
-                        onClick={() =>
+                      <SettingsSwitch
+                        ariaLabel={SETTINGS_PANEL_COPY.general.rows.showMenuBarIcon}
+                        checked={showMenuBarIcon}
+                        onToggle={() =>
                           updateGeneralPreferences({ showMenuBarIcon: !showMenuBarIcon })
                         }
                       />
@@ -518,13 +512,10 @@ export function SettingsPanel({
                   <ToggleRow
                     label={SETTINGS_PANEL_COPY.general.rows.restoreWindowState}
                     control={
-                      <button
-                        type="button"
-                        role="switch"
-                        className="settings-switch"
-                        aria-label={SETTINGS_PANEL_COPY.general.rows.restoreWindowState}
-                        aria-checked={restoreWindowState}
-                        onClick={() =>
+                      <SettingsSwitch
+                        ariaLabel={SETTINGS_PANEL_COPY.general.rows.restoreWindowState}
+                        checked={restoreWindowState}
+                        onToggle={() =>
                           updateGeneralPreferences({
                             restoreWindowState: !restoreWindowState,
                           })
@@ -962,13 +953,9 @@ function SettingsActionRow({
   action: ReactNode;
 }) {
   return (
-    <div className="settings-row settings-row-action">
-      <div className="settings-row-copy">
-        <span className="settings-row-label">{label}</span>
-        {description ? <p className="inline-note">{description}</p> : null}
-      </div>
-      <div className="settings-row-control">{action}</div>
-    </div>
+    <SettingsCopyRow className="settings-row settings-row-action" label={label} description={description}>
+      {action}
+    </SettingsCopyRow>
   );
 }
 
@@ -982,13 +969,55 @@ function ToggleRow({
   control: ReactNode;
 }) {
   return (
-    <div className="settings-row settings-row-toggle">
+    <SettingsCopyRow className="settings-row settings-row-toggle" label={label} description={description}>
+      {control}
+    </SettingsCopyRow>
+  );
+}
+
+function SettingsCopyRow({
+  className,
+  label,
+  description,
+  children,
+}: {
+  className: string;
+  label: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={className}>
       <div className="settings-row-copy">
         <span className="settings-row-label">{label}</span>
         {description ? <p className="inline-note">{description}</p> : null}
       </div>
-      <div className="settings-row-control">{control}</div>
+      <div className="settings-row-control">{children}</div>
     </div>
+  );
+}
+
+function SettingsSwitch({
+  ariaLabel,
+  checked,
+  disabled = false,
+  onToggle,
+}: {
+  ariaLabel: string;
+  checked: boolean;
+  disabled?: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      className="settings-switch"
+      aria-label={ariaLabel}
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={onToggle}
+    />
   );
 }
 
