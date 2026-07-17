@@ -19,7 +19,11 @@ import { normalizeOneOf } from "../../lib/parse-guards";
 import { toolProfileDisplayLabel } from "../../lib/profile-display";
 import type { AppSnapshot, BackupEntry, DesktopSettings } from "../../lib/schemas";
 import { toolDisplayName } from "../../lib/tool-display";
-import { resolveSelectionItem, resolveSelectionValue } from "../../lib/utils";
+import {
+  normalizeSearchText,
+  resolveSelectionItem,
+  resolveSelectionValue,
+} from "../../lib/utils";
 
 export type ToolFilter = "all" | "claude" | "codex" | "gemini";
 export type DateFilter = "newest" | "oldest";
@@ -169,7 +173,7 @@ export function filterBackups(
   settings: DesktopSettings,
   snapshot: AppSnapshot,
 ) {
-  const normalizedQuery = search.trim().toLowerCase();
+  const normalizedQuery = normalizeSearchText(search);
 
   return backups.filter((entry) => {
     const target = resolveBackupTarget(entry.tool, entry.profile);
@@ -185,16 +189,15 @@ export function filterBackups(
       target.tool,
       target.profile,
     );
-    return [
-      entry.backup_id,
-      toolDisplayName(target.tool),
-      target.profile,
-      profileLabel,
-      backupReasonLabel(entry),
-    ]
-      .join(" ")
-      .toLowerCase()
-      .includes(normalizedQuery);
+    return normalizeSearchText(
+      [
+        entry.backup_id,
+        toolDisplayName(target.tool),
+        target.profile,
+        profileLabel,
+        backupReasonLabel(entry),
+      ].join(" "),
+    ).includes(normalizedQuery);
   });
 }
 

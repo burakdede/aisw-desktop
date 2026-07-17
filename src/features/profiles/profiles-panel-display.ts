@@ -34,6 +34,7 @@ import { toolDisplayName } from "../../lib/tool-display";
 import {
   findMatchingItem,
   hasMatchingSelection,
+  normalizeSearchText,
   resolveSelectionValue,
   stringRecordValue,
   trimmedStringOrNull,
@@ -370,16 +371,22 @@ export function buildInventoryProfiles(input: {
 }
 
 export function filterInventoryProfiles(entries: InventoryEntry[], search: string) {
-  const query = search.trim().toLowerCase();
+  const query = normalizeSearchText(search);
   if (!query) {
     return entries;
   }
 
   return entries.filter((entry) =>
-    [entry.label, entry.name, toolDisplayName(entry.tool), entry.auth, entry.backend, entry.state]
-      .join(" ")
-      .toLowerCase()
-      .includes(query),
+    normalizeSearchText(
+      [
+        entry.label,
+        entry.name,
+        toolDisplayName(entry.tool),
+        entry.auth,
+        entry.backend,
+        entry.state,
+      ].join(" "),
+    ).includes(query),
   );
 }
 
@@ -807,11 +814,11 @@ export function isDuplicateProfileName(
   currentName: string,
   nextName: string,
 ) {
-  const normalizedCurrent = currentName.trim().toLowerCase();
-  const normalizedNext = nextName.trim().toLowerCase();
+  const normalizedCurrent = normalizeSearchText(currentName);
+  const normalizedNext = normalizeSearchText(nextName);
   return profiles.some(
     (entry) =>
-      entry.name.trim().toLowerCase() === normalizedNext &&
-      entry.name.trim().toLowerCase() !== normalizedCurrent,
+      normalizeSearchText(entry.name) === normalizedNext &&
+      normalizeSearchText(entry.name) !== normalizedCurrent,
   );
 }

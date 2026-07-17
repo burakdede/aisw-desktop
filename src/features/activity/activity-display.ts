@@ -18,7 +18,7 @@ import {
 import { SNAPSHOT_UPDATED_RESULT_SUMMARY } from "../shared/command-result-payload";
 import type { ActivityTimelineEntry } from "../shared/lastCommandResult";
 import type { CommandResultRecord } from "../shared/command-result-shape";
-import { resolveSelectionValue } from "../../lib/utils";
+import { normalizeSearchText, resolveSelectionValue } from "../../lib/utils";
 import { nullishToEmptyString } from "../../lib/parse-guards";
 
 export type ActivityFilter = "all" | CommandResultStatus;
@@ -219,7 +219,7 @@ export function activityStatusPresentation(
 }
 
 export function filterActivity(entries: ActivityEntry[], search: string, filter: ActivityFilter) {
-  const query = search.trim().toLowerCase();
+  const query = normalizeSearchText(search);
 
   return entries.filter((entry) => {
     if (filter !== "all" && entry.status !== filter) {
@@ -230,16 +230,15 @@ export function filterActivity(entries: ActivityEntry[], search: string, filter:
       return true;
     }
 
-    return [
-      entry.label,
-      entry.message,
-      nullishToEmptyString(entry.remediation),
-      entry.scopeLabel,
-      activityPreview(entry),
-    ]
-      .join(" ")
-      .toLowerCase()
-      .includes(query);
+    return normalizeSearchText(
+      [
+        entry.label,
+        entry.message,
+        nullishToEmptyString(entry.remediation),
+        entry.scopeLabel,
+        activityPreview(entry),
+      ].join(" "),
+    ).includes(query);
   });
 }
 
@@ -415,5 +414,5 @@ function parseActivityTargetSummary(entry: ActivityEntry) {
 }
 
 function isGenericActivityResult(value: string) {
-  return value.trim().toLowerCase() === GENERIC_ACTIVITY_RESULT;
+  return normalizeSearchText(value) === GENERIC_ACTIVITY_RESULT;
 }

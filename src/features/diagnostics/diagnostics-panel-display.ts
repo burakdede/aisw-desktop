@@ -26,6 +26,8 @@ import { toolDisplayName } from "../../lib/tool-display";
 import { isSupportedTool } from "../../lib/tool-registry";
 import {
   countLabel,
+  normalizeSearchText,
+  normalizeWordKey,
   pluralChoice,
   resolvePriorityItem,
   resolveSelectionValue,
@@ -640,7 +642,7 @@ export function diagnosticRepairFixFromAction(action: DiagnosticRepairAction) {
     return action.fix;
   }
 
-  return action.title.trim().toLowerCase().replace(/\s+/g, "_");
+  return normalizeWordKey(action.title);
 }
 
 export function buildSelectedRepairFixes(
@@ -1018,7 +1020,7 @@ function resolveIssueProfileTarget(title: string, snapshot: AppSnapshot) {
 }
 
 function resolveDiagnosticTool(title: string) {
-  const normalized = title.trim().toLowerCase();
+  const normalized = normalizeSearchText(title);
   const candidate = normalized.startsWith("tool/") ? normalized.slice("tool/".length) : normalized;
   return isSupportedTool(candidate) ? candidate : null;
 }

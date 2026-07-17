@@ -6,7 +6,9 @@ import {
   itemAtIndexOrNull,
   itemKeyOrNull,
   humanizeIdentifierLabel,
+  normalizeSearchText,
   normalizeIdentifierLabel,
+  normalizeWordKey,
   pluralChoice,
   pluralSuffix,
   resolvePriorityItem,
@@ -36,6 +38,12 @@ describe("utils", () => {
     expect(humanizeIdentifierLabel("RUNTIME_OVERRIDE", { lowercase: true })).toBe(
       "Runtime Override",
     );
+  });
+
+  it("shares lowercase search and key normalization helpers", () => {
+    expect(normalizeSearchText("  Personal Codex  ")).toBe("personal codex");
+    expect(normalizeSearchText(undefined)).toBe("");
+    expect(normalizeWordKey("  Repair Permissions  ")).toBe("repair_permissions");
   });
 
   it("shares pluralization helpers", () => {

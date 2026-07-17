@@ -29,6 +29,14 @@ export function humanizeIdentifierLabel(
   return titleCase(normalizeIdentifierLabel(value, options));
 }
 
+export function normalizeSearchText(value: string | null | undefined) {
+  return value?.trim().toLowerCase() ?? "";
+}
+
+export function normalizeWordKey(value: string | null | undefined) {
+  return normalizeSearchText(value).replace(/\s+/g, "_");
+}
+
 export function pluralSuffix(count: number) {
   return count === 1 ? "" : "s";
 }

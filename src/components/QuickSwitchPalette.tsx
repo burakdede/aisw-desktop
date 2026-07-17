@@ -20,6 +20,7 @@ import {
   quickSwitchStatusCopy,
   type QuickSwitchItem,
 } from "./quick-switch-display";
+import { normalizeSearchText } from "../lib/utils";
 
 type QuickSwitchPaletteProps = {
   open: boolean;
@@ -48,7 +49,7 @@ export function QuickSwitchPalette({
     [settings, snapshot],
   );
   const filteredItems = useMemo(() => {
-    const needle = query.trim().toLowerCase();
+    const needle = normalizeSearchText(query);
     if (!needle) {
       return items;
     }

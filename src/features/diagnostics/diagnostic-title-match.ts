@@ -1,4 +1,4 @@
-import { nullishToEmptyString } from "../../lib/parse-guards";
+import { normalizeSearchText } from "../../lib/utils";
 
 const DIAGNOSTIC_TITLE_PATTERNS = {
   liveMismatch: ["live mismatch"],
@@ -15,7 +15,7 @@ const DIAGNOSTIC_TITLE_PATTERNS = {
 export type DiagnosticTitlePattern = keyof typeof DIAGNOSTIC_TITLE_PATTERNS;
 
 export function normalizeDiagnosticTitle(title: string | null | undefined) {
-  return nullishToEmptyString(title?.trim().toLowerCase());
+  return normalizeSearchText(title);
 }
 
 export function diagnosticTitleHas(

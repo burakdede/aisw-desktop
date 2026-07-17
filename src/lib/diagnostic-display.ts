@@ -3,6 +3,7 @@ import type { AppSnapshot, ToolStatus } from "./schemas";
 import { findSnapshotToolStatus } from "./profile-display";
 import { isSupportedTool } from "./tool-registry";
 import { toolDisplayName } from "./tool-display";
+import { normalizeSearchText } from "./utils";
 import {
   normalizeResolvedCheckStatus,
   type ResolvedCheckStatus,
@@ -32,7 +33,7 @@ export function diagnosticFindingTitle(
     }
   }
 
-  const normalized = card.title.trim().toLowerCase();
+  const normalized = normalizeSearchText(card.title);
   if (normalized.includes("permission")) {
     return "Permissions incorrect";
   }
@@ -97,7 +98,7 @@ export function diagnosticToolStatusLabel(status: ToolStatus) {
 }
 
 function resolveDiagnosticTool(title: string) {
-  const normalized = title.trim().toLowerCase();
+  const normalized = normalizeSearchText(title);
   const candidate = normalized.startsWith("tool/") ? normalized.slice("tool/".length) : normalized;
   return isSupportedTool(candidate) ? candidate : null;
 }
