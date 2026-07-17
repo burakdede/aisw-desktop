@@ -67,6 +67,10 @@ function payloadResultSummaryRecord(payload: { result?: unknown } | undefined) {
   return payloadSummaryRecord(payloadResultRecord(payload));
 }
 
+export function parseRepairActionRecords(payload: RepairReport | undefined) {
+  return asRecordArray(payloadResultRecord(payload)?.actions);
+}
+
 function asStringArray(value: unknown): string[] {
   if (typeof value === "string") {
     return [value];
@@ -143,10 +147,9 @@ export function parseVerifyIssues(payload: VerifyReport | undefined): IssueCardD
 }
 
 export function parseRepairActions(payload: RepairReport | undefined): RepairActionData[] {
-  const result = payloadResultRecord(payload);
   const grouped = new Map<string, GroupedRepairAction>();
 
-  asRecordArray(result?.actions)
+  parseRepairActionRecords(payload)
     .forEach((action) => {
       const kind = asString(action.kind, "");
       const fix = asString(action.fix, "");

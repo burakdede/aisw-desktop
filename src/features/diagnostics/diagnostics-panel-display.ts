@@ -13,12 +13,9 @@ import {
   inspectItemLabel,
 } from "../../lib/display-copy";
 import {
-  asArray,
-  asObject,
-  asOptionalString,
   nullishToNull,
   nullishToUndefined,
-  type UnknownRecord,
+  asOptionalStringField,
 } from "../../lib/parse-guards";
 import {
   contextDisplayLabel,
@@ -92,7 +89,10 @@ import {
   type StateModeRequest,
   type ToolStateModeTarget,
 } from "../shared/state-modes";
-import type { IssueCardData } from "./diagnostic-parsers";
+import {
+  parseRepairActionRecords,
+  type IssueCardData,
+} from "./diagnostic-parsers";
 import { diagnosticFindingTitle } from "../../lib/diagnostic-display";
 import { parseWorkspaceStatus } from "../workspaces/workspace-parsers";
 import {
@@ -812,12 +812,9 @@ export function buildDiagnosticQuickFixModels(input: {
 }
 
 function buildRepairFixMap(repair: RepairReport | undefined) {
-  const result = asObject(repair?.result);
-  return asArray(result?.actions)
-    .map((action) => asObject(action))
-    .filter((action): action is UnknownRecord => Boolean(action))
+  return parseRepairActionRecords(repair)
     .reduce((map, action) => {
-      const fix = asOptionalString(action.fix);
+      const fix = asOptionalStringField(action, "fix");
       if (fix) {
         map.set(fix.toLowerCase(), fix);
       }

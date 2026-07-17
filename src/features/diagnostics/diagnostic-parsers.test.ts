@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DIAGNOSTICS_REPAIR_PLAN_LABEL } from "./diagnostics-copy";
 import {
   parseDoctorSummary,
+  parseRepairActionRecords,
   parseRepairActions,
   parseRepairSummary,
   parseVerifySummary,
@@ -52,6 +53,17 @@ describe("parseRepairActions", () => {
   });
 
   it("dedupes duplicate safe fixes for the same target", () => {
+    expect(
+      parseRepairActionRecords({
+        result: {
+          actions: [
+            { fix: "permissions", path: "~/.aisw/config.json" },
+            "invalid",
+          ],
+        },
+      }),
+    ).toEqual([{ fix: "permissions", path: "~/.aisw/config.json" }]);
+
     const actions = parseRepairActions({
       result: {
         actions: [
