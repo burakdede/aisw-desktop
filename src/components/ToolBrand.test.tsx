@@ -51,4 +51,14 @@ describe("ToolBrand", () => {
       expect.stringContaining(`${TOOL_BRAND_VARIANTS.inlineSection.logoSize}px`),
     );
   });
+
+  it("renders a dedicated antigravity logo instead of the fallback glyph", () => {
+    render(<ToolLogo tool="antigravity" className="antigravity-logo" />);
+
+    const logo = document.querySelector(".tool-logo");
+    expect(logo).toHaveClass("tool-logo-antigravity");
+    expect(logo).toHaveClass("antigravity-logo");
+    expect(logo).not.toHaveClass("tool-logo-fallback");
+    expect(logo?.querySelector("svg")).not.toBeNull();
+  });
 });

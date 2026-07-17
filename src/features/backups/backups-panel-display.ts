@@ -24,8 +24,9 @@ import {
   resolveSelectionItem,
   resolveSelectionValue,
 } from "../../lib/utils";
+import { SUPPORTED_TOOLS, toolShortName, type SupportedTool } from "../../lib/tool-registry";
 
-export type ToolFilter = "all" | "claude" | "codex" | "gemini";
+export type ToolFilter = "all" | SupportedTool;
 export type DateFilter = "newest" | "oldest";
 export type PendingRestoreMode = "files" | "activate";
 export const DEFAULT_BACKUPS_TOOL_FILTER: ToolFilter = "all";
@@ -33,9 +34,10 @@ export const DEFAULT_BACKUPS_DATE_FILTER: DateFilter = "newest";
 
 export const BACKUPS_TOOL_FILTER_OPTIONS = [
   { value: DEFAULT_BACKUPS_TOOL_FILTER, label: "All tools" },
-  { value: "claude", label: "Claude" },
-  { value: "codex", label: "Codex" },
-  { value: "gemini", label: "Gemini" },
+  ...SUPPORTED_TOOLS.map((tool) => ({
+    value: tool,
+    label: toolShortName(tool),
+  })),
 ] as const satisfies ReadonlyArray<{ value: ToolFilter; label: string }>;
 
 export const BACKUPS_DATE_FILTER_OPTIONS = [

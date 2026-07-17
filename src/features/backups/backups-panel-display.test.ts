@@ -93,6 +93,7 @@ describe("backups-panel-display", () => {
       { value: "claude", label: "Claude" },
       { value: "codex", label: "Codex" },
       { value: "gemini", label: "Gemini" },
+      { value: "antigravity", label: "Antigravity" },
     ]);
     expect(BACKUPS_DATE_FILTER_OPTIONS).toEqual([
       { value: "newest", label: "Newest first" },
@@ -132,16 +133,28 @@ describe("backups-panel-display", () => {
         profile: "personal",
         created_at: "2026-03-24T11:45:02Z",
       }),
+      makeBackup({
+        backup_id: "20260323T114502Z-agy-lab",
+        tool: "agy",
+        profile: "lab",
+        created_at: "2026-03-23T11:45:02Z",
+      }),
     ];
 
     expect(sortBackups(backups[0], backups[1], "newest")).toBeLessThan(0);
     expect(sortBackups(backups[0], backups[1], "oldest")).toBeGreaterThan(0);
     expect(filterBackups(backups, "codex", "", settings, snapshot)).toEqual([backups[1]]);
+    expect(filterBackups(backups, "antigravity", "", settings, snapshot)).toEqual([
+      backups[2],
+    ]);
     expect(filterBackups(backups, "all", "work claude", settings, snapshot)).toEqual([
       backups[0],
     ]);
     expect(filterBackups(backups, "all", "personal codex", settings, snapshot)).toEqual([
       backups[1],
+    ]);
+    expect(filterBackups(backups, "all", "antigravity cli", settings, snapshot)).toEqual([
+      backups[2],
     ]);
   });
 

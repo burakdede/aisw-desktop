@@ -252,6 +252,11 @@ button {
   background: color-mix(in srgb, #eef1f8 92%, Canvas);
 }
 
+.tool-logo-antigravity {
+  color: #0f7a5a;
+  background: color-mix(in srgb, #ecfff8 90%, Canvas);
+}
+
 .fatal-screen {
   display: grid;
   min-height: 100dvh;
@@ -349,11 +354,22 @@ html[data-appearance="dark"] .tool-logo-codex {
   background: color-mix(in srgb, #1f2230 86%, Canvas);
 }
 
+html[data-appearance="dark"] .tool-logo-antigravity {
+  color: #7ef0c7;
+  background: color-mix(in srgb, #12362d 84%, Canvas);
+}
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-appearance]) .tool-logo-codex,
   html[data-appearance="system"] .tool-logo-codex {
     color: #f5f5f7;
     background: color-mix(in srgb, #1f2230 86%, Canvas);
+  }
+
+  :root:not([data-appearance]) .tool-logo-antigravity,
+  html[data-appearance="system"] .tool-logo-antigravity {
+    color: #7ef0c7;
+    background: color-mix(in srgb, #12362d 84%, Canvas);
   }
 }
 

@@ -134,6 +134,19 @@ function BrandGlyph({ tool }: { tool: SupportedTool }) {
     );
   }
 
+  if (tool === "antigravity") {
+    return (
+      <svg viewBox="0 0 24 24" focusable="false">
+        <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6.4 16.9 12 7.2l5.6 9.7" strokeWidth="2.2" />
+          <path d="M9.1 12.2h5.8" strokeWidth="2" />
+          <path d="M8.25 18.9h7.5" strokeWidth="2.2" />
+          <path d="M12 5.35v-.55" strokeWidth="1.8" />
+        </g>
+      </svg>
+    );
+  }
+
   return (
     <svg viewBox="0 0 24 24" focusable="false">
       <defs>

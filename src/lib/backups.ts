@@ -1,5 +1,6 @@
 import { DAY_IN_MS, calendarDayDifference } from "./calendar-time";
 import { DATE_UNAVAILABLE_LABEL, parseStoredDate } from "./date-format";
+import { canonicalToolId } from "./tool-registry";
 
 const BACKUP_REASON_RULES = [
   {
@@ -51,10 +52,10 @@ export function resolveBackupTarget(tool: string, profile: string): BackupTarget
   if (profile.includes("/")) {
     const [resolvedTool, resolvedProfile] = profile.split("/", 2);
     if (resolvedTool && resolvedProfile) {
-      return { tool: resolvedTool, profile: resolvedProfile };
+      return { tool: canonicalToolId(resolvedTool), profile: resolvedProfile };
     }
   }
-  return { tool, profile };
+  return { tool: canonicalToolId(tool), profile };
 }
 
 export function backupReasonLabel(entry: Pick<BackupLike, "backup_id">) {

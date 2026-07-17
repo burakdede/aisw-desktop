@@ -25,6 +25,14 @@ describe("backups", () => {
       tool: "codex",
       profile: "personal",
     });
+    expect(resolveBackupTarget("agy", "lab")).toEqual({
+      tool: "antigravity",
+      profile: "lab",
+    });
+    expect(resolveBackupTarget("claude", "agy/lab")).toEqual({
+      tool: "antigravity",
+      profile: "lab",
+    });
     expect(resolveBackupTarget("claude", "personal")).toEqual({
       tool: "claude",
       profile: "personal",
