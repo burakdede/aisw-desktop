@@ -32,6 +32,7 @@ import {
 } from "./activity-display";
 import { SNAPSHOT_UPDATED_RESULT_SUMMARY } from "../shared/command-result-payload";
 import { COMMAND_RESULT_GLOBAL_IDS } from "../shared/command-result-scope";
+import { DESKTOP_ACTION_RESULT_COPY } from "../shared/desktop-action-result-copy";
 import type { ActivityTimelineEntry } from "../shared/lastCommandResult";
 
 function makeEntry(overrides: Partial<ActivityEntry> = {}): ActivityEntry {
@@ -40,7 +41,7 @@ function makeEntry(overrides: Partial<ActivityEntry> = {}): ActivityEntry {
     scopeLabel: "Claude Code",
     scopeType: "tool",
     scopeTool: "claude",
-    label: "Use profile",
+    label: DESKTOP_ACTION_RESULT_COPY.labels.useProfile,
     status: "success",
     message: "Switched Claude Code to Personal2.",
     remediation: undefined,
@@ -119,7 +120,7 @@ describe("activity-display", () => {
       {
         key: "entry-1",
         scope: { type: "tool", tool: "claude" },
-        label: "Use profile",
+        label: DESKTOP_ACTION_RESULT_COPY.labels.useProfile,
         status: "success",
         message: "Switched Claude Code to Personal2.",
         remediation: undefined,

@@ -10,6 +10,7 @@ import type {
   CommandResultScope,
   LastCommandResult,
 } from "./features/shared/lastCommandResult";
+import { DESKTOP_ACTION_RESULT_COPY } from "./features/shared/desktop-action-result-copy";
 import {
   parseTrayCommandResultEvent,
   type ParsedTrayCommandResultEvent,
@@ -181,7 +182,7 @@ export type ReapplyActiveProfileAction =
       };
     };
 
-export const REAPPLY_ACTIVE_PROFILE_LABEL = "Re-apply active profile";
+export const REAPPLY_ACTIVE_PROFILE_LABEL = DESKTOP_ACTION_RESULT_COPY.labels.reapplyActiveProfile;
 
 export function settingsForRecovery(settings: AppBootstrap["settings"] | undefined) {
   return createDesktopSettings(settings ?? {});
@@ -479,7 +480,7 @@ export function buildTrayCommandFeedback(input: unknown) {
   const remediation = normalizeRuntimeLanguage(event.remediation);
   const label =
     event.scope === COMMAND_RESULT_SCOPE_TYPES.global && event.id === COMMAND_RESULT_GLOBAL_IDS.context
-      ? "Use set"
+      ? DESKTOP_ACTION_RESULT_COPY.labels.useSet
       : normalizeRuntimeLanguage(event.label);
   let scope: CommandResultScope;
   if (event.scope === COMMAND_RESULT_SCOPE_TYPES.tool) {

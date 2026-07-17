@@ -6,6 +6,7 @@ import {
   parseTrayCommandResultEvent,
 } from "./command-result-shape";
 import { COMMAND_RESULT_GLOBAL_IDS } from "./command-result-scope";
+import { DESKTOP_ACTION_RESULT_COPY } from "./desktop-action-result-copy";
 
 describe("command-result-shape", () => {
   it("shares stable command result statuses", () => {
@@ -15,7 +16,7 @@ describe("command-result-shape", () => {
   it("parses stored command results with optional metadata", () => {
     expect(
       parseStoredCommandResult({
-        label: "Use set",
+        label: DESKTOP_ACTION_RESULT_COPY.labels.useSet,
         status: "error",
         message: "Workspace mismatch.",
         kind: "workspace_mismatch",
@@ -25,7 +26,7 @@ describe("command-result-shape", () => {
         at: 100,
       }),
     ).toEqual({
-      label: "Use set",
+      label: DESKTOP_ACTION_RESULT_COPY.labels.useSet,
       status: "error",
       message: "Workspace mismatch.",
       kind: "workspace_mismatch",
@@ -49,14 +50,14 @@ describe("command-result-shape", () => {
       parseTrayCommandResultEvent({
         scope: "tool",
         tool: "claude",
-        label: "Use profile",
+        label: DESKTOP_ACTION_RESULT_COPY.labels.useProfile,
         status: "success",
         message: "Switched Claude.",
       }),
     ).toEqual({
       scope: "tool",
       tool: "claude",
-      label: "Use profile",
+      label: DESKTOP_ACTION_RESULT_COPY.labels.useProfile,
       status: "success",
       message: "Switched Claude.",
       kind: undefined,
@@ -67,7 +68,7 @@ describe("command-result-shape", () => {
       parseTrayCommandResultEvent({
         scope: "global",
         id: COMMAND_RESULT_GLOBAL_IDS.context,
-        label: "Use set",
+        label: DESKTOP_ACTION_RESULT_COPY.labels.useSet,
         status: "error",
         message: "Mismatch.",
         remediation: "Retry.",
@@ -75,7 +76,7 @@ describe("command-result-shape", () => {
     ).toEqual({
       scope: "global",
       id: COMMAND_RESULT_GLOBAL_IDS.context,
-      label: "Use set",
+      label: DESKTOP_ACTION_RESULT_COPY.labels.useSet,
       status: "error",
       message: "Mismatch.",
       kind: undefined,
@@ -87,7 +88,7 @@ describe("command-result-shape", () => {
       parseTrayCommandResultEvent({
         scope: "global",
         id: "unknown",
-        label: "Use set",
+        label: DESKTOP_ACTION_RESULT_COPY.labels.useSet,
         status: "success",
         message: "Ignored.",
       }),

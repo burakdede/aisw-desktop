@@ -4,6 +4,7 @@ import {
   ACTIVITY_TIMELINE_LIMIT,
 } from "./activity-store";
 import { COMMAND_RESULT_GLOBAL_IDS } from "./command-result-scope";
+import { DESKTOP_ACTION_RESULT_COPY } from "./desktop-action-result-copy";
 
 type StorageMock = {
   getItem: (key: string) => string | null;
@@ -48,7 +49,12 @@ describe("lastCommandResult store", () => {
     );
     module.recordCommandResult(
       { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.workspace },
-      { label: "Use set", status: "error", message: "Workspace mismatch.", remediation: "Open Sets." },
+      {
+        label: DESKTOP_ACTION_RESULT_COPY.labels.useSet,
+        status: "error",
+        message: "Workspace mismatch.",
+        remediation: "Open Sets.",
+      },
     );
 
     const stored = JSON.parse(window.localStorage.getItem(ACTIVITY_STORE_KEY) ?? "{}");
@@ -97,7 +103,7 @@ describe("lastCommandResult store", () => {
           },
           global: {
             [COMMAND_RESULT_GLOBAL_IDS.context]: {
-              label: "Use set",
+              label: DESKTOP_ACTION_RESULT_COPY.labels.useSet,
               status: "error",
               message: "Missing context.",
               kind: "ContextMissing",

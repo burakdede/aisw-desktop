@@ -37,6 +37,7 @@ import {
   DIAGNOSTICS_REVIEW_SAFE_FIXES_ELLIPSIS_LABEL,
 } from "./diagnostics-copy";
 import { USE_EXPECTED_SET_NOW_LABEL } from "../../lib/sets-display";
+import { DESKTOP_ACTION_RESULT_COPY } from "../shared/desktop-action-result-copy";
 import {
   buildDiagnosticsStatusMessage,
   buildDiagnosticsSummary,
@@ -177,7 +178,7 @@ describe("diagnostics-panel-display", () => {
       {
         tool: {
           claude: {
-            label: "Use profile",
+            label: DESKTOP_ACTION_RESULT_COPY.labels.useProfile,
             status: "error",
             message: "Profile failed.",
             at: 20,

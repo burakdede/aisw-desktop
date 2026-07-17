@@ -3,10 +3,12 @@ import { titleCase } from "../../lib/utils";
 export const DESKTOP_ACTION_RESULT_COPY = {
   labels: {
     addProfile: "Add profile",
+    useProfile: "Use profile",
     switchProfile: "Switch profile",
     switchAllTools: "Switch all tools",
     useSet: "Use set",
     activateSavedSet: "Activate saved set",
+    reapplyActiveProfile: "Re-apply active profile",
     renameProfile: "Rename profile",
     removeProfile: "Remove profile",
     restoreBackup: "Restore backup",

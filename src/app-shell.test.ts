@@ -29,6 +29,7 @@ import {
   settingsForRecovery,
 } from "./app-shell";
 import { COMMAND_RESULT_GLOBAL_IDS } from "./features/shared/command-result-scope";
+import { DESKTOP_ACTION_RESULT_COPY } from "./features/shared/desktop-action-result-copy";
 import {
   CUSTOM_OVERRIDE_LABEL,
   INCLUDED_DESKTOP_ENGINE_LABEL,
@@ -450,14 +451,14 @@ describe("app-shell helpers", () => {
     ).toEqual({
       scope: { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.context },
       result: {
-        label: "Use set",
+        label: DESKTOP_ACTION_RESULT_COPY.labels.useSet,
         status: "error",
         message: "AI Switch cannot switch.",
         kind: undefined,
         remediation: "Run AI Switch verify.",
       },
       notification: {
-        title: "Use set",
+        title: DESKTOP_ACTION_RESULT_COPY.labels.useSet,
         body: "AI Switch cannot switch. Run AI Switch verify.",
       },
     });
@@ -467,21 +468,21 @@ describe("app-shell helpers", () => {
         scope: "tool",
         tool: "claude",
         status: "success",
-        label: "Use profile",
+        label: DESKTOP_ACTION_RESULT_COPY.labels.useProfile,
         message: "AISW switched successfully.",
         remediation: undefined,
       }),
     ).toEqual({
       scope: { type: "tool", tool: "claude" },
       result: {
-        label: "Use profile",
+        label: DESKTOP_ACTION_RESULT_COPY.labels.useProfile,
         status: "success",
         message: "AI Switch switched successfully.",
         kind: undefined,
         remediation: "",
       },
       notification: {
-        title: "Use profile",
+        title: DESKTOP_ACTION_RESULT_COPY.labels.useProfile,
         body: "AI Switch switched successfully.",
       },
     });
@@ -523,7 +524,7 @@ describe("app-shell helpers", () => {
       }),
     ).toEqual({
       scope: { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.profileSet },
-      resultLabel: "Re-apply active profile",
+      resultLabel: DESKTOP_ACTION_RESULT_COPY.labels.reapplyActiveProfile,
       message: "Re-applied current set Work.",
       action: {
         kind: "set",
@@ -544,7 +545,7 @@ describe("app-shell helpers", () => {
       }),
     ).toEqual({
       scope: { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.switchAll },
-      resultLabel: "Re-apply active profile",
+      resultLabel: DESKTOP_ACTION_RESULT_COPY.labels.reapplyActiveProfile,
       message: "Re-applied shared profile Work Claude.",
       action: {
         kind: "shared-profile",
@@ -581,7 +582,7 @@ describe("app-shell helpers", () => {
       }),
     ).toEqual({
       scope: { type: "tool", tool: "claude" },
-      resultLabel: "Re-apply active profile",
+      resultLabel: DESKTOP_ACTION_RESULT_COPY.labels.reapplyActiveProfile,
       message: "Re-applied Claude profile Work Claude.",
       action: {
         kind: "tool-profile",

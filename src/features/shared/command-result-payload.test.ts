@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DesktopCommandError } from "../../lib/tauri";
+import { DESKTOP_ACTION_RESULT_COPY } from "./desktop-action-result-copy";
 import {
   buildCommandResultError,
   buildCommandResultSuccess,
@@ -33,12 +34,12 @@ describe("command-result-payload", () => {
           remediation: "Open Sets.",
         }),
         {
-          label: "Use set",
-          fallbackMessage: "Use set failed.",
+          label: DESKTOP_ACTION_RESULT_COPY.labels.useSet,
+          fallbackMessage: `${DESKTOP_ACTION_RESULT_COPY.labels.useSet} failed.`,
         },
       ),
     ).toEqual({
-      label: "Use set",
+      label: DESKTOP_ACTION_RESULT_COPY.labels.useSet,
       status: "error",
       message: "Workspace mismatch.",
       kind: "workspace_mismatch",

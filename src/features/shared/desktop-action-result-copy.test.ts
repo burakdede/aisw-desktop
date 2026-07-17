@@ -19,6 +19,11 @@ import {
 describe("desktop-action-result-copy", () => {
   it("shares mutation labels and fallback copy", () => {
     expect(DESKTOP_ACTION_RESULT_COPY.labels.addProfile).toBe("Add profile");
+    expect(DESKTOP_ACTION_RESULT_COPY.labels.useProfile).toBe("Use profile");
+    expect(DESKTOP_ACTION_RESULT_COPY.labels.useSet).toBe("Use set");
+    expect(DESKTOP_ACTION_RESULT_COPY.labels.reapplyActiveProfile).toBe(
+      "Re-apply active profile",
+    );
     expect(DESKTOP_ACTION_RESULT_COPY.labels.useExpectedProjectSet).toBe(
       "Use expected project set",
     );
