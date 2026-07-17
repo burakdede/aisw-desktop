@@ -193,10 +193,10 @@ export function resolveOverviewSelectedTool(
 }
 
 export function resolveOverviewStateMode(
-  currentMode: string,
+  currentMode: string | null | undefined,
   stateModes: EditableStateMode[],
 ) {
-  return resolvePreferredEditableStateMode(stateModes, currentMode) ?? currentMode;
+  return resolvePreferredEditableStateMode(stateModes, currentMode) ?? currentMode ?? "";
 }
 
 export function resolveOverviewSelectedProfile(

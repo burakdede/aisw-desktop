@@ -56,7 +56,12 @@ import {
   type ProfileCredentialBackend,
   type ProfileImportMode,
 } from "../shared/profile-capabilities";
-import { DEFAULT_EDITABLE_STATE_MODE, stateModeLabel } from "../shared/state-modes";
+import {
+  DEFAULT_EDITABLE_STATE_MODE,
+  resolvePreferredEditableStateMode,
+  stateModeLabel,
+  type EditableStateMode,
+} from "../shared/state-modes";
 
 export type OAuthWizardStep = {
   id: "start" | "browser" | "login" | "capture" | "saved";
@@ -641,12 +646,12 @@ export function buildProfileActivationRequest(input: {
   profileName: string;
   profileLabel: string;
   selectedStateMode: string;
-  availableStateModes: readonly string[];
+  availableStateModes: readonly EditableStateMode[];
 }) {
   return {
     tool: input.tool,
     profile: input.profileName,
-    stateMode: input.availableStateModes.length ? input.selectedStateMode : null,
+    stateMode: resolvePreferredEditableStateMode(input.availableStateModes, input.selectedStateMode),
     label: input.profileLabel,
   };
 }
@@ -656,14 +661,14 @@ export function buildProfileMutationRequest(input: {
   profileName: string;
   profileLabel: string;
   selectedStateMode: string;
-  availableStateModes: readonly string[];
+  availableStateModes: readonly EditableStateMode[];
   credentialBackend: ProfileCredentialBackend;
 }) {
   return {
     tool: input.tool,
     profile: input.profileName,
     label: trimmedStringOrNull(input.profileLabel),
-    stateMode: input.availableStateModes.length ? input.selectedStateMode : null,
+    stateMode: resolvePreferredEditableStateMode(input.availableStateModes, input.selectedStateMode),
     credentialBackend: resolveCredentialBackendRequest(input.credentialBackend),
   };
 }

@@ -23,7 +23,7 @@ export function isEditableStateMode(value: string | null | undefined): value is 
 }
 
 export function resolvePreferredEditableStateMode(
-  modes: EditableStateMode[],
+  modes: readonly EditableStateMode[],
   preferred: string | null | undefined,
 ): StateModeRequest {
   if (!modes.length) {
