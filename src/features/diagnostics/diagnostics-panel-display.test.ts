@@ -166,7 +166,23 @@ describe("diagnostics-panel-display", () => {
         tool: "claude",
         label: "Install",
       }),
-    ).toBe("Claude CLI missing");
+    ).toBe("Claude Code missing");
+    expect(
+      recentFailureTitle({
+        kind: "ToolMissing",
+        scope: "tool",
+        tool: "codex",
+        label: "Install",
+      }),
+    ).toBe("Codex CLI missing");
+    expect(
+      recentFailureTitle({
+        kind: "ProfileMissing",
+        scope: "tool",
+        tool: "gemini",
+        label: "Use profile",
+      }),
+    ).toBe("Gemini CLI profile missing");
     expect(
       recentFailureTitle({
         kind: undefined,

@@ -28,7 +28,8 @@ import {
   toolProfileDisplayLabel,
 } from "./lib/profile-display";
 import { resolveGlobalStateMode, resolveStateModeRequest } from "./features/shared/state-modes";
-import { hasMatchingSelection, titleCase } from "./lib/utils";
+import { toolDisplayName } from "./lib/tool-display";
+import { hasMatchingSelection } from "./lib/utils";
 import { formatMessageWithRemediation } from "./lib/remediation-text";
 import {
   APP_NAV_IDS,
@@ -579,7 +580,7 @@ export function resolveActiveReapplyAction(input: {
     return {
       scope: { type: "tool", tool: status.tool },
       resultLabel: REAPPLY_ACTIVE_PROFILE_LABEL,
-      message: `Re-applied ${titleCase(status.tool)} profile ${label}.`,
+      message: `Re-applied ${toolDisplayName(status.tool)} profile ${label}.`,
       action: {
         kind: "tool-profile",
         tool: status.tool,

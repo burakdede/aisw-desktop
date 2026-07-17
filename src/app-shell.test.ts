@@ -583,7 +583,7 @@ describe("app-shell helpers", () => {
     ).toEqual({
       scope: { type: "tool", tool: "claude" },
       resultLabel: DESKTOP_ACTION_RESULT_COPY.labels.reapplyActiveProfile,
-      message: "Re-applied Claude profile Work Claude.",
+      message: "Re-applied Claude Code profile Work Claude.",
       action: {
         kind: "tool-profile",
         tool: "claude",

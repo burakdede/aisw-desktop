@@ -23,6 +23,7 @@ import {
   findSnapshotToolStatus,
   toolProfileDisplayLabel,
 } from "../../lib/profile-display";
+import { toolDisplayName } from "../../lib/tool-display";
 import { isSupportedTool } from "../../lib/tool-registry";
 import {
   countLabel,
@@ -498,11 +499,11 @@ export function recentFailureTitle(input: {
 }) {
   switch (input.kind) {
     case "ToolMissing":
-      return `${titleCase(input.tool ?? "Tool")} CLI missing`;
+      return `${toolDisplayNameOrFallback(input.tool, "Tool")} missing`;
     case "ProfileMissing":
-      return `${titleCase(input.tool ?? "Profile")} profile missing`;
+      return `${toolDisplayNameOrFallback(input.tool, "Profile")} profile missing`;
     case "KeyringUnavailable":
-      return `${titleCase(input.tool ?? "Credential")} keyring unavailable`;
+      return `${toolDisplayNameOrFallback(input.tool, "Credential")} keyring unavailable`;
     case "PermissionDenied":
       return RECENT_FAILURE_TITLES.permissionDenied;
     case "OAuthTimeout":
@@ -522,8 +523,12 @@ export function recentFailureTitle(input: {
       ) {
         return RECENT_FAILURE_TITLES.backupNeedsAttention;
       }
-      return input.tool ? `${titleCase(input.tool)} · ${input.label}` : input.label;
+      return input.tool ? `${toolDisplayName(input.tool)} · ${input.label}` : input.label;
   }
+}
+
+function toolDisplayNameOrFallback(tool: string | undefined, fallback: string) {
+  return tool ? toolDisplayName(tool) : titleCase(fallback);
 }
 
 export function matchesQuickFixToFinding(

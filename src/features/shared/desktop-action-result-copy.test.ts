@@ -41,7 +41,12 @@ describe("desktop-action-result-copy", () => {
 
   it("formats shared mutation success messages", () => {
     expect(addProfileSavedMessage("claude", "work")).toBe("Saved claude profile work.");
-    expect(switchProfileMessage("claude", "Work", "work")).toBe("Switched Claude to Work.");
+    expect(switchProfileMessage("claude", "Work", "work")).toBe(
+      "Switched Claude Code to Work.",
+    );
+    expect(switchProfileMessage("codex", "Release Review", "release-review")).toBe(
+      "Switched Codex CLI to Release Review.",
+    );
     expect(switchAllToolsMessage("Personal", "personal")).toBe(
       "Switched all tools to Personal.",
     );

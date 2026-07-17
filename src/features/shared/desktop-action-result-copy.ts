@@ -1,6 +1,6 @@
 import { resolveErrorDetails } from "../../lib/error-details";
 import { formatMessageWithRemediation } from "../../lib/remediation-text";
-import { titleCase } from "../../lib/utils";
+import { toolDisplayName } from "../../lib/tool-display";
 
 export const DESKTOP_ACTION_RESULT_COPY = {
   labels: {
@@ -38,7 +38,7 @@ export function addProfileSavedMessage(tool: string, profile: string) {
 }
 
 export function switchProfileMessage(tool: string, label: string | null | undefined, profile: string) {
-  return `Switched ${titleCase(tool)} to ${label ?? profile}.`;
+  return `Switched ${toolDisplayName(tool)} to ${label ?? profile}.`;
 }
 
 export function switchAllToolsMessage(label: string | null | undefined, profile: string) {
