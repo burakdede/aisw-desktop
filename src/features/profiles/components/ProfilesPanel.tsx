@@ -39,6 +39,7 @@ import { disposeSafely, type AsyncDispose } from "../../../lib/async-dispose";
 import { BACKEND_UNAVAILABLE_LABEL } from "../../../lib/display-copy";
 import { eventTargetWithinSelector } from "../../../lib/dom-events";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
+import { nullishToEmptyString, nullishToNull } from "../../../lib/parse-guards";
 import {
   AVAILABLE_AFTER_ACTIVATION_LABEL,
   profileAddedLabel,
@@ -391,7 +392,7 @@ export function ProfilesPanel({
   }, [availableCredentialBackends, credentialBackend]);
 
   useEffect(() => {
-    setExpandedDetails(initialExpandedProfile ?? null);
+    setExpandedDetails(nullishToNull(initialExpandedProfile));
     setOpenStorageDetails(null);
   }, [initialExpandedProfile, initialTool]);
 
@@ -516,7 +517,7 @@ export function ProfilesPanel({
     }
 
     if (mode === "api_key") {
-      const apiKey = apiKeyInputRef.current?.value ?? "";
+      const apiKey = nullishToEmptyString(apiKeyInputRef.current?.value);
       if (apiKeyInputRef.current) {
         apiKeyInputRef.current.value = "";
       }
@@ -747,7 +748,7 @@ export function ProfilesPanel({
                   state: inventoryEntry.state,
                 });
                 const rowActionAnchorRef = {
-                  current: rowActionAnchorRefs.current[menuKey] ?? null,
+                  current: nullishToNull(rowActionAnchorRefs.current[menuKey]),
                 };
                 return (
                   <div

@@ -20,6 +20,7 @@ import { exportActivityLog } from "../../../lib/client";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { notifyDesktop } from "../../../lib/notifications";
+import { nullishToEmptyString } from "../../../lib/parse-guards";
 import { resolveSelectionItem } from "../../../lib/utils";
 import {
   clearLastCommandResults,
@@ -296,7 +297,7 @@ export function ActivityPanel({
                             variant="inline"
                           />
                         ) : (
-                          selectedEntryScope?.value ?? ""
+                          nullishToEmptyString(selectedEntryScope?.value)
                         ),
                     },
                     ...buildActivityInspectorRows(selectedEntry),

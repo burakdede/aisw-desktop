@@ -34,7 +34,7 @@ import {
   savedRuleStatusLabel,
 } from "../../../lib/sets-display";
 import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
-import { nullishToNull } from "../../../lib/parse-guards";
+import { nullishToEmptyString, nullishToNull } from "../../../lib/parse-guards";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { SUPPORTED_TOOLS } from "../../../lib/tool-registry";
 import {
@@ -667,11 +667,11 @@ export function SetsPanel({
                   <>
                     <PaneInspectorHeader
                       className="sets-inspector-header"
-                      title={selectedSetInspector?.displayLabel ?? ""}
+                      title={nullishToEmptyString(selectedSetInspector?.displayLabel)}
                       backLabel={compactLayout ? SETS_PANEL_COPY.backLabel : undefined}
                       backButtonClassName="sets-inspector-back"
                       onBack={compactLayout ? () => setCompactSetInspectorOpen(false) : undefined}
-                      supporting={<p className="inline-note sets-inspector-subtitle">{selectedSetInspector?.selectionCountLabel ?? ""}</p>}
+                      supporting={<p className="inline-note sets-inspector-subtitle">{nullishToEmptyString(selectedSetInspector?.selectionCountLabel)}</p>}
                     />
                     <ButtonRow className="sets-inspector-actions">
                       <button
@@ -853,11 +853,11 @@ export function SetsPanel({
                   <>
                     <PaneInspectorHeader
                       className="sets-inspector-header"
-                      title={selectedRuleInspector?.displayLabel ?? ""}
+                      title={nullishToEmptyString(selectedRuleInspector?.displayLabel)}
                       backLabel={compactLayout ? SETS_PANEL_COPY.backLabel : undefined}
                       backButtonClassName="sets-inspector-back"
                       onBack={compactLayout ? () => setCompactRuleInspectorOpen(false) : undefined}
-                      supporting={<p className="inline-note sets-inspector-subtitle">{selectedRuleInspector?.subtitle ?? ""}</p>}
+                      supporting={<p className="inline-note sets-inspector-subtitle">{nullishToEmptyString(selectedRuleInspector?.subtitle)}</p>}
                     />
                     <RuleInspectorDetailList state={selectedRuleInspector} />
                     <ButtonRow className="sets-inspector-actions">
