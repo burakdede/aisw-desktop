@@ -22,6 +22,7 @@ import {
   buildProfileSavedAsLabel,
   buildProfileSheetDraftReset,
   buildProfileSheetSubmitLabel,
+  buildFixedStateModeNotice,
   buildSelectedProfileInspectorState,
   buildOauthWizardSteps,
   defaultExpandedProfileName,
@@ -47,8 +48,7 @@ import {
   PROFILE_PANEL_COPY,
   PROFILE_REMOVAL_SHEET_COPY,
   resolveAvailableSelection,
-  STATIC_STATE_MODE_COPY,
-  STATIC_STATE_MODE_LABEL,
+  FIXED_STATE_MODE_LABEL,
   shouldAutoOpenProfileSheet,
   toggleProfileActionMenu,
 } from "./profiles-panel-display";
@@ -375,10 +375,15 @@ describe("profiles-panel-display", () => {
         apiKeyPending: false,
       }),
     ).toBe("Import");
-    expect(STATIC_STATE_MODE_LABEL).toBe("Isolated");
-    expect(STATIC_STATE_MODE_COPY).toBe(
-      "Gemini keeps authentication and local state together.",
-    );
+    expect(FIXED_STATE_MODE_LABEL).toBe("Managed by tool");
+    expect(buildFixedStateModeNotice("gemini")).toEqual({
+      label: "Managed by tool",
+      detail: "Gemini CLI keeps authentication and local state together.",
+    });
+    expect(buildFixedStateModeNotice("antigravity")).toEqual({
+      label: "Managed by tool",
+      detail: "Antigravity CLI keeps authentication and local state together.",
+    });
   });
 
   it("builds edit/removal sheet state and profile activation requests", () => {

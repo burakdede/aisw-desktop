@@ -131,9 +131,8 @@ import {
   PROFILE_INSPECTOR_FIELD_LABELS,
   PROFILE_PANEL_COPY,
   PROFILE_REMOVAL_SHEET_COPY,
+  buildFixedStateModeNotice,
   resolveAvailableSelection,
-  STATIC_STATE_MODE_COPY,
-  STATIC_STATE_MODE_LABEL,
   shouldAutoOpenProfileSheet,
   toggleProfileActionMenu,
   type InventoryEntry,
@@ -988,7 +987,7 @@ export function ProfilesPanel({
                     variant="compact"
                   />
                 ) : (
-                  <StaticStateModeNotice />
+                  <StaticStateModeNotice tool={tool} />
                 )}
                 <div className="profiles-inspector-disclosure">
                   <button
@@ -1322,7 +1321,7 @@ export function ProfilesPanel({
                   variant="compact"
                 />
               ) : (
-                <StaticStateModeNotice />
+                <StaticStateModeNotice tool={tool} />
               )}
               {mode === "oauth" ? (
                 <article className="diagnostic-card">
@@ -1430,12 +1429,13 @@ function ProfileActionsControl({
   );
 }
 
-function StaticStateModeNotice() {
+function StaticStateModeNotice({ tool }: { tool: string }) {
+  const notice = buildFixedStateModeNotice(tool);
   return (
     <div className="state-mode-static">
       <span className="state-mode-static-label">State mode</span>
-      <strong>{STATIC_STATE_MODE_LABEL}</strong>
-      <p className="state-mode-copy">{STATIC_STATE_MODE_COPY}</p>
+      <strong>{notice.label}</strong>
+      <p className="state-mode-copy">{notice.detail}</p>
     </div>
   );
 }

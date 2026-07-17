@@ -59,6 +59,7 @@ import {
 } from "../shared/profile-capabilities";
 import {
   DEFAULT_EDITABLE_STATE_MODE,
+  fixedStateModeDescription,
   resolvePreferredEditableStateMode,
   stateModeLabel,
   type EditableStateMode,
@@ -122,9 +123,7 @@ export type OpenProfileActionMenu = {
   scope: ProfileActionScope;
 } | null;
 
-export const STATIC_STATE_MODE_LABEL = stateModeLabel(DEFAULT_EDITABLE_STATE_MODE);
-export const STATIC_STATE_MODE_COPY =
-  "Gemini keeps authentication and local state together.";
+export const FIXED_STATE_MODE_LABEL = "Managed by tool";
 
 export const PROFILE_PANEL_COPY = {
   searchAriaLabel: "Search Profiles",
@@ -262,6 +261,13 @@ export function buildProfileSheetDraftReset(
     label: "",
     mode: initialProfileSheetImportMode(),
     profile: "",
+  };
+}
+
+export function buildFixedStateModeNotice(tool: string) {
+  return {
+    label: FIXED_STATE_MODE_LABEL,
+    detail: fixedStateModeDescription(tool),
   };
 }
 

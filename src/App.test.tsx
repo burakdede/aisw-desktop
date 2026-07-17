@@ -2362,7 +2362,7 @@ describe("App", () => {
     expect(calls.some((entry) => entry.command === "add_profile")).toBe(false);
   });
 
-  it("keeps Gemini state mode non-configurable even when runtime capabilities advertise shared mode", async () => {
+  it("limits antigravity profile setup to shared-live auth flows", async () => {
     const calls: Array<{ command: string; args: unknown }> = [];
     let currentSnapshot: AppSnapshot = {
       ...bootstrap.snapshot,
@@ -2373,10 +2373,10 @@ describe("App", () => {
             "warnings" in entry && Array.isArray(entry.warnings) ? entry.warnings : [],
         })),
         {
-          tool: "gemini",
+          tool: "antigravity",
           binary_found: true,
           stored_profiles: 1,
-          active_profile: "travel",
+          active_profile: "work",
           auth_method: "oauth",
           credential_backend: "system_keyring",
           state_mode: null,
@@ -2388,21 +2388,23 @@ describe("App", () => {
       ],
       profiles: {
         ...bootstrap.snapshot.profiles,
-        gemini: {
-          active: "travel",
-          profiles: [{ name: "travel", auth: "oauth", label: "Travel" }],
+        antigravity: {
+          active: "work",
+          profiles: [{ name: "work", auth: "oauth", label: "Work" }],
         },
       },
     };
-    const geminiBootstrap = {
+    const antigravityBootstrap = {
       ...bootstrap,
       runtime_status: {
         ...bootstrap.runtime_status,
         capabilities: {
           ...bootstrap.runtime_status.capabilities,
           tools: {
-            gemini: {
-              state_modes: ["isolated", "shared"],
+            agy: {
+              auth_methods: ["oauth", "from_live"],
+              state_modes: [],
+              credential_backends: ["system_keyring", "file"],
               fail_closed_keyring_identity: false,
             },
           },
@@ -2417,24 +2419,24 @@ describe("App", () => {
         currentSnapshot = {
           ...currentSnapshot,
           statuses: currentSnapshot.statuses.map((entry) =>
-            entry.tool === "gemini"
+            entry.tool === "antigravity"
               ? {
                   ...entry,
-              stored_profiles: 2,
-              active_profile: "travel-next",
-              auth_method: "oauth",
-              state_mode: null,
-              warnings: [],
-            }
+                  stored_profiles: 2,
+                  active_profile: "field",
+                  auth_method: "oauth",
+                  state_mode: null,
+                  warnings: [],
+                }
               : entry,
           ),
           profiles: {
             ...currentSnapshot.profiles,
-            gemini: {
-              active: "travel-next",
+            antigravity: {
+              active: "field",
               profiles: [
-                ...currentSnapshot.profiles.gemini.profiles,
-                { name: "travel-next", auth: "oauth", label: undefined },
+                ...currentSnapshot.profiles.antigravity.profiles,
+                { name: "field", auth: "oauth", label: undefined },
               ],
             },
           },
@@ -2447,7 +2449,7 @@ describe("App", () => {
       return (
         desktopMockRecord({
           get_bootstrap: {
-            ...geminiBootstrap,
+            ...antigravityBootstrap,
             snapshot: currentSnapshot,
           },
           get_snapshot: currentSnapshot,
@@ -2458,7 +2460,7 @@ describe("App", () => {
           get_workspace_status: { result: { status: "match" } },
           get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
           list_backups: [],
-          get_settings: geminiBootstrap.settings,
+          get_settings: antigravityBootstrap.settings,
         })
       )[command];
     };
@@ -2468,12 +2470,28 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Profiles"));
     const profileDialog = await openAddProfileDialog();
     fireEvent.change(profileDialog.getByLabelText("Tool"), {
-      target: { value: "gemini" },
+      target: { value: "antigravity" },
     });
 
-    expect(profileDialog.getByText("Gemini keeps authentication and local state together.")).toBeInTheDocument();
+    const importModeSelect = profileDialog.getByLabelText("Import mode");
+    expect(importModeSelect).toHaveValue("from_live");
+    expect(
+      within(importModeSelect).getByRole("option", { name: "Import current login" }),
+    ).toBeInTheDocument();
+    expect(
+      within(importModeSelect).getByRole("option", { name: "Sign in with OAuth" }),
+    ).toBeInTheDocument();
+    expect(
+      within(importModeSelect).queryByRole("option", { name: "Read from environment" }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(importModeSelect).queryByRole("option", { name: "Paste API key" }),
+    ).not.toBeInTheDocument();
+    expect(
+      profileDialog.getByText("Antigravity CLI keeps authentication and local state together."),
+    ).toBeInTheDocument();
     fireEvent.change(profileDialog.getByLabelText("Profile name"), {
-      target: { value: "travel-next" },
+      target: { value: "field" },
     });
     fireEvent.click(profileDialog.getByRole("button", { name: "Import" }));
 
@@ -2489,24 +2507,27 @@ describe("App", () => {
 
     fireEvent.click(screen.getByText("Overview"));
 
-    selectOverviewTool("Gemini");
-    const geminiCard = screen.getByText("Travel").closest(".tool-card");
-    if (!(geminiCard instanceof HTMLElement)) {
-      throw new Error("Missing Gemini overview card.");
+    selectOverviewTool("Antigravity");
+    const antigravityCard = screen
+      .getAllByText("Antigravity CLI")
+      .map((node) => node.closest(".tool-card"))
+      .find((node): node is HTMLElement => node instanceof HTMLElement);
+    if (!(antigravityCard instanceof HTMLElement)) {
+      throw new Error("Missing Antigravity overview card.");
     }
-    const overview = within(geminiCard);
+    const overview = within(antigravityCard);
     expect(overview.getAllByRole("combobox")).toHaveLength(1);
-    fireEvent.change(overview.getByLabelText("Switch gemini profile"), {
-      target: { value: "travel" },
+    fireEvent.change(overview.getByLabelText("Switch antigravity profile"), {
+      target: { value: "work" },
     });
-    fireEvent.click(overview.getByRole("button", { name: "Switch to Travel" }));
+    fireEvent.click(overview.getByRole("button", { name: "Switch to Work" }));
 
     await waitFor(() => {
       expect(
         calls.some(
           (entry) =>
             entry.command === "use_profile" &&
-            (entry.args as { request?: { tool?: string; state_mode?: string | null } })?.request?.tool === "gemini" &&
+            (entry.args as { request?: { tool?: string; state_mode?: string | null } })?.request?.tool === "antigravity" &&
             (entry.args as { request?: { tool?: string; state_mode?: string | null } })?.request?.state_mode === null,
         ),
       ).toBe(true);
