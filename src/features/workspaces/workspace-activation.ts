@@ -1,6 +1,7 @@
 import { AppSnapshot, DesktopSettings } from "../../lib/schemas";
 import {
   findProfileSetByName,
+  profileSetDisplayLabel,
   profileSetHasUsableSelections,
   snapshotHasContext,
 } from "../../lib/profile-display";
@@ -39,7 +40,7 @@ export function resolveWorkspaceActivationTarget(
       return {
         kind: "profile_set",
         name: expectedContext,
-        label: profileSet.label ?? profileSet.name,
+        label: profileSetDisplayLabel(profileSet),
       };
     }
   }
@@ -60,7 +61,7 @@ export function workspaceBindingOptions(
   const profileSets = (settings.profile_sets ?? [])
     .filter((set) => profileSetHasUsableSelections(snapshot, set))
     .map((set) =>
-      buildWorkspaceBindingOption("saved_set", set.name, set.label ?? set.name),
+      buildWorkspaceBindingOption("saved_set", set.name, profileSetDisplayLabel(set)),
     );
   const contexts = snapshot.contexts
     .filter((context) => !hasMatchingSelection(context.name, profileSets, (set) => set.value))

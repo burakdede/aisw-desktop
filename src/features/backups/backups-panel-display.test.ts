@@ -3,6 +3,8 @@ import type { AppSnapshot, BackupEntry, DesktopSettings } from "../../lib/schema
 import { makeToolStatus } from "../../test-support/runtime-tool-statuses";
 import {
   BACKUPS_DATE_FILTER_OPTIONS,
+  DEFAULT_BACKUPS_DATE_FILTER,
+  DEFAULT_BACKUPS_TOOL_FILTER,
   BACKUPS_PANEL_COPY,
   BACKUPS_TOOL_FILTER_OPTIONS,
   backupIdCopyMessage,
@@ -96,6 +98,8 @@ describe("backups-panel-display", () => {
       { value: "newest", label: "Newest first" },
       { value: "oldest", label: "Oldest first" },
     ]);
+    expect(DEFAULT_BACKUPS_TOOL_FILTER).toBe("all");
+    expect(DEFAULT_BACKUPS_DATE_FILTER).toBe("newest");
     expect(normalizeBackupsToolFilter("codex")).toBe("codex");
     expect(normalizeBackupsToolFilter("bad")).toBe("all");
     expect(normalizeBackupsDateFilter("oldest")).toBe("oldest");

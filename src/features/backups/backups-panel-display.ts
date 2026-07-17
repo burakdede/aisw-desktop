@@ -23,22 +23,24 @@ import { resolveSelectionItem, resolveSelectionValue } from "../../lib/utils";
 export type ToolFilter = "all" | "claude" | "codex" | "gemini";
 export type DateFilter = "newest" | "oldest";
 export type PendingRestoreMode = "files" | "activate";
+export const DEFAULT_BACKUPS_TOOL_FILTER: ToolFilter = "all";
+export const DEFAULT_BACKUPS_DATE_FILTER: DateFilter = "newest";
 
 export const BACKUPS_TOOL_FILTER_OPTIONS = [
-  { value: "all", label: "All tools" },
+  { value: DEFAULT_BACKUPS_TOOL_FILTER, label: "All tools" },
   { value: "claude", label: "Claude" },
   { value: "codex", label: "Codex" },
   { value: "gemini", label: "Gemini" },
 ] as const satisfies ReadonlyArray<{ value: ToolFilter; label: string }>;
 
 export const BACKUPS_DATE_FILTER_OPTIONS = [
-  { value: "newest", label: "Newest first" },
+  { value: DEFAULT_BACKUPS_DATE_FILTER, label: "Newest first" },
   { value: "oldest", label: "Oldest first" },
 ] as const satisfies ReadonlyArray<{ value: DateFilter; label: string }>;
 
 export function normalizeBackupsToolFilter(
   value: unknown,
-  fallback: ToolFilter = BACKUPS_TOOL_FILTER_OPTIONS[0].value,
+  fallback: ToolFilter = DEFAULT_BACKUPS_TOOL_FILTER,
 ): ToolFilter {
   return normalizeOneOf(
     BACKUPS_TOOL_FILTER_OPTIONS.map((option) => option.value),
@@ -49,7 +51,7 @@ export function normalizeBackupsToolFilter(
 
 export function normalizeBackupsDateFilter(
   value: unknown,
-  fallback: DateFilter = BACKUPS_DATE_FILTER_OPTIONS[0].value,
+  fallback: DateFilter = DEFAULT_BACKUPS_DATE_FILTER,
 ): DateFilter {
   return normalizeOneOf(
     BACKUPS_DATE_FILTER_OPTIONS.map((option) => option.value),

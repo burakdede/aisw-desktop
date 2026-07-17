@@ -32,6 +32,8 @@ import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import {
   BACKUPS_DATE_FILTER_OPTIONS,
+  DEFAULT_BACKUPS_DATE_FILTER,
+  DEFAULT_BACKUPS_TOOL_FILTER,
   BACKUPS_PANEL_COPY,
   BACKUPS_TOOL_FILTER_OPTIONS,
   backupIdCopyMessage,
@@ -68,8 +70,8 @@ export function BackupsPanel({
     enabled: readEnabled,
   });
   const { restoreBackupMutation, useProfileMutation, mutationLock } = useDesktopActions();
-  const [toolFilter, setToolFilter] = useState<ToolFilter>("all");
-  const [dateFilter, setDateFilter] = useState<DateFilter>("newest");
+  const [toolFilter, setToolFilter] = useState<ToolFilter>(DEFAULT_BACKUPS_TOOL_FILTER);
+  const [dateFilter, setDateFilter] = useState<DateFilter>(DEFAULT_BACKUPS_DATE_FILTER);
   const [search, setSearch] = useState("");
   const [selectedBackupId, setSelectedBackupId] = useState<string | null>(null);
   const [copyMessage, setCopyMessage] = useState("");
