@@ -24,11 +24,13 @@ import type {
   AppBootstrap,
   DesktopSettings,
   DoctorReport,
+  LaunchAtLoginStatus,
   UpdateCheckReport,
 } from "../../lib/schemas";
 import {
   clipboardCopiedMessage,
   clipboardUnavailableManualMessage,
+  DATE_UNAVAILABLE_LABEL,
   DEFAULT_ACTION_FAILURE_MESSAGE,
   NOT_FOUND_LABEL,
   NOT_SET_LABEL,
@@ -356,8 +358,20 @@ export function launchAtLoginSuccessMessage(enabled: boolean) {
     : LAUNCH_AT_LOGIN_DISABLED_MESSAGE;
 }
 
+export function launchAtLoginState(status: LaunchAtLoginStatus | null | undefined) {
+  return {
+    supported: status?.supported ?? false,
+    enabled: status?.enabled ?? false,
+    detail: status?.detail,
+  };
+}
+
 export function releaseChannelDescription(channel: string) {
   return `Check for a signed desktop release on the selected ${channel} channel.`;
+}
+
+export function runtimeVersionLabel(runtimeStatus: AppBootstrap["runtime_status"]) {
+  return runtimeStatus.version?.version ?? DATE_UNAVAILABLE_LABEL;
 }
 
 export function buildUpdateCheckResultLines(report: UpdateCheckReport) {

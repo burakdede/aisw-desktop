@@ -22,6 +22,7 @@ import {
   initialSettingsSection,
   launchAtLoginDescription,
   launchAtLoginErrorMessage,
+  launchAtLoginState,
   LAUNCH_AT_LOGIN_DISABLED_MESSAGE,
   LAUNCH_AT_LOGIN_ENABLED_MESSAGE,
   launchAtLoginSuccessMessage,
@@ -57,6 +58,7 @@ import {
   SETTINGS_UPDATE_CHANNEL_OPTIONS,
   WINDOW_LAYOUT_RESET_MESSAGE,
   releaseChannelDescription,
+  runtimeVersionLabel,
 } from "./settings-panel-display";
 
 function makeSettings(overrides: Partial<DesktopSettings> = {}): DesktopSettings {
@@ -279,6 +281,35 @@ describe("settings-panel-display", () => {
     expect(launchAtLoginSuccessMessage(false)).toBe(
       LAUNCH_AT_LOGIN_DISABLED_MESSAGE,
     );
+    expect(launchAtLoginState(null)).toEqual({
+      supported: false,
+      enabled: false,
+      detail: undefined,
+    });
+    expect(
+      launchAtLoginState({
+        supported: true,
+        enabled: true,
+        detail: "Configured",
+      }),
+    ).toEqual({
+      supported: true,
+      enabled: true,
+      detail: "Configured",
+    });
+    expect(runtimeVersionLabel(makeRuntimeStatus())).toBe("Date Unavailable");
+    expect(
+      runtimeVersionLabel(
+        makeRuntimeStatus({
+          version: {
+            version: "0.3.7",
+            cli_api_version: 3,
+            json_schema_version: 1,
+            progress_schema_version: 1,
+          },
+        }),
+      ),
+    ).toBe("0.3.7");
   });
 
   it("shares effective and resolved runtime paths", () => {

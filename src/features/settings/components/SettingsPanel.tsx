@@ -19,7 +19,6 @@ import {
   normalizeDesktopUpdateChannel,
 } from "../../../lib/desktop-settings";
 import {
-  DATE_UNAVAILABLE_LABEL,
   NOT_FOUND_LABEL,
 } from "../../../lib/display-copy";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
@@ -70,6 +69,7 @@ import {
   initialSettingsSection,
   launchAtLoginDescription,
   launchAtLoginErrorMessage,
+  launchAtLoginState,
   launchAtLoginSuccessMessage,
   nextSettingsSection,
   nextRuntimeSourceSelection,
@@ -100,6 +100,7 @@ import {
   SETTINGS_UPDATE_INSTALL_FAILED_TITLE,
   SETTINGS_UPDATE_CHANNEL_OPTIONS,
   type DesktopPreferencesDraft,
+  runtimeVersionLabel,
   type SettingsDraft,
   WINDOW_LAYOUT_RESET_MESSAGE,
 } from "../settings-panel-display";
@@ -199,9 +200,10 @@ export function SettingsPanel({
     () => selectedShellVariant(shellGuidance.data, selectedShell),
     [selectedShell, shellGuidance.data],
   );
-  const launchAtLoginSupported = launchAtLogin.data?.supported ?? false;
-  const launchAtLoginEnabled = launchAtLogin.data?.enabled ?? false;
-  const launchAtLoginDetail = launchAtLogin.data?.detail;
+  const launchAtLoginStateValue = launchAtLoginState(launchAtLogin.data);
+  const launchAtLoginSupported = launchAtLoginStateValue.supported;
+  const launchAtLoginEnabled = launchAtLoginStateValue.enabled;
+  const launchAtLoginDetail = launchAtLoginStateValue.detail;
   const runtimePathValue = selectedRuntimePath(
     buildRuntimeSelectionSettings(settings, {
       runtimeKind,
@@ -536,7 +538,7 @@ export function SettingsPanel({
                 <SettingsGroup title={SETTINGS_PANEL_COPY.runtime.groups.runtime}>
                   <SettingsStaticRow
                     label={SETTINGS_PANEL_COPY.runtime.rows.bundledRuntime}
-                    value={runtimeStatus.version?.version ?? DATE_UNAVAILABLE_LABEL}
+                    value={runtimeVersionLabel(runtimeStatus)}
                   />
                   <SettingsStaticRow
                     label={SETTINGS_PANEL_COPY.runtime.rows.status}
@@ -782,7 +784,7 @@ export function SettingsPanel({
                 <SettingsGroup title={SETTINGS_PANEL_COPY.updates.groups.bundledRuntime}>
                   <SettingsStaticRow
                     label={SETTINGS_PANEL_COPY.updates.rows.version}
-                    value={runtimeStatus.version?.version ?? DATE_UNAVAILABLE_LABEL}
+                    value={runtimeVersionLabel(runtimeStatus)}
                   />
                   <SettingsStaticRow
                     label={SETTINGS_PANEL_COPY.updates.rows.compatibility}
