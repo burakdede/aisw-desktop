@@ -38,8 +38,13 @@ import {
   RUNTIME_WARNING_FALLBACK_DETAIL,
 } from "./tool-warning-display";
 import { toolShortName } from "./tool-registry";
-import { hasMatchingSelection, resolveSelectionValue } from "./utils";
-import { countLabel, pluralChoice, titleCase } from "./utils";
+import {
+  countLabel,
+  pluralChoice,
+  resolvePreferredSelectionValue,
+  resolveSelectionValue,
+  titleCase,
+} from "./utils";
 
 export type OverviewInspectorActionKind =
   | "switch"
@@ -197,11 +202,14 @@ export function resolveOverviewSelectedProfile(
   profiles: AppSnapshot["profiles"][string]["profiles"],
   activeProfile: string | null | undefined,
 ) {
-  if (hasMatchingSelection(currentProfile, profiles, (profile) => profile.name)) {
-    return currentProfile;
-  }
-
-  return resolveSelectionValue(activeProfile, profiles, (profile) => profile.name) ?? "";
+  return (
+    resolvePreferredSelectionValue(
+      currentProfile,
+      activeProfile,
+      profiles,
+      (profile) => profile.name,
+    ) ?? ""
+  );
 }
 
 export function resolveOverviewActionProfileLabel(
