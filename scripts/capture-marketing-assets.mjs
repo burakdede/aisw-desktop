@@ -23,31 +23,31 @@ const SERVER_READY_TIMEOUT_MS = 30_000;
 const SERVER_READY_POLL_MS = 250;
 const GIF_FPS = 18;
 const GIF_LOOP = "0";
-const OVERLAY_BOTTOM_OFFSET_PX = 24;
-const OVERLAY_CARD_SIZE = { width: 640, height: 104 };
+const OVERLAY_BOTTOM_OFFSET_PX = 56;
+const OVERLAY_CARD_SIZE = { width: 560, height: 96 };
 const OVERLAY_CARD_FRAME = {
   left: 1,
   top: 1,
-  right: 638,
-  bottom: 102,
-  radius: 24,
+  right: 558,
+  bottom: 94,
+  radius: 22,
 };
 const OVERLAY_TITLE = {
   font: "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
-  pointSize: 36,
-  offsetY: 14,
+  pointSize: 32,
+  offsetY: -14,
   color: "#ffffff",
 };
 const OVERLAY_DETAIL = {
   font: "/System/Library/Fonts/Supplemental/Arial.ttf",
-  pointSize: 24,
-  offsetY: 56,
-  color: "#f3f6fb",
+  pointSize: 20,
+  offsetY: 18,
+  color: "#eef3ff",
   interlineSpacing: 4,
 };
 const OVERLAY_CARD_COLORS = {
-  fill: "rgba(14,18,26,0.94)",
-  stroke: "rgba(115,153,255,0.28)",
+  fill: "rgba(9,13,22,0.96)",
+  stroke: "rgba(92,144,255,0.36)",
   strokeWidth: "2",
 };
 const QUICK_SWITCH_CAPTURE = {
@@ -193,7 +193,7 @@ async function captureQuickSwitchGif(browser) {
     path.join(mediaDir, "desktop-quick-switch.gif"),
     {
       title: "Quick switch",
-      detail: "Type. Arrow down. Press Enter.",
+      detail: "Type, choose, press Enter.",
       trimStartSeconds: QUICK_SWITCH_CAPTURE.trimStartSeconds,
     },
   );
@@ -219,7 +219,7 @@ async function captureWorkspaceSwitchGif(browser) {
     path.join(mediaDir, "desktop-workspace-switch.gif"),
     {
       title: "Workspace restore",
-      detail: "Apply the expected set for this repo.",
+      detail: "Restore the expected set.",
       trimStartSeconds: WORKSPACE_SWITCH_CAPTURE.trimStartSeconds,
     },
   );
@@ -350,9 +350,9 @@ async function renderOverlayCard(pngPath, { title, detail }) {
     "-pointsize",
     String(OVERLAY_TITLE.pointSize),
     "-gravity",
-    "north",
+    "center",
     "-annotate",
-    `+0+${OVERLAY_TITLE.offsetY}`,
+    `+0${OVERLAY_TITLE.offsetY >= 0 ? "+" : ""}${OVERLAY_TITLE.offsetY}`,
     title,
     "-font",
     OVERLAY_DETAIL.font,
@@ -363,9 +363,9 @@ async function renderOverlayCard(pngPath, { title, detail }) {
     "-interline-spacing",
     String(OVERLAY_DETAIL.interlineSpacing),
     "-gravity",
-    "north",
+    "center",
     "-annotate",
-    `+0+${OVERLAY_DETAIL.offsetY}`,
+    `+0${OVERLAY_DETAIL.offsetY >= 0 ? "+" : ""}${OVERLAY_DETAIL.offsetY}`,
     detail.replace(/\\n/g, "\n"),
     pngPath,
   ]);
