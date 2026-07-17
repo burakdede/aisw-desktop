@@ -1,4 +1,4 @@
-import { isOneOf } from "./parse-guards";
+import { isOneOf, nullishToNull } from "./parse-guards";
 import type { DesktopSettings } from "./schemas";
 
 export const DESKTOP_RUNTIME_KINDS = ["bundled", "system", "custom"] as const;
@@ -16,6 +16,13 @@ export const DEFAULT_DESKTOP_SETTINGS: DesktopSettings = {
   profile_labels: {},
   profile_sets: [],
 };
+
+function resolveNullableDesktopSetting<Value>(
+  override: Value | null | undefined,
+  fallback: Value | null,
+) {
+  return override !== undefined ? nullishToNull(override) : fallback;
+}
 
 export function isDesktopUpdateChannel(
   value: string | null | undefined,
@@ -43,14 +50,14 @@ export function createDesktopSettings(
 ): DesktopSettings {
   return {
     runtime_kind: overrides.runtime_kind ?? DEFAULT_DESKTOP_SETTINGS.runtime_kind,
-    runtime_path:
-      overrides.runtime_path !== undefined
-        ? overrides.runtime_path
-        : DEFAULT_DESKTOP_SETTINGS.runtime_path,
-    aisw_home:
-      overrides.aisw_home !== undefined
-        ? overrides.aisw_home
-        : DEFAULT_DESKTOP_SETTINGS.aisw_home,
+    runtime_path: resolveNullableDesktopSetting(
+      overrides.runtime_path,
+      DEFAULT_DESKTOP_SETTINGS.runtime_path,
+    ),
+    aisw_home: resolveNullableDesktopSetting(
+      overrides.aisw_home,
+      DEFAULT_DESKTOP_SETTINGS.aisw_home,
+    ),
     update_channel: normalizeDesktopUpdateChannel(overrides.update_channel),
     profile_labels: overrides.profile_labels ?? {},
     profile_sets: overrides.profile_sets ?? [],
@@ -63,14 +70,8 @@ export function buildDesktopSettingsUpdate(
 ): DesktopSettings {
   return {
     runtime_kind: overrides.runtime_kind ?? settings.runtime_kind,
-    runtime_path:
-      overrides.runtime_path !== undefined
-        ? overrides.runtime_path
-        : settings.runtime_path ?? null,
-    aisw_home:
-      overrides.aisw_home !== undefined
-        ? overrides.aisw_home
-        : settings.aisw_home ?? null,
+    runtime_path: resolveNullableDesktopSetting(overrides.runtime_path, nullishToNull(settings.runtime_path)),
+    aisw_home: resolveNullableDesktopSetting(overrides.aisw_home, nullishToNull(settings.aisw_home)),
     update_channel: normalizeDesktopUpdateChannel(
       overrides.update_channel ?? settings.update_channel,
     ),

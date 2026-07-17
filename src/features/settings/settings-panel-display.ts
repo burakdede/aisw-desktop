@@ -11,7 +11,12 @@ import {
   normalizeDesktopUpdateChannel,
   type DesktopUpdateChannel,
 } from "../../lib/desktop-settings";
-import { emptyStringToNull, nullishToEmptyString } from "../../lib/parse-guards";
+import {
+  emptyStringToNull,
+  normalizeOneOf,
+  nullishToEmptyString,
+  nullishToNull,
+} from "../../lib/parse-guards";
 import { resolveErrorDetails, resolveErrorMessage } from "../../lib/error-details";
 import { normalizeResolvedCheckStatus } from "../../lib/check-status";
 import {
@@ -312,13 +317,13 @@ export function nextSettingsSection(
 }
 
 export function initialSettingsSection(section: SettingsSection | null | undefined) {
-  return section ?? DEFAULT_SETTINGS_SECTION;
+  return normalizeOneOf(SETTINGS_SECTIONS, section, DEFAULT_SETTINGS_SECTION);
 }
 
 export function settingsSectionDirectionForKey(key: string): SettingsSectionDirection | null {
-  return SETTINGS_SECTION_KEY_DIRECTIONS[
-    key as keyof typeof SETTINGS_SECTION_KEY_DIRECTIONS
-  ] ?? null;
+  return nullishToNull(
+    SETTINGS_SECTION_KEY_DIRECTIONS[key as keyof typeof SETTINGS_SECTION_KEY_DIRECTIONS],
+  );
 }
 
 export function clipboardUnavailableMessage(label: string) {
