@@ -74,7 +74,7 @@ export function parseTrayCommandResultEvent(
 }
 
 export function parseCommandResultCommand(value: unknown) {
-  return asOptionalString(asObject(value)?.command);
+  return commandResultStringField(asObject(value), "command");
 }
 
 function parseCommandResultBase(value: unknown) {
@@ -83,8 +83,8 @@ function parseCommandResultBase(value: unknown) {
     return null;
   }
 
-  const label = asOptionalString(record.label);
-  const message = asOptionalString(record.message);
+  const label = commandResultStringField(record, "label");
+  const message = commandResultStringField(record, "message");
   const status = parseCommandResultStatus(record.status);
   if (!label || !message || !status) {
     return null;
@@ -94,11 +94,18 @@ function parseCommandResultBase(value: unknown) {
     label,
     status,
     message,
-    kind: asOptionalString(record.kind),
-    remediation: asOptionalString(record.remediation),
-    command: asOptionalString(record.command),
-    resultSummary: asOptionalString(record.resultSummary),
+    kind: commandResultStringField(record, "kind"),
+    remediation: commandResultStringField(record, "remediation"),
+    command: commandResultStringField(record, "command"),
+    resultSummary: commandResultStringField(record, "resultSummary"),
   };
+}
+
+function commandResultStringField(
+  record: Record<string, unknown> | undefined,
+  key: string,
+) {
+  return asOptionalString(record?.[key]);
 }
 
 function parseCommandResultStatus(value: unknown): CommandResultStatus | null {

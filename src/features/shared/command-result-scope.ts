@@ -1,5 +1,4 @@
-import { asObject, asOptionalString } from "../../lib/parse-guards";
-import { isOneOf } from "../../lib/parse-guards";
+import { asObject, asOptionalString, isOneOf } from "../../lib/parse-guards";
 import { APP_NAV_IDS, APP_NAV_LABELS } from "../../lib/app-navigation";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import { toolDisplayName } from "../../lib/tool-display";
@@ -63,11 +62,11 @@ export function parseCommandResultScope(value: unknown): CommandResultScope | nu
   }
 
   if (scopeType === COMMAND_RESULT_SCOPE_TYPES.tool) {
-    const tool = asOptionalString(record.tool);
+    const tool = commandResultScopeString(record, "tool");
     return tool ? { type: COMMAND_RESULT_SCOPE_TYPES.tool, tool } : null;
   }
 
-  const id = asOptionalString(record.id);
+  const id = commandResultScopeString(record, "id");
   return id && isCommandResultGlobalId(id)
     ? { type: COMMAND_RESULT_SCOPE_TYPES.global, id }
     : null;
@@ -100,4 +99,8 @@ function parseCommandResultScopeType(record: Record<string, unknown>): CommandRe
     return COMMAND_RESULT_SCOPE_TYPES.global;
   }
   return null;
+}
+
+function commandResultScopeString(record: Record<string, unknown>, key: string) {
+  return asOptionalString(record[key]);
 }
