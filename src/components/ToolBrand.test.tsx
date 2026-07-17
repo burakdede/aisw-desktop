@@ -1,0 +1,33 @@
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { ToolBrand, ToolLogo } from "./ToolBrand";
+
+describe("ToolBrand", () => {
+  it("merges shared and custom classes for the brand label", () => {
+    render(
+      <ToolBrand
+        tool="claude"
+        className="custom-brand"
+        nameClassName="custom-name"
+        logoClassName="custom-logo"
+      />,
+    );
+
+    const name = screen.getByText("Claude Code");
+    const label = name.parentElement;
+    expect(label).toHaveClass("tool-brand");
+    expect(label).toHaveClass("custom-brand");
+    expect(name).toHaveClass("tool-brand-name");
+    expect(name).toHaveClass("custom-name");
+    expect(document.querySelector(".tool-logo")).toHaveClass("custom-logo");
+  });
+
+  it("uses the shared class helper for fallback logos too", () => {
+    render(<ToolLogo tool="mystery" className="fallback-logo" />);
+
+    const logo = screen.getByText("M");
+    expect(logo).toHaveClass("tool-logo");
+    expect(logo).toHaveClass("tool-logo-fallback");
+    expect(logo).toHaveClass("fallback-logo");
+  });
+});

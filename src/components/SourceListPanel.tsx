@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { cn } from "../lib/utils";
 
 type SourceListPanelProps = {
   kicker?: string;
@@ -24,7 +25,7 @@ export function SourceListPanel({
   listRole,
 }: SourceListPanelProps) {
   return (
-    <article className={["source-list-panel", className].filter(Boolean).join(" ")}>
+    <article className={cn("source-list-panel", className)}>
       <div className="source-list-header">
         <div>
           {kicker ? <p className="card-kicker">{kicker}</p> : null}

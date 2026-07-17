@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { cn } from "../lib/utils";
 import {
   isSupportedTool,
   toolDisplayName,
@@ -22,9 +23,9 @@ export function ToolBrand({
   shortName?: boolean;
 }) {
   return (
-    <span className={joinClasses("tool-brand", className)}>
+    <span className={cn("tool-brand", className)}>
       <ToolLogo tool={tool} size={logoSize} className={logoClassName} />
-      <span className={joinClasses("tool-brand-name", nameClassName)}>{formatToolBrandName(tool, shortName)}</span>
+      <span className={cn("tool-brand-name", nameClassName)}>{formatToolBrandName(tool, shortName)}</span>
     </span>
   );
 }
@@ -41,7 +42,7 @@ export function ToolLogo({
   if (isSupportedTool(tool)) {
     return (
       <span
-        className={joinClasses("tool-logo", `tool-logo-${tool}`, className)}
+        className={cn("tool-logo", `tool-logo-${tool}`, className)}
         aria-hidden="true"
         style={{ width: `${size}px`, height: `${size}px` }}
       >
@@ -52,7 +53,7 @@ export function ToolLogo({
 
   return (
     <span
-      className={joinClasses("tool-logo", "tool-logo-fallback", className)}
+      className={cn("tool-logo", "tool-logo-fallback", className)}
       aria-hidden="true"
       style={{ width: `${size}px`, height: `${size}px` }}
     >
@@ -112,8 +113,4 @@ function BrandGlyph({ tool }: { tool: SupportedTool }) {
 
 function formatToolBrandName(tool: string, shortName: boolean) {
   return shortName ? toolShortName(tool) : toolDisplayName(tool);
-}
-
-function joinClasses(...values: Array<string | undefined>) {
-  return values.filter(Boolean).join(" ");
 }
