@@ -7,6 +7,33 @@ type SegmentedOption<T extends string> = {
   disabled?: boolean;
 };
 
+type SegmentedControlKind = "buttons" | "tabs";
+
+type SegmentedControlSemantics = {
+  listRole?: "tablist";
+  itemRole?: "tab";
+  selected: boolean;
+};
+
+function buildSegmentedControlSemantics(
+  kind: SegmentedControlKind,
+  value: string,
+  optionValue: string,
+): SegmentedControlSemantics {
+  const selected = value === optionValue;
+  if (kind === "tabs") {
+    return {
+      listRole: "tablist",
+      itemRole: "tab",
+      selected,
+    };
+  }
+
+  return {
+    selected,
+  };
+}
+
 export function SegmentedControl<T extends string>({
   ariaLabel,
   options,
@@ -20,31 +47,41 @@ export function SegmentedControl<T extends string>({
   value: T;
   onChange: (value: T) => void;
   className?: string;
-  kind?: "buttons" | "tabs";
+  kind?: SegmentedControlKind;
 }) {
+  const listSemantics = buildSegmentedControlSemantics(kind, value, value);
+
   return (
     <div
       className={cn("segmented-control", className)}
-      role={kind === "tabs" ? "tablist" : undefined}
+      role={listSemantics.listRole}
       aria-label={ariaLabel}
     >
-      {options.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          role={kind === "tabs" ? "tab" : undefined}
-          className={cn(
-            "segmented-control-button",
-            value === option.value && "segmented-control-button-active",
-          )}
-          aria-selected={kind === "tabs" ? value === option.value : undefined}
-          aria-pressed={value === option.value}
-          disabled={option.disabled}
-          onClick={() => onChange(option.value)}
-        >
-          {option.label}
-        </button>
-      ))}
+      {options.map((option) => {
+        const itemSemantics = buildSegmentedControlSemantics(
+          kind,
+          value,
+          option.value,
+        );
+
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role={itemSemantics.itemRole}
+            className={cn(
+              "segmented-control-button",
+              itemSemantics.selected && "segmented-control-button-active",
+            )}
+            aria-selected={itemSemantics.itemRole ? itemSemantics.selected : undefined}
+            aria-pressed={itemSemantics.selected}
+            disabled={option.disabled}
+            onClick={() => onChange(option.value)}
+          >
+            {option.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

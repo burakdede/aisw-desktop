@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { KeyValueGrid, KeyValueGridInner } from "./KeyValueGrid";
+import { KeyValueGrid } from "./KeyValueGrid";
 import { SectionCard } from "./SectionCard";
 
 describe("SectionCard", () => {
@@ -39,7 +39,7 @@ describe("KeyValueGrid", () => {
     expect(screen.getByText("Active set")).toBeVisible();
     expect(screen.getByText("Work")).toBeVisible();
 
-    rerender(<KeyValueGridInner rows={[{ label: "Switching", value: "Ready" }]} variant="plain" />);
+    rerender(<KeyValueGrid rows={[{ label: "Switching", value: "Ready" }]} variant="plain" />);
 
     expect(container.querySelector(".kv-grid-plain")).not.toBeNull();
     expect(screen.getByText("Switching")).toBeVisible();
