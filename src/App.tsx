@@ -50,6 +50,7 @@ import {
 import { listenDesktopEvent } from "./lib/tauri";
 import { subscribeDesktopEvents, type DesktopEventHandler } from "./lib/desktop-events";
 import { buildBundledRuntimeSettingsUpdate } from "./lib/desktop-settings";
+import { eventTargetIsEditable } from "./lib/dom-events";
 import { syncWindowState } from "./lib/window-state";
 import {
   activateProfileSet,
@@ -218,7 +219,7 @@ export function App() {
         metaKey: event.metaKey,
         ctrlKey: event.ctrlKey,
         altKey: event.altKey,
-        editableTarget: isEditableTarget(event.target),
+        editableTarget: eventTargetIsEditable(event.target),
         runtimeBlocked: runtimeBlockedForShortcuts,
       });
       if (!action) {
@@ -856,15 +857,4 @@ function BootstrapSurface({
       </section>
     </main>
   );
-}
-
-function isEditableTarget(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) {
-    return false;
-  }
-  if (target.isContentEditable) {
-    return true;
-  }
-  const tagName = target.tagName.toLowerCase();
-  return tagName === "input" || tagName === "textarea" || tagName === "select";
 }
