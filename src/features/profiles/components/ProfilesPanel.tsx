@@ -74,7 +74,6 @@ import { toolDisplayName } from "../../../lib/tool-display";
 import {
   DEFAULT_PROFILE_CREDENTIAL_BACKEND,
   DEFAULT_PROFILE_IMPORT_MODE,
-  resolveCredentialBackendRequest,
   supportedCredentialBackends,
   supportedProfileImportModes,
   type ExplicitProfileCredentialBackend,
@@ -96,6 +95,7 @@ import {
 import {
   buildProfileInspectAriaLabel,
   buildProfileActivationRequest,
+  buildProfileMutationRequest,
   buildInventoryProfiles,
   buildProfileActionMenu,
   buildProfileEditSheetState,
@@ -478,7 +478,6 @@ export function ProfilesPanel({
       return;
     }
 
-    const nextStateMode = availableStateModes.length ? stateMode : null;
     const completeProfileSheetSuccess = () => {
       setProfile("");
       setLabel("");
@@ -489,13 +488,14 @@ export function ProfilesPanel({
       setOauthEvents([]);
       setOauthError("");
       addProfileOAuthMutation.mutate(
-        {
+        buildProfileMutationRequest({
           tool,
-          profile,
-          label: label || null,
-          stateMode: nextStateMode,
-          credentialBackend: resolveCredentialBackendRequest(credentialBackend),
-        },
+          profileName: profile,
+          profileLabel: label,
+          selectedStateMode: stateMode,
+          availableStateModes,
+          credentialBackend,
+        }),
         {
           onSuccess: completeProfileSheetSuccess,
           onError: (error) => {
@@ -513,11 +513,14 @@ export function ProfilesPanel({
       }
       void apiKeyProfileAction
         .submit({
-          tool,
-          profile,
-          label: label || null,
-          stateMode: availableStateModes.length ? stateMode : null,
-          credentialBackend: resolveCredentialBackendRequest(credentialBackend),
+          ...buildProfileMutationRequest({
+            tool,
+            profileName: profile,
+            profileLabel: label,
+            selectedStateMode: stateMode,
+            availableStateModes,
+            credentialBackend,
+          }),
           importMode: { kind: "api_key", value: apiKey },
         })
         .then(completeProfileSheetSuccess)
@@ -532,11 +535,14 @@ export function ProfilesPanel({
 
     addProfileMutation.mutate(
       {
-        tool,
-        profile,
-        label: label || null,
-        stateMode: availableStateModes.length ? stateMode : null,
-        credentialBackend: resolveCredentialBackendRequest(credentialBackend),
+        ...buildProfileMutationRequest({
+          tool,
+          profileName: profile,
+          profileLabel: label,
+          selectedStateMode: stateMode,
+          availableStateModes,
+          credentialBackend,
+        }),
         importMode,
       },
       {

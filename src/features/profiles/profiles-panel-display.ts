@@ -49,6 +49,7 @@ import {
   PROFILE_IMPORT_MODES,
   DEFAULT_PROFILE_CREDENTIAL_BACKEND,
   DEFAULT_PROFILE_IMPORT_MODE,
+  resolveCredentialBackendRequest,
   type ExplicitProfileCredentialBackend,
   type ProfileCredentialBackend,
   type ProfileImportMode,
@@ -644,6 +645,23 @@ export function buildProfileActivationRequest(input: {
     profile: input.profileName,
     stateMode: input.availableStateModes.length ? input.selectedStateMode : null,
     label: input.profileLabel,
+  };
+}
+
+export function buildProfileMutationRequest(input: {
+  tool: SupportedTool;
+  profileName: string;
+  profileLabel: string;
+  selectedStateMode: string;
+  availableStateModes: readonly string[];
+  credentialBackend: ProfileCredentialBackend;
+}) {
+  return {
+    tool: input.tool,
+    profile: input.profileName,
+    label: input.profileLabel || null,
+    stateMode: input.availableStateModes.length ? input.selectedStateMode : null,
+    credentialBackend: resolveCredentialBackendRequest(input.credentialBackend),
   };
 }
 

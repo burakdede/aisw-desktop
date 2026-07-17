@@ -10,6 +10,7 @@ import { makeToolStatus } from "../../test-support/runtime-tool-statuses";
 import {
   buildProfileInspectAriaLabel,
   buildProfileActivationRequest,
+  buildProfileMutationRequest,
   buildInventoryProfiles,
   buildProfileActionMenu,
   buildProfileEditSheetState,
@@ -464,6 +465,40 @@ describe("profiles-panel-display", () => {
       profile: "work",
       stateMode: null,
       label: "Work Laptop",
+    });
+
+    expect(
+      buildProfileMutationRequest({
+        tool: "claude",
+        profileName: "work",
+        profileLabel: "",
+        selectedStateMode: "shared",
+        availableStateModes: ["isolated", "shared"],
+        credentialBackend: "auto",
+      }),
+    ).toEqual({
+      tool: "claude",
+      profile: "work",
+      label: null,
+      stateMode: "shared",
+      credentialBackend: null,
+    });
+
+    expect(
+      buildProfileMutationRequest({
+        tool: "gemini",
+        profileName: "work",
+        profileLabel: "Work Laptop",
+        selectedStateMode: "shared",
+        availableStateModes: [],
+        credentialBackend: "file",
+      }),
+    ).toEqual({
+      tool: "gemini",
+      profile: "work",
+      label: "Work Laptop",
+      stateMode: null,
+      credentialBackend: "file",
     });
 
     expect(
