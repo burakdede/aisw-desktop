@@ -23,26 +23,27 @@ const SERVER_READY_TIMEOUT_MS = 30_000;
 const SERVER_READY_POLL_MS = 250;
 const GIF_FPS = 18;
 const GIF_LOOP = "0";
-const OVERLAY_BOTTOM_OFFSET_PX = 34;
-const OVERLAY_CARD_SIZE = { width: 360, height: 84 };
+const OVERLAY_BOTTOM_OFFSET_PX = 28;
+const OVERLAY_CARD_SIZE = { width: 420, height: 96 };
 const OVERLAY_CARD_FRAME = {
   left: 4,
-  top: 8,
-  right: 356,
-  bottom: 80,
-  radius: 24,
+  top: 4,
+  right: 416,
+  bottom: 92,
+  radius: 28,
 };
 const OVERLAY_SHADOW_FRAME = {
-  left: 12,
-  top: 18,
-  right: 348,
-  bottom: 82,
-  radius: 24,
+  left: 10,
+  top: 14,
+  right: 410,
+  bottom: 94,
+  radius: 28,
 };
 const OVERLAY_TITLE = {
   font: "/System/Library/Fonts/SFNSRounded.ttf",
-  pointSize: 32,
-  offsetY: 2,
+  pointSize: 36,
+  weight: "700",
+  offsetY: 0,
   color: "#ffffff",
 };
 const OVERLAY_DETAIL = {
@@ -53,9 +54,9 @@ const OVERLAY_DETAIL = {
   interlineSpacing: 3,
 };
 const OVERLAY_CARD_COLORS = {
-  fill: "rgba(10,16,27,0.97)",
-  shadow: "rgba(7,13,24,0.28)",
-  stroke: "rgba(139,180,255,0.32)",
+  fill: "rgba(9,14,24,0.98)",
+  shadow: "rgba(4,8,14,0.32)",
+  stroke: "rgba(255,255,255,0.14)",
   strokeWidth: "2",
 };
 const QUICK_SWITCH_CAPTURE = {
@@ -200,7 +201,7 @@ async function captureQuickSwitchGif(browser) {
     videoPath,
     path.join(mediaDir, "desktop-quick-switch.gif"),
     {
-      title: "Quick Switch",
+      title: "Quick switch",
       trimStartSeconds: QUICK_SWITCH_CAPTURE.trimStartSeconds,
     },
   );
@@ -225,7 +226,7 @@ async function captureWorkspaceSwitchGif(browser) {
     videoPath,
     path.join(mediaDir, "desktop-workspace-switch.gif"),
     {
-      title: "Switch Set",
+      title: "Use project set",
       trimStartSeconds: WORKSPACE_SWITCH_CAPTURE.trimStartSeconds,
     },
   );
@@ -355,6 +356,8 @@ async function renderOverlayCard(pngPath, { title, detail }) {
     `roundrectangle ${OVERLAY_CARD_FRAME.left},${OVERLAY_CARD_FRAME.top} ${OVERLAY_CARD_FRAME.right},${OVERLAY_CARD_FRAME.bottom} ${OVERLAY_CARD_FRAME.radius},${OVERLAY_CARD_FRAME.radius}`,
     "-font",
     OVERLAY_TITLE.font,
+    "-weight",
+    OVERLAY_TITLE.weight,
     "-fill",
     OVERLAY_TITLE.color,
     "-pointsize",
