@@ -15,6 +15,9 @@ const TOOL_METADATA: Record<
   {
     apiKeyEnvVar: string;
     binaryName: string;
+    credentialBackends: readonly string[];
+    defaultAuthMethods: readonly string[];
+    defaultStateModes: readonly string[];
     displayName: string;
     installCommand: string;
     installGuideUrl: string;
@@ -26,6 +29,9 @@ const TOOL_METADATA: Record<
   claude: {
     apiKeyEnvVar: "ANTHROPIC_API_KEY",
     binaryName: "claude",
+    credentialBackends: ["file", "system_keyring"],
+    defaultAuthMethods: ["oauth", "api_key", "from_env", "from_live"],
+    defaultStateModes: ["isolated", "shared"],
     displayName: "Claude Code",
     installCommand: "npm install -g @anthropic-ai/claude-code",
     installGuideUrl: "https://www.npmjs.com/package/@anthropic-ai/claude-code",
@@ -36,6 +42,9 @@ const TOOL_METADATA: Record<
   codex: {
     apiKeyEnvVar: "OPENAI_API_KEY",
     binaryName: "codex",
+    credentialBackends: ["file", "system_keyring"],
+    defaultAuthMethods: ["oauth", "api_key", "from_env", "from_live"],
+    defaultStateModes: ["isolated", "shared"],
     displayName: "Codex CLI",
     installCommand: "npm install -g @openai/codex",
     installGuideUrl: "https://www.npmjs.com/package/@openai/codex",
@@ -46,6 +55,9 @@ const TOOL_METADATA: Record<
   gemini: {
     apiKeyEnvVar: "GEMINI_API_KEY",
     binaryName: "gemini",
+    credentialBackends: ["file"],
+    defaultAuthMethods: ["oauth", "api_key", "from_env", "from_live"],
+    defaultStateModes: ["isolated"],
     displayName: "Gemini CLI",
     installCommand: "npm install -g @google/gemini-cli",
     installGuideUrl: "https://www.npmjs.com/package/@google/gemini-cli",
@@ -56,6 +68,9 @@ const TOOL_METADATA: Record<
   antigravity: {
     apiKeyEnvVar: DEFAULT_TOOL_API_KEY_ENV_VAR,
     binaryName: "agy",
+    credentialBackends: ["file", "system_keyring"],
+    defaultAuthMethods: ["oauth", "from_live"],
+    defaultStateModes: [],
     displayName: "Antigravity CLI",
     installCommand: "install agy",
     installGuideUrl: DEFAULT_INSTALL_GUIDE_URL,
@@ -108,4 +123,16 @@ export function toolSupportsEditableStateModes(tool: string) {
 
 export function toolSupportsSystemKeyringCredentials(tool: string) {
   return toolMetadata(tool)?.supportsSystemKeyringCredentials ?? true;
+}
+
+export function toolDefaultAuthMethods(tool: string) {
+  return [...(toolMetadata(tool)?.defaultAuthMethods ?? [])];
+}
+
+export function toolDefaultStateModes(tool: string) {
+  return [...(toolMetadata(tool)?.defaultStateModes ?? [])];
+}
+
+export function toolDefaultCredentialBackends(tool: string) {
+  return [...(toolMetadata(tool)?.credentialBackends ?? [])];
 }

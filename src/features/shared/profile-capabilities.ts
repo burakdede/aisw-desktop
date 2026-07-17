@@ -4,7 +4,12 @@ import {
   normalizeCredentialBackend as normalizeCredentialBackendValue,
 } from "../../lib/credential-backends";
 import { isOneOf } from "../../lib/parse-guards";
-import { toolSupportsSystemKeyringCredentials } from "../../lib/tool-registry";
+import {
+  canonicalToolId,
+  toolDefaultAuthMethods,
+  toolDefaultCredentialBackends,
+  toolSupportsSystemKeyringCredentials,
+} from "../../lib/tool-registry";
 
 const PROFILE_IMPORT_MODE_DEFINITIONS = [
   { id: "from_live" },
@@ -39,14 +44,15 @@ export function supportedProfileImportModes(
   tool: string,
   toolCapabilities: ToolCapabilities,
 ): ProfileImportMode[] {
-  const configured = toolCapabilities[tool]?.auth_methods ?? [];
+  const configured = resolveToolCapability(tool, toolCapabilities)?.auth_methods ?? [];
   const normalized = dedupeNormalizedValues(configured, normalizeImportMode);
 
   if (normalized.length) {
     return normalized;
   }
 
-  return [...PROFILE_IMPORT_MODES];
+  const fallback = dedupeNormalizedValues(toolDefaultAuthMethods(tool), normalizeImportMode);
+  return fallback.length ? fallback : [...PROFILE_IMPORT_MODES];
 }
 
 export function supportsProfileImportMode(
@@ -73,7 +79,7 @@ export function supportedCredentialBackends(
   tool: string,
   toolCapabilities: ToolCapabilities,
 ): ProfileCredentialBackend[] {
-  const configured = toolCapabilities[tool]?.credential_backends ?? [];
+  const configured = resolveToolCapability(tool, toolCapabilities)?.credential_backends ?? [];
   const normalized = dedupeNormalizedValues(configured, normalizeCredentialBackend);
 
   if (normalized.length === 1) {
@@ -88,7 +94,15 @@ export function supportedCredentialBackends(
     return ["file"];
   }
 
-  return [...PROFILE_CREDENTIAL_BACKENDS];
+  const fallback = dedupeNormalizedValues(
+    toolDefaultCredentialBackends(tool),
+    normalizeCredentialBackend,
+  );
+  return fallback.length > 1
+    ? [DEFAULT_PROFILE_CREDENTIAL_BACKEND, ...fallback]
+    : fallback.length === 1
+      ? fallback
+      : [...PROFILE_CREDENTIAL_BACKENDS];
 }
 
 export function resolveCredentialBackendRequest(backend: ProfileCredentialBackend): string | null {
@@ -124,4 +138,11 @@ function dedupeNormalizedValues<InputValue, OutputValue extends string>(
     }
   });
   return normalized;
+}
+
+function resolveToolCapability(
+  tool: string,
+  toolCapabilities: ToolCapabilities,
+) {
+  return toolCapabilities[tool] ?? toolCapabilities[canonicalToolId(tool)];
 }

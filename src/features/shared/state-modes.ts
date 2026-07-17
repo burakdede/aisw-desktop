@@ -1,6 +1,7 @@
 import { AppBootstrap, AppSnapshot } from "../../lib/schemas";
 import { isOneOf, nullishToNull } from "../../lib/parse-guards";
 import { toolDisplayName } from "../../lib/tool-display";
+import { canonicalToolId, toolDefaultStateModes } from "../../lib/tool-registry";
 import { titleCase } from "../../lib/utils";
 
 const EDITABLE_STATE_MODE_DEFINITIONS = [
@@ -53,9 +54,9 @@ export function supportedStateModes(
   tool: string,
   toolCapabilities: NonNullable<AppBootstrap["runtime_status"]["capabilities"]>["tools"],
 ) {
-  const capability = toolCapabilities[tool];
+  const capability = toolCapabilities[tool] ?? toolCapabilities[canonicalToolId(tool)];
   if (!capability) {
-    return [...EDITABLE_STATE_MODES];
+    return dedupeEditableStateModes(toolDefaultStateModes(tool));
   }
 
   const configured = capability.state_modes ?? [];
@@ -63,6 +64,12 @@ export function supportedStateModes(
     return [];
   }
 
+  return dedupeEditableStateModes(configured);
+}
+
+function dedupeEditableStateModes(
+  configured: readonly string[],
+) {
   const normalized: EditableStateMode[] = [];
   configured.forEach((mode) => {
     if (isEditableStateMode(mode) && !normalized.includes(mode)) {

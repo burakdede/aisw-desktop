@@ -46,11 +46,19 @@ describe("state-modes", () => {
         state_modes: [],
         credential_backends: [],
       },
+      agy: {
+        auth_methods: [],
+        state_modes: [],
+        credential_backends: [],
+      },
     });
 
     expect(supportedStateModes("claude", toolCapabilities)).toEqual(["shared", "isolated"]);
     expect(supportedStateModes("gemini", toolCapabilities)).toEqual(["isolated"]);
     expect(supportedStateModes("antigravity", toolCapabilities)).toEqual([]);
+    expect(supportedStateModes("codex", {} as ToolCapabilities)).toEqual(["isolated", "shared"]);
+    expect(supportedStateModes("gemini", {} as ToolCapabilities)).toEqual(["isolated"]);
+    expect(supportedStateModes("antigravity", {} as ToolCapabilities)).toEqual([]);
     expect(isEditableStateMode("shared")).toBe(true);
     expect(isEditableStateMode("portable")).toBe(false);
     expect(resolvePreferredEditableStateMode(["shared", "isolated"], "shared")).toBe("shared");

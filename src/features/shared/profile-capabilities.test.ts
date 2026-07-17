@@ -28,9 +28,17 @@ describe("profile-capabilities", () => {
         auth_methods: ["oauth", "from_live", "oauth", "unknown"],
         state_modes: [],
       },
+      agy: {
+        auth_methods: ["oauth", "from_live"],
+        state_modes: [],
+      },
     });
 
     expect(supportedProfileImportModes("claude", toolCapabilities)).toEqual([
+      "oauth",
+      "from_live",
+    ]);
+    expect(supportedProfileImportModes("antigravity", toolCapabilities)).toEqual([
       "oauth",
       "from_live",
     ]);
@@ -38,6 +46,16 @@ describe("profile-capabilities", () => {
       DEFAULT_PROFILE_IMPORT_MODE,
     );
     expect(preferredProfileImportMode("claude", toolCapabilities, "api_key")).toBe("oauth");
+    expect(supportedProfileImportModes("gemini", {} as ToolCapabilities)).toEqual([
+      "oauth",
+      "api_key",
+      "from_env",
+      "from_live",
+    ]);
+    expect(supportedProfileImportModes("antigravity", {} as ToolCapabilities)).toEqual([
+      "oauth",
+      "from_live",
+    ]);
   });
 
   it("normalizes supported credential backends and request values", () => {
@@ -52,6 +70,11 @@ describe("profile-capabilities", () => {
         state_modes: [],
         credential_backends: [],
       },
+      agy: {
+        auth_methods: [],
+        state_modes: [],
+        credential_backends: ["system_keyring", "file"],
+      },
     });
 
     expect(supportedCredentialBackends("claude", toolCapabilities)).toEqual([
@@ -60,6 +83,16 @@ describe("profile-capabilities", () => {
       "file",
     ]);
     expect(supportedCredentialBackends("gemini", toolCapabilities)).toEqual(["file"]);
+    expect(supportedCredentialBackends("antigravity", toolCapabilities)).toEqual([
+      DEFAULT_PROFILE_CREDENTIAL_BACKEND,
+      "file",
+      "system-keyring",
+    ]);
+    expect(supportedCredentialBackends("codex", {} as ToolCapabilities)).toEqual([
+      DEFAULT_PROFILE_CREDENTIAL_BACKEND,
+      "file",
+      "system-keyring",
+    ]);
     expect(resolveCredentialBackendRequest(DEFAULT_PROFILE_CREDENTIAL_BACKEND)).toBeNull();
     expect(resolveCredentialBackendRequest("file")).toBe("file");
   });
