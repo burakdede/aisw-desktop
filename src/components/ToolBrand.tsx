@@ -7,12 +7,19 @@ import {
   type SupportedTool,
 } from "../lib/tool-registry";
 
+export const TOOL_BRAND_LOGO_SIZES = {
+  compact: 15,
+  inline: 16,
+  section: 18,
+  prominent: 20,
+} as const;
+
 export function ToolBrand({
   tool,
   className,
   logoClassName,
   nameClassName,
-  logoSize = 20,
+  logoSize = TOOL_BRAND_LOGO_SIZES.prominent,
   shortName = false,
 }: {
   tool: string;
@@ -32,7 +39,7 @@ export function ToolBrand({
 
 export function ToolLogo({
   tool,
-  size = 20,
+  size = TOOL_BRAND_LOGO_SIZES.prominent,
   className,
 }: {
   tool: string;

@@ -1,13 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
 import { DIALOG_FOCUS_SELECTORS, DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SearchField } from "../../../components/SearchField";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
-import { ToolBrand } from "../../../components/ToolBrand";
+import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { listBackups, openAppDataFolder } from "../../../lib/client";
 import {
@@ -207,7 +206,6 @@ export function BackupsPanel({
           anchorRef={toolbarMenuAnchorRef}
           containerClassName="backups-toolbar-menu-wrap"
           triggerClassName="icon-button"
-          triggerContent={<SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />}
           triggerAriaLabel={BACKUPS_PANEL_COPY.toolbarMenuMoreAriaLabel}
           menuAriaLabel={BACKUPS_PANEL_COPY.toolbarMenuAriaLabel}
           items={[
@@ -282,7 +280,12 @@ export function BackupsPanel({
                       >
                         <span title={createdDetail}>{createdLabel}</span>
                         <span>
-                          <ToolBrand tool={target.tool} className="tool-brand-compact" logoSize={16} shortName />
+                          <ToolBrand
+                            tool={target.tool}
+                            className="tool-brand-compact"
+                            logoSize={TOOL_BRAND_LOGO_SIZES.inline}
+                            shortName
+                          />
                         </span>
                         <span>{profileLabel}</span>
                         <span className="backups-table-reason">{reasonLabel}</span>
@@ -337,7 +340,6 @@ export function BackupsPanel({
                       align="start"
                       containerClassName="backups-toolbar-menu-wrap"
                       triggerClassName="icon-button"
-                      triggerContent={<SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />}
                       triggerAriaLabel={BACKUPS_PANEL_COPY.inspector.menuAriaLabel}
                       menuAriaLabel={BACKUPS_PANEL_COPY.inspector.menuAriaLabel}
                       containmentSelector=".backups-inspector-surface"
@@ -461,7 +463,7 @@ export function BackupsPanel({
                   <ToolBrand
                     tool={restoreSheet.target.tool}
                     className="tool-brand-inline"
-                    logoSize={16}
+                    logoSize={TOOL_BRAND_LOGO_SIZES.inline}
                   />
                 ),
               },

@@ -1,6 +1,6 @@
 import { DIALOG_FOCUS_SELECTORS, DialogSurface } from "./DialogSurface";
 import { SheetHeader } from "./SheetHeader";
-import { ToolBrand } from "./ToolBrand";
+import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "./ToolBrand";
 import {
   HELP_SHEET_ACTIONS,
   HELP_SHEET_COPY,
@@ -61,7 +61,12 @@ export function HelpSheet({
           </div>
           <div className="tool-brand-list" aria-label={HELP_SHEET_COPY.supportedToolsAriaLabel}>
             {HELP_SHEET_SUPPORTED_TOOLS.map((tool) => (
-              <ToolBrand key={tool} tool={tool} className="tool-brand-inline" logoSize={18} />
+              <ToolBrand
+                key={tool}
+                tool={tool}
+                className="tool-brand-inline"
+                logoSize={TOOL_BRAND_LOGO_SIZES.section}
+              />
             ))}
           </div>
           <p className="inline-note">{HELP_SHEET_COPY.supportedToolsPrimaryNote}</p>

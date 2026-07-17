@@ -15,7 +15,7 @@ import { SearchField } from "../../../components/SearchField";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
-import { ToolBrand } from "../../../components/ToolBrand";
+import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import {
   AppBootstrap,
@@ -686,7 +686,12 @@ export function ProfilesPanel({
               entry === "all" ? (
                 "All"
               ) : (
-                <ToolBrand tool={entry} className="tool-brand-inline" logoSize={15} shortName />
+                <ToolBrand
+                  tool={entry}
+                  className="tool-brand-inline"
+                  logoSize={TOOL_BRAND_LOGO_SIZES.compact}
+                  shortName
+                />
               ),
           }))}
           value={inventoryFilter}
@@ -757,7 +762,7 @@ export function ProfilesPanel({
                         <ToolBrand
                           tool={inventoryEntry.tool}
                           className="tool-brand-compact"
-                          logoSize={16}
+                          logoSize={TOOL_BRAND_LOGO_SIZES.inline}
                           shortName
                         />
                       </span>
@@ -827,7 +832,12 @@ export function ProfilesPanel({
                     ) : null}
                     <h3 className="profiles-inspector-heading">
                       <span aria-hidden="true">
-                        <ToolBrand tool={tool} className="tool-brand-inline" logoSize={18} shortName />
+                        <ToolBrand
+                          tool={tool}
+                          className="tool-brand-inline"
+                          logoSize={TOOL_BRAND_LOGO_SIZES.section}
+                          shortName
+                        />
                       </span>
                       <span>{selectedProfileDisplay}</span>
                     </h3>

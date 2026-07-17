@@ -5,7 +5,7 @@ import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SplitView } from "../../../components/SplitView";
-import { ToolBrand } from "../../../components/ToolBrand";
+import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { getProjectBindings, getWorkspaceStatus } from "../../../lib/client";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
@@ -906,7 +906,11 @@ export function SetsPanel({
               </label>
               {TOOLS.map((tool) => (
                 <label key={tool}>
-                  <ToolBrand tool={tool} className="tool-brand-inline" logoSize={16} />
+                  <ToolBrand
+                    tool={tool}
+                    className="tool-brand-inline"
+                    logoSize={TOOL_BRAND_LOGO_SIZES.inline}
+                  />
                   <select
                     value={setDraft.profiles[tool] ?? ""}
                     onChange={(event) =>
@@ -1088,7 +1092,11 @@ function SetInspectorDetailList({
         >
           <span className="sets-detail-key">
             {row.kind === "tool" ? (
-              <ToolBrand tool={row.tool} className="tool-brand-inline" logoSize={16} />
+              <ToolBrand
+                tool={row.tool}
+                className="tool-brand-inline"
+                logoSize={TOOL_BRAND_LOGO_SIZES.inline}
+              />
             ) : (
               row.label
             )}

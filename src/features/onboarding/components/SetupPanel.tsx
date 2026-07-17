@@ -4,7 +4,7 @@ import { DIALOG_FOCUS_SELECTORS, DialogSurface } from "../../../components/Dialo
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SourceListPanel } from "../../../components/SourceListPanel";
 import { SplitView } from "../../../components/SplitView";
-import { ToolBrand } from "../../../components/ToolBrand";
+import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "../../../components/ToolBrand";
 import { getShellGuidance, runDoctor, updateSettings } from "../../../lib/client";
 import { buildBundledRuntimeSettingsUpdate } from "../../../lib/desktop-settings";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
@@ -324,7 +324,7 @@ export function SetupPanel({
                                   key={tool}
                                   tool={tool}
                                   className="tool-brand-inline"
-                                  logoSize={15}
+                                  logoSize={TOOL_BRAND_LOGO_SIZES.compact}
                                 />
                               ))}
                             </span>
@@ -523,7 +523,11 @@ export function SetupPanel({
                                 >
                                   <div className="onboarding-account-row-main">
                                     <strong>
-                                      <ToolBrand tool={tool} className="tool-brand-inline" logoSize={16} />
+                                      <ToolBrand
+                                        tool={tool}
+                                        className="tool-brand-inline"
+                                        logoSize={TOOL_BRAND_LOGO_SIZES.inline}
+                                      />
                                     </strong>
                                     <p className="inline-note">{summary}</p>
                                   </div>
@@ -659,7 +663,11 @@ export function SetupPanel({
                     return (
                       <div key={status.tool} className="onboarding-complete-cell">
                         <span className="overview-current-set-cell-label">
-                          <ToolBrand tool={status.tool} className="tool-brand-inline" logoSize={15} />
+                          <ToolBrand
+                            tool={status.tool}
+                            className="tool-brand-inline"
+                            logoSize={TOOL_BRAND_LOGO_SIZES.compact}
+                          />
                         </span>
                         <strong>{completion.state}</strong>
                         <p className="inline-note">{completion.detail}</p>
@@ -720,7 +728,12 @@ export function SetupPanel({
             title={
               <>
                 {ONBOARDING_IMPORT_DIALOG_COPY.headingPrefix}{" "}
-                <ToolBrand tool={pendingLiveImport.tool} className="tool-brand-inline" logoSize={18} shortName />{" "}
+                <ToolBrand
+                  tool={pendingLiveImport.tool}
+                  className="tool-brand-inline"
+                  logoSize={TOOL_BRAND_LOGO_SIZES.section}
+                  shortName
+                />{" "}
                 {ONBOARDING_IMPORT_DIALOG_COPY.headingSuffix}
               </>
             }
@@ -828,7 +841,11 @@ function OnboardingAccountDetailCard({
           <p className="card-kicker">{state.kicker}</p>
           <h3>
             {state.headingKind === "brand" ? (
-              <ToolBrand tool={state.tool} className="tool-brand-heading" logoSize={18} />
+              <ToolBrand
+                tool={state.tool}
+                className="tool-brand-heading"
+                logoSize={TOOL_BRAND_LOGO_SIZES.section}
+              />
             ) : (
               state.headingText
             )}
@@ -838,7 +855,11 @@ function OnboardingAccountDetailCard({
       </div>
       {state.kind === "missing" ? (
         <p className="inline-note">
-          <ToolBrand tool={state.tool} className="tool-brand-inline" logoSize={16} />
+          <ToolBrand
+            tool={state.tool}
+            className="tool-brand-inline"
+            logoSize={TOOL_BRAND_LOGO_SIZES.inline}
+          />
         </p>
       ) : null}
       <div className="onboarding-account-summary">

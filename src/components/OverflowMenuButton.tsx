@@ -1,4 +1,5 @@
 import type { MutableRefObject, ReactNode } from "react";
+import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
 import { AnchoredMenu } from "./AnchoredMenu";
 import { cn } from "../lib/utils";
 
@@ -11,6 +12,12 @@ export type OverflowMenuItem = {
   separated?: boolean;
 };
 
+export const OVERFLOW_MENU_ICON_SIZE = 16;
+
+export function OverflowMenuIcon() {
+  return <SFEllipsisCircle aria-hidden="true" focusable="false" size={OVERFLOW_MENU_ICON_SIZE} />;
+}
+
 export function OverflowMenuButton({
   open,
   anchorRef,
@@ -19,7 +26,7 @@ export function OverflowMenuButton({
   triggerAriaLabel,
   triggerClassName,
   containerClassName,
-  triggerContent = "•••",
+  triggerContent = <OverflowMenuIcon />,
   menuAriaLabel,
   items,
   containmentSelector,

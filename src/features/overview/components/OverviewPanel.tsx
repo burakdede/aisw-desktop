@@ -1,8 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
-import { ToolBrand } from "../../../components/ToolBrand";
+import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import { credentialBackendLabel as formatCredentialBackendLabel } from "../../../lib/credential-backends";
@@ -237,7 +236,11 @@ export function OverviewPanel({
                       </span>
                     </div>
                     <div className="overview-tool-list-cell overview-tool-list-cell-main">
-                      <ToolBrand tool={status.tool} className="tool-brand-inline" logoSize={18} />
+                      <ToolBrand
+                        tool={status.tool}
+                        className="tool-brand-inline"
+                        logoSize={TOOL_BRAND_LOGO_SIZES.section}
+                      />
                     </div>
                     <span className="overview-tool-list-profile">{activeProfileLabel}</span>
                     <span className={`overview-tool-list-status overview-tool-list-status-${state}`}>
@@ -513,7 +516,11 @@ function ToolInspector({
             </button>
           ) : null}
           <h3>
-            <ToolBrand tool={status.tool} className="tool-brand-heading" logoSize={20} />
+            <ToolBrand
+              tool={status.tool}
+              className="tool-brand-heading"
+              logoSize={TOOL_BRAND_LOGO_SIZES.prominent}
+            />
           </h3>
           <p className="inline-note">{inspector.summaryLabel}</p>
         </div>
@@ -641,7 +648,6 @@ function ToolInspector({
               align="start"
               containerClassName="overview-actions-menu-wrap"
               triggerClassName="icon-button"
-              triggerContent={<SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />}
               triggerAriaLabel={OVERVIEW_MORE_ACTIONS_LABEL}
               menuAriaLabel={OVERVIEW_PANEL_COPY.actionsMenuAriaLabel}
               boundaryAttribute={OVERVIEW_ACTIONS_BOUNDARY_ATTRIBUTE}

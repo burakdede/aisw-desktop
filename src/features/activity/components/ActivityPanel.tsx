@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { SFEllipsisCircle } from "sf-symbols-lib/monochrome/SFEllipsisCircle";
 import { DIALOG_FOCUS_SELECTORS, DialogSurface } from "../../../components/DialogSurface";
 import { KeyValueGrid } from "../../../components/KeyValueGrid";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
@@ -8,7 +7,7 @@ import { SearchField } from "../../../components/SearchField";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
-import { ToolBrand } from "../../../components/ToolBrand";
+import { TOOL_BRAND_LOGO_SIZES, ToolBrand } from "../../../components/ToolBrand";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import { exportActivityLog } from "../../../lib/client";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
@@ -181,7 +180,6 @@ export function ActivityPanel({
           anchorRef={menuAnchorRef}
           containerClassName="activity-toolbar-menu-wrap"
           triggerClassName="icon-button"
-          triggerContent={<SFEllipsisCircle aria-hidden="true" focusable="false" size={16} />}
           triggerAriaLabel={ACTIVITY_TOOLBAR_COPY.menuAriaLabel}
           menuAriaLabel={ACTIVITY_TOOLBAR_COPY.menuLabel}
           items={[
@@ -296,7 +294,7 @@ export function ActivityPanel({
                           <ToolBrand
                             tool={selectedEntryScope.brandTool}
                             className="tool-brand-inline"
-                            logoSize={16}
+                            logoSize={TOOL_BRAND_LOGO_SIZES.inline}
                           />
                         ) : (
                           selectedEntryScope?.value ?? ""
