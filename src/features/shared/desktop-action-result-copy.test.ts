@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DesktopCommandError } from "../../lib/tauri";
 import {
   activatedSavedSetMessage,
   activatedSetMessage,
@@ -14,6 +15,8 @@ import {
   switchedWorkspaceTargetMessage,
   switchProfileMessage,
   updatedProjectRuleGuardMessage,
+  workspaceTargetFailureNotification,
+  workspaceTargetSuccessNotification,
 } from "./desktop-action-result-copy";
 
 describe("desktop-action-result-copy", () => {
@@ -61,5 +64,33 @@ describe("desktop-action-result-copy", () => {
     expect(switchedWorkspaceTargetMessage("Daily", "~/project")).toBe(
       "Switched to Daily for ~/project.",
     );
+  });
+
+  it("builds shared workspace-target notification payloads", () => {
+    expect(
+      workspaceTargetSuccessNotification("Switched to Daily for ~/project."),
+    ).toEqual({
+      title: "Project switch",
+      body: "Switched to Daily for ~/project.",
+    });
+
+    expect(
+      workspaceTargetFailureNotification(
+        new DesktopCommandError("Context mismatch", {
+          remediation: "Re-apply the expected set.",
+        }),
+        "Use expected project set failed.",
+      ),
+    ).toEqual({
+      title: "Project switch",
+      body: "Context mismatch Re-apply the expected set.",
+    });
+
+    expect(
+      workspaceTargetFailureNotification(null, "Use expected project set failed."),
+    ).toEqual({
+      title: "Project switch",
+      body: "Use expected project set failed.",
+    });
   });
 });

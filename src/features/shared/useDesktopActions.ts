@@ -19,7 +19,6 @@ import {
   workspaceUnbind,
 } from "../../lib/client";
 import type { AddProfileInput } from "../../lib/client";
-import { DesktopCommandError } from "../../lib/tauri";
 import { notifyDesktop } from "../../lib/notifications";
 import { DESKTOP_QUERY_KEYS } from "../../lib/desktop-query-keys";
 import {
@@ -49,6 +48,8 @@ import {
   switchedWorkspaceTargetMessage,
   switchProfileMessage,
   updatedProjectRuleGuardMessage,
+  workspaceTargetFailureNotification,
+  workspaceTargetSuccessNotification,
 } from "./desktop-action-result-copy";
 import { enqueueMutation, useMutationQueueState } from "./mutationQueue";
 import { invalidatePostMutationQueries } from "./postMutationRefresh";
@@ -168,10 +169,7 @@ export function useDesktopActions() {
           message,
         }),
       );
-      await notifyDesktop({
-        title: DESKTOP_ACTION_RESULT_COPY.fallbackMessages.projectSwitchTitle,
-        body: message,
-      });
+      await notifyDesktop(workspaceTargetSuccessNotification(message));
       await invalidate();
       return result;
     } catch (error) {
@@ -182,15 +180,9 @@ export function useDesktopActions() {
           fallbackMessage: desktopActionFailureMessage(label),
         }),
       );
-      const resolved =
-        error instanceof Error ? error : new Error(desktopActionFailureMessage(label));
-      await notifyDesktop({
-        title: DESKTOP_ACTION_RESULT_COPY.fallbackMessages.projectSwitchTitle,
-        body:
-          resolved instanceof DesktopCommandError && resolved.remediation
-            ? `${resolved.message} ${resolved.remediation}`
-            : resolved.message,
-      });
+      await notifyDesktop(
+        workspaceTargetFailureNotification(error, desktopActionFailureMessage(label)),
+      );
       throw error;
     }
   };

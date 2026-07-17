@@ -1,3 +1,5 @@
+import { resolveErrorDetails } from "../../lib/error-details";
+import { formatMessageWithRemediation } from "../../lib/remediation-text";
 import { titleCase } from "../../lib/utils";
 
 export const DESKTOP_ACTION_RESULT_COPY = {
@@ -80,4 +82,24 @@ export function switchedWorkspaceTargetMessage(
   matchedTarget: string,
 ) {
   return `Switched to ${targetLabel} for ${matchedTarget}.`;
+}
+
+export function workspaceTargetSuccessNotification(message: string) {
+  return {
+    title: DESKTOP_ACTION_RESULT_COPY.fallbackMessages.projectSwitchTitle,
+    body: message,
+  };
+}
+
+export function workspaceTargetFailureNotification(
+  error: unknown,
+  fallbackMessage: string,
+) {
+  const details = resolveErrorDetails(error, fallbackMessage);
+  return {
+    title: DESKTOP_ACTION_RESULT_COPY.fallbackMessages.projectSwitchTitle,
+    body: formatMessageWithRemediation(details.message, details.remediation, {
+      prefix: "",
+    }),
+  };
 }
