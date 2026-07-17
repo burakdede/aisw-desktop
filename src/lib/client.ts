@@ -125,6 +125,15 @@ export interface WorkspaceUnbindInput {
   pattern?: string;
 }
 
+type StateModeRequestInput = {
+  stateMode?: string | null;
+};
+
+type ProfileMutationRequestInput = StateModeRequestInput & {
+  label?: string | null;
+  credentialBackend?: string | null;
+};
+
 async function invokeParsed<Schema extends ZodTypeAny>(
   command: DesktopCommandName,
   schema: Schema,
@@ -153,9 +162,7 @@ export async function addProfile(input: AddProfileInput): Promise<MutationRespon
       request: {
         tool: input.tool,
         profile: input.profile,
-        label: input.label ?? null,
-        state_mode: input.stateMode ?? null,
-        credential_backend: input.credentialBackend ?? null,
+        ...buildProfileMutationRequest(input),
         import_mode: input.importMode,
       },
     },
@@ -172,9 +179,7 @@ export async function addProfileOAuth(
       request: {
         tool: input.tool,
         profile: input.profile,
-        label: input.label ?? null,
-        state_mode: input.stateMode ?? null,
-        credential_backend: input.credentialBackend ?? null,
+        ...buildProfileMutationRequest(input),
       },
     },
   );
@@ -188,7 +193,7 @@ export async function useProfile(input: UseProfileInput): Promise<MutationRespon
       request: {
         tool: input.tool,
         profile: input.profile,
-        state_mode: input.stateMode ?? null,
+        ...buildStateModeRequest(input),
       },
     },
   );
@@ -203,7 +208,7 @@ export async function useAllProfiles(
     {
       request: {
         profile: input.profile,
-        state_mode: input.stateMode ?? null,
+        ...buildStateModeRequest(input),
       },
     },
   );
@@ -216,7 +221,7 @@ export async function useContext(input: UseContextInput): Promise<MutationRespon
     {
       request: {
         context: input.context,
-        state_mode: input.stateMode ?? null,
+        ...buildStateModeRequest(input),
       },
     },
   );
@@ -332,6 +337,20 @@ export async function setLaunchAtLogin(enabled: boolean): Promise<LaunchAtLoginS
     launchAtLoginStatusSchema,
     { enabled },
   );
+}
+
+function buildProfileMutationRequest(input: ProfileMutationRequestInput) {
+  return {
+    label: input.label ?? null,
+    credential_backend: input.credentialBackend ?? null,
+    ...buildStateModeRequest(input),
+  };
+}
+
+function buildStateModeRequest(input: StateModeRequestInput) {
+  return {
+    state_mode: input.stateMode ?? null,
+  };
 }
 
 export function parseOAuthProgressEvent(payload: unknown): OAuthProgressEvent {
