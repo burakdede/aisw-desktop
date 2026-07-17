@@ -29,6 +29,8 @@ import {
   findSelectedInventoryEntry,
   INVENTORY_FILTERS,
   inventoryKeyActionForEvent,
+  initialProfileSheetCredentialBackend,
+  initialProfileSheetImportMode,
   isDuplicateProfileName,
   latestBackupForProfile,
   nextInventorySelectionIndex,
@@ -239,6 +241,11 @@ describe("profiles-panel-display", () => {
   });
 
   it("shares profile panel selection, routing, keyboard, and submit-label policy", () => {
+    expect(initialProfileSheetImportMode(undefined)).toBe("from_live");
+    expect(initialProfileSheetImportMode("oauth")).toBe("oauth");
+    expect(initialProfileSheetCredentialBackend(null)).toBe("auto");
+    expect(initialProfileSheetCredentialBackend("file")).toBe("file");
+
     expect(buildProfileSheetDraftReset(null)).toEqual({
       credentialBackend: "auto",
       label: "",

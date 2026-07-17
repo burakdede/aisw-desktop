@@ -248,11 +248,23 @@ export function buildProfileSheetDraftReset(
   initialCredentialBackend: ProfileCredentialBackend | null | undefined,
 ) {
   return {
-    credentialBackend: initialCredentialBackend ?? DEFAULT_PROFILE_CREDENTIAL_BACKEND,
+    credentialBackend: initialProfileSheetCredentialBackend(initialCredentialBackend),
     label: "",
-    mode: DEFAULT_PROFILE_IMPORT_MODE,
+    mode: initialProfileSheetImportMode(),
     profile: "",
   };
+}
+
+export function initialProfileSheetImportMode(
+  initialMode?: ProfileImportMode,
+): ProfileImportMode {
+  return initialMode ?? DEFAULT_PROFILE_IMPORT_MODE;
+}
+
+export function initialProfileSheetCredentialBackend(
+  initialCredentialBackend: ProfileCredentialBackend | null | undefined,
+): ProfileCredentialBackend {
+  return initialCredentialBackend ?? DEFAULT_PROFILE_CREDENTIAL_BACKEND;
 }
 
 export function buildProfileInspectAriaLabel(tool: SupportedTool, label: string) {

@@ -116,6 +116,8 @@ import {
   INVENTORY_FILTERS,
   inventoryKeyActionForEvent,
   isDuplicateProfileName,
+  initialProfileSheetCredentialBackend,
+  initialProfileSheetImportMode,
   latestBackupForProfile,
   nextInventorySelectionIndex,
   normalizeInventoryFilter,
@@ -185,10 +187,10 @@ export function ProfilesPanel({
   const [profile, setProfile] = useState("");
   const [label, setLabel] = useState("");
   const [mode, setMode] = useState<ProfileImportMode>(
-    initialMode ?? DEFAULT_PROFILE_IMPORT_MODE,
+    initialProfileSheetImportMode(initialMode),
   );
   const [credentialBackend, setCredentialBackend] = useState<ProfileCredentialBackend>(
-    initialCredentialBackend ?? DEFAULT_PROFILE_CREDENTIAL_BACKEND,
+    initialProfileSheetCredentialBackend(initialCredentialBackend),
   );
   const [stateMode, setStateMode] = useState<string>(DEFAULT_EDITABLE_STATE_MODE);
   const [renameDrafts, setRenameDrafts] = useState<Record<string, string>>({});
@@ -364,7 +366,7 @@ export function ProfilesPanel({
   }, [availableImportModes, mode]);
 
   useEffect(() => {
-    const next = initialCredentialBackend ?? DEFAULT_PROFILE_CREDENTIAL_BACKEND;
+    const next = initialProfileSheetCredentialBackend(initialCredentialBackend);
     setCredentialBackend(next);
   }, [initialCredentialBackend]);
 
