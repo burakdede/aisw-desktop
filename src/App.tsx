@@ -129,17 +129,52 @@ export function App() {
     setActiveNav(APP_NAV_IDS.settings);
   }
 
+  function openOverview() {
+    setActiveNav(APP_NAV_IDS.overview);
+  }
+
   function openContexts() {
     setActiveNav(APP_NAV_IDS.sets);
   }
 
+  function openDiagnostics(options?: { refresh?: boolean }) {
+    setActiveNav(APP_NAV_IDS.diagnostics);
+    if (options?.refresh) {
+      invalidateDiagnostics();
+    }
+  }
+
+  function openActivity() {
+    setActiveNav(APP_NAV_IDS.activity);
+  }
+
+  function openBackups() {
+    setActiveNav(APP_NAV_IDS.backups);
+  }
+
+  function openProfiles(routeState: ProfilesRouteState = createProfilesRouteState()) {
+    setProfilesRouteState(routeState);
+    setActiveNav(APP_NAV_IDS.profiles);
+  }
+
+  function openProfileSetup(
+    routeState: Parameters<typeof createProfileSetupRouteState>[0] = {},
+  ) {
+    openProfiles(createProfileSetupRouteState(routeState));
+  }
+
+  function openImportCurrentLogin() {
+    openProfiles(createImportCurrentLoginRouteState());
+  }
+
   function selectNav(id: AppNavId) {
     if (id === APP_NAV_IDS.profiles) {
-      setProfilesRouteState(createProfilesRouteState());
+      openProfiles();
+      return;
     }
     if (id === APP_NAV_IDS.settings) {
-      setSettingsRouteState(createSettingsRouteState());
-      setRuntimeRecoveryOpen(true);
+      openSettings();
+      return;
     }
     setActiveNav(id);
   }
@@ -302,14 +337,11 @@ export function App() {
     const desktopEventHandlers: DesktopEventHandler[] = [
       {
         event: DESKTOP_TRAY_EVENTS.openDiagnostics,
-        handler: () => setActiveNav(APP_NAV_IDS.diagnostics),
+        handler: () => openDiagnostics(),
       },
       {
         event: DESKTOP_TRAY_EVENTS.runDiagnostics,
-        handler: () => {
-          setActiveNav(APP_NAV_IDS.diagnostics);
-          invalidateDiagnostics();
-        },
+        handler: () => openDiagnostics({ refresh: true }),
       },
       {
         event: DESKTOP_MENU_EVENTS.openSettings,
@@ -321,10 +353,7 @@ export function App() {
       },
       {
         event: DESKTOP_MENU_EVENTS.openProfiles,
-        handler: () => {
-          setProfilesRouteState(createProfilesRouteState());
-          setActiveNav(APP_NAV_IDS.profiles);
-        },
+        handler: () => openProfiles(),
       },
       {
         event: DESKTOP_MENU_EVENTS.openAddProfile,
@@ -334,26 +363,20 @@ export function App() {
       },
       {
         event: DESKTOP_MENU_EVENTS.openImportCurrentLogin,
-        handler: () => {
-          setProfilesRouteState(createImportCurrentLoginRouteState());
-          setActiveNav(APP_NAV_IDS.profiles);
-        },
+        handler: () => openImportCurrentLogin(),
       },
-      { event: DESKTOP_MENU_EVENTS.openOverview, handler: () => setActiveNav(APP_NAV_IDS.overview) },
+      { event: DESKTOP_MENU_EVENTS.openOverview, handler: () => openOverview() },
       { event: DESKTOP_MENU_EVENTS.openSets, handler: () => setActiveNav(APP_NAV_IDS.sets) },
       {
         event: DESKTOP_MENU_EVENTS.openDiagnostics,
-        handler: () => setActiveNav(APP_NAV_IDS.diagnostics),
+        handler: () => openDiagnostics(),
       },
       {
         event: DESKTOP_MENU_EVENTS.runVerify,
-        handler: () => {
-          setActiveNav(APP_NAV_IDS.diagnostics);
-          invalidateDiagnostics();
-        },
+        handler: () => openDiagnostics({ refresh: true }),
       },
-      { event: DESKTOP_MENU_EVENTS.openBackups, handler: () => setActiveNav(APP_NAV_IDS.backups) },
-      { event: DESKTOP_MENU_EVENTS.openActivity, handler: () => setActiveNav(APP_NAV_IDS.activity) },
+      { event: DESKTOP_MENU_EVENTS.openBackups, handler: () => openBackups() },
+      { event: DESKTOP_MENU_EVENTS.openActivity, handler: () => openActivity() },
       {
         event: DESKTOP_MENU_EVENTS.openQuickSwitch,
         handler: () => setQuickSwitchOpen(true),
@@ -388,8 +411,7 @@ export function App() {
         event: DESKTOP_MENU_EVENTS.openTroubleshooting,
         handler: () => {
           void openReferenceDocument(REFERENCE_DOCUMENT_KIND_TROUBLESHOOTING).catch(() => {
-            setActiveNav(APP_NAV_IDS.diagnostics);
-            invalidateDiagnostics();
+            openDiagnostics({ refresh: true });
           });
         },
       },
@@ -497,8 +519,7 @@ export function App() {
   }
 
   function runVerifyFlow() {
-    setActiveNav(APP_NAV_IDS.diagnostics);
-    invalidateDiagnostics();
+    openDiagnostics({ refresh: true });
   }
 
   function openAddProfile() {
@@ -511,7 +532,7 @@ export function App() {
       ...current,
       reopenSetupAssistant: true,
     }));
-    setActiveNav(APP_NAV_IDS.overview);
+    openOverview();
   }
 
   function resetOnboarding() {
@@ -526,7 +547,7 @@ export function App() {
       defaultSection: APP_NAV_IDS.overview,
       reopenSetupAssistant: true,
     }));
-    setActiveNav(APP_NAV_IDS.overview);
+    openOverview();
   }
 
   function closeSetupAssistant() {
@@ -684,10 +705,7 @@ export function App() {
               forcedOpen={setupForced}
               onCloseSetup={closeSetupAssistant}
               onOpenProfiles={(tool, options) => {
-                setProfilesRouteState(
-                  createProfileSetupRouteState({ tool, mode: options?.mode }),
-                );
-                setActiveNav(APP_NAV_IDS.profiles);
+                openProfileSetup({ tool, mode: options?.mode });
               }}
               onOpenSettings={openSettings}
             />
@@ -699,12 +717,11 @@ export function App() {
               toolCapabilities={toolCapabilities}
               onOpenContexts={openContexts}
               onOpenQuickSwitch={() => setQuickSwitchOpen(true)}
-              onOpenActivity={() => setActiveNav(APP_NAV_IDS.activity)}
+              onOpenActivity={openActivity}
               onOpenProfiles={(tool, expandedProfile, options) => {
-                setProfilesRouteState(
+                openProfiles(
                   createProfilesRouteState({ tool, expandedProfile, mode: options?.mode }),
                 );
-                setActiveNav(APP_NAV_IDS.profiles);
               }}
             />
           ) : null}
@@ -718,9 +735,7 @@ export function App() {
               initialMode={profilesRouteState.mode}
               initialCredentialBackend={profilesRouteState.credentialBackend}
               openToken={profilesRouteState.openToken}
-              onOpenBackups={() => {
-                setActiveNav(APP_NAV_IDS.backups);
-              }}
+              onOpenBackups={openBackups}
             />
           ) : null}
           {activeSection === APP_NAV_IDS.sets ? (
@@ -738,18 +753,14 @@ export function App() {
               onOpenSettings={openSettings}
               onOpenContexts={openContexts}
               onOpenProfiles={(tool, expandedProfile) => {
-                setProfilesRouteState(createProfilesRouteState({ tool, expandedProfile }));
-                setActiveNav(APP_NAV_IDS.profiles);
+                openProfiles(createProfilesRouteState({ tool, expandedProfile }));
               }}
               onOpenProfileSetup={(options) => {
-                setProfilesRouteState(
-                  createProfileSetupRouteState({
-                    tool: options?.tool,
-                    mode: options?.mode,
-                    credentialBackend: options?.credentialBackend ?? null,
-                  }),
-                );
-                setActiveNav(APP_NAV_IDS.profiles);
+                openProfileSetup({
+                  tool: options?.tool,
+                  mode: options?.mode,
+                  credentialBackend: options?.credentialBackend ?? null,
+                });
               }}
             />
           ) : null}
@@ -759,8 +770,7 @@ export function App() {
               settings={settings}
               toolCapabilities={toolCapabilities}
               onOpenProfiles={(tool, expandedProfile) => {
-                setProfilesRouteState(createProfilesRouteState({ tool, expandedProfile }));
-                setActiveNav(APP_NAV_IDS.profiles);
+                openProfiles(createProfilesRouteState({ tool, expandedProfile }));
               }}
             />
           ) : null}
@@ -800,19 +810,12 @@ export function App() {
         toolCapabilities={toolCapabilities}
       />
     ) : null}
-    <HelpSheet
+      <HelpSheet
       open={helpOpen}
       onClose={() => setHelpOpen(false)}
-      onOpenProfiles={() => {
-        setProfilesRouteState(createProfilesRouteState());
-        setActiveNav(APP_NAV_IDS.profiles);
-      }}
-      onOpenDiagnostics={() => {
-        setActiveNav(APP_NAV_IDS.diagnostics);
-      }}
-      onOpenSettings={() => {
-        openSettings();
-      }}
+      onOpenProfiles={() => openProfiles()}
+      onOpenDiagnostics={() => openDiagnostics()}
+      onOpenSettings={() => openSettings()}
     />
     </>
   );
