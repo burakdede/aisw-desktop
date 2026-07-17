@@ -1,4 +1,5 @@
 import type { WorkspaceBindInput, WorkspaceUnbindInput } from "../../lib/client";
+import type { CommandResultSummary } from "../shared/command-result-shape";
 import {
   BACK_LABEL,
   CANCEL_LABEL,
@@ -33,6 +34,7 @@ import {
   profileSetStatus,
   ruleScopeLabel,
   ruleTargetLabel,
+  setCommandResultLabel,
   selectedRuleMatchLabel,
   selectedRulePriorityLabel,
   selectedRuleSubtitle,
@@ -98,6 +100,11 @@ export type WorkspaceMismatchBannerState = {
   currentSetLine: string;
   matchedRuleLine: string;
   primaryActionLabel: string;
+};
+
+export type SetsFooterNote = {
+  message: string;
+  tone: "default" | "error";
 };
 
 export type RuleInspectorDetailRow = {
@@ -281,6 +288,32 @@ export function buildWorkspaceMismatchBannerState(input: {
     matchedRuleLine: workspaceRuleMatchLabel(input.scope, input.target),
     primaryActionLabel: workspaceSetActionLabel(input.canResolveDirectly),
   };
+}
+
+export function buildSetsFooterNotes(input: {
+  result: CommandResultSummary | null | undefined;
+  kind: "set" | "project-rule";
+  trailingMessage?: string | null;
+}): SetsFooterNote[] {
+  const notes: SetsFooterNote[] = [];
+  const resultMessage = setCommandResultLabel(input.result, input.kind);
+
+  if (resultMessage) {
+    notes.push({
+      message: resultMessage,
+      tone: input.result?.status === "error" ? "error" : "default",
+    });
+  }
+
+  const trailingMessage = input.trailingMessage?.trim();
+  if (trailingMessage) {
+    notes.push({
+      message: trailingMessage,
+      tone: "default",
+    });
+  }
+
+  return notes;
 }
 
 export function setEditorDialogLabel(isEditingSet: boolean) {

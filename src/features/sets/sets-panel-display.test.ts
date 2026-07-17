@@ -6,6 +6,7 @@ import {
   buildSavedSetRows,
   buildSavedSetCollection,
   buildSetSettingsUpdate,
+  buildSetsFooterNotes,
   buildSelectedSetInspectorState,
   buildSelectedRuleInspectorState,
   buildWorkspaceBindingTarget,
@@ -537,5 +538,53 @@ describe("sets-panel-display", () => {
         canResolveDirectly: false,
       }).primaryActionLabel,
     ).toBe("Open Sets");
+  });
+
+  it("builds shared sets footer notes for result tone and trailing copy", () => {
+    expect(
+      buildSetsFooterNotes({
+        result: {
+          status: "error",
+          message: "AISW cannot load CLI context.",
+          remediation: "Open Sets.",
+        },
+        kind: "set",
+        trailingMessage: "Activated set Client Acme.",
+      }),
+    ).toEqual([
+      {
+        message: "Last set result: AI Switch cannot load set. Remediation: Open Sets.",
+        tone: "error",
+      },
+      {
+        message: "Activated set Client Acme.",
+        tone: "default",
+      },
+    ]);
+
+    expect(
+      buildSetsFooterNotes({
+        result: {
+          status: "success",
+          message: "Workspace guardrails updated.",
+          remediation: "Review workspace checks.",
+        },
+        kind: "project-rule",
+      }),
+    ).toEqual([
+      {
+        message:
+          "Last project-rule result: Project-rule guardrails updated. Remediation: Review project-rule checks.",
+        tone: "default",
+      },
+    ]);
+
+    expect(
+      buildSetsFooterNotes({
+        result: null,
+        kind: "set",
+        trailingMessage: "   ",
+      }),
+    ).toEqual([]);
   });
 });

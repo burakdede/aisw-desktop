@@ -23,7 +23,6 @@ import {
   ruleScopeLabel,
   ruleTargetLabel,
   savedRuleStatusLabel,
-  setCommandResultLabel,
 } from "../../../lib/sets-display";
 import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
@@ -51,6 +50,7 @@ import {
   buildSavedSetCollection,
   buildSelectedRuleInspectorState,
   buildSetSettingsUpdate,
+  buildSetsFooterNotes,
   buildSelectedSetInspectorState,
   buildWorkspaceMismatchBannerState,
   buildWorkspaceBindingTarget,
@@ -162,8 +162,6 @@ export function SetsPanel({
     ?? null;
   const workspaceCommandResult =
     lastCommandResults.global[COMMAND_RESULT_GLOBAL_IDS.workspace] ?? null;
-  const setResultLabel = setCommandResultLabel(setCommandResult, "set");
-  const projectRuleResultLabel = setCommandResultLabel(workspaceCommandResult, "project-rule");
 
   const trimmedDraftName = setDraft.name.trim();
   const isEditingSet = setDraft.sourceName !== null;
@@ -465,6 +463,15 @@ export function SetsPanel({
     snapshot,
     tools: TOOLS,
   });
+  const setFooterNotes = buildSetsFooterNotes({
+    result: setCommandResult,
+    kind: "set",
+    trailingMessage: lastSetAction,
+  });
+  const projectRuleFooterNotes = buildSetsFooterNotes({
+    result: workspaceCommandResult,
+    kind: "project-rule",
+  });
   const selectedSetMenuItems = selectedSet
     ? [
         {
@@ -622,12 +629,14 @@ export function SetsPanel({
                   </details>
                 ) : null}
                 <div className="sets-footer-note">
-                  {setResultLabel ? (
-                    <p className={`inline-note ${setCommandResult?.status === "error" ? "diagnostic-status-fail" : ""}`}>
-                      {setResultLabel}
+                  {setFooterNotes.map((note) => (
+                    <p
+                      key={note.message}
+                      className={note.tone === "error" ? "inline-note diagnostic-status-fail" : "inline-note"}
+                    >
+                      {note.message}
                     </p>
-                  ) : null}
-                  {lastSetAction ? <p className="inline-note">{lastSetAction}</p> : null}
+                  ))}
                 </div>
               </section>
             ) : null}
@@ -806,11 +815,14 @@ export function SetsPanel({
                   </div>
                 )}
                 <div className="sets-footer-note">
-                  {projectRuleResultLabel ? (
-                    <p className={`inline-note ${workspaceCommandResult?.status === "error" ? "diagnostic-status-fail" : ""}`}>
-                      {projectRuleResultLabel}
+                  {projectRuleFooterNotes.map((note) => (
+                    <p
+                      key={note.message}
+                      className={note.tone === "error" ? "inline-note diagnostic-status-fail" : "inline-note"}
+                    >
+                      {note.message}
                     </p>
-                  ) : null}
+                  ))}
                 </div>
               </section>
             ) : null}
