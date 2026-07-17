@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   COMMAND_RESULT_GLOBAL_IDS,
+  commandResultGlobalScopeLabel,
+  commandResultScopeLabel,
   isCommandResultGlobalId,
   parseCommandResultScope,
 } from "./command-result-scope";
@@ -43,5 +45,21 @@ describe("command-result-scope", () => {
       }),
     ).toBeNull();
     expect(parseCommandResultScope(null)).toBeNull();
+  });
+
+  it("shares derived global and tool scope labels", () => {
+    expect(commandResultGlobalScopeLabel(COMMAND_RESULT_GLOBAL_IDS.profileSet)).toBe(
+      "Saved set",
+    );
+    expect(commandResultGlobalScopeLabel(COMMAND_RESULT_GLOBAL_IDS.settings)).toBe(
+      "Settings",
+    );
+    expect(commandResultGlobalScopeLabel("unknown")).toBe("App");
+    expect(
+      commandResultScopeLabel({
+        type: "tool",
+        tool: "codex",
+      }),
+    ).toBe("Codex CLI");
   });
 });

@@ -11,15 +11,51 @@ export const COMMAND_RESULT_SCOPE_TYPES = {
 export type CommandResultScopeType =
   (typeof COMMAND_RESULT_SCOPE_TYPES)[keyof typeof COMMAND_RESULT_SCOPE_TYPES];
 
-export const COMMAND_RESULT_GLOBAL_IDS = {
-  switchAll: "switch-all",
-  context: "context",
-  profileSet: "profile-set",
-  workspace: "workspace",
-  backup: "backup",
-  settings: "settings",
-  setup: "setup",
-} as const;
+const COMMAND_RESULT_GLOBAL_DEFINITIONS = [
+  {
+    key: "switchAll",
+    id: "switch-all",
+    label: DESKTOP_ACTION_COPY.quickSwitchLabel,
+  },
+  {
+    key: "context",
+    id: "context",
+    label: APP_NAV_LABELS[APP_NAV_IDS.sets],
+  },
+  {
+    key: "profileSet",
+    id: "profile-set",
+    label: "Saved set",
+  },
+  {
+    key: "workspace",
+    id: "workspace",
+    label: "Project rules",
+  },
+  {
+    key: "backup",
+    id: "backup",
+    label: APP_NAV_LABELS[APP_NAV_IDS.backups],
+  },
+  {
+    key: "settings",
+    id: "settings",
+    label: APP_NAV_LABELS[APP_NAV_IDS.settings],
+  },
+  {
+    key: "setup",
+    id: "setup",
+    label: "Setup",
+  },
+] as const satisfies ReadonlyArray<{
+  key: string;
+  id: string;
+  label: string;
+}>;
+
+export const COMMAND_RESULT_GLOBAL_IDS = Object.fromEntries(
+  COMMAND_RESULT_GLOBAL_DEFINITIONS.map((definition) => [definition.key, definition.id]),
+) as Record<(typeof COMMAND_RESULT_GLOBAL_DEFINITIONS)[number]["key"], (typeof COMMAND_RESULT_GLOBAL_DEFINITIONS)[number]["id"]>;
 
 export type CommandResultGlobalId =
   (typeof COMMAND_RESULT_GLOBAL_IDS)[keyof typeof COMMAND_RESULT_GLOBAL_IDS];
@@ -40,15 +76,10 @@ const COMMAND_RESULT_GLOBAL_ID_VALUES = Object.values(COMMAND_RESULT_GLOBAL_IDS)
 
 export const COMMAND_RESULT_GLOBAL_FALLBACK_LABEL = "App";
 
-export const COMMAND_RESULT_GLOBAL_LABELS: Record<CommandResultGlobalId, string> = {
-  [COMMAND_RESULT_GLOBAL_IDS.switchAll]: DESKTOP_ACTION_COPY.quickSwitchLabel,
-  [COMMAND_RESULT_GLOBAL_IDS.context]: APP_NAV_LABELS[APP_NAV_IDS.sets],
-  [COMMAND_RESULT_GLOBAL_IDS.profileSet]: "Saved set",
-  [COMMAND_RESULT_GLOBAL_IDS.workspace]: "Project rules",
-  [COMMAND_RESULT_GLOBAL_IDS.backup]: APP_NAV_LABELS[APP_NAV_IDS.backups],
-  [COMMAND_RESULT_GLOBAL_IDS.settings]: APP_NAV_LABELS[APP_NAV_IDS.settings],
-  [COMMAND_RESULT_GLOBAL_IDS.setup]: "Setup",
-};
+export const COMMAND_RESULT_GLOBAL_LABELS: Record<CommandResultGlobalId, string> =
+  Object.fromEntries(
+    COMMAND_RESULT_GLOBAL_DEFINITIONS.map((definition) => [definition.id, definition.label]),
+  ) as Record<CommandResultGlobalId, string>;
 
 export function isCommandResultGlobalId(value: string): value is CommandResultGlobalId {
   return isOneOf(COMMAND_RESULT_GLOBAL_ID_VALUES, value);
