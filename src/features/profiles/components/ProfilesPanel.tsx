@@ -1,4 +1,12 @@
-import { FormEvent, KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  FormEvent,
+  KeyboardEvent as ReactKeyboardEvent,
+  type RefObject,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
@@ -121,6 +129,7 @@ import {
 } from "../profiles-panel-display";
 
 const TOOLS = SUPPORTED_TOOLS;
+const PROFILE_ROW_ACTIONS_ATTRIBUTE = "data-profile-row-actions";
 
 export function ProfilesPanel({
   snapshot,
@@ -423,7 +432,7 @@ export function ProfilesPanel({
     }
 
     function closeActions(event: MouseEvent) {
-      if (eventTargetWithinSelector(event.target, "[data-profile-row-actions]")) {
+      if (eventTargetWithinSelector(event.target, `[${PROFILE_ROW_ACTIONS_ATTRIBUTE}]`)) {
         return;
       }
       setOpenRowActions(null);
@@ -459,6 +468,11 @@ export function ProfilesPanel({
     }
 
     const nextStateMode = availableStateModes.length ? stateMode : null;
+    const completeProfileSheetSuccess = () => {
+      setProfile("");
+      setLabel("");
+      setProfileSheetOpen(false);
+    };
 
     if (mode === "oauth") {
       setOauthEvents([]);
@@ -472,11 +486,7 @@ export function ProfilesPanel({
           credentialBackend: resolveCredentialBackendRequest(credentialBackend),
         },
         {
-          onSuccess: () => {
-            setProfile("");
-            setLabel("");
-            setProfileSheetOpen(false);
-          },
+          onSuccess: completeProfileSheetSuccess,
           onError: (error) => {
             setOauthError(formatDesktopError(error));
           },
@@ -499,11 +509,7 @@ export function ProfilesPanel({
           credentialBackend: resolveCredentialBackendRequest(credentialBackend),
           importMode: { kind: "api_key", value: apiKey },
         })
-        .then(() => {
-          setProfile("");
-          setLabel("");
-          setProfileSheetOpen(false);
-        })
+        .then(completeProfileSheetSuccess)
         .catch(() => undefined);
       return;
     }
@@ -523,19 +529,19 @@ export function ProfilesPanel({
         importMode,
       },
       {
-        onSuccess: () => {
-          setProfile("");
-          setLabel("");
-          setProfileSheetOpen(false);
-        },
+        onSuccess: completeProfileSheetSuccess,
       },
     );
   }
 
-  function selectInventoryEntry(entryTool: (typeof TOOLS)[number], name: string) {
+  function selectInventoryEntry(
+    entryTool: (typeof TOOLS)[number],
+    name: string,
+    options?: { openCompactInspector?: boolean },
+  ) {
     setTool(entryTool);
     setExpandedDetails(name);
-    if (compactLayout) {
+    if (options?.openCompactInspector ?? compactLayout) {
       setCompactInspectorOpen(true);
     }
   }
@@ -563,8 +569,7 @@ export function ProfilesPanel({
     name: string,
     scope: "inspector" | "table",
   ) {
-    setTool(entryTool);
-    setExpandedDetails(name);
+    selectInventoryEntry(entryTool, name, { openCompactInspector: false });
     setOpenRowActions((current) =>
       toggleProfileActionMenu(current, { tool: entryTool, name, scope }),
     );
@@ -789,40 +794,20 @@ export function ProfilesPanel({
                       >
                         •••
                       </button>
-                      {openRowActions?.tool === inventoryEntry.tool &&
-                      openRowActions?.name === inventoryEntry.name &&
-                      openRowActions?.scope === "table" ? (
-                        <AnchoredMenu
-                          anchorRef={rowActionAnchorRef}
-                          className="profile-row-actions-menu"
-                          align="end"
-                          boundaryAttribute="data-profile-row-actions"
-                          role="menu"
-                          aria-label={PROFILE_PANEL_COPY.actionMenuAriaLabel}
-                        >
-                          {rowActions.map((action) => (
-                            <button
-                              key={action.kind}
-                              type="button"
-                              role="menuitem"
-                              disabled={
-                                action.kind === "view_backups"
-                                  ? action.disabled
-                                  : mutationLock.isBusy
-                              }
-                              className={action.danger ? "profile-row-actions-danger" : undefined}
-                              onClick={() =>
-                                handleProfileAction(action, {
-                                  tool: inventoryEntry.tool,
-                                  name: inventoryEntry.name,
-                                })
-                              }
-                            >
-                              {action.label}
-                            </button>
-                          ))}
-                        </AnchoredMenu>
-                      ) : null}
+                      <ProfileActionMenu
+                        open={
+                          openRowActions?.tool === inventoryEntry.tool &&
+                          openRowActions?.name === inventoryEntry.name &&
+                          openRowActions?.scope === "table"
+                        }
+                        anchorRef={rowActionAnchorRef}
+                        align="end"
+                        boundaryAttribute={PROFILE_ROW_ACTIONS_ATTRIBUTE}
+                        actionTarget={{ tool: inventoryEntry.tool, name: inventoryEntry.name }}
+                        actions={rowActions}
+                        mutationBusy={mutationLock.isBusy}
+                        onAction={handleProfileAction}
+                      />
                     </div>
                   </div>
                 );
@@ -917,42 +902,26 @@ export function ProfilesPanel({
                       >
                         •••
                       </button>
-                      {openRowActions?.tool === tool &&
-                      openRowActions?.name === selectedProfileEntry.name &&
-                      openRowActions?.scope === "inspector" ? (
-                        <AnchoredMenu
-                          anchorRef={inspectorMenuAnchorRef}
-                          className="profile-row-actions-menu"
-                          align="start"
-                          boundaryAttribute="data-profile-row-actions"
-                          containmentSelector=".profiles-inspector"
-                          role="menu"
-                          aria-label={PROFILE_PANEL_COPY.actionMenuAriaLabel}
-                        >
-                          {buildProfileActionMenu({
-                            active: selectedProfileInspectorState.isActive,
-                            hasBackup: Boolean(selectedLatestBackup),
-                            scope: "inspector",
-                            state: selectedProfileInspectorState.state,
-                          }).map((action) => (
-                            <button
-                              key={action.kind}
-                              type="button"
-                              role="menuitem"
-                              disabled={action.kind === "view_backups" ? action.disabled : false}
-                              className={action.danger ? "profile-row-actions-danger" : undefined}
-                              onClick={() =>
-                                handleProfileAction(action, {
-                                  tool,
-                                  name: selectedProfileEntry.name,
-                                })
-                              }
-                            >
-                              {action.label}
-                            </button>
-                          ))}
-                        </AnchoredMenu>
-                      ) : null}
+                      <ProfileActionMenu
+                        open={
+                          openRowActions?.tool === tool &&
+                          openRowActions?.name === selectedProfileEntry.name &&
+                          openRowActions?.scope === "inspector"
+                        }
+                        anchorRef={inspectorMenuAnchorRef}
+                        align="start"
+                        boundaryAttribute={PROFILE_ROW_ACTIONS_ATTRIBUTE}
+                        containmentSelector=".profiles-inspector"
+                        actionTarget={{ tool, name: selectedProfileEntry.name }}
+                        actions={buildProfileActionMenu({
+                          active: selectedProfileInspectorState.isActive,
+                          hasBackup: Boolean(selectedLatestBackup),
+                          scope: "inspector",
+                          state: selectedProfileInspectorState.state,
+                        })}
+                        mutationBusy={mutationLock.isBusy}
+                        onAction={handleProfileAction}
+                      />
                     </div>
                   </div>
                 </header>
@@ -1009,13 +978,7 @@ export function ProfilesPanel({
                     variant="compact"
                   />
                 ) : (
-                  <div className="state-mode-static">
-                    <span className="state-mode-static-label">State mode</span>
-                    <strong>{STATIC_STATE_MODE_LABEL}</strong>
-                    <p className="state-mode-copy">
-                      {STATIC_STATE_MODE_COPY}
-                    </p>
-                  </div>
+                  <StaticStateModeNotice />
                 )}
                 <div className="profiles-inspector-disclosure">
                   <button
@@ -1084,12 +1047,10 @@ export function ProfilesPanel({
           initialFocusSelector="input:not([disabled]), button:not([disabled])"
           onClose={() => setPendingEdit(null)}
         >
-          <div className="quick-switch-header">
-            <div>
-              <p className="card-kicker">{PROFILE_EDIT_SHEET_COPY.kicker}</p>
-              <h3>{PROFILE_EDIT_SHEET_COPY.heading}</h3>
-            </div>
-          </div>
+          <ProfileSheetHeader
+            kicker={PROFILE_EDIT_SHEET_COPY.kicker}
+            heading={PROFILE_EDIT_SHEET_COPY.heading}
+          />
           <form
             className="stacked-form"
             onSubmit={(event) => {
@@ -1181,12 +1142,10 @@ export function ProfilesPanel({
           initialFocusSelector="button:not([disabled])"
           onClose={() => setPendingRemoval(null)}
         >
-            <div className="quick-switch-header">
-              <div>
-                <p className="card-kicker">{PROFILE_REMOVAL_SHEET_COPY.kicker}</p>
-                <h3>{buildProfileRemovalHeading(removalSheetState.display)}</h3>
-              </div>
-            </div>
+            <ProfileSheetHeader
+              kicker={PROFILE_REMOVAL_SHEET_COPY.kicker}
+              heading={buildProfileRemovalHeading(removalSheetState.display)}
+            />
             <p className="inline-note">
               {PROFILE_REMOVAL_SHEET_COPY.warning}
             </p>
@@ -1221,12 +1180,10 @@ export function ProfilesPanel({
           initialFocusSelector="select:not([disabled]), input:not([disabled]), button:not([disabled])"
           onClose={() => setProfileSheetOpen(false)}
         >
-            <div className="quick-switch-header">
-              <div>
-                <p className="card-kicker">{PROFILE_PANEL_COPY.addProfileLabel}</p>
-                <h3>{PROFILE_ADD_SHEET_COPY.heading}</h3>
-              </div>
-            </div>
+            <ProfileSheetHeader
+              kicker={PROFILE_PANEL_COPY.addProfileLabel}
+              heading={PROFILE_ADD_SHEET_COPY.heading}
+            />
             <form className="stacked-form" onSubmit={submit}>
               <label>
                 {PROFILE_ADD_SHEET_COPY.toolLabel}
@@ -1355,13 +1312,7 @@ export function ProfilesPanel({
                   variant="compact"
                 />
               ) : (
-                <div className="state-mode-static">
-                  <span className="state-mode-static-label">State mode</span>
-                  <strong>{STATIC_STATE_MODE_LABEL}</strong>
-                  <p className="state-mode-copy">
-                    {STATIC_STATE_MODE_COPY}
-                  </p>
-                </div>
+                <StaticStateModeNotice />
               )}
               {mode === "oauth" ? (
                 <article className="diagnostic-card">
@@ -1417,5 +1368,83 @@ export function ProfilesPanel({
         </DialogSurface>
       ) : null}
     </div>
+  );
+}
+
+function ProfileSheetHeader({
+  kicker,
+  heading,
+}: {
+  kicker: string;
+  heading: string;
+}) {
+  return (
+    <div className="quick-switch-header">
+      <div>
+        <p className="card-kicker">{kicker}</p>
+        <h3>{heading}</h3>
+      </div>
+    </div>
+  );
+}
+
+function StaticStateModeNotice() {
+  return (
+    <div className="state-mode-static">
+      <span className="state-mode-static-label">State mode</span>
+      <strong>{STATIC_STATE_MODE_LABEL}</strong>
+      <p className="state-mode-copy">{STATIC_STATE_MODE_COPY}</p>
+    </div>
+  );
+}
+
+function ProfileActionMenu({
+  open,
+  anchorRef,
+  align,
+  boundaryAttribute,
+  containmentSelector,
+  actionTarget,
+  actions,
+  mutationBusy,
+  onAction,
+}: {
+  open: boolean;
+  anchorRef: RefObject<HTMLButtonElement | null>;
+  align: "start" | "end";
+  boundaryAttribute: string;
+  containmentSelector?: string;
+  actionTarget: ProfileActionTarget;
+  actions: readonly ProfileActionMenuItem[];
+  mutationBusy: boolean;
+  onAction: (action: ProfileActionMenuItem, target: ProfileActionTarget) => void;
+}) {
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <AnchoredMenu
+      anchorRef={anchorRef}
+      className="profile-row-actions-menu"
+      align={align}
+      boundaryAttribute={boundaryAttribute}
+      containmentSelector={containmentSelector}
+      role="menu"
+      aria-label={PROFILE_PANEL_COPY.actionMenuAriaLabel}
+    >
+      {actions.map((action) => (
+        <button
+          key={action.kind}
+          type="button"
+          role="menuitem"
+          disabled={action.kind === "view_backups" ? action.disabled : mutationBusy}
+          className={action.danger ? "profile-row-actions-danger" : undefined}
+          onClick={() => onAction(action, actionTarget)}
+        >
+          {action.label}
+        </button>
+      ))}
+    </AnchoredMenu>
   );
 }
