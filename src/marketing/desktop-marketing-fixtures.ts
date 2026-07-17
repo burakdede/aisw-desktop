@@ -9,6 +9,7 @@ import type {
   VerifyReport,
   WorkspaceStatusReport,
 } from "../lib/schemas";
+import { snapshotHasToolProfile } from "../lib/profile-display";
 
 export const MARKETING_SCENES = [
   "overview",
@@ -785,8 +786,7 @@ function applySet(state: MutableMarketingState, setName: string) {
 
 function applySharedProfile(state: MutableMarketingState, profile: string) {
   Object.keys(state.snapshot.profiles).forEach((tool) => {
-    const hasProfile = state.snapshot.profiles[tool]?.profiles.some((entry) => entry.name === profile);
-    if (hasProfile) {
+    if (snapshotHasToolProfile(state.snapshot, tool, profile)) {
       setActiveProfile(state, tool, profile);
     }
   });

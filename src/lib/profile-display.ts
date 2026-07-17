@@ -1,6 +1,20 @@
 import type { AppSnapshot, DesktopSettings } from "./schemas";
 import { titleCase } from "./utils";
 
+export function snapshotHasToolProfile(
+  snapshot: AppSnapshot,
+  tool: string,
+  profile: string,
+) {
+  return (
+    snapshot.profiles[tool]?.profiles.some((candidate) => candidate.name === profile) ?? false
+  );
+}
+
+export function snapshotHasContext(snapshot: AppSnapshot, context: string) {
+  return snapshot.contexts.some((entry) => entry.name === context);
+}
+
 export function profileDisplayLabel(
   settings: DesktopSettings,
   snapshot: AppSnapshot,
@@ -119,9 +133,7 @@ export function missingProfileSetSelections(
 ) {
   return Object.entries(set.profiles)
     .filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].trim().length > 0)
-    .filter(([tool, profile]) =>
-      !snapshot.profiles[tool]?.profiles.some((candidate) => candidate.name === profile),
-    );
+    .filter(([tool, profile]) => !snapshotHasToolProfile(snapshot, tool, profile));
 }
 
 export function profileSetHasUsableSelections(

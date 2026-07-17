@@ -8,6 +8,8 @@ import {
   profileDisplayLabel,
   profileSetDisplayLabel,
   sharedProfileEntries,
+  snapshotHasContext,
+  snapshotHasToolProfile,
   toolProfileDisplayLabel,
 } from "./profile-display";
 
@@ -128,8 +130,20 @@ describe("profile-display", () => {
     expect(sharedProfileEntries(settings, snapshot)).toEqual([
       { name: "personal", label: "Claude Personal" },
     ]);
+    expect(snapshotHasToolProfile(snapshot, "claude", "personal")).toBe(true);
+    expect(snapshotHasToolProfile(snapshot, "claude", "missing")).toBe(false);
+    expect(snapshotHasToolProfile(snapshot, "gemini", "personal")).toBe(false);
     expect(activeSetLabel(settings, snapshot)).toBe("Personal Set");
     expect(profileSetDisplayLabel(settings.profile_sets[0])).toBe("Personal Set");
     expect(contextDisplayLabel(settings, "personal")).toBe("Personal Set");
+    expect(snapshotHasContext(snapshot, "personal")).toBe(false);
+    expect(
+      snapshotHasContext(
+        makeSnapshot({
+          contexts: [{ name: "personal", profiles: { claude: "personal", codex: "personal" } }],
+        }),
+        "personal",
+      ),
+    ).toBe(true);
   });
 });

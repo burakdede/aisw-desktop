@@ -1,5 +1,8 @@
 import { AppSnapshot, DesktopSettings } from "../../lib/schemas";
-import { profileSetHasUsableSelections } from "../../lib/profile-display";
+import {
+  profileSetHasUsableSelections,
+  snapshotHasContext,
+} from "../../lib/profile-display";
 import {
   resolveGlobalStateMode,
   type StateModeRequest,
@@ -34,7 +37,7 @@ export function resolveWorkspaceActivationTarget(
   if (profileSet) {
     return { kind: "profile_set", name: expectedContext, label: profileSet.label ?? profileSet.name };
   }
-  if (snapshot.contexts.some((context) => context.name === expectedContext)) {
+  if (snapshotHasContext(snapshot, expectedContext)) {
     return {
       kind: "context",
       name: expectedContext,

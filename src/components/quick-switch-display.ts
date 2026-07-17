@@ -4,6 +4,7 @@ import {
   profileSetDisplayLabel,
   profileSetHasUsableSelections,
   sharedProfileEntries,
+  snapshotHasToolProfile,
   toolProfileDisplayLabel,
 } from "../lib/profile-display";
 import { CURRENT_LABEL } from "../lib/status-copy";
@@ -216,8 +217,6 @@ function quickSwitchSetSubtitle(set: NonNullable<DesktopSettings["profile_sets"]
 
 function sharedProfileToolLabels(snapshot: AppSnapshot, profileName: string) {
   return Object.keys(snapshot.profiles)
-    .filter((tool) =>
-      snapshot.profiles[tool]?.profiles.some((profile) => profile.name === profileName),
-    )
+    .filter((tool) => snapshotHasToolProfile(snapshot, tool, profileName))
     .map((tool) => toolDisplayName(tool));
 }
