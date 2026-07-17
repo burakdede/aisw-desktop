@@ -1,5 +1,6 @@
 import type { WorkspaceBindInput, WorkspaceUnbindInput } from "../../lib/client";
 import {
+  BACK_LABEL,
   CANCEL_LABEL,
   CLOSE_LABEL,
   inspectItemLabel,
@@ -30,6 +31,11 @@ import {
   importedContextActionLabel,
   importedContextStatus,
   profileSetStatus,
+  ruleScopeLabel,
+  ruleTargetLabel,
+  selectedRuleMatchLabel,
+  selectedRulePriorityLabel,
+  selectedRuleSubtitle,
   setSelectionCountLabel,
 } from "../../lib/sets-display";
 import { CURRENT_LABEL } from "../../lib/status-copy";
@@ -71,9 +77,23 @@ export type SelectedSetInspectorState = {
   canActivate: boolean;
   activateLabel: string;
   selectionCountLabel: string;
-  mappedProfiles: Array<{ tool: string; value: string }>;
-  projectRuleCount: number;
+  detailRows: SetInspectorDetailRow[];
   warning: string | null;
+};
+
+export type SetInspectorDetailRow =
+  | { kind: "tool"; tool: string; value: string }
+  | { kind: "text"; label: string; value: string };
+
+export type SelectedRuleInspectorState = {
+  displayLabel: string;
+  subtitle: string;
+  detailRows: RuleInspectorDetailRow[];
+};
+
+export type RuleInspectorDetailRow = {
+  label: string;
+  value: string;
 };
 
 export type ImportedContextRowModel = {
@@ -108,6 +128,7 @@ export const SETS_PANEL_COPY = {
   modeAriaLabel: "Sets mode",
   setLibraryModeLabel: "Set Library",
   projectRulesModeLabel: "Project Rules",
+  backLabel: BACK_LABEL,
   newSetButtonLabel: "New Set…",
   setLibraryAriaLabel: "Set Library",
   importedContextsTitle: "Imported CLI contexts",
@@ -141,11 +162,13 @@ export const SETS_PANEL_COPY = {
   addRuleButtonLabel: "Add Rule…",
   projectRulesActionsAriaLabel: "Project rules actions",
   openSetsLabel: OPEN_SETS_LABEL,
+  ruleTableHeaders: ["Match", "Value", "Set", "Status"],
   noProjectRulesTitle: "No project rules yet",
   noProjectRulesDetail:
     "Add a rule to match a default scope, folder, or git remote pattern to a saved set.",
   setUnavailableLabel: "Set Unavailable",
   enabledLabel: YES_LABEL,
+  enabledFieldLabel: "Enabled",
   noRuleSelectedTitle: noSelectionHeading("rule"),
   noRuleSelectedDetail: "Select a rule to inspect it here.",
   closeLabel: CLOSE_LABEL,
@@ -154,6 +177,14 @@ export const SETS_PANEL_COPY = {
   displayLabelFieldLabel: "Display label",
   notIncludedLabel: "Not included",
   projectRuleKicker: "Project rule",
+  setMappingsAriaLabel: "Set mappings",
+  ruleDetailsAriaLabel: "Rule details",
+  projectRulesCountLabel: "Project rules",
+  ruleTypeLabel: "Rule type",
+  matchValueLabel: "Match value",
+  setFieldSummaryLabel: "Set",
+  priorityLabel: "Priority",
+  lastMatchedLabel: "Last matched",
   ruleScopeLabel: "Rule scope",
   defaultSetRuleScopeLabel: "Default set",
   pathPrefixRuleScopeLabel: "Path prefix",
@@ -162,6 +193,8 @@ export const SETS_PANEL_COPY = {
   gitRemotePatternLabel: "Git remote pattern",
   setFieldLabel: "Set",
   selectSetLabel: "Select set",
+  editRuleLabel: "Edit…",
+  removeRuleLabel: "Remove…",
   summaryEmptyValue: "—",
 } as const;
 
@@ -551,17 +584,64 @@ export function buildSelectedSetInspectorState(input: {
       ? "Current"
       : `Switch to ${profileSetDisplayLabel(input.selectedSet)}`,
     selectionCountLabel: setSelectionCountLabel(selectedCount),
-    mappedProfiles: input.tools.map((tool) => {
-      const profile = input.selectedSet.profiles[tool];
-      return {
-        tool,
-        value: profile
-          ? toolProfileDisplayLabel(input.settings, input.snapshot, tool, profile)
-          : "Not included",
-      };
-    }),
-    projectRuleCount: input.ruleUsageCountByContext.get(input.selectedSet.name) ?? 0,
+    detailRows: [
+      ...input.tools.map(
+        (tool): SetInspectorDetailRow => {
+          const profile = input.selectedSet.profiles[tool];
+          return {
+            kind: "tool",
+            tool,
+            value: profile
+              ? toolProfileDisplayLabel(input.settings, input.snapshot, tool, profile)
+              : SETS_PANEL_COPY.notIncludedLabel,
+          };
+        },
+      ),
+      {
+        kind: "text",
+        label: SETS_PANEL_COPY.projectRulesCountLabel,
+        value: `${input.ruleUsageCountByContext.get(input.selectedSet.name) ?? 0} active`,
+      },
+    ],
     warning,
+  };
+}
+
+export function buildSelectedRuleInspectorState(input: {
+  contextLabel: string;
+  scope: string;
+  target: string;
+  matched: boolean;
+}): SelectedRuleInspectorState {
+  return {
+    displayLabel: input.contextLabel,
+    subtitle: selectedRuleSubtitle(input.matched),
+    detailRows: [
+      {
+        label: SETS_PANEL_COPY.ruleTypeLabel,
+        value: ruleScopeLabel(input.scope),
+      },
+      {
+        label: SETS_PANEL_COPY.matchValueLabel,
+        value: ruleTargetLabel(input.scope, input.target),
+      },
+      {
+        label: SETS_PANEL_COPY.setFieldSummaryLabel,
+        value: input.contextLabel || SETS_PANEL_COPY.setUnavailableLabel,
+      },
+      {
+        label: SETS_PANEL_COPY.priorityLabel,
+        value: selectedRulePriorityLabel(input.scope),
+      },
+      {
+        label: SETS_PANEL_COPY.enabledFieldLabel,
+        value: SETS_PANEL_COPY.enabledLabel,
+      },
+      {
+        label: SETS_PANEL_COPY.lastMatchedLabel,
+        value: selectedRuleMatchLabel(input.matched),
+      },
+    ],
   };
 }
 

@@ -7,6 +7,7 @@ import {
   buildSavedSetCollection,
   buildSetSettingsUpdate,
   buildSelectedSetInspectorState,
+  buildSelectedRuleInspectorState,
   buildWorkspaceBindingTarget,
   countRuleUsageByContext,
   createEditableProfileSetDraft,
@@ -450,12 +451,12 @@ describe("sets-panel-display", () => {
       canActivate: false,
       activateLabel: "Current",
       selectionCountLabel: "2 profiles mapped",
-      mappedProfiles: [
-        { tool: "claude", value: "Work Claude" },
-        { tool: "codex", value: "Work Codex" },
-        { tool: "gemini", value: "Not included" },
+      detailRows: [
+        { kind: "tool", tool: "claude", value: "Work Claude" },
+        { kind: "tool", tool: "codex", value: "Work Codex" },
+        { kind: "tool", tool: "gemini", value: "Not included" },
+        { kind: "text", label: "Project rules", value: "1 active" },
       ],
-      projectRuleCount: 1,
       warning: null,
     });
 
@@ -486,5 +487,27 @@ describe("sets-panel-display", () => {
         tools: TOOLS,
       }).warning,
     ).toBe("Missing mapped profiles: claude: missing");
+  });
+
+  it("builds selected rule inspector state from shared copy", () => {
+    expect(
+      buildSelectedRuleInspectorState({
+        contextLabel: "Client Acme",
+        scope: "path",
+        target: "/code/acme",
+        matched: true,
+      }),
+    ).toEqual({
+      displayLabel: "Client Acme",
+      subtitle: "This rule currently matches",
+      detailRows: [
+        { label: "Rule type", value: "Folder" },
+        { label: "Match value", value: "/code/acme" },
+        { label: "Set", value: "Client Acme" },
+        { label: "Priority", value: "Explicit" },
+        { label: "Enabled", value: "Yes" },
+        { label: "Last matched", value: "Current project" },
+      ],
+    });
   });
 });

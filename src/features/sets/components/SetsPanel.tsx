@@ -20,20 +20,15 @@ import {
   emptyRuleSetWarning,
   emptySetSelectionWarning,
   explicitRuleTargetWarning,
-  importedContextActionLabel,
-  importedContextStatus,
   ruleScopeLabel,
   ruleTargetLabel,
   savedRuleStatusLabel,
-  selectedRuleMatchLabel,
-  selectedRulePriorityLabel,
-  selectedRuleSubtitle,
   setCommandResultLabel,
   workspaceSetActionLabel,
 } from "../../../lib/sets-display";
 import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
-import { SUPPORTED_TOOLS, toolShortName } from "../../../lib/tool-registry";
+import { SUPPORTED_TOOLS } from "../../../lib/tool-registry";
 import { buildKeyedRecord, countLabel } from "../../../lib/utils";
 import {
   DEFAULT_WORKSPACE_BINDING_SCOPE,
@@ -44,13 +39,18 @@ import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import { COMMAND_RESULT_GLOBAL_IDS } from "../../shared/command-result-scope";
 import { resolveGlobalStateMode } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
-import { resolveWorkspaceActivationTarget, workspaceBindingOptions } from "../../workspaces/workspace-activation";
+import {
+  resolveWorkspaceActivationTarget,
+  workspaceBindingOptions,
+  workspaceBindingOptionSavedSetLabel,
+} from "../../workspaces/workspace-activation";
 import { parseWorkspaceBindings, parseWorkspaceStatus } from "../../workspaces/workspace-parsers";
 import type { WorkspaceUnbindInput } from "../../../lib/client";
 import {
   buildImportedContextRows,
   buildSavedSetRows,
   buildSavedSetCollection,
+  buildSelectedRuleInspectorState,
   buildSetSettingsUpdate,
   buildSelectedSetInspectorState,
   buildWorkspaceBindingTarget,
@@ -84,11 +84,14 @@ import {
   type EditableProfileSet,
   type EditableRule,
   type SetPanelMode,
+  type SelectedRuleInspectorState,
+  type SelectedSetInspectorState,
   unbindTargetForBinding,
   workspaceBindingTargetChanged,
 } from "../sets-panel-display";
 
 const TOOLS = SUPPORTED_TOOLS;
+const SETS_ROW_ACTIONS_ATTRIBUTE = "data-profile-row-actions";
 
 export function SetsPanel({
   snapshot,
@@ -174,8 +177,6 @@ export function SetsPanel({
 
   const selectedSet =
     localSets.find((entry) => entry.name === selectedSetName) ?? localSets[0] ?? null;
-  const usableSetCount = localSets.filter((entry) => profileSetHasUsableSelections(snapshot, entry)).length;
-  const activeSetCount = localSets.filter((entry) => profileSetIsActive(snapshot, entry)).length;
   const profileOptions = useMemo(
     () =>
       buildKeyedRecord(TOOLS, (tool) =>
@@ -218,9 +219,6 @@ export function SetsPanel({
     ruleEntries[0] ??
     null;
   const selectedRuleMatched = selectedRule?.key === matchedBindingKey;
-  const selectedRuleContextLabel = selectedRule
-    ? contextDisplayLabel(settings, selectedRule.context)
-    : null;
   const currentRuleCount = ruleEntries.length;
   const requiresExplicitTarget = ruleDraft.scope !== "default";
   const trimmedTargetValue = ruleDraft.targetValue.trim();
@@ -407,9 +405,7 @@ export function SetsPanel({
     }
 
     const selectedContext = bindingOptions.find((entry) => entry.value === ruleDraft.context);
-    const label = selectedContext?.label.startsWith("Saved set: ")
-      ? selectedContext.label.slice("Saved set: ".length)
-      : undefined;
+    const label = workspaceBindingOptionSavedSetLabel(selectedContext);
 
     const target = buildWorkspaceBindingTarget(ruleDraft.scope, trimmedTargetValue);
 
@@ -444,6 +440,14 @@ export function SetsPanel({
         settings,
         snapshot,
         tools: TOOLS,
+      })
+    : null;
+  const selectedRuleInspector = selectedRule
+    ? buildSelectedRuleInspectorState({
+        contextLabel: contextDisplayLabel(settings, selectedRule.context),
+        scope: selectedRule.scope,
+        target: selectedRule.target,
+        matched: Boolean(selectedRuleMatched),
       })
     : null;
   const importedContextRows = buildImportedContextRows({
@@ -584,23 +588,12 @@ export function SetsPanel({
               <aside className="sets-pane sets-inspector">
                 {selectedSet ? (
                   <>
-                    <header className="sets-inspector-header">
-                      <div>
-                        {compactLayout ? (
-                          <button
-                            className="ghost-button sets-inspector-back"
-                            type="button"
-                            onClick={() => setCompactSetInspectorOpen(false)}
-                          >
-                            Back
-                          </button>
-                        ) : null}
-                        <h3>{selectedSetInspector?.displayLabel}</h3>
-                        <p className="inline-note sets-inspector-subtitle">
-                          {selectedSetInspector?.selectionCountLabel}
-                        </p>
-                      </div>
-                    </header>
+                    <SetsInspectorHeader
+                      compactLayout={compactLayout}
+                      title={selectedSetInspector?.displayLabel ?? ""}
+                      subtitle={selectedSetInspector?.selectionCountLabel ?? ""}
+                      onBack={() => setCompactSetInspectorOpen(false)}
+                    />
                     <div className="button-row sets-inspector-actions">
                       <button
                         className="primary-button"
@@ -632,7 +625,7 @@ export function SetsPanel({
                             anchorRef={setMenuAnchorRef}
                             className="profile-row-actions-menu"
                             align="start"
-                            boundaryAttribute="data-profile-row-actions"
+                            boundaryAttribute={SETS_ROW_ACTIONS_ATTRIBUTE}
                             containmentSelector=".sets-inspector"
                             role="menu"
                             aria-label={SETS_PANEL_COPY.setActionsMenuAriaLabel}
@@ -674,24 +667,7 @@ export function SetsPanel({
                         ) : null}
                       </div>
                     </div>
-                    <section className="sets-detail-list" aria-label="Set mappings">
-                      {selectedSetInspector?.mappedProfiles.map((profile) => (
-                        <div key={profile.tool} className="sets-detail-row">
-                          <span className="sets-detail-key">
-                            <ToolBrand tool={profile.tool} className="tool-brand-inline" logoSize={16} />
-                          </span>
-                          <strong className="sets-detail-value">
-                            {profile.value}
-                          </strong>
-                        </div>
-                      ))}
-                      <div className="sets-detail-row">
-                        <span className="sets-detail-key">Project rules</span>
-                        <strong className="sets-detail-value">
-                          {selectedSetInspector?.projectRuleCount ?? 0} active
-                        </strong>
-                      </div>
-                    </section>
+                    <SetInspectorDetailList state={selectedSetInspector} />
                     {selectedSetInspector?.warning ? (
                       <p className="inline-note">{selectedSetInspector.warning}</p>
                     ) : null}
@@ -792,7 +768,7 @@ export function SetsPanel({
                         <AnchoredMenu
                           anchorRef={rulesMenuAnchorRef}
                           className="profile-row-actions-menu"
-                          boundaryAttribute="data-profile-row-actions"
+                          boundaryAttribute={SETS_ROW_ACTIONS_ATTRIBUTE}
                           containmentSelector=".sets-rules-list-panel"
                           role="menu"
                           aria-label={SETS_PANEL_COPY.projectRulesActionsAriaLabel}
@@ -815,10 +791,9 @@ export function SetsPanel({
                 {currentRuleCount ? (
                   <div className="sets-rule-table">
                     <div className="sets-rule-table-header" aria-hidden="true">
-                      <span>Match</span>
-                      <span>Value</span>
-                      <span>Set</span>
-                      <span>Status</span>
+                      {SETS_PANEL_COPY.ruleTableHeaders.map((label) => (
+                        <span key={label}>{label}</span>
+                      ))}
                     </div>
                     <div className="sets-rule-table-body">
                       {ruleEntries.map((binding) => (
@@ -868,54 +843,20 @@ export function SetsPanel({
               <aside className="sets-pane sets-rules-inspector">
                 {selectedRule ? (
                   <>
-                    <header className="sets-inspector-header">
-                      <div>
-                        {compactLayout ? (
-                          <button
-                            className="ghost-button sets-inspector-back"
-                            type="button"
-                            onClick={() => setCompactRuleInspectorOpen(false)}
-                          >
-                            Back
-                          </button>
-                        ) : null}
-                        <h3>{selectedRuleContextLabel}</h3>
-                        <p className="inline-note sets-inspector-subtitle">
-                          {selectedRuleSubtitle(Boolean(selectedRuleMatched))}
-                        </p>
-                      </div>
-                    </header>
-                    <section className="sets-detail-list" aria-label="Rule details">
-                      <div className="sets-detail-row">
-                        <span className="sets-detail-key">Rule type</span>
-                        <strong className="sets-detail-value">{ruleScopeLabel(selectedRule.scope)}</strong>
-                      </div>
-                      <div className="sets-detail-row">
-                        <span className="sets-detail-key">Match value</span>
-                        <strong className="sets-detail-value">{ruleTargetLabel(selectedRule.scope, selectedRule.target)}</strong>
-                      </div>
-                      <div className="sets-detail-row">
-                        <span className="sets-detail-key">Set</span>
-                        <strong className="sets-detail-value">
-                          {selectedRuleContextLabel ?? SETS_PANEL_COPY.setUnavailableLabel}
-                        </strong>
-                      </div>
-                      <div className="sets-detail-row">
-                        <span className="sets-detail-key">Priority</span>
-                        <strong className="sets-detail-value">{selectedRulePriorityLabel(selectedRule.scope)}</strong>
-                      </div>
-                      <div className="sets-detail-row">
-                        <span className="sets-detail-key">Enabled</span>
-                        <strong className="sets-detail-value">{SETS_PANEL_COPY.enabledLabel}</strong>
-                      </div>
-                      <div className="sets-detail-row">
-                        <span className="sets-detail-key">Last matched</span>
-                        <strong className="sets-detail-value">{selectedRuleMatchLabel(Boolean(selectedRuleMatched))}</strong>
-                      </div>
-                    </section>
+                    <SetsInspectorHeader
+                      compactLayout={compactLayout}
+                      title={selectedRuleInspector?.displayLabel ?? ""}
+                      subtitle={selectedRuleInspector?.subtitle ?? ""}
+                      onBack={() => setCompactRuleInspectorOpen(false)}
+                    />
+                    <RuleInspectorDetailList state={selectedRuleInspector} />
                     <div className="button-row sets-inspector-actions">
-                      <button className="ghost-button" type="button" onClick={() => openEditRuleEditor(selectedRule)}>
-                        Edit…
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        onClick={() => openEditRuleEditor(selectedRule)}
+                      >
+                        {SETS_PANEL_COPY.editRuleLabel}
                       </button>
                       <button
                         className="ghost-button danger-button"
@@ -925,7 +866,7 @@ export function SetsPanel({
                           removeRule(unbindTargetForBinding(selectedRule.scope, selectedRule.target))
                         }
                       >
-                        Remove…
+                        {SETS_PANEL_COPY.removeRuleLabel}
                       </button>
                     </div>
                   </>
@@ -951,15 +892,11 @@ export function SetsPanel({
           onClose={closeSetEditor}
         >
           <form className="stack-list" onSubmit={saveSet}>
-            <div className="quick-switch-header">
-              <div>
-                <p className="card-kicker">{setEditorKicker(isEditingSet)}</p>
-                <h3>{setEditorTitle(isEditingSet)}</h3>
-              </div>
-              <button className="ghost-button" type="button" onClick={closeSetEditor}>
-                {SETS_PANEL_COPY.closeLabel}
-              </button>
-            </div>
+            <SetsSheetHeader
+              kicker={setEditorKicker(isEditingSet)}
+              title={setEditorTitle(isEditingSet)}
+              onClose={closeSetEditor}
+            />
             <div className="stacked-form diagnostics-body">
               <label>
                 {SETS_PANEL_COPY.setNameLabel}
@@ -1034,15 +971,11 @@ export function SetsPanel({
           onClose={closeRuleEditor}
         >
           <form className="stack-list" onSubmit={submitRule}>
-            <div className="quick-switch-header">
-              <div>
-                <p className="card-kicker">{SETS_PANEL_COPY.projectRuleKicker}</p>
-                <h3>{ruleEditorTitle(isEditingRule)}</h3>
-              </div>
-              <button className="ghost-button" type="button" onClick={closeRuleEditor}>
-                {SETS_PANEL_COPY.closeLabel}
-              </button>
-            </div>
+            <SetsSheetHeader
+              kicker={SETS_PANEL_COPY.projectRuleKicker}
+              title={ruleEditorTitle(isEditingRule)}
+              onClose={closeRuleEditor}
+            />
             <div className="stacked-form diagnostics-body">
               <label>
                 {SETS_PANEL_COPY.ruleScopeLabel}
@@ -1116,5 +1049,96 @@ export function SetsPanel({
         </DialogSurface>
       ) : null}
     </div>
+  );
+}
+
+function SetsSheetHeader({
+  kicker,
+  title,
+  onClose,
+}: {
+  kicker?: string;
+  title: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="quick-switch-header">
+      <div>
+        {kicker ? <p className="card-kicker">{kicker}</p> : null}
+        <h3>{title}</h3>
+      </div>
+      <button className="ghost-button" type="button" onClick={onClose}>
+        {SETS_PANEL_COPY.closeLabel}
+      </button>
+    </div>
+  );
+}
+
+function SetsInspectorHeader({
+  compactLayout,
+  title,
+  subtitle,
+  onBack,
+}: {
+  compactLayout: boolean;
+  title: string;
+  subtitle: string;
+  onBack: () => void;
+}) {
+  return (
+    <header className="sets-inspector-header">
+      <div>
+        {compactLayout ? (
+          <button className="ghost-button sets-inspector-back" type="button" onClick={onBack}>
+            {SETS_PANEL_COPY.backLabel}
+          </button>
+        ) : null}
+        <h3>{title}</h3>
+        <p className="inline-note sets-inspector-subtitle">{subtitle}</p>
+      </div>
+    </header>
+  );
+}
+
+function SetInspectorDetailList({
+  state,
+}: {
+  state: SelectedSetInspectorState | null;
+}) {
+  return (
+    <section className="sets-detail-list" aria-label={SETS_PANEL_COPY.setMappingsAriaLabel}>
+      {state?.detailRows.map((row) => (
+        <div
+          key={row.kind === "tool" ? row.tool : row.label}
+          className="sets-detail-row"
+        >
+          <span className="sets-detail-key">
+            {row.kind === "tool" ? (
+              <ToolBrand tool={row.tool} className="tool-brand-inline" logoSize={16} />
+            ) : (
+              row.label
+            )}
+          </span>
+          <strong className="sets-detail-value">{row.value}</strong>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function RuleInspectorDetailList({
+  state,
+}: {
+  state: SelectedRuleInspectorState | null;
+}) {
+  return (
+    <section className="sets-detail-list" aria-label={SETS_PANEL_COPY.ruleDetailsAriaLabel}>
+      {state?.detailRows.map((row) => (
+        <div key={row.label} className="sets-detail-row">
+          <span className="sets-detail-key">{row.label}</span>
+          <strong className="sets-detail-value">{row.value}</strong>
+        </div>
+      ))}
+    </section>
   );
 }
