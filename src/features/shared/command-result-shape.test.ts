@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   COMMAND_RESULT_STATUSES,
+  isCommandResultStatus,
   parseCommandResultCommand,
   parseStoredCommandResult,
   parseTrayCommandResultEvent,
@@ -11,6 +12,9 @@ import { DESKTOP_ACTION_RESULT_COPY } from "./desktop-action-result-copy";
 describe("command-result-shape", () => {
   it("shares stable command result statuses", () => {
     expect(COMMAND_RESULT_STATUSES).toEqual(["success", "error"]);
+    expect(isCommandResultStatus("success")).toBe(true);
+    expect(isCommandResultStatus("error")).toBe(true);
+    expect(isCommandResultStatus("unknown")).toBe(false);
   });
 
   it("parses stored command results with optional metadata", () => {

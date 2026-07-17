@@ -1,4 +1,4 @@
-import { asObject, asOptionalString } from "../../lib/parse-guards";
+import { asObject, asOptionalString, isOneOf } from "../../lib/parse-guards";
 import type { ErrorMetadata } from "../../lib/error-details";
 import {
   COMMAND_RESULT_SCOPE_TYPES,
@@ -7,9 +7,18 @@ import {
   type CommandResultGlobalId,
 } from "./command-result-scope";
 
-export const COMMAND_RESULT_STATUSES = ["success", "error"] as const;
+const COMMAND_RESULT_STATUS_DEFINITIONS = [
+  {
+    id: "success",
+  },
+  {
+    id: "error",
+  },
+] as const;
 
-export type CommandResultStatus = (typeof COMMAND_RESULT_STATUSES)[number];
+export type CommandResultStatus = (typeof COMMAND_RESULT_STATUS_DEFINITIONS)[number]["id"];
+export const COMMAND_RESULT_STATUSES: readonly CommandResultStatus[] =
+  COMMAND_RESULT_STATUS_DEFINITIONS.map((status) => status.id);
 
 export type CommandResultBase = {
   label: string;
@@ -77,6 +86,10 @@ export function parseCommandResultCommand(value: unknown) {
   return commandResultStringField(asObject(value), "command");
 }
 
+export function isCommandResultStatus(value: unknown): value is CommandResultStatus {
+  return isOneOf(COMMAND_RESULT_STATUSES, value);
+}
+
 function parseCommandResultBase(value: unknown) {
   const record = asObject(value);
   if (!record) {
@@ -109,5 +122,5 @@ function commandResultStringField(
 }
 
 function parseCommandResultStatus(value: unknown): CommandResultStatus | null {
-  return value === "success" || value === "error" ? value : null;
+  return isCommandResultStatus(value) ? value : null;
 }
