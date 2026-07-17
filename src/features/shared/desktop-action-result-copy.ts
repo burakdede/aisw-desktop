@@ -38,19 +38,19 @@ export function addProfileSavedMessage(tool: string, profile: string) {
 }
 
 export function switchProfileMessage(tool: string, label: string | null | undefined, profile: string) {
-  return `Switched ${toolDisplayName(tool)} to ${label ?? profile}.`;
+  return `Switched ${toolDisplayName(tool)} to ${displayLabel(label, profile)}.`;
 }
 
 export function switchAllToolsMessage(label: string | null | undefined, profile: string) {
-  return `Switched all tools to ${label ?? profile}.`;
+  return `Switched all tools to ${displayLabel(label, profile)}.`;
 }
 
 export function activatedSetMessage(label: string | null | undefined, context: string) {
-  return `Activated set ${label ?? context}.`;
+  return `Activated set ${displayLabel(label, context)}.`;
 }
 
 export function activatedSavedSetMessage(label: string | null | undefined, name: string) {
-  return `Activated saved set ${label ?? name}.`;
+  return `Activated saved set ${displayLabel(label, name)}.`;
 }
 
 export function renameProfileMessage(tool: string, oldName: string, newName: string) {
@@ -66,7 +66,7 @@ export function restoreBackupMessage(backupId: string) {
 }
 
 export function savedProjectRuleMessage(label: string | null | undefined, context: string) {
-  return `Saved project rule for ${label ?? context}.`;
+  return `Saved project rule for ${displayLabel(label, context)}.`;
 }
 
 export function removedProjectRuleMessage() {
@@ -82,6 +82,14 @@ export function switchedWorkspaceTargetMessage(
   matchedTarget: string,
 ) {
   return `Switched to ${targetLabel} for ${matchedTarget}.`;
+}
+
+export function workspaceTargetLabel(input: {
+  kind: "profile_set" | "context";
+  name: string;
+  label?: string;
+}) {
+  return input.kind === "profile_set" ? displayLabel(input.label, input.name) : input.name;
 }
 
 export function workspaceTargetSuccessNotification(message: string) {
@@ -102,4 +110,8 @@ export function workspaceTargetFailureNotification(
       prefix: "",
     }),
   };
+}
+
+function displayLabel(label: string | null | undefined, fallback: string) {
+  return label ?? fallback;
 }

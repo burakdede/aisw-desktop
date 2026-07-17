@@ -15,6 +15,7 @@ import {
   switchedWorkspaceTargetMessage,
   switchProfileMessage,
   updatedProjectRuleGuardMessage,
+  workspaceTargetLabel,
   workspaceTargetFailureNotification,
   workspaceTargetSuccessNotification,
 } from "./desktop-action-result-copy";
@@ -69,6 +70,11 @@ describe("desktop-action-result-copy", () => {
     expect(switchedWorkspaceTargetMessage("Daily", "~/project")).toBe(
       "Switched to Daily for ~/project.",
     );
+    expect(
+      workspaceTargetLabel({ kind: "profile_set", name: "daily", label: "Daily" }),
+    ).toBe("Daily");
+    expect(workspaceTargetLabel({ kind: "profile_set", name: "daily" })).toBe("daily");
+    expect(workspaceTargetLabel({ kind: "context", name: "~/project" })).toBe("~/project");
   });
 
   it("builds shared workspace-target notification payloads", () => {

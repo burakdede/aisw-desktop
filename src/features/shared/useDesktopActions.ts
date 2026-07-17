@@ -48,6 +48,7 @@ import {
   switchedWorkspaceTargetMessage,
   switchProfileMessage,
   updatedProjectRuleGuardMessage,
+  workspaceTargetLabel,
   workspaceTargetFailureNotification,
   workspaceTargetSuccessNotification,
 } from "./desktop-action-result-copy";
@@ -159,8 +160,7 @@ export function useDesktopActions() {
           ? activateProfileSet({ name: variables.name })
           : useContext({ context: variables.name, stateMode: variables.stateMode }),
       );
-      const targetLabel =
-        variables.kind === "profile_set" ? variables.label ?? variables.name : variables.name;
+      const targetLabel = workspaceTargetLabel(variables);
       const message = switchedWorkspaceTargetMessage(targetLabel, variables.matchedTarget);
       recordCommandResult(
         { type: "global", id: COMMAND_RESULT_GLOBAL_IDS.workspace },
