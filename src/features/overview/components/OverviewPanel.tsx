@@ -4,7 +4,7 @@ import { ButtonRow } from "../../../components/ButtonRow";
 import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { PaneInspectorHeader } from "../../../components/PaneInspectorHeader";
 import { ToolBrand } from "../../../components/ToolBrand";
-import { useCompactLayout } from "../../../components/useCompactLayout";
+import { useCompactInspectorLayout } from "../../../components/useCompactInspectorLayout";
 import { AppBootstrap, AppSnapshot, DesktopSettings, ToolStatus } from "../../../lib/schemas";
 import { credentialBackendLabel as formatCredentialBackendLabel } from "../../../lib/credential-backends";
 import {
@@ -115,8 +115,12 @@ export function OverviewPanel({
   const currentSetDisplay = currentSetLabel ?? OVERVIEW_PANEL_COPY.currentSetFallback;
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [selectedTool, setSelectedTool] = useState(snapshot.statuses[0]?.tool ?? "");
-  const compactLayout = useCompactLayout(rootRef, PANEL_COMPACT_BREAKPOINT);
-  const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
+  const {
+    compactLayout,
+    setCompactInspectorOpen,
+    showPrimary: showToolList,
+    showInspector,
+  } = useCompactInspectorLayout(rootRef, PANEL_COMPACT_BREAKPOINT);
   const selectedStatus =
     snapshot.statuses.find((status) => status.tool === selectedTool) ?? snapshot.statuses[0] ?? null;
   const overviewStates = snapshot.statuses.map(resolveOverviewHealthState);
@@ -142,12 +146,6 @@ export function OverviewPanel({
     }
   }, [selectedTool, snapshot.statuses]);
 
-  useEffect(() => {
-    if (!compactLayout) {
-      setCompactInspectorOpen(false);
-    }
-  }, [compactLayout]);
-
   const recentSummary = overviewRecentSummary({
     bulkResult,
     workspaceResult,
@@ -156,8 +154,6 @@ export function OverviewPanel({
   const workspaceActivationTarget = hasWorkspaceMismatch
     ? resolveWorkspaceActivationTarget(workspaceStatus.expectedContext, settings, snapshot)
     : null;
-  const showInspector = !compactLayout || compactInspectorOpen;
-  const showToolList = !compactLayout || !compactInspectorOpen;
   const selectedToolName = selectedStatus
     ? toolDisplayName(selectedStatus.tool)
     : OVERVIEW_PANEL_COPY.selectedToolFallback;

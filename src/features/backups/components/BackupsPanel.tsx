@@ -14,7 +14,7 @@ import { SheetFooter } from "../../../components/SheetFooter";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
-import { useCompactLayout } from "../../../components/useCompactLayout";
+import { useCompactInspectorLayout } from "../../../components/useCompactInspectorLayout";
 import { listBackups, openAppDataFolder } from "../../../lib/client";
 import {
   backupReasonLabel,
@@ -77,8 +77,12 @@ export function BackupsPanel({
   const [inspectorMenuOpen, setInspectorMenuOpen] = useState(false);
   const toolbarMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
   const inspectorMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
-  const compactLayout = useCompactLayout(rootRef, PANEL_COMPACT_BREAKPOINT);
-  const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
+  const {
+    compactLayout,
+    setCompactInspectorOpen,
+    showPrimary: showTable,
+    showInspector,
+  } = useCompactInspectorLayout(rootRef, PANEL_COMPACT_BREAKPOINT);
   const [pendingRestore, setPendingRestore] = useState<{
     backupId: string;
     mode: PendingRestoreMode;
@@ -100,12 +104,6 @@ export function BackupsPanel({
     }
   }, [filteredBackups, selectedBackupId]);
 
-  useEffect(() => {
-    if (!compactLayout) {
-      setCompactInspectorOpen(false);
-    }
-  }, [compactLayout]);
-
   const selectedInspector = buildBackupInspectorState(
     selectedBackupId,
     filteredBackups,
@@ -113,8 +111,6 @@ export function BackupsPanel({
     snapshot,
   );
   const emptyState = buildBackupsEmptyState(backups.isLoading);
-  const showInspector = !compactLayout || compactInspectorOpen;
-  const showTable = !compactLayout || !compactInspectorOpen;
 
   const restoreSheet = buildRestoreSheetState(
     pendingRestore?.backupId ?? null,

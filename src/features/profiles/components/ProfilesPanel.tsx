@@ -23,7 +23,7 @@ import { SheetFooter } from "../../../components/SheetFooter";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
-import { useCompactLayout } from "../../../components/useCompactLayout";
+import { useCompactInspectorLayout } from "../../../components/useCompactInspectorLayout";
 import {
   AppBootstrap,
   AppSnapshot,
@@ -212,8 +212,12 @@ export function ProfilesPanel({
   const inventoryRowRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const rowActionAnchorRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const compactLayout = useCompactLayout(rootRef, PANEL_COMPACT_BREAKPOINT);
-  const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
+  const {
+    compactLayout,
+    setCompactInspectorOpen,
+    showPrimary: showInventory,
+    showInspector,
+  } = useCompactInspectorLayout(rootRef, PANEL_COMPACT_BREAKPOINT);
 
   const profiles = useMemo(() => snapshot.profiles[tool]?.profiles ?? [], [snapshot, tool]);
   const readEnabled = useMutationAwareQueryEnabled();
@@ -408,12 +412,6 @@ export function ProfilesPanel({
       setExpandedDetails(nextDefault);
     }
   }, [expandedDetails, profiles, snapshot.profiles, tool]);
-
-  useEffect(() => {
-    if (!compactLayout) {
-      setCompactInspectorOpen(false);
-    }
-  }, [compactLayout]);
 
   useEffect(() => {
     let active = true;
@@ -670,9 +668,6 @@ export function ProfilesPanel({
       moveInventorySelection(index, nextIndex);
     }
   }
-
-  const showInventory = !compactLayout || !compactInspectorOpen;
-  const showInspector = !compactLayout || compactInspectorOpen;
 
   return (
     <div ref={rootRef} className="profiles-screen screen-content">

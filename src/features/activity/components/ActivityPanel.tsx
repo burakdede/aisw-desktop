@@ -15,7 +15,7 @@ import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
-import { useCompactLayout } from "../../../components/useCompactLayout";
+import { useCompactInspectorLayout } from "../../../components/useCompactInspectorLayout";
 import { exportActivityLog } from "../../../lib/client";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
@@ -71,8 +71,12 @@ export function ActivityPanel({
   const [logMessage, setLogMessage] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [pendingClear, setPendingClear] = useState(false);
-  const compactLayout = useCompactLayout(rootRef, PANEL_COMPACT_BREAKPOINT);
-  const [compactInspectorOpen, setCompactInspectorOpen] = useState(false);
+  const {
+    compactLayout,
+    setCompactInspectorOpen,
+    showPrimary: showList,
+    showInspector,
+  } = useCompactInspectorLayout(rootRef, PANEL_COMPACT_BREAKPOINT);
   const menuAnchorRef = useRef<HTMLButtonElement | null>(null);
 
   const entries = useMemo<ActivityEntry[]>(
@@ -92,8 +96,6 @@ export function ActivityPanel({
     filteredEntries.find((entry) => entry.key === selectedEntryKey) ?? filteredEntries[0] ?? null;
   const hasEntries = entries.length > 0;
   const footerMessage = clearMessage || logMessage;
-  const showList = !compactLayout || !compactInspectorOpen;
-  const showInspector = !compactLayout || compactInspectorOpen;
   const selectedEntryScope = selectedEntry
     ? activityScopePresentation(selectedEntry)
     : null;
@@ -104,12 +106,6 @@ export function ActivityPanel({
       setSelectedEntryKey(nextEntryKey);
     }
   }, [filteredEntries, selectedEntryKey]);
-
-  useEffect(() => {
-    if (!compactLayout) {
-      setCompactInspectorOpen(false);
-    }
-  }, [compactLayout]);
 
   useEffect(() => {
     if (externalClearSignal < 1) {

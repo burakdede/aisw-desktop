@@ -14,7 +14,8 @@ export function useCompactLayout(
 
     const rootElement = rootRef.current;
     const updateLayout = () => {
-      setCompactLayout(measuredPaneWidth(rootRef.current, breakpoint) < breakpoint);
+      const nextCompactLayout = measuredPaneWidth(rootRef.current, breakpoint) < breakpoint;
+      setCompactLayout((current) => (current === nextCompactLayout ? current : nextCompactLayout));
     };
 
     updateLayout();
@@ -33,14 +34,6 @@ export function useCompactLayout(
       observer?.disconnect();
     };
   }, [breakpoint, rootRef]);
-
-  useEffect(() => {
-    if (!rootRef.current) {
-      return;
-    }
-
-    setCompactLayout(measuredPaneWidth(rootRef.current, breakpoint) < breakpoint);
-  });
 
   return compactLayout;
 }
