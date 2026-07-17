@@ -23,31 +23,31 @@ const SERVER_READY_TIMEOUT_MS = 30_000;
 const SERVER_READY_POLL_MS = 250;
 const GIF_FPS = 18;
 const GIF_LOOP = "0";
-const OVERLAY_BOTTOM_OFFSET_PX = 32;
-const OVERLAY_CARD_SIZE = { width: 920, height: 148 };
+const OVERLAY_BOTTOM_OFFSET_PX = 24;
+const OVERLAY_CARD_SIZE = { width: 640, height: 104 };
 const OVERLAY_CARD_FRAME = {
   left: 1,
   top: 1,
-  right: 918,
-  bottom: 146,
-  radius: 28,
+  right: 638,
+  bottom: 102,
+  radius: 24,
 };
 const OVERLAY_TITLE = {
   font: "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
-  pointSize: 44,
-  offsetY: 22,
+  pointSize: 36,
+  offsetY: 14,
   color: "#ffffff",
 };
 const OVERLAY_DETAIL = {
   font: "/System/Library/Fonts/Supplemental/Arial.ttf",
-  pointSize: 28,
-  offsetY: 78,
-  color: "#f4f6fb",
-  interlineSpacing: 6,
+  pointSize: 24,
+  offsetY: 56,
+  color: "#f3f6fb",
+  interlineSpacing: 4,
 };
 const OVERLAY_CARD_COLORS = {
-  fill: "rgba(18,20,27,0.9)",
-  stroke: "rgba(255,255,255,0.18)",
+  fill: "rgba(14,18,26,0.94)",
+  stroke: "rgba(115,153,255,0.28)",
   strokeWidth: "2",
 };
 const QUICK_SWITCH_CAPTURE = {
@@ -192,8 +192,8 @@ async function captureQuickSwitchGif(browser) {
     videoPath,
     path.join(mediaDir, "desktop-quick-switch.gif"),
     {
-      title: "Quick Switch",
-      detail: "Command-K. Type a profile. Press Enter.",
+      title: "Quick switch",
+      detail: "Type. Arrow down. Press Enter.",
       trimStartSeconds: QUICK_SWITCH_CAPTURE.trimStartSeconds,
     },
   );
@@ -218,8 +218,8 @@ async function captureWorkspaceSwitchGif(browser) {
     videoPath,
     path.join(mediaDir, "desktop-workspace-switch.gif"),
     {
-      title: "Project Rules",
-      detail: "Use Expected Set to restore this repository context.",
+      title: "Workspace restore",
+      detail: "Apply the expected set for this repo.",
       trimStartSeconds: WORKSPACE_SWITCH_CAPTURE.trimStartSeconds,
     },
   );
