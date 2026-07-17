@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
+import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SplitView } from "../../../components/SplitView";
 import { useCompactLayout } from "../../../components/useCompactLayout";
 import type {
@@ -512,44 +513,25 @@ export function DiagnosticsPanel({
                       </button>
                     ) : null}
                     {inspectorOverflowActions.length ? (
-                      <div className="profile-row-actions" data-profile-row-actions>
-                        <button
-                          ref={inspectorMenuAnchorRef}
-                          className="ghost-button profile-row-actions-trigger profile-row-actions-trigger-visible"
-                          type="button"
-                          aria-label={DIAGNOSTICS_PANEL_COPY.inspectorOverflowTriggerAriaLabel}
-                          aria-expanded={inspectorMenuOpen}
-                          onClick={() => setInspectorMenuOpen((open) => !open)}
-                        >
-                          •••
-                        </button>
-                        {inspectorMenuOpen ? (
-                          <AnchoredMenu
-                            anchorRef={inspectorMenuAnchorRef}
-                            className="profile-row-actions-menu"
-                            align="start"
-                            boundaryAttribute="data-profile-row-actions"
-                            containmentSelector=".diagnostics-inspector-surface"
-                            role="menu"
-                            aria-label={DIAGNOSTICS_PANEL_COPY.inspectorOverflowMenuAriaLabel}
-                          >
-                            {inspectorOverflowActions.map((action) => (
-                              <button
-                                key={action.key}
-                                type="button"
-                                role="menuitem"
-                                disabled={mutationLock.isBusy}
-                                onClick={() => {
-                                  setInspectorMenuOpen(false);
-                                  runInspectorAction(action);
-                                }}
-                              >
-                                {action.label}
-                              </button>
-                            ))}
-                          </AnchoredMenu>
-                        ) : null}
-                      </div>
+                      <OverflowMenuButton
+                        open={inspectorMenuOpen}
+                        anchorRef={inspectorMenuAnchorRef}
+                        align="start"
+                        triggerAriaLabel={DIAGNOSTICS_PANEL_COPY.inspectorOverflowTriggerAriaLabel}
+                        triggerClassName="profile-row-actions-trigger-visible"
+                        menuAriaLabel={DIAGNOSTICS_PANEL_COPY.inspectorOverflowMenuAriaLabel}
+                        containmentSelector=".diagnostics-inspector-surface"
+                        items={inspectorOverflowActions.map((action) => ({
+                          key: action.key,
+                          label: action.label,
+                          disabled: mutationLock.isBusy,
+                          onSelect: () => {
+                            setInspectorMenuOpen(false);
+                            runInspectorAction(action);
+                          },
+                        }))}
+                        onToggle={() => setInspectorMenuOpen((open) => !open)}
+                      />
                     ) : null}
                   </div>
                 ) : null}

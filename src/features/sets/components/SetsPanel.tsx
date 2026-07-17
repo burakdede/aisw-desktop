@@ -1,7 +1,7 @@
-import { FormEvent, type MutableRefObject, ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AnchoredMenu } from "../../../components/AnchoredMenu";
 import { DialogSurface } from "../../../components/DialogSurface";
+import { OverflowMenuButton } from "../../../components/OverflowMenuButton";
 import { SegmentedControl } from "../../../components/SegmentedControl";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
@@ -91,7 +91,6 @@ import {
 } from "../sets-panel-display";
 
 const TOOLS = SUPPORTED_TOOLS;
-const SETS_ROW_ACTIONS_ATTRIBUTE = "data-profile-row-actions";
 
 export function SetsPanel({
   snapshot,
@@ -466,6 +465,45 @@ export function SetsPanel({
     snapshot,
     tools: TOOLS,
   });
+  const selectedSetMenuItems = selectedSet
+    ? [
+        {
+          key: "rename",
+          label: SETS_PANEL_COPY.renameSetLabel,
+          onSelect: () => openEditSetEditor(selectedSet),
+        },
+        {
+          key: "duplicate",
+          label: SETS_PANEL_COPY.duplicateSetLabel,
+          onSelect: () => duplicateSet(selectedSet),
+        },
+        {
+          key: "manage-project-rules",
+          label: SETS_PANEL_COPY.manageProjectRulesLabel,
+          onSelect: () => {
+            setSetMenuOpen(false);
+            setMode("rules");
+          },
+        },
+        {
+          key: "remove",
+          label: SETS_PANEL_COPY.removeSetLabel,
+          danger: true,
+          disabled: mutationLock.isBusy,
+          onSelect: () => deleteSet(selectedSet.name),
+        },
+      ]
+    : [];
+  const rulesMenuItems = [
+    {
+      key: "open-sets",
+      label: SETS_PANEL_COPY.openSetsLabel,
+      onSelect: () => {
+        setRulesMenuOpen(false);
+        onOpenContexts();
+      },
+    },
+  ];
 
   const setRows = setRowModels.map((row) => (
       <button
@@ -618,49 +656,16 @@ export function SetsPanel({
                       <button className="ghost-button" type="button" onClick={() => openEditSetEditor(selectedSet)}>
                         {SETS_PANEL_COPY.editSetLabel}
                       </button>
-                      <SetsActionsMenu
+                      <OverflowMenuButton
                         open={setMenuOpen}
                         anchorRef={setMenuAnchorRef}
                         align="start"
                         triggerAriaLabel={setActionsTriggerLabel(profileSetDisplayLabel(selectedSet))}
                         menuAriaLabel={SETS_PANEL_COPY.setActionsMenuAriaLabel}
                         containmentSelector=".sets-inspector"
+                        items={selectedSetMenuItems}
                         onToggle={() => setSetMenuOpen((open) => !open)}
-                      >
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={() => openEditSetEditor(selectedSet)}
-                        >
-                          {SETS_PANEL_COPY.renameSetLabel}
-                        </button>
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={() => duplicateSet(selectedSet)}
-                        >
-                          {SETS_PANEL_COPY.duplicateSetLabel}
-                        </button>
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={() => {
-                            setSetMenuOpen(false);
-                            setMode("rules");
-                          }}
-                        >
-                          {SETS_PANEL_COPY.manageProjectRulesLabel}
-                        </button>
-                        <button
-                          type="button"
-                          role="menuitem"
-                          className="profile-row-actions-danger"
-                          disabled={mutationLock.isBusy}
-                          onClick={() => deleteSet(selectedSet.name)}
-                        >
-                          {SETS_PANEL_COPY.removeSetLabel}
-                        </button>
-                      </SetsActionsMenu>
+                      />
                     </div>
                     <SetInspectorDetailList state={selectedSetInspector} />
                     {selectedSetInspector?.warning ? (
@@ -745,7 +750,7 @@ export function SetsPanel({
                     <button className="primary-button" type="button" onClick={openRuleEditor}>
                       {SETS_PANEL_COPY.addRuleButtonLabel}
                     </button>
-                    <SetsActionsMenu
+                    <OverflowMenuButton
                       open={rulesMenuOpen}
                       anchorRef={rulesMenuAnchorRef}
                       align="start"
@@ -753,19 +758,9 @@ export function SetsPanel({
                       triggerClassName="profile-row-actions-trigger-visible"
                       menuAriaLabel={SETS_PANEL_COPY.projectRulesActionsAriaLabel}
                       containmentSelector=".sets-rules-list-panel"
+                      items={rulesMenuItems}
                       onToggle={() => setRulesMenuOpen((open) => !open)}
-                    >
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={() => {
-                          setRulesMenuOpen(false);
-                          onOpenContexts();
-                        }}
-                      >
-                        {SETS_PANEL_COPY.openSetsLabel}
-                      </button>
-                    </SetsActionsMenu>
+                    />
                   </div>
                 </header>
                 {currentRuleCount ? (
@@ -1077,56 +1072,6 @@ function SetsInspectorHeader({
         <p className="inline-note sets-inspector-subtitle">{subtitle}</p>
       </div>
     </header>
-  );
-}
-
-function SetsActionsMenu({
-  open,
-  anchorRef,
-  align,
-  triggerAriaLabel,
-  triggerClassName,
-  menuAriaLabel,
-  containmentSelector,
-  onToggle,
-  children,
-}: {
-  open: boolean;
-  anchorRef: MutableRefObject<HTMLButtonElement | null>;
-  align: "start" | "end";
-  triggerAriaLabel: string;
-  triggerClassName?: string;
-  menuAriaLabel: string;
-  containmentSelector: string;
-  onToggle: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <div className="profile-row-actions" data-profile-row-actions>
-      <button
-        ref={anchorRef}
-        className={`ghost-button profile-row-actions-trigger${triggerClassName ? ` ${triggerClassName}` : ""}`}
-        type="button"
-        aria-label={triggerAriaLabel}
-        aria-expanded={open}
-        onClick={onToggle}
-      >
-        •••
-      </button>
-      {open ? (
-        <AnchoredMenu
-          anchorRef={anchorRef}
-          className="profile-row-actions-menu"
-          align={align}
-          boundaryAttribute={SETS_ROW_ACTIONS_ATTRIBUTE}
-          containmentSelector={containmentSelector}
-          role="menu"
-          aria-label={menuAriaLabel}
-        >
-          {children}
-        </AnchoredMenu>
-      ) : null}
-    </div>
   );
 }
 

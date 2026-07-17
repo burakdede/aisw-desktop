@@ -3,6 +3,7 @@ import type { RefObject } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AnchoredMenu } from "./AnchoredMenu";
 import { DialogSurface } from "./DialogSurface";
+import { OverflowMenuButton } from "./OverflowMenuButton";
 
 function mockRect(
   element: Element,
@@ -290,5 +291,46 @@ describe("DialogSurface", () => {
     fireEvent.keyDown(dialog, { key: "Tab" });
 
     expect(primary).toHaveFocus();
+  });
+});
+
+describe("OverflowMenuButton", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("renders a shared overflow trigger and runs item actions", async () => {
+    const anchorRef = { current: null };
+    const onToggle = vi.fn();
+    const onSelect = vi.fn();
+
+    render(
+      <OverflowMenuButton
+        open
+        anchorRef={anchorRef}
+        triggerAriaLabel="More actions"
+        triggerClassName="profile-row-actions-trigger-visible"
+        menuAriaLabel="Actions"
+        items={[
+          {
+            key: "rename",
+            label: "Rename",
+            onSelect,
+          },
+        ]}
+        onToggle={onToggle}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: "More actions" });
+    expect(trigger).toHaveAttribute("aria-haspopup", "menu");
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(trigger).toHaveClass("profile-row-actions-trigger-visible");
+
+    fireEvent.click(trigger);
+    expect(onToggle).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("menuitem", { name: "Rename" }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
   });
 });
