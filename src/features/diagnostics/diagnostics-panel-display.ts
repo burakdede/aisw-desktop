@@ -427,6 +427,12 @@ export function resolveSelectedFindingKey(
   return resolveSelectionValue(currentFindingKey, findings, (finding) => finding.key);
 }
 
+export function selectPrimaryFindingFix<Fix extends { primary?: boolean }>(
+  fixes: readonly Fix[],
+): Fix | null {
+  return fixes.find((fix) => fix.primary) ?? fixes[0] ?? null;
+}
+
 export function buildRecentFailureCards(
   lastCommandResults: LastCommandResultsInput,
   snapshot: AppSnapshot | undefined,

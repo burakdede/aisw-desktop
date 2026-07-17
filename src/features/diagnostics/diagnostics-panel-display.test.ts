@@ -28,6 +28,7 @@ import {
   matchesQuickFixToFinding,
   recentFailureTitle,
   resolveSelectedFindingKey,
+  selectPrimaryFindingFix,
   type DiagnosticFinding,
 } from "./diagnostics-panel-display";
 import {
@@ -374,6 +375,24 @@ describe("diagnostics-panel-display", () => {
       "finding-2",
     );
     expect(resolveSelectedFindingKey(null, [])).toBeNull();
+    expect(
+      selectPrimaryFindingFix<{ label: string; primary?: boolean }>([
+        { label: "First" },
+        { label: "Second", primary: true },
+      ]),
+    ).toEqual({
+      label: "Second",
+      primary: true,
+    });
+    expect(
+      selectPrimaryFindingFix<{ label: string; primary?: boolean }>([
+        { label: "First" },
+        { label: "Second" },
+      ]),
+    ).toEqual({
+      label: "First",
+    });
+    expect(selectPrimaryFindingFix([])).toBeNull();
   });
 
   it("builds diagnostics inspector actions with stable precedence", () => {

@@ -72,6 +72,7 @@ import {
   impactTextForFinding,
   matchesQuickFixToFinding,
   resolveSelectedFindingKey,
+  selectPrimaryFindingFix,
   type DiagnosticFinding,
 } from "../diagnostics-panel-display";
 import {
@@ -213,8 +214,7 @@ export function DiagnosticsPanel({
     () => quickFixes.filter((fix) => matchesQuickFixToFinding(fix, selectedFinding)),
     [quickFixes, selectedFinding],
   );
-  const primaryFindingFix =
-    selectedFindingQuickFixes.find((fix) => fix.primary) ?? selectedFindingQuickFixes[0] ?? null;
+  const primaryFindingFix = selectPrimaryFindingFix(selectedFindingQuickFixes);
   const secondaryFindingFixes = selectedFindingQuickFixes.filter((fix) => fix !== primaryFindingFix);
   const verifiedAt = Math.max(
     doctor.dataUpdatedAt || 0,

@@ -380,7 +380,7 @@ export function SetsPanel({
   }
 
   function resetRuleDraft() {
-    setRuleDraft(createEmptyRuleDraft(bindingOptions[0]?.value ?? ""));
+    setRuleDraft(createEmptyRuleDraft(resolveSelectedBindingContext("", bindingOptions)));
   }
 
   function openRuleEditor() {
