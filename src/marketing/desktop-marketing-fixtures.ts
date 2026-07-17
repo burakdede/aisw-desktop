@@ -10,6 +10,7 @@ import type {
   WorkspaceStatusReport,
 } from "../lib/schemas";
 import {
+  findProfileSetByName,
   findSnapshotToolStatus,
   snapshotHasToolProfile,
 } from "../lib/profile-display";
@@ -760,7 +761,7 @@ function setActiveProfile(state: MutableMarketingState, tool: string, profile: s
 }
 
 function applySet(state: MutableMarketingState, setName: string) {
-  const set = state.settings.profile_sets.find((entry) => entry.name === setName);
+  const set = findProfileSetByName(state.settings.profile_sets, setName);
   if (!set) {
     return;
   }

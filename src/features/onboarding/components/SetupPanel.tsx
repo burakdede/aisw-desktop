@@ -22,7 +22,7 @@ import {
 import { AppBootstrap, AppSnapshot, InitReport } from "../../../lib/schemas";
 import { toolSupportsEditableStateModes } from "../../../lib/tool-registry";
 import { toolDisplayName } from "../../../lib/tool-display";
-import { countLabel } from "../../../lib/utils";
+import { countLabel, findMatchingItem } from "../../../lib/utils";
 import { inspectItemLabel } from "../../../lib/display-copy";
 import {
   installGuideUrlForTool,
@@ -144,6 +144,10 @@ export function SetupPanel({
   const switchableProfiles = useMemo(
     () => sharedProfileEntries(settings, snapshot),
     [settings, snapshot],
+  );
+  const selectedSwitchProfile = useMemo(
+    () => findMatchingItem(firstSwitchProfile, switchableProfiles, (profile) => profile.name),
+    [firstSwitchProfile, switchableProfiles],
   );
   const shouldShowSetup = shouldShowSetupFlow(snapshot, initReport, forcedOpen);
   const [activeStep, setActiveStep] = useState<SetupStep>(() =>
@@ -594,9 +598,7 @@ export function SetupPanel({
                       useAllProfilesMutation.mutate({
                         profile: firstSwitchProfile,
                         stateMode: resolveGlobalStateMode(snapshot),
-                        label:
-                          switchableProfiles.find((profile) => profile.name === firstSwitchProfile)?.label ??
-                          undefined,
+                        label: selectedSwitchProfile?.label,
                       })
                     }
                   >

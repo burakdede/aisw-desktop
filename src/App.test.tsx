@@ -1808,7 +1808,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Switch to Personal" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Last result: Switched Claude to Personal.")).toBeInTheDocument();
+      expect(screen.getByText("Last result: Switched Claude Code to Personal.")).toBeInTheDocument();
     });
     expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
   });
@@ -1888,7 +1888,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Switch to Code Work" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Last result: Switched Codex to Code Work.")).toBeInTheDocument();
+      expect(screen.getByText("Last result: Switched Codex CLI to Code Work.")).toBeInTheDocument();
     });
     expect(calls.some((entry) => entry.command === "use_profile")).toBe(true);
   });
@@ -7259,7 +7259,7 @@ describe("App", () => {
     fireEvent.click(screen.getByText("Diagnostics"));
 
     await waitFor(() => {
-      expect(screen.getAllByText("Claude profile missing").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Claude Code profile missing").length).toBeGreaterThan(0);
       expect(screen.getAllByText("profile work no longer exists").length).toBeGreaterThan(0);
       expect(
         screen.getAllByText(
