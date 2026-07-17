@@ -24,6 +24,7 @@ import { SheetHeader } from "../../../components/SheetHeader";
 import { SplitView } from "../../../components/SplitView";
 import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactInspectorLayout } from "../../../components/useCompactInspectorLayout";
+import { backupTimestampValue } from "../../../lib/backups";
 import {
   AppBootstrap,
   AppSnapshot,
@@ -937,9 +938,7 @@ export function ProfilesPanel({
                       label: PROFILE_INSPECTOR_FIELD_LABELS.added,
                       value: profileAddedLabel(
                         selectedLatestBackup
-                          ? formatDateTimeWithZone(
-                              selectedLatestBackup.created_at ?? selectedLatestBackup.backup_id,
-                            )
+                          ? formatDateTimeWithZone(backupTimestampValue(selectedLatestBackup))
                           : null,
                       ),
                     },

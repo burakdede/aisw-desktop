@@ -4,7 +4,7 @@ import type {
   DesktopSettings,
   OAuthProgressEvent,
 } from "../../lib/schemas";
-import { compareBackupsNewestFirst } from "../../lib/backups";
+import { backupTimestampValue, compareBackupsNewestFirst } from "../../lib/backups";
 import { credentialBackendLabel as formatCredentialBackendLabel } from "../../lib/credential-backends";
 import { DESKTOP_ACTION_COPY } from "../../lib/desktop-action-copy";
 import {
@@ -340,9 +340,7 @@ export function buildInventoryProfiles(input: {
           activeProfileApplied: status?.active_profile_applied,
         }),
         lastChecked: profileLastCheckedLabel(
-          latestBackup
-            ? formatDateTimeWithZone(latestBackup.created_at ?? latestBackup.backup_id)
-            : null,
+          latestBackup ? formatDateTimeWithZone(backupTimestampValue(latestBackup)) : null,
           isActive,
         ),
         hasBackup: Boolean(latestBackup),
