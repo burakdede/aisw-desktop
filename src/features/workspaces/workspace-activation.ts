@@ -3,6 +3,7 @@ import {
   profileSetHasUsableSelections,
   snapshotHasContext,
 } from "../../lib/profile-display";
+import { hasMatchingSelection } from "../../lib/utils";
 import {
   resolveGlobalStateMode,
   type StateModeRequest,
@@ -57,7 +58,7 @@ export function workspaceBindingOptions(
       buildWorkspaceBindingOption("saved_set", set.name, set.label ?? set.name),
     );
   const contexts = snapshot.contexts
-    .filter((context) => !profileSets.some((set) => set.value === context.name))
+    .filter((context) => !hasMatchingSelection(context.name, profileSets, (set) => set.value))
     .map((context) =>
       buildWorkspaceBindingOption("available_set", context.name, context.name),
     );

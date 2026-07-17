@@ -28,7 +28,7 @@ import {
   toolProfileDisplayLabel,
 } from "./lib/profile-display";
 import { resolveGlobalStateMode, resolveStateModeRequest } from "./features/shared/state-modes";
-import { titleCase } from "./lib/utils";
+import { hasMatchingSelection, titleCase } from "./lib/utils";
 import { formatMessageWithRemediation } from "./lib/remediation-text";
 import {
   APP_NAV_IDS,
@@ -550,7 +550,7 @@ export function resolveActiveReapplyAction(input: {
 
   if (
     uniqueProfiles.length === 1 &&
-    sharedProfileEntries(settings, snapshot).some((entry) => entry.name === uniqueProfiles[0])
+    hasMatchingSelection(uniqueProfiles[0], sharedProfileEntries(settings, snapshot), (entry) => entry.name)
   ) {
     const profile = uniqueProfiles[0];
     const label = profileDisplayLabel(settings, snapshot, profile);
