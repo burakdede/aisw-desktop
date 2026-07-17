@@ -4,8 +4,20 @@ import { toolDisplayName } from "../../lib/tool-display";
 import { toolSupportsEditableStateModes } from "../../lib/tool-registry";
 import { titleCase } from "../../lib/utils";
 
-export const EDITABLE_STATE_MODES = ["isolated", "shared"] as const;
-export type EditableStateMode = (typeof EDITABLE_STATE_MODES)[number];
+const EDITABLE_STATE_MODE_DEFINITIONS = [
+  {
+    id: "isolated",
+    description: "Separate config, history, and extensions for this profile.",
+  },
+  {
+    id: "shared",
+    description: "Keep the normal tool config and history while switching credentials only.",
+  },
+] as const;
+
+export type EditableStateMode = (typeof EDITABLE_STATE_MODE_DEFINITIONS)[number]["id"];
+export const EDITABLE_STATE_MODES: readonly EditableStateMode[] =
+  EDITABLE_STATE_MODE_DEFINITIONS.map((mode) => mode.id);
 export type StateModeRequest = EditableStateMode | null;
 export type ToolStateModeTarget = {
   tool: string;
@@ -13,10 +25,9 @@ export type ToolStateModeTarget = {
 };
 export const DEFAULT_EDITABLE_STATE_MODE: EditableStateMode = EDITABLE_STATE_MODES[0];
 
-const STATE_MODE_COPY: Record<EditableStateMode, string> = {
-  isolated: "Separate config, history, and extensions for this profile.",
-  shared: "Keep the normal tool config and history while switching credentials only.",
-};
+const STATE_MODE_COPY: Record<EditableStateMode, string> = Object.fromEntries(
+  EDITABLE_STATE_MODE_DEFINITIONS.map((mode) => [mode.id, mode.description]),
+) as Record<EditableStateMode, string>;
 
 export function isEditableStateMode(value: string | null | undefined): value is EditableStateMode {
   return typeof value === "string" && isOneOf(EDITABLE_STATE_MODES, value);
