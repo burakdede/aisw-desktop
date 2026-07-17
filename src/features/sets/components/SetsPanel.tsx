@@ -36,7 +36,7 @@ import {
 import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { SUPPORTED_TOOLS } from "../../../lib/tool-registry";
-import { buildKeyedRecord, countLabel } from "../../../lib/utils";
+import { buildKeyedRecord, countLabel, resolveSelectionItem } from "../../../lib/utils";
 import {
   DEFAULT_WORKSPACE_BINDING_SCOPE,
   normalizeWorkspaceBindingScope,
@@ -73,6 +73,10 @@ import {
   hasDuplicateSetName,
   importedContextActivationResultLabel,
   normalizeSetPanelMode,
+  resolveSelectedBindingContext,
+  resolveSelectedBindingKey,
+  resolveSelectedRule,
+  resolveSelectedSetName,
   ruleRowAriaLabel,
   RULE_SCOPE_OPTIONS,
   savedSetActionLabel,
@@ -191,8 +195,7 @@ export function SetsPanel({
     setDraft.sourceName,
   );
 
-  const selectedSet =
-    localSets.find((entry) => entry.name === selectedSetName) ?? localSets[0] ?? null;
+  const selectedSet = resolveSelectionItem(selectedSetName, localSets, (entry) => entry.name);
   const profileOptions = useMemo(
     () =>
       buildKeyedRecord(TOOLS, (tool) =>
@@ -229,11 +232,7 @@ export function SetsPanel({
     ...binding,
     key: `${binding.scope}:${binding.target}:${binding.context}`,
   }));
-  const selectedRule =
-    ruleEntries.find((entry) => entry.key === selectedBindingKey) ??
-    ruleEntries.find((entry) => entry.key === matchedBindingKey) ??
-    ruleEntries[0] ??
-    null;
+  const selectedRule = resolveSelectedRule(selectedBindingKey, matchedBindingKey, ruleEntries);
   const selectedRuleMatched = selectedRule?.key === matchedBindingKey;
   const currentRuleCount = ruleEntries.length;
   const requiresExplicitTarget = ruleDraft.scope !== "default";
@@ -243,28 +242,31 @@ export function SetsPanel({
   const isEditingRule = ruleDraft.source !== null;
 
   useEffect(() => {
-    if (selectedSetName && localSets.some((entry) => entry.name === selectedSetName)) {
-      return;
+    const nextSetName = resolveSelectedSetName(selectedSetName, localSets);
+    if (nextSetName !== selectedSetName) {
+      setSelectedSetName(nextSetName);
     }
-    setSelectedSetName(localSets[0]?.name ?? null);
   }, [localSets, selectedSetName]);
 
   useEffect(() => {
-    if (!bindingOptions.some((entry) => entry.value === ruleDraft.context)) {
+    const nextContext = resolveSelectedBindingContext(ruleDraft.context, bindingOptions);
+    if (nextContext !== ruleDraft.context) {
       setRuleDraft((current) => ({
         ...current,
-        context: bindingOptions[0]?.value ?? "",
+        context: nextContext,
       }));
     }
   }, [bindingOptions, ruleDraft.context]);
 
   useEffect(() => {
-    if (selectedBindingKey && ruleEntries.some((entry) => entry.key === selectedBindingKey)) {
-      return;
-    }
-    setSelectedBindingKey(
-      ruleEntries.find((entry) => entry.key === matchedBindingKey)?.key ?? ruleEntries[0]?.key ?? null,
+    const nextBindingKey = resolveSelectedBindingKey(
+      selectedBindingKey,
+      matchedBindingKey,
+      ruleEntries,
     );
+    if (nextBindingKey !== selectedBindingKey) {
+      setSelectedBindingKey(nextBindingKey);
+    }
   }, [matchedBindingKey, ruleEntries, selectedBindingKey]);
 
   useEffect(() => {
@@ -413,8 +415,12 @@ export function SetsPanel({
       return;
     }
 
-    const selectedContext = bindingOptions.find((entry) => entry.value === ruleDraft.context);
-    const label = workspaceBindingOptionSavedSetLabel(selectedContext);
+    const selectedContext = resolveSelectionItem(
+      ruleDraft.context,
+      bindingOptions,
+      (entry) => entry.value,
+    );
+    const label = workspaceBindingOptionSavedSetLabel(selectedContext ?? undefined);
 
     const target = buildWorkspaceBindingTarget(ruleDraft.scope, trimmedTargetValue);
 

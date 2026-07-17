@@ -37,7 +37,12 @@ import {
   NO_SAVED_PROFILE_YET_LABEL,
   NOT_INSTALLED_LABEL,
 } from "../../lib/status-copy";
-import { countLabel, titleCase } from "../../lib/utils";
+import {
+  countLabel,
+  hasMatchingSelection,
+  resolveSelectionItem,
+  titleCase,
+} from "../../lib/utils";
 import { parseDoctorReportChecks } from "../diagnostics/diagnostic-doctor-checks";
 import { normalizeRuntimeLanguage } from "../shared/runtime-language";
 import {
@@ -842,9 +847,11 @@ export function resolveSelectedOnboardingAccountItem(
   items: OnboardingAccountItem[],
   selectedKey: string | null,
 ) {
-  return (
-    items.find((item) => item.key === selectedKey) ?? selectDefaultAccountItem(items) ?? null
-  );
+  if (hasMatchingSelection(selectedKey, items, (item) => item.key)) {
+    return resolveSelectionItem(selectedKey, items, (item) => item.key);
+  }
+
+  return selectDefaultAccountItem(items) ?? null;
 }
 
 export function buildOnboardingHealthItems(

@@ -230,13 +230,14 @@ export function SetupPanel({
   }
 
   useEffect(() => {
-    if (!selectedAccountKey && !accountItems.length) {
-      return;
+    const nextSelectedAccount = resolveSelectedOnboardingAccountItem(
+      accountItems,
+      selectedAccountKey,
+    );
+    const nextSelectedAccountKey = nextSelectedAccount?.key ?? null;
+    if (nextSelectedAccountKey !== selectedAccountKey) {
+      setSelectedAccountKey(nextSelectedAccountKey);
     }
-    if (selectedAccountKey && accountItems.some((item) => item.key === selectedAccountKey)) {
-      return;
-    }
-    setSelectedAccountKey(selectDefaultAccountItem(accountItems)?.key ?? null);
   }, [accountItems, selectedAccountKey]);
 
   if (!shouldShowSetup) {

@@ -66,3 +66,32 @@ export function resolveSelectionItem<T>(
 
   return items.find((item) => getKey(item) === selection) ?? items[0] ?? null;
 }
+
+export function resolvePreferredSelectionValue<T>(
+  selection: string | null | undefined,
+  preferredSelection: string | null | undefined,
+  items: readonly T[],
+  getKey: (item: T) => string,
+): string | null {
+  if (typeof selection === "string" && hasMatchingSelection(selection, items, getKey)) {
+    return selection;
+  }
+
+  return resolveSelectionValue(preferredSelection, items, getKey);
+}
+
+export function resolvePreferredSelectionItem<T>(
+  selection: string | null | undefined,
+  preferredSelection: string | null | undefined,
+  items: readonly T[],
+  getKey: (item: T) => string,
+): T | null {
+  const nextSelection = resolvePreferredSelectionValue(
+    selection,
+    preferredSelection,
+    items,
+    getKey,
+  );
+
+  return resolveSelectionItem(nextSelection, items, getKey);
+}

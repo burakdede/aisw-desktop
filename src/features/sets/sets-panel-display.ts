@@ -44,7 +44,12 @@ import {
 } from "../../lib/sets-display";
 import { CURRENT_LABEL } from "../../lib/status-copy";
 import { toolShortName } from "../../lib/tool-registry";
-import { buildKeyedRecord } from "../../lib/utils";
+import {
+  buildKeyedRecord,
+  resolvePreferredSelectionItem,
+  resolvePreferredSelectionValue,
+  resolveSelectionValue,
+} from "../../lib/utils";
 
 export type EditableProfileSet = {
   sourceName: string | null;
@@ -607,6 +612,49 @@ export function buildImportedContextRows(input: {
       active,
     };
   });
+}
+
+export function resolveSelectedSetName(
+  selectedSetName: string | null,
+  localSets: NonNullable<DesktopSettings["profile_sets"]>,
+) {
+  return resolveSelectionValue(selectedSetName, localSets, (entry) => entry.name);
+}
+
+export function resolveSelectedBindingContext<
+  Option extends { value: string },
+>(context: string, bindingOptions: readonly Option[]) {
+  return resolveSelectionValue(context, bindingOptions, (entry) => entry.value) ?? "";
+}
+
+export function resolveSelectedBindingKey<
+  Entry extends { key: string },
+>(
+  selectedBindingKey: string | null,
+  matchedBindingKey: string | null,
+  ruleEntries: readonly Entry[],
+) {
+  return resolvePreferredSelectionValue(
+    selectedBindingKey,
+    matchedBindingKey,
+    ruleEntries,
+    (entry) => entry.key,
+  );
+}
+
+export function resolveSelectedRule<
+  Entry extends { key: string },
+>(
+  selectedBindingKey: string | null,
+  matchedBindingKey: string | null,
+  ruleEntries: readonly Entry[],
+) {
+  return resolvePreferredSelectionItem(
+    selectedBindingKey,
+    matchedBindingKey,
+    ruleEntries,
+    (entry) => entry.key,
+  );
 }
 
 export function buildSelectedSetInspectorState(input: {

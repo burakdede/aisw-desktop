@@ -22,6 +22,10 @@ import {
   hasDuplicateSetName,
   importedContextActivationResultLabel,
   normalizeSetPanelMode,
+  resolveSelectedBindingContext,
+  resolveSelectedBindingKey,
+  resolveSelectedRule,
+  resolveSelectedSetName,
   ruleRowAriaLabel,
   RULE_SCOPE_OPTIONS,
   savedSetActionLabel,
@@ -434,6 +438,57 @@ describe("sets-panel-display", () => {
     expect(importedContextActivationResultLabel("Client Acme")).toBe(
       "Activated set Client Acme.",
     );
+  });
+
+  it("resolves selected set and rule fallbacks", () => {
+    const localSets = [
+      makeSet(),
+      makeSet({ name: "release-review", label: "Release Review" }),
+    ];
+    const ruleEntries = [
+      { key: "path:~/Projects/acme:client-acme" },
+      { key: "repo:acme/app:release-review" },
+    ];
+
+    expect(resolveSelectedSetName("release-review", localSets)).toBe("release-review");
+    expect(resolveSelectedSetName("missing", localSets)).toBe("client-acme");
+    expect(resolveSelectedSetName(null, [])).toBeNull();
+
+    expect(
+      resolveSelectedBindingContext("release-review", [
+        { value: "client-acme" },
+        { value: "release-review" },
+      ]),
+    ).toBe("release-review");
+    expect(resolveSelectedBindingContext("missing", [{ value: "client-acme" }])).toBe(
+      "client-acme",
+    );
+    expect(resolveSelectedBindingContext("missing", [])).toBe("");
+
+    expect(
+      resolveSelectedBindingKey(
+        "repo:acme/app:release-review",
+        "path:~/Projects/acme:client-acme",
+        ruleEntries,
+      ),
+    ).toBe("repo:acme/app:release-review");
+    expect(
+      resolveSelectedBindingKey(
+        "missing",
+        "repo:acme/app:release-review",
+        ruleEntries,
+      ),
+    ).toBe("repo:acme/app:release-review");
+    expect(resolveSelectedBindingKey("missing", "unknown", ruleEntries)).toBe(
+      "path:~/Projects/acme:client-acme",
+    );
+    expect(resolveSelectedBindingKey(null, null, [])).toBeNull();
+
+    expect(
+      resolveSelectedRule("missing", "repo:acme/app:release-review", ruleEntries),
+    ).toEqual(ruleEntries[1]);
+    expect(resolveSelectedRule("missing", "unknown", ruleEntries)).toEqual(ruleEntries[0]);
+    expect(resolveSelectedRule(null, null, [])).toBeNull();
   });
 
   it("builds selected set inspector state with activation and warning policy", () => {

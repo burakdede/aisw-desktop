@@ -4,6 +4,8 @@ import {
   hasMatchingSelection,
   pluralChoice,
   pluralSuffix,
+  resolvePreferredSelectionItem,
+  resolvePreferredSelectionValue,
   resolveSelectionItem,
   resolveSelectionValue,
   titleCase,
@@ -53,5 +55,27 @@ describe("utils", () => {
     expect(resolveSelectionItem("missing", items, (item) => item.key)).toEqual(items[0]);
     expect(resolveSelectionItem(null, items, (item) => item.key)).toEqual(items[0]);
     expect(resolveSelectionItem(undefined, noItems, (item) => item.key)).toBeNull();
+
+    expect(resolvePreferredSelectionValue("second", "first", items, (item) => item.key)).toBe(
+      "second",
+    );
+    expect(resolvePreferredSelectionValue("missing", "second", items, (item) => item.key)).toBe(
+      "second",
+    );
+    expect(resolvePreferredSelectionValue("missing", "unknown", items, (item) => item.key)).toBe(
+      "first",
+    );
+    expect(resolvePreferredSelectionValue(null, null, noItems, (item) => item.key)).toBeNull();
+
+    expect(resolvePreferredSelectionItem("second", "first", items, (item) => item.key)).toEqual(
+      items[1],
+    );
+    expect(resolvePreferredSelectionItem("missing", "second", items, (item) => item.key)).toEqual(
+      items[1],
+    );
+    expect(resolvePreferredSelectionItem("missing", "unknown", items, (item) => item.key)).toEqual(
+      items[0],
+    );
+    expect(resolvePreferredSelectionItem(null, null, noItems, (item) => item.key)).toBeNull();
   });
 });
