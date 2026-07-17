@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  diagnosticTitleTool,
   diagnosticTitleHas,
   diagnosticTitleHasAny,
   normalizeDiagnosticTitle,
@@ -22,5 +23,12 @@ describe("diagnostic-title-match", () => {
       diagnosticTitleHasAny("Terminal setup required", ["shell", "setup", "missing"]),
     ).toBe(true);
     expect(diagnosticTitleHasAny("Healthy state", ["project", "missing"])).toBe(false);
+  });
+
+  it("extracts supported tool names from diagnostic titles", () => {
+    expect(diagnosticTitleTool("tool/claude")).toBe("claude");
+    expect(diagnosticTitleTool(" codex ")).toBe("codex");
+    expect(diagnosticTitleTool("tool/unknown")).toBeNull();
+    expect(diagnosticTitleTool(undefined)).toBeNull();
   });
 });

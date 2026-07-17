@@ -1,9 +1,11 @@
 import type { IssueCardData, SummaryCardData } from "../features/diagnostics/diagnostic-parsers";
+import {
+  diagnosticTitleHas,
+  diagnosticTitleTool,
+} from "../features/diagnostics/diagnostic-title-match";
 import type { AppSnapshot, ToolStatus } from "./schemas";
 import { findSnapshotToolStatus } from "./profile-display";
-import { isSupportedTool } from "./tool-registry";
 import { toolDisplayName } from "./tool-display";
-import { normalizeSearchText } from "./utils";
 import {
   normalizeResolvedCheckStatus,
   type ResolvedCheckStatus,
@@ -19,7 +21,7 @@ export function diagnosticFindingTitle(
   card: IssueCardData,
   snapshot: AppSnapshot | undefined,
 ) {
-  const tool = resolveDiagnosticTool(card.title);
+  const tool = diagnosticTitleTool(card.title);
   if (tool) {
     const status = snapshot ? findSnapshotToolStatus(snapshot, tool) : null;
     if (status && status.binary_found === false) {
@@ -33,17 +35,16 @@ export function diagnosticFindingTitle(
     }
   }
 
-  const normalized = normalizeSearchText(card.title);
-  if (normalized.includes("permission")) {
+  if (diagnosticTitleHas(card.title, "permission")) {
     return "Permissions incorrect";
   }
-  if (normalized.includes("keyring")) {
+  if (diagnosticTitleHas(card.title, "keyring")) {
     return "Keyring unavailable";
   }
-  if (normalized.includes("oauth")) {
+  if (diagnosticTitleHas(card.title, "oauth")) {
     return "OAuth failure";
   }
-  if (normalized.includes("shell")) {
+  if (diagnosticTitleHas(card.title, "shell")) {
     return "Shell hook not installed";
   }
 
@@ -95,12 +96,6 @@ export function diagnosticToolStatusLabel(status: ToolStatus) {
   return `${toolDisplayName(status.tool)}${
     status.active_profile ? ` is using ${status.active_profile}` : ""
   }`;
-}
-
-function resolveDiagnosticTool(title: string) {
-  const normalized = normalizeSearchText(title);
-  const candidate = normalized.startsWith("tool/") ? normalized.slice("tool/".length) : normalized;
-  return isSupportedTool(candidate) ? candidate : null;
 }
 
 function normalizeDiagnosticStatus(status: string) {

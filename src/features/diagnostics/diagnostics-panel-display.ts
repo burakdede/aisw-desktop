@@ -23,10 +23,8 @@ import {
   toolProfileDisplayLabel,
 } from "../../lib/profile-display";
 import { toolDisplayName } from "../../lib/tool-display";
-import { isSupportedTool } from "../../lib/tool-registry";
 import {
   countLabel,
-  normalizeSearchText,
   normalizeWordKey,
   pluralChoice,
   resolvePriorityItem,
@@ -69,6 +67,7 @@ import {
   diagnosticTitleHas,
   diagnosticTitleHasAny,
   normalizeDiagnosticTitle,
+  diagnosticTitleTool,
 } from "./diagnostic-title-match";
 import { toolSupportsEditableStateModes } from "../../lib/tool-registry";
 import type { LastCommandResult } from "../shared/lastCommandResult";
@@ -1020,9 +1019,7 @@ function resolveIssueProfileTarget(title: string, snapshot: AppSnapshot) {
 }
 
 function resolveDiagnosticTool(title: string) {
-  const normalized = normalizeSearchText(title);
-  const candidate = normalized.startsWith("tool/") ? normalized.slice("tool/".length) : normalized;
-  return isSupportedTool(candidate) ? candidate : null;
+  return diagnosticTitleTool(title);
 }
 
 function resolveDoctorRepairAction(
