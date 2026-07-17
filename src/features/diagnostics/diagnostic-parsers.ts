@@ -49,6 +49,24 @@ type GroupedRepairAction = {
   count: number;
 };
 
+function asRecordArray(value: unknown) {
+  return asArray(value)
+    .map((entry) => asObject(entry))
+    .filter((entry): entry is UnknownRecord => Boolean(entry));
+}
+
+function payloadSummaryRecord(payload: { summary?: unknown } | undefined) {
+  return asObject(payload?.summary);
+}
+
+function payloadResultRecord(payload: { result?: unknown } | undefined) {
+  return asObject(payload?.result);
+}
+
+function payloadResultSummaryRecord(payload: { result?: unknown } | undefined) {
+  return payloadSummaryRecord(payloadResultRecord(payload));
+}
+
 function asStringArray(value: unknown): string[] {
   if (typeof value === "string") {
     return [value];
@@ -77,7 +95,7 @@ export function parseDoctorSummary(payload: DoctorReport | undefined): SummaryCa
 }
 
 export function parseVerifySummary(payload: VerifyReport | undefined): SummaryCardData {
-  const summary = asObject(payload?.summary);
+  const summary = payloadSummaryRecord(payload);
   return {
     title: "Live match",
     status: normalizeCheckStatus(summary?.status),
@@ -90,8 +108,7 @@ export function parseVerifySummary(payload: VerifyReport | undefined): SummaryCa
 }
 
 export function parseRepairSummary(payload: RepairReport | undefined): SummaryCardData {
-  const result = asObject(payload?.result);
-  const summary = asObject(result?.summary);
+  const summary = payloadResultSummaryRecord(payload);
   return {
     title: DIAGNOSTICS_REPAIR_PLAN_LABEL,
     status: normalizeCheckStatus(summary?.status),
@@ -104,9 +121,7 @@ export function parseRepairSummary(payload: RepairReport | undefined): SummaryCa
 }
 
 export function parseDoctorIssues(payload: DoctorReport | undefined): IssueCardData[] {
-  return asArray(payload?.checks)
-    .map((check) => asObject(check))
-    .filter((check): check is UnknownRecord => Boolean(check))
+  return asRecordArray(payload?.checks)
     .filter((check) => normalizeCheckStatus(check.status) !== "pass")
     .map((check) => ({
       title: asString(check.name),
@@ -117,9 +132,7 @@ export function parseDoctorIssues(payload: DoctorReport | undefined): IssueCardD
 }
 
 export function parseVerifyIssues(payload: VerifyReport | undefined): IssueCardData[] {
-  return asArray(payload?.tools)
-    .map((tool) => asObject(tool))
-    .filter((tool): tool is UnknownRecord => Boolean(tool))
+  return asRecordArray(payload?.tools)
     .filter((tool) => normalizeCheckStatus(tool.status) !== "pass")
     .map((tool) => ({
       title: asString(tool.tool),
@@ -130,12 +143,10 @@ export function parseVerifyIssues(payload: VerifyReport | undefined): IssueCardD
 }
 
 export function parseRepairActions(payload: RepairReport | undefined): RepairActionData[] {
-  const result = asObject(payload?.result);
+  const result = payloadResultRecord(payload);
   const grouped = new Map<string, GroupedRepairAction>();
 
-  asArray(result?.actions)
-    .map((action) => asObject(action))
-    .filter((action): action is UnknownRecord => Boolean(action))
+  asRecordArray(result?.actions)
     .forEach((action) => {
       const kind = asString(action.kind, "");
       const fix = asString(action.fix, "");
