@@ -178,6 +178,153 @@ test("uses an overlay sidebar on narrow widths", async ({ page }) => {
   await expect(page.locator(".sidebar")).toHaveCount(0);
 });
 
+test("switches to a saved set from quick switch and updates the overview", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Quick Switch" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Quick Switch" });
+  await dialog.getByLabel("Search Quick Switch").fill("client acme");
+  await page.keyboard.press("Enter");
+
+  await expect(dialog).toBeHidden();
+  await expect(page.locator(".overview-set-row")).toContainText("Client Acme");
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "activate_profile_set" &&
+        entry.args?.name === "client-acme",
+    ),
+  ).toBe(true);
+});
+
+test("adds, renames, activates, and removes a profile from the profiles screen", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  await page.getByRole("button", { name: "Add Profile" }).click();
+  const addDialog = page.getByRole("dialog", { name: "Add Profile" });
+  await addDialog.getByLabel("Tool").selectOption("codex");
+  await addDialog.getByLabel("Profile name").fill("ci");
+  await addDialog.getByLabel("Import mode").selectOption("from_env");
+  await addDialog.getByLabel("Credential backend").selectOption("system-keyring");
+  await expect(addDialog.getByText("OPENAI_API_KEY", { exact: true })).toBeVisible();
+  await addDialog.getByRole("button", { name: "Save Profile" }).click();
+
+  await expect(addDialog).toBeHidden();
+  const ciRow = page.locator(".profiles-table-row-button").filter({ hasText: "ci" }).first();
+  await expect(ciRow).toBeVisible();
+
+  await ciRow.click();
+  await expect(page.locator(".profiles-inspector")).toContainText("Codex CLI");
+  await page.locator(".profiles-inspector").getByRole("button", { name: "More profile actions" }).click();
+  await page.getByRole("menuitem", { name: "Rename…" }).click();
+  await page.getByLabel("rename ci").fill("release-ci");
+  await page.getByRole("button", { name: "Save" }).click();
+
+  const renamedRow = page.locator(".profiles-table-row-button").filter({ hasText: "release-ci" }).first();
+  await expect(renamedRow).toBeVisible();
+  await page.getByLabel("Profile filters").getByRole("button", { name: "Codex" }).click();
+  await page.locator(".profiles-table-row-button").filter({ hasText: "Work" }).first().click();
+  await page.getByRole("button", { name: "Activate Profile" }).click();
+  await expect(page.locator(".profiles-inspector")).toContainText("Active");
+
+  await renamedRow.click();
+
+  await page.locator(".profiles-inspector").getByRole("button", { name: "More profile actions" }).click();
+  await page.getByRole("menuitem", { name: "Remove…" }).click();
+  const removeDialog = page.getByRole("dialog", { name: "Remove Profile" });
+  await removeDialog.getByRole("button", { name: "Remove Profile" }).click();
+  await expect(removeDialog).toBeHidden();
+
+  await expect(page.locator(".profiles-table-row-button").filter({ hasText: "release-ci" })).toHaveCount(0);
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "add_profile")).toBe(true);
+  expect(commandLog.some((entry) => entry.command === "rename_profile")).toBe(true);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "use_profile" &&
+        entry.args?.request?.tool === "codex" &&
+        entry.args?.request?.profile === "work",
+    ),
+  ).toBe(true);
+  expect(commandLog.some((entry) => entry.command === "remove_profile")).toBe(true);
+});
+
+test("creates and activates a saved set from the sets screen", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByRole("button", { name: "New Set…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "New Set" });
+  await dialog.getByLabel("Set name").fill("focus-mode");
+  await dialog.getByLabel("Display label").fill("Focus Mode");
+  await dialog.getByLabel("Claude Code").selectOption("personal");
+  await dialog.getByLabel("Codex CLI").selectOption("personal");
+  await dialog.getByRole("button", { name: "Create Set" }).click();
+
+  await expect(dialog).toBeHidden();
+  await expect(page.getByText("Saved set Focus Mode.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Inspect set Focus Mode" }).click();
+  await page.getByRole("button", { name: "Switch to Focus Mode" }).click();
+
+  await expect(page.locator(".sets-inspector")).toContainText("Current");
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "update_settings")).toBe(true);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "activate_profile_set" && entry.args?.name === "focus-mode",
+    ),
+  ).toBe(true);
+});
+
+test("adds and removes a project rule from the sets screen", async ({ page }) => {
+  await installDesktopMock(page, "workspaceContext");
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
+  await page.getByRole("button", { name: "Add Rule…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Add Rule" });
+  await dialog.getByLabel("Rule scope").selectOption("path");
+  await dialog.locator("select").nth(1).selectOption("client-acme");
+  await dialog.getByRole("textbox", { name: "Path" }).fill("/code/acceptance");
+  await dialog.getByRole("button", { name: "Add Rule" }).click();
+
+  await expect(dialog).toBeHidden();
+  const ruleRow = page.locator(".sets-rule-table-row").filter({ hasText: "/code/acceptance" }).first();
+  await expect(ruleRow).toBeVisible();
+
+  await ruleRow.click();
+  await page.getByRole("button", { name: "Remove…" }).click();
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "workspace_bind" &&
+        entry.args?.request?.target?.scope === "path" &&
+        entry.args?.request?.target?.path === "/code/acceptance",
+    ),
+  ).toBe(true);
+  expect(commandLog.some((entry) => entry.command === "workspace_unbind")).toBe(true);
+});
+
 async function expectMenuToFitWithin(menu: Locator, container: Locator) {
   await expect
     .poll(async () => (await menu.boundingBox())?.x ?? 0)
@@ -193,4 +340,15 @@ async function expectMenuToFitWithin(menu: Locator, container: Locator) {
   expect(menuBox!.x + menuBox!.width).toBeLessThanOrEqual(containerBox!.x + containerBox!.width + 1);
   expect(menuBox!.y).toBeGreaterThanOrEqual(containerBox!.y - 1);
   expect(menuBox!.y + menuBox!.height).toBeLessThanOrEqual(containerBox!.y + containerBox!.height + 1);
+}
+
+async function readCommandLog(page: Page) {
+  return page.evaluate(
+    () =>
+      (
+        window as typeof window & {
+          __AISW_COMMAND_LOG__?: Array<{ command: string; args?: Record<string, unknown> }>;
+        }
+      ).__AISW_COMMAND_LOG__ ?? [],
+  );
 }
