@@ -377,6 +377,21 @@ test("switches to a saved set from quick switch and updates the overview", async
   ).toBe(true);
 });
 
+test("switches all matching tools from quick switch", async ({ page }) => {
+  await installDesktopMock(page, "updaterError");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Quick Switch" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Quick Switch" });
+  await dialog.getByLabel("Search Quick Switch").fill("work");
+  await dialog.getByRole("option").filter({ hasText: "Across Claude Code, Codex CLI" }).first().click();
+
+  await expect(dialog).toBeHidden();
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "use_all_profiles")).toBe(true);
+});
+
 test("refreshes overview state after a successful tray profile switch", async ({ page }) => {
   await installDesktopMock(page, "trayRefresh");
 
@@ -660,6 +675,52 @@ test("creates and activates a saved set from the sets screen", async ({ page }) 
         entry.command === "activate_profile_set" && entry.args?.name === "focus-mode",
     ),
   ).toBe(true);
+});
+
+test("renames a saved set from the sets screen", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByRole("button", { name: "Inspect set Client Acme" }).click();
+  await page.getByRole("button", { name: "Edit…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Edit Set" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel("Set name").fill("client-acme-prime");
+  await dialog.getByLabel("Display label").fill("Client Acme Prime");
+  await dialog.getByRole("button", { name: "Save Set" }).click();
+
+  await expect(dialog).toBeHidden();
+  await expect(page.getByText("Updated set Client Acme Prime.")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Inspect set Client Acme Prime", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Inspect set Client Acme", exact: true }),
+  ).toHaveCount(0);
+  await expect(page.locator(".sets-inspector")).toContainText("Client Acme Prime");
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "update_settings")).toBe(true);
+});
+
+test("deletes a saved set from the sets screen", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByRole("button", { name: "More actions for Client Acme" }).click();
+  await page.getByRole("menuitem", { name: "Remove…" }).click();
+
+  await expect(page.getByRole("heading", { name: "No sets yet" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create Set…" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Inspect set Client Acme", exact: true }),
+  ).toHaveCount(0);
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "update_settings")).toBe(true);
 });
 
 test("adds and removes a project rule from the sets screen", async ({ page }) => {
