@@ -305,6 +305,91 @@ test("opens quick switch from the app menu and focuses search", async ({ page })
   await expect(dialog.getByLabel("Search Quick Switch")).toBeFocused();
 });
 
+test("announces an available desktop update on launch and lets the user dismiss it", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+
+  await expect(page.getByText("AI Switcher 0.2.0 is available")).toBeVisible();
+  await expect(page.getByText("Faster switching and signed updater artifacts.")).toBeVisible();
+  await expect
+    .poll(async () =>
+      (await readNotifications(page)).some(
+        (notification) =>
+          notification?.title === "AI Switcher 0.2.0 is available" &&
+          notification?.body === "Faster switching and signed updater artifacts.",
+      ),
+    )
+    .toBe(true);
+
+  await page.getByRole("button", { name: "Later" }).click();
+  await expect(page.getByText("AI Switcher 0.2.0 is available")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Update and Restart" }),
+  ).toHaveCount(0);
+  await expect
+    .poll(async () =>
+      readLocalStorage(page, "ai-switch.desktop.update-dismissed-version"),
+    )
+    .toBe("0.2.0");
+  await expect
+    .poll(async () => expectCommandCount(page, "check_for_updates"))
+    .toBeGreaterThan(0);
+});
+
+test("installs an available desktop update from the global banner", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await expect(page.getByText("AI Switcher 0.2.0 is available")).toBeVisible();
+
+  await page.getByRole("button", { name: "Update and Restart" }).click();
+
+  await expect(page.getByText("Restart requested")).toBeVisible();
+  await expect(page.getByText("Update installed. Restart has been requested.")).toBeVisible();
+  await expect
+    .poll(async () =>
+      (await readNotifications(page)).some(
+        (notification) =>
+          notification?.title === "AI Switcher updated" &&
+          notification?.body === "Update installed. Restart has been requested.",
+      ),
+    )
+    .toBe(true);
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "check_for_updates")).toBe(true);
+  expect(commandLog.some((entry) => entry.command === "install_update")).toBe(true);
+});
+
+test("surfaces update install remediation from the global banner", async ({ page }) => {
+  await installDesktopMock(page, "updaterInstallError");
+
+  await page.goto("/");
+  await expect(page.getByText("AI Switcher 0.2.0 is available")).toBeVisible();
+
+  await page.getByRole("button", { name: "Update and Restart" }).click();
+
+  await expect(page.getByText("Update failed", { exact: true })).toBeVisible();
+  await expect(page.getByText("Desktop update failed: signature mismatch")).toBeVisible();
+  await expect(
+    page.getByText(
+      "Verify the updater endpoint, signing key, and generated updater artifacts for this release.",
+    ),
+  ).toBeVisible();
+  await expect
+    .poll(async () =>
+      (await readNotifications(page)).some(
+        (notification) =>
+          notification?.title === "Update install failed" &&
+          notification?.body?.includes("Desktop update failed: signature mismatch"),
+      ),
+    )
+    .toBe(true);
+});
+
 test("keeps the profile inspector actions menu inside the visible pane", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
