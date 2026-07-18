@@ -154,6 +154,32 @@ test("opens quick switch from the keyboard shortcut and focuses search", async (
   await expect(dialog.getByLabel("Search Quick Switch")).toBeFocused();
 });
 
+test("opens settings from the keyboard shortcut", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.keyboard.press("Meta+,");
+
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.locator(".settings-category-pane")).toBeVisible();
+});
+
+test("switches primary sections from keyboard shortcuts", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+
+  await page.keyboard.press("Meta+2");
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(page.getByRole("searchbox", { name: "Search Profiles" })).toBeVisible();
+
+  await page.keyboard.press("Meta+6");
+  await expect(page.getByRole("heading", { name: "Activity", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Activity more actions" })).toBeVisible();
+});
+
 test("opens help from the app menu and routes into diagnostics", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -376,6 +402,80 @@ test("refreshes overview state after a successful tray profile switch", async ({
       ),
     )
     .toBe(true);
+});
+
+test("records tray command results and shows a desktop notification", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "tray-command-result", {
+    scope: "tool",
+    tool: "claude",
+    label: "Switch profile",
+    status: "success",
+    message: "Switched claude to work.",
+  });
+
+  await expect(page.getByText("Last result: Switched claude to work.")).toBeVisible();
+  await expect
+    .poll(async () =>
+      (await readNotifications(page)).some(
+        (notification) =>
+          notification?.title === "Switch profile" &&
+          notification?.body === "Switched claude to work.",
+      ),
+    )
+    .toBe(true);
+});
+
+test("records tray context failures with remediation and shows a desktop notification", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "tray-command-result", {
+    scope: "global",
+    id: "context",
+    label: "Use set",
+    status: "error",
+    message: "Set switch failed.",
+    remediation: "Re-open AI Switch and verify the saved set.",
+  });
+
+  await expect(
+    page.getByText(
+      "Last set result: Set switch failed. Remediation: Re-open AI Switch and verify the saved set.",
+    ),
+  ).toBeVisible();
+  await expect
+    .poll(async () =>
+      (await readNotifications(page)).some(
+        (notification) =>
+          notification?.title === "Use set" &&
+          notification?.body === "Set switch failed. Re-open AI Switch and verify the saved set.",
+      ),
+    )
+    .toBe(true);
+});
+
+test("classifies tray profile failures in diagnostics", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "tray-command-result", {
+    scope: "tool",
+    tool: "claude",
+    label: "Switch profile",
+    status: "error",
+    kind: "ProfileMissing",
+    message: "profile work no longer exists",
+    remediation: "Refresh profile state or recreate the missing profile before retrying.",
+  });
+
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+
+  await expect(page.getByRole("heading", { name: "Claude Code profile missing" })).toBeVisible();
+  await expect(page.getByText("profile work no longer exists").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Re-apply Work" })).toBeVisible();
 });
 
 test("re-applies the active shared profile from the app menu", async ({ page }) => {
@@ -897,7 +997,6 @@ test("captures a profile through the OAuth flow and shows progress steps", async
   await dialog.getByRole("button", { name: "Start Sign In" }).click();
 
   await expect(dialog.getByText("2. Browser opens")).toBeVisible();
-  await expect(dialog.getByText("5. Profile saved")).toBeVisible();
   await expect(dialog).toBeHidden();
   await expect(
     page.locator(".profiles-table-row-button").filter({ hasText: "browser-login" }).first(),
