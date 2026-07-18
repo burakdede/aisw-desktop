@@ -129,6 +129,74 @@ test("opens quick switch from the keyboard shortcut and focuses search", async (
   await expect(dialog.getByLabel("Search Quick Switch")).toBeFocused();
 });
 
+test("opens help from the app menu and routes into diagnostics", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "menu-open-help");
+
+  const dialog = page.getByRole("dialog", { name: "Using AI Switch" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText("Desktop control center")).toBeVisible();
+  await dialog.getByRole("button", { name: "Open Diagnostics" }).click();
+
+  await expect(page.getByRole("heading", { name: "Diagnostics" })).toBeVisible();
+  await expect(dialog).toBeHidden();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "open_reference_document")).toBe(true);
+});
+
+test("falls back to exporting diagnostics when the issue tracker cannot open", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "menu-open-issues");
+
+  await expect
+    .poll(async () =>
+      (await readCommandLog(page)).map((entry) => entry.command),
+    )
+    .toEqual(expect.arrayContaining(["open_issue_tracker", "export_diagnostic_bundle"]));
+  await expect
+    .poll(async () =>
+      (await readNotifications(page)).some(
+        (notification) =>
+          notification?.title === "Diagnostic report exported" &&
+          notification?.body === "Saved aisw-desktop-diagnostics-789.json.",
+      ),
+    )
+    .toBe(true);
+});
+
+test("opens import current login from the app menu in the profiles flow", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "menu-open-import-current-login");
+
+  const dialog = page.getByRole("dialog", { name: "Add Profile" });
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByLabel("Import mode")).toHaveValue("from_live");
+});
+
+test("opens the updates settings section from the app menu", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "menu-open-settings-updates");
+
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(
+    page.locator(".settings-category-pane").getByRole("button", {
+      name: "Updates",
+      pressed: true,
+    }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Check for Updates" })).toBeVisible();
+});
+
 test("keeps the profile inspector actions menu inside the visible pane", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -199,6 +267,33 @@ test("switches to a saved set from quick switch and updates the overview", async
         entry.args?.name === "client-acme",
     ),
   ).toBe(true);
+});
+
+test("refreshes overview state after a successful tray profile switch", async ({ page }) => {
+  await installDesktopMock(page, "trayRefresh");
+
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+
+  await dispatchDesktopEvent(page, "tray-command-result", {
+    scope: "tool",
+    tool: "claude",
+    label: "Switch profile",
+    status: "success",
+    message: "Switched claude to personal.",
+  });
+
+  await expect(page.getByText("Last result: Switched claude to personal.")).toBeVisible();
+  await expect(page.getByText("Active profile: Personal")).toBeVisible();
+  await expect
+    .poll(async () =>
+      (await readNotifications(page)).some(
+        (notification) =>
+          notification?.title === "Switch profile" &&
+          notification?.body === "Switched claude to personal.",
+      ),
+    )
+    .toBe(true);
 });
 
 test("switches a profile from overview and opens the matching profile details", async ({ page }) => {
@@ -387,6 +482,30 @@ test("reviews and applies safe diagnostics repairs, then exports a report", asyn
       "Support report ready: aisw-desktop-diagnostics-789.json. /tmp/aisw-desktop/aisw-desktop-diagnostics-789.json",
     ),
   ).toBeVisible();
+});
+
+test("opens diagnostics and refreshes health checks from the tray", async ({ page }) => {
+  await installDesktopMock(page, "trayDiagnosticsRefresh");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "tray-run-diagnostics");
+
+  await expect(page.getByRole("heading", { name: "Diagnostics" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Verify Again" }).first()).toBeVisible();
+  await expect
+    .poll(async () => {
+      const commandLog = await readCommandLog(page);
+      return {
+        doctorRuns: commandLog.filter((entry) => entry.command === "run_doctor").length,
+        verifyRuns: commandLog.filter((entry) => entry.command === "run_verify").length,
+        repairRuns: commandLog.filter((entry) => entry.command === "run_repair").length,
+      };
+    })
+    .toEqual({
+      doctorRuns: 1,
+      verifyRuns: 1,
+      repairRuns: 1,
+    });
 });
 
 test("filters backups and restores a saved backup into the active profile", async ({ page }) => {
@@ -721,6 +840,34 @@ async function expectMenuToFitWithin(menu: Locator, container: Locator) {
   expect(menuBox!.y + menuBox!.height).toBeLessThanOrEqual(containerBox!.y + containerBox!.height + 1);
 }
 
+async function dispatchDesktopEvent(
+  page: Page,
+  eventName: string,
+  payload: Record<string, unknown> = {},
+) {
+  await page.waitForFunction(
+    (name) =>
+      Boolean(
+        (
+          window as typeof window & {
+            __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+          }
+        ).__AISW_DESKTOP_EVENT_HANDLERS__?.[name],
+      ),
+    eventName,
+  );
+  await page.evaluate(
+    ({ name, eventPayload }) => {
+      (
+        window as typeof window & {
+          __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+        }
+      ).__AISW_DESKTOP_EVENT_HANDLERS__?.[name]?.(eventPayload);
+    },
+    { name: eventName, eventPayload: payload },
+  );
+}
+
 async function readCommandLog(page: Page) {
   return page.evaluate(
     () =>
@@ -740,6 +887,17 @@ async function readClipboardWrites(page: Page) {
           __AISW_CLIPBOARD_WRITES__?: string[];
         }
       ).__AISW_CLIPBOARD_WRITES__ ?? [],
+  );
+}
+
+async function readNotifications(page: Page) {
+  return page.evaluate(
+    () =>
+      (
+        window as typeof window & {
+          __AISW_NOTIFICATIONS__?: Array<{ title?: string; body?: string }>;
+        }
+      ).__AISW_NOTIFICATIONS__ ?? [],
   );
 }
 
