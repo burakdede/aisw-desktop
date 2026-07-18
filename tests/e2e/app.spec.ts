@@ -197,6 +197,17 @@ test("opens the updates settings section from the app menu", async ({ page }) =>
   await expect(page.getByRole("button", { name: "Check for Updates" })).toBeVisible();
 });
 
+test("opens quick switch from the app menu and focuses search", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "menu-open-quick-switch");
+
+  const dialog = page.getByRole("dialog", { name: "Quick Switch" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByLabel("Search Quick Switch")).toBeFocused();
+});
+
 test("keeps the profile inspector actions menu inside the visible pane", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -291,6 +302,29 @@ test("refreshes overview state after a successful tray profile switch", async ({
         (notification) =>
           notification?.title === "Switch profile" &&
           notification?.body === "Switched claude to personal.",
+      ),
+    )
+    .toBe(true);
+});
+
+test("re-applies the active shared profile from the app menu", async ({ page }) => {
+  await installDesktopMock(page, "updaterError");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "menu-reapply-active-profile");
+
+  await expect
+    .poll(async () =>
+      (await readCommandLog(page)).some((entry) => entry.command === "use_all_profiles"),
+    )
+    .toBe(true);
+  await expect(page.getByText(/Last set result: Re-applied shared profile/i)).toBeVisible();
+  await expect
+    .poll(async () =>
+      (await readNotifications(page)).some(
+        (notification) =>
+          notification?.title === "Re-apply active profile" &&
+          notification?.body?.includes("Re-applied shared profile"),
       ),
     )
     .toBe(true);
@@ -484,6 +518,16 @@ test("reviews and applies safe diagnostics repairs, then exports a report", asyn
   ).toBeVisible();
 });
 
+test("opens diagnostics from the tray without using the sidebar", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "tray-open-diagnostics");
+
+  await expect(page.getByRole("heading", { name: "Diagnostics" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Verify Again" }).first()).toBeVisible();
+});
+
 test("opens diagnostics and refreshes health checks from the tray", async ({ page }) => {
   await installDesktopMock(page, "trayDiagnosticsRefresh");
 
@@ -502,6 +546,54 @@ test("opens diagnostics and refreshes health checks from the tray", async ({ pag
       };
     })
     .toEqual({
+      doctorRuns: 1,
+      verifyRuns: 1,
+      repairRuns: 1,
+    });
+});
+
+test("exports diagnostics from the app menu", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "menu-export-diagnostics");
+
+  await expect
+    .poll(async () =>
+      (await readCommandLog(page)).some((entry) => entry.command === "export_diagnostic_bundle"),
+    )
+    .toBe(true);
+  await expect
+    .poll(async () =>
+      (await readNotifications(page)).some(
+        (notification) =>
+          notification?.title === "Diagnostic report exported" &&
+          notification?.body === "Saved aisw-desktop-diagnostics-789.json.",
+      ),
+    )
+    .toBe(true);
+});
+
+test("opens troubleshooting from the app menu and falls back to diagnostics", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "menu-open-troubleshooting");
+
+  await expect(page.getByRole("heading", { name: "Diagnostics" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Verify Again" }).first()).toBeVisible();
+  await expect
+    .poll(async () => {
+      const commandLog = await readCommandLog(page);
+      return {
+        openedReference: commandLog.some((entry) => entry.command === "open_reference_document"),
+        doctorRuns: commandLog.filter((entry) => entry.command === "run_doctor").length,
+        verifyRuns: commandLog.filter((entry) => entry.command === "run_verify").length,
+        repairRuns: commandLog.filter((entry) => entry.command === "run_repair").length,
+      };
+    })
+    .toEqual({
+      openedReference: true,
       doctorRuns: 1,
       verifyRuns: 1,
       repairRuns: 1,
