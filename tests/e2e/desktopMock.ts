@@ -2607,6 +2607,7 @@ export async function installDesktopMock(
             emit({ seq: 2, phase: "waiting_for_login", message: "Waiting for login" });
             emit({ seq: 3, phase: "profile_saved", message: "Profile saved" });
           }
+          await new Promise((resolve) => window.setTimeout(resolve, 50));
           ensureToolEntry(request.tool);
           state.snapshot.profiles[request.tool].profiles.push({
             name: request.profile,

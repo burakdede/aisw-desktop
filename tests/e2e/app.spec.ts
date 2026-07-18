@@ -471,6 +471,117 @@ test("manages launch, shell, update, and app-data actions from settings", async 
   expect(await readClipboardWrites(page)).toContain('echo "$AISW_SHELL_HOOK"');
 });
 
+test("captures a profile through the OAuth flow and shows progress steps", async ({ page }) => {
+  await installDesktopMock(page, "switching", {
+    claude: {
+      auth_methods: ["oauth", "from_live"],
+      state_modes: ["isolated", "shared"],
+      credential_backends: ["system-keyring", "file"],
+    },
+    codex: { state_modes: ["isolated", "shared"] },
+    gemini: { state_modes: [] },
+  });
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Profiles", exact: true }).click();
+  await page.getByRole("button", { name: "Add Profile" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Add Profile" });
+  await dialog.getByLabel("Tool").selectOption("claude");
+  await dialog.getByLabel("Profile name").fill("browser-login");
+  await dialog.getByLabel("Import mode").selectOption("oauth");
+  await dialog.getByRole("button", { name: "Start Sign In" }).click();
+
+  await expect(dialog.getByText("2. Browser opens")).toBeVisible();
+  await expect(dialog.getByText("5. Profile saved")).toBeVisible();
+  await expect(dialog).toBeHidden();
+  await expect(
+    page.locator(".profiles-table-row-button").filter({ hasText: "browser-login" }).first(),
+  ).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "add_profile_oauth")).toBe(true);
+});
+
+test("routes diagnostics import recovery into profile setup", async ({ page }) => {
+  await installDesktopMock(page, "diagnosticFixes", {
+    claude: {
+      auth_methods: ["from_live", "oauth"],
+      state_modes: ["isolated", "shared"],
+      credential_backends: ["system-keyring", "file"],
+    },
+    codex: {
+      auth_methods: ["from_live", "oauth"],
+      state_modes: ["isolated", "shared"],
+      credential_backends: ["system-keyring", "file"],
+    },
+    gemini: { state_modes: [] },
+  });
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Diagnostics" }).click();
+  await page.getByRole("button", { name: /Inspect .*live mismatch/i }).click();
+  await page.getByRole("button", { name: "More finding actions" }).click();
+  await page.getByRole("menuitem", { name: "Import Current…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Add Profile" });
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByLabel("Tool")).toHaveValue("claude");
+  await expect(dialog.getByLabel("Import mode")).toHaveValue("from_live");
+});
+
+test("opens install guidance and refreshes missing-tool diagnostics", async ({ page }) => {
+  await installDesktopMock(page, "missingTool");
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Diagnostics" }).click();
+
+  await expect(page.getByRole("button", { name: "Open installation guide" })).toBeVisible();
+  await page.getByRole("button", { name: "Open installation guide" }).click();
+  await page.getByRole("button", { name: "Refresh diagnostics" }).click();
+
+  expect(await readOpenedGuides(page)).toContain("https://www.npmjs.com/package/@google/gemini-cli");
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.filter((entry) => entry.command === "run_doctor").length).toBeGreaterThan(1);
+  expect(commandLog.filter((entry) => entry.command === "get_snapshot").length).toBeGreaterThan(1);
+});
+
+test("activates an imported CLI context and marks it current", async ({ page }) => {
+  await installDesktopMock(page, "matchingContextSet");
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+
+  const importedDisclosure = page.locator(".sets-imported-disclosure");
+  await importedDisclosure.locator("summary").click();
+  await importedDisclosure.getByRole("button", { name: "Use CLI Context Client Acme" }).click();
+  await expect(importedDisclosure.getByRole("button", { name: "Current" })).toBeDisabled();
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "use_context" &&
+        entry.args?.request?.context === "client-acme",
+    ),
+  ).toBe(true);
+});
+
+test("marks the matched project rule for the current workspace", async ({ page }) => {
+  await installDesktopMock(page, "workspaceContext");
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+
+  await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
+  const matchedRule = page.locator(".sets-rule-table-row").filter({ hasText: "/code/acme" }).first();
+  await expect(matchedRule).toContainText("Active");
+  await matchedRule.click();
+  await expect(page.locator(".sets-rules-inspector")).toContainText("Current project");
+});
+
 async function expectMenuToFitWithin(menu: Locator, container: Locator) {
   await expect
     .poll(async () => (await menu.boundingBox())?.x ?? 0)
@@ -507,5 +618,16 @@ async function readClipboardWrites(page: Page) {
           __AISW_CLIPBOARD_WRITES__?: string[];
         }
       ).__AISW_CLIPBOARD_WRITES__ ?? [],
+  );
+}
+
+async function readOpenedGuides(page: Page) {
+  return page.evaluate(
+    () =>
+      (
+        window as typeof window & {
+          __AISW_OPENED_GUIDES__?: string[];
+        }
+      ).__AISW_OPENED_GUIDES__ ?? [],
   );
 }
