@@ -27,7 +27,7 @@ const REFERENCE_DOCUMENT_RESOLUTION_REMEDIATION: &str =
     "Choose a supported help action and try again.";
 const REFERENCE_DOCUMENT_MISSING_ERROR_MESSAGE: &str =
     "AI Switch could not find the requested reference document.";
-#[cfg(any(target_os = "macos", test))]
+#[cfg(target_os = "macos")]
 const LAUNCH_AT_LOGIN_ITEM_NAME: &str = "AI Switch";
 #[cfg(any(not(target_os = "macos"), test))]
 const LAUNCH_AT_LOGIN_UNSUPPORTED_DETAIL: &str =
