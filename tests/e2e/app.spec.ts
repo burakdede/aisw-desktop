@@ -179,6 +179,10 @@ test("uses an overlay sidebar on narrow widths", async ({ page }) => {
 });
 
 async function expectMenuToFitWithin(menu: Locator, container: Locator) {
+  await expect
+    .poll(async () => (await menu.boundingBox())?.x ?? 0)
+    .toBeGreaterThan(0);
+
   const menuBox = await menu.boundingBox();
   const containerBox = await container.boundingBox();
 

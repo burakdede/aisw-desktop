@@ -30,7 +30,11 @@ export function AnchoredMenu({
   containmentSelector?: string;
 } & HTMLAttributes<HTMLDivElement>) {
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const [style, setStyle] = useState<CSSProperties>({ opacity: 0 });
+  const [style, setStyle] = useState<CSSProperties>({
+    opacity: 0,
+    visibility: "hidden",
+    pointerEvents: "none",
+  });
 
   useLayoutEffect(() => {
     if (typeof window === "undefined") {
@@ -70,6 +74,8 @@ export function AnchoredMenu({
         left,
         top: Math.max(minTop, Math.min(top, maxBottom - menuRect.height)),
         opacity: 1,
+        visibility: "visible",
+        pointerEvents: "auto",
       });
     };
 
@@ -78,6 +84,7 @@ export function AnchoredMenu({
       frame = window.requestAnimationFrame(updatePosition);
     };
 
+    updatePosition();
     queueUpdate();
     window.addEventListener("resize", queueUpdate);
     window.addEventListener("scroll", queueUpdate, true);

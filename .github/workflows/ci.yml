@@ -46,6 +46,39 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install chromium
 
+      - name: Download aisw sidecar
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="$(rustc --print host-tuple)"
+          case "$target" in
+            aarch64-apple-darwin)
+              asset="aisw-aarch64-apple-darwin"
+              ;;
+            x86_64-apple-darwin)
+              asset="aisw-x86_64-apple-darwin"
+              ;;
+            x86_64-unknown-linux-gnu)
+              asset="aisw-x86_64-unknown-linux-gnu"
+              ;;
+            x86_64-pc-windows-msvc)
+              asset="aisw-x86_64-pc-windows-msvc.exe"
+              ;;
+            *)
+              echo "Unsupported rust host tuple: $target" >&2
+              exit 1
+              ;;
+          esac
+
+          mkdir -p "$RUNNER_TEMP/aisw-sidecar"
+          curl -fsSL "https://github.com/burakdede/aisw/releases/download/v0.3.8/$asset" -o "$RUNNER_TEMP/aisw-sidecar/$asset"
+          echo "AISW_TARGET_TRIPLE=$target" >> "$GITHUB_ENV"
+          echo "AISW_SIDECAR_PATH=$RUNNER_TEMP/aisw-sidecar/$asset" >> "$GITHUB_ENV"
+
+      - name: Stage aisw sidecar
+        shell: bash
+        run: npm run prepare:sidecar -- --target "$AISW_TARGET_TRIPLE" "$AISW_SIDECAR_PATH"
+
       - name: Verify frontend
         run: |
           npm test
