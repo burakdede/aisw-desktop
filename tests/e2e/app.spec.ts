@@ -407,6 +407,46 @@ test("keeps the profile inspector actions menu inside the visible pane", async (
   await expectMenuToFitWithin(menu, inspector);
 });
 
+test("filters the profile inventory by tool segment and search query", async ({ page }) => {
+  await installDesktopMock(page, "switching", undefined, {
+    settings: {
+      profile_labels: {
+        claude: {
+          work: "Office",
+        },
+        codex: {
+          work: "Code Work",
+        },
+      },
+    },
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles", exact: true }).click();
+
+  await expect(page.locator(".profiles-table-row-button").filter({ hasText: "Office" })).toBeVisible();
+  await expect(
+    page.locator(".profiles-table-row-button").filter({ hasText: "Code Work" }),
+  ).toBeVisible();
+
+  await page.getByLabel("Profile filters").getByRole("button", { name: "Codex" }).click();
+  await expect(
+    page.locator(".profiles-table-row-button").filter({ hasText: "Code Work" }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".profiles-table-row-button").filter({ hasText: "Office" }),
+  ).toHaveCount(0);
+
+  await page.getByRole("searchbox", { name: "Search Profiles" }).fill("office");
+  await expect(page.getByRole("heading", { name: "No matching profiles" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Clear Search Profiles" }).click();
+  await expect(page.getByRole("searchbox", { name: "Search Profiles" })).toHaveValue("");
+  await expect(
+    page.locator(".profiles-table-row-button").filter({ hasText: "Code Work" }),
+  ).toBeVisible();
+});
+
 test("keeps the backups inspector actions menu inside the visible pane", async ({ page }) => {
   await installDesktopMock(page, "backupCatalog");
 
@@ -422,6 +462,24 @@ test("keeps the backups inspector actions menu inside the visible pane", async (
   await expect(menu).toBeVisible();
   await expect(menu.getByRole("menuitem", { name: "Open Profile" })).toBeVisible();
   await expectMenuToFitWithin(menu, inspector);
+});
+
+test("opens the matching profile details from backup actions", async ({ page }) => {
+  await installDesktopMock(page, "backupCatalog");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Backups" }).click();
+
+  await page.locator(".backups-table-row").filter({ hasText: "Work" }).first().click();
+  await page.getByRole("button", { name: "Backup actions" }).click();
+  await page.getByRole("menuitem", { name: "Open Profile" }).click();
+
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(
+    page.getByLabel("Profile filters").getByRole("button", { name: "Claude", pressed: true }),
+  ).toBeVisible();
+  await expect(page.locator(".profiles-inspector")).toContainText("Work");
+  await expect(page.getByRole("button", { name: "Storage Details" })).toBeVisible();
 });
 
 test("uses an overlay sidebar on narrow widths", async ({ page }) => {
