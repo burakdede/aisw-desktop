@@ -201,6 +201,36 @@ test("switches to a saved set from quick switch and updates the overview", async
   ).toBe(true);
 });
 
+test("switches a profile from overview and opens the matching profile details", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Inspect Codex" }).click();
+  await page.getByLabel("Switch codex profile").selectOption("work");
+  await page.getByRole("button", { name: "Switch to Work" }).click();
+
+  await expect(
+    page.locator(".overview-tool-list-row").filter({ hasText: "Codex" }).first(),
+  ).toContainText("Work");
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "use_profile" &&
+        entry.args?.request?.tool === "codex" &&
+        entry.args?.request?.profile === "work",
+    ),
+  ).toBe(true);
+
+  await page.getByRole("button", { name: "Open Profile" }).click();
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(
+    page.getByLabel("Profile filters").getByRole("button", { name: "Codex" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".profiles-inspector-pane")).toContainText("Work");
+});
+
 test("adds, renames, activates, and removes a profile from the profiles screen", async ({
   page,
 }) => {
@@ -471,6 +501,98 @@ test("manages launch, shell, update, and app-data actions from settings", async 
   expect(await readClipboardWrites(page)).toContain('echo "$AISW_SHELL_HOOK"');
 });
 
+test("persists general preferences and runs security and advanced settings actions", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+
+  const launchAtLogin = page.getByRole("switch", { name: "Launch at login" });
+  const showMenuBarIcon = page.getByRole("switch", { name: "Show menu bar icon" });
+  const restoreWindowState = page.getByRole("switch", {
+    name: "Restore previous window size and position",
+  });
+
+  await expect(launchAtLogin).toHaveAttribute("aria-checked", "false");
+  await expect(showMenuBarIcon).toHaveAttribute("aria-checked", "true");
+  await expect(restoreWindowState).toHaveAttribute("aria-checked", "true");
+
+  await launchAtLogin.click();
+  await page.getByLabel("Appearance").selectOption("dark");
+  await showMenuBarIcon.click();
+  await restoreWindowState.click();
+  await page.getByLabel("Default section").selectOption("profiles");
+
+  await expect(launchAtLogin).toHaveAttribute("aria-checked", "true");
+  await expect
+    .poll(async () => ({
+      appearance: await readLocalStorage(page, "ai-switch.desktop.appearance"),
+      defaultSection: await readLocalStorage(page, "ai-switch.desktop.default-section"),
+      showMenuBarIcon: await readLocalStorage(page, "ai-switch.desktop.show-menu-bar-icon"),
+      restoreWindowState: await readLocalStorage(page, "ai-switch.desktop.restore-window-state"),
+      rootAppearance: await page.evaluate(() => document.documentElement.dataset.appearance ?? null),
+      colorScheme: await page.evaluate(() => document.documentElement.style.colorScheme),
+    }))
+    .toEqual({
+      appearance: "dark",
+      defaultSection: "profiles",
+      showMenuBarIcon: "false",
+      restoreWindowState: "false",
+      rootAppearance: "dark",
+      colorScheme: "dark",
+    });
+
+  await page.getByRole("button", { name: "Security" }).click();
+  await page.getByRole("button", { name: "Copy Redacted Report…" }).click();
+  await expect(page.getByText("Saved aisw-desktop-diagnostics-789.json.")).toBeVisible();
+
+  await page.evaluate(() =>
+    window.localStorage.setItem(
+      "ai-switch.desktop.window-state",
+      JSON.stringify({ width: 1280, height: 820, x: 64, y: 96 }),
+    ),
+  );
+
+  await page.getByRole("button", { name: "Advanced" }).click();
+  await page.getByRole("button", { name: "Reset Window Layout" }).click();
+  await expect(page.getByText("Cleared the saved window size and position.")).toBeVisible();
+  await expect
+    .poll(async () => readLocalStorage(page, "ai-switch.desktop.window-state"))
+    .toBeNull();
+
+  await page.getByRole("button", { name: "Reopen Setup Assistant" }).click();
+  await expect(page.getByRole("button", { name: "Close setup" })).toBeVisible();
+  await expect
+    .poll(async () => readLocalStorage(page, "ai-switch.desktop.reopen-setup-assistant"))
+    .toBe("true");
+
+  await page.getByRole("button", { name: "Close setup" }).click();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await expect
+    .poll(async () => readLocalStorage(page, "ai-switch.desktop.reopen-setup-assistant"))
+    .toBe("false");
+
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Advanced" }).click();
+  await page.getByRole("button", { name: "Reset Onboarding" }).click();
+  await expect(page.getByRole("button", { name: "Close setup" })).toBeVisible();
+  await expect
+    .poll(async () => ({
+      defaultSection: await readLocalStorage(page, "ai-switch.desktop.default-section"),
+      reopenSetupAssistant: await readLocalStorage(page, "ai-switch.desktop.reopen-setup-assistant"),
+    }))
+    .toEqual({
+      defaultSection: "overview",
+      reopenSetupAssistant: "true",
+    });
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "set_launch_at_login")).toBe(true);
+  expect(commandLog.some((entry) => entry.command === "export_diagnostic_bundle")).toBe(true);
+});
+
 test("captures a profile through the OAuth flow and shows progress steps", async ({ page }) => {
   await installDesktopMock(page, "switching", {
     claude: {
@@ -619,6 +741,10 @@ async function readClipboardWrites(page: Page) {
         }
       ).__AISW_CLIPBOARD_WRITES__ ?? [],
   );
+}
+
+async function readLocalStorage(page: Page, key: string) {
+  return page.evaluate((storageKey) => window.localStorage.getItem(storageKey), key);
 }
 
 async function readOpenedGuides(page: Page) {
