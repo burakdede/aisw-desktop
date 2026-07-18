@@ -27,6 +27,7 @@ const REFERENCE_DOCUMENT_RESOLUTION_REMEDIATION: &str =
     "Choose a supported help action and try again.";
 const REFERENCE_DOCUMENT_MISSING_ERROR_MESSAGE: &str =
     "AI Switch could not find the requested reference document.";
+#[cfg(any(target_os = "macos", test))]
 const LAUNCH_AT_LOGIN_ITEM_NAME: &str = "AI Switch";
 #[cfg(any(not(target_os = "macos"), test))]
 const LAUNCH_AT_LOGIN_UNSUPPORTED_DETAIL: &str =
@@ -37,6 +38,7 @@ const LAUNCH_AT_LOGIN_UNSUPPORTED_MESSAGE: &str =
 #[cfg(any(not(target_os = "macos"), test))]
 const LAUNCH_AT_LOGIN_UNSUPPORTED_REMEDIATION: &str =
     "Use a macOS build of AI Switch for this setting.";
+#[cfg(any(target_os = "macos", test))]
 const MACOS_LOGIN_ITEM_ERROR_MESSAGE: &str = "AI Switch could not update the macOS login item.";
 
 #[tauri::command]
