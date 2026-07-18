@@ -50,7 +50,7 @@ export async function installDesktopMock(
   scenarioOverride?: Record<string, unknown>,
 ) {
   await page.addInitScript(
-    ({ activeScenario, capabilities, scenarioPatch }) => {
+    ({ activeScenario, capabilities, scenarioPatch, currentAppVersion }) => {
       window.localStorage.clear();
       if (document.documentElement) {
         document.documentElement.removeAttribute("data-appearance");
@@ -1790,6 +1790,7 @@ export async function installDesktopMock(
         backupReads: 0,
         trayContextApplied: false,
         trayBackupApplied: false,
+        launchAtLoginEnabled: false,
       };
       window.__AISW_DESKTOP_SCENARIO_STATE__ = state;
 
@@ -2288,12 +2289,12 @@ export async function installDesktopMock(
           return {
             configured: true,
             channel: state.settings.update_channel,
-            current_version: CURRENT_APP_VERSION,
+            current_version: currentAppVersion,
             endpoint: `https://updates.example.com/${state.settings.update_channel}.json`,
             update: {
               version:
                 state.settings.update_channel === "beta" ? "0.3.0-beta.1" : "0.2.0",
-              current_version: CURRENT_APP_VERSION,
+              current_version: currentAppVersion,
               target: "darwin-aarch64",
               notes:
                 state.settings.update_channel === "beta"
@@ -2314,7 +2315,7 @@ export async function installDesktopMock(
           return {
             configured: true,
             channel: state.settings.update_channel,
-            current_version: CURRENT_APP_VERSION,
+            current_version: currentAppVersion,
             installed_version: "0.2.0",
             restart_requested: true,
             message: "Update installed. Restart has been requested.",
@@ -2573,6 +2574,31 @@ export async function installDesktopMock(
             generated_at: "unix:789",
           };
         }
+        if (command === "export_activity_log") {
+          return {
+            path: "/tmp/aisw-desktop/aisw-desktop-activity-123.json",
+            filename: "aisw-desktop-activity-123.json",
+            generated_at: "unix:123",
+          };
+        }
+        if (command === "open_app_data_folder") {
+          return "/Users/burakdede/.local/share/ai-switcher";
+        }
+        if (command === "get_launch_at_login_status") {
+          return {
+            supported: true,
+            enabled: state.launchAtLoginEnabled,
+            detail: null,
+          };
+        }
+        if (command === "set_launch_at_login") {
+          state.launchAtLoginEnabled = Boolean(args?.enabled);
+          return {
+            supported: true,
+            enabled: state.launchAtLoginEnabled,
+            detail: null,
+          };
+        }
         if (command === "add_profile_oauth") {
           const request = args.request;
           const emit = listeners.get("oauth-progress");
@@ -2594,7 +2620,12 @@ export async function installDesktopMock(
         throw new Error(`Unhandled desktop command: ${command}`);
       };
     },
-    { activeScenario: scenario, capabilities: capabilitiesOverride, scenarioPatch: scenarioOverride ?? null },
+    {
+      activeScenario: scenario,
+      capabilities: capabilitiesOverride,
+      scenarioPatch: scenarioOverride ?? null,
+      currentAppVersion: CURRENT_APP_VERSION,
+    },
   );
 }
 

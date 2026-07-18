@@ -325,6 +325,152 @@ test("adds and removes a project rule from the sets screen", async ({ page }) =>
   expect(commandLog.some((entry) => entry.command === "workspace_unbind")).toBe(true);
 });
 
+test("reviews and applies safe diagnostics repairs, then exports a report", async ({ page }) => {
+  await installDesktopMock(page, "diagnosticsRepair");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+
+  const reviewSafeFixes = page.getByRole("button", { name: "Review Safe Fixes" });
+  await expect(reviewSafeFixes).toBeEnabled();
+  await reviewSafeFixes.click();
+  const repairDialog = page.getByRole("dialog", { name: "Review Safe Fixes" });
+  await expect(repairDialog).toBeVisible();
+  await expect(repairDialog.getByText("Unlock keyring integration")).toBeVisible();
+  await repairDialog.getByRole("button", { name: "Apply Safe Fixes" }).click();
+  await expect(repairDialog).toBeHidden();
+
+  await page.getByRole("button", { name: "Diagnostics more actions" }).click();
+  await page.getByRole("menuitem", { name: "Export Report" }).click();
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "run_repair" &&
+        entry.args?.request?.apply === true,
+    ),
+  ).toBe(true);
+  expect(commandLog.some((entry) => entry.command === "export_diagnostic_bundle")).toBe(true);
+  await expect(
+    page.getByText(
+      "Support report ready: aisw-desktop-diagnostics-789.json. /tmp/aisw-desktop/aisw-desktop-diagnostics-789.json",
+    ),
+  ).toBeVisible();
+});
+
+test("filters backups and restores a saved backup into the active profile", async ({ page }) => {
+  await installDesktopMock(page, "backupCatalog");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Backups" }).click();
+
+  const toolbar = page.locator(".backups-filter-row");
+  await toolbar.getByLabel("Tool").selectOption("codex");
+  await toolbar.getByLabel("Search backups").fill("personal");
+
+  const backupRow = page.locator(".backups-table-row").first();
+  await expect(backupRow).toContainText("Personal");
+  await backupRow.click();
+
+  await page.getByRole("button", { name: "Backup actions" }).click();
+  await page.getByRole("menuitem", { name: "Restore and Activate…" }).click();
+
+  const restoreDialog = page.getByRole("dialog", { name: "Restore Backup" });
+  await expect(restoreDialog).toContainText("Restore and Activate");
+  await restoreDialog.getByRole("button", { name: "Restore and Activate" }).click();
+  await expect(restoreDialog).toBeHidden();
+  await expect(page.locator(".backups-inspector-surface")).toContainText("Personal");
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "restore_backup")).toBe(true);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "use_profile" &&
+        entry.args?.request?.tool === "codex" &&
+        entry.args?.request?.profile === "personal",
+    ),
+  ).toBe(true);
+});
+
+test("exports and clears recorded activity from the activity screen", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Quick Switch" }).click();
+  const dialog = page.getByRole("dialog", { name: "Quick Switch" });
+  await dialog.getByLabel("Search Quick Switch").fill("client acme");
+  await page.keyboard.press("Enter");
+  await expect(dialog).toBeHidden();
+
+  await page.locator(".sidebar").getByRole("button", { name: "Activity", exact: true }).click();
+  await expect(page.locator(".activity-event-row").first()).toBeVisible();
+
+  await page.getByRole("button", { name: "Activity more actions" }).click();
+  await page.getByRole("menuitem", { name: "Export Redacted Activity…" }).click();
+  await expect(page.getByText("Opened aisw-desktop-activity-123.json.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Activity more actions" }).click();
+  await page.getByRole("menuitem", { name: "Clear Activity History…" }).click();
+
+  const clearDialog = page.getByRole("dialog", { name: "Clear Activity History" });
+  await clearDialog.getByRole("button", { name: "Clear History" }).click();
+  await expect(clearDialog).toBeHidden();
+  await expect(page.getByText("No recent activity")).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "export_activity_log")).toBe(true);
+});
+
+test("manages launch, shell, update, and app-data actions from settings", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+
+  const launchAtLogin = page.getByRole("switch", { name: "Launch at login" });
+  await expect(launchAtLogin).toHaveAttribute("aria-checked", "false");
+  await launchAtLogin.click();
+  await expect(launchAtLogin).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByText("Launch at login enabled.")).toBeVisible();
+
+  const settingsNav = page.locator(".settings-category-pane");
+  await settingsNav.getByRole("button", { name: "Terminal Integration" }).click();
+  await page.getByRole("button", { name: "Copy Install" }).click();
+  await page.getByRole("button", { name: "Copy Verify" }).click();
+
+  await settingsNav.getByRole("button", { name: "Updates" }).click();
+  await page.getByLabel("Update channel").selectOption("beta");
+  await expect
+    .poll(async () =>
+      (await readCommandLog(page)).some(
+        (entry) =>
+          entry.command === "update_settings" &&
+          entry.args?.request?.update_channel === "beta",
+      ),
+    )
+    .toBe(true);
+  await page.getByRole("button", { name: "Check for Updates" }).click();
+  await expect(page.getByText("Update available: 0.3.0-beta.1")).toBeVisible();
+  await page.getByRole("button", { name: "Install Update" }).click();
+  await expect(page.getByText("Update installed. Restart has been requested.")).toBeVisible();
+
+  await settingsNav.getByRole("button", { name: "Advanced" }).click();
+  await page.getByRole("button", { name: "Open App Data Folder" }).click();
+  await expect(page.getByText("Opened /Users/burakdede/.local/share/ai-switcher.")).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "set_launch_at_login")).toBe(true);
+  expect(commandLog.some((entry) => entry.command === "check_for_updates")).toBe(true);
+  expect(commandLog.some((entry) => entry.command === "install_update")).toBe(true);
+  expect(commandLog.some((entry) => entry.command === "open_app_data_folder")).toBe(true);
+  expect(await readClipboardWrites(page)).toContain(
+    "echo 'eval \"$(aisw shell-hook zsh)\"' >> ~/.zshrc",
+  );
+  expect(await readClipboardWrites(page)).toContain('echo "$AISW_SHELL_HOOK"');
+});
+
 async function expectMenuToFitWithin(menu: Locator, container: Locator) {
   await expect
     .poll(async () => (await menu.boundingBox())?.x ?? 0)
@@ -350,5 +496,16 @@ async function readCommandLog(page: Page) {
           __AISW_COMMAND_LOG__?: Array<{ command: string; args?: Record<string, unknown> }>;
         }
       ).__AISW_COMMAND_LOG__ ?? [],
+  );
+}
+
+async function readClipboardWrites(page: Page) {
+  return page.evaluate(
+    () =>
+      (
+        window as typeof window & {
+          __AISW_CLIPBOARD_WRITES__?: string[];
+        }
+      ).__AISW_CLIPBOARD_WRITES__ ?? [],
   );
 }
