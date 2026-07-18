@@ -106,6 +106,31 @@ test("shows runtime compatibility blockers for an unusable runtime", async ({ pa
   await expect(page.getByText("Runtime capability details are unavailable")).toBeVisible();
 });
 
+test("routes runtime recovery into engine settings", async ({ page }) => {
+  await installDesktopMock(page, "incompatibleRuntime");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Engine Settings" }).click();
+
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(
+    page.locator(".settings-category-pane").getByRole("button", { name: "Engine", pressed: true }),
+  ).toBeVisible();
+});
+
+test("retries the runtime bootstrap check from the recovery surface", async ({ page }) => {
+  await installDesktopMock(page, "incompatibleRuntime");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Try Again" }).click();
+
+  await expect
+    .poll(async () =>
+      (await readCommandLog(page)).filter((entry) => entry.command === "get_bootstrap").length,
+    )
+    .toBeGreaterThan(1);
+});
+
 test("shows bootstrap remediation when initial desktop state cannot load", async ({ page }) => {
   await installDesktopMock(page, "bootstrapError");
 
@@ -167,6 +192,52 @@ test("falls back to exporting diagnostics when the issue tracker cannot open", a
       ),
     )
     .toBe(true);
+});
+
+test("opens local documentation from the app menu when it is available", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await overrideDesktopCommand(page, "open_reference_document", {
+    result: "/Users/burakdede/Projects/aisw-desktop/README.md",
+  });
+  await dispatchDesktopEvent(page, "menu-open-help");
+
+  await expect
+    .poll(async () =>
+      (await readCommandLog(page)).some((entry) => entry.command === "open_reference_document"),
+    )
+    .toBe(true);
+  await expect(page.getByRole("dialog", { name: "Using AI Switch" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+});
+
+test("opens the issue tracker from the app menu when it is available", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await overrideDesktopCommand(page, "open_issue_tracker", {
+    result: "https://github.com/burakdede/aisw-desktop/issues",
+  });
+  await dispatchDesktopEvent(page, "menu-open-issues");
+
+  await expect
+    .poll(async () =>
+      (await readCommandLog(page)).some((entry) => entry.command === "open_issue_tracker"),
+    )
+    .toBe(true);
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "export_diagnostic_bundle")).toBe(false);
+});
+
+test("opens add profile from the app menu", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "menu-open-add-profile");
+
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Add Profile" })).toBeVisible();
 });
 
 test("opens import current login from the app menu in the profiles flow", async ({ page }) => {
@@ -957,6 +1028,51 @@ async function dispatchDesktopEvent(
       ).__AISW_DESKTOP_EVENT_HANDLERS__?.[name]?.(eventPayload);
     },
     { name: eventName, eventPayload: payload },
+  );
+}
+
+async function overrideDesktopCommand(
+  page: Page,
+  commandName: string,
+  options: { result?: unknown; error?: Record<string, unknown> },
+) {
+  await page.evaluate(
+    ({ name, result, error }) => {
+      const currentMock = (
+        window as typeof window & {
+          __AISW_DESKTOP_MOCK__?: (command: string, args?: Record<string, unknown>) => Promise<unknown>;
+        }
+      ).__AISW_DESKTOP_MOCK__;
+      if (!currentMock) {
+        return;
+      }
+
+      (
+        window as typeof window & {
+          __AISW_DESKTOP_MOCK__?: (command: string, args?: Record<string, unknown>) => Promise<unknown>;
+        }
+      ).__AISW_DESKTOP_MOCK__ = async (command, args) => {
+        if (command === name) {
+          const commandLog = (
+            window as typeof window & {
+              __AISW_COMMAND_LOG__?: Array<{ command: string; args?: Record<string, unknown> | null }>;
+            }
+          ).__AISW_COMMAND_LOG__;
+          commandLog?.push({ command, args: args ?? null });
+          if (error) {
+            throw error;
+          }
+          return result;
+        }
+
+        return currentMock(command, args);
+      };
+    },
+    {
+      name: commandName,
+      result: options.result ?? null,
+      error: options.error ?? null,
+    },
   );
 }
 
