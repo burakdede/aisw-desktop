@@ -497,6 +497,60 @@ test("uses an overlay sidebar on narrow widths", async ({ page }) => {
   await expect(page.locator(".sidebar")).toHaveCount(0);
 });
 
+test("uses a one-pane detail flow for profiles on narrow widths", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.setViewportSize({ width: 760, height: 920 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Show sidebar" }).click();
+  await page.getByRole("button", { name: "Profiles", exact: true }).click();
+  await expect(page.getByLabel("Profile table")).toBeVisible();
+
+  await page.getByRole("option", { name: "Inspect Claude Code Work" }).click();
+  await expect(page.getByRole("button", { name: "Back" })).toBeVisible();
+  await expect(page.getByLabel("Profile table")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Back" }).click();
+  await expect(page.getByLabel("Profile table")).toBeVisible();
+});
+
+test("uses a one-pane detail flow for sets on narrow widths", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.setViewportSize({ width: 760, height: 920 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Show sidebar" }).click();
+  await page.getByRole("button", { name: "Sets", exact: true }).click();
+  await expect(page.getByLabel("Set Library")).toBeVisible();
+
+  await page.getByRole("button", { name: "Inspect set Client Acme" }).click();
+  await expect(page.getByRole("button", { name: "Back" })).toBeVisible();
+  await expect(page.getByLabel("Set Library")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Back" }).click();
+  await expect(page.getByLabel("Set Library")).toBeVisible();
+});
+
+test("uses a one-pane detail flow for backups on narrow widths", async ({ page }) => {
+  await installDesktopMock(page, "backupCatalog");
+
+  await page.setViewportSize({ width: 760, height: 920 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Show sidebar" }).click();
+  await page.getByRole("button", { name: "Backups", exact: true }).click();
+  await expect(page.getByLabel("Backups list")).toBeVisible();
+
+  await page.locator(".backups-table-row").first().click();
+  await expect(page.getByRole("button", { name: "Back", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Backups list")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(page.getByLabel("Backups list")).toBeVisible();
+});
+
 test("switches to a saved set from quick switch and updates the overview", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
