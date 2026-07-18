@@ -781,9 +781,10 @@ fn map_machine_failure(command: &str, value: &serde_json::Value) -> Option<Deskt
         GuiErrorKind::BackupMissing
     } else if lower.contains("config_corrupt") {
         GuiErrorKind::ConfigCorrupt
-    } else if lower.contains("tool_not_installed") || lower.contains("tool_missing") {
-        GuiErrorKind::ToolMissing
-    } else if lower.contains("not_found") || lower.contains("tool_missing") {
+    } else if lower.contains("tool_not_installed")
+        || lower.contains("tool_missing")
+        || lower.contains("not_found")
+    {
         GuiErrorKind::ToolMissing
     } else if lower.contains("duplicate") {
         GuiErrorKind::DuplicateProfile
