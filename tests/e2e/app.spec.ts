@@ -457,6 +457,46 @@ test("records tray context failures with remediation and shows a desktop notific
     .toBe(true);
 });
 
+test("refreshes workspace status after a tray context switch", async ({ page }) => {
+  await installDesktopMock(page, "trayWorkspaceRefresh");
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
+  await expect(page.getByText("Project mismatch")).toBeVisible();
+
+  await page.evaluate(() => {
+    (
+      window as typeof window & {
+        __AISW_DESKTOP_SCENARIO_STATE__?: { trayContextApplied?: boolean };
+      }
+    ).__AISW_DESKTOP_SCENARIO_STATE__!.trayContextApplied = true;
+  });
+  const workspaceReadsBefore = await expectCommandCount(page, "get_workspace_status");
+  const bindingReadsBefore = await expectCommandCount(page, "get_project_bindings");
+
+  await dispatchDesktopEvent(page, "tray-command-result", {
+    scope: "global",
+    id: "context",
+    label: "Use set",
+    status: "success",
+    message: "Activated set client-acme.",
+  });
+
+  await expect
+    .poll(async () => ({
+      workspaceReads: await expectCommandCount(page, "get_workspace_status"),
+      bindingReads: await expectCommandCount(page, "get_project_bindings"),
+    }))
+    .toEqual({
+      workspaceReads: workspaceReadsBefore + 1,
+      bindingReads: bindingReadsBefore + 1,
+    });
+  await expect(page.getByText("Project mismatch")).toHaveCount(0);
+  await page.locator(".sets-rule-table-row").filter({ hasText: "/code/acme" }).first().click();
+  await expect(page.locator(".sets-rules-inspector")).toContainText("Current project");
+});
+
 test("classifies tray profile failures in diagnostics", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -721,6 +761,33 @@ test("opens diagnostics and refreshes health checks from the tray", async ({ pag
       verifyRuns: 1,
       repairRuns: 1,
     });
+});
+
+test("refreshes the backups list after a successful tray profile switch", async ({ page }) => {
+  await installDesktopMock(page, "trayBackupRefresh");
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Backups", exact: true }).click();
+  await expect(page.getByText("No backups found")).toBeVisible();
+
+  await page.evaluate(() => {
+    (
+      window as typeof window & {
+        __AISW_DESKTOP_SCENARIO_STATE__?: { trayBackupApplied?: boolean };
+      }
+    ).__AISW_DESKTOP_SCENARIO_STATE__!.trayBackupApplied = true;
+  });
+
+  await dispatchDesktopEvent(page, "tray-command-result", {
+    scope: "tool",
+    tool: "claude",
+    label: "Switch profile",
+    status: "success",
+    message: "Switched claude to work.",
+  });
+
+  await expect(page.getByText("20260326T120000Z-claude-work")).toBeVisible();
+  await expect(page.getByLabel("Backups list")).toContainText("Work");
 });
 
 test("exports diagnostics from the app menu", async ({ page }) => {
@@ -1184,6 +1251,11 @@ async function readCommandLog(page: Page) {
         }
       ).__AISW_COMMAND_LOG__ ?? [],
   );
+}
+
+async function expectCommandCount(page: Page, commandName: string) {
+  const commandLog = await readCommandLog(page);
+  return commandLog.filter((entry) => entry.command === commandName).length;
 }
 
 async function readClipboardWrites(page: Page) {
