@@ -50,11 +50,22 @@ import {
 import { listenDesktopEvent } from "./lib/tauri";
 import { subscribeDesktopEvents, type DesktopEventHandler } from "./lib/desktop-events";
 import { buildBundledRuntimeSettingsUpdate } from "./lib/desktop-settings";
+import {
+  automaticUpdateCheckDue,
+  loadDismissedUpdateVersion,
+  loadLastAutomaticUpdateCheckAt,
+  saveDismissedUpdateVersion,
+  saveLastAutomaticUpdateCheckAt,
+  updateAnnouncementBody,
+  updateAnnouncementTitle,
+} from "./lib/desktop-updates";
 import { eventTargetIsEditable } from "./lib/dom-events";
 import { syncWindowState } from "./lib/window-state";
 import {
   activateProfileSet,
+  checkForUpdates,
   exportDiagnosticBundle,
+  installUpdate,
   openReferenceDocument,
   openIssueTracker,
   updateSettings,
@@ -68,8 +79,15 @@ import {
   saveDesktopPreferences,
   type DesktopPreferences,
 } from "./lib/desktop-preferences";
+import { formatResolvedErrorMessage, resolveErrorDetails, type ErrorDetails } from "./lib/error-details";
 import { nullishToNull } from "./lib/parse-guards";
-import type { AppBootstrap, AppSnapshot, DesktopSettings } from "./lib/schemas";
+import type {
+  AppBootstrap,
+  AppSnapshot,
+  DesktopSettings,
+  InstallUpdateReport,
+  UpdateCheckReport,
+} from "./lib/schemas";
 import {
   APP_SHELL_COPY,
   appNavFromShortcut,
@@ -116,6 +134,12 @@ export function App() {
   const [runtimeRecoveryOpen, setRuntimeRecoveryOpen] = useState(false);
   const [activityClearSignal, setActivityClearSignal] = useState(0);
   const [activityOpenLogSignal, setActivityOpenLogSignal] = useState(0);
+  const [availableUpdateReport, setAvailableUpdateReport] = useState<UpdateCheckReport | null>(
+    null,
+  );
+  const [installedUpdateReport, setInstalledUpdateReport] =
+    useState<InstallUpdateReport | null>(null);
+  const [updateInstallError, setUpdateInstallError] = useState<ErrorDetails | null>(null);
   const { bootstrap, snapshot, init } = useDesktop();
   type ProfilesRouteInput = Parameters<typeof createProfilesRouteState>[0];
   type ProfileSetupRouteInput = Parameters<typeof createProfileSetupRouteState>[0];
@@ -130,6 +154,96 @@ export function App() {
     toolCapabilities: {},
     runtimeBlocked: true,
   });
+  const automaticUpdateDismissedVersionRef = useRef<string | null>(
+    loadDismissedUpdateVersion(),
+  );
+  const automaticUpdateLastCheckAtRef = useRef<number | null>(
+    loadLastAutomaticUpdateCheckAt(),
+  );
+  const automaticUpdateAnnouncedVersionRef = useRef<string | null>(null);
+  const automaticUpdateChannelRef = useRef<string | null>(null);
+  const automaticUpdateCheckInFlightRef = useRef(false);
+
+  function persistDismissedUpdateVersion(version: string | null) {
+    automaticUpdateDismissedVersionRef.current = version;
+    saveDismissedUpdateVersion(version);
+  }
+
+  function clearAvailableUpdateBanner() {
+    setAvailableUpdateReport(null);
+    setInstalledUpdateReport(null);
+    setUpdateInstallError(null);
+  }
+
+  function dismissAvailableUpdate() {
+    const version = availableUpdateReport?.update?.version;
+    if (version) {
+      persistDismissedUpdateVersion(version);
+    }
+    clearAvailableUpdateBanner();
+  }
+
+  function applyAutomaticUpdateReport(report: UpdateCheckReport, options?: { notify?: boolean }) {
+    setUpdateInstallError(null);
+
+    if (!report.configured || !report.update) {
+      setAvailableUpdateReport(null);
+      setInstalledUpdateReport(null);
+      return;
+    }
+
+    const nextVersion = report.update.version;
+    if (
+      automaticUpdateDismissedVersionRef.current &&
+      automaticUpdateDismissedVersionRef.current !== nextVersion
+    ) {
+      persistDismissedUpdateVersion(null);
+    }
+
+    if (automaticUpdateDismissedVersionRef.current === nextVersion) {
+      return;
+    }
+
+    setInstalledUpdateReport(null);
+    setAvailableUpdateReport(report);
+
+    if (!options?.notify || automaticUpdateAnnouncedVersionRef.current === nextVersion) {
+      return;
+    }
+
+    automaticUpdateAnnouncedVersionRef.current = nextVersion;
+    void notifyDesktop({
+      title: updateAnnouncementTitle(nextVersion),
+      body: updateAnnouncementBody(report),
+    });
+  }
+
+  async function runAutomaticUpdateCheck(options: { force?: boolean; notify?: boolean } = {}) {
+    if (automaticUpdateCheckInFlightRef.current) {
+      return;
+    }
+
+    if (
+      !options.force &&
+      !automaticUpdateCheckDue(automaticUpdateLastCheckAtRef.current)
+    ) {
+      return;
+    }
+
+    automaticUpdateCheckInFlightRef.current = true;
+    const startedAt = Date.now();
+    automaticUpdateLastCheckAtRef.current = startedAt;
+    saveLastAutomaticUpdateCheckAt(startedAt);
+
+    try {
+      const report = await checkForUpdates();
+      applyAutomaticUpdateReport(report, { notify: options.notify });
+    } catch {
+      // Automatic checks stay quiet. Manual update checks in Settings still surface remediation.
+    } finally {
+      automaticUpdateCheckInFlightRef.current = false;
+    }
+  }
 
   function openSettings(section?: SettingsSection) {
     setSettingsRouteState(createSettingsRouteState(section));
@@ -357,6 +471,33 @@ export function App() {
     void invalidateDiagnosticDesktopQueries(queryClient);
   }
 
+  const installAvailableUpdateMutation = useMutation({
+    mutationFn: installUpdate,
+    onMutate: () => {
+      setUpdateInstallError(null);
+      setInstalledUpdateReport(null);
+    },
+    onSuccess: async (report) => {
+      setAvailableUpdateReport(null);
+      setInstalledUpdateReport(report);
+      persistDismissedUpdateVersion(null);
+      await notifyDesktop({
+        title: "AI Switcher updated",
+        body: report.message ?? "Update installed. Restart has been requested.",
+      });
+    },
+    onError: async (error) => {
+      const details = resolveErrorDetails(error, "Desktop update failed.");
+      setUpdateInstallError(details);
+      await notifyDesktop({
+        title: "Update install failed",
+        body: formatResolvedErrorMessage(error, "Desktop update failed.", {
+          remediationPrefix: "",
+        }),
+      });
+    },
+  });
+
   useEffect(() => {
     const desktopEventHandlers: DesktopEventHandler[] = [
       {
@@ -456,6 +597,41 @@ export function App() {
 
     return subscribeDesktopEvents(desktopEventHandlers, listenDesktopEvent);
   }, [queryClient]);
+
+  useEffect(() => {
+    if (!bootstrap.data) {
+      return;
+    }
+
+    const channel = bootstrap.data.settings.update_channel;
+    if (automaticUpdateChannelRef.current === channel) {
+      return;
+    }
+
+    automaticUpdateChannelRef.current = channel;
+    void runAutomaticUpdateCheck({ force: true, notify: true });
+  }, [bootstrap.data]);
+
+  useEffect(() => {
+    if (!bootstrap.data) {
+      return;
+    }
+
+    const maybeRefreshUpdate = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        return;
+      }
+      void runAutomaticUpdateCheck({ notify: true });
+    };
+
+    window.addEventListener("focus", maybeRefreshUpdate);
+    document.addEventListener("visibilitychange", maybeRefreshUpdate);
+
+    return () => {
+      window.removeEventListener("focus", maybeRefreshUpdate);
+      document.removeEventListener("visibilitychange", maybeRefreshUpdate);
+    };
+  }, [bootstrap.data]);
 
   if (bootstrap.isLoading) {
     const loadingSurface = buildBootstrapLoadingSurface();
@@ -606,6 +782,87 @@ export function App() {
     );
   }
 
+  function renderUpdateBanner() {
+    if (showSetupWindow) {
+      return null;
+    }
+
+    if (installedUpdateReport?.restart_requested) {
+      return (
+        <section
+          className="desktop-update-banner desktop-update-banner-success"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="desktop-update-banner-copy">
+            <span className="desktop-update-banner-kicker">Update installed</span>
+            <h3>Restart requested</h3>
+            <p>
+              {installedUpdateReport.message ??
+                "AI Switcher installed the new release and requested a restart."}
+            </p>
+          </div>
+          <div className="button-row desktop-update-banner-actions">
+            <button className="ghost-button" type="button" onClick={clearAvailableUpdateBanner}>
+              Dismiss
+            </button>
+          </div>
+        </section>
+      );
+    }
+
+    const availableUpdate = availableUpdateReport?.update;
+    if (!availableUpdate) {
+      return null;
+    }
+
+    const summary = updateInstallError
+      ? updateInstallError.message
+      : updateAnnouncementBody(availableUpdateReport);
+
+    return (
+      <section
+        className={`desktop-update-banner ${
+          updateInstallError ? "desktop-update-banner-error" : "desktop-update-banner-ready"
+        }`}
+        role={updateInstallError ? "alert" : "status"}
+        aria-live="polite"
+      >
+        <div className="desktop-update-banner-copy">
+          <span className="desktop-update-banner-kicker">
+            {updateInstallError ? "Update failed" : "Update ready"}
+          </span>
+          <h3>{updateAnnouncementTitle(availableUpdate.version)}</h3>
+          <p>{summary}</p>
+          {updateInstallError?.remediation ? <p>{updateInstallError.remediation}</p> : null}
+          <div className="desktop-update-banner-meta" aria-label="Desktop update details">
+            <span>Current {availableUpdate.current_version}</span>
+            <span>Next {availableUpdate.version}</span>
+            <span>{availableUpdateReport.channel}</span>
+          </div>
+        </div>
+        <div className="button-row desktop-update-banner-actions">
+          <button
+            className="primary-button"
+            type="button"
+            disabled={installAvailableUpdateMutation.isPending}
+            onClick={() => installAvailableUpdateMutation.mutate()}
+          >
+            {installAvailableUpdateMutation.isPending ? "Installing…" : "Update and Restart"}
+          </button>
+          <button
+            className="ghost-button"
+            type="button"
+            disabled={installAvailableUpdateMutation.isPending}
+            onClick={dismissAvailableUpdate}
+          >
+            Later
+          </button>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <>
       <AppFrame
@@ -645,6 +902,7 @@ export function App() {
           )
         }
       >
+        {renderUpdateBanner()}
         {runtimeRecoveryFocused ? (
           <SectionCard
             title={APP_SHELL_COPY.runtimeRecovery.cardTitle}

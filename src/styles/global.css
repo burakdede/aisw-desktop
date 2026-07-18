@@ -1329,6 +1329,105 @@ html[data-appearance="dark"] .tool-logo-antigravity {
   min-width: 0;
 }
 
+.desktop-update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--separator);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, Canvas 99%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
+    color-mix(in srgb, Canvas 97%, CanvasText 3%);
+  box-shadow: var(--shadow-panel);
+}
+
+.desktop-update-banner-ready {
+  border-color: color-mix(in srgb, AccentColor 24%, var(--separator));
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, AccentColor 11%, transparent), transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, Canvas 99%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
+    color-mix(in srgb, Canvas 97%, CanvasText 3%);
+}
+
+.desktop-update-banner-success {
+  border-color: color-mix(in srgb, #22c55e 24%, var(--separator));
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, #22c55e 9%, transparent), transparent 28%),
+    linear-gradient(180deg, color-mix(in srgb, Canvas 99%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
+    color-mix(in srgb, Canvas 97%, CanvasText 3%);
+}
+
+.desktop-update-banner-error {
+  border-color: color-mix(in srgb, var(--danger) 24%, var(--separator));
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--danger) 8%, transparent), transparent 28%),
+    linear-gradient(180deg, color-mix(in srgb, Canvas 99%, transparent), color-mix(in srgb, Canvas 96%, transparent)),
+    color-mix(in srgb, Canvas 97%, CanvasText 3%);
+}
+
+.desktop-update-banner-copy {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.desktop-update-banner-kicker {
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.desktop-update-banner-copy h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 650;
+  font-size: 20px;
+  line-height: 1.1;
+  letter-spacing: -0.022em;
+}
+
+.desktop-update-banner-copy p {
+  margin: 0;
+  max-width: 72ch;
+  font-size: var(--type-footnote);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.desktop-update-banner-error .desktop-update-banner-copy p:first-of-type {
+  color: var(--danger);
+}
+
+.desktop-update-banner-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.desktop-update-banner-meta span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, CanvasText 8%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, Canvas 97%, CanvasText 3%);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+.desktop-update-banner-actions {
+  flex: none;
+  align-items: center;
+}
+
 .sidebar-toggle {
   flex: none;
 }
@@ -7010,6 +7109,19 @@ html[data-appearance="dark"] .tool-logo-antigravity {
 
   .section-card {
     padding: 14px;
+  }
+
+  .desktop-update-banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .desktop-update-banner-actions {
+    width: 100%;
+  }
+
+  .desktop-update-banner-actions > * {
+    flex: 1 1 0;
   }
 }
 

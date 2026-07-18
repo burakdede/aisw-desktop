@@ -24,6 +24,7 @@ import {
   DESKTOP_PREFERENCE_STORAGE_KEYS,
   loadDesktopPreferences,
 } from "./lib/desktop-preferences";
+import { DESKTOP_UPDATE_STORAGE_KEYS } from "./lib/desktop-updates";
 import type { UnknownRecord } from "./lib/parse-guards";
 import { desktopSettingsSchema } from "./lib/schemas";
 import type { AppBootstrap, AppSnapshot, DesktopSettings, InitReport } from "./lib/schemas";
@@ -147,14 +148,24 @@ async function renderApp() {
     },
   });
 
+  let rendered: ReturnType<typeof render> | undefined;
   await act(async () => {
-    render(
+    rendered = render(
       <QueryClientProvider client={queryClient}>
         <App />
       </QueryClientProvider>,
     );
     await Promise.resolve();
   });
+
+  if (!rendered) {
+    throw new Error("App failed to render.");
+  }
+
+  return {
+    ...rendered,
+    queryClient,
+  };
 }
 
 async function renderOverviewApp() {
@@ -8235,6 +8246,252 @@ describe("App", () => {
       expect(screen.getByText("Update installed. Restart has been requested.")).toBeInTheDocument();
       expect(calls.some((entry) => entry.command === "check_for_updates")).toBe(true);
       expect(calls.some((entry) => entry.command === "install_update")).toBe(true);
+    });
+  });
+
+  it("checks for updates automatically on launch and announces the release", async () => {
+    const calls: string[] = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      calls.push(command);
+      if (command === "check_for_updates") {
+        return {
+          configured: true,
+          channel: "stable",
+          current_version: CURRENT_APP_VERSION,
+          endpoint: "https://updates.example.com/stable.json",
+          update: {
+            version: "0.2.0",
+            current_version: CURRENT_APP_VERSION,
+            target: "darwin-aarch64",
+            notes: "New workspace safeguards and smoother profile switching.",
+          },
+          message: null,
+        };
+      }
+      return (
+        desktopMockRecord({
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        })
+      )[command];
+    };
+
+    await renderApp();
+
+    await waitFor(() => {
+      expect(screen.getByText("AI Switcher 0.2.0 is available")).toBeInTheDocument();
+      expect(
+        screen.getByText("New workspace safeguards and smoother profile switching."),
+      ).toBeInTheDocument();
+    });
+
+    expect(calls).toContain("check_for_updates");
+    expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
+      title: "AI Switcher 0.2.0 is available",
+      body: "New workspace safeguards and smoother profile switching.",
+    });
+  });
+
+  it("uses fallback release copy and remembers dismissed update versions", async () => {
+    let checks = 0;
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "check_for_updates") {
+        checks += 1;
+        return {
+          configured: true,
+          channel: "stable",
+          current_version: CURRENT_APP_VERSION,
+          endpoint: "https://updates.example.com/stable.json",
+          update: {
+            version: "0.2.1",
+            current_version: CURRENT_APP_VERSION,
+            target: "darwin-aarch64",
+            notes: null,
+          },
+          message: null,
+        };
+      }
+      return (
+        desktopMockRecord({
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        })
+      )[command];
+    };
+
+    const firstRender = await renderApp();
+
+    await waitFor(() => {
+      expect(screen.getByText("AI Switcher 0.2.1 is available")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "New fixes and improvements are ready. Download the signed update and restart when prompted.",
+        ),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Later" }));
+
+    expect(
+      window.localStorage.getItem(DESKTOP_UPDATE_STORAGE_KEYS.dismissedVersion),
+    ).toBe("0.2.1");
+    firstRender.unmount();
+
+    await renderApp();
+
+    await waitFor(() => {
+      expect(checks).toBeGreaterThanOrEqual(2);
+    });
+
+    expect(screen.queryByText("AI Switcher 0.2.1 is available")).not.toBeInTheDocument();
+    expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledTimes(1);
+  });
+
+  it("installs an available update from the global banner and requests a restart", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "check_for_updates") {
+        return {
+          configured: true,
+          channel: "stable",
+          current_version: CURRENT_APP_VERSION,
+          endpoint: "https://updates.example.com/stable.json",
+          update: {
+            version: "0.2.0",
+            current_version: CURRENT_APP_VERSION,
+            target: "darwin-aarch64",
+            notes: "Faster switching and signed updater artifacts.",
+          },
+          message: null,
+        };
+      }
+      if (command === "install_update") {
+        return {
+          configured: true,
+          channel: "stable",
+          current_version: CURRENT_APP_VERSION,
+          installed_version: "0.2.0",
+          restart_requested: true,
+          message: "Update installed. Restart has been requested.",
+        };
+      }
+      return (
+        desktopMockRecord({
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        })
+      )[command];
+    };
+
+    await renderApp();
+
+    await waitFor(() => {
+      expect(screen.getByText("AI Switcher 0.2.0 is available")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Update and Restart" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Restart requested")).toBeInTheDocument();
+      expect(
+        screen.getByText("Update installed. Restart has been requested."),
+      ).toBeInTheDocument();
+    });
+
+    expect(calls.some((entry) => entry.command === "check_for_updates")).toBe(true);
+    expect(calls.some((entry) => entry.command === "install_update")).toBe(true);
+    expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
+      title: "AI Switcher updated",
+      body: "Update installed. Restart has been requested.",
+    });
+  });
+
+  it("shows updater remediation in the global banner when install fails", async () => {
+    window.__AISW_DESKTOP_MOCK__ = async (command) => {
+      if (command === "check_for_updates") {
+        return {
+          configured: true,
+          channel: "stable",
+          current_version: CURRENT_APP_VERSION,
+          endpoint: "https://updates.example.com/stable.json",
+          update: {
+            version: "0.2.0",
+            current_version: CURRENT_APP_VERSION,
+            target: "darwin-aarch64",
+            notes: "Faster switching and signed updater artifacts.",
+          },
+          message: null,
+        };
+      }
+      if (command === "install_update") {
+        throw {
+          message: "Desktop update failed: signature mismatch",
+          remediation:
+            "Verify the updater endpoint, signing key, and generated updater artifacts for this release.",
+        };
+      }
+      return (
+        desktopMockRecord({
+          get_bootstrap: bootstrap,
+          get_snapshot: bootstrap.snapshot,
+          run_init: { result: { live_accounts: [] } },
+          run_doctor: { summary: { status: "pass" } },
+          run_verify: { summary: { status: "pass" } },
+          run_repair: { result: { mode: "dry_run" } },
+          get_workspace_status: { result: { status: "match" } },
+          get_project_bindings: { result: { user_bindings: { guard_mode: "warn" } } },
+          list_backups: [],
+          get_settings: bootstrap.settings,
+        })
+      )[command];
+    };
+
+    await renderApp();
+
+    await waitFor(() => {
+      expect(screen.getByText("AI Switcher 0.2.0 is available")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Update and Restart" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Desktop update failed: signature mismatch")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Verify the updater endpoint, signing key, and generated updater artifacts for this release.",
+        ),
+      ).toBeInTheDocument();
+    });
+
+    expect(window.__AISW_DESKTOP_NOTIFY__).toHaveBeenCalledWith({
+      title: "Update install failed",
+      body:
+        "Desktop update failed: signature mismatch Verify the updater endpoint, signing key, and generated updater artifacts for this release.",
     });
   });
 
