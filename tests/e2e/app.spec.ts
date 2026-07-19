@@ -3466,6 +3466,68 @@ test("adds and removes a project rule from the sets screen", async ({ page }) =>
   expect(commandLog.some((entry) => entry.command === "workspace_unbind")).toBe(true);
 });
 
+test("adds and removes a git remote project rule from the sets screen", async ({ page }) => {
+  await installDesktopMock(page, "workspaceContext", undefined, {
+    settings: {
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    },
+  });
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
+  await page.getByRole("button", { name: "Add Rule…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Add Rule" });
+  await dialog.getByLabel("Rule scope").selectOption("git_remote");
+  await dialog.getByRole("combobox", { name: "Set" }).selectOption("client-acme");
+  await dialog.getByRole("textbox", { name: "Git remote pattern" }).fill("github.com:acme/desktop");
+  await dialog.getByRole("button", { name: "Add Rule" }).click();
+
+  await expect(dialog).toBeHidden();
+  const ruleRow = page
+    .locator(".sets-rule-table-row")
+    .filter({ hasText: "github.com:acme/desktop" })
+    .first();
+  await expect(ruleRow).toBeVisible();
+
+  await ruleRow.click();
+  const inspector = page.locator(".sets-rules-inspector");
+  await expect(inspector).toContainText("Client Acme");
+  await expect(inspector).toContainText("Git remote");
+  await expect(inspector).toContainText("github.com:acme/desktop");
+
+  await page.getByRole("button", { name: "Remove…" }).click();
+  await expect(
+    page.locator(".sets-rule-table-row").filter({ hasText: "github.com:acme/desktop" }),
+  ).toHaveCount(0);
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "workspace_bind" &&
+        entry.args?.request?.target?.scope === "git_remote" &&
+        entry.args?.request?.target?.pattern === "github.com:acme/desktop" &&
+        entry.args?.request?.context === "client-acme",
+    ),
+  ).toBe(true);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "workspace_unbind" &&
+        entry.args?.target?.scope === "git_remote" &&
+        entry.args?.target?.pattern === "github.com:acme/desktop",
+    ),
+  ).toBe(true);
+});
+
 test("closes a new project rule draft without saving it", async ({ page }) => {
   await installDesktopMock(page, "workspaceContext");
 
