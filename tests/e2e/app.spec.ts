@@ -5582,6 +5582,28 @@ test("opens matching profile details from a diagnostics quick fix", async ({ pag
   await expect(page.locator(".profiles-inspector")).toContainText("Needs Attention");
 });
 
+test("routes project-set diagnostics recovery into sets without activating a context", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "diagnosticFixes");
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Diagnostics" }).click();
+  await expect(page.getByRole("button", { name: "Inspect Project set mismatch" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Inspect Project set mismatch" }).click();
+  await expect(page.getByRole("heading", { name: "Project set mismatch" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Open Sets" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Use expected set now" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Open Sets" }).click();
+
+  await expect(page.getByLabel("Set Library")).toBeVisible();
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "use_context")).toBe(false);
+  expect(commandLog.some((entry) => entry.command === "activate_profile_set")).toBe(false);
+});
+
 test("opens install guidance and refreshes missing-tool diagnostics", async ({ page }) => {
   await installDesktopMock(page, "missingTool");
 
