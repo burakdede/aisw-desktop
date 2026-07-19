@@ -53,12 +53,20 @@ export function AnchoredMenu({
       const anchorRect = anchor.getBoundingClientRect();
       const menuRect = menu.getBoundingClientRect();
       const containmentElement = containmentSelector ? anchor.closest(containmentSelector) : null;
-      const containmentRect = containmentElement?.getBoundingClientRect();
-      const minLeft = (containmentRect?.left ?? 0) + 8;
-      const maxRight = (containmentRect?.right ?? readViewportWidth(0)) - 8;
-      const minTop = (containmentRect?.top ?? 0) + 8;
-      const maxBottom = (containmentRect?.bottom ?? readViewportHeight(0)) - 8;
       const margin = 8;
+      const containmentRect = containmentElement?.getBoundingClientRect();
+      const viewportMinLeft = margin;
+      const viewportMaxRight = readViewportWidth(0) - margin;
+      const viewportMinTop = margin;
+      const viewportMaxBottom = readViewportHeight(0) - margin;
+      const containmentMinLeft = containmentRect ? containmentRect.left + margin : viewportMinLeft;
+      const containmentMaxRight = containmentRect ? containmentRect.right - margin : viewportMaxRight;
+      const containmentMinTop = containmentRect ? containmentRect.top + margin : viewportMinTop;
+      const containmentMaxBottom = containmentRect ? containmentRect.bottom - margin : viewportMaxBottom;
+      const minLeft = Math.max(viewportMinLeft, containmentMinLeft);
+      const maxRight = Math.min(viewportMaxRight, containmentMaxRight);
+      const minTop = Math.max(viewportMinTop, containmentMinTop);
+      const maxBottom = Math.min(viewportMaxBottom, containmentMaxBottom);
 
       let left = align === "start" ? anchorRect.left : anchorRect.right - menuRect.width;
       left = Math.max(minLeft, Math.min(left, maxRight - menuRect.width));

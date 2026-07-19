@@ -162,6 +162,64 @@ describe("AnchoredMenu", () => {
     expect(menu.style.top).toBe("184px");
   });
 
+  it("keeps the menu inside the visible viewport when the containment pane extends below the fold", () => {
+    Object.defineProperty(window, "innerHeight", { configurable: true, value: 300 });
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "pane";
+    document.body.appendChild(wrapper);
+
+    const anchor = document.createElement("button");
+    wrapper.appendChild(anchor);
+
+    const anchorRef = { current: anchor } as RefObject<HTMLElement>;
+
+    vi.spyOn(anchor, "closest").mockReturnValue(wrapper);
+    mockRect(anchor, {
+      x: 340,
+      y: 260,
+      left: 340,
+      top: 260,
+      right: 372,
+      bottom: 284,
+      width: 32,
+      height: 24,
+    });
+    mockRect(wrapper, {
+      x: 200,
+      y: 80,
+      left: 200,
+      top: 80,
+      right: 420,
+      bottom: 620,
+      width: 220,
+      height: 540,
+    });
+
+    render(
+      <AnchoredMenu anchorRef={anchorRef} align="start" containmentSelector=".pane">
+        Menu
+      </AnchoredMenu>,
+    );
+
+    const menu = document.body.querySelector(".anchored-menu-surface") as HTMLDivElement;
+    mockRect(menu, {
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: 100,
+      bottom: 120,
+      width: 100,
+      height: 120,
+    });
+
+    fireEvent(window, new Event("scroll"));
+
+    expect(menu.style.left).toBe("312px");
+    expect(menu.style.top).toBe("134px");
+  });
+
   it("renders safely when the anchor ref is not attached", () => {
     const anchorRef = { current: null } as RefObject<HTMLElement>;
 
