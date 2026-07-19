@@ -3545,6 +3545,28 @@ test("warns before restoring backup files without activating the profile", async
   expect(commandLog.some((entry) => entry.command === "use_profile")).toBe(false);
 });
 
+test("closes the backup restore dialog without changing files or activation", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "backupCatalog");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Backups" }).click();
+
+  const backupRow = page.locator(".backups-table-row").first();
+  await backupRow.click();
+  await page.getByRole("button", { name: "Restore…" }).click();
+
+  const restoreDialog = page.getByRole("dialog", { name: "Restore Backup" });
+  await expect(restoreDialog).toBeVisible();
+  await restoreDialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(restoreDialog).toBeHidden();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "restore_backup")).toBe(false);
+  expect(commandLog.some((entry) => entry.command === "use_profile")).toBe(false);
+});
+
 test("preserves the tool state mode when a backup restore re-activates a profile", async ({
   page,
 }) => {
