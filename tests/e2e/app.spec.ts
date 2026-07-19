@@ -1164,6 +1164,59 @@ test("classifies tray profile failures in diagnostics", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Re-apply Work" })).toBeVisible();
 });
 
+test("surfaces failed profile switches in diagnostics and routes back into profile details", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await overrideDesktopCommand(page, "use_profile", {
+    error: {
+      kind: "ConfigLockTimeout",
+      message: "config lock is busy",
+      remediation:
+        "Close other AI Switch windows or wait for the local config lock to clear, then retry.",
+    },
+  });
+  await page.getByRole("button", { name: "Inspect Codex" }).click();
+  await page.getByLabel("Switch codex profile").selectOption("work");
+  await page.getByRole("button", { name: "Switch to Work" }).click();
+
+  await expect
+    .poll(async () =>
+      (await readCommandLog(page)).some(
+        (entry) =>
+          entry.command === "use_profile" &&
+          entry.args?.request?.tool === "codex" &&
+          entry.args?.request?.profile === "work",
+      ),
+    )
+    .toBe(true);
+  await expect(page.locator(".overview-inspector-pane")).toContainText("config lock is busy");
+  await expect(page.locator(".overview-inspector-pane")).toContainText(
+    "Close other AI Switch windows or wait for the local config lock to clear, then retry.",
+  );
+
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+  await expect(page.getByText("Config lock timeout").first()).toBeVisible();
+  await expect(page.getByText("config lock is busy").first()).toBeVisible();
+  await expect(
+    page.getByText(
+      "Close other AI Switch windows or wait for the local config lock to clear, then retry.",
+    ).first(),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Inspect Config lock timeout" }).click();
+  await page.getByRole("button", { name: "Open Profile Details" }).click();
+
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(
+    page.getByLabel("Profile filters").getByRole("button", { name: "Codex" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".profiles-inspector")).toContainText("Personal");
+  await expect(page.getByRole("button", { name: "Storage Details" })).toBeVisible();
+});
+
 test("re-applies the active shared profile from the app menu", async ({ page }) => {
   await installDesktopMock(page, "updaterError");
 
@@ -1992,6 +2045,33 @@ test("filters backups and restores a saved backup into the active profile", asyn
         entry.args?.request?.profile === "personal",
     ),
   ).toBe(true);
+});
+
+test("warns before restoring backup files without activating the profile", async ({ page }) => {
+  await installDesktopMock(page, "backupCatalog");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Backups" }).click();
+
+  const backupRow = page.locator(".backups-table-row").first();
+  await backupRow.click();
+  await page.getByRole("button", { name: "Restore…" }).click();
+
+  const restoreDialog = page.getByRole("dialog", { name: "Restore Backup" });
+  await expect(restoreDialog).toContainText(
+    "The active Codex CLI account will not change until you activate the profile.",
+  );
+
+  let commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "restore_backup")).toBe(false);
+  expect(commandLog.some((entry) => entry.command === "use_profile")).toBe(false);
+
+  await restoreDialog.getByRole("button", { name: "Restore Files" }).click();
+  await expect(restoreDialog).toBeHidden();
+
+  commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "restore_backup")).toBe(true);
+  expect(commandLog.some((entry) => entry.command === "use_profile")).toBe(false);
 });
 
 test("exports and clears recorded activity from the activity screen", async ({ page }) => {
