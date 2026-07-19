@@ -2629,6 +2629,75 @@ test("persists general preferences and runs security and advanced settings actio
   expect(commandLog.some((entry) => entry.command === "export_diagnostic_bundle")).toBe(true);
 });
 
+test("supports arrow-key navigation in settings sections", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+
+  const settingsNav = page.locator(".settings-category-pane");
+  const generalButton = settingsNav.getByRole("button", { name: "General" });
+  await generalButton.focus();
+  await expect(generalButton).toBeFocused();
+
+  await generalButton.press("ArrowDown");
+
+  const engineButton = settingsNav.getByRole("button", { name: "Engine" });
+  await expect(engineButton).toBeFocused();
+  await expect(engineButton).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("heading", { name: "Engine" })).toBeVisible();
+
+  await engineButton.press("End");
+
+  const advancedButton = settingsNav.getByRole("button", { name: "Advanced" });
+  await expect(advancedButton).toBeFocused();
+  await expect(advancedButton).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("heading", { name: "Advanced" })).toBeVisible();
+});
+
+test("shows runtime detection details in settings", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.locator(".settings-category-pane").getByRole("button", { name: "Engine" }).click();
+
+  const runtimeGroup = page.locator(".settings-group").filter({ hasText: "AISW Runtime" }).first();
+  await expect(runtimeGroup).toBeVisible();
+  await expect(runtimeGroup.getByText("Bundled runtime")).toBeVisible();
+  await expect(runtimeGroup.getByText("0.3.8", { exact: true })).toBeVisible();
+  await expect(runtimeGroup.getByText("Status")).toBeVisible();
+  await expect(runtimeGroup.getByText("Ready")).toBeVisible();
+  await expect(runtimeGroup.getByText("Current path")).toBeVisible();
+  await expect(
+    runtimeGroup.getByText("/Applications/AI Switch.app/Contents/Resources/aisw"),
+  ).toBeVisible();
+  await expect(runtimeGroup.getByText("System runtime")).toBeVisible();
+  await expect(runtimeGroup.getByText("/opt/homebrew/bin/aisw")).toBeVisible();
+});
+
+test("shows keyring guidance details in security settings", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.locator(".settings-category-pane").getByRole("button", { name: "Security" }).click();
+
+  const securityPane = page.locator(".settings-form-pane");
+  await expect(securityPane.getByText("Credential Storage")).toBeVisible();
+  await expect(securityPane.getByText("macOS Keychain")).toBeVisible();
+  await expect(securityPane.getByText("Available")).toBeVisible();
+  await expect(securityPane.getByText("File permissions")).toBeVisible();
+  await expect(securityPane.getByText("Correct")).toBeVisible();
+  await expect(securityPane.getByText("Remote sync")).toBeVisible();
+  await expect(securityPane.getByText("Disabled")).toHaveCount(2);
+  await expect(securityPane.getByText("Telemetry")).toBeVisible();
+  await expect(securityPane.getByText("Local Data")).toBeVisible();
+  await expect(securityPane.getByText("~/.aisw")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reveal in Finder" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copy Redacted Report…" })).toBeVisible();
+});
+
 test("captures a profile through the OAuth flow and shows progress steps", async ({ page }) => {
   await installDesktopMock(page, "switching", {
     claude: {
