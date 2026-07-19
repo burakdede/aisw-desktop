@@ -1718,6 +1718,94 @@ test("exports and clears recorded activity from the activity screen", async ({ p
   expect(commandLog.some((entry) => entry.command === "export_activity_log")).toBe(true);
 });
 
+test("shows recorded activity details and opens the log file from the activity screen", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "tray-command-result", {
+    scope: "tool",
+    tool: "claude",
+    label: "Switched Claude Code",
+    status: "error",
+    message: "The selected profile needs attention before it can be applied.",
+    remediation: "Open the profile and refresh credentials.",
+  });
+
+  await page.locator(".sidebar").getByRole("button", { name: "Activity", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Inspect Switched Claude Code" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Inspect Switched Claude Code" }).click();
+  await expect(page.getByRole("heading", { name: "Switched Claude Code" })).toBeVisible();
+  await expect(
+    page.getByText("The selected profile needs attention before it can be applied."),
+  ).toBeVisible();
+  await expect(page.getByText("Open the profile and refresh credentials.")).toBeVisible();
+  await page.locator("summary").filter({ hasText: "Recorded Command" }).click();
+  await expect(page.getByText("Command details were not recorded for this event.")).toBeVisible();
+  await page.locator("summary").filter({ hasText: "Redacted Result" }).click();
+  await expect(page.getByText("No redacted result payload was recorded for this event.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Activity more actions" }).click();
+  await page.getByRole("menuitem", { name: "Open Log File" }).click();
+  await expect(page.getByText("Opened aisw-desktop-activity-123.json.")).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "export_activity_log")).toBe(true);
+});
+
+test("persists multiple recorded activity events for the same scope across reloads", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "tray-command-result", {
+    scope: "global",
+    id: "settings",
+    label: "Saved settings",
+    status: "success",
+    message: "Updated bundled runtime settings.",
+  });
+  await dispatchDesktopEvent(page, "tray-command-result", {
+    scope: "global",
+    id: "settings",
+    label: "Checked for updates",
+    status: "error",
+    message: "The update endpoint did not respond.",
+    remediation: "Try again after verifying the selected update channel.",
+  });
+
+  await page.locator(".sidebar").getByRole("button", { name: "Activity", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Inspect Saved settings" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Inspect Checked for updates" })).toBeVisible();
+  await expect(
+    page.getByText("Activity is stored locally and credentials are always redacted."),
+  ).toBeVisible();
+
+  const storedActivity = await readLocalStorage(page, "ai-switch.desktop.activity-log");
+  await page.evaluate((value) => {
+    window.sessionStorage.setItem("persisted-activity-log", value ?? "");
+  }, storedActivity);
+  await page.addInitScript(() => {
+    const value = window.sessionStorage.getItem("persisted-activity-log");
+    if (value) {
+      window.localStorage.setItem("ai-switch.desktop.activity-log", value);
+    }
+  });
+
+  await page.reload();
+  await page.locator(".sidebar").getByRole("button", { name: "Activity", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Inspect Saved settings" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Inspect Checked for updates" })).toBeVisible();
+  await expect(page.locator(".activity-event-row").first()).toContainText("Checked for updates");
+
+  const restoredActivity = await readLocalStorage(page, "ai-switch.desktop.activity-log");
+  expect(restoredActivity).toContain("Checked for updates");
+  expect(restoredActivity).toContain("Saved settings");
+});
+
 test("uses the saved default section on launch", async ({ page }) => {
   await installDesktopMock(page, "switching");
   await page.addInitScript(() => {
