@@ -2189,6 +2189,35 @@ test("adds, renames, activates, and removes a profile from the profiles screen",
   expect(commandLog.some((entry) => entry.command === "remove_profile")).toBe(true);
 });
 
+test("closes profile removal without deleting the saved profile", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+  await page.getByLabel("Profile filters").getByRole("button", { name: "Codex" }).click();
+
+  const personalRow = page
+    .locator(".profiles-table-row-button")
+    .filter({ hasText: "Personal" })
+    .first();
+  await personalRow.click();
+  await expect(page.locator(".profiles-inspector")).toContainText("Personal");
+
+  await page.locator(".profiles-inspector").getByRole("button", { name: "More profile actions" }).click();
+  await page.getByRole("menuitem", { name: "Remove…" }).click();
+
+  const removeDialog = page.getByRole("dialog", { name: "Remove Profile" });
+  await expect(removeDialog).toBeVisible();
+  await removeDialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(removeDialog).toBeHidden();
+
+  await expect(personalRow).toBeVisible();
+  await expect(page.locator(".profiles-inspector")).toContainText("Personal");
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "remove_profile")).toBe(false);
+});
+
 test("adds a profile from a pasted API key on the profiles screen", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
