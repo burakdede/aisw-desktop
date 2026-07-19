@@ -528,6 +528,181 @@ test("resets settings to the default section when reopened from a fresh entry po
   ).toHaveCount(0);
 });
 
+test("restores and persists the desktop window frame when the native window API is available", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "ai-switch.desktop.window-state",
+      JSON.stringify({ width: 1280, height: 820, x: 64, y: 96 }),
+    );
+
+    (
+      window as typeof window & {
+        __AISW_WINDOW_CALLS__?: {
+          setSize: Array<{ width: number; height: number }>;
+          setPosition: Array<{ x: number; y: number }>;
+        };
+        __AISW_WINDOW_EVENTS__?: {
+          resize?: () => void;
+          move?: () => void;
+        };
+        __AISW_WINDOW_MOCK__?: unknown;
+      }
+    ).__AISW_WINDOW_CALLS__ = {
+      setSize: [],
+      setPosition: [],
+    };
+    (
+      window as typeof window & {
+        __AISW_WINDOW_CALLS__?: {
+          setSize: Array<{ width: number; height: number }>;
+          setPosition: Array<{ x: number; y: number }>;
+        };
+        __AISW_WINDOW_EVENTS__?: {
+          resize?: () => void;
+          move?: () => void;
+        };
+        __AISW_WINDOW_MOCK__?: unknown;
+      }
+    ).__AISW_WINDOW_EVENTS__ = {};
+    (
+      window as typeof window & {
+        __AISW_WINDOW_MOCK__?: {
+          setSize: (size: { width: number; height: number }) => Promise<void>;
+          setPosition: (position: { x: number; y: number }) => Promise<void>;
+          innerSize: () => Promise<{ width: number; height: number }>;
+          outerPosition: () => Promise<{ x: number; y: number }>;
+          isMaximized: () => Promise<boolean>;
+          onResized: (handler: () => void) => Promise<() => void>;
+          onMoved: (handler: () => void) => Promise<() => void>;
+        };
+        __AISW_WINDOW_CALLS__?: {
+          setSize: Array<{ width: number; height: number }>;
+          setPosition: Array<{ x: number; y: number }>;
+        };
+        __AISW_WINDOW_EVENTS__?: {
+          resize?: () => void;
+          move?: () => void;
+        };
+      }
+    ).__AISW_WINDOW_MOCK__ = {
+      setSize: async (size) => {
+        (
+          window as typeof window & {
+            __AISW_WINDOW_CALLS__?: {
+              setSize: Array<{ width: number; height: number }>;
+            };
+          }
+        ).__AISW_WINDOW_CALLS__?.setSize.push({
+          width: Number(size.width),
+          height: Number(size.height),
+        });
+      },
+      setPosition: async (position) => {
+        (
+          window as typeof window & {
+            __AISW_WINDOW_CALLS__?: {
+              setPosition: Array<{ x: number; y: number }>;
+            };
+          }
+        ).__AISW_WINDOW_CALLS__?.setPosition.push({
+          x: Number(position.x),
+          y: Number(position.y),
+        });
+      },
+      innerSize: async () => ({ width: 1360, height: 860 }),
+      outerPosition: async () => ({ x: 180, y: 144 }),
+      isMaximized: async () => false,
+      onResized: async (handler) => {
+        (
+          window as typeof window & {
+            __AISW_WINDOW_EVENTS__?: {
+              resize?: () => void;
+            };
+          }
+        ).__AISW_WINDOW_EVENTS__!.resize = handler;
+        return () => {
+          (
+            window as typeof window & {
+              __AISW_WINDOW_EVENTS__?: {
+                resize?: () => void;
+              };
+            }
+          ).__AISW_WINDOW_EVENTS__!.resize = undefined;
+        };
+      },
+      onMoved: async (handler) => {
+        (
+          window as typeof window & {
+            __AISW_WINDOW_EVENTS__?: {
+              move?: () => void;
+            };
+          }
+        ).__AISW_WINDOW_EVENTS__!.move = handler;
+        return () => {
+          (
+            window as typeof window & {
+              __AISW_WINDOW_EVENTS__?: {
+                move?: () => void;
+              };
+            }
+          ).__AISW_WINDOW_EVENTS__!.move = undefined;
+        };
+      },
+    };
+  });
+
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+
+  await expect
+    .poll(async () =>
+      page.evaluate(() => {
+        const calls = (
+          window as typeof window & {
+            __AISW_WINDOW_CALLS__?: {
+              setSize: Array<{ width: number; height: number }>;
+              setPosition: Array<{ x: number; y: number }>;
+            };
+          }
+        ).__AISW_WINDOW_CALLS__;
+        return {
+          setSize: calls?.setSize.at(-1) ?? null,
+          setPosition: calls?.setPosition.at(-1) ?? null,
+        };
+      }),
+    )
+    .toEqual({
+      setSize: { width: 1280, height: 820 },
+      setPosition: { x: 64, y: 96 },
+    });
+
+  await page.evaluate(() => {
+    (
+      window as typeof window & {
+        __AISW_WINDOW_EVENTS__?: {
+          resize?: () => void;
+          move?: () => void;
+        };
+      }
+    ).__AISW_WINDOW_EVENTS__?.resize?.();
+    (
+      window as typeof window & {
+        __AISW_WINDOW_EVENTS__?: {
+          resize?: () => void;
+          move?: () => void;
+        };
+      }
+    ).__AISW_WINDOW_EVENTS__?.move?.();
+  });
+
+  await expect
+    .poll(async () => readLocalStorage(page, "ai-switch.desktop.window-state"))
+    .toBe(JSON.stringify({ width: 1360, height: 860, x: 180, y: 144 }));
+});
+
 test("opens profiles from the onboarding first-switch step when no shared profile choices exist", async ({
   page,
 }) => {
