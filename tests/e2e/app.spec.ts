@@ -248,6 +248,31 @@ test("switches primary sections from keyboard shortcuts", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Activity more actions" })).toBeVisible();
 });
 
+test("supports arrow-key sidebar navigation", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+
+  const sidebar = page.locator(".sidebar");
+  const overviewButton = sidebar.getByRole("button", { name: "Overview", exact: true });
+  await overviewButton.focus();
+  await expect(overviewButton).toBeFocused();
+
+  await page.keyboard.press("ArrowDown");
+
+  const profilesButton = sidebar.getByRole("button", { name: "Profiles", exact: true });
+  await expect(profilesButton).toBeFocused();
+  await expect(profilesButton).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+
+  await page.keyboard.press("End");
+
+  const settingsButton = sidebar.getByRole("button", { name: "Settings", exact: true });
+  await expect(settingsButton).toBeFocused();
+  await expect(settingsButton).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+});
+
 test("opens help from the app menu and routes into diagnostics", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -1978,6 +2003,67 @@ test("opens diagnostics and refreshes health checks from the tray", async ({ pag
       doctorRuns: 1,
       verifyRuns: 1,
       repairRuns: 1,
+    });
+});
+
+test("reruns diagnostics from the global verify toolbar action", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+
+  const beforeRefresh = await readCommandLog(page);
+  const initialDoctorRuns = beforeRefresh.filter((entry) => entry.command === "run_doctor").length;
+  const initialVerifyRuns = beforeRefresh.filter((entry) => entry.command === "run_verify").length;
+  const initialRepairRuns = beforeRefresh.filter((entry) => entry.command === "run_repair").length;
+
+  await page.getByRole("button", { name: "Verify" }).first().click();
+
+  await expect(page.getByRole("heading", { name: "Diagnostics" })).toBeVisible();
+  await expect
+    .poll(async () => {
+      const doctorRuns = await expectCommandCount(page, "run_doctor");
+      const verifyRuns = await expectCommandCount(page, "run_verify");
+      const repairRuns = await expectCommandCount(page, "run_repair");
+      return {
+        doctorRuns,
+        verifyRuns,
+        repairRuns,
+        refreshed:
+          doctorRuns > initialDoctorRuns &&
+          verifyRuns > initialVerifyRuns &&
+          repairRuns > initialRepairRuns,
+      };
+    })
+    .toMatchObject({
+      refreshed: true,
+    });
+
+  const afterFirstVerify = {
+    doctorRuns: await expectCommandCount(page, "run_doctor"),
+    verifyRuns: await expectCommandCount(page, "run_verify"),
+    repairRuns: await expectCommandCount(page, "run_repair"),
+  };
+
+  await page.getByRole("button", { name: "Verify" }).first().click();
+
+  await expect
+    .poll(async () => {
+      const doctorRuns = await expectCommandCount(page, "run_doctor");
+      const verifyRuns = await expectCommandCount(page, "run_verify");
+      const repairRuns = await expectCommandCount(page, "run_repair");
+      return {
+        doctorRuns,
+        verifyRuns,
+        repairRuns,
+        refreshedAgain:
+          doctorRuns > afterFirstVerify.doctorRuns &&
+          verifyRuns > afterFirstVerify.verifyRuns &&
+          repairRuns > afterFirstVerify.repairRuns,
+      };
+    })
+    .toMatchObject({
+      refreshedAgain: true,
     });
 });
 
