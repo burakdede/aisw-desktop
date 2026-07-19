@@ -2984,6 +2984,43 @@ test("orders backups by created_at metadata and shows formatted timestamps", asy
   await expect(page.locator(".backups-inspector-surface")).not.toContainText("Date Unavailable");
 });
 
+test("refreshes backups from the toolbar menu", async ({ page }) => {
+  await installDesktopMock(page, "backupCatalog");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Backups" }).click();
+
+  const refreshRunsBefore = await expectCommandCount(page, "list_backups");
+  await page.getByRole("button", { name: "Backups more actions" }).click();
+  await page.getByRole("menuitem", { name: "Refresh" }).click();
+
+  await expect
+    .poll(async () => await expectCommandCount(page, "list_backups"))
+    .toBe(refreshRunsBefore + 1);
+});
+
+test("copies backup ids and reveals the backup folder from backup actions", async ({ page }) => {
+  await installDesktopMock(page, "backupCatalog");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Backups" }).click();
+
+  const backupRow = page.locator(".backups-table-row").first();
+  await backupRow.click();
+
+  await page.getByRole("button", { name: "Backup actions" }).click();
+  await page.getByRole("menuitem", { name: "Copy Backup ID" }).click();
+  await expect.poll(async () => readClipboardWrites(page)).toContain(
+    "20260326T094012Z-codex-personal",
+  );
+
+  await page.getByRole("button", { name: "Backup actions" }).click();
+  await page.getByRole("menuitem", { name: "Reveal Backup Folder" }).click();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "open_app_data_folder")).toBe(true);
+});
+
 test("warns before restoring backup files without activating the profile", async ({ page }) => {
   await installDesktopMock(page, "backupCatalog");
 
