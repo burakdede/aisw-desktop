@@ -2450,6 +2450,42 @@ test("renames a saved set from the sets screen", async ({ page }) => {
   expect(commandLog.some((entry) => entry.command === "update_settings")).toBe(true);
 });
 
+test("updates saved set mappings from the sets inspector", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByRole("button", { name: "Inspect set Client Acme" }).click();
+
+  await expect(page.getByRole("button", { name: "Switch to Client Acme" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Edit…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Edit Set" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByLabel("Codex CLI")).toHaveValue("work");
+  await dialog.getByLabel("Codex CLI").selectOption("personal");
+  await dialog.getByRole("button", { name: "Save Set" }).click();
+
+  await expect(dialog).toBeHidden();
+  await expect(page.getByText("Updated set Client Acme.")).toBeVisible();
+  await expect(page.locator(".sets-inspector")).toContainText("Current");
+  await expect(
+    page.locator(".sets-detail-row").filter({ hasText: "Codex CLI" }),
+  ).toContainText("Personal");
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "update_settings" &&
+        entry.args?.request?.profile_sets?.some(
+          (set: { name?: string; profiles?: Record<string, string | null> }) =>
+            set.name === "client-acme" && set.profiles?.codex === "personal",
+        ),
+    ),
+  ).toBe(true);
+});
+
 test("duplicates a saved set from the sets overflow menu", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
