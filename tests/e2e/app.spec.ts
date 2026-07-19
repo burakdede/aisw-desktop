@@ -2960,6 +2960,34 @@ test("adds and removes a project rule from the sets screen", async ({ page }) =>
   expect(commandLog.some((entry) => entry.command === "workspace_unbind")).toBe(true);
 });
 
+test("closes a new project rule draft without saving it", async ({ page }) => {
+  await installDesktopMock(page, "workspaceContext");
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
+  await page.getByRole("button", { name: "Add Rule…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Add Rule" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel("Rule scope").selectOption("path");
+  await dialog.locator("select").nth(1).selectOption("client-acme");
+  await dialog.getByRole("textbox", { name: "Path" }).fill("/code/acceptance-draft");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+
+  await expect(dialog).toBeHidden();
+  await expect(
+    page.locator(".sets-rule-table-row").filter({ hasText: "/code/acme" }).first(),
+  ).toBeVisible();
+  await expect(
+    page.locator(".sets-rule-table-row").filter({ hasText: "/code/acceptance-draft" }),
+  ).toHaveCount(0);
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "workspace_bind")).toBe(false);
+  expect(commandLog.some((entry) => entry.command === "workspace_unbind")).toBe(false);
+});
+
 test("edits an existing project rule from the sets inspector", async ({ page }) => {
   await installDesktopMock(page, "workspaceContext", undefined, {
     settings: {
