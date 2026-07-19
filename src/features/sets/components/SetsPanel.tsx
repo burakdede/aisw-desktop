@@ -536,7 +536,7 @@ export function SetsPanel({
       label: SETS_PANEL_COPY.openSetsLabel,
       onSelect: () => {
         setRulesMenuOpen(false);
-        onOpenContexts();
+        setMode("sets");
       },
     },
   ];

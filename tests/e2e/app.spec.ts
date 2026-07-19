@@ -2555,6 +2555,26 @@ test("edits an existing project rule from the sets inspector", async ({ page }) 
   ).toBe(true);
 });
 
+test("returns from project rules to the set library from the rules overflow menu", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "workspaceContext");
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
+  await expect(page.getByRole("heading", { name: "Project Rules" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Project rules actions" }).click();
+  await page.getByRole("menuitem", { name: "Open Sets" }).click();
+
+  await expect(
+    page.getByLabel("Sets mode").getByRole("button", { name: "Set Library" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "New Set…" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Project Rules" })).toHaveCount(0);
+});
+
 test("blocks incomplete project-rule submissions until a valid set and target are available", async ({
   page,
 }) => {
@@ -3250,6 +3270,32 @@ test("persists multiple recorded activity events for the same scope across reloa
   const restoredActivity = await readLocalStorage(page, "ai-switch.desktop.activity-log");
   expect(restoredActivity).toContain("Checked for updates");
   expect(restoredActivity).toContain("Saved settings");
+});
+
+test("refreshes activity state from the toolbar overflow menu", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "tray-command-result", {
+    scope: "tool",
+    tool: "claude",
+    label: "Switch profile",
+    status: "success",
+    message: "Switched claude to work.",
+  });
+
+  await page.locator(".sidebar").getByRole("button", { name: "Activity", exact: true }).click();
+  await expect(page.locator(".activity-event-row").first()).toBeVisible();
+
+  const bootstrapReadsBefore = await expectCommandCount(page, "get_bootstrap");
+
+  await page.getByRole("button", { name: "Activity more actions" }).click();
+  await page.getByRole("menuitem", { name: "Refresh" }).click();
+
+  await expect
+    .poll(async () => await expectCommandCount(page, "get_bootstrap"))
+    .toBeGreaterThan(bootstrapReadsBefore);
+  await expect(page.locator(".activity-event-row").first()).toBeVisible();
 });
 
 test("uses the saved default section on launch", async ({ page }) => {
