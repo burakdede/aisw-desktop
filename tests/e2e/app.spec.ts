@@ -3647,6 +3647,31 @@ test("shows installed app and engine versions in updates settings", async ({ pag
   await expect(page.getByText("Supported")).toBeVisible();
 });
 
+test("shows when no desktop update is available in settings", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await overrideDesktopCommand(page, "check_for_updates", {
+    result: {
+      configured: true,
+      channel: "stable",
+      current_version: "0.1.11",
+      endpoint: "https://updates.example.com/stable.json",
+      update: null,
+      message: "No update is currently available.",
+    },
+  });
+
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.locator(".settings-category-pane").getByRole("button", { name: "Updates" }).click();
+  await page.getByRole("button", { name: "Check for Updates" }).click();
+
+  await expect(page.getByText("Channel: stable")).toBeVisible();
+  await expect(page.getByText("Endpoint: https://updates.example.com/stable.json")).toBeVisible();
+  await expect(page.getByText("No update is currently available.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Install Update" })).toBeDisabled();
+});
+
 test("clears stale updater results when the release channel changes", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
