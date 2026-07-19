@@ -1514,6 +1514,66 @@ test("deletes a saved set from the sets screen", async ({ page }) => {
   expect(commandLog.some((entry) => entry.command === "update_settings")).toBe(true);
 });
 
+test("keeps empty saved sets out of activation surfaces", async ({ page }) => {
+  await installDesktopMock(page, "emptyProfileSet");
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+
+  await page.getByRole("button", { name: "Inspect set Empty Set", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Switch to Empty Set" })).toBeDisabled();
+  await expect(
+    page.getByText("This saved set is empty and cannot be activated yet."),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Quick Switch" }).click();
+  const quickSwitchDialog = page.getByRole("dialog", { name: "Quick Switch" });
+  await expect(quickSwitchDialog.getByRole("option", { name: /Empty Set/ })).toHaveCount(0);
+  await expect(quickSwitchDialog.getByRole("option", { name: /Client Acme/ })).toBeVisible();
+  await quickSwitchDialog.getByRole("button", { name: "Close" }).click();
+
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
+  await page.getByRole("button", { name: "Add Rule…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Add Rule" });
+  const dialogOptions = await dialog.locator("option").allTextContents();
+  expect(dialogOptions).toContain("Saved set: Client Acme");
+  expect(dialogOptions).not.toContain("Saved set: Empty Set");
+});
+
+test("keeps stale saved sets out of activation surfaces and explains missing mappings", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "staleProfileSet");
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+
+  await expect(page.getByText("Missing: codex: missing")).toBeVisible();
+  await page.getByRole("button", { name: "Inspect set Client Acme", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Switch to Client Acme" })).toBeDisabled();
+  await expect(page.getByText("Missing mapped profiles: codex: missing")).toBeVisible();
+
+  await page.getByRole("button", { name: "Quick Switch" }).click();
+  const quickSwitchDialog = page.getByRole("dialog", { name: "Quick Switch" });
+  await expect(
+    quickSwitchDialog.getByRole("option", { name: /Saved set: Client Acme/i }),
+  ).toHaveCount(0);
+  await quickSwitchDialog.getByRole("button", { name: "Close" }).click();
+
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
+  await page.getByRole("button", { name: "Add Rule…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Add Rule" });
+  const dialogOptions = await dialog.locator("option").allTextContents();
+  expect(dialogOptions).not.toContain("Saved set: Client Acme");
+  await expect(
+    dialog.getByText("No sets are available yet. Create one before saving a project rule."),
+  ).toBeVisible();
+});
+
 test("adds and removes a project rule from the sets screen", async ({ page }) => {
   await installDesktopMock(page, "workspaceContext");
 
