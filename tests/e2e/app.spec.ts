@@ -86,6 +86,98 @@ test("shows missing-tool guidance during onboarding", async ({ page }) => {
     .toContain("https://www.npmjs.com/package/@google/gemini-cli");
 });
 
+test("uses saved profile labels in onboarding first-switch options and the current-state badge", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching", undefined, {
+    settings: {
+      profile_labels: {
+        claude: { work: "Office" },
+        codex: { work: "Code Work" },
+      },
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    },
+    snapshot: {
+      statuses: [
+        {
+          tool: "claude",
+          binary_found: true,
+          stored_profiles: 2,
+          active_profile: "work",
+          auth_method: "oauth",
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+        },
+        {
+          tool: "codex",
+          binary_found: true,
+          stored_profiles: 2,
+          active_profile: "work",
+          auth_method: "api_key",
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+        },
+        {
+          tool: "gemini",
+          binary_found: false,
+          stored_profiles: 0,
+          active_profile: null,
+          auth_method: null,
+          credential_backend: null,
+          state_mode: null,
+          active_profile_applied: null,
+          credentials_present: false,
+          permissions_ok: true,
+        },
+      ],
+      profiles: {
+        claude: {
+          active: "work",
+          profiles: [
+            { name: "work", auth: "oauth", label: "Work" },
+            { name: "personal", auth: "oauth", label: "Personal" },
+          ],
+        },
+        codex: {
+          active: "work",
+          profiles: [
+            { name: "work", auth: "api_key", label: "Work" },
+            { name: "personal", auth: "api_key", label: "Personal" },
+          ],
+        },
+        gemini: {
+          active: null,
+          profiles: [],
+        },
+      },
+      contexts: [],
+    },
+  });
+
+  await page.goto("/");
+  await expect(page.locator(".sidebar-status-stack")).toContainText("Client Acme");
+
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.locator(".settings-category-pane").getByRole("button", { name: "Advanced" }).click();
+  await page.getByRole("button", { name: "Reopen Setup Assistant" }).click();
+
+  await expect(page.getByRole("heading", { name: "Get started" }).first()).toBeVisible();
+  await page.getByRole("tab", { name: "First switch" }).click();
+  await expect(page.getByLabel("First switch profile")).toContainText("Office");
+});
+
 test("reruns onboarding setup detection and surfaces newly detected live accounts", async ({
   page,
 }) => {
@@ -158,6 +250,29 @@ test("opens profiles from onboarding when an installed tool still needs a saved 
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "No matching profiles" })).toBeVisible();
   await expect(addDialog.getByLabel("Tool")).toHaveValue("codex");
+});
+
+test("resets settings to the default section when reopened from a fresh entry point", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "noLiveAccounts");
+
+  await page.goto("/");
+  await page.getByRole("tab", { name: "Terminal" }).click();
+  await expect(page.getByRole("button", { name: "Open terminal setup" })).toBeVisible();
+  await page.getByRole("button", { name: "Open terminal setup" }).click();
+
+  const settingsNav = page.locator(".settings-category-pane");
+  await expect(settingsNav.getByRole("button", { name: "Terminal Integration", pressed: true })).toBeVisible();
+  await expect(page.getByText("Detected shell")).toBeVisible();
+
+  await dispatchDesktopEvent(page, "menu-open-settings");
+
+  await expect(page.getByText("Bundled runtime")).toBeVisible();
+  await expect(settingsNav.getByRole("button", { name: "Engine", pressed: true })).toBeVisible();
+  await expect(
+    settingsNav.getByRole("button", { name: "Terminal Integration", pressed: true }),
+  ).toHaveCount(0);
 });
 
 test("opens profiles from the onboarding first-switch step when no shared profile choices exist", async ({
@@ -1320,6 +1435,27 @@ test("switches a profile from overview and opens the matching profile details", 
     page.getByLabel("Profile filters").getByRole("button", { name: "Codex" }),
   ).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator(".profiles-inspector-pane")).toContainText("Work");
+});
+
+test("clears routed profile details when reopening profiles from the sidebar", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Inspect Codex" }).click();
+  await page.getByRole("button", { name: "Open Profile" }).click();
+
+  const profileFilters = page.getByLabel("Profile filters");
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(profileFilters.getByRole("button", { name: "Codex", pressed: true })).toBeVisible();
+  await expect(page.locator(".profiles-inspector-pane")).toContainText("Personal");
+
+  await page.locator(".sidebar").getByRole("button", { name: "Overview", exact: true }).click();
+  await page.locator(".sidebar").getByRole("button", { name: "Profiles", exact: true }).click();
+
+  await expect(profileFilters.getByRole("button", { name: "All", pressed: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Work" })).toBeVisible();
 });
 
 test("shows the last successful overview switch result on the active tool card", async ({ page }) => {
