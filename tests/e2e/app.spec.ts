@@ -928,6 +928,29 @@ test("uses a one-pane detail flow for backups on narrow widths", async ({ page }
   await expect(page.getByLabel("Backups list")).toBeVisible();
 });
 
+test("uses a one-pane detail flow for diagnostics on narrow widths", async ({ page }) => {
+  await installDesktopMock(page, "diagnosticsRepair");
+
+  await page.setViewportSize({ width: 760, height: 920 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Show sidebar" }).click();
+  await page.getByRole("button", { name: "Diagnostics", exact: true }).click();
+  await expect(page.getByLabel("Diagnostics findings")).toBeVisible();
+
+  await page
+    .getByLabel("Diagnostics findings")
+    .getByRole("button")
+    .first()
+    .click();
+
+  await expect(page.getByRole("button", { name: "Back", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Diagnostics findings")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(page.getByLabel("Diagnostics findings")).toBeVisible();
+});
+
 test("switches to a saved set from quick switch and updates the overview", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -1924,7 +1947,7 @@ test("captures a profile through the OAuth flow and shows progress steps", async
       emit?.({ seq: 1, phase: "browser_launch", message: "Launching browser" });
       await new Promise((resolve) => window.setTimeout(resolve, 120));
       emit?.({ seq: 2, phase: "waiting_for_login", message: "Waiting for login" });
-      await new Promise((resolve) => window.setTimeout(resolve, 120));
+      await new Promise((resolve) => window.setTimeout(resolve, 900));
 
       return currentMock(command, args);
     };
