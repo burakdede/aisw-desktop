@@ -2866,6 +2866,41 @@ test("adds a profile from a pasted API key on the profiles screen", async ({ pag
   ).toBe(true);
 });
 
+test("clears pasted API keys from the dialog when profile save fails", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await overrideDesktopCommand(page, "add_profile", {
+    error: {
+      kind: "keyring_unavailable",
+      message: "keyring unavailable",
+      remediation: "Unlock the local credential store and retry.",
+    },
+  });
+  await page.getByRole("button", { name: "Profiles", exact: true }).click();
+  await page.getByRole("button", { name: "Add Profile" }).click();
+
+  const addDialog = page.getByRole("dialog", { name: "Add Profile" });
+  await addDialog.getByLabel("Tool").selectOption("codex");
+  await addDialog.getByLabel("Profile name").fill("ops");
+  await addDialog.getByLabel("Import mode").selectOption("api_key");
+
+  const apiKeyInput = addDialog.getByLabel("API key");
+  await apiKeyInput.fill("sk-live-secret");
+  await expect(apiKeyInput).toHaveValue("sk-live-secret");
+
+  await addDialog.getByRole("button", { name: "Save Profile" }).click();
+
+  await expect(addDialog).toBeVisible();
+  await expect(
+    page.getByText("keyring unavailable Remediation: Unlock the local credential store and retry."),
+  ).toBeVisible();
+  await expect(apiKeyInput).toHaveValue("");
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.filter((entry) => entry.command === "add_profile").length).toBe(1);
+});
+
 test("captures a profile from environment variables with the expected env hint", async ({
   page,
 }) => {
