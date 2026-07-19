@@ -3317,6 +3317,43 @@ test("exports and clears recorded activity from the activity screen", async ({ p
   expect(commandLog.some((entry) => entry.command === "export_activity_log")).toBe(true);
 });
 
+test("opens the activity log from the toolbar menu", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "tray-command-result", {
+    scope: "tool",
+    tool: "claude",
+    label: "Switch profile",
+    status: "success",
+    message: "Switched claude to work.",
+  });
+
+  await page.locator(".sidebar").getByRole("button", { name: "Activity", exact: true }).click();
+  await expect(page.locator(".activity-event-row").first()).toBeVisible();
+
+  await page.getByRole("button", { name: "Activity more actions" }).click();
+  const activityMenu = page.getByRole("menu", { name: "Activity actions" });
+  await expect(activityMenu).toBeVisible();
+  await expect(activityMenu.getByRole("menuitem", { name: "Open Log File" })).toBeVisible();
+  await expectMenuToFitViewport(activityMenu, page);
+  await activityMenu.getByRole("menuitem", { name: "Open Log File" }).click();
+
+  await expect(page.getByText("Opened aisw-desktop-activity-123.json.")).toBeVisible();
+  await expect
+    .poll(async () =>
+      (await readNotifications(page)).some(
+        (notification) =>
+          notification?.title === "Activity log opened" &&
+          notification?.body === "Opened aisw-desktop-activity-123.json.",
+      ),
+    )
+    .toBe(true);
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "export_activity_log")).toBe(true);
+});
+
 test("shows recorded activity details and opens the log file from the activity screen", async ({
   page,
 }) => {
