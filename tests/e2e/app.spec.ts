@@ -4717,6 +4717,29 @@ test("shows installed app and engine versions in updates settings", async ({ pag
   await expect(page.getByText("Supported")).toBeVisible();
 });
 
+test("shows desktop-first terminal guidance in settings", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.locator(".settings-category-pane").getByRole("button", { name: "Terminal Integration" }).click();
+
+  const settingsPane = page.locator(".settings-form-pane");
+  await expect(settingsPane.getByText("Detected shell")).toBeVisible();
+  await expect(settingsPane.getByText("Zsh", { exact: true })).toBeVisible();
+  await expect(settingsPane.getByText("Shell hook", { exact: true })).toBeVisible();
+  await expect(settingsPane.getByText("Config file", { exact: true })).toBeVisible();
+  await expect(settingsPane.getByText("~/.zshrc", { exact: true })).toBeVisible();
+  await expect(settingsPane.getByText("Completion scripts", { exact: true })).toBeVisible();
+  await expect(settingsPane.getByRole("button", { name: "Copy Install" })).toBeVisible();
+  await expect(settingsPane.getByRole("button", { name: "Copy Verify" })).toBeVisible();
+  await expect(
+    settingsPane.getByText(
+      "Current terminal sessions only need the hook when they must receive live environment changes immediately.",
+    ),
+  ).toBeVisible();
+});
+
 test("shows when no desktop update is available in settings", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
