@@ -1547,6 +1547,101 @@ test("adds and removes a project rule from the sets screen", async ({ page }) =>
   expect(commandLog.some((entry) => entry.command === "workspace_unbind")).toBe(true);
 });
 
+test("edits an existing project rule from the sets inspector", async ({ page }) => {
+  await installDesktopMock(page, "workspaceContext", undefined, {
+    settings: {
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    },
+  });
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
+
+  const ruleRow = page.getByRole("button", { name: "Inspect rule for Client Acme" });
+  await ruleRow.click();
+  await expect(page.locator(".sets-rules-inspector")).toContainText("Current project");
+
+  await page.getByRole("button", { name: "Edit…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Edit Rule" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByLabel("Rule scope")).toHaveValue("path");
+  await expect(dialog.getByRole("textbox", { name: "Path" })).toHaveValue("/code/acme");
+  await expect(dialog.getByRole("combobox", { name: "Set" })).toHaveValue("client-acme");
+
+  await dialog.getByRole("textbox", { name: "Path" }).fill("/code/acme-next");
+  await dialog.getByRole("button", { name: "Save Rule" }).click();
+
+  await expect(dialog).toBeHidden();
+  await expect(
+    page.locator(".sets-rule-table-row").filter({ hasText: "/code/acme-next" }).first(),
+  ).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "workspace_unbind" &&
+        entry.args?.target?.scope === "path" &&
+        entry.args?.target?.path === "/code/acme",
+    ),
+  ).toBe(true);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "workspace_bind" &&
+        entry.args?.request?.target?.scope === "path" &&
+        entry.args?.request?.target?.path === "/code/acme-next" &&
+        entry.args?.request?.context === "client-acme",
+    ),
+  ).toBe(true);
+});
+
+test("blocks incomplete project-rule submissions until a valid set and target are available", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "matchingContextSet", undefined, {
+    settings: {
+      profile_sets: [],
+    },
+    snapshot: {
+      contexts: [],
+    },
+  });
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
+  await page.getByRole("button", { name: "Add Rule…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Add Rule" });
+  await expect(dialog).toBeVisible();
+  await expect(
+    dialog.getByText("No sets are available yet. Create one before saving a project rule."),
+  ).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Add Rule" })).toBeDisabled();
+
+  await dialog.getByLabel("Rule scope").selectOption("path");
+  await expect(
+    dialog.getByText("Enter a path prefix before saving or removing this rule."),
+  ).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Add Rule" })).toBeDisabled();
+
+  await dialog.getByRole("textbox", { name: "Path" }).fill("   ");
+  await expect(dialog.getByRole("button", { name: "Add Rule" })).toBeDisabled();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "workspace_bind")).toBe(false);
+  expect(commandLog.some((entry) => entry.command === "workspace_unbind")).toBe(false);
+});
+
 test("reviews and applies safe diagnostics repairs, then exports a report", async ({ page }) => {
   await installDesktopMock(page, "diagnosticsRepair");
 
