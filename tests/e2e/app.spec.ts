@@ -1812,6 +1812,43 @@ test("adds a profile from a pasted API key on the profiles screen", async ({ pag
   ).toBe(true);
 });
 
+test("captures a profile from environment variables with the expected env hint", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles", exact: true }).click();
+  await page.getByRole("button", { name: "Add Profile" }).click();
+
+  const addDialog = page.getByRole("dialog", { name: "Add Profile" });
+  await addDialog.getByLabel("Tool").selectOption("codex");
+  await addDialog.getByLabel("Profile name").fill("ci");
+  await addDialog.getByLabel("Import mode").selectOption("from_env");
+  await addDialog.getByLabel("Credential backend").selectOption("system-keyring");
+  await expect(addDialog.getByText("OPENAI_API_KEY", { exact: true })).toBeVisible();
+
+  await addDialog.getByRole("button", { name: "Save Profile" }).click();
+
+  await expect(addDialog).toBeHidden();
+  await expect(
+    page.locator(".profiles-table-row-button").filter({ hasText: "ci" }).first(),
+  ).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "add_profile" &&
+        entry.args?.request?.tool === "codex" &&
+        entry.args?.request?.profile === "ci" &&
+        entry.args?.request?.state_mode === "isolated" &&
+        entry.args?.request?.credential_backend === "system-keyring" &&
+        entry.args?.request?.import_mode?.kind === "from_env",
+    ),
+  ).toBe(true);
+});
+
 test("stores a relabel override for an existing profile", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -2755,6 +2792,93 @@ test("warns before restoring backup files without activating the profile", async
   commandLog = await readCommandLog(page);
   expect(commandLog.some((entry) => entry.command === "restore_backup")).toBe(true);
   expect(commandLog.some((entry) => entry.command === "use_profile")).toBe(false);
+});
+
+test("preserves the tool state mode when a backup restore re-activates a profile", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "backupCatalog", undefined, {
+    runtime_status: {
+      capabilities: {
+        tools: {
+          codex: {
+            state_modes: ["shared", "isolated"],
+          },
+        },
+      },
+    },
+    snapshot: {
+      statuses: [
+        {
+          tool: "claude",
+          binary_found: true,
+          stored_profiles: 2,
+          active_profile: "work",
+          auth_method: "oauth",
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+          warnings: [],
+        },
+        {
+          tool: "codex",
+          binary_found: true,
+          stored_profiles: 2,
+          active_profile: "work",
+          auth_method: "api_key",
+          credential_backend: "file",
+          state_mode: "shared",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+          warnings: [],
+        },
+      ],
+      profiles: {
+        claude: {
+          active: "work",
+          profiles: [
+            { name: "work", auth: "oauth", label: "Work" },
+            { name: "personal", auth: "oauth", label: "Personal" },
+          ],
+        },
+        codex: {
+          active: "work",
+          profiles: [
+            { name: "work", auth: "api_key", label: "Work" },
+            { name: "personal", auth: "api_key", label: "Personal" },
+          ],
+        },
+      },
+      contexts: [],
+    },
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Backups" }).click();
+
+  const backupRow = page.locator(".backups-table-row").first();
+  await backupRow.click();
+  await page.getByRole("button", { name: "Backup actions" }).click();
+  await page.getByRole("menuitem", { name: "Restore and Activate…" }).click();
+
+  const restoreDialog = page.getByRole("dialog", { name: "Restore Backup" });
+  await restoreDialog.getByRole("button", { name: "Restore and Activate" }).click();
+  await expect(restoreDialog).toBeHidden();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "restore_backup")).toBe(true);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "use_profile" &&
+        entry.args?.request?.tool === "codex" &&
+        entry.args?.request?.profile === "personal" &&
+        entry.args?.request?.state_mode === "shared",
+    ),
+  ).toBe(true);
 });
 
 test("exports and clears recorded activity from the activity screen", async ({ page }) => {
