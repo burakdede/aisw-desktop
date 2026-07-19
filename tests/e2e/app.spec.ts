@@ -2988,6 +2988,48 @@ test("edits an existing project rule from the sets inspector", async ({ page }) 
   ).toBe(true);
 });
 
+test("closes the project rule editor without saving changes", async ({ page }) => {
+  await installDesktopMock(page, "workspaceContext", undefined, {
+    settings: {
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    },
+  });
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
+
+  const ruleRow = page.getByRole("button", { name: "Inspect rule for Client Acme" });
+  await ruleRow.click();
+  await expect(page.locator(".sets-rules-inspector")).toContainText("Current project");
+
+  await page.getByRole("button", { name: "Edit…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Edit Rule" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("textbox", { name: "Path" }).fill("/code/acme-draft");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+
+  await expect(dialog).toBeHidden();
+  await expect(
+    page.locator(".sets-rule-table-row").filter({ hasText: "/code/acme" }).first(),
+  ).toBeVisible();
+  await expect(
+    page.locator(".sets-rule-table-row").filter({ hasText: "/code/acme-draft" }),
+  ).toHaveCount(0);
+  await expect(page.locator(".sets-rules-inspector")).toContainText("Current project");
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "workspace_bind")).toBe(false);
+  expect(commandLog.some((entry) => entry.command === "workspace_unbind")).toBe(false);
+});
+
 test("returns from project rules to the set library from the rules overflow menu", async ({
   page,
 }) => {
