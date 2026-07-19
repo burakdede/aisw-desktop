@@ -603,6 +603,50 @@ test("filters the profile inventory by tool segment and search query", async ({ 
   ).toBeVisible();
 });
 
+test("warns before adding a duplicate profile name from the profiles screen", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  await page.getByRole("button", { name: "Add Profile" }).click();
+  const addDialog = page.getByRole("dialog", { name: "Add Profile" });
+  await addDialog.getByLabel("Tool").selectOption("claude");
+  await addDialog.getByLabel("Profile name").fill("work");
+
+  await expect(
+    addDialog.getByText(
+      "Claude already has a profile named work. Choose a different name or rename the existing profile first.",
+    ),
+  ).toBeVisible();
+  await expect(addDialog.getByRole("button", { name: "Import" })).toBeDisabled();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "add_profile")).toBe(false);
+});
+
+test("surfaces duplicate profile save failures from the profiles screen", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await overrideDesktopCommand(page, "add_profile", {
+    error: { message: "duplicate profile" },
+  });
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  await page.getByRole("button", { name: "Add Profile" }).click();
+  const addDialog = page.getByRole("dialog", { name: "Add Profile" });
+  await addDialog.getByLabel("Tool").selectOption("claude");
+  await addDialog.getByLabel("Profile name").fill("ops");
+  await addDialog.getByRole("button", { name: "Import" }).click();
+
+  await expect(addDialog.getByText("duplicate profile")).toBeVisible();
+});
+
 test("keeps the backups inspector actions menu inside the visible pane", async ({ page }) => {
   await installDesktopMock(page, "backupCatalog");
 
@@ -1034,6 +1078,31 @@ test("adds, renames, activates, and removes a profile from the profiles screen",
     ),
   ).toBe(true);
   expect(commandLog.some((entry) => entry.command === "remove_profile")).toBe(true);
+});
+
+test("warns before renaming a profile to a duplicate name", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  const workRow = page.locator(".profiles-table-row-button").filter({ hasText: "Work" }).first();
+  await workRow.click();
+  await page.locator(".profiles-inspector").getByRole("button", { name: "More profile actions" }).click();
+  await page.getByRole("menuitem", { name: "Rename…" }).click();
+
+  const renameDialog = page.getByRole("dialog", { name: "Edit Profile" });
+  await renameDialog.getByLabel("rename work").fill("PERSONAL");
+
+  await expect(
+    renameDialog.getByText(
+      "Claude already has a profile named PERSONAL. Choose a different name or rename the existing profile first.",
+    ),
+  ).toBeVisible();
+  await expect(renameDialog.getByRole("button", { name: "Save" })).toBeDisabled();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "rename_profile")).toBe(false);
 });
 
 test("creates and activates a saved set from the sets screen", async ({ page }) => {
@@ -1559,11 +1628,46 @@ test("captures a profile through the OAuth flow and shows progress steps", async
   await page.getByRole("button", { name: "Add Profile" }).click();
 
   const dialog = page.getByRole("dialog", { name: "Add Profile" });
+  await page.evaluate(() => {
+    const currentMock = (
+      window as typeof window & {
+        __AISW_DESKTOP_MOCK__?: (command: string, args?: Record<string, unknown>) => Promise<unknown>;
+        __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+      }
+    ).__AISW_DESKTOP_MOCK__;
+    if (!currentMock) {
+      return;
+    }
+
+    (
+      window as typeof window & {
+        __AISW_DESKTOP_MOCK__?: (command: string, args?: Record<string, unknown>) => Promise<unknown>;
+        __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+      }
+    ).__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      if (command !== "add_profile_oauth") {
+        return currentMock(command, args);
+      }
+
+      const emit = (
+        window as typeof window & {
+          __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+        }
+      ).__AISW_DESKTOP_EVENT_HANDLERS__?.["oauth-progress"];
+      emit?.({ seq: 1, phase: "browser_launch", message: "Launching browser" });
+      await new Promise((resolve) => window.setTimeout(resolve, 120));
+      emit?.({ seq: 2, phase: "waiting_for_login", message: "Waiting for login" });
+      await new Promise((resolve) => window.setTimeout(resolve, 120));
+
+      return currentMock(command, args);
+    };
+  });
   await dialog.getByLabel("Tool").selectOption("claude");
   await dialog.getByLabel("Profile name").fill("browser-login");
   await dialog.getByLabel("Import mode").selectOption("oauth");
   await dialog.getByRole("button", { name: "Start Sign In" }).click();
 
+  await expect(dialog.getByRole("button", { name: "Waiting for sign-in…" })).toBeVisible();
   await expect(dialog.getByText("2. Browser opens")).toBeVisible();
   await expect(dialog).toBeHidden();
   await expect(
