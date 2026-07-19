@@ -2768,6 +2768,33 @@ test("reviews and applies safe diagnostics repairs, then exports a report", asyn
   ).toBeVisible();
 });
 
+test("copies the exported diagnostics report path from the footer", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+
+  await page.getByRole("button", { name: "Diagnostics more actions" }).click();
+  await page.getByRole("menuitem", { name: "Export Report" }).click();
+
+  await expect(
+    page.getByText(
+      "Support report ready: aisw-desktop-diagnostics-789.json. /tmp/aisw-desktop/aisw-desktop-diagnostics-789.json",
+    ),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Copy report path" }).click();
+
+  await expect.poll(async () => readClipboardWrites(page)).toContain(
+    "/tmp/aisw-desktop/aisw-desktop-diagnostics-789.json",
+  );
+  await expect(
+    page.getByText(
+      "Copied bundle path /tmp/aisw-desktop/aisw-desktop-diagnostics-789.json.",
+    ),
+  ).toBeVisible();
+});
+
 test("routes keyring diagnostics into security settings", async ({ page }) => {
   await installDesktopMock(page, "diagnosticsRepair");
 
