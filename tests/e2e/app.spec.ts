@@ -5318,6 +5318,19 @@ test("activates an imported CLI context and marks it current", async ({ page }) 
   ).toBe(true);
 });
 
+test("uses the saved set label in imported CLI context activation results", async ({ page }) => {
+  await installDesktopMock(page, "matchingContextSet");
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+
+  const importedDisclosure = page.locator(".sets-imported-disclosure");
+  await importedDisclosure.locator("summary").click();
+  await importedDisclosure.getByRole("button", { name: "Use CLI Context Client Acme" }).click();
+
+  await expect(page.getByText("Last set result: Activated set Client Acme.")).toBeVisible();
+});
+
 test("shows workspace mismatch details and activates the expected set", async ({
   page,
 }) => {
