@@ -2189,6 +2189,31 @@ test("adds, renames, activates, and removes a profile from the profiles screen",
   expect(commandLog.some((entry) => entry.command === "remove_profile")).toBe(true);
 });
 
+test("closes add profile without saving a draft", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+  await page.getByRole("button", { name: "Add Profile" }).click();
+
+  const addDialog = page.getByRole("dialog", { name: "Add Profile" });
+  await expect(addDialog).toBeVisible();
+  await addDialog.getByLabel("Tool").selectOption("codex");
+  await addDialog.getByLabel("Profile name").fill("draft-ci");
+  await addDialog.getByLabel("Import mode").selectOption("from_env");
+  await addDialog.getByLabel("Credential backend").selectOption("system-keyring");
+  await expect(addDialog.getByText("OPENAI_API_KEY", { exact: true })).toBeVisible();
+  await addDialog.getByRole("button", { name: "Cancel" }).click();
+
+  await expect(addDialog).toBeHidden();
+  await expect(
+    page.locator(".profiles-table-row-button").filter({ hasText: "draft-ci" }),
+  ).toHaveCount(0);
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "add_profile")).toBe(false);
+});
+
 test("closes profile removal without deleting the saved profile", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
