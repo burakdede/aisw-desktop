@@ -1234,7 +1234,11 @@ test("opens backups from a profile row actions menu without restoring or activat
   await page.goto("/");
   await page.getByRole("button", { name: "Profiles", exact: true }).click();
   await page.getByRole("button", { name: "More actions for Claude Code Work" }).click();
-  await page.getByRole("menuitem", { name: "View Backups" }).click();
+  const menu = page.getByRole("menu", { name: "Profile actions" });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "View Backups" })).toBeVisible();
+  await expectMenuToFitViewport(menu, page);
+  await menu.getByRole("menuitem", { name: "View Backups" }).click();
 
   await expect(page.getByRole("heading", { name: "Backups" })).toBeVisible();
   await expect(page.getByLabel("Backups list")).toContainText("Work");
@@ -4242,6 +4246,23 @@ async function expectMenuToFitWithin(menu: Locator, container: Locator) {
   expect(menuBox!.x + menuBox!.width).toBeLessThanOrEqual(containerBox!.x + containerBox!.width + 1);
   expect(menuBox!.y).toBeGreaterThanOrEqual(containerBox!.y - 1);
   expect(menuBox!.y + menuBox!.height).toBeLessThanOrEqual(containerBox!.y + containerBox!.height + 1);
+}
+
+async function expectMenuToFitViewport(menu: Locator, page: Page) {
+  await expect
+    .poll(async () => (await menu.boundingBox())?.x ?? 0)
+    .toBeGreaterThan(0);
+
+  const menuBox = await menu.boundingBox();
+  expect(menuBox).not.toBeNull();
+
+  const viewport = page.viewportSize();
+  expect(viewport).not.toBeNull();
+
+  expect(menuBox!.x).toBeGreaterThanOrEqual(0);
+  expect(menuBox!.y).toBeGreaterThanOrEqual(0);
+  expect(menuBox!.x + menuBox!.width).toBeLessThanOrEqual(viewport!.width + 1);
+  expect(menuBox!.y + menuBox!.height).toBeLessThanOrEqual(viewport!.height + 1);
 }
 
 async function dispatchDesktopEvent(
