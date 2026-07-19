@@ -1450,6 +1450,82 @@ test("adds a profile from a pasted API key on the profiles screen", async ({ pag
   ).toBe(true);
 });
 
+test("stores a relabel override for an existing profile", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.evaluate(() => {
+    const currentMock = (
+      window as typeof window & {
+        __AISW_DESKTOP_MOCK__?: (command: string, args?: Record<string, unknown>) => Promise<unknown>;
+        __AISW_COMMAND_LOG__?: Array<{ command: string; args?: Record<string, unknown> | null }>;
+        __AISW_DESKTOP_SCENARIO_STATE__?: {
+          bootstrap?: { settings?: Record<string, unknown> };
+          settings?: Record<string, unknown>;
+        };
+      }
+    ).__AISW_DESKTOP_MOCK__;
+    if (!currentMock) {
+      return;
+    }
+
+    (
+      window as typeof window & {
+        __AISW_DESKTOP_MOCK__?: (command: string, args?: Record<string, unknown>) => Promise<unknown>;
+        __AISW_COMMAND_LOG__?: Array<{ command: string; args?: Record<string, unknown> | null }>;
+        __AISW_DESKTOP_SCENARIO_STATE__?: {
+          bootstrap?: { settings?: Record<string, unknown> };
+          settings?: Record<string, unknown>;
+        };
+      }
+    ).__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      if (command === "update_settings") {
+        const request = structuredClone(args?.request ?? {});
+        const state = (
+          window as typeof window & {
+            __AISW_DESKTOP_SCENARIO_STATE__?: {
+              bootstrap?: { settings?: Record<string, unknown> };
+              settings?: Record<string, unknown>;
+            };
+          }
+        ).__AISW_DESKTOP_SCENARIO_STATE__;
+        if (state?.bootstrap) {
+          state.bootstrap.settings = request as Record<string, unknown>;
+        }
+        if (state) {
+          state.settings = request as Record<string, unknown>;
+        }
+        (
+          window as typeof window & {
+            __AISW_COMMAND_LOG__?: Array<{ command: string; args?: Record<string, unknown> | null }>;
+          }
+        ).__AISW_COMMAND_LOG__?.push({ command, args: args ?? null });
+        return request;
+      }
+
+      return currentMock(command, args);
+    };
+  });
+  await page.getByRole("button", { name: "Profiles", exact: true }).click();
+  await page.getByRole("option", { name: "Inspect Claude Code Work" }).click();
+
+  await page.locator(".profiles-inspector").getByRole("button", { name: "More profile actions" }).click();
+  await page.getByRole("menuitem", { name: "Change Label…" }).click();
+  await page.getByLabel("label work").fill("Acme Work");
+  await page.getByRole("button", { name: "Save" }).click();
+
+  await expect(page.locator(".profiles-inspector")).toContainText("Acme Work");
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "update_settings" &&
+        entry.args?.request?.profile_labels?.claude?.work === "Acme Work",
+    ),
+  ).toBe(true);
+});
+
 test("derives add-profile modes and fixed file storage from runtime capabilities", async ({
   page,
 }) => {
@@ -2412,6 +2488,21 @@ test("manages launch, shell, update, and app-data actions from settings", async 
     "echo 'eval \"$(aisw shell-hook zsh)\"' >> ~/.zshrc",
   );
   expect(await readClipboardWrites(page)).toContain('echo "$AISW_SHELL_HOOK"');
+});
+
+test("shows installed app and engine versions in updates settings", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.locator(".settings-category-pane").getByRole("button", { name: "Updates" }).click();
+
+  await expect(page.getByText("Current version")).toBeVisible();
+  await expect(page.getByText("0.1.11", { exact: true })).toBeVisible();
+  await expect(page.getByText("Bundled AISW Engine")).toBeVisible();
+  await expect(page.getByText("0.3.8", { exact: true })).toBeVisible();
+  await expect(page.getByText("Compatibility")).toBeVisible();
+  await expect(page.getByText("Supported")).toBeVisible();
 });
 
 test("clears stale updater results when the release channel changes", async ({ page }) => {
