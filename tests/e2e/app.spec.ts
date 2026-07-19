@@ -107,6 +107,39 @@ test("routes unsupported live imports into profiles setup", async ({ page }) => 
   await expect(page.getByLabel("Import mode")).toHaveValue("from_env");
 });
 
+test("opens profile setup from onboarding when live import requires another sign-in method", async ({
+  page,
+}) => {
+  await installDesktopMock(
+    page,
+    "onboarding",
+    {
+      claude: {
+        auth_methods: ["from_env", "api_key"],
+        state_modes: ["isolated", "shared"],
+        credential_backends: ["file"],
+      },
+      codex: { state_modes: ["isolated", "shared"] },
+      gemini: { state_modes: [] },
+    },
+  );
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Inspect Claude Code" }).click();
+
+  await expect(page.getByRole("button", { name: "Choose sign-in method" })).toBeVisible();
+  await page.getByRole("button", { name: "Choose sign-in method" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Add Profile" });
+  await expect(page.getByRole("heading", { name: "Profiles", exact: true })).toBeVisible();
+  await expect(
+    page.getByLabel("Profile filters").getByRole("button", { name: "Claude", pressed: true }),
+  ).toBeVisible();
+  await expect(dialog.getByLabel("Tool")).toHaveValue("claude");
+  await expect(dialog.getByLabel("Import mode")).toHaveValue("from_env");
+});
+
 test("shows missing-tool guidance during onboarding", async ({ page }) => {
   await installDesktopMock(page, "onboardingMissingTool");
 
