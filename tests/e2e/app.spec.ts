@@ -919,6 +919,29 @@ test("returns focus to the quick switch trigger when the palette closes", async 
   await expect(trigger).toBeFocused();
 });
 
+test("returns focus to the quick switch trigger when the palette is dismissed by the overlay", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  const trigger = page.getByRole("button", { name: "Quick Switch" }).first();
+  await trigger.focus();
+  await trigger.click();
+
+  const dialog = page.getByRole("dialog", { name: "Quick Switch" });
+  await expect(dialog.getByLabel("Search Quick Switch")).toBeFocused();
+
+  await page.locator(".quick-switch-overlay").click({ position: { x: 12, y: 12 } });
+
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "use_profile")).toBe(false);
+  expect(commandLog.some((entry) => entry.command === "use_all_profiles")).toBe(false);
+});
+
 test("clears the quick switch query from the search field", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
