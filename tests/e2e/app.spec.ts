@@ -482,6 +482,44 @@ test("opens the matching profile details from backup actions", async ({ page }) 
   await expect(page.getByRole("button", { name: "Storage Details" })).toBeVisible();
 });
 
+test("opens backups from the selected profile menu without restoring or activating", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "backupCatalog");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles", exact: true }).click();
+  await page.getByRole("option", { name: "Inspect Claude Code Work" }).click();
+
+  await page.locator(".profiles-inspector").getByRole("button", { name: "More profile actions" }).click();
+  await page.getByRole("menuitem", { name: "View Backups" }).click();
+
+  await expect(page.getByRole("heading", { name: "Backups" })).toBeVisible();
+  await expect(page.getByLabel("Backups list")).toContainText("Work");
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "restore_backup")).toBe(false);
+  expect(commandLog.some((entry) => entry.command === "use_profile")).toBe(false);
+});
+
+test("opens backups from a profile row actions menu without restoring or activating", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "backupCatalog");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles", exact: true }).click();
+  await page.getByRole("button", { name: "More actions for Claude Code Work" }).click();
+  await page.getByRole("menuitem", { name: "View Backups" }).click();
+
+  await expect(page.getByRole("heading", { name: "Backups" })).toBeVisible();
+  await expect(page.getByLabel("Backups list")).toContainText("Work");
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "restore_backup")).toBe(false);
+  expect(commandLog.some((entry) => entry.command === "use_profile")).toBe(false);
+});
+
 test("uses an overlay sidebar on narrow widths", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
