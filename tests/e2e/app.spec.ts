@@ -1194,6 +1194,68 @@ test("switches a profile from overview and opens the matching profile details", 
   await expect(page.locator(".profiles-inspector-pane")).toContainText("Work");
 });
 
+test("shows the last successful overview switch result on the active tool card", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.locator(".overview-tool-list-row").filter({ hasText: "Codex" }).first().click();
+  await page.getByLabel("Switch codex profile").selectOption("work");
+  await page.getByRole("button", { name: "Switch to Work" }).click();
+
+  await expect(
+    page.locator(".overview-tool-list-row").filter({ hasText: "Codex" }).first(),
+  ).toContainText("Work");
+  await expect(
+    page.getByText("Last result: Switched Codex CLI to Work."),
+  ).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "use_profile" &&
+        entry.args?.request?.tool === "codex" &&
+        entry.args?.request?.profile === "work",
+    ),
+  ).toBe(true);
+});
+
+test("uses saved profile labels in overview switch results", async ({ page }) => {
+  await installDesktopMock(page, "switching", undefined, {
+    settings: {
+      profile_labels: {
+        codex: {
+          work: "Code Work",
+        },
+      },
+    },
+  });
+
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.locator(".overview-tool-list-row").filter({ hasText: "Codex" }).first().click();
+  await page.getByLabel("Switch codex profile").selectOption("work");
+  await page.getByRole("button", { name: "Switch to Code Work" }).click();
+
+  await expect(
+    page.locator(".overview-tool-list-row").filter({ hasText: "Codex" }).first(),
+  ).toContainText("Code Work");
+  await expect(
+    page.getByText("Last result: Switched Codex CLI to Code Work."),
+  ).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "use_profile" &&
+        entry.args?.request?.tool === "codex" &&
+        entry.args?.request?.profile === "work",
+    ),
+  ).toBe(true);
+});
+
 test("adds, renames, activates, and removes a profile from the profiles screen", async ({
   page,
 }) => {
