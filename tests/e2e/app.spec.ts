@@ -512,6 +512,36 @@ test("opens help from the app menu and routes into diagnostics", async ({ page }
   expect(commandLog.some((entry) => entry.command === "open_reference_document")).toBe(true);
 });
 
+test("opens profiles and settings from the help sheet", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "menu-open-help");
+
+  let dialog = page.getByRole("dialog", { name: "Using AI Switch" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByLabel("Supported tools")).toContainText("Claude");
+  await expect(dialog.getByLabel("Supported tools")).toContainText("Codex");
+  await expect(dialog.getByLabel("Supported tools")).toContainText("Gemini");
+  await expect(dialog.getByRole("button", { name: "Open Profiles" })).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Open Settings" })).toBeVisible();
+
+  await dialog.getByRole("button", { name: "Open Profiles" }).click();
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(dialog).toBeHidden();
+
+  await dispatchDesktopEvent(page, "menu-open-help");
+  dialog = page.getByRole("dialog", { name: "Using AI Switch" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Open Settings" }).click();
+
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(dialog).toBeHidden();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "open_reference_document")).toBe(true);
+});
+
 test("falls back to exporting diagnostics when the issue tracker cannot open", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
