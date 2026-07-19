@@ -1346,6 +1346,27 @@ test("installs an available desktop update from the global banner", async ({ pag
   expect(commandLog.some((entry) => entry.command === "install_update")).toBe(true);
 });
 
+test("dismisses the installed-update banner after a successful global update", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await expect(page.getByText("AI Switcher 0.2.0 is available")).toBeVisible();
+
+  await page.getByRole("button", { name: "Update and Restart" }).click();
+
+  await expect(page.getByText("Restart requested")).toBeVisible();
+  await expect(page.getByText("Update installed. Restart has been requested.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Dismiss" }).click();
+
+  await expect(page.getByText("Restart requested")).toHaveCount(0);
+  await expect(page.getByText("Update installed. Restart has been requested.")).toHaveCount(0);
+  await expect(page.getByText("AI Switcher 0.2.0 is available")).toHaveCount(0);
+  await expect
+    .poll(async () => readLocalStorage(page, "ai-switch.desktop.update-dismissed-version"))
+    .toBeNull();
+});
+
 test("surfaces update install remediation from the global banner", async ({ page }) => {
   await installDesktopMock(page, "updaterInstallError");
 
