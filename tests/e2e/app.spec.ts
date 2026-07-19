@@ -3914,8 +3914,14 @@ test("routes diagnostics import recovery into profile setup", async ({ page }) =
   await page.goto("/");
   await page.locator(".sidebar").getByRole("button", { name: "Diagnostics" }).click();
   await page.getByRole("button", { name: /Inspect .*live mismatch/i }).click();
-  await page.getByRole("button", { name: "More finding actions" }).click();
-  await page.getByRole("menuitem", { name: "Import Current…" }).click();
+  const inspector = page.locator(".diagnostics-inspector-surface");
+  await inspector.getByRole("button", { name: "More finding actions" }).click();
+
+  const menu = page.getByRole("menu", { name: "Finding actions" });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Import Current…" })).toBeVisible();
+  await expectMenuToFitWithin(menu, inspector);
+  await menu.getByRole("menuitem", { name: "Import Current…" }).click();
 
   const dialog = page.getByRole("dialog", { name: "Add Profile" });
   await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
