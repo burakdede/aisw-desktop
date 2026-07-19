@@ -112,6 +112,33 @@ test("reruns onboarding setup detection and surfaces newly detected live account
     .toBe(initialInitRuns + 1);
 });
 
+test("guides onboarding with step footer navigation", async ({ page }) => {
+  await installDesktopMock(page, "onboarding");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Get Started" }).click();
+
+  await expect(page.getByText("Step 2 of 5")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue to First switch" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Continue to First switch" }).click();
+  await expect(page.getByText("Step 3 of 5")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Try one safe switch" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Back" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Back" }).click();
+  await expect(page.getByText("Step 2 of 5")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Detected tools" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Continue to First switch" }).click();
+  await page.getByRole("button", { name: "Continue to Terminal" }).click();
+  await page.getByRole("button", { name: "Continue to Done" }).click();
+
+  await expect(page.getByText("Step 5 of 5")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "You're ready" })).toBeVisible();
+  await expect(page.getByLabel("Setup completion status").getByText("Claude Code")).toBeVisible();
+});
+
 test("opens profiles from onboarding when an installed tool still needs a saved profile", async ({
   page,
 }) => {
@@ -2009,6 +2036,26 @@ test("reviews and applies safe diagnostics repairs, then exports a report", asyn
       "Support report ready: aisw-desktop-diagnostics-789.json. /tmp/aisw-desktop/aisw-desktop-diagnostics-789.json",
     ),
   ).toBeVisible();
+});
+
+test("routes keyring diagnostics into security settings", async ({ page }) => {
+  await installDesktopMock(page, "diagnosticsRepair");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+  await expect(page.getByRole("button", { name: "Apply keyring repair" })).toBeVisible();
+
+  await page.getByRole("button", { name: "More finding actions" }).click();
+  await page.getByRole("menuitem", { name: "Show keyring setup" }).click();
+
+  const settingsNav = page.locator(".settings-category-pane");
+  await expect(page.getByRole("heading", { name: "Security" })).toBeVisible();
+  await expect(settingsNav.getByRole("button", { name: "Security" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.getByRole("heading", { name: "Credential Storage" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reveal in Finder" })).toBeVisible();
 });
 
 test("shows healthy diagnostics states and reruns checks on demand", async ({ page }) => {
