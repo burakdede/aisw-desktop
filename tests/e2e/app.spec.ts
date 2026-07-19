@@ -1370,6 +1370,31 @@ test("uses a one-pane detail flow for diagnostics on narrow widths", async ({ pa
   await expect(page.getByLabel("Diagnostics findings")).toBeVisible();
 });
 
+test("uses the settings mobile section picker on narrow widths", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.setViewportSize({ width: 760, height: 920 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Show sidebar" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+
+  const sectionPicker = page.getByLabel("Settings section", { exact: true });
+  await expect(sectionPicker).toBeVisible();
+  await expect(page.getByRole("heading", { name: "General" })).toBeVisible();
+  await expect(page.getByText("Show menu bar icon")).toBeVisible();
+
+  await sectionPicker.selectOption("updates");
+  await expect(page.getByRole("heading", { name: "Updates" })).toBeVisible();
+  await expect(page.getByText("Current version")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Check for Updates" })).toBeVisible();
+
+  await sectionPicker.selectOption("shell");
+  await expect(page.locator(".settings-section-header")).toContainText("Terminal Integration");
+  await expect(page.getByText("Detected shell")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copy Install" })).toBeVisible();
+});
+
 test("switches to a saved set from quick switch and updates the overview", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
