@@ -945,7 +945,7 @@ test("routes native app-menu navigation across the primary desktop screens", asy
   ).toBeVisible();
 
   await dispatchDesktopEvent(page, "menu-open-sets");
-  await expect(page.getByRole("heading", { name: "Sets" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sets", exact: true })).toBeVisible();
   await expect(page.getByLabel("Sets mode")).toBeVisible();
 
   await dispatchDesktopEvent(page, "menu-open-diagnostics");
@@ -2286,8 +2286,27 @@ test("resolves a workspace mismatch directly from overview actions", async ({ pa
       (entry) =>
         entry.command === "use_context" &&
         entry.args?.request?.context === "client-acme",
-    ),
+      ),
   ).toBe(true);
+});
+
+test("routes unresolved workspace mismatch from overview into sets", async ({ page }) => {
+  await installDesktopMock(page, "staleWorkspaceTarget");
+
+  await page.goto("/");
+  await expect(page.getByText("Expected set: client-acme")).toBeVisible();
+
+  await page.getByRole("button", { name: "Inspect Claude" }).click();
+  await page.getByRole("button", { name: "More profile actions" }).click();
+  await expect(page.getByRole("menuitem", { name: "Open Sets" })).toBeVisible();
+  await page.getByRole("menuitem", { name: "Open Sets" }).click();
+
+  await expect(page.getByRole("heading", { name: "Sets", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Set Library")).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "use_context")).toBe(false);
+  expect(commandLog.some((entry) => entry.command === "activate_profile_set")).toBe(false);
 });
 
 test("opens installation help and refreshes a missing tool from overview", async ({ page }) => {
