@@ -2422,6 +2422,38 @@ test("reapplies a mismatched active profile from the profile row actions menu", 
   ).toBe(true);
 });
 
+test("activates an inactive profile from the profile row actions menu", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  await page.getByLabel("Profile filters").getByRole("button", { name: "Codex" }).click();
+
+  const workRow = page.locator(".profiles-table-row").filter({ hasText: "Work" }).first();
+  await expect(workRow).toContainText("Stored");
+
+  await page.getByRole("button", { name: "More actions for Codex CLI Work" }).click();
+  const menu = page.getByRole("menu", { name: "Profile actions" });
+  await expect(menu.getByRole("menuitem", { name: "Activate" })).toBeVisible();
+  await menu.getByRole("menuitem", { name: "Activate" }).click();
+
+  await expect(workRow).toContainText("Active");
+  await expect(workRow).not.toContainText("Stored");
+  await expect(page.locator(".profiles-inspector")).toContainText("Active");
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "use_profile" &&
+        entry.args?.request?.tool === "codex" &&
+        entry.args?.request?.profile === "work" &&
+        entry.args?.request?.state_mode === "isolated",
+    ),
+  ).toBe(true);
+});
+
 test("creates and activates a saved set from the sets screen", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
