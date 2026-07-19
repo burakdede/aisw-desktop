@@ -2746,7 +2746,11 @@ test("reviews and applies safe diagnostics repairs, then exports a report", asyn
   await expect(repairDialog).toBeHidden();
 
   await page.getByRole("button", { name: "Diagnostics more actions" }).click();
-  await page.getByRole("menuitem", { name: "Export Report" }).click();
+  const diagnosticsMenu = page.getByRole("menu", { name: "Diagnostics actions" });
+  await expect(diagnosticsMenu).toBeVisible();
+  await expect(diagnosticsMenu.getByRole("menuitem", { name: "Export Report" })).toBeVisible();
+  await expectMenuToFitViewport(diagnosticsMenu, page);
+  await diagnosticsMenu.getByRole("menuitem", { name: "Export Report" }).click();
 
   const commandLog = await readCommandLog(page);
   expect(
@@ -3129,7 +3133,11 @@ test("refreshes backups from the toolbar menu", async ({ page }) => {
 
   const refreshRunsBefore = await expectCommandCount(page, "list_backups");
   await page.getByRole("button", { name: "Backups more actions" }).click();
-  await page.getByRole("menuitem", { name: "Refresh" }).click();
+  const backupsMenu = page.getByRole("menu", { name: "Backups actions" });
+  await expect(backupsMenu).toBeVisible();
+  await expect(backupsMenu.getByRole("menuitem", { name: "Refresh" })).toBeVisible();
+  await expectMenuToFitViewport(backupsMenu, page);
+  await backupsMenu.getByRole("menuitem", { name: "Refresh" }).click();
 
   await expect
     .poll(async () => await expectCommandCount(page, "list_backups"))
@@ -3286,11 +3294,19 @@ test("exports and clears recorded activity from the activity screen", async ({ p
   await expect(page.locator(".activity-event-row").first()).toBeVisible();
 
   await page.getByRole("button", { name: "Activity more actions" }).click();
-  await page.getByRole("menuitem", { name: "Export Redacted Activity…" }).click();
+  const activityMenu = page.getByRole("menu", { name: "Activity actions" });
+  await expect(activityMenu).toBeVisible();
+  await expect(activityMenu.getByRole("menuitem", { name: "Export Redacted Activity…" })).toBeVisible();
+  await expectMenuToFitViewport(activityMenu, page);
+  await activityMenu.getByRole("menuitem", { name: "Export Redacted Activity…" }).click();
   await expect(page.getByText("Opened aisw-desktop-activity-123.json.")).toBeVisible();
 
   await page.getByRole("button", { name: "Activity more actions" }).click();
-  await page.getByRole("menuitem", { name: "Clear Activity History…" }).click();
+  const clearMenu = page.getByRole("menu", { name: "Activity actions" });
+  await expect(clearMenu).toBeVisible();
+  await expect(clearMenu.getByRole("menuitem", { name: "Clear Activity History…" })).toBeVisible();
+  await expectMenuToFitViewport(clearMenu, page);
+  await clearMenu.getByRole("menuitem", { name: "Clear Activity History…" }).click();
 
   const clearDialog = page.getByRole("dialog", { name: "Clear Activity History" });
   await clearDialog.getByRole("button", { name: "Clear History" }).click();
