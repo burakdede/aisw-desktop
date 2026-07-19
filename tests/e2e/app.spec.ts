@@ -3442,6 +3442,49 @@ test("persists multiple recorded activity events for the same scope across reloa
   expect(restoredActivity).toContain("Saved settings");
 });
 
+test("filters recorded activity by status and search query", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "tray-command-result", {
+    scope: "global",
+    id: "settings",
+    label: "Saved settings",
+    status: "success",
+    message: "Updated bundled runtime settings.",
+  });
+  await dispatchDesktopEvent(page, "tray-command-result", {
+    scope: "global",
+    id: "settings",
+    label: "Checked for updates",
+    status: "error",
+    message: "The update endpoint did not respond.",
+    remediation: "Try again after verifying the selected update channel.",
+  });
+
+  await page.locator(".sidebar").getByRole("button", { name: "Activity", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Inspect Saved settings" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Inspect Checked for updates" })).toBeVisible();
+
+  const activityFilters = page.locator('.segmented-control[aria-label="Activity filters"]');
+  await activityFilters.getByRole("button", { name: "Failed" }).click();
+  await expect(page.getByRole("button", { name: "Inspect Checked for updates" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Inspect Saved settings" })).toHaveCount(0);
+
+  const search = page.getByRole("searchbox", { name: "Search activity" });
+  await search.fill("selected update channel");
+  await expect(page.getByRole("button", { name: "Inspect Checked for updates" })).toBeVisible();
+
+  await search.fill("bundled runtime");
+  await expect(page.getByText("No recent activity")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Inspect Checked for updates" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Clear Search activity" }).click();
+  await activityFilters.getByRole("button", { name: "All" }).click();
+  await expect(page.getByRole("button", { name: "Inspect Saved settings" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Inspect Checked for updates" })).toBeVisible();
+});
+
 test("refreshes activity state from the toolbar overflow menu", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
