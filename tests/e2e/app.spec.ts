@@ -1554,6 +1554,38 @@ test("manages launch, shell, update, and app-data actions from settings", async 
   expect(await readClipboardWrites(page)).toContain('echo "$AISW_SHELL_HOOK"');
 });
 
+test("clears stale updater results when the release channel changes", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+
+  const settingsNav = page.locator(".settings-category-pane");
+  await settingsNav.getByRole("button", { name: "Updates" }).click();
+  const updateResults = page.locator(".settings-result-list");
+
+  await page.getByRole("button", { name: "Check for Updates" }).click();
+  await expect(page.getByText("Update available: 0.2.0")).toBeVisible();
+  await expect(page.getByText("Endpoint: https://updates.example.com/stable.json")).toBeVisible();
+  await expect(updateResults.getByText("Faster switching and signed updater artifacts.")).toBeVisible();
+
+  await page.getByLabel("Update channel").selectOption("beta");
+  await expect(
+    page.getByText("Check for a signed desktop release on the selected beta channel."),
+  ).toBeVisible();
+  await expect(page.getByText("Update available: 0.2.0")).toHaveCount(0);
+  await expect(page.getByText("Endpoint: https://updates.example.com/stable.json")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Check for Updates" }).click();
+  await expect(page.getByText("Channel: beta")).toBeVisible();
+  await expect(page.getByText("Update available: 0.3.0-beta.1")).toBeVisible();
+  await expect(page.getByText("Endpoint: https://updates.example.com/beta.json")).toBeVisible();
+  await expect(updateResults.getByText("Preview release candidate.")).toBeVisible();
+
+  const checkRuns = await expectCommandCount(page, "check_for_updates");
+  expect(checkRuns).toBeGreaterThanOrEqual(2);
+});
+
 test("persists general preferences and runs security and advanced settings actions", async ({
   page,
 }) => {
