@@ -4090,6 +4090,35 @@ test("shows healthy diagnostics states and reruns checks on demand", async ({ pa
     });
 });
 
+test("shows doctor remediations for keyring, permission, and OAuth failures", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "diagnosticsRepair");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+
+  await expect(page.getByRole("button", { name: "Inspect Keyring unavailable" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Inspect Permissions incorrect" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Inspect OAuth failure" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Inspect Keyring unavailable" }).click();
+  const inspector = page.locator(".diagnostics-inspector-surface");
+  await expect(inspector).toContainText("Local credential store is locked.");
+  await expect(inspector).toContainText("Unlock the local credential store and retry.");
+
+  await page.getByRole("button", { name: "Inspect Permissions incorrect" }).click();
+  await expect(inspector).toContainText("AISW cannot write the active config path.");
+  await expect(inspector).toContainText("Grant write access to ~/.aisw");
+  await expect(inspector).toContainText("Retry the switch");
+
+  await page.getByRole("button", { name: "Inspect OAuth failure" }).click();
+  await expect(inspector).toContainText("Upstream OAuth session timed out.");
+  await expect(inspector).toContainText(
+    "Run the guided OAuth flow again and finish login before timeout.",
+  );
+});
+
 test("opens diagnostics from the tray without using the sidebar", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
