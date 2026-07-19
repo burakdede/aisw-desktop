@@ -1820,6 +1820,32 @@ test("opens installation help and refreshes a missing tool from overview", async
     .toBe(snapshotReadsBefore + 1);
 });
 
+test("starts current-login import from the overview inspector when live credentials mismatch", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching", {
+    claude: {
+      auth_methods: ["from_live", "oauth"],
+      state_modes: ["isolated", "shared"],
+      credential_backends: ["system-keyring", "file"],
+    },
+    codex: { state_modes: ["isolated", "shared"] },
+    gemini: { state_modes: [] },
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Inspect Claude" }).click();
+  await expect(page.getByText("Live credentials do not match Work.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Import Current…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Add Profile" });
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByLabel("Tool")).toHaveValue("claude");
+  await expect(dialog.getByLabel("Import mode")).toHaveValue("from_live");
+});
+
 test("opens activity from the overview footer after a switch result is recorded", async ({
   page,
 }) => {
