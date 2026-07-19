@@ -1464,6 +1464,35 @@ test("derives add-profile modes and fixed file storage from runtime capabilities
   ).toBeVisible();
 });
 
+test("falls back to legacy profile setup options when capability metadata is absent", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching", undefined, {
+    runtime_status: {
+      capabilities: null,
+    },
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles", exact: true }).click();
+  await page.getByRole("button", { name: "Add Profile" }).click();
+
+  const addDialog = page.getByRole("dialog", { name: "Add Profile" });
+  await addDialog.getByLabel("Tool").selectOption("codex");
+
+  const importMode = addDialog.getByLabel("Import mode");
+  await expect(importMode.getByRole("option", { name: "Import current login" })).toHaveCount(1);
+  await expect(importMode.getByRole("option", { name: "Read from environment" })).toHaveCount(1);
+  await expect(importMode.getByRole("option", { name: "Paste API key" })).toHaveCount(1);
+  await expect(importMode.getByRole("option", { name: "Sign in with OAuth" })).toHaveCount(1);
+
+  const backend = addDialog.getByLabel("Credential backend");
+  await expect(backend).toBeEnabled();
+  await expect(backend.getByRole("option", { name: "Automatic" })).toHaveCount(1);
+  await expect(backend.getByRole("option", { name: "System keyring" })).toHaveCount(1);
+  await expect(backend.getByRole("option", { name: "File-backed" })).toHaveCount(1);
+});
+
 test("warns before renaming a profile to a duplicate name", async ({ page }) => {
   await installDesktopMock(page, "switching");
 

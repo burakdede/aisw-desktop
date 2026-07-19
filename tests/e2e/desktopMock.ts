@@ -1774,11 +1774,14 @@ export async function installDesktopMock(
 
       const scenarioState = deepMerge(scenarios[activeScenario], scenarioPatch ?? {});
       const state = {
-        bootstrap: {
-          ...deepClone(baseBootstrap),
+        bootstrap: deepMerge(baseBootstrap, {
           settings: deepClone(scenarioState.settings ?? bootstrapSettings),
           snapshot: deepClone(scenarioState.snapshot),
-        },
+          runtime_status:
+            scenarioState.runtime_status === undefined
+              ? undefined
+              : deepClone(scenarioState.runtime_status),
+        }),
         snapshot: deepClone(scenarioState.snapshot),
         initReport: deepClone(scenarioState.initReport),
         settings: deepClone(scenarioState.settings ?? bootstrapSettings),
