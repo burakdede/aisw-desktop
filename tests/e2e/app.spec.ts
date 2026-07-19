@@ -4407,6 +4407,45 @@ test("drops the saved custom engine path when switching back to the bundled engi
     .toBe(true);
 });
 
+test("saves a custom engine path and opens the local data folder from runtime settings", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.locator(".settings-category-pane").getByRole("button", { name: "Engine" }).click();
+
+  const runtimeSource = page.getByLabel("Runtime source");
+  const runtimePath = page.getByLabel("Engine path");
+
+  await expect(runtimeSource).toHaveValue("bundled");
+  await expect(runtimePath).toBeDisabled();
+  await expect(runtimePath).toHaveValue("");
+
+  await runtimeSource.selectOption("custom");
+  await expect(runtimeSource).toHaveValue("custom");
+  await expect(runtimePath).toBeEnabled();
+
+  await runtimePath.fill("/opt/custom/bin/aisw");
+  await page.getByRole("button", { name: "Reveal in Finder" }).click();
+
+  await expect(page.getByText("Opened /Users/burakdede/.local/share/ai-switcher.")).toBeVisible();
+  await expect
+    .poll(async () =>
+      (await readCommandLog(page)).some(
+        (entry) =>
+          entry.command === "update_settings" &&
+          entry.args?.request?.runtime_kind === "custom" &&
+          entry.args?.request?.runtime_path === "/opt/custom/bin/aisw",
+      ),
+    )
+    .toBe(true);
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "open_app_data_folder")).toBe(true);
+});
+
 test("drops the saved custom engine path when switching to the system engine", async ({
   page,
 }) => {
