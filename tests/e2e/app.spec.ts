@@ -20,6 +20,29 @@ test("imports a detected account during onboarding", async ({ page }) => {
   await expect(page.getByLabel("First switch profile")).toContainText("Work");
 });
 
+test("dismisses the onboarding live-import dialog without saving a profile", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "onboarding");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Inspect Claude" }).click();
+  await page.getByRole("button", { name: "Import as profile" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Import Claude Code Profile" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel("Profile name").fill("draft-profile");
+  await dialog.getByLabel("Label").fill("Draft Profile");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole("button", { name: "Import as profile" })).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "add_profile")).toBe(false);
+});
+
 test("opens the terminal setup section from onboarding", async ({ page }) => {
   await installDesktopMock(page, "onboarding");
 
