@@ -316,6 +316,25 @@ test("runs the onboarding first switch and updates the setup summary", async ({ 
   ).toBe(true);
 });
 
+test("opens security settings from onboarding credential storage guidance", async ({ page }) => {
+  await installDesktopMock(page, "onboarding");
+
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Get started" }).first()).toBeVisible();
+
+  await page.getByRole("button", { name: "How credentials stay local" }).click();
+
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  const settingsNav = page.locator(".settings-category-pane");
+  await expect(settingsNav.getByRole("button", { name: "Security", pressed: true })).toBeVisible();
+
+  const securityPane = page.locator(".settings-form-pane");
+  await expect(securityPane.getByText("Credential Storage")).toBeVisible();
+  await expect(securityPane.getByText("macOS Keychain")).toBeVisible();
+  await expect(securityPane.getByText("Local Data")).toBeVisible();
+  await expect(securityPane.getByText("~/.aisw")).toBeVisible();
+});
+
 test("reruns onboarding setup detection and surfaces newly detected live accounts", async ({
   page,
 }) => {
