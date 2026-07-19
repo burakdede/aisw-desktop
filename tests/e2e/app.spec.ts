@@ -2530,6 +2530,21 @@ test("keeps the overview actions menu inside the inspector and routes current-lo
   await expect(dialog.getByLabel("Import mode")).toHaveValue("from_live");
 });
 
+test("keeps reapply out of healthy overview menus", async ({ page }) => {
+  await installDesktopMock(page, "failedBulkSwitch");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Inspect Claude" }).click();
+
+  const inspector = page.locator(".overview-inspector-pane");
+  await inspector.getByRole("button", { name: "More profile actions" }).click();
+
+  const menu = page.getByRole("menu", { name: "Overview actions" });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Open Profile" })).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: /Re-apply/i })).toHaveCount(0);
+});
+
 test("starts current-login import from the overview inspector when live credentials mismatch", async ({
   page,
 }) => {
