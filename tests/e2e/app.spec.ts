@@ -4774,6 +4774,39 @@ test("clears stale updater results when the release channel changes", async ({ p
   expect(checkRuns).toBeGreaterThanOrEqual(2);
 });
 
+test("saves the selected update channel before checking for updates", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+
+  const settingsNav = page.locator(".settings-category-pane");
+  await settingsNav.getByRole("button", { name: "Updates" }).click();
+
+  await page.getByLabel("Update channel").selectOption("beta");
+  const checkCountBefore = await expectCommandCount(page, "check_for_updates");
+  await page.getByRole("button", { name: "Check for Updates" }).click();
+
+  await expect(page.getByText("Channel: beta")).toBeVisible();
+  await expect(page.getByText("Endpoint: https://updates.example.com/beta.json")).toBeVisible();
+  await expect(page.getByText("Update available: 0.3.0-beta.1")).toBeVisible();
+  await expect
+    .poll(async () => expectCommandCount(page, "check_for_updates"))
+    .toBe(checkCountBefore + 1);
+
+  const commandLog = await readCommandLog(page);
+  const updateSettingsIndex = commandLog.findIndex(
+    (entry) =>
+      entry.command === "update_settings" && entry.args?.request?.update_channel === "beta",
+  );
+  const checkForUpdatesIndex = commandLog.findLastIndex(
+    (entry) => entry.command === "check_for_updates",
+  );
+
+  expect(updateSettingsIndex).toBeGreaterThanOrEqual(0);
+  expect(checkForUpdatesIndex).toBeGreaterThan(updateSettingsIndex);
+});
+
 test("shows updater remediation when update checks fail in settings", async ({ page }) => {
   await installDesktopMock(page, "updaterError");
 
