@@ -2473,6 +2473,36 @@ test("focuses the rename field when rename is chosen from the profile inspector 
   await expect(page.getByLabel("rename work")).toBeFocused();
 });
 
+test("closes profile rename without saving changes", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles", exact: true }).click();
+
+  const workRow = page.locator(".profiles-table-row-button").filter({ hasText: "Work" }).first();
+  await workRow.click();
+  await page.locator(".profiles-inspector").getByRole("button", { name: "More profile actions" }).click();
+  await page.getByRole("menuitem", { name: "Rename…" }).click();
+
+  const renameDialog = page.getByRole("dialog", { name: "Edit Profile" });
+  await expect(renameDialog).toBeVisible();
+  await renameDialog.getByLabel("rename work").fill("draft-work");
+  await renameDialog.getByLabel("label work").fill("Draft Work");
+  await renameDialog.getByRole("button", { name: "Cancel" }).click();
+
+  await expect(renameDialog).toBeHidden();
+  await expect(workRow).toBeVisible();
+  await expect(
+    page.locator(".profiles-table-row-button").filter({ hasText: "draft-work" }),
+  ).toHaveCount(0);
+  await expect(page.locator(".profiles-inspector")).toContainText("Work");
+  await expect(page.locator(".profiles-inspector")).not.toContainText("Draft Work");
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "rename_profile")).toBe(false);
+  expect(commandLog.some((entry) => entry.command === "update_settings")).toBe(false);
+});
+
 test("warns before renaming a profile to a duplicate name", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
