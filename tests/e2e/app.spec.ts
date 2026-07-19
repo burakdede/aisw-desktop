@@ -2981,6 +2981,43 @@ test("clears stale updater results when the release channel changes", async ({ p
   expect(checkRuns).toBeGreaterThanOrEqual(2);
 });
 
+test("shows updater remediation when update checks fail in settings", async ({ page }) => {
+  await installDesktopMock(page, "updaterError");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.locator(".settings-category-pane").getByRole("button", { name: "Updates" }).click();
+  await page.getByRole("button", { name: "Check for Updates" }).click();
+
+  await expect(page.getByText("Update check failed")).toBeVisible();
+  await expect(page.getByText("Desktop update failed: invalid endpoint")).toBeVisible();
+  await expect(
+    page.getByText(
+      "Verify the updater endpoint, signing key, and generated updater artifacts for this release.",
+    ),
+  ).toBeVisible();
+});
+
+test("shows updater remediation when install fails in settings", async ({ page }) => {
+  await installDesktopMock(page, "updaterInstallError");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.locator(".settings-category-pane").getByRole("button", { name: "Updates" }).click();
+  await page.getByRole("button", { name: "Check for Updates" }).click();
+  await expect(page.getByText("Update available: 0.2.0")).toBeVisible();
+
+  await page.getByRole("button", { name: "Install Update" }).click();
+
+  await expect(page.getByText("Update install failed")).toBeVisible();
+  await expect(page.getByText("Desktop update failed: signature mismatch")).toBeVisible();
+  await expect(
+    page.getByText(
+      "Verify the updater endpoint, signing key, and generated updater artifacts for this release.",
+    ),
+  ).toBeVisible();
+});
+
 test("persists general preferences and runs security and advanced settings actions", async ({
   page,
 }) => {
