@@ -647,6 +647,145 @@ test("surfaces duplicate profile save failures from the profiles screen", async 
   await expect(addDialog.getByText("duplicate profile")).toBeVisible();
 });
 
+test("limits antigravity profile setup to live auth flows and fixed state mode", async ({
+  page,
+}) => {
+  await installDesktopMock(
+    page,
+    "switching",
+    {
+      claude: { state_modes: ["isolated", "shared"] },
+      codex: { state_modes: ["isolated", "shared"] },
+      gemini: { state_modes: [] },
+      agy: {
+        auth_methods: ["oauth", "from_live"],
+        state_modes: [],
+        credential_backends: ["system_keyring", "file"],
+        fail_closed_keyring_identity: false,
+      },
+    },
+    {
+      snapshot: {
+        statuses: [
+          {
+            tool: "claude",
+            binary_found: true,
+            stored_profiles: 2,
+            active_profile: "work",
+            auth_method: "oauth",
+            credential_backend: "system_keyring",
+            state_mode: "isolated",
+            active_profile_applied: false,
+            credentials_present: true,
+            permissions_ok: true,
+          },
+          {
+            tool: "codex",
+            binary_found: true,
+            stored_profiles: 2,
+            active_profile: "personal",
+            auth_method: "api_key",
+            credential_backend: "system_keyring",
+            state_mode: "isolated",
+            active_profile_applied: true,
+            credentials_present: true,
+            permissions_ok: true,
+          },
+          {
+            tool: "antigravity",
+            binary_found: true,
+            stored_profiles: 1,
+            active_profile: "work",
+            auth_method: "oauth",
+            credential_backend: "system_keyring",
+            state_mode: null,
+            active_profile_applied: true,
+            credentials_present: true,
+            permissions_ok: true,
+          },
+        ],
+        profiles: {
+          claude: {
+            active: "work",
+            profiles: [
+              { name: "work", auth: "oauth", label: "Work" },
+              { name: "personal", auth: "oauth", label: "Personal" },
+            ],
+          },
+          codex: {
+            active: "personal",
+            profiles: [
+              { name: "work", auth: "api_key", label: "Work" },
+              { name: "personal", auth: "api_key", label: "Personal" },
+            ],
+          },
+          antigravity: {
+            active: "work",
+            profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+          },
+        },
+        contexts: [],
+      },
+    },
+  );
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  await page.getByRole("button", { name: "Add Profile" }).click();
+  const addDialog = page.getByRole("dialog", { name: "Add Profile" });
+  await addDialog.getByLabel("Tool").selectOption("antigravity");
+
+  const importMode = addDialog.getByLabel("Import mode");
+  await expect(importMode).toHaveValue("from_live");
+  await expect(importMode.getByRole("option", { name: "Import current login" })).toHaveCount(1);
+  await expect(importMode.getByRole("option", { name: "Sign in with OAuth" })).toHaveCount(1);
+  await expect(importMode.getByRole("option", { name: "Read from environment" })).toHaveCount(0);
+  await expect(importMode.getByRole("option", { name: "Paste API key" })).toHaveCount(0);
+  await expect(addDialog.getByText("Managed by tool")).toBeVisible();
+  await expect(
+    addDialog.getByText("Antigravity CLI keeps authentication and local state together."),
+  ).toBeVisible();
+
+  await addDialog.getByLabel("Profile name").fill("field");
+  await addDialog.getByRole("button", { name: "Import" }).click();
+
+  await expect(addDialog).toBeHidden();
+  await expect(
+    page.locator(".profiles-table-row-button").filter({ hasText: "Field" }).first(),
+  ).toBeVisible();
+
+  const afterImportLog = await readCommandLog(page);
+  expect(
+    afterImportLog.some(
+      (entry) =>
+        entry.command === "add_profile" &&
+        entry.args?.request?.tool === "antigravity" &&
+        entry.args?.request?.state_mode === null,
+    ),
+  ).toBe(true);
+
+  await page.getByRole("button", { name: "Overview" }).click();
+  await page.getByRole("button", { name: "Inspect Antigravity" }).click();
+  await page.getByLabel("Switch antigravity profile").selectOption("work");
+  await page.getByRole("button", { name: "Switch to Work" }).click();
+
+  await expect(
+    page.locator(".overview-tool-list-row").filter({ hasText: "Antigravity" }).first(),
+  ).toContainText("Work");
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "use_profile" &&
+        entry.args?.request?.tool === "antigravity" &&
+        entry.args?.request?.profile === "work" &&
+        entry.args?.request?.state_mode === null,
+    ),
+  ).toBe(true);
+});
+
 test("keeps the backups inspector actions menu inside the visible pane", async ({ page }) => {
   await installDesktopMock(page, "backupCatalog");
 
