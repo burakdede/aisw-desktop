@@ -1436,6 +1436,83 @@ test("warns before renaming a profile to a duplicate name", async ({ page }) => 
   expect(commandLog.some((entry) => entry.command === "rename_profile")).toBe(false);
 });
 
+test("uses saved labels in the profiles inspector header", async ({ page }) => {
+  await installDesktopMock(page, "switching", undefined, {
+    settings: {
+      profile_labels: {
+        claude: {
+          work: "Office",
+        },
+      },
+    },
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  await expect(page.getByRole("heading", { name: "Office" })).toBeVisible();
+  await expect(page.locator(".profiles-inspector")).toContainText("Saved as work");
+  await expect(page.locator(".profiles-table-row-button").filter({ hasText: "work" }).first()).toBeVisible();
+});
+
+test("uses the newest matching backup timestamp in the profiles inspector", async ({ page }) => {
+  await installDesktopMock(page, "profileLatestBackup");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  const expectedNewestAdded = await page.evaluate(() =>
+    new Intl.DateTimeFormat(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZoneName: "short",
+    }).format(new Date("2026-03-27T12:15:00Z")),
+  );
+  const expectedOlderAdded = await page.evaluate(() =>
+    new Intl.DateTimeFormat(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZoneName: "short",
+    }).format(new Date("2026-03-25T11:45:02Z")),
+  );
+
+  await expect(page.locator(".profiles-inspector")).toContainText("Added");
+  await expect(page.locator(".profiles-inspector")).toContainText(expectedNewestAdded);
+  await expect(page.locator(".profiles-inspector")).not.toContainText(expectedOlderAdded);
+});
+
+test("uses the selected state mode when activating from profiles", async ({ page }) => {
+  await installDesktopMock(page, "matchingContextSet");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+  await page.getByLabel("Profile filters").getByRole("button", { name: "Codex" }).click();
+
+  const workRow = page.locator(".profiles-table-row-button").filter({ hasText: "Work" }).first();
+  await workRow.click();
+  await page.getByRole("button", { name: "Shared" }).click();
+  await page.getByRole("button", { name: "Activate Profile" }).click();
+
+  await expect(page.locator(".profiles-inspector")).toContainText("Active");
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "use_profile" &&
+        entry.args?.request?.tool === "codex" &&
+        entry.args?.request?.profile === "work" &&
+        entry.args?.request?.state_mode === "shared",
+    ),
+  ).toBe(true);
+});
+
 test("creates and activates a saved set from the sets screen", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
