@@ -2183,6 +2183,50 @@ test("surfaces failed profile switches in diagnostics and routes back into profi
   await expect(page.getByRole("button", { name: "Storage Details" })).toBeVisible();
 });
 
+test("shows stale-profile remediation immediately in overview after a failed switch", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await overrideDesktopCommand(page, "use_profile", {
+    error: {
+      kind: "ProfileMissing",
+      message: "profile work no longer exists",
+      remediation: "Refresh profile state or recreate the missing profile before retrying.",
+    },
+  });
+  await page.getByRole("button", { name: "Inspect Codex" }).click();
+  await page.getByLabel("Switch codex profile").selectOption("work");
+  await page.getByRole("button", { name: "Switch to Work" }).click();
+
+  await expect
+    .poll(async () =>
+      (await readCommandLog(page)).some(
+        (entry) =>
+          entry.command === "use_profile" &&
+          entry.args?.request?.tool === "codex" &&
+          entry.args?.request?.profile === "work",
+      ),
+    )
+    .toBe(true);
+
+  await expect(
+    page.locator(".overview-tool-list-row").filter({ hasText: "Codex" }).first(),
+  ).toContainText("Personal");
+  await expect(
+    page.getByText(
+      "Last result: profile work no longer exists Remediation: Refresh profile state or recreate the missing profile before retrying.",
+    ),
+  ).toBeVisible();
+  await expect(page.locator(".overview-inspector-pane")).toContainText(
+    "profile work no longer exists",
+  );
+  await expect(page.locator(".overview-inspector-pane")).toContainText(
+    "Refresh profile state or recreate the missing profile before retrying.",
+  );
+});
+
 test("re-applies the active shared profile from the app menu", async ({ page }) => {
   await installDesktopMock(page, "updaterError");
 
