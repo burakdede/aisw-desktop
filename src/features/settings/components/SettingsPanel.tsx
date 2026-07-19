@@ -586,9 +586,9 @@ export function SettingsPanel({
                       disabled={runtimeKind !== "custom"}
                       placeholder={runtimeKind === "custom" ? "/path/to/aisw" : ""}
                       onChange={(event) => setRuntimePath(event.target.value)}
-                      onBlur={() => {
+                      onBlur={(event) => {
                         if (runtimeKind !== "custom") return;
-                        saveSettingsPatch({ runtimePath });
+                        saveSettingsPatch({ runtimePath: event.currentTarget.value });
                       }}
                     />
                   </SettingsRow>
@@ -887,7 +887,9 @@ export function SettingsPanel({
                       aria-label={SETTINGS_PANEL_COPY.advanced.aiswHomeAriaLabel}
                       value={aiswHome}
                       onChange={(event) => setAiswHome(event.target.value)}
-                      onBlur={() => saveSettingsPatch({ aiswHome })}
+                      onBlur={(event) =>
+                        saveSettingsPatch({ aiswHome: event.currentTarget.value })
+                      }
                     />
                   </SettingsRow>
                 </SettingsGroup>

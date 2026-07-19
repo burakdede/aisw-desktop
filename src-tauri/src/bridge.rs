@@ -932,19 +932,30 @@ mod tests {
         AddOAuthProfileRequest, AddProfileMode, AddProfileRequest, RuntimeKind,
         UseAllProfilesRequest, WorkspaceBindRequest, WorkspaceBindTarget,
     };
-    use std::fs;
+    use std::fs::{self, File};
+    use std::io::Write;
     use std::os::unix::fs::PermissionsExt;
     use std::path::PathBuf;
+    use std::sync::atomic::{AtomicU64, Ordering};
     use tempfile::tempdir;
 
+    static NEXT_FAKE_AISW_ID: AtomicU64 = AtomicU64::new(1);
+
     fn write_fake_aisw(script: &str) -> std::path::PathBuf {
-        let dir = tempdir().unwrap();
-        let path = dir.path().join("aisw");
-        fs::write(&path, script).unwrap();
+        let dir = std::env::temp_dir().join(format!(
+            "aisw-bridge-test-{}-{}",
+            std::process::id(),
+            NEXT_FAKE_AISW_ID.fetch_add(1, Ordering::Relaxed)
+        ));
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("aisw");
+        let mut file = File::create(&path).unwrap();
+        file.write_all(script.as_bytes()).unwrap();
+        file.sync_all().unwrap();
+        drop(file);
         let mut perms = fs::metadata(&path).unwrap().permissions();
         perms.set_mode(0o755);
         fs::set_permissions(&path, perms).unwrap();
-        std::mem::forget(dir);
         path
     }
 
