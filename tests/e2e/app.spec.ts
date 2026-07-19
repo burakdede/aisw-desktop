@@ -558,6 +558,25 @@ test("restores the bundled engine from onboarding runtime setup", async ({ page 
   ).toBe(true);
 });
 
+test("opens engine settings from onboarding runtime setup", async ({ page }) => {
+  await installDesktopMock(page, "onboarding");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("tab", { name: "Welcome" }).click();
+
+  await expect(page.getByRole("button", { name: "Engine Settings" })).toBeVisible();
+  await page.getByRole("button", { name: "Engine Settings" }).click();
+
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  const settingsNav = page.locator(".settings-category-pane");
+  await expect(settingsNav.getByRole("button", { name: "Engine", pressed: true })).toBeVisible();
+
+  const runtimePane = page.locator(".settings-form-pane");
+  await expect(runtimePane.getByText("Bundled runtime")).toBeVisible();
+  await expect(runtimePane.getByText("/Applications/AI Switch.app/Contents/Resources/aisw")).toBeVisible();
+});
+
 test("shows runtime compatibility blockers for an unusable runtime", async ({ page }) => {
   await installDesktopMock(page, "incompatibleRuntime");
 
