@@ -305,6 +305,94 @@ test("opens quick switch from the app menu and focuses search", async ({ page })
   await expect(dialog.getByLabel("Search Quick Switch")).toBeFocused();
 });
 
+test("supports keyboard navigation in quick switch with an active descendant", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Quick Switch" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Quick Switch" });
+  const search = dialog.getByRole("searchbox", { name: "Search Quick Switch" });
+  const results = dialog.getByRole("listbox", { name: "Quick Switch results" });
+
+  await expect(results).toBeVisible();
+  await expect(search).toHaveAttribute("aria-controls", "quick-switch-results-listbox");
+
+  const initialActiveId = await search.getAttribute("aria-activedescendant");
+  expect(initialActiveId).toMatch(/^quick-switch-option-/);
+  await expect(page.locator(`[id="${initialActiveId}"]`)).toHaveAttribute("aria-selected", "true");
+
+  await page.keyboard.press("ArrowDown");
+
+  await expect
+    .poll(async () => search.getAttribute("aria-activedescendant"))
+    .not.toBe(initialActiveId);
+
+  const nextActiveId = await search.getAttribute("aria-activedescendant");
+  expect(nextActiveId).toMatch(/^quick-switch-option-/);
+  await expect(page.locator(`[id="${nextActiveId}"]`)).toHaveAttribute("aria-selected", "true");
+});
+
+test("supports Command-Enter in quick switch for matching shared profiles", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Quick Switch" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Quick Switch" });
+  await dialog.getByLabel("Search Quick Switch").fill("work");
+
+  const sharedOption = dialog
+    .getByRole("option")
+    .filter({ hasText: "Across Claude Code, Codex CLI" })
+    .first();
+  await sharedOption.hover();
+  await page.keyboard.press("Meta+Enter");
+
+  await expect(dialog).toHaveCount(0);
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "use_all_profiles")).toBe(true);
+});
+
+test("returns focus to the quick switch trigger when the palette closes", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  const trigger = page.getByRole("button", { name: "Quick Switch" }).first();
+  await trigger.focus();
+  await trigger.click();
+
+  const dialog = page.getByRole("dialog", { name: "Quick Switch" });
+  const search = dialog.getByLabel("Search Quick Switch");
+  await expect(search).toBeFocused();
+
+  await page.keyboard.press("Escape");
+
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
+
+test("clears the quick switch query from the search field", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Quick Switch" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Quick Switch" });
+  const search = dialog.getByRole("searchbox", { name: "Search Quick Switch" });
+  await search.fill("office");
+  await expect(search).toHaveValue("office");
+
+  await dialog.getByRole("button", { name: "Clear Search Quick Switch" }).click();
+  await expect(search).toHaveValue("");
+});
+
 test("announces an available desktop update on launch and lets the user dismiss it", async ({
   page,
 }) => {
