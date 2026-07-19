@@ -3125,6 +3125,40 @@ test("orders backups by created_at metadata and shows formatted timestamps", asy
   await expect(page.locator(".backups-inspector-surface")).not.toContainText("Date Unavailable");
 });
 
+test("reorders backups when the date filter changes", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await overrideDesktopCommand(page, "list_backups", {
+    result: [
+      {
+        backup_id: "newer-claude-work",
+        tool: "claude",
+        profile: "claude/work",
+        created_at: "2026-03-26T11:45:02Z",
+      },
+      {
+        backup_id: "older-codex-personal",
+        tool: "codex",
+        profile: "codex/personal",
+        created_at: "2026-03-24T09:40:12Z",
+      },
+    ],
+  });
+
+  await page.getByRole("button", { name: "Backups" }).click();
+  const toolbar = page.locator(".backups-filter-row");
+  const rows = page.locator(".backups-table-row");
+
+  await expect(rows.nth(0)).toContainText("Work");
+  await expect(rows.nth(1)).toContainText("Personal");
+
+  await toolbar.getByLabel("Date").selectOption("oldest");
+
+  await expect(rows.nth(0)).toContainText("Personal");
+  await expect(rows.nth(1)).toContainText("Work");
+});
+
 test("refreshes backups from the toolbar menu", async ({ page }) => {
   await installDesktopMock(page, "backupCatalog");
 
