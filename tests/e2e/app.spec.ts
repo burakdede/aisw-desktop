@@ -3066,6 +3066,29 @@ test("opens install guidance and refreshes missing-tool diagnostics", async ({ p
   expect(commandLog.filter((entry) => entry.command === "get_snapshot").length).toBeGreaterThan(1);
 });
 
+test("opens terminal setup from diagnostics when the shell hook is inactive", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "diagnosticsRepair");
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Diagnostics" }).click();
+  await expect(page.getByRole("button", { name: "Inspect Shell hook not installed" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Inspect Shell hook not installed" }).click();
+  await page.getByRole("button", { name: "Open terminal setup" }).click();
+
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(
+    page.locator(".settings-category-pane").getByRole("button", {
+      name: "Terminal Integration",
+      pressed: true,
+    }),
+  ).toBeVisible();
+  await expect(page.getByText("Detected shell")).toBeVisible();
+  await expect(page.getByText("~/.zshrc")).toBeVisible();
+});
+
 test("keeps imported CLI contexts collapsed until the disclosure is opened", async ({ page }) => {
   await installDesktopMock(page, "matchingContextSet");
 
@@ -3160,6 +3183,92 @@ test("marks the matched project rule for the current workspace", async ({ page }
   await expect(matchedRule).toContainText("Active");
   await matchedRule.click();
   await expect(page.locator(".sets-rules-inspector")).toContainText("Current project");
+});
+
+test("drops the saved custom engine path when switching back to the bundled engine", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching", undefined, {
+    settings: {
+      runtime_kind: "custom",
+      runtime_path: "/opt/aisw/bin/aisw",
+    },
+    runtime_status: {
+      resolved_path: "/opt/aisw/bin/aisw",
+      inventory: {
+        configured_path: "/opt/aisw/bin/aisw",
+      },
+    },
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.locator(".settings-category-pane").getByRole("button", { name: "Engine" }).click();
+
+  const runtimeSource = page.getByLabel("Runtime source");
+  const runtimePath = page.getByLabel("Engine path");
+  await expect(runtimeSource).toHaveValue("custom");
+  await expect(runtimePath).toHaveValue("/opt/aisw/bin/aisw");
+  await expect(runtimePath).toBeEnabled();
+
+  await runtimeSource.selectOption("bundled");
+
+  await expect(runtimeSource).toHaveValue("bundled");
+  await expect(runtimePath).toBeDisabled();
+  await expect(runtimePath).toHaveValue("");
+  await expect
+    .poll(async () =>
+      (await readCommandLog(page)).some(
+        (entry) =>
+          entry.command === "update_settings" &&
+          entry.args?.request?.runtime_kind === "bundled" &&
+          entry.args?.request?.runtime_path === null,
+      ),
+    )
+    .toBe(true);
+});
+
+test("drops the saved custom engine path when switching to the system engine", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching", undefined, {
+    settings: {
+      runtime_kind: "custom",
+      runtime_path: "/opt/aisw/bin/aisw",
+    },
+    runtime_status: {
+      resolved_path: "/opt/aisw/bin/aisw",
+      inventory: {
+        configured_path: "/opt/aisw/bin/aisw",
+      },
+    },
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.locator(".settings-category-pane").getByRole("button", { name: "Engine" }).click();
+
+  const runtimeSource = page.getByLabel("Runtime source");
+  const runtimePath = page.getByLabel("Engine path");
+  await expect(runtimeSource).toHaveValue("custom");
+  await expect(runtimePath).toHaveValue("/opt/aisw/bin/aisw");
+  await expect(runtimePath).toBeEnabled();
+
+  await runtimeSource.selectOption("system");
+
+  await expect(runtimeSource).toHaveValue("system");
+  await expect(runtimePath).toBeDisabled();
+  await expect(runtimePath).toHaveValue("");
+  await expect
+    .poll(async () =>
+      (await readCommandLog(page)).some(
+        (entry) =>
+          entry.command === "update_settings" &&
+          entry.args?.request?.runtime_kind === "system" &&
+          entry.args?.request?.runtime_path === null,
+      ),
+    )
+    .toBe(true);
 });
 
 async function expectMenuToFitWithin(menu: Locator, container: Locator) {
