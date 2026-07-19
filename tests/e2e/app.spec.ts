@@ -2390,6 +2390,38 @@ test("uses the selected state mode when activating from profiles", async ({ page
   ).toBe(true);
 });
 
+test("reapplies a mismatched active profile from the profile row actions menu", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  const workRow = page.locator(".profiles-table-row").filter({ hasText: "Claude" }).first();
+  await expect(workRow).toContainText("Needs Attention");
+
+  await page.getByRole("button", { name: "More actions for Claude Code Work" }).click();
+  const menu = page.getByRole("menu", { name: "Profile actions" });
+  await expect(menu.getByRole("menuitem", { name: "Reapply Active Profile" })).toBeVisible();
+  await menu.getByRole("menuitem", { name: "Reapply Active Profile" }).click();
+
+  await expect(workRow).toContainText("Active");
+  await expect(workRow).not.toContainText("Needs Attention");
+  await expect(page.locator(".profiles-inspector")).toContainText("Active");
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "use_profile" &&
+        entry.args?.request?.tool === "claude" &&
+        entry.args?.request?.profile === "work" &&
+        entry.args?.request?.state_mode === "isolated",
+    ),
+  ).toBe(true);
+});
+
 test("creates and activates a saved set from the sets screen", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
