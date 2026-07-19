@@ -2677,6 +2677,35 @@ test("creates and activates a saved set from the sets screen", async ({ page }) 
   ).toBe(true);
 });
 
+test("closes a new set draft without creating a saved set", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByRole("button", { name: "New Set…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "New Set" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel("Set name").fill("focus-mode-draft");
+  await dialog.getByLabel("Display label").fill("Focus Mode Draft");
+  await dialog.getByLabel("Claude Code").selectOption("personal");
+  await dialog.getByLabel("Codex CLI").selectOption("personal");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+
+  await expect(dialog).toBeHidden();
+  await expect(
+    page.getByRole("button", { name: "Inspect set Client Acme", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Inspect set Focus Mode Draft", exact: true }),
+  ).toHaveCount(0);
+  await expect(page.getByText("Saved set Focus Mode Draft.")).toHaveCount(0);
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "update_settings")).toBe(false);
+  expect(commandLog.some((entry) => entry.command === "activate_profile_set")).toBe(false);
+});
+
 test("renames a saved set from the sets screen", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
