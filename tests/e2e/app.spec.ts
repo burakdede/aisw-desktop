@@ -3667,6 +3667,55 @@ test("persists general preferences and runs security and advanced settings actio
   expect(commandLog.some((entry) => entry.command === "export_diagnostic_bundle")).toBe(true);
 });
 
+test("saves AISW home and exports the support bundle from advanced settings", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Advanced" }).click();
+
+  const aiswHome = page.getByRole("textbox", { name: "AISW home" });
+  await expect(aiswHome).toHaveValue("");
+
+  await aiswHome.fill("/tmp/aisw-home-custom");
+  await page.getByRole("button", { name: "Open App Data Folder" }).click();
+  await expect(page.getByText("Opened /Users/burakdede/.local/share/ai-switcher.")).toBeVisible();
+  await expect
+    .poll(async () =>
+      (await readCommandLog(page)).some(
+        (entry) =>
+          entry.command === "update_settings" &&
+          entry.args?.request?.aisw_home === "/tmp/aisw-home-custom",
+      ),
+    )
+    .toBe(true);
+
+  await expect(aiswHome).toHaveValue("/tmp/aisw-home-custom");
+
+  await aiswHome.fill("");
+  await page.getByRole("button", { name: "Reset Window Layout" }).click();
+  await expect(page.getByText("Cleared the saved window size and position.")).toBeVisible();
+  await expect
+    .poll(async () =>
+      (await readCommandLog(page)).some(
+        (entry) =>
+          entry.command === "update_settings" && entry.args?.request?.aisw_home === null,
+      ),
+    )
+    .toBe(true);
+
+  await expect(aiswHome).toHaveValue("");
+
+  await page.getByRole("button", { name: "Export Redacted Support Bundle…" }).click();
+  await expect(page.getByText("Saved aisw-desktop-diagnostics-789.json.")).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "open_app_data_folder")).toBe(true);
+  expect(commandLog.some((entry) => entry.command === "export_diagnostic_bundle")).toBe(true);
+});
+
 test("supports arrow-key navigation in settings sections", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
