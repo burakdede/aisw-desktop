@@ -4425,6 +4425,38 @@ test("persists general preferences and runs security and advanced settings actio
   expect(commandLog.some((entry) => entry.command === "export_diagnostic_bundle")).toBe(true);
 });
 
+test("closes the reopened setup assistant after resetting onboarding", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Advanced" }).click();
+  await page.getByRole("button", { name: "Reset Onboarding" }).click();
+
+  await expect(page.getByRole("button", { name: "Close setup" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Get started" }).first()).toBeVisible();
+  await expect(
+    page.getByText("Set up AI Switch on this computer before you switch coding-agent profiles."),
+  ).toBeVisible();
+  await expect
+    .poll(async () => ({
+      defaultSection: await readLocalStorage(page, "ai-switch.desktop.default-section"),
+      reopenSetupAssistant: await readLocalStorage(page, "ai-switch.desktop.reopen-setup-assistant"),
+    }))
+    .toEqual({
+      defaultSection: "overview",
+      reopenSetupAssistant: "true",
+    });
+
+  await page.getByRole("button", { name: "Close setup" }).click();
+
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Close setup" })).toHaveCount(0);
+  await expect
+    .poll(async () => readLocalStorage(page, "ai-switch.desktop.reopen-setup-assistant"))
+    .toBe("false");
+});
+
 test("saves AISW home and exports the support bundle from advanced settings", async ({
   page,
 }) => {
