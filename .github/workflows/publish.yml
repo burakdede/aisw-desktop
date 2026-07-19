@@ -2,18 +2,12 @@ name: publish
 
 on:
   workflow_dispatch:
-    inputs:
-      publish_targets:
-        description: "Comma-separated targets to publish (or 'all')"
-        required: false
-        default: "all"
   push:
     tags:
       - "v*"
 
 jobs:
   publish-tauri:
-    if: github.event_name != 'workflow_dispatch' || inputs.publish_targets == 'all' || contains(inputs.publish_targets, matrix.target)
     environment:
       name: production
     permissions:
