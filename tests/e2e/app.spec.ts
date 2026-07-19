@@ -2387,6 +2387,48 @@ test("renames a saved set from the sets screen", async ({ page }) => {
   expect(commandLog.some((entry) => entry.command === "update_settings")).toBe(true);
 });
 
+test("duplicates a saved set from the sets overflow menu", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByRole("button", { name: "Inspect set Client Acme" }).click();
+  await page.getByRole("button", { name: "More actions for Client Acme" }).click();
+  await page.getByRole("menuitem", { name: "Duplicate…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "New Set" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByLabel("Set name")).toHaveValue("client-acme-copy");
+  await expect(dialog.getByLabel("Display label")).toHaveValue("Client Acme Copy");
+  await dialog.getByRole("button", { name: "Create Set" }).click();
+
+  await expect(dialog).toBeHidden();
+  await expect(page.getByText("Saved set Client Acme Copy.")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Inspect set Client Acme Copy", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator(".sets-inspector")).toContainText("Client Acme Copy");
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "update_settings")).toBe(true);
+});
+
+test("opens project rules from the selected set overflow menu", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByRole("button", { name: "Inspect set Client Acme" }).click();
+  await page.getByRole("button", { name: "More actions for Client Acme" }).click();
+  await page.getByRole("menuitem", { name: "Manage Project Rules…" }).click();
+
+  await expect(
+    page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("heading", { name: "Project Rules" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Add Rule…" })).toBeVisible();
+});
+
 test("deletes a saved set from the sets screen", async ({ page }) => {
   await installDesktopMock(page, "switching");
 

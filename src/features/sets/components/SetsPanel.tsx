@@ -148,6 +148,7 @@ export function SetsPanel({
   const [selectedSetName, setSelectedSetName] = useState<string | null>(
     resolveSelectedSetName(null, settings.profile_sets ?? []),
   );
+  const [pendingSelectedSetName, setPendingSelectedSetName] = useState<string | null>(null);
   const [setEditorOpen, setSetEditorOpen] = useState(false);
   const [ruleEditorOpen, setRuleEditorOpen] = useState(false);
   const [setMenuOpen, setSetMenuOpen] = useState(false);
@@ -253,11 +254,26 @@ export function SetsPanel({
   const isEditingRule = ruleDraft.source !== null;
 
   useEffect(() => {
+    if (
+      pendingSelectedSetName &&
+      selectedSetName === pendingSelectedSetName &&
+      !localSets.some((entry) => entry.name === pendingSelectedSetName)
+    ) {
+      return;
+    }
+
+    if (
+      pendingSelectedSetName &&
+      localSets.some((entry) => entry.name === pendingSelectedSetName)
+    ) {
+      setPendingSelectedSetName(null);
+    }
+
     const nextSetName = resolveSelectedSetName(selectedSetName, localSets);
     if (nextSetName !== selectedSetName) {
       setSelectedSetName(nextSetName);
     }
-  }, [localSets, selectedSetName]);
+  }, [localSets, pendingSelectedSetName, selectedSetName]);
 
   useEffect(() => {
     const nextContext = resolveSelectedBindingContext(ruleDraft.context, bindingOptions);
@@ -333,6 +349,7 @@ export function SetsPanel({
       {
         onSuccess: () => {
           setSelectedSetName(trimmedDraftName);
+          setPendingSelectedSetName(trimmedDraftName);
           setLastSetAction(savedSetActionLabel(trimmedDraftName, setDraft.label, isEditingSet));
           closeSetEditor();
         },
