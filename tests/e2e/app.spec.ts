@@ -497,6 +497,48 @@ test("opens profiles from the onboarding first-switch step when no shared profil
   await expect(addDialog.getByLabel("Tool")).toHaveValue("claude");
 });
 
+test("restores the bundled engine from onboarding runtime setup", async ({ page }) => {
+  await installDesktopMock(page, "onboarding", undefined, {
+    settings: {
+      runtime_kind: "custom",
+      runtime_path: "/opt/aisw/bin/aisw",
+    },
+    runtime_status: {
+      resolved_path: "/opt/aisw/bin/aisw",
+      inventory: {
+        configured_path: "/opt/aisw/bin/aisw",
+      },
+    },
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("tab", { name: "Welcome" }).click();
+
+  await expect(
+    page.getByText("AI Switch is currently pointing at a custom engine path instead of the included one."),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Use Included Engine" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Use Included Engine" }).click();
+
+  await expect(page.getByRole("button", { name: "Use Included Engine" })).toHaveCount(0);
+  await expect(
+    page.getByText("AI Switch is already set to use the desktop engine bundled with this app."),
+  ).toBeVisible();
+  await expect(page.getByText("Ready. Version 0.3.8.")).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "update_settings" &&
+        entry.args?.request?.runtime_kind === "bundled" &&
+        entry.args?.request?.runtime_path === null,
+    ),
+  ).toBe(true);
+});
+
 test("shows runtime compatibility blockers for an unusable runtime", async ({ page }) => {
   await installDesktopMock(page, "incompatibleRuntime");
 
