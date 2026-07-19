@@ -2497,6 +2497,144 @@ test("opens installation help and refreshes a missing tool from overview", async
     .toBe(snapshotReadsBefore + 1);
 });
 
+test("disables overview missing-tool refresh while another switch is in progress", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching", undefined, {
+    snapshot: {
+      statuses: [
+        {
+          tool: "claude",
+          binary_found: true,
+          stored_profiles: 2,
+          active_profile: "work",
+          auth_method: "oauth",
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+        },
+        {
+          tool: "codex",
+          binary_found: true,
+          stored_profiles: 2,
+          active_profile: "personal",
+          auth_method: "api_key",
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+        },
+        {
+          tool: "gemini",
+          binary_found: false,
+          stored_profiles: 0,
+          active_profile: null,
+          auth_method: null,
+          credential_backend: null,
+          state_mode: null,
+          active_profile_applied: null,
+          credentials_present: false,
+          permissions_ok: true,
+        },
+      ],
+      profiles: {
+        claude: {
+          active: "work",
+          profiles: [
+            { name: "work", auth: "oauth", label: "Work" },
+            { name: "personal", auth: "oauth", label: "Personal" },
+          ],
+        },
+        codex: {
+          active: "personal",
+          profiles: [
+            { name: "work", auth: "api_key", label: "Work" },
+            { name: "personal", auth: "api_key", label: "Personal" },
+          ],
+        },
+        gemini: {
+          active: null,
+          profiles: [],
+        },
+      },
+    },
+  });
+
+  await page.goto("/");
+  await page.evaluate(() => {
+    const currentMock = (
+      window as typeof window & {
+        __AISW_DESKTOP_MOCK__?: (command: string, args?: Record<string, unknown>) => Promise<unknown>;
+      }
+    ).__AISW_DESKTOP_MOCK__;
+    if (!currentMock) {
+      return;
+    }
+
+    (
+      window as typeof window & {
+        __AISW_DESKTOP_MOCK__?: (command: string, args?: Record<string, unknown>) => Promise<unknown>;
+        __AISW_PENDING_USE_PROFILE_RESOLVE__?: (value: unknown) => void;
+      }
+    ).__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      if (command === "use_profile") {
+        return await new Promise((resolve) => {
+          (
+            window as typeof window & {
+              __AISW_PENDING_USE_PROFILE_RESOLVE__?: (value: unknown) => void;
+            }
+          ).__AISW_PENDING_USE_PROFILE_RESOLVE__ = resolve;
+        });
+      }
+
+      return currentMock(command, args);
+    };
+  });
+
+  await page.getByRole("button", { name: "Inspect Claude" }).click();
+  await page.getByLabel("Switch claude profile").selectOption("personal");
+  await page.getByRole("button", { name: "Switch to Personal" }).click();
+  await page.waitForFunction(
+    () =>
+      Boolean(
+        (
+          window as typeof window & {
+            __AISW_PENDING_USE_PROFILE_RESOLVE__?: (value: unknown) => void;
+          }
+        ).__AISW_PENDING_USE_PROFILE_RESOLVE__,
+      ),
+  );
+
+  await page.getByRole("button", { name: "Inspect Gemini" }).click();
+  const refreshButton = page.getByRole("button", { name: "Refresh" });
+  await expect(refreshButton).toBeDisabled();
+
+  await page.evaluate(() => {
+    const resolver = (
+      window as typeof window & {
+        __AISW_PENDING_USE_PROFILE_RESOLVE__?: (value: unknown) => void;
+        __AISW_DESKTOP_SCENARIO_STATE__?: { snapshot?: unknown };
+      }
+    ).__AISW_PENDING_USE_PROFILE_RESOLVE__;
+    const snapshot = (
+      window as typeof window & {
+        __AISW_DESKTOP_SCENARIO_STATE__?: { snapshot?: unknown };
+      }
+    ).__AISW_DESKTOP_SCENARIO_STATE__?.snapshot;
+    resolver?.({ command: "use_profile", snapshot });
+    (
+      window as typeof window & {
+        __AISW_PENDING_USE_PROFILE_RESOLVE__?: (value: unknown) => void;
+      }
+    ).__AISW_PENDING_USE_PROFILE_RESOLVE__ = undefined;
+  });
+
+  await expect(refreshButton).toBeEnabled();
+});
+
 test("keeps the overview actions menu inside the inspector and routes current-login import", async ({
   page,
 }) => {
