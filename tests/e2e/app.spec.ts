@@ -1538,6 +1538,52 @@ test("surfaces duplicate profile save failures from the profiles screen", async 
   await expect(addDialog.getByText("duplicate profile")).toBeVisible();
 });
 
+test("shows keyring remediation when profile import fails from the profiles screen", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "profileCommandError");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+  await page.getByRole("button", { name: "Add Profile" }).click();
+
+  const addDialog = page.getByRole("dialog", { name: "Add Profile" });
+  await addDialog.getByLabel("Profile name").fill("ops");
+  await addDialog.getByRole("button", { name: "Import" }).click();
+
+  await expect(
+    addDialog.getByText(
+      "keyring unavailable Remediation: Unlock the local credential store and retry.",
+    ),
+  ).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "add_profile")).toBe(true);
+});
+
+test("shows interactive-session remediation when live import is unavailable", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "nonInteractiveProfile");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+  await page.getByRole("button", { name: "Add Profile" }).click();
+
+  const addDialog = page.getByRole("dialog", { name: "Add Profile" });
+  await addDialog.getByLabel("Profile name").fill("ops");
+  await addDialog.getByRole("button", { name: "Import" }).click();
+
+  await expect(
+    addDialog.getByText(
+      "interactive login required Remediation: Rerun this flow in an interactive session or use a supported non-interactive import method.",
+    ),
+  ).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "add_profile")).toBe(true);
+});
+
 test("limits antigravity profile setup to live auth flows and fixed state mode", async ({
   page,
 }) => {
