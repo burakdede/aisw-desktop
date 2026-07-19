@@ -1338,6 +1338,79 @@ test("adds, renames, activates, and removes a profile from the profiles screen",
   expect(commandLog.some((entry) => entry.command === "remove_profile")).toBe(true);
 });
 
+test("adds a profile from a pasted API key on the profiles screen", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles", exact: true }).click();
+  await page.getByRole("button", { name: "Add Profile" }).click();
+
+  const addDialog = page.getByRole("dialog", { name: "Add Profile" });
+  await addDialog.getByLabel("Tool").selectOption("codex");
+  await addDialog.getByLabel("Profile name").fill("ops");
+  await addDialog.getByLabel("Import mode").selectOption("api_key");
+  await addDialog.getByLabel("Credential backend").selectOption("file");
+  await addDialog.getByLabel("API key").fill("sk-live-secret");
+  await addDialog.getByRole("button", { name: "Save Profile" }).click();
+
+  await expect(addDialog).toBeHidden();
+  await expect(
+    page.locator(".profiles-table-row-button").filter({ hasText: "ops" }).first(),
+  ).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "add_profile" &&
+        entry.args?.request?.tool === "codex" &&
+        entry.args?.request?.profile === "ops" &&
+        entry.args?.request?.credential_backend === "file" &&
+        entry.args?.request?.import_mode?.kind === "api_key" &&
+        entry.args?.request?.import_mode?.value === "sk-live-secret",
+    ),
+  ).toBe(true);
+});
+
+test("derives add-profile modes and fixed file storage from runtime capabilities", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching", {
+    claude: {
+      auth_methods: ["from_env", "api_key"],
+      state_modes: ["isolated", "shared"],
+      credential_backends: ["file"],
+      fail_closed_keyring_identity: false,
+    },
+    codex: {
+      auth_methods: ["from_live", "oauth"],
+      state_modes: ["isolated", "shared"],
+      credential_backends: ["system-keyring", "file"],
+    },
+    gemini: { state_modes: [] },
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles", exact: true }).click();
+  await page.getByRole("button", { name: "Add Profile" }).click();
+
+  const addDialog = page.getByRole("dialog", { name: "Add Profile" });
+  await addDialog.getByLabel("Tool").selectOption("claude");
+
+  const importMode = addDialog.getByLabel("Import mode");
+  await expect(importMode.getByRole("option", { name: "Read from environment" })).toHaveCount(1);
+  await expect(importMode.getByRole("option", { name: "Paste API key" })).toHaveCount(1);
+  await expect(importMode.getByRole("option", { name: "Import current login" })).toHaveCount(0);
+  await expect(importMode.getByRole("option", { name: "Sign in with OAuth" })).toHaveCount(0);
+
+  const backend = addDialog.getByLabel("Credential backend");
+  await expect(backend).toBeDisabled();
+  await expect(backend).toHaveValue("file");
+  await expect(
+    addDialog.getByText("Claude profiles are always stored with file-backed credentials."),
+  ).toBeVisible();
+});
+
 test("warns before renaming a profile to a duplicate name", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
