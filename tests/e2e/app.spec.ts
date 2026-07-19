@@ -769,6 +769,33 @@ test("opens quick switch from the app menu and focuses search", async ({ page })
   await expect(dialog.getByLabel("Search Quick Switch")).toBeFocused();
 });
 
+test("switches a saved set from the native app menu quick-switch entry point", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "menu-open-quick-switch");
+
+  const dialog = page.getByRole("dialog", { name: "Quick Switch" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByLabel("Search Quick Switch")).toBeFocused();
+  await dialog.getByLabel("Search Quick Switch").fill("client acme");
+  await page.keyboard.press("Enter");
+
+  await expect(dialog).toBeHidden();
+  await expect(page.locator(".overview-set-row")).toContainText("Client Acme");
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "activate_profile_set" &&
+        entry.args?.name === "client-acme",
+    ),
+  ).toBe(true);
+});
+
 test("runs diagnostics from the native app-menu verify action", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
