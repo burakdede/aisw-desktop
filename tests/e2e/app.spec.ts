@@ -608,6 +608,47 @@ test("opens the updates settings section from the app menu", async ({ page }) =>
   await expect(page.getByRole("button", { name: "Check for Updates" })).toBeVisible();
 });
 
+test("routes native app-menu navigation across the primary desktop screens", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Inspect Codex" }).click();
+  await page.getByRole("button", { name: "Open Profile" }).click();
+  await expect(
+    page.getByLabel("Profile filters").getByRole("button", { name: "Codex", pressed: true }),
+  ).toBeVisible();
+
+  await dispatchDesktopEvent(page, "menu-open-profiles");
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(
+    page.getByLabel("Profile filters").getByRole("button", { name: "All", pressed: true }),
+  ).toBeVisible();
+
+  await dispatchDesktopEvent(page, "menu-open-sets");
+  await expect(page.getByRole("heading", { name: "Sets" })).toBeVisible();
+  await expect(page.getByLabel("Sets mode")).toBeVisible();
+
+  await dispatchDesktopEvent(page, "menu-open-diagnostics");
+  await expect(page.getByRole("heading", { name: "Diagnostics" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Verify Again" })).toBeVisible();
+
+  await dispatchDesktopEvent(page, "menu-open-backups");
+  await expect(page.getByRole("heading", { name: "Backups" })).toBeVisible();
+  await expect(page.getByRole("toolbar", { name: "Backups filters" })).toBeVisible();
+
+  await dispatchDesktopEvent(page, "menu-open-activity");
+  await expect(page.getByRole("heading", { name: "Activity", exact: true })).toBeVisible();
+  await expect(page.getByRole("searchbox", { name: "Search activity" })).toBeVisible();
+
+  await dispatchDesktopEvent(page, "menu-open-overview");
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Quick Switch" })).toBeVisible();
+});
+
 test("opens quick switch from the app menu and focuses search", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -617,6 +658,27 @@ test("opens quick switch from the app menu and focuses search", async ({ page })
   const dialog = page.getByRole("dialog", { name: "Quick Switch" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByLabel("Search Quick Switch")).toBeFocused();
+});
+
+test("runs diagnostics from the native app-menu verify action", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  const doctorRunsBefore = await expectCommandCount(page, "run_doctor");
+  const verifyRunsBefore = await expectCommandCount(page, "run_verify");
+
+  await dispatchDesktopEvent(page, "menu-run-verify");
+
+  await expect(page.getByRole("heading", { name: "Diagnostics" })).toBeVisible();
+  await expect
+    .poll(async () => ({
+      doctorRuns: await expectCommandCount(page, "run_doctor"),
+      verifyRuns: await expectCommandCount(page, "run_verify"),
+    }))
+    .toEqual({
+      doctorRuns: doctorRunsBefore + 1,
+      verifyRuns: verifyRunsBefore + 1,
+    });
 });
 
 test("supports keyboard navigation in quick switch with an active descendant", async ({

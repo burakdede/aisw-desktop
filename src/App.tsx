@@ -274,8 +274,16 @@ export function App() {
     setActiveNav(APP_NAV_IDS.backups);
   }
 
-  function openProfiles(routeState: ProfilesRouteState = createProfilesRouteState()) {
-    setProfilesRouteState(routeState);
+  function openProfiles(routeState?: ProfilesRouteState) {
+    if (routeState) {
+      setProfilesRouteState(routeState);
+    } else {
+      setProfilesRouteState((current) =>
+        createProfilesRouteState({
+          resetToken: (current.resetToken ?? 0) + 1,
+        }),
+      );
+    }
     setActiveNav(APP_NAV_IDS.profiles);
   }
 
@@ -1015,6 +1023,7 @@ export function App() {
                 initialMode={profilesRouteState.mode}
                 initialCredentialBackend={profilesRouteState.credentialBackend}
                 openToken={profilesRouteState.openToken}
+                resetToken={profilesRouteState.resetToken}
                 onOpenBackups={openBackups}
               />
             ) : null}

@@ -153,6 +153,7 @@ export function ProfilesPanel({
   initialMode,
   initialCredentialBackend,
   openToken,
+  resetToken,
   onOpenBackups,
 }: {
   snapshot: AppSnapshot;
@@ -163,6 +164,7 @@ export function ProfilesPanel({
   initialMode?: ProfileImportMode;
   initialCredentialBackend?: ExplicitProfileCredentialBackend | null;
   openToken?: number;
+  resetToken?: number;
   onOpenBackups?: () => void;
 }) {
   const {
@@ -408,6 +410,36 @@ export function ProfilesPanel({
       setProfileSheetOpen(true);
     }
   }, [initialCredentialBackend, initialExpandedProfile, initialMode, openToken, resolvedInitialTool]);
+
+  useEffect(() => {
+    if (resetToken == null) {
+      return;
+    }
+    if (
+      resolvedInitialTool ||
+      initialExpandedProfile != null ||
+      initialMode ||
+      initialCredentialBackend !== undefined
+    ) {
+      return;
+    }
+
+    setTool("claude");
+    setInventoryFilter("all");
+    setSearch("");
+    setExpandedDetails(null);
+    setOpenStorageDetails(null);
+    setProfileSheetOpen(false);
+    setPendingEdit(null);
+    setPendingRemoval(null);
+    setOpenRowActions(null);
+  }, [
+    initialCredentialBackend,
+    initialExpandedProfile,
+    initialMode,
+    resetToken,
+    resolvedInitialTool,
+  ]);
 
   useEffect(() => {
     if (inventoryFilter === "all") {

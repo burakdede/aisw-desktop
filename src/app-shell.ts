@@ -136,6 +136,7 @@ export type ProfilesRouteState = {
   mode?: ProfileImportMode;
   credentialBackend?: ExplicitProfileCredentialBackend | null;
   openToken?: number;
+  resetToken?: number;
 };
 
 export type SettingsRouteState = {
