@@ -5198,6 +5198,29 @@ test("saves AISW home and exports the support bundle from advanced settings", as
   expect(commandLog.some((entry) => entry.command === "export_diagnostic_bundle")).toBe(true);
 });
 
+test("exports a redacted diagnostic report from security settings", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.locator(".settings-category-pane").getByRole("button", { name: "Security" }).click();
+
+  await page.getByRole("button", { name: "Copy Redacted Report…" }).click();
+  await expect(page.getByText("Saved aisw-desktop-diagnostics-789.json.")).toBeVisible();
+  await expect
+    .poll(async () =>
+      (await readNotifications(page)).some(
+        (notification) =>
+          notification?.title === "Diagnostic report exported" &&
+          notification?.body === "Saved aisw-desktop-diagnostics-789.json.",
+      ),
+    )
+    .toBe(true);
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "export_diagnostic_bundle")).toBe(true);
+});
+
 test("supports arrow-key navigation in settings sections", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
