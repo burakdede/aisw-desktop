@@ -1113,6 +1113,43 @@ test("reviews and applies safe diagnostics repairs, then exports a report", asyn
   ).toBeVisible();
 });
 
+test("shows healthy diagnostics states and reruns checks on demand", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+
+  await expect(page.getByText("Everything looks good")).toBeVisible();
+  await expect(
+    page.getByText(
+      "All configured tools match their active AISW profiles and local storage checks passed.",
+    ),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Review Safe Fixes" })).toBeDisabled();
+
+  const beforeRefresh = await readCommandLog(page);
+  const initialDoctorRuns = beforeRefresh.filter((entry) => entry.command === "run_doctor").length;
+  const initialVerifyRuns = beforeRefresh.filter((entry) => entry.command === "run_verify").length;
+  const initialRepairRuns = beforeRefresh.filter((entry) => entry.command === "run_repair").length;
+
+  await page.getByRole("button", { name: "Verify Again" }).first().click();
+
+  await expect
+    .poll(async () => {
+      const commandLog = await readCommandLog(page);
+      return {
+        doctorRuns: commandLog.filter((entry) => entry.command === "run_doctor").length,
+        verifyRuns: commandLog.filter((entry) => entry.command === "run_verify").length,
+        repairRuns: commandLog.filter((entry) => entry.command === "run_repair").length,
+      };
+    })
+    .toEqual({
+      doctorRuns: initialDoctorRuns + 1,
+      verifyRuns: initialVerifyRuns + 1,
+      repairRuns: initialRepairRuns + 1,
+    });
+});
+
 test("opens diagnostics from the tray without using the sidebar", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -1284,6 +1321,18 @@ test("exports and clears recorded activity from the activity screen", async ({ p
 
   const commandLog = await readCommandLog(page);
   expect(commandLog.some((entry) => entry.command === "export_activity_log")).toBe(true);
+});
+
+test("uses the saved default section on launch", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+  await page.addInitScript(() => {
+    window.localStorage.setItem("ai-switch.desktop.default-section", "profiles");
+  });
+
+  await page.goto("/");
+
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(page.getByRole("searchbox", { name: "Search Profiles" })).toBeVisible();
 });
 
 test("manages launch, shell, update, and app-data actions from settings", async ({ page }) => {
