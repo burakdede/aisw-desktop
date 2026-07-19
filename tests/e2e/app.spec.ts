@@ -565,6 +565,23 @@ test("opens profiles and settings from the help sheet", async ({ page }) => {
   expect(commandLog.some((entry) => entry.command === "open_reference_document")).toBe(true);
 });
 
+test("closes the help sheet without changing screens", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "menu-open-help");
+
+  const dialog = page.getByRole("dialog", { name: "Using AI Switch" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Close" }).click();
+
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "open_reference_document")).toBe(true);
+});
+
 test("falls back to exporting diagnostics when the issue tracker cannot open", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
