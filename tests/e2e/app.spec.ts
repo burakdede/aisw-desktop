@@ -1584,6 +1584,39 @@ test("shows interactive-session remediation when live import is unavailable", as
   expect(commandLog.some((entry) => entry.command === "add_profile")).toBe(true);
 });
 
+test("classifies non-interactive profile import failures in diagnostics", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "nonInteractiveProfile");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+  await page.getByRole("button", { name: "Add Profile" }).click();
+
+  const addDialog = page.getByRole("dialog", { name: "Add Profile" });
+  await addDialog.getByLabel("Profile name").fill("ops");
+  await addDialog.getByRole("button", { name: "Import" }).click();
+
+  await expect(
+    addDialog.getByText(
+      "interactive login required Remediation: Rerun this flow in an interactive session or use a supported non-interactive import method.",
+    ),
+  ).toBeVisible();
+
+  await addDialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(addDialog).toBeHidden();
+
+  await page.locator(".sidebar").getByRole("button", { name: "Diagnostics", exact: true }).click();
+  await expect(page.getByLabel("Diagnostics findings")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Non-interactive mode failure" })).toBeVisible();
+  await expect(page.getByText("interactive login required").first()).toBeVisible();
+  await expect(
+    page.getByText(
+      "Rerun this flow in an interactive session or use a supported non-interactive import method.",
+    ).first(),
+  ).toBeVisible();
+});
+
 test("limits antigravity profile setup to live auth flows and fixed state mode", async ({
   page,
 }) => {
