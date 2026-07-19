@@ -4144,6 +4144,34 @@ test("shows workspace mismatch details and activates the expected set", async ({
   ).toBe(true);
 });
 
+test("dismisses the workspace mismatch banner without switching sets", async ({ page }) => {
+  await installDesktopMock(page, "workspaceContext", undefined, {
+    settings: {
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    },
+  });
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
+
+  await expect(page.getByText("Project mismatch")).toBeVisible();
+  await page.getByRole("button", { name: "Keep current set" }).click();
+
+  await expect(page.getByText("Project mismatch")).toHaveCount(0);
+  await expect(page.getByText("Expected set: Client Acme")).toHaveCount(0);
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "activate_profile_set")).toBe(false);
+  expect(commandLog.some((entry) => entry.command === "use_context")).toBe(false);
+});
+
 test("excludes duplicate imported CLI contexts from project-rule options when a saved set exists", async ({
   page,
 }) => {
