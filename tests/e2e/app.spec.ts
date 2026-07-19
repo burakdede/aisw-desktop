@@ -252,6 +252,69 @@ test("opens profiles from onboarding when an installed tool still needs a saved 
   await expect(addDialog.getByLabel("Tool")).toHaveValue("codex");
 });
 
+test("opens profiles from onboarding when an installed tool has no live credentials", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "noLiveAccounts", undefined, {
+    snapshot: {
+      statuses: [
+        {
+          tool: "codex",
+          binary_found: true,
+          stored_profiles: 0,
+          active_profile: null,
+          auth_method: null,
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: null,
+          credentials_present: false,
+          permissions_ok: true,
+          warnings: [],
+        },
+      ],
+      profiles: {
+        codex: {
+          active: null,
+          profiles: [],
+        },
+      },
+      contexts: [],
+    },
+    initReport: {
+      result: {
+        live_accounts: [],
+      },
+    },
+  });
+
+  await page.goto("/");
+
+  await expect(page.getByRole("heading", { name: "Get started" }).first()).toBeVisible();
+  await expect(page.getByText("Installed, but no saved profile yet").first()).toBeVisible();
+
+  await page.getByLabel("Add codex profile").click();
+
+  const addDialog = page.getByRole("dialog", { name: "Add Profile" });
+  await expect(page.getByRole("heading", { name: "Profiles", exact: true })).toBeVisible();
+  await expect(
+    page.getByLabel("Profile filters").getByRole("button", { name: "Codex", pressed: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No matching profiles" })).toBeVisible();
+  await expect(addDialog.getByLabel("Tool")).toHaveValue("codex");
+});
+
+test("keeps setup visible while another installed tool still has no profile", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "partialSetup");
+
+  await page.goto("/");
+
+  await expect(page.getByRole("heading", { name: "Get started" }).first()).toBeVisible();
+  await expect(page.getByText("Installed, but no saved profile yet").first()).toBeVisible();
+  await expect(page.getByLabel("Add codex profile")).toBeVisible();
+});
+
 test("resets settings to the default section when reopened from a fresh entry point", async ({
   page,
 }) => {
@@ -1458,6 +1521,79 @@ test("clears routed profile details when reopening profiles from the sidebar", a
   await expect(page.getByRole("heading", { name: "Work" })).toBeVisible();
 });
 
+test("clears route-opened profile details when switching tools manually", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching", undefined, {
+    snapshot: {
+      statuses: [
+        {
+          tool: "claude",
+          binary_found: true,
+          stored_profiles: 2,
+          active_profile: "personal",
+          auth_method: "oauth",
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+          warnings: [],
+        },
+        {
+          tool: "codex",
+          binary_found: true,
+          stored_profiles: 2,
+          active_profile: "personal",
+          auth_method: "api_key",
+          credential_backend: "file",
+          state_mode: "shared",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+          warnings: [],
+        },
+      ],
+      profiles: {
+        claude: {
+          active: "personal",
+          profiles: [
+            { name: "work", auth: "oauth", label: "Work" },
+            { name: "personal", auth: "oauth", label: "Personal" },
+          ],
+        },
+        codex: {
+          active: "personal",
+          profiles: [
+            { name: "work", auth: "api_key", label: "Work" },
+            { name: "personal", auth: "api_key", label: "Personal" },
+          ],
+        },
+      },
+      contexts: [],
+    },
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Inspect Codex" }).click();
+  await page.getByRole("button", { name: "Open Profile" }).click();
+
+  const profileFilters = page.getByLabel("Profile filters");
+  const inspectorPane = page.locator(".profiles-inspector-pane");
+
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(profileFilters.getByRole("button", { name: "Codex", pressed: true })).toBeVisible();
+  await expect(inspectorPane).toContainText("Personal");
+  await expect(inspectorPane).toContainText("Authentication");
+  await expect(inspectorPane).toContainText("API Key");
+
+  await profileFilters.getByRole("button", { name: "Claude" }).click();
+
+  await expect(profileFilters.getByRole("button", { name: "Claude", pressed: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Personal" })).toBeVisible();
+  await expect(inspectorPane).not.toContainText("API Key");
+});
+
 test("shows the last successful overview switch result on the active tool card", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -1483,6 +1619,69 @@ test("shows the last successful overview switch result on the active tool card",
         entry.args?.request?.profile === "work",
     ),
   ).toBe(true);
+});
+
+test("supports arrow-key navigation in the profiles inventory", async ({ page }) => {
+  await installDesktopMock(page, "switching", undefined, {
+    snapshot: {
+      statuses: [
+        {
+          tool: "claude",
+          binary_found: true,
+          stored_profiles: 1,
+          active_profile: "work",
+          auth_method: "oauth",
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+          warnings: [],
+        },
+        {
+          tool: "codex",
+          binary_found: true,
+          stored_profiles: 1,
+          active_profile: "work",
+          auth_method: "api_key",
+          credential_backend: "file",
+          state_mode: "shared",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+          warnings: [],
+        },
+      ],
+      profiles: {
+        claude: {
+          active: "work",
+          profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+        },
+        codex: {
+          active: "work",
+          profiles: [{ name: "work", auth: "api_key", label: "Work" }],
+        },
+      },
+      contexts: [],
+    },
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  const profilesList = page.getByRole("listbox", { name: "Profiles" });
+  const workRow = page.getByRole("option", { name: "Inspect Claude Code Work" });
+  const codexRow = page.getByRole("option", { name: "Inspect Codex CLI Work" });
+
+  await expect(profilesList).toBeVisible();
+
+  await workRow.focus();
+  await workRow.press("ArrowDown");
+
+  await expect(codexRow).toHaveAttribute("aria-selected", "true");
+  await expect(codexRow).toBeFocused();
+  await expect(workRow).toHaveAttribute("aria-selected", "false");
+  await expect(page.getByRole("heading", { name: "Work" })).toBeVisible();
 });
 
 test("uses saved profile labels in overview switch results", async ({ page }) => {
