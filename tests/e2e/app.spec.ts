@@ -2705,6 +2705,37 @@ test("renames a saved set from the sets screen", async ({ page }) => {
   expect(commandLog.some((entry) => entry.command === "update_settings")).toBe(true);
 });
 
+test("closes the set editor without saving changes", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByRole("button", { name: "Inspect set Client Acme" }).click();
+  await page.getByRole("button", { name: "Edit…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Edit Set" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel("Set name").fill("client-acme-draft");
+  await dialog.getByLabel("Display label").fill("Client Acme Draft");
+  await dialog.getByLabel("Codex CLI").selectOption("personal");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+
+  await expect(dialog).toBeHidden();
+  await expect(
+    page.getByRole("button", { name: "Inspect set Client Acme", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Inspect set Client Acme Draft", exact: true }),
+  ).toHaveCount(0);
+  await expect(page.locator(".sets-inspector")).toContainText("Client Acme");
+  await expect(
+    page.locator(".sets-detail-row").filter({ hasText: "Codex CLI" }),
+  ).toContainText("Work");
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "update_settings")).toBe(false);
+});
+
 test("updates saved set mappings from the sets inspector", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
