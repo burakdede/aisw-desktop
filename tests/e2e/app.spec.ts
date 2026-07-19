@@ -1694,8 +1694,70 @@ test("shows the last successful overview switch result on the active tool card",
         entry.command === "use_profile" &&
         entry.args?.request?.tool === "codex" &&
         entry.args?.request?.profile === "work",
+      ),
+  ).toBe(true);
+});
+
+test("resolves a workspace mismatch directly from overview actions", async ({ page }) => {
+  await installDesktopMock(page, "workspaceContext");
+
+  await page.goto("/");
+  await expect(page.getByText("Expected set: client-acme")).toBeVisible();
+
+  await page.getByRole("button", { name: "Inspect Claude" }).click();
+  await page.getByRole("button", { name: "More profile actions" }).click();
+  await page.getByRole("menuitem", { name: "Use Expected Set" }).click();
+
+  await expect(page.getByText("Expected set: client-acme")).toHaveCount(0);
+  await expect(page.locator(".overview-status-strip")).toContainText("Ready to switch");
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "use_context" &&
+        entry.args?.request?.context === "client-acme",
     ),
   ).toBe(true);
+});
+
+test("opens installation help and refreshes a missing tool from overview", async ({ page }) => {
+  await installDesktopMock(page, "missingTool");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Inspect Gemini" }).click();
+
+  await expect(page.getByText("Gemini CLI is not installed on this Mac.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Installation Help" }).click();
+  await expect.poll(async () => readOpenedGuides(page)).toContain(
+    "https://www.npmjs.com/package/@google/gemini-cli",
+  );
+
+  const snapshotReadsBefore = await expectCommandCount(page, "get_snapshot");
+  await page.getByRole("button", { name: "Refresh" }).click();
+
+  await expect
+    .poll(async () => await expectCommandCount(page, "get_snapshot"))
+    .toBe(snapshotReadsBefore + 1);
+});
+
+test("opens activity from the overview footer after a switch result is recorded", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Inspect Codex" }).click();
+  await page.getByLabel("Switch codex profile").selectOption("work");
+  await page.getByRole("button", { name: "Switch to Work" }).click();
+
+  await expect(page.getByText("Last result: Switched Codex CLI to Work.")).toBeVisible();
+  await page.getByRole("button", { name: "View Activity" }).click();
+
+  await expect(page.getByRole("heading", { name: "Activity" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Switch profile" })).toBeVisible();
+  await expect(page.getByText("Switched Codex CLI to Work.")).toBeVisible();
 });
 
 test("supports arrow-key navigation in the profiles inventory", async ({ page }) => {
