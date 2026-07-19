@@ -2923,6 +2923,35 @@ test("reviews and applies safe diagnostics repairs, then exports a report", asyn
   ).toBeVisible();
 });
 
+test("reviews safe diagnostics fixes and closes without applying changes", async ({ page }) => {
+  await installDesktopMock(page, "diagnosticsRepair");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+
+  const reviewSafeFixes = page.getByRole("button", { name: "Review Safe Fixes" });
+  await expect(reviewSafeFixes).toBeEnabled();
+  await reviewSafeFixes.click();
+
+  const repairDialog = page.getByRole("dialog", { name: "Review Safe Fixes" });
+  await expect(repairDialog).toBeVisible();
+  await expect(repairDialog.getByText("Unlock keyring integration")).toBeVisible();
+  await expect(repairDialog.getByRole("button", { name: /Apply .* Fixes|Apply Safe Fixes/ })).toBeVisible();
+
+  await repairDialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(repairDialog).toBeHidden();
+  await expect(page.getByRole("button", { name: "Review Safe Fixes" })).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "run_repair" &&
+        entry.args?.request?.apply === true,
+    ),
+  ).toBe(false);
+});
+
 test("copies the exported diagnostics report path from the footer", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
