@@ -878,6 +878,40 @@ test("records tray command results and shows a desktop notification", async ({ p
     .toBe(true);
 });
 
+test("surfaces token warnings in overview cards", async ({ page }) => {
+  await installDesktopMock(page, "tokenWarnings");
+
+  await page.goto("/");
+
+  await expect(
+    page.getByText("Token warning: Claude session expires soon Expires in 2 days."),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      "Warning: Refresh Claude authentication soon. Remediation: Run the guided OAuth flow again.",
+    ),
+  ).toBeVisible();
+});
+
+test("refreshes overview state after a failed shared switch to show the rolled-back profile", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "failedBulkSwitch");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Quick Switch" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Quick Switch" });
+  await dialog.getByLabel("Search Quick Switch").fill("work");
+  await dialog.getByRole("option").filter({ hasText: "Across Claude Code, Codex CLI" }).first().click();
+
+  await expect(page.getByText("Active profile: Personal")).toBeVisible();
+  await expect(page.getByText("Last set result: switch failed")).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "use_all_profiles")).toBe(true);
+});
+
 test("records tray context failures with remediation and shows a desktop notification", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
