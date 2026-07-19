@@ -414,6 +414,22 @@ test("shows bootstrap remediation when initial desktop state cannot load", async
   await expect(page.getByText("Select a valid bundled, system, or custom switching runtime.")).toBeVisible();
 });
 
+test("shows the waiting snapshot surface when the desktop runtime is ready but no snapshot is available", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "waitingSnapshot");
+
+  await page.goto("/");
+
+  await expect(page.getByText("Bootstrap")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Waiting for snapshot" })).toBeVisible();
+  await expect(
+    page.getByText(
+      "The desktop engine is compatible, but no state snapshot is available yet.",
+    ),
+  ).toBeVisible();
+});
+
 test("opens quick switch from the keyboard shortcut and focuses search", async ({ page }) => {
   await installDesktopMock(page, "switching");
 

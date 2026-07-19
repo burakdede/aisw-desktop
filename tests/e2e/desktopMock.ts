@@ -35,6 +35,7 @@ type ScenarioName =
   | "emptyProfileSetWorkspaceMismatch"
   | "staleProfileSet"
   | "staleWorkspaceTarget"
+  | "waitingSnapshot"
   | "bootstrapError";
 
 const toolCapabilities = {
@@ -290,6 +291,14 @@ export async function installDesktopMock(
           },
         },
         bootstrapError: {
+          snapshot: null,
+          initReport: {
+            result: {
+              live_accounts: [],
+            },
+          },
+        },
+        waitingSnapshot: {
           snapshot: null,
           initReport: {
             result: {
@@ -1989,12 +1998,21 @@ export async function installDesktopMock(
               snapshot: null,
             };
           }
+          if (activeScenario === "waitingSnapshot") {
+            return {
+              ...deepClone(state.bootstrap),
+              snapshot: null,
+            };
+          }
           return {
             ...deepClone(state.bootstrap),
             snapshot: cloneSnapshot(),
           };
         }
         if (command === "get_snapshot") {
+          if (activeScenario === "waitingSnapshot") {
+            return null;
+          }
           if (activeScenario === "failedBulkSwitch") {
             state.snapshotReads += 1;
             if (state.snapshotReads > 1) {
