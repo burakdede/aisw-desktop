@@ -86,6 +86,74 @@ test("shows missing-tool guidance during onboarding", async ({ page }) => {
     .toContain("https://www.npmjs.com/package/@google/gemini-cli");
 });
 
+test("reruns onboarding setup detection and surfaces newly detected live accounts", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "noLiveAccounts");
+
+  await page.goto("/");
+
+  await expect(page.getByRole("heading", { name: "Get started" }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Get Started" })).toBeVisible();
+
+  const initialInitRuns = (await readCommandLog(page)).filter(
+    (entry) => entry.command === "run_init",
+  ).length;
+
+  await page.getByRole("button", { name: "Get Started" }).click();
+
+  await expect(page.getByRole("button", { name: "Inspect Codex" })).toBeVisible();
+  await expect(page.getByText("detected · oauth").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Refresh Setup" })).toBeVisible();
+  await expect
+    .poll(async () =>
+      (await readCommandLog(page)).filter((entry) => entry.command === "run_init").length,
+    )
+    .toBe(initialInitRuns + 1);
+});
+
+test("opens profiles from onboarding when an installed tool still needs a saved profile", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "partialSetup");
+
+  await page.goto("/");
+
+  await expect(page.getByRole("heading", { name: "Get started" }).first()).toBeVisible();
+  await expect(page.getByText("Installed, but no saved profile yet").first()).toBeVisible();
+
+  await page.getByLabel("Add codex profile").click();
+
+  const addDialog = page.getByRole("dialog", { name: "Add Profile" });
+  await expect(page.getByRole("heading", { name: "Profiles", exact: true })).toBeVisible();
+  await expect(
+    page.getByLabel("Profile filters").getByRole("button", { name: "Codex", pressed: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No matching profiles" })).toBeVisible();
+  await expect(addDialog.getByLabel("Tool")).toHaveValue("codex");
+});
+
+test("opens profiles from the onboarding first-switch step when no shared profile choices exist", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "partialSetup");
+
+  await page.goto("/");
+
+  await page.getByRole("tab", { name: "First switch" }).click();
+  await expect(
+    page.getByText(
+      "Import or create matching profile names across tools before running a shared switch check.",
+    ),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Open Profiles" }).click();
+
+  const addDialog = page.getByRole("dialog", { name: "Add Profile" });
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(addDialog.getByLabel("Tool")).toHaveValue("claude");
+});
+
 test("shows runtime compatibility blockers for an unusable runtime", async ({ page }) => {
   await installDesktopMock(page, "incompatibleRuntime");
 
