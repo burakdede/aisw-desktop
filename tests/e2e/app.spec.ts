@@ -1321,6 +1321,50 @@ test("surfaces a newly available desktop update after dismissing an older versio
     .toBe(true);
 });
 
+test("uses fallback update copy and keeps a dismissed version hidden after relaunch", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching", undefined, {
+    preserveLocalStorageOnReload: true,
+    updateCheckReport: {
+      configured: true,
+      channel: "stable",
+      current_version: "0.1.11",
+      endpoint: "https://updates.example.com/stable.json",
+      update: {
+        version: "0.2.1",
+        current_version: "0.1.11",
+        target: "darwin-aarch64",
+        notes: null,
+      },
+      message: null,
+    },
+  });
+
+  await page.goto("/");
+
+  await expect(page.getByText("AI Switcher 0.2.1 is available")).toBeVisible();
+  await expect(
+    page.getByText(
+      "New fixes and improvements are ready. Download the signed update and restart when prompted.",
+    ),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Later" }).click();
+
+  await expect(page.getByText("AI Switcher 0.2.1 is available")).toHaveCount(0);
+  await expect
+    .poll(async () => readLocalStorage(page, "ai-switch.desktop.update-dismissed-version"))
+    .toBe("0.2.1");
+
+  await page.reload();
+
+  await expect(page.getByText("AI Switcher 0.2.1 is available")).toHaveCount(0);
+  await expect
+    .poll(async () => readLocalStorage(page, "ai-switch.desktop.update-dismissed-version"))
+    .toBe("0.2.1");
+});
+
 test("installs an available desktop update from the global banner", async ({ page }) => {
   await installDesktopMock(page, "switching");
 

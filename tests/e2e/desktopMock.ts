@@ -52,7 +52,13 @@ export async function installDesktopMock(
 ) {
   await page.addInitScript(
     ({ activeScenario, capabilities, scenarioPatch, currentAppVersion }) => {
-      window.localStorage.clear();
+      const preserveLocalStorageOnReload =
+        typeof scenarioPatch === "object" &&
+        scenarioPatch !== null &&
+        scenarioPatch.preserveLocalStorageOnReload === true;
+      if (!preserveLocalStorageOnReload) {
+        window.localStorage.clear();
+      }
       if (document.documentElement) {
         document.documentElement.removeAttribute("data-appearance");
         document.documentElement.style.colorScheme = "";
@@ -2300,6 +2306,12 @@ export async function installDesktopMock(
           return [];
         }
         if (command === "check_for_updates") {
+          if (scenarioState.updateCheckError) {
+            throw deepClone(scenarioState.updateCheckError);
+          }
+          if (scenarioState.updateCheckReport) {
+            return deepClone(scenarioState.updateCheckReport);
+          }
           if (activeScenario === "updaterError") {
             throw {
               message: "Desktop update failed: invalid endpoint",
@@ -2326,6 +2338,12 @@ export async function installDesktopMock(
           };
         }
         if (command === "install_update") {
+          if (scenarioState.installUpdateError) {
+            throw deepClone(scenarioState.installUpdateError);
+          }
+          if (scenarioState.installUpdateReport) {
+            return deepClone(scenarioState.installUpdateReport);
+          }
           if (activeScenario === "updaterInstallError") {
             throw {
               message: "Desktop update failed: signature mismatch",
