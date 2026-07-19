@@ -2179,6 +2179,27 @@ test("captures a profile through the OAuth flow and shows progress steps", async
       window as typeof window & {
         __AISW_DESKTOP_MOCK__?: (command: string, args?: Record<string, unknown>) => Promise<unknown>;
         __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+        __AISW_COMMAND_LOG__?: Array<{ command: string; args: Record<string, unknown> | null }>;
+        __AISW_DESKTOP_SCENARIO_STATE__?: {
+          snapshot?: {
+            profiles: Record<
+              string,
+              { active: string | null; profiles: Array<{ name: string; auth: string; label: string | null }> }
+            >;
+            statuses: Array<{
+              tool: string;
+              binary_found: boolean;
+              stored_profiles: number;
+              active_profile: string | null;
+              auth_method: string | null;
+              credential_backend: string | null;
+              state_mode: string | null;
+              active_profile_applied: boolean | null;
+              credentials_present: boolean;
+              permissions_ok: boolean;
+            }>;
+          };
+        };
       }
     ).__AISW_DESKTOP_MOCK__;
     if (!currentMock) {
@@ -2189,11 +2210,41 @@ test("captures a profile through the OAuth flow and shows progress steps", async
       window as typeof window & {
         __AISW_DESKTOP_MOCK__?: (command: string, args?: Record<string, unknown>) => Promise<unknown>;
         __AISW_DESKTOP_EVENT_HANDLERS__?: Record<string, (payload: unknown) => void>;
+        __AISW_COMMAND_LOG__?: Array<{ command: string; args: Record<string, unknown> | null }>;
+        __AISW_DESKTOP_SCENARIO_STATE__?: {
+          snapshot?: {
+            profiles: Record<
+              string,
+              { active: string | null; profiles: Array<{ name: string; auth: string; label: string | null }> }
+            >;
+            statuses: Array<{
+              tool: string;
+              binary_found: boolean;
+              stored_profiles: number;
+              active_profile: string | null;
+              auth_method: string | null;
+              credential_backend: string | null;
+              state_mode: string | null;
+              active_profile_applied: boolean | null;
+              credentials_present: boolean;
+              permissions_ok: boolean;
+            }>;
+          };
+        };
       }
     ).__AISW_DESKTOP_MOCK__ = async (command, args) => {
       if (command !== "add_profile_oauth") {
         return currentMock(command, args);
       }
+
+      (
+        window as typeof window & {
+          __AISW_COMMAND_LOG__?: Array<{ command: string; args: Record<string, unknown> | null }>;
+        }
+      ).__AISW_COMMAND_LOG__?.push({
+        command,
+        args: JSON.parse(JSON.stringify(args ?? null)) as Record<string, unknown> | null,
+      });
 
       const emit = (
         window as typeof window & {
@@ -2204,8 +2255,83 @@ test("captures a profile through the OAuth flow and shows progress steps", async
       await new Promise((resolve) => window.setTimeout(resolve, 120));
       emit?.({ seq: 2, phase: "waiting_for_login", message: "Waiting for login" });
       await new Promise((resolve) => window.setTimeout(resolve, 900));
+      const request = args?.request as
+        | {
+            tool?: string;
+            profile?: string;
+            label?: string | null;
+            state_mode?: string | null;
+          }
+        | undefined;
+      const scenarioState = (
+        window as typeof window & {
+          __AISW_DESKTOP_SCENARIO_STATE__?: {
+            snapshot?: {
+              profiles: Record<
+                string,
+                {
+                  active: string | null;
+                  profiles: Array<{ name: string; auth: string; label: string | null }>;
+                }
+              >;
+              statuses: Array<{
+                tool: string;
+                binary_found: boolean;
+                stored_profiles: number;
+                active_profile: string | null;
+                auth_method: string | null;
+                credential_backend: string | null;
+                state_mode: string | null;
+                active_profile_applied: boolean | null;
+                credentials_present: boolean;
+                permissions_ok: boolean;
+              }>;
+            };
+          };
+        }
+      ).__AISW_DESKTOP_SCENARIO_STATE__;
 
-      return currentMock(command, args);
+      if (!request?.tool || !request.profile || !scenarioState?.snapshot) {
+        return currentMock(command, args);
+      }
+
+      const snapshot = scenarioState.snapshot;
+      snapshot.profiles[request.tool] ??= { active: null, profiles: [] };
+      let statusEntry = snapshot.statuses.find((entry) => entry.tool === request.tool);
+      if (!statusEntry) {
+        statusEntry = {
+          tool: request.tool,
+          binary_found: true,
+          stored_profiles: 0,
+          active_profile: null,
+          auth_method: null,
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: null,
+          credentials_present: false,
+          permissions_ok: true,
+        };
+        snapshot.statuses.push(statusEntry);
+      }
+
+      snapshot.profiles[request.tool].profiles.push({
+        name: request.profile,
+        auth: "oauth",
+        label: request.label ?? null,
+      });
+      snapshot.profiles[request.tool].active = request.profile;
+      statusEntry.stored_profiles = snapshot.profiles[request.tool].profiles.length;
+      statusEntry.active_profile = request.profile;
+      statusEntry.auth_method = "oauth";
+      statusEntry.active_profile_applied = true;
+      statusEntry.credentials_present = true;
+      statusEntry.state_mode = request.state_mode ?? statusEntry.state_mode;
+      emit?.({ seq: 3, phase: "profile_saved", message: "Profile saved" });
+
+      return {
+        command,
+        snapshot: await currentMock("get_snapshot"),
+      };
     };
   });
   await dialog.getByLabel("Tool").selectOption("claude");
@@ -2267,6 +2393,68 @@ test("opens install guidance and refreshes missing-tool diagnostics", async ({ p
   const commandLog = await readCommandLog(page);
   expect(commandLog.filter((entry) => entry.command === "run_doctor").length).toBeGreaterThan(1);
   expect(commandLog.filter((entry) => entry.command === "get_snapshot").length).toBeGreaterThan(1);
+});
+
+test("keeps imported CLI contexts collapsed until the disclosure is opened", async ({ page }) => {
+  await installDesktopMock(page, "matchingContextSet");
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+
+  const disclosure = page.locator(".sets-imported-disclosure");
+  await expect(disclosure).toBeVisible();
+  await expect(disclosure).not.toHaveAttribute("open", "");
+  await expect(disclosure.getByRole("button", { name: "Use CLI Context Client Acme" })).toHaveCount(0);
+
+  await disclosure.locator("summary").click();
+
+  await expect(disclosure).toHaveAttribute("open", "");
+  await expect(
+    disclosure.getByText("Use an imported CLI context directly without turning it into a saved set."),
+  ).toBeVisible();
+  await expect(disclosure.getByRole("button", { name: "Use CLI Context Client Acme" })).toBeVisible();
+});
+
+test("uses saved profile labels in set and imported-context summaries", async ({ page }) => {
+  await installDesktopMock(page, "matchingContextSet", undefined, {
+    settings: {
+      profile_labels: {
+        claude: { work: "Office" },
+        codex: { work: "Code Work" },
+      },
+    },
+  });
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+
+  await expect(page.getByText("2 profiles mapped")).toBeVisible();
+  await expect(
+    page
+      .getByRole("button", { name: "Inspect set Client Acme", exact: true })
+      .locator(".sets-library-row-summary"),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole("button", { name: "Inspect set Client Acme", exact: true })
+      .locator(".sets-library-row-summary"),
+  ).toContainText("Claude: Office · Codex: Code Work · Gemini: — · Antigravity: —");
+
+  const disclosure = page.locator(".sets-imported-disclosure");
+  await disclosure.locator("summary").click();
+  await expect(
+    disclosure.locator(".sets-cli-row .sets-library-row-summary"),
+  ).toBeVisible();
+  await expect(disclosure.locator(".sets-cli-row .sets-library-row-summary")).toContainText(
+    "Claude: Office · Codex: Code Work · Gemini: — · Antigravity: —",
+  );
+
+  await page.getByRole("button", { name: "New Set…" }).click();
+  const dialog = page.getByRole("dialog", { name: "New Set" });
+  await expect(dialog).toBeVisible();
+  const dialogOptions = await dialog.locator("option").allTextContents();
+  expect(dialogOptions).toContain("Office");
+  expect(dialogOptions).toContain("Code Work");
 });
 
 test("activates an imported CLI context and marks it current", async ({ page }) => {
