@@ -222,6 +222,100 @@ test("uses saved profile labels in onboarding first-switch options and the curre
   await expect(page.getByLabel("First switch profile")).toContainText("Office");
 });
 
+test("runs the onboarding first switch and updates the setup summary", async ({ page }) => {
+  await installDesktopMock(page, "onboarding", undefined, {
+    snapshot: {
+      statuses: [
+        {
+          tool: "claude",
+          binary_found: true,
+          stored_profiles: 2,
+          active_profile: "personal",
+          auth_method: "oauth",
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+        },
+        {
+          tool: "codex",
+          binary_found: true,
+          stored_profiles: 2,
+          active_profile: "personal",
+          auth_method: "oauth",
+          credential_backend: "system_keyring",
+          state_mode: "isolated",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+        },
+        {
+          tool: "gemini",
+          binary_found: true,
+          stored_profiles: 0,
+          active_profile: null,
+          auth_method: null,
+          credential_backend: null,
+          state_mode: null,
+          active_profile_applied: null,
+          credentials_present: false,
+          permissions_ok: true,
+        },
+      ],
+      profiles: {
+        claude: {
+          active: "personal",
+          profiles: [
+            { name: "personal", auth: "oauth", label: "Personal" },
+            { name: "work", auth: "oauth", label: "Work" },
+          ],
+        },
+        codex: {
+          active: "personal",
+          profiles: [
+            { name: "personal", auth: "oauth", label: "Personal" },
+            { name: "work", auth: "oauth", label: "Work" },
+          ],
+        },
+        gemini: {
+          active: null,
+          profiles: [],
+        },
+      },
+      contexts: [],
+    },
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("tab", { name: "First switch" }).click();
+
+  const firstSwitchProfile = page.getByLabel("First switch profile");
+  await expect(firstSwitchProfile).toContainText("Work");
+  await firstSwitchProfile.selectOption("work");
+  await page.getByRole("button", { name: "Switch now" }).click();
+
+  await page.getByRole("tab", { name: "Done" }).click();
+  await expect(page.getByRole("heading", { name: "You're ready" })).toBeVisible();
+  await expect(
+    page.locator(".onboarding-complete-cell").filter({ hasText: "Claude Code" }),
+  ).toContainText("work");
+  await expect(
+    page.locator(".onboarding-complete-cell").filter({ hasText: "Codex CLI" }),
+  ).toContainText("work");
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "use_all_profiles" &&
+        entry.args?.request?.profile === "work" &&
+        entry.args?.request?.state_mode === "isolated",
+    ),
+  ).toBe(true);
+});
+
 test("reruns onboarding setup detection and surfaces newly detected live accounts", async ({
   page,
 }) => {
