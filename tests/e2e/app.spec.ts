@@ -3745,6 +3745,59 @@ test("activates an imported CLI context and marks it current", async ({ page }) 
   ).toBe(true);
 });
 
+test("shows workspace mismatch details and activates the expected set", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "workspaceContext", undefined, {
+    settings: {
+      profile_sets: [
+        {
+          name: "client-acme",
+          label: "Client Acme",
+          profiles: { claude: "work", codex: "work", gemini: null },
+        },
+      ],
+    },
+  });
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
+
+  await expect(page.getByText("Project mismatch")).toBeVisible();
+  await expect(page.getByText("Expected set: Client Acme")).toBeVisible();
+  await expect(page.getByText("Current set: work")).toBeVisible();
+  await expect(page.getByText("Matched by this folder rule: /code/acme")).toBeVisible();
+
+  await page.getByRole("button", { name: "Use Expected Set" }).click();
+
+  await expect(page.getByText("Last project-rule result: Switched to Client Acme for /code/acme.")).toBeVisible();
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "activate_profile_set" && entry.args?.name === "client-acme",
+    ),
+  ).toBe(true);
+});
+
+test("excludes duplicate imported CLI contexts from project-rule options when a saved set exists", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "matchingContextSet");
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
+  await page.getByRole("button", { name: "Add Rule…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Add Rule" });
+  const dialogOptions = await dialog.locator("option").allTextContents();
+  expect(dialogOptions).toContain("Saved set: Client Acme");
+  expect(dialogOptions).not.toContain("Detected set: client-acme");
+});
+
 test("marks the matched project rule for the current workspace", async ({ page }) => {
   await installDesktopMock(page, "workspaceContext");
 
