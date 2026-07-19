@@ -656,6 +656,83 @@ test("supports Command-Enter in quick switch for matching shared profiles", asyn
   expect(commandLog.some((entry) => entry.command === "use_all_profiles")).toBe(true);
 });
 
+test("groups quick switch tool profiles under full tool names", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Quick Switch" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Quick Switch" });
+  const results = dialog.getByRole("listbox", { name: "Quick Switch results" });
+  await expect(results.getByText("Claude Code", { exact: true })).toBeVisible();
+  await expect(results.getByText("Codex CLI", { exact: true })).toBeVisible();
+});
+
+test("preserves shared state mode when switching all tools from quick switch", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching", undefined, {
+    snapshot: {
+      statuses: [
+        {
+          tool: "claude",
+          binary_found: true,
+          stored_profiles: 1,
+          active_profile: "work",
+          auth_method: "oauth",
+          credential_backend: "system_keyring",
+          state_mode: "shared",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+          warnings: [],
+        },
+        {
+          tool: "codex",
+          binary_found: true,
+          stored_profiles: 1,
+          active_profile: "work",
+          auth_method: "api_key",
+          credential_backend: "file",
+          state_mode: "shared",
+          active_profile_applied: true,
+          credentials_present: true,
+          permissions_ok: true,
+          warnings: [],
+        },
+      ],
+      profiles: {
+        claude: {
+          active: "work",
+          profiles: [{ name: "work", auth: "oauth", label: "Work" }],
+        },
+        codex: {
+          active: "work",
+          profiles: [{ name: "work", auth: "api_key", label: "Work" }],
+        },
+      },
+      contexts: [],
+    },
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Quick Switch" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Quick Switch" });
+  await dialog.getByRole("option").filter({ hasText: "Across Claude Code, Codex CLI" }).first().click();
+  await expect(dialog).toHaveCount(0);
+
+  const commandLog = await readCommandLog(page);
+  expect(
+    commandLog.some(
+      (entry) =>
+        entry.command === "use_all_profiles" &&
+        entry.args?.request?.profile === "work" &&
+        entry.args?.request?.state_mode === "shared",
+    ),
+  ).toBe(true);
+});
+
 test("returns focus to the quick switch trigger when the palette closes", async ({
   page,
 }) => {
