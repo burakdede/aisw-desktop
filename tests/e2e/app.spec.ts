@@ -2058,6 +2058,68 @@ test("routes keyring diagnostics into security settings", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Reveal in Finder" })).toBeVisible();
 });
 
+test("runs targeted diagnostic repairs and opens file-backed profile setup", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "diagnosticsRepair");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+
+  await expect(page.getByRole("button", { name: "Apply keyring repair" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Use file-backed storage" })).toBeVisible();
+  await page.getByRole("button", { name: "Apply keyring repair" }).click();
+
+  await expect
+    .poll(async () =>
+      (await readCommandLog(page)).some(
+        (entry) =>
+          entry.command === "run_repair" &&
+          entry.args?.request?.apply === true &&
+          entry.args?.request?.fixes?.includes("keyring"),
+      ),
+    )
+    .toBe(true);
+
+  await page.getByRole("button", { name: "Inspect Permissions incorrect" }).click();
+  await expect(page.getByRole("button", { name: "Repair permissions" })).toBeVisible();
+  await page.getByRole("button", { name: "Repair permissions" }).click();
+
+  await expect
+    .poll(async () =>
+      (await readCommandLog(page)).some(
+        (entry) =>
+          entry.command === "run_repair" &&
+          entry.args?.request?.apply === true &&
+          entry.args?.request?.fixes?.includes("permissions"),
+      ),
+    )
+    .toBe(true);
+
+  await page.getByRole("button", { name: "Inspect OAuth failure" }).click();
+  await expect(page.getByRole("button", { name: "Retry OAuth repair" })).toBeVisible();
+  await page.getByRole("button", { name: "Retry OAuth repair" }).click();
+
+  await expect
+    .poll(async () =>
+      (await readCommandLog(page)).some(
+        (entry) =>
+          entry.command === "run_repair" &&
+          entry.args?.request?.apply === true &&
+          entry.args?.request?.fixes?.includes("oauth"),
+      ),
+    )
+    .toBe(true);
+
+  await page.getByRole("button", { name: "Inspect Keyring unavailable" }).click();
+  await page.getByRole("button", { name: "Use file-backed storage" }).click();
+
+  const addDialog = page.getByRole("dialog", { name: "Add Profile" });
+  await expect(addDialog).toBeVisible();
+  await expect(addDialog.getByLabel("Import mode")).toHaveValue("from_live");
+  await expect(addDialog.getByLabel("Credential backend")).toHaveValue("file");
+});
+
 test("shows healthy diagnostics states and reruns checks on demand", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -2963,6 +3025,28 @@ test("routes diagnostics import recovery into profile setup", async ({ page }) =
   await expect(dialog).toBeVisible();
   await expect(dialog.getByLabel("Tool")).toHaveValue("claude");
   await expect(dialog.getByLabel("Import mode")).toHaveValue("from_live");
+});
+
+test("opens matching profile details from a diagnostics quick fix", async ({ page }) => {
+  await installDesktopMock(page, "diagnosticFixes");
+
+  await page.goto("/");
+  await page.locator(".sidebar").getByRole("button", { name: "Diagnostics" }).click();
+  await expect(page.getByRole("button", { name: /Inspect .*live mismatch/i })).toBeVisible();
+
+  await page.getByRole("button", { name: /Inspect .*live mismatch/i }).click();
+  await page.getByRole("button", { name: "Open Profile Details" }).click();
+
+  await expect(page.getByRole("heading", { name: "Profiles" })).toBeVisible();
+  await expect(
+    page.getByLabel("Profile filters").getByRole("button", { name: "Claude", pressed: true }),
+  ).toBeVisible();
+  await expect(page.locator(".profiles-inspector")).toContainText("Work");
+  await expect(page.getByRole("button", { name: "Storage Details" })).toBeVisible();
+  await page.getByRole("button", { name: "Storage Details" }).click();
+  await expect(page.getByRole("button", { name: "Hide Storage Details" })).toBeVisible();
+  await expect(page.locator(".profiles-inspector")).toContainText("Keychain");
+  await expect(page.locator(".profiles-inspector")).toContainText("Needs Attention");
 });
 
 test("opens install guidance and refreshes missing-tool diagnostics", async ({ page }) => {
