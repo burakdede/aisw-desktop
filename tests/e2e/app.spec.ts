@@ -2456,8 +2456,14 @@ test("duplicates a saved set from the sets overflow menu", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Sets", exact: true }).click();
   await page.getByRole("button", { name: "Inspect set Client Acme" }).click();
-  await page.getByRole("button", { name: "More actions for Client Acme" }).click();
-  await page.getByRole("menuitem", { name: "Duplicate…" }).click();
+  const inspector = page.locator(".sets-inspector");
+  await inspector.getByRole("button", { name: "More actions for Client Acme" }).click();
+
+  const menu = page.getByRole("menu", { name: "Set actions" });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Duplicate…" })).toBeVisible();
+  await expectMenuToFitWithin(menu, inspector);
+  await menu.getByRole("menuitem", { name: "Duplicate…" }).click();
 
   const dialog = page.getByRole("dialog", { name: "New Set" });
   await expect(dialog).toBeVisible();
@@ -2670,8 +2676,14 @@ test("returns from project rules to the set library from the rules overflow menu
   await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
   await expect(page.getByRole("heading", { name: "Project Rules" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Project rules actions" }).click();
-  await page.getByRole("menuitem", { name: "Open Sets" }).click();
+  const panel = page.locator(".sets-rules-list-panel");
+  await panel.getByRole("button", { name: "Project rules actions" }).click();
+
+  const menu = page.getByRole("menu", { name: "Project rules actions" });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Open Sets" })).toBeVisible();
+  await expectMenuToFitWithin(menu, panel);
+  await menu.getByRole("menuitem", { name: "Open Sets" }).click();
 
   await expect(
     page.getByLabel("Sets mode").getByRole("button", { name: "Set Library" }),
