@@ -3691,6 +3691,36 @@ test("exports and clears recorded activity from the activity screen", async ({ p
   expect(commandLog.some((entry) => entry.command === "export_activity_log")).toBe(true);
 });
 
+test("closes activity clear history without removing recorded events", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Quick Switch" }).click();
+  const dialog = page.getByRole("dialog", { name: "Quick Switch" });
+  await dialog.getByLabel("Search Quick Switch").fill("client acme");
+  await page.keyboard.press("Enter");
+  await expect(dialog).toBeHidden();
+
+  await page.locator(".sidebar").getByRole("button", { name: "Activity", exact: true }).click();
+  await expect(page.locator(".activity-event-row").first()).toBeVisible();
+  const activityBefore = await readLocalStorage(page, "ai-switch.desktop.activity-log");
+
+  await page.getByRole("button", { name: "Activity more actions" }).click();
+  const clearMenu = page.getByRole("menu", { name: "Activity actions" });
+  await clearMenu.getByRole("menuitem", { name: "Clear Activity History…" }).click();
+
+  const clearDialog = page.getByRole("dialog", { name: "Clear Activity History" });
+  await expect(clearDialog).toBeVisible();
+  await clearDialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(clearDialog).toBeHidden();
+
+  await expect(page.locator(".activity-event-row").first()).toBeVisible();
+  await expect(page.locator(".activity-event-row").first()).toContainText("Activate saved set");
+  await expect
+    .poll(async () => readLocalStorage(page, "ai-switch.desktop.activity-log"))
+    .toBe(activityBefore);
+});
+
 test("opens the activity log from the toolbar menu", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
