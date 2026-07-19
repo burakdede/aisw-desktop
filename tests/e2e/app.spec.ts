@@ -3102,6 +3102,41 @@ test("uses the selected state mode when activating from profiles", async ({ page
   ).toBe(true);
 });
 
+test("shows active profile storage diagnostics from live runtime state", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "tokenWarnings");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+
+  const workRow = page.locator(".profiles-table-row-button").filter({ hasText: "Work" }).first();
+  await workRow.click();
+
+  const inspector = page.locator(".profiles-inspector");
+  await expect(inspector).toContainText("Work");
+  await expect(inspector).toContainText("Keychain");
+  await expect(inspector).toContainText("Ready");
+
+  await page.getByRole("button", { name: "Storage Details" }).click();
+
+  await expect(page.getByRole("button", { name: "Hide Storage Details" })).toBeVisible();
+  await expect(inspector).toContainText("Credentials present: No");
+  await expect(inspector).toContainText("Local permissions: No");
+  await expect(inspector).toContainText(
+    "Token warning: Claude session expires soon Expires in 2 days.",
+  );
+  await expect(inspector).toContainText(
+    "Warning: Keyring access failed. Remediation: Unlock the local credential store and retry.",
+  );
+  await expect(inspector).toContainText(
+    "Warning: Refresh Claude authentication soon. Remediation: Run the guided OAuth flow again.",
+  );
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "use_profile")).toBe(false);
+});
+
 test("keeps inactive profile storage details separate from live runtime warnings", async ({
   page,
 }) => {
