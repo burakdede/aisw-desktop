@@ -2521,6 +2521,37 @@ test("uses the selected state mode when activating from profiles", async ({ page
   ).toBe(true);
 });
 
+test("keeps inactive profile storage details separate from live runtime warnings", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles" }).click();
+  await page.getByLabel("Profile filters").getByRole("button", { name: "Codex" }).click();
+
+  const workRow = page.locator(".profiles-table-row-button").filter({ hasText: "Work" }).first();
+  await workRow.click();
+
+  const inspector = page.locator(".profiles-inspector");
+  await expect(inspector).toContainText("Work");
+  await expect(page.getByRole("button", { name: "Activate Profile" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Storage Details" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Storage Details" }).click();
+
+  await expect(page.getByRole("button", { name: "Hide Storage Details" })).toBeVisible();
+  await expect(inspector).toContainText(
+    "Live storage details are available after this profile becomes active.",
+  );
+  await expect(inspector).not.toContainText("Credentials present");
+  await expect(inspector).not.toContainText("Local permissions");
+  await expect(inspector).not.toContainText("Token warning");
+
+  const commandLog = await readCommandLog(page);
+  expect(commandLog.some((entry) => entry.command === "use_profile")).toBe(false);
+});
+
 test("reapplies a mismatched active profile from the profile row actions menu", async ({
   page,
 }) => {
