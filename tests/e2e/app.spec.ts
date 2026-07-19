@@ -933,6 +933,59 @@ test("announces an available desktop update on launch and lets the user dismiss 
     .toBeGreaterThan(0);
 });
 
+test("surfaces a newly available desktop update after dismissing an older version", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+
+  await expect(page.getByText("AI Switcher 0.2.0 is available")).toBeVisible();
+  await page.getByRole("button", { name: "Later" }).click();
+  await expect(page.getByText("AI Switcher 0.2.0 is available")).toHaveCount(0);
+  await expect
+    .poll(async () => readLocalStorage(page, "ai-switch.desktop.update-dismissed-version"))
+    .toBe("0.2.0");
+
+  await overrideDesktopCommand(page, "check_for_updates", {
+    result: {
+      configured: true,
+      channel: "beta",
+      current_version: "0.1.11",
+      endpoint: "https://updates.example.com/beta.json",
+      update: {
+        version: "0.3.0-beta.2",
+        current_version: "0.1.11",
+        target: "darwin-aarch64",
+        notes: "Preview fixes for switching, diagnostics, and set routing.",
+      },
+      message: null,
+    },
+  });
+
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.locator(".settings-category-pane").getByRole("button", { name: "Updates" }).click();
+  await page.getByLabel("Update channel").selectOption("beta");
+
+  await expect(page.getByText("AI Switcher 0.3.0-beta.2 is available")).toBeVisible();
+  await expect(
+    page.getByText("Preview fixes for switching, diagnostics, and set routing."),
+  ).toBeVisible();
+  await expect
+    .poll(async () => readLocalStorage(page, "ai-switch.desktop.update-dismissed-version"))
+    .toBeNull();
+  await expect
+    .poll(async () =>
+      (await readNotifications(page)).some(
+        (notification) =>
+          notification?.title === "AI Switcher 0.3.0-beta.2 is available" &&
+          notification?.body ===
+            "Preview fixes for switching, diagnostics, and set routing.",
+      ),
+    )
+    .toBe(true);
+});
+
 test("installs an available desktop update from the global banner", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
