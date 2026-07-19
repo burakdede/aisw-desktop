@@ -1493,6 +1493,21 @@ test("falls back to legacy profile setup options when capability metadata is abs
   await expect(backend.getByRole("option", { name: "File-backed" })).toHaveCount(1);
 });
 
+test("focuses the rename field when rename is chosen from the profile inspector menu", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Profiles", exact: true }).click();
+  await page.getByRole("option", { name: "Inspect Claude Code Work" }).click();
+
+  await page.locator(".profiles-inspector").getByRole("button", { name: "More profile actions" }).click();
+  await page.getByRole("menuitem", { name: "Rename…" }).click();
+
+  await expect(page.getByLabel("rename work")).toBeFocused();
+});
+
 test("warns before renaming a profile to a duplicate name", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -2074,6 +2089,39 @@ test("filters backups and restores a saved backup into the active profile", asyn
         entry.args?.request?.profile === "personal",
     ),
   ).toBe(true);
+});
+
+test("orders backups by created_at metadata and shows formatted timestamps", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await overrideDesktopCommand(page, "list_backups", {
+    result: [
+      {
+        backup_id: "zzz-claude-work",
+        tool: "claude",
+        profile: "claude/work",
+        created_at: "2026-03-25T11:45:02Z",
+      },
+      {
+        backup_id: "aaa-codex-personal",
+        tool: "codex",
+        profile: "codex/personal",
+        created_at: "2026-03-26T09:40:12Z",
+      },
+    ],
+  });
+
+  await page.getByRole("button", { name: "Backups" }).click();
+  await expect(page.getByLabel("Backups list")).toBeVisible();
+
+  const rows = page.locator(".backups-table-row");
+  await expect(rows.nth(0)).toContainText("Personal");
+  await expect(rows.nth(1)).toContainText("Work");
+  await expect(page.getByText("Date Unavailable")).toHaveCount(0);
+
+  await rows.nth(0).click();
+  await expect(page.locator(".backups-inspector-surface")).not.toContainText("Date Unavailable");
 });
 
 test("warns before restoring backup files without activating the profile", async ({ page }) => {
