@@ -313,6 +313,15 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         publishWorkflow.includes("TAURI_SIGNING_PRIVATE_KEY"),
     },
     {
+      label: "publish workflow targets the public versioned release",
+      ok:
+        publishWorkflow.includes("tagName: v__VERSION__") &&
+        publishWorkflow.includes("releaseName: AI Switcher v__VERSION__") &&
+        publishWorkflow.includes("releaseDraft: false") &&
+        !publishWorkflow.includes("releaseName: AI Switch v__VERSION__") &&
+        !publishWorkflow.includes("releaseDraft: true"),
+    },
+    {
       label: "publish workflow validates macOS Gatekeeper acceptance before release promotion",
       ok:
         publishWorkflow.includes("Notarize macOS DMG") &&

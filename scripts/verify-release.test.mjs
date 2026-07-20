@@ -158,6 +158,9 @@ AISW_SIDECAR_URL_WINDOWS_X64
 AISW_DESKTOP_UPDATER_ENDPOINT_STABLE
 TAURI_SIGNING_PUBLIC_KEY
 node-version: 20.19.0
+tagName: v__VERSION__
+releaseName: AI Switcher v__VERSION__
+releaseDraft: false
 Notarize macOS DMG
 npm run notarize:macos-dmg -- --target \${{ matrix.target }}
 Verify macOS Gatekeeper acceptance
@@ -257,6 +260,10 @@ describe("verify-release", () => {
         }),
         expect.objectContaining({
           ok: true,
+          label: "publish workflow targets the public versioned release",
+        }),
+        expect.objectContaining({
+          ok: true,
           label: "tauri main window capability stays least-privilege",
         }),
         expect.objectContaining({
@@ -278,6 +285,9 @@ Download aisw sidecar
 npm run prepare:sidecar -- --target \${{ matrix.target }} "\${{ runner.temp }}/aisw"
 tauri-apps/tauri-action@v1
 TAURI_SIGNING_PRIVATE_KEY
+tagName: v__VERSION__
+releaseName: AI Switch v__VERSION__
+releaseDraft: true
 `,
       runbook: `
 npm run prepare:sidecar -- /absolute/path/to/aisw
@@ -316,6 +326,12 @@ Complete platform signing checks
     expect(result.checks).toContainEqual(
       expect.objectContaining({
         label: "publish workflow requires the protected production environment",
+        ok: false,
+      }),
+    );
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        label: "publish workflow targets the public versioned release",
         ok: false,
       }),
     );
