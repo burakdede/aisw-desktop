@@ -208,7 +208,7 @@ describe("build-local-bundle", () => {
     process.env.APPLE_TEAM_ID = "TEAMID1234";
 
     try {
-      const status = runLocalBundleBuild(root, ["--target", "aarch64-apple-darwin"], spawn);
+      const status = runLocalBundleBuild(root, ["--target", "aarch64-apple-darwin"], spawn, "darwin");
       expect(status).toBe(0);
       expect(spawn).toHaveBeenCalledTimes(4);
       expect(spawn.mock.calls[1][0]).toBe("xcrun");

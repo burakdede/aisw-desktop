@@ -129,6 +129,7 @@ export function runLocalBundleBuild(
   rootDir = process.cwd(),
   extraArgs = process.argv.slice(2),
   spawn = spawnSync,
+  platform = process.platform,
 ) {
   const invocation = buildLocalBundleInvocation(rootDir, extraArgs);
   try {
@@ -144,7 +145,7 @@ export function runLocalBundleBuild(
       return buildStatus;
     }
 
-    const notarizeStatus = notarizeLocalMacosDmgs(rootDir, extraArgs, spawn);
+    const notarizeStatus = notarizeLocalMacosDmgs(rootDir, extraArgs, spawn, process.env, platform);
     return notarizeStatus ?? 0;
   } finally {
     invocation.cleanup();
