@@ -1133,16 +1133,13 @@ printf '{"version":"0.3.8","cli_api_version":1,"json_schema_version":1,"progress
     async fn add_profile_redacts_secrets_from_failure_stderr() {
         let path = write_fake_aisw(
             r#"#!/bin/sh
-if [ "$1" = "add" ]; then
-  printf 'key rejected for sk-ant-api03-supersecret\n' >&2
-  exit 1
-fi
-printf '{}'
+printf 'key rejected for sk-ant-api03-supersecret\n' >&2
+exit 1
 "#,
         );
         let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
-        let error = bridge
-            .add_profile(AddProfileRequest {
+        let error = retry_on_aisw_not_found(|| {
+            bridge.add_profile(AddProfileRequest {
                 tool: "claude".to_owned(),
                 profile: "work".to_owned(),
                 label: None,
@@ -1152,8 +1149,9 @@ printf '{}'
                     value: "sk-ant-api03-supersecret".to_owned(),
                 },
             })
-            .await
-            .expect_err("expected command failure");
+        })
+        .await
+        .expect_err("expected command failure");
 
         let crate::errors::DesktopError::CommandFailed { message, .. } = error else {
             panic!("expected command failure");
@@ -1167,12 +1165,9 @@ printf '{}'
     async fn add_profile_oauth_redacts_secrets_from_failure_stderr() {
         let path = write_fake_aisw(
             r#"#!/bin/sh
-if [ "$1" = "add" ]; then
-  printf '%s\n' '{"type":"started","seq":1,"command":"add","tool":"claude","profile":"work"}'
-  printf 'oauth failed for AIzaSecret123\n' >&2
-  exit 1
-fi
-printf '{}'
+printf '%s\n' '{"type":"started","seq":1,"command":"add","tool":"claude","profile":"work"}'
+printf 'oauth failed for AIzaSecret123\n' >&2
+exit 1
 "#,
         );
         let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
