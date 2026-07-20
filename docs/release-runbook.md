@@ -91,12 +91,15 @@ npm run tauri:build
 
 1. Export signing inputs before running `npm run tauri:build`:
    `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`, `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, and `TAURI_SIGNING_PUBLIC_KEY`.
+   The `.p12` must be a clean `Developer ID Application` export matching `APPLE_SIGNING_IDENTITY`.
+   Do not upload a mixed export that also contains `Apple Development` or other non-release identities.
 2. Configure `plugins.updater.channels` in `src-tauri/tauri.conf.json` for every release channel you intend to ship, or provide `AISW_DESKTOP_UPDATER_ENDPOINT[_CHANNEL]` overrides for a non-production build.
    CI release builds do this with `npm run prepare:updater`.
 3. Build with the target-specific sidecar staged:
    `npm run tauri:build`
 4. Confirm the build produced a signed `.app`, a signed `.dmg`, and an updater archive plus `.sig`.
 5. Confirm notarization completed and the app launches without Gatekeeper warnings on a clean macOS machine.
+   At minimum, validate the `.dmg` with `spctl -a -t open --context context:primary-signature -vv`, mount it, then validate the shipped `.app` with `spctl -a -vv` and `xcrun stapler validate`.
 
 ### Windows
 

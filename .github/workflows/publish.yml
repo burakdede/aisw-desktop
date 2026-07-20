@@ -140,3 +140,30 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+
+      - name: Verify macOS Gatekeeper acceptance
+        if: matrix.platform == 'macos-latest' && vars.AISW_ENABLE_MACOS_SIGNING == '1'
+        shell: bash
+        run: |
+          dmg_dir="src-tauri/target/${{ matrix.target }}/release/bundle/dmg"
+          dmg="$(find "$dmg_dir" -maxdepth 1 -name '*.dmg' | head -n 1)"
+          if [ -z "$dmg" ]; then
+            echo "Missing DMG in $dmg_dir"
+            exit 1
+          fi
+
+          spctl -a -t open --context context:primary-signature -vv "$dmg"
+
+          mount_dir="$(mktemp -d /tmp/aisw-release-mount.XXXXXX)"
+          trap 'hdiutil detach "$mount_dir" >/dev/null 2>&1 || true' EXIT
+          hdiutil attach -nobrowse -readonly -mountpoint "$mount_dir" "$dmg"
+
+          app_path="$(find "$mount_dir" -maxdepth 1 -name '*.app' | head -n 1)"
+          if [ -z "$app_path" ]; then
+            echo "Missing .app bundle inside $dmg"
+            exit 1
+          fi
+
+          spctl -a -vv "$app_path"
+          xcrun stapler validate "$app_path"
+          codesign -dv --verbose=4 "$app_path" 2>&1 | grep -E 'Authority=Developer ID Application|Timestamp=|TeamIdentifier='

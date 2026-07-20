@@ -6,6 +6,7 @@ import {
   DEFAULT_ENVIRONMENT,
   collectMacosSigningSecrets,
   configureMacosSigningSecrets,
+  inspectMacosSigningCertificate,
   loadEnvFile,
   parseArgs,
 } from "./configure-macos-signing-secrets.mjs";
@@ -35,6 +36,14 @@ function makeEnv(overrides = {}) {
     APPLE_TEAM_ID: "TEAMID1234",
     ...overrides,
   };
+}
+
+function makeOpenSslRunner(friendlyNames = ["Developer ID Application: Example, Inc. (TEAMID1234)"]) {
+  return vi.fn(() => ({
+    status: 0,
+    stdout: "",
+    stderr: friendlyNames.map((name) => `friendlyName: ${name}`).join("\n"),
+  }));
 }
 
 describe("configure-macos-signing-secrets", () => {
@@ -90,7 +99,7 @@ describe("configure-macos-signing-secrets", () => {
 
   it("collects a base64 certificate and the remaining Apple signing values", () => {
     const certPath = makeTempFile("certificate.p12", "binary-p12-contents");
-    const secrets = collectMacosSigningSecrets({ cert: certPath }, makeEnv());
+    const secrets = collectMacosSigningSecrets({ cert: certPath }, makeEnv(), makeOpenSslRunner());
 
     expect(secrets).toEqual([
       { name: "APPLE_CERTIFICATE", value: Buffer.from("binary-p12-contents").toString("base64") },
@@ -112,6 +121,7 @@ describe("configure-macos-signing-secrets", () => {
         APPLE_CERTIFICATE_PASSWORD_FILE: passwordFile,
         APPLE_CERTIFICATE_PATH: certPath,
       }),
+      makeOpenSslRunner(),
     );
 
     expect(secrets[0]).toEqual({
@@ -149,7 +159,11 @@ describe("configure-macos-signing-secrets", () => {
     });
 
     const runner = vi.fn(() => {
-      throw new Error("runner should not be used");
+      return {
+        status: 0,
+        stdout: "",
+        stderr: "friendlyName: Developer ID Application: Example, Inc. (TEAMID1234)",
+      };
     });
     const stdout = { write: vi.fn() };
 
@@ -168,7 +182,21 @@ describe("configure-macos-signing-secrets", () => {
 
     expect(result.dryRun).toBe(true);
     expect(result.secretCount).toBe(6);
-    expect(runner).not.toHaveBeenCalled();
+    expect(runner).toHaveBeenCalledTimes(1);
+    expect(runner).toHaveBeenCalledWith(
+      "openssl",
+      [
+        "pkcs12",
+        "-legacy",
+        "-in",
+        certPath,
+        "-nokeys",
+        "-passin",
+        "pass:certificate-password",
+        "-info",
+      ],
+      { encoding: "utf8" },
+    );
   });
 
   it("fails when a required value is missing", () => {
@@ -179,8 +207,51 @@ describe("configure-macos-signing-secrets", () => {
         makeEnv({
           APPLE_PASSWORD: "",
         }),
+        makeOpenSslRunner(),
       ),
     ).toThrow("Missing required macOS signing values: APPLE_PASSWORD.");
+  });
+
+  it("rejects certificates that are not Developer ID Application exports", () => {
+    const certPath = makeTempFile("certificate.p12", "p12");
+
+    expect(() =>
+      inspectMacosSigningCertificate(
+        certPath,
+        "certificate-password",
+        "Developer ID Application: Example, Inc. (TEAMID1234)",
+        makeOpenSslRunner(["Apple Development: Example, Inc. (TEAMID1234)"]),
+      ),
+    ).toThrow("The provided .p12 does not contain a Developer ID Application certificate.");
+  });
+
+  it("rejects mixed Apple Development and Developer ID exports", () => {
+    const certPath = makeTempFile("certificate.p12", "p12");
+
+    expect(() =>
+      inspectMacosSigningCertificate(
+        certPath,
+        "certificate-password",
+        "Developer ID Application: Example, Inc. (TEAMID1234)",
+        makeOpenSslRunner([
+          "Developer ID Application: Example, Inc. (TEAMID1234)",
+          "Apple Development: Example, Inc. (TEAMID1234)",
+        ]),
+      ),
+    ).toThrow("The provided .p12 mixes non-release Apple identities");
+  });
+
+  it("rejects signing identities that do not match the Developer ID export", () => {
+    const certPath = makeTempFile("certificate.p12", "p12");
+
+    expect(() =>
+      inspectMacosSigningCertificate(
+        certPath,
+        "certificate-password",
+        "Developer ID Application: Wrong, Inc. (TEAMID9999)",
+        makeOpenSslRunner(["Developer ID Application: Example, Inc. (TEAMID1234)"]),
+      ),
+    ).toThrow("APPLE_SIGNING_IDENTITY does not match the Developer ID identity inside the .p12.");
   });
 
   it("uploads all six secrets in one run", () => {
@@ -188,6 +259,13 @@ describe("configure-macos-signing-secrets", () => {
     const commands = [];
     const runner = vi.fn((command, args, options = {}) => {
       commands.push({ command, args, input: options.input ?? "" });
+      if (command === "openssl") {
+        return {
+          status: 0,
+          stdout: "",
+          stderr: "friendlyName: Developer ID Application: Example, Inc. (TEAMID1234)",
+        };
+      }
       if (args[0] === "repo" && args[1] === "view") {
         return { status: 0, stdout: "burakdede/aisw-desktop\n", stderr: "" };
       }
@@ -220,6 +298,20 @@ describe("configure-macos-signing-secrets", () => {
     });
     expect(commands[0].args).toEqual(["repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"]);
     expect(commands[1]).toEqual({
+      command: "openssl",
+      args: [
+        "pkcs12",
+        "-legacy",
+        "-in",
+        certPath,
+        "-nokeys",
+        "-passin",
+        "pass:certificate-password",
+        "-info",
+      ],
+      input: "",
+    });
+    expect(commands[2]).toEqual({
       command: "gh",
       args: [
         "secret",
@@ -232,13 +324,17 @@ describe("configure-macos-signing-secrets", () => {
       ],
       input: Buffer.from("p12").toString("base64"),
     });
-    expect(commands).toHaveLength(7);
+    expect(commands).toHaveLength(8);
   });
 
   it("supports a dry run", () => {
     const certPath = makeTempFile("certificate.p12", "p12");
     const runner = vi.fn(() => {
-      throw new Error("runner should not be used");
+      return {
+        status: 0,
+        stdout: "",
+        stderr: "friendlyName: Developer ID Application: Example, Inc. (TEAMID1234)",
+      };
     });
     const stdout = { write: vi.fn() };
 
@@ -253,6 +349,20 @@ describe("configure-macos-signing-secrets", () => {
 
     expect(result.dryRun).toBe(true);
     expect(result.secretCount).toBe(6);
-    expect(runner).not.toHaveBeenCalled();
+    expect(runner).toHaveBeenCalledTimes(1);
+    expect(runner).toHaveBeenCalledWith(
+      "openssl",
+      [
+        "pkcs12",
+        "-legacy",
+        "-in",
+        certPath,
+        "-nokeys",
+        "-passin",
+        "pass:certificate-password",
+        "-info",
+      ],
+      { encoding: "utf8" },
+    );
   });
 });

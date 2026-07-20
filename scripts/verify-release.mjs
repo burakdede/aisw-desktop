@@ -211,8 +211,12 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       ok:
         runbook.includes("## Platform signing flow") &&
         runbook.includes("APPLE_SIGNING_IDENTITY") &&
+        runbook.includes("Developer ID Application") &&
+        runbook.includes("Apple Development") &&
         runbook.includes("plugins.updater.channels") &&
         runbook.includes("Confirm notarization completed") &&
+        runbook.includes("spctl -a -t open --context context:primary-signature -vv") &&
+        runbook.includes("xcrun stapler validate") &&
         runbook.includes("Verify the generated installer is code signed") &&
         runbook.includes("Validate the generated `.deb`, `.rpm`, and AppImage artifacts"),
     },
@@ -303,6 +307,13 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       ok:
         publishWorkflow.includes("tauri-apps/tauri-action@v1") &&
         publishWorkflow.includes("TAURI_SIGNING_PRIVATE_KEY"),
+    },
+    {
+      label: "publish workflow validates macOS Gatekeeper acceptance before release promotion",
+      ok:
+        publishWorkflow.includes("Verify macOS Gatekeeper acceptance") &&
+        publishWorkflow.includes("spctl -a -t open --context context:primary-signature -vv") &&
+        publishWorkflow.includes("xcrun stapler validate"),
     },
     {
       label: "publish workflow wires target-specific sidecar secrets",

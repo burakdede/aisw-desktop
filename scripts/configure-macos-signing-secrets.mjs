@@ -24,6 +24,60 @@ function base64Encode(bytes) {
   return Buffer.from(bytes).toString("base64");
 }
 
+function collectFriendlyNames(opensslOutput) {
+  return [...opensslOutput.matchAll(/friendlyName:\s*(.+)/g)].map((match) => match[1].trim());
+}
+
+export function inspectMacosSigningCertificate(
+  certPath,
+  certificatePassword,
+  signingIdentity,
+  runner = spawnSync,
+) {
+  const inspection = runner(
+    "openssl",
+    ["pkcs12", "-legacy", "-in", certPath, "-nokeys", "-passin", `pass:${certificatePassword}`, "-info"],
+    {
+      encoding: "utf8",
+    },
+  );
+
+  const output = `${inspection.stdout ?? ""}\n${inspection.stderr ?? ""}`;
+  if (inspection.status !== 0) {
+    throw new Error(
+      `Unable to inspect ${certPath} with openssl. Confirm the .p12 path and password are correct before uploading macOS signing secrets.`,
+    );
+  }
+
+  const friendlyNames = collectFriendlyNames(output);
+  const developerIdNames = friendlyNames.filter((name) => name.startsWith("Developer ID Application:"));
+  const disallowedNames = friendlyNames.filter((name) =>
+    name.startsWith("Apple Development:") ||
+    name.startsWith("Mac Development:") ||
+    name.startsWith("Apple Distribution:") ||
+    name.startsWith("Mac App Distribution:") ||
+    name.startsWith("Developer ID Installer:"),
+  );
+
+  if (developerIdNames.length === 0) {
+    throw new Error(
+      "The provided .p12 does not contain a Developer ID Application certificate. Export a Developer ID Application identity for notarized outside-App-Store macOS releases.",
+    );
+  }
+
+  if (disallowedNames.length > 0) {
+    throw new Error(
+      `The provided .p12 mixes non-release Apple identities with the Developer ID export: ${disallowedNames.join(", ")}. Re-export a clean Developer ID Application-only .p12.`,
+    );
+  }
+
+  if (!developerIdNames.includes(signingIdentity)) {
+    throw new Error(
+      `APPLE_SIGNING_IDENTITY does not match the Developer ID identity inside the .p12. Expected ${signingIdentity}; found ${developerIdNames.join(", ")}.`,
+    );
+  }
+}
+
 const STRING_ARGUMENT_KEYS = {
   "--apple-id": "appleId",
   "--apple-password": "applePassword",
@@ -101,7 +155,7 @@ export function parseArgs(argv) {
   return options;
 }
 
-export function collectMacosSigningSecrets(options = {}, env = process.env) {
+export function collectMacosSigningSecrets(options = {}, env = process.env, runner = spawnSync) {
   const certPath =
     options.cert ||
     resolveValue({
@@ -170,6 +224,8 @@ export function collectMacosSigningSecrets(options = {}, env = process.env) {
     throw new Error(`Missing required macOS signing values: ${missing.join(", ")}.`);
   }
 
+  inspectMacosSigningCertificate(certPath, certificatePassword, signingIdentity, runner);
+
   return entries;
 }
 
@@ -180,7 +236,7 @@ export function configureMacosSigningSecrets(
   const mergedEnv = options.envFile ? { ...env, ...loadEnvFile(options.envFile) } : env;
   const environment = options.environment || DEFAULT_ENVIRONMENT;
   const repo = options.repo || resolveRepository(mergedEnv, runner);
-  const entries = collectMacosSigningSecrets(options, mergedEnv);
+  const entries = collectMacosSigningSecrets(options, mergedEnv, runner);
 
   stdout.write(`Using ${repo} / ${environment}\n`);
   stdout.write(`Uploading ${entries.length} macOS signing secrets.\n`);

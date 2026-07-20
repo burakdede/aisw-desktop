@@ -157,6 +157,9 @@ AISW_SIDECAR_URL_WINDOWS_X64
 AISW_DESKTOP_UPDATER_ENDPOINT_STABLE
 TAURI_SIGNING_PUBLIC_KEY
 node-version: 20.19.0
+Verify macOS Gatekeeper acceptance
+spctl -a -t open --context context:primary-signature -vv
+xcrun stapler validate
 `,
   );
   writeFixture(
@@ -209,8 +212,12 @@ cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
 ## Platform signing flow
 APPLE_SIGNING_IDENTITY
+Developer ID Application
+Apple Development
 plugins.updater.channels
 Confirm notarization completed
+spctl -a -t open --context context:primary-signature -vv
+xcrun stapler validate
 Verify the generated installer is code signed
 Validate the generated \`.deb\`, \`.rpm\`, and AppImage artifacts
 Use the \`production\` GitHub environment with gh secret set.
