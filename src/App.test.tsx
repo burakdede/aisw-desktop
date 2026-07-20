@@ -8901,6 +8901,49 @@ describe("App", () => {
     });
   });
 
+  it("persists a cleared AISW home before advanced actions run", async () => {
+    const calls: Array<{ command: string; args: unknown }> = [];
+    let currentSettings: DesktopSettings = {
+      ...bootstrap.settings,
+      aisw_home: "/tmp/aisw-home-custom",
+    };
+    const defaultMock = readDesktopMockRecord();
+
+    window.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+      calls.push({ command, args });
+      if (command === "update_settings") {
+        const request = (args as { request?: DesktopSettings } | undefined)?.request;
+        currentSettings = request ?? currentSettings;
+        return currentSettings;
+      }
+      if (command === "open_app_data_folder") {
+        return "/tmp/ai-switch-desktop";
+      }
+      if (command === "get_settings") {
+        return currentSettings;
+      }
+      return defaultMock[command];
+    };
+
+    await renderSettingsPanel(currentSettings, "advanced");
+
+    const aiswHome = screen.getByRole("textbox", { name: "AISW home" });
+    fireEvent.change(aiswHome, { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: "Open App Data Folder" }));
+
+    await waitFor(() => {
+      expect(
+        calls.some(
+          (entry) =>
+            entry.command === "update_settings" &&
+            (entry.args as { request?: DesktopSettings } | undefined)?.request?.aisw_home === null,
+        ),
+      ).toBe(true);
+      expect(calls.some((entry) => entry.command === "open_app_data_folder")).toBe(true);
+      expect(screen.getByText("Opened /tmp/ai-switch-desktop.")).toBeInTheDocument();
+    });
+  });
+
   it("saves general desktop preferences from settings", async () => {
     const commands: string[] = [];
     let launchAtLoginEnabled = false;

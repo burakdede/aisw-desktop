@@ -282,6 +282,28 @@ export function SettingsPanel({
     );
   }
 
+  async function persistAiswHomeIfNeeded(nextValue = aiswHome) {
+    const nextAiswHome = nextValue === "" ? null : nextValue;
+    if (nextAiswHome === settings.aisw_home) {
+      return;
+    }
+
+    await updateSettingsMutation.mutateAsync(
+      buildSettingsRequest({
+        settings,
+        draft: settingsDraft,
+        next: {
+          aiswHome: nextValue,
+        },
+      }),
+    );
+  }
+
+  async function runAdvancedAction(action: () => Promise<void> | void) {
+    await persistAiswHomeIfNeeded();
+    await action();
+  }
+
   async function copyText(value: string, label: string) {
     if (!navigator.clipboard?.writeText) {
       setCopyMessage(clipboardUnavailableMessage(label));
@@ -861,7 +883,11 @@ export function SettingsPanel({
                   <SettingsActionRow
                     label={SETTINGS_PANEL_COPY.advanced.rows.windowLayout}
                     action={
-                      <button className="ghost-button" type="button" onClick={resetWindowLayout}>
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        onClick={() => void runAdvancedAction(resetWindowLayout)}
+                      >
                         {SETTINGS_RESET_WINDOW_LAYOUT_LABEL}
                       </button>
                     }
@@ -869,7 +895,11 @@ export function SettingsPanel({
                   <SettingsActionRow
                     label={SETTINGS_PANEL_COPY.advanced.rows.appDataFolder}
                     action={
-                      <button className="ghost-button" type="button" onClick={() => void revealAppDataFolder()}>
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        onClick={() => void runAdvancedAction(revealAppDataFolder)}
+                      >
                         {SETTINGS_OPEN_APP_DATA_FOLDER_LABEL}
                       </button>
                     }
@@ -877,7 +907,11 @@ export function SettingsPanel({
                   <SettingsActionRow
                     label={SETTINGS_PANEL_COPY.advanced.rows.supportBundle}
                     action={
-                      <button className="ghost-button" type="button" onClick={() => void exportReport()}>
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        onClick={() => void runAdvancedAction(exportReport)}
+                      >
                         {SETTINGS_EXPORT_REDACTED_SUPPORT_BUNDLE_LABEL}
                       </button>
                     }
@@ -887,9 +921,7 @@ export function SettingsPanel({
                       aria-label={SETTINGS_PANEL_COPY.advanced.aiswHomeAriaLabel}
                       value={aiswHome}
                       onChange={(event) => setAiswHome(event.target.value)}
-                      onBlur={(event) =>
-                        saveSettingsPatch({ aiswHome: event.currentTarget.value })
-                      }
+                      onBlur={(event) => void persistAiswHomeIfNeeded(event.currentTarget.value)}
                     />
                   </SettingsRow>
                 </SettingsGroup>
