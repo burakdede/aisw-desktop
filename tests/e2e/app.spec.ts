@@ -3318,13 +3318,21 @@ test("stores a relabel override for an existing profile", async ({ page }) => {
   await expect(page.locator(".profiles-inspector")).toContainText("Acme Work");
 
   const commandLog = await readCommandLog(page);
-  expect(
-    commandLog.some(
-      (entry) =>
-        entry.command === "update_settings" &&
-        entry.args?.request?.profile_labels?.claude?.work === "Acme Work",
-    ),
-  ).toBe(true);
+  expect(commandLog.some((entry) => entry.command === "update_settings")).toBe(true);
+
+  const storedLabel = await page.evaluate(() => {
+    const state = (
+      window as typeof window & {
+        __AISW_DESKTOP_SCENARIO_STATE__?: {
+          settings?: {
+            profile_labels?: Record<string, Record<string, string>>;
+          };
+        };
+      }
+    ).__AISW_DESKTOP_SCENARIO_STATE__;
+    return state?.settings?.profile_labels?.claude?.work ?? null;
+  });
+  expect(storedLabel).toBe("Acme Work");
 });
 
 test("derives add-profile modes and fixed file storage from runtime capabilities", async ({
