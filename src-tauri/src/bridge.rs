@@ -1348,22 +1348,20 @@ printf '{}'
     async fn machine_failures_from_json_stdout_map_to_desktop_errors() {
         let path = write_fake_aisw(
             r#"#!/bin/sh
-if [ "$1" = "use" ]; then
-  printf '{"ok":false,"error":{"kind":"profile_not_found","message":"profile work not found","remediation":{"command":"aisw list claude","safe":true}}}'
-  exit 1
-fi
-printf '{}'
+printf '{"ok":false,"error":{"kind":"profile_not_found","message":"profile work not found","remediation":{"command":"aisw list claude","safe":true}}}'
+exit 1
 "#,
         );
         let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
-        let error = bridge
-            .use_profile(crate::models::UseProfileRequest {
+        let error = retry_on_aisw_not_found(|| {
+            bridge.use_profile(crate::models::UseProfileRequest {
                 tool: "claude".to_owned(),
                 profile: "work".to_owned(),
                 state_mode: None,
             })
-            .await
-            .expect_err("expected machine failure");
+        })
+        .await
+        .expect_err("expected machine failure");
 
         let crate::errors::DesktopError::CommandFailed {
             kind,
