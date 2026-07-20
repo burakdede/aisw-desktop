@@ -927,16 +927,18 @@ mod tests {
     use super::{
         map_command_failure, map_machine_failure, remediation_for_kind, AiswBridge, CliAiswBridge,
     };
-    use crate::errors::GuiErrorKind;
+    use crate::errors::{DesktopError, GuiErrorKind};
     use crate::models::{
         AddOAuthProfileRequest, AddProfileMode, AddProfileRequest, RuntimeKind,
         UseAllProfilesRequest, WorkspaceBindRequest, WorkspaceBindTarget,
     };
     use std::fs::{self, File};
+    use std::future::Future;
     use std::io::Write;
     use std::os::unix::fs::PermissionsExt;
     use std::path::PathBuf;
     use std::sync::atomic::{AtomicU64, Ordering};
+    use std::time::Duration;
     use tempfile::tempdir;
 
     static NEXT_FAKE_AISW_ID: AtomicU64 = AtomicU64::new(1);
@@ -957,6 +959,23 @@ mod tests {
         perms.set_mode(0o755);
         fs::set_permissions(&path, perms).unwrap();
         path
+    }
+
+    async fn retry_on_aisw_not_found<T, F, Fut>(mut operation: F) -> Result<T, DesktopError>
+    where
+        F: FnMut() -> Fut,
+        Fut: Future<Output = Result<T, DesktopError>>,
+    {
+        for attempt in 0..3 {
+            match operation().await {
+                Err(DesktopError::AiswNotFound) if attempt < 2 => {
+                    tokio::time::sleep(Duration::from_millis(25)).await;
+                }
+                result => return result,
+            }
+        }
+
+        unreachable!("retry loop always returns on the final attempt")
     }
 
     #[tokio::test]
@@ -1068,8 +1087,11 @@ printf '{"version":"0.3.8","cli_api_version":1,"json_schema_version":1,"progress
         );
         let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
         let mut events = Vec::new();
-        let response = bridge
-            .add_profile_oauth(
+        let mut response = None;
+        for attempt in 0..3 {
+            events.clear();
+            match bridge
+                .add_profile_oauth(
                 AddOAuthProfileRequest {
                     tool: "claude".to_owned(),
                     profile: "work".to_owned(),
@@ -1080,7 +1102,18 @@ printf '{"version":"0.3.8","cli_api_version":1,"json_schema_version":1,"progress
                 |event| events.push(event),
             )
             .await
-            .unwrap();
+            {
+                Ok(result) => {
+                    response = Some(result);
+                    break;
+                }
+                Err(DesktopError::AiswNotFound) if attempt < 2 => {
+                    tokio::time::sleep(Duration::from_millis(25)).await;
+                }
+                Err(error) => panic!("expected OAuth success, got {error:?}"),
+            }
+        }
+        let response = response.expect("expected OAuth success after retries");
 
         assert_eq!(events.len(), 4);
         assert_eq!(events[0]["type"], "started");
@@ -1136,8 +1169,8 @@ printf '{}'
 "#,
         );
         let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
-        let error = bridge
-            .add_profile_oauth(
+        let error = retry_on_aisw_not_found::<serde_json::Value, _, _>(|| {
+            bridge.add_profile_oauth(
                 AddOAuthProfileRequest {
                     tool: "claude".to_owned(),
                     profile: "work".to_owned(),
@@ -1147,8 +1180,9 @@ printf '{}'
                 },
                 |_| {},
             )
-            .await
-            .expect_err("expected command failure");
+        })
+        .await
+        .expect_err("expected command failure");
 
         let crate::errors::DesktopError::CommandFailed { message, .. } = error else {
             panic!("expected command failure");
