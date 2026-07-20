@@ -89,6 +89,10 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       ok: packageJson.scripts?.["tauri:bundle-local"] === "node ./scripts/build-local-bundle.mjs",
     },
     {
+      label: "package.json exposes macOS dmg notarization",
+      ok: packageJson.scripts?.["notarize:macos-dmg"] === "node ./scripts/notarize-macos-dmgs.mjs",
+    },
+    {
       label: "package.json exposes sidecar staging",
       ok: packageJson.scripts?.["prepare:sidecar"] === "node ./scripts/prepare-sidecar.mjs",
     },
@@ -311,6 +315,8 @@ export function verifyReleaseContract(rootDir = repoRoot) {
     {
       label: "publish workflow validates macOS Gatekeeper acceptance before release promotion",
       ok:
+        publishWorkflow.includes("Notarize macOS DMG") &&
+        publishWorkflow.includes("npm run notarize:macos-dmg -- --target ${{ matrix.target }}") &&
         publishWorkflow.includes("Verify macOS Gatekeeper acceptance") &&
         publishWorkflow.includes("spctl -a -t open --context context:primary-signature -vv") &&
         publishWorkflow.includes("xcrun stapler validate"),

@@ -29,6 +29,7 @@ function createReleaseFixture(overrides = {}) {
       {
         scripts: {
           "tauri:bundle-local": "node ./scripts/build-local-bundle.mjs",
+          "notarize:macos-dmg": "node ./scripts/notarize-macos-dmgs.mjs",
           "prepare:sidecar": "node ./scripts/prepare-sidecar.mjs",
           "prepare:updater": "node ./scripts/prepare-updater.mjs",
           "configure:release-secrets": "node ./scripts/configure-release-secrets.mjs",
@@ -157,6 +158,8 @@ AISW_SIDECAR_URL_WINDOWS_X64
 AISW_DESKTOP_UPDATER_ENDPOINT_STABLE
 TAURI_SIGNING_PUBLIC_KEY
 node-version: 20.19.0
+Notarize macOS DMG
+npm run notarize:macos-dmg -- --target \${{ matrix.target }}
 Verify macOS Gatekeeper acceptance
 spctl -a -t open --context context:primary-signature -vv
 xcrun stapler validate

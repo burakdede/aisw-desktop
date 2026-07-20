@@ -14,6 +14,7 @@
     "capture:marketing-assets": "node ./scripts/capture-marketing-assets.mjs",
     "tauri:dev": "tauri dev",
     "tauri:bundle-local": "node ./scripts/build-local-bundle.mjs",
+    "notarize:macos-dmg": "node ./scripts/notarize-macos-dmgs.mjs",
     "prepare:sidecar": "node ./scripts/prepare-sidecar.mjs",
     "prepare:updater": "node ./scripts/prepare-updater.mjs",
     "configure:release-secrets": "node ./scripts/configure-release-secrets.mjs",

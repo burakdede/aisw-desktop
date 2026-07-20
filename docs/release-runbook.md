@@ -100,6 +100,7 @@ npm run tauri:build
    `npm run tauri:build`
 4. Confirm the build produced a signed `.app`, a signed `.dmg`, and an updater archive plus `.sig`.
 5. Confirm notarization completed and the app launches without Gatekeeper warnings on a clean macOS machine.
+   Tauri notarizes the `.app`, but Gatekeeper still checks the outer `.dmg`; run `npm run notarize:macos-dmg -- --target <triple>` before shipping any signed DMG that was produced outside the publish workflow.
    At minimum, validate the `.dmg` with `spctl -a -t open --context context:primary-signature -vv`, mount it, then validate the shipped `.app` with `spctl -a -vv` and `xcrun stapler validate`.
 
 ### Windows

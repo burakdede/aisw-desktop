@@ -141,6 +141,14 @@ jobs:
           prerelease: false
           args: ${{ matrix.args }}
 
+      - name: Notarize macOS DMG
+        if: matrix.platform == 'macos-latest' && vars.AISW_ENABLE_MACOS_SIGNING == '1'
+        run: npm run notarize:macos-dmg -- --target ${{ matrix.target }}
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
       - name: Verify macOS Gatekeeper acceptance
         if: matrix.platform == 'macos-latest' && vars.AISW_ENABLE_MACOS_SIGNING == '1'
         shell: bash
