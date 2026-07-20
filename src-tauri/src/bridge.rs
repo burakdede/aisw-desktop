@@ -995,8 +995,8 @@ printf '{"version":"0.3.8","cli_api_version":1,"json_schema_version":1,"progress
 "#,
         );
         let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
-        let response = bridge
-            .add_profile(AddProfileRequest {
+        let response = retry_on_aisw_not_found(|| {
+            bridge.add_profile(AddProfileRequest {
                 tool: "claude".to_owned(),
                 profile: "work".to_owned(),
                 label: None,
@@ -1006,8 +1006,9 @@ printf '{"version":"0.3.8","cli_api_version":1,"json_schema_version":1,"progress
                     value: "sk-ant-api03-secret".to_owned(),
                 },
             })
-            .await
-            .unwrap();
+        })
+        .await
+        .expect("expected API-key import success after retries");
 
         assert_eq!(response["args"], "add claude work --json --api-key-stdin");
         assert_eq!(response["received"], "sk-ant-api03-secret");
