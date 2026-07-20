@@ -5,6 +5,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildLocalBundleInvocation,
   createLocalBundleConfig,
+  hasMacosNotarizationCredentials,
+  notarizeLocalMacosDmgs,
+  resolveDmgDirectory,
+  resolveTauriTarget,
   runLocalBundleBuild,
 } from "./build-local-bundle.mjs";
 
@@ -82,6 +86,88 @@ describe("build-local-bundle", () => {
     expect(existsSync(invocation.configPath)).toBe(false);
   });
 
+  it("resolves the tauri target triple and dmg directory", () => {
+    const root = createWorkspace();
+
+    expect(resolveTauriTarget(["--target", "aarch64-apple-darwin", "--bundles", "dmg"])).toBe(
+      "aarch64-apple-darwin",
+    );
+    expect(resolveTauriTarget(["--bundles", "dmg"])).toBeNull();
+    expect(resolveDmgDirectory(root, ["--target", "aarch64-apple-darwin"])).toBe(
+      resolve(root, "src-tauri/target/aarch64-apple-darwin/release/bundle/dmg"),
+    );
+    expect(resolveDmgDirectory(root, [])).toBe(resolve(root, "src-tauri/target/release/bundle/dmg"));
+  });
+
+  it("detects when Apple notarization credentials are fully configured", () => {
+    expect(
+      hasMacosNotarizationCredentials({
+        APPLE_ID: "ship@example.com",
+        APPLE_PASSWORD: "app-password",
+        APPLE_TEAM_ID: "TEAMID1234",
+      }),
+    ).toBe(true);
+    expect(
+      hasMacosNotarizationCredentials({
+        APPLE_ID: "ship@example.com",
+        APPLE_PASSWORD: "",
+        APPLE_TEAM_ID: "TEAMID1234",
+      }),
+    ).toBe(false);
+  });
+
+  it("skips dmg notarization when not running on macOS or credentials are absent", () => {
+    const root = createWorkspace();
+    const spawn = vi.fn();
+
+    expect(notarizeLocalMacosDmgs(root, [], spawn, {}, "linux")).toBeUndefined();
+    expect(spawn).not.toHaveBeenCalled();
+  });
+
+  it("notarizes and staples dmg artifacts when Apple credentials are present on macOS", () => {
+    const root = createWorkspace();
+    const dmgDir = resolve(root, "src-tauri/target/aarch64-apple-darwin/release/bundle/dmg");
+    mkdirSync(dmgDir, { recursive: true });
+    writeFixture(root, "src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/AI Switcher.dmg", "dmg");
+
+    const spawn = vi.fn().mockReturnValue({ status: 0 });
+    const env = {
+      APPLE_ID: "ship@example.com",
+      APPLE_PASSWORD: "app-password",
+      APPLE_TEAM_ID: "TEAMID1234",
+    };
+
+    expect(notarizeLocalMacosDmgs(root, ["--target", "aarch64-apple-darwin"], spawn, env, "darwin")).toBe(0);
+    expect(spawn.mock.calls).toEqual([
+      [
+        "xcrun",
+        [
+          "notarytool",
+          "submit",
+          resolve(dmgDir, "AI Switcher.dmg"),
+          "--apple-id",
+          "ship@example.com",
+          "--password",
+          "app-password",
+          "--team-id",
+          "TEAMID1234",
+          "--wait",
+        ],
+        { cwd: root, stdio: "inherit" },
+      ],
+      [
+        "xcrun",
+        ["stapler", "staple", resolve(dmgDir, "AI Switcher.dmg")],
+        { cwd: root, stdio: "inherit" },
+      ],
+      [
+        "spctl",
+        ["-a", "-t", "open", "--context", "context:primary-signature", "-vv", resolve(dmgDir, "AI Switcher.dmg")],
+        { cwd: root, stdio: "inherit" },
+      ],
+    ]);
+  });
+
   it("cleans up the temporary config after invoking tauri build", () => {
     const root = createWorkspace();
     const spawn = vi.fn().mockReturnValue({ status: 0 });
@@ -96,5 +182,58 @@ describe("build-local-bundle", () => {
     expect(args.slice(4)).toEqual(["--bundles", "app"]);
     expect(options).toMatchObject({ cwd: root, stdio: "inherit" });
     expect(existsSync(args[3])).toBe(false);
+  });
+
+  it("notarizes local macOS dmg outputs after a successful build when credentials exist", () => {
+    const root = createWorkspace();
+    const dmgDir = resolve(root, "src-tauri/target/aarch64-apple-darwin/release/bundle/dmg");
+    mkdirSync(dmgDir, { recursive: true });
+    writeFixture(root, "src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/AI Switcher.dmg", "dmg");
+
+    const spawn = vi
+      .fn()
+      .mockReturnValueOnce({ status: 0 })
+      .mockReturnValueOnce({ status: 0 })
+      .mockReturnValueOnce({ status: 0 })
+      .mockReturnValueOnce({ status: 0 });
+
+    const originalEnv = {
+      APPLE_ID: process.env.APPLE_ID,
+      APPLE_PASSWORD: process.env.APPLE_PASSWORD,
+      APPLE_TEAM_ID: process.env.APPLE_TEAM_ID,
+    };
+
+    process.env.APPLE_ID = "ship@example.com";
+    process.env.APPLE_PASSWORD = "app-password";
+    process.env.APPLE_TEAM_ID = "TEAMID1234";
+
+    try {
+      const status = runLocalBundleBuild(root, ["--target", "aarch64-apple-darwin"], spawn);
+      expect(status).toBe(0);
+      expect(spawn).toHaveBeenCalledTimes(4);
+      expect(spawn.mock.calls[1][0]).toBe("xcrun");
+      expect(spawn.mock.calls[2][1]).toEqual([
+        "stapler",
+        "staple",
+        resolve(dmgDir, "AI Switcher.dmg"),
+      ]);
+      expect(spawn.mock.calls[3][0]).toBe("spctl");
+    } finally {
+      if (originalEnv.APPLE_ID === undefined) {
+        delete process.env.APPLE_ID;
+      } else {
+        process.env.APPLE_ID = originalEnv.APPLE_ID;
+      }
+      if (originalEnv.APPLE_PASSWORD === undefined) {
+        delete process.env.APPLE_PASSWORD;
+      } else {
+        process.env.APPLE_PASSWORD = originalEnv.APPLE_PASSWORD;
+      }
+      if (originalEnv.APPLE_TEAM_ID === undefined) {
+        delete process.env.APPLE_TEAM_ID;
+      } else {
+        process.env.APPLE_TEAM_ID = originalEnv.APPLE_TEAM_ID;
+      }
+    }
   });
 });

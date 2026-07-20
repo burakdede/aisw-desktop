@@ -48,6 +48,7 @@ npm run tauri:bundle-local
 ```
 
 This local smoke-build path keeps the sidecar contract intact but disables updater artifact generation, so it succeeds without `TAURI_SIGNING_PRIVATE_KEY` while still producing a launchable packaged app bundle.
+On macOS, if `APPLE_ID`, `APPLE_PASSWORD`, and `APPLE_TEAM_ID` are exported, it now also notarizes and staples the generated `.dmg` so local release candidates match Gatekeeper behavior.
 
 5. Build the signed release bundle after staging updater channels and signing secrets:
 
