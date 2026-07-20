@@ -1030,8 +1030,8 @@ printf '{"version":"0.3.8","cli_api_version":1,"json_schema_version":1,"progress
 "#,
         );
         let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
-        let response = bridge
-            .add_profile(AddProfileRequest {
+        let response = retry_on_aisw_not_found(|| {
+            bridge.add_profile(AddProfileRequest {
                 tool: "codex".to_owned(),
                 profile: "ci".to_owned(),
                 label: None,
@@ -1039,8 +1039,9 @@ printf '{"version":"0.3.8","cli_api_version":1,"json_schema_version":1,"progress
                 credential_backend: None,
                 import_mode: AddProfileMode::FromEnv,
             })
-            .await
-            .unwrap();
+        })
+        .await
+        .expect("expected from-env import success after retries");
 
         assert_eq!(response["args"], "add codex ci --json --from-env");
         assert_eq!(response["command"], "add");
@@ -1058,8 +1059,8 @@ printf '{"version":"0.3.8","cli_api_version":1,"json_schema_version":1,"progress
 "#,
         );
         let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
-        let response = bridge
-            .add_profile(AddProfileRequest {
+        let response = retry_on_aisw_not_found(|| {
+            bridge.add_profile(AddProfileRequest {
                 tool: "claude".to_owned(),
                 profile: "work".to_owned(),
                 label: None,
@@ -1067,8 +1068,9 @@ printf '{"version":"0.3.8","cli_api_version":1,"json_schema_version":1,"progress
                 credential_backend: Some("file".to_owned()),
                 import_mode: AddProfileMode::FromLive,
             })
-            .await
-            .unwrap();
+        })
+        .await
+        .expect("expected explicit credential backend success after retries");
 
         assert_eq!(
             response["args"],
