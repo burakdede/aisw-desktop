@@ -944,7 +944,11 @@ mod tests {
     static NEXT_FAKE_AISW_ID: AtomicU64 = AtomicU64::new(1);
 
     fn write_fake_aisw(script: &str) -> std::path::PathBuf {
-        let dir = std::env::temp_dir().join(format!(
+        let dir = std::env::current_dir()
+            .unwrap()
+            .join("target")
+            .join("test-fixtures")
+            .join(format!(
             "aisw-bridge-test-{}-{}",
             std::process::id(),
             NEXT_FAKE_AISW_ID.fetch_add(1, Ordering::Relaxed)
