@@ -1092,16 +1092,16 @@ printf '{"version":"0.3.8","cli_api_version":1,"json_schema_version":1,"progress
             events.clear();
             match bridge
                 .add_profile_oauth(
-                AddOAuthProfileRequest {
-                    tool: "claude".to_owned(),
-                    profile: "work".to_owned(),
-                    label: None,
-                    state_mode: Some("isolated".to_owned()),
-                    credential_backend: None,
-                },
-                |event| events.push(event),
-            )
-            .await
+                    AddOAuthProfileRequest {
+                        tool: "claude".to_owned(),
+                        profile: "work".to_owned(),
+                        label: None,
+                        state_mode: Some("isolated".to_owned()),
+                        credential_backend: None,
+                    },
+                    |event| events.push(event),
+                )
+                .await
             {
                 Ok(result) => {
                     response = Some(result);
