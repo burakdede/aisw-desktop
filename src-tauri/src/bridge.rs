@@ -949,10 +949,10 @@ mod tests {
             .join("target")
             .join("test-fixtures")
             .join(format!(
-            "aisw-bridge-test-{}-{}",
-            std::process::id(),
-            NEXT_FAKE_AISW_ID.fetch_add(1, Ordering::Relaxed)
-        ));
+                "aisw-bridge-test-{}-{}",
+                std::process::id(),
+                NEXT_FAKE_AISW_ID.fetch_add(1, Ordering::Relaxed)
+            ));
         fs::create_dir_all(&dir).unwrap();
         let path = dir.join("aisw");
         let mut file = File::create(&path).unwrap();
