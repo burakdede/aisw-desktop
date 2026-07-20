@@ -160,7 +160,8 @@ jobs:
             exit 1
           fi
 
-          gh release upload "v__VERSION__" "$dmg" --repo "${GITHUB_REPOSITORY}" --clobber
+          release_tag="v$(node -p "require('./src-tauri/tauri.conf.json').version")"
+          gh release upload "$release_tag" "$dmg" --repo "${GITHUB_REPOSITORY}" --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

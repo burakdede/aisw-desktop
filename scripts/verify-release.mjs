@@ -327,7 +327,8 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         publishWorkflow.includes("Notarize macOS DMG") &&
         publishWorkflow.includes("npm run notarize:macos-dmg -- --target ${{ matrix.target }}") &&
         publishWorkflow.includes("Re-upload notarized macOS DMG") &&
-        publishWorkflow.includes('gh release upload "v__VERSION__" "$dmg" --repo "${GITHUB_REPOSITORY}" --clobber') &&
+        publishWorkflow.includes(`release_tag="v$(node -p "require('./src-tauri/tauri.conf.json').version")"`) &&
+        publishWorkflow.includes('gh release upload "$release_tag" "$dmg" --repo "${GITHUB_REPOSITORY}" --clobber') &&
         publishWorkflow.includes("Verify macOS Gatekeeper acceptance") &&
         publishWorkflow.includes("spctl -a -t open --context context:primary-signature -vv") &&
         publishWorkflow.includes("xcrun stapler validate") &&

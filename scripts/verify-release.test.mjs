@@ -164,7 +164,8 @@ releaseDraft: false
 Notarize macOS DMG
 npm run notarize:macos-dmg -- --target \${{ matrix.target }}
 Re-upload notarized macOS DMG
-gh release upload "v__VERSION__" "$dmg" --repo "\${GITHUB_REPOSITORY}" --clobber
+release_tag="v$(node -p "require('./src-tauri/tauri.conf.json').version")"
+gh release upload "$release_tag" "$dmg" --repo "\${GITHUB_REPOSITORY}" --clobber
 Verify macOS Gatekeeper acceptance
 spctl -a -t open --context context:primary-signature -vv
 xcrun stapler validate
