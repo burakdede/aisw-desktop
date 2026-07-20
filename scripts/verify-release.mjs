@@ -144,9 +144,15 @@ export function verifyReleaseContract(rootDir = repoRoot) {
         mainCapability.identifier === "main-capability" &&
         Array.isArray(mainCapability.windows) &&
         mainCapability.windows.includes("main") &&
-        ["desktop-commands", "core:event:allow-listen", "core:event:allow-unlisten", "notification:allow-is-permission-granted", "notification:allow-request-permission", "notification:allow-notify"].every(
-          (permission) => mainCapabilityPermissions.includes(permission),
-        ) &&
+        [
+          "desktop-commands",
+          "core:event:allow-listen",
+          "core:event:allow-unlisten",
+          "core:window:allow-start-dragging",
+          "notification:allow-is-permission-granted",
+          "notification:allow-request-permission",
+          "notification:allow-notify",
+        ].every((permission) => mainCapabilityPermissions.includes(permission)) &&
         !mainCapabilityPermissions.some((permission) =>
           typeof permission === "string" &&
           (permission === "core:default" ||
