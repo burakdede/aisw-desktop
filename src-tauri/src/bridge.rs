@@ -246,6 +246,7 @@ impl CliAiswBridge {
         let stdout_task = async move {
             let mut reader = BufReader::new(stdout).lines();
             let mut last_value: Option<serde_json::Value> = None;
+            let mut latest_result: Option<serde_json::Value> = None;
             while let Some(line) =
                 reader
                     .next_line()
@@ -268,9 +269,15 @@ impl CliAiswBridge {
                     }
                 })?;
                 on_event(value.clone());
+                if let Some(result) = value.get("result").cloned() {
+                    latest_result = Some(result);
+                }
                 last_value = Some(value);
             }
-            Ok::<Option<serde_json::Value>, DesktopError>(last_value)
+            Ok::<(Option<serde_json::Value>, Option<serde_json::Value>), DesktopError>((
+                last_value,
+                latest_result,
+            ))
         };
 
         let stderr_task = async move {
@@ -289,8 +296,8 @@ impl CliAiswBridge {
             Ok::<Vec<u8>, DesktopError>(bytes)
         };
 
-        let (last_value, stderr_bytes) = tokio::join!(stdout_task, stderr_task);
-        let last_value = last_value?;
+        let (stdout_summary, stderr_bytes) = tokio::join!(stdout_task, stderr_task);
+        let (last_value, latest_result) = stdout_summary?;
         let stderr_bytes = stderr_bytes?;
         let status = child
             .wait()
@@ -304,11 +311,7 @@ impl CliAiswBridge {
             })?;
 
         if status.success() {
-            if let Some(result) = last_value
-                .as_ref()
-                .and_then(|value| value.get("result"))
-                .cloned()
-            {
+            if let Some(result) = latest_result {
                 return Ok(result);
             }
             return Err(DesktopError::InvalidJson {
@@ -1125,6 +1128,42 @@ printf '{"version":"0.3.8","cli_api_version":1,"json_schema_version":1,"progress
         assert_eq!(events.len(), 4);
         assert_eq!(events[0]["type"], "started");
         assert_eq!(events[2]["safe_to_cancel"], true);
+        assert_eq!(response["profile"], "work");
+        assert_eq!(response["auth_method"], "oauth");
+    }
+
+    #[tokio::test]
+    async fn add_profile_oauth_returns_success_when_result_is_not_last_event() {
+        let path = write_fake_aisw(
+            r#"#!/bin/sh
+if [ "$1" = "add" ]; then
+  printf '%s\n' '{"type":"started","seq":1,"command":"add","tool":"codex","profile":"work"}'
+  printf '%s\n' '{"type":"waiting_for_user","seq":2,"command":"add","tool":"codex","profile":"work","phase":"waiting_for_user","safe_to_cancel":true,"message":"Complete login"}'
+  printf '%s\n' '{"type":"result","seq":3,"command":"add","tool":"codex","profile":"work","ok":true,"result":{"tool":"codex","profile":"work","auth_method":"oauth"}}'
+  printf '%s\n' '{"type":"info","seq":4,"command":"add","tool":"codex","profile":"work","phase":"cleanup","message":"Cleaning up browser session"}'
+  exit 0
+fi
+printf '{"version":"0.3.8","cli_api_version":1,"json_schema_version":1,"progress_schema_version":1}'
+"#,
+        );
+        let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
+
+        let response = retry_on_aisw_not_found::<serde_json::Value, _, _>(|| {
+            bridge.add_profile_oauth(
+                AddOAuthProfileRequest {
+                    tool: "codex".to_owned(),
+                    profile: "work".to_owned(),
+                    label: None,
+                    state_mode: None,
+                    credential_backend: None,
+                },
+                |_| {},
+            )
+        })
+        .await
+        .expect("expected OAuth success with trailing progress event");
+
+        assert_eq!(response["tool"], "codex");
         assert_eq!(response["profile"], "work");
         assert_eq!(response["auth_method"], "oauth");
     }
