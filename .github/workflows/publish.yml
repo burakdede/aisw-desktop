@@ -149,6 +149,21 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
+      - name: Re-upload notarized macOS DMG
+        if: matrix.platform == 'macos-latest' && vars.AISW_ENABLE_MACOS_SIGNING == '1'
+        shell: bash
+        run: |
+          dmg_dir="src-tauri/target/${{ matrix.target }}/release/bundle/dmg"
+          dmg="$(find "$dmg_dir" -maxdepth 1 -name '*.dmg' | head -n 1)"
+          if [ -z "$dmg" ]; then
+            echo "Missing DMG in $dmg_dir"
+            exit 1
+          fi
+
+          gh release upload "v__VERSION__" "$dmg" --repo "${GITHUB_REPOSITORY}" --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Verify macOS Gatekeeper acceptance
         if: matrix.platform == 'macos-latest' && vars.AISW_ENABLE_MACOS_SIGNING == '1'
         shell: bash

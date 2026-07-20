@@ -326,9 +326,15 @@ export function verifyReleaseContract(rootDir = repoRoot) {
       ok:
         publishWorkflow.includes("Notarize macOS DMG") &&
         publishWorkflow.includes("npm run notarize:macos-dmg -- --target ${{ matrix.target }}") &&
+        publishWorkflow.includes("Re-upload notarized macOS DMG") &&
+        publishWorkflow.includes('gh release upload "v__VERSION__" "$dmg" --repo "${GITHUB_REPOSITORY}" --clobber') &&
         publishWorkflow.includes("Verify macOS Gatekeeper acceptance") &&
         publishWorkflow.includes("spctl -a -t open --context context:primary-signature -vv") &&
-        publishWorkflow.includes("xcrun stapler validate"),
+        publishWorkflow.includes("xcrun stapler validate") &&
+        publishWorkflow.indexOf("Notarize macOS DMG") <
+          publishWorkflow.indexOf("Re-upload notarized macOS DMG") &&
+        publishWorkflow.indexOf("Re-upload notarized macOS DMG") <
+          publishWorkflow.indexOf("Verify macOS Gatekeeper acceptance"),
     },
     {
       label: "publish workflow wires target-specific sidecar secrets",
