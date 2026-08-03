@@ -2125,6 +2125,49 @@ test("uses the settings mobile section picker on narrow widths", async ({ page }
   await expect(page.getByRole("button", { name: "Copy Install" })).toBeVisible();
 });
 
+test("keeps the overview usable on compact widths and supports inspector navigation", async ({
+  page,
+}) => {
+  await installDesktopMock(page, "switching");
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+
+  const layout = await page.evaluate(() => ({
+    viewportWidth: window.innerWidth,
+    documentWidth: document.documentElement.scrollWidth,
+    overviewWidth: document.querySelector<HTMLElement>(".overview-screen")?.scrollWidth ?? 0,
+  }));
+  expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  expect(layout.overviewWidth).toBeLessThanOrEqual(layout.viewportWidth);
+
+  const unnamedInteractive = await page.locator(
+    ".overview-screen button, .overview-screen a, .overview-screen select, .overview-screen input",
+  ).evaluateAll((elements) =>
+    elements.filter((element) => {
+      const rect = element.getBoundingClientRect();
+      return (
+        rect.width > 0 &&
+        rect.height > 0 &&
+        !element.getAttribute("aria-label") &&
+        !element.textContent?.trim()
+      );
+    }).length,
+  );
+  expect(unnamedInteractive).toBe(0);
+
+  await page.locator(".overview-tool-list-row").first().click();
+  await expect(page.locator(".overview-inspector-pane")).toBeVisible();
+  await page.getByRole("button", { name: "More profile actions" }).click();
+  await expect(page.getByRole("menu", { name: "Overview actions" })).toBeVisible();
+
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("menu", { name: "Overview actions" })).toBeHidden();
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(page.locator(".overview-inspector-pane")).toHaveCount(0);
+});
+
 test("switches to a saved set from quick switch and updates the overview", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
