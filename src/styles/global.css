@@ -2676,6 +2676,16 @@ html[data-appearance="dark"] .tool-logo-antigravity {
     align-items: stretch;
   }
 
+  .profiles-filter-row .segmented-control {
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .profiles-filter-row .segmented-control-button {
+    flex: 1 1 auto;
+  }
+
   .profiles-layout {
     display: block;
   }

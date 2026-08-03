@@ -2041,6 +2041,30 @@ test("uses a one-pane detail flow for profiles on narrow widths", async ({ page 
   await expect(page.getByLabel("Profile table")).toBeVisible();
 });
 
+test("keeps the profiles inventory usable at phone widths", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Show sidebar" }).click();
+  await page.getByRole("button", { name: "Profiles", exact: true }).click();
+  await expect(page.getByLabel("Profile table")).toBeVisible();
+
+  const layout = await page.evaluate(() => ({
+    viewportWidth: window.innerWidth,
+    documentWidth: document.documentElement.scrollWidth,
+    profilesWidth: document.querySelector<HTMLElement>(".profiles-screen")?.scrollWidth ?? 0,
+  }));
+  expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  expect(layout.profilesWidth).toBeLessThanOrEqual(layout.viewportWidth);
+
+  await page.getByRole("option", { name: "Inspect Claude Code Work" }).click();
+  await expect(page.getByRole("button", { name: "Back" })).toBeVisible();
+  await expect(page.getByLabel("Profile table")).toHaveCount(0);
+  await page.getByRole("button", { name: "Back" }).click();
+  await expect(page.getByLabel("Profile table")).toBeVisible();
+});
+
 test("uses a one-pane detail flow for sets on narrow widths", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -3376,6 +3400,26 @@ test("stores a relabel override for an existing profile", async ({ page }) => {
     return state?.settings?.profile_labels?.claude?.work ?? null;
   });
   expect(storedLabel).toBe("Acme Work");
+});
+
+test("keeps profile editing open when saving a display label fails", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await overrideDesktopCommand(page, "update_settings", {
+    error: { message: "settings write failed" },
+  });
+  await page.getByRole("button", { name: "Profiles", exact: true }).click();
+  await page.getByRole("option", { name: "Inspect Claude Code Work" }).click();
+
+  await page.locator(".profiles-inspector").getByRole("button", { name: "More profile actions" }).click();
+  await page.getByRole("menuitem", { name: "Change Label…" }).click();
+  await page.getByLabel("label work").fill("Acme Work");
+  await page.getByRole("button", { name: "Save" }).click();
+
+  const editDialog = page.getByRole("dialog", { name: "Edit Profile" });
+  await expect(editDialog).toBeVisible();
+  await expect(editDialog).toContainText("settings write failed");
 });
 
 test("derives add-profile modes and fixed file storage from runtime capabilities", async ({

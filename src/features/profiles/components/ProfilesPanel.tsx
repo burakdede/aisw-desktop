@@ -333,10 +333,13 @@ export function ProfilesPanel({
   const mutationErrorMessage = profileMutationError(
     addProfileMutation.error,
     addProfileOAuthMutation.error,
-    renameProfileMutation.error,
     removeProfileMutation.error,
     useProfileMutation.error,
     apiKeyProfileAction.error,
+  );
+  const editMutationErrorMessage = profileMutationError(
+    renameProfileMutation.error,
+    updateSettingsMutation.error,
   );
 
   useEffect(() => {
@@ -645,6 +648,44 @@ export function ProfilesPanel({
     setProfileSheetOpen(true);
   }
 
+  async function submitProfileEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editSheetState) {
+      return;
+    }
+
+    const nextName = editSheetState.renameDraft.trim();
+    const nextLabel = editSheetState.labelDraft.trim();
+    if (editSheetState.renameDuplicate) {
+      return;
+    }
+
+    const labelUpdateRequest = buildProfileLabelUpdateRequest({
+      settings,
+      tool,
+      profileName: editSheetState.profile.name,
+      profileLabel: editSheetState.profile.label,
+      nextLabel,
+    });
+
+    try {
+      // Persist the label first so a failed rename cannot leave an orphaned label key.
+      if (labelUpdateRequest) {
+        await updateSettingsMutation.mutateAsync(labelUpdateRequest);
+      }
+      if (nextName && nextName !== editSheetState.profile.name) {
+        await renameProfileMutation.mutateAsync({
+          tool,
+          oldName: editSheetState.profile.name,
+          newName: nextName,
+        });
+      }
+      setPendingEdit(null);
+    } catch {
+      // Keep the edit sheet open so the mutation error and retry path remain visible.
+    }
+  }
+
   function handleProfileAction(
     action: ProfileActionMenuItem,
     target: ProfileActionTarget,
@@ -662,9 +703,13 @@ export function ProfilesPanel({
         break;
       }
       case "rename":
+        renameProfileMutation.reset();
+        updateSettingsMutation.reset();
         setPendingEdit({ name: target.name, focus: "name" });
         break;
       case "change_label":
+        renameProfileMutation.reset();
+        updateSettingsMutation.reset();
         setPendingEdit({ name: target.name, focus: "label" });
         break;
       case "view_backups":
@@ -1094,35 +1139,7 @@ export function ProfilesPanel({
           />
           <form
             className="stacked-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const nextName = editSheetState.renameDraft.trim();
-              const nextLabel = editSheetState.labelDraft.trim();
-              if (editSheetState.renameDuplicate) {
-                return;
-              }
-
-              if (nextName && nextName !== editSheetState.profile.name) {
-                renameProfileMutation.mutate({
-                  tool,
-                  oldName: editSheetState.profile.name,
-                  newName: nextName,
-                });
-              }
-
-              const labelUpdateRequest = buildProfileLabelUpdateRequest({
-                settings,
-                tool,
-                profileName: editSheetState.profile.name,
-                profileLabel: editSheetState.profile.label,
-                nextLabel,
-              });
-              if (labelUpdateRequest) {
-                updateSettingsMutation.mutate(labelUpdateRequest);
-              }
-
-              setPendingEdit(null);
-            }}
+            onSubmit={submitProfileEdit}
           >
             <label>
               {PROFILE_EDIT_SHEET_COPY.currentNameLabel}
@@ -1168,11 +1185,17 @@ export function ProfilesPanel({
               <button
                 className="primary-button"
                 type="submit"
-                disabled={mutationLock.isBusy || Boolean(editSheetState.renameDuplicate)}
+                disabled={
+                  mutationLock.isBusy ||
+                  renameProfileMutation.isPending ||
+                  updateSettingsMutation.isPending ||
+                  Boolean(editSheetState.renameDuplicate)
+                }
               >
                 {PROFILE_EDIT_SHEET_COPY.saveLabel}
               </button>
             </ButtonRow>
+            {editMutationErrorMessage ? <p className="inline-note">{editMutationErrorMessage}</p> : null}
           </form>
         </DialogSurface>
       ) : null}
