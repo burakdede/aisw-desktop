@@ -5860,6 +5860,20 @@ test("exports a redacted diagnostic report from security settings", async ({ pag
   expect(commandLog.some((entry) => entry.command === "export_diagnostic_bundle")).toBe(true);
 });
 
+test("surfaces support-bundle export failures from security settings", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.locator(".settings-category-pane").getByRole("button", { name: "Security" }).click();
+  await overrideDesktopCommand(page, "export_diagnostic_bundle", {
+    error: { message: "support bundle unavailable" },
+  });
+
+  await page.getByRole("button", { name: "Copy Redacted Report…" }).click();
+  await expect(page.getByText("support bundle unavailable")).toBeVisible();
+});
+
 test("supports arrow-key navigation in settings sections", async ({ page }) => {
   await installDesktopMock(page, "switching");
 

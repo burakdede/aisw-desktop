@@ -300,8 +300,12 @@ export function SettingsPanel({
   }
 
   async function runAdvancedAction(action: () => Promise<void> | void) {
-    await persistAiswHomeIfNeeded();
-    await action();
+    try {
+      await persistAiswHomeIfNeeded();
+      await action();
+    } catch (error) {
+      setAdvancedMessage(formatSettingsMutationError(error).message);
+    }
   }
 
   async function copyText(value: string, label: string) {
@@ -309,8 +313,12 @@ export function SettingsPanel({
       setCopyMessage(clipboardUnavailableMessage(label));
       return;
     }
-    await navigator.clipboard.writeText(value);
-    setCopyMessage(clipboardSuccessMessage(label));
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopyMessage(clipboardSuccessMessage(label));
+    } catch (error) {
+      setCopyMessage(formatSettingsMutationError(error).message);
+    }
   }
 
   async function exportReport() {
@@ -319,7 +327,11 @@ export function SettingsPanel({
       const result = await exportDiagnosticBundle();
       const message = exportedDiagnosticMessage(result.filename);
       setSecurityMessage(message);
-      void notifyDesktop(diagnosticExportSuccessNotification(result.filename));
+      try {
+        await notifyDesktop(diagnosticExportSuccessNotification(result.filename));
+      } catch (error) {
+        setSecurityMessage(formatSettingsMutationError(error).message);
+      }
     } catch (error) {
       const message = diagnosticExportFailureMessage(error);
       setSecurityMessage(message);
@@ -331,10 +343,14 @@ export function SettingsPanel({
     try {
       const path = await openAppDataFolder();
       setAdvancedMessage(openedAppDataFolderMessage(path));
-      void notifyDesktop({
-        title: "App data folder opened",
-        body: path,
-      });
+      try {
+        await notifyDesktop({
+          title: "App data folder opened",
+          body: path,
+        });
+      } catch (error) {
+        setAdvancedMessage(formatSettingsMutationError(error).message);
+      }
     } catch (error) {
       const message = appDataFolderErrorMessage(error);
       setAdvancedMessage(message);
