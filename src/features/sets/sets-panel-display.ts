@@ -169,6 +169,10 @@ export const SETS_PANEL_COPY = {
   duplicateSetLabel: "Duplicate…",
   manageProjectRulesLabel: "Manage Project Rules…",
   removeSetLabel: "Remove…",
+  removeSetDialogLabel: "Remove Set",
+  removeSetWarning:
+    "Removing this saved set cannot be undone. Project rules that reference it will need to be updated separately.",
+  confirmRemoveSetLabel: "Remove Set",
   noSavedSetSelectedTitle: noSelectionHeading("saved set"),
   noSavedSetSelectedDetail:
     "Select a saved set to inspect mapped profiles and switch it.",

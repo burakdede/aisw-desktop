@@ -2083,6 +2083,30 @@ test("uses a one-pane detail flow for sets on narrow widths", async ({ page }) =
   await expect(page.getByLabel("Set Library")).toBeVisible();
 });
 
+test("keeps the sets library usable at phone widths", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Show sidebar" }).click();
+  await page.getByRole("button", { name: "Sets", exact: true }).click();
+  await expect(page.getByLabel("Set Library")).toBeVisible();
+
+  const layout = await page.evaluate(() => ({
+    viewportWidth: window.innerWidth,
+    documentWidth: document.documentElement.scrollWidth,
+    setsWidth: document.querySelector<HTMLElement>(".sets-screen")?.scrollWidth ?? 0,
+  }));
+  expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  expect(layout.setsWidth).toBeLessThanOrEqual(layout.viewportWidth);
+
+  await page.getByRole("button", { name: "Inspect set Client Acme" }).click();
+  await expect(page.getByRole("button", { name: "Back" })).toBeVisible();
+  await expect(page.getByLabel("Set Library")).toHaveCount(0);
+  await page.getByRole("button", { name: "Back" }).click();
+  await expect(page.getByLabel("Set Library")).toBeVisible();
+});
+
 test("uses a one-pane detail flow for backups on narrow widths", async ({ page }) => {
   await installDesktopMock(page, "backupCatalog");
 
@@ -3923,6 +3947,25 @@ test("updates saved set mappings from the sets inspector", async ({ page }) => {
   ).toBe(true);
 });
 
+test("keeps the set editor open when saving a set fails", async ({ page }) => {
+  await installDesktopMock(page, "switching");
+
+  await page.goto("/");
+  await overrideDesktopCommand(page, "update_settings", {
+    error: { message: "set settings write failed" },
+  });
+  await page.getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByRole("button", { name: "New Set…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "New Set" });
+  await dialog.getByLabel("Set name").fill("failure-set");
+  await dialog.getByLabel("Claude Code").selectOption("work");
+  await dialog.getByRole("button", { name: "Create Set" }).click();
+
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("set settings write failed");
+});
+
 test("duplicates a saved set from the sets overflow menu", async ({ page }) => {
   await installDesktopMock(page, "switching");
 
@@ -3978,6 +4021,10 @@ test("deletes a saved set from the sets screen", async ({ page }) => {
   await page.getByRole("button", { name: "Sets", exact: true }).click();
   await page.getByRole("button", { name: "More actions for Client Acme" }).click();
   await page.getByRole("menuitem", { name: "Remove…" }).click();
+
+  const removeDialog = page.getByRole("dialog", { name: "Remove Set" });
+  await expect(removeDialog).toBeVisible();
+  await removeDialog.getByRole("button", { name: "Remove Set" }).click();
 
   await expect(page.getByRole("heading", { name: "No sets yet" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Create Set…" })).toBeVisible();
@@ -4080,6 +4127,27 @@ test("adds and removes a project rule from the sets screen", async ({ page }) =>
     ),
   ).toBe(true);
   expect(commandLog.some((entry) => entry.command === "workspace_unbind")).toBe(true);
+});
+
+test("keeps the project rule editor open when binding fails", async ({ page }) => {
+  await installDesktopMock(page, "workspaceContext");
+
+  await page.goto("/");
+  await overrideDesktopCommand(page, "workspace_bind", {
+    error: { message: "project rule write failed" },
+  });
+  await page.locator(".sidebar").getByRole("button", { name: "Sets", exact: true }).click();
+  await page.getByLabel("Sets mode").getByRole("button", { name: "Project Rules" }).click();
+  await page.getByRole("button", { name: "Add Rule…" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Add Rule" });
+  await dialog.getByLabel("Rule scope").selectOption("path");
+  await dialog.locator("select").nth(1).selectOption("client-acme");
+  await dialog.getByRole("textbox", { name: "Path" }).fill("/code/failure");
+  await dialog.getByRole("button", { name: "Add Rule" }).click();
+
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("project rule write failed");
 });
 
 test("adds and removes a git remote project rule from the sets screen", async ({ page }) => {

@@ -7432,6 +7432,11 @@ describe("App", () => {
     await openSetsSection();
     fireEvent.click(screen.getByRole("button", { name: "More actions for Client Acme" }));
     fireEvent.click(screen.getByText("Remove…"));
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Remove Set" })).getByRole("button", {
+        name: "Remove Set",
+      }),
+    );
 
     await waitFor(() => {
       expect(calls.some((entry) => entry.command === "update_settings")).toBe(true);

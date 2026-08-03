@@ -35,6 +35,7 @@ import {
 } from "../../../lib/sets-display";
 import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { nullishToEmptyString, nullishToNull } from "../../../lib/parse-guards";
+import { formatResolvedErrorMessage } from "../../../lib/error-details";
 import type { AppSnapshot, DesktopSettings } from "../../../lib/schemas";
 import { SUPPORTED_TOOLS } from "../../../lib/tool-registry";
 import {
@@ -50,6 +51,7 @@ import {
   type WorkspaceBindingScope,
 } from "../../../lib/workspace-binding-contract";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
+import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import { COMMAND_RESULT_GLOBAL_IDS } from "../../shared/command-result-scope";
 import { resolveGlobalStateMode } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
@@ -149,6 +151,7 @@ export function SetsPanel({
     resolveSelectedSetName(null, settings.profile_sets ?? []),
   );
   const [pendingSelectedSetName, setPendingSelectedSetName] = useState<string | null>(null);
+  const [pendingSetRemoval, setPendingSetRemoval] = useState<string | null>(null);
   const [setEditorOpen, setSetEditorOpen] = useState(false);
   const [ruleEditorOpen, setRuleEditorOpen] = useState(false);
   const [setMenuOpen, setSetMenuOpen] = useState(false);
@@ -313,11 +316,13 @@ export function SetsPanel({
   }
 
   function openNewSetEditor() {
+    updateSettingsMutation.reset();
     resetSetDraft();
     setSetEditorOpen(true);
   }
 
   function openEditSetEditor(set: NonNullable<DesktopSettings["profile_sets"]>[number]) {
+    updateSettingsMutation.reset();
     setSetMenuOpen(false);
     setSelectedSetName(set.name);
     setSetDraft(createEditableProfileSetDraft(set, TOOLS));
@@ -412,11 +417,15 @@ export function SetsPanel({
   }
 
   function openRuleEditor() {
+    workspaceBindMutation.reset();
+    workspaceUnbindMutation.reset();
     resetRuleDraft();
     setRuleEditorOpen(true);
   }
 
   function openEditRuleEditor(binding: (typeof ruleEntries)[number]) {
+    workspaceBindMutation.reset();
+    workspaceUnbindMutation.reset();
     setRuleDraft(createEditableRuleDraft(binding));
     setRuleEditorOpen(true);
   }
@@ -455,12 +464,13 @@ export function SetsPanel({
     const saveRule = async () => {
       if (ruleDraft.source && workspaceBindingTargetChanged(ruleDraft.source, target)) {
         await workspaceUnbindMutation.mutateAsync(ruleDraft.source);
+        setRuleDraft((current) => ({ ...current, source: null }));
       }
       await workspaceBindMutation.mutateAsync({ target, context: ruleDraft.context, label });
       closeRuleEditor();
     };
 
-    void saveRule();
+    void saveRule().catch(() => undefined);
   }
 
   function removeRule(target: WorkspaceUnbindInput) {
@@ -518,6 +528,17 @@ export function SetsPanel({
     result: workspaceCommandResult,
     kind: "project-rule",
   });
+  const setEditorError = updateSettingsMutation.error
+    ? formatResolvedErrorMessage(updateSettingsMutation.error, "Could not save set.", {
+        normalizeText: normalizeRuntimeLanguage,
+      })
+    : null;
+  const ruleEditorError = workspaceBindMutation.error ?? workspaceUnbindMutation.error;
+  const ruleEditorErrorMessage = ruleEditorError
+    ? formatResolvedErrorMessage(ruleEditorError, "Could not save project rule.", {
+        normalizeText: normalizeRuntimeLanguage,
+      })
+    : null;
   const selectedSetMenuItems = selectedSet
     ? [
         {
@@ -543,7 +564,10 @@ export function SetsPanel({
           label: SETS_PANEL_COPY.removeSetLabel,
           danger: true,
           disabled: mutationLock.isBusy,
-          onSelect: () => deleteSet(selectedSet.name),
+          onSelect: () => {
+            setSetMenuOpen(false);
+            setPendingSetRemoval(selectedSet.name);
+          },
         },
       ]
     : [];
@@ -981,6 +1005,7 @@ export function SetsPanel({
               {!draftHasSelections ? (
                 <p className="inline-note">{emptySetSelectionWarning()}</p>
               ) : null}
+              {setEditorError ? <p className="inline-note diagnostic-status-fail">{setEditorError}</p> : null}
             </div>
             <SheetFooter>
               <ButtonRow>
@@ -1085,8 +1110,46 @@ export function SetsPanel({
                   {ruleEditorSubmitLabel(isEditingRule)}
                 </button>
               </ButtonRow>
+              {ruleEditorErrorMessage ? (
+                <p className="inline-note diagnostic-status-fail">{ruleEditorErrorMessage}</p>
+              ) : null}
             </SheetFooter>
           </form>
+        </DialogSurface>
+      ) : null}
+      {pendingSetRemoval ? (
+        <DialogSurface
+          ariaLabel={SETS_PANEL_COPY.removeSetDialogLabel}
+          className={DIALOG_SURFACE_CLASS_NAMES.sheet}
+          initialFocusSelector={DIALOG_FOCUS_SELECTORS.action}
+          onClose={() => setPendingSetRemoval(null)}
+        >
+          <SheetHeader
+            kicker={SETS_PANEL_COPY.removeSetDialogLabel}
+            title={SETS_PANEL_COPY.removeSetDialogLabel}
+          />
+          <p className="inline-note">
+            {SETS_PANEL_COPY.removeSetWarning}
+          </p>
+          <SheetFooter>
+            <ButtonRow>
+              <button className="ghost-button" type="button" onClick={() => setPendingSetRemoval(null)}>
+                {SETS_PANEL_COPY.cancelLabel}
+              </button>
+              <button
+                className="ghost-button danger-button"
+                type="button"
+                disabled={mutationLock.isBusy}
+                onClick={() => {
+                  const name = pendingSetRemoval;
+                  setPendingSetRemoval(null);
+                  deleteSet(name);
+                }}
+              >
+                {SETS_PANEL_COPY.confirmRemoveSetLabel}
+              </button>
+            </ButtonRow>
+          </SheetFooter>
         </DialogSurface>
       ) : null}
     </div>
