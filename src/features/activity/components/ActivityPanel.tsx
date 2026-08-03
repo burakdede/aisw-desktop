@@ -18,9 +18,11 @@ import { ToolBrand } from "../../../components/ToolBrand";
 import { useCompactInspectorLayout } from "../../../components/useCompactInspectorLayout";
 import { exportActivityLog } from "../../../lib/client";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
+import { formatResolvedErrorMessage } from "../../../lib/error-details";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { notifyDesktop } from "../../../lib/notifications";
 import { nullishToEmptyString } from "../../../lib/parse-guards";
+import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import { resolveSelectionItem } from "../../../lib/utils";
 import {
   clearLastCommandResults,
@@ -71,6 +73,7 @@ export function ActivityPanel({
   const [selectedEntryKey, setSelectedEntryKey] = useState<string | null>(null);
   const [clearMessage, setClearMessage] = useState("");
   const [logMessage, setLogMessage] = useState("");
+  const [actionError, setActionError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [pendingClear, setPendingClear] = useState(false);
   const {
@@ -100,7 +103,7 @@ export function ActivityPanel({
     (entry) => entry.key,
   );
   const hasEntries = entries.length > 0;
-  const footerMessage = clearMessage || logMessage;
+  const footerMessage = actionError || clearMessage || logMessage;
   const selectedEntryScope = selectedEntry
     ? activityScopePresentation(selectedEntry)
     : null;
@@ -139,14 +142,31 @@ export function ActivityPanel({
       return;
     }
 
-    const result = await exportActivityLog(buildActivityExportBody(entries));
-    const message = buildActivityExportMessage(result.filename);
-    setClearMessage("");
-    setLogMessage(message);
-    await notifyDesktop({
-      title: notificationTitle,
-      body: message,
-    });
+    setActionError("");
+    try {
+      const result = await exportActivityLog(buildActivityExportBody(entries));
+      const message = buildActivityExportMessage(result.filename);
+      setClearMessage("");
+      setLogMessage(message);
+      try {
+        await notifyDesktop({
+          title: notificationTitle,
+          body: message,
+        });
+      } catch (error) {
+        setActionError(
+          formatResolvedErrorMessage(error, "Activity export completed, but notification failed.", {
+            normalizeText: normalizeRuntimeLanguage,
+          }),
+        );
+      }
+    } catch (error) {
+      setActionError(
+        formatResolvedErrorMessage(error, "Could not export activity.", {
+          normalizeText: normalizeRuntimeLanguage,
+        }),
+      );
+    }
   }
 
   function applyClear() {
@@ -155,6 +175,7 @@ export function ActivityPanel({
     setPendingClear(false);
     setClearMessage(ACTIVITY_STATUS_NOTIFICATION.clearMessage);
     setLogMessage("");
+    setActionError("");
     setMenuOpen(false);
   }
 
@@ -162,8 +183,15 @@ export function ActivityPanel({
     setMenuOpen(false);
     setClearMessage("");
     setLogMessage("");
+    setActionError("");
     setSelectedEntryKey(resolveSelectedActivityEntryKey(null, filteredEntries));
-    void queryClient.invalidateQueries({ queryKey: DESKTOP_QUERY_KEYS.bootstrap });
+    void queryClient.invalidateQueries({ queryKey: DESKTOP_QUERY_KEYS.bootstrap }).catch((error) => {
+      setActionError(
+        formatResolvedErrorMessage(error, "Could not refresh activity.", {
+          normalizeText: normalizeRuntimeLanguage,
+        }),
+      );
+    });
   }
 
   return (
@@ -327,7 +355,7 @@ export function ActivityPanel({
       />
 
       <div className="activity-footer-line">
-        <p>{activityFooterMessage(footerMessage)}</p>
+        <p role={actionError ? "alert" : undefined}>{activityFooterMessage(footerMessage)}</p>
       </div>
 
       {pendingClear ? (

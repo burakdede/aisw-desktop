@@ -5259,6 +5259,29 @@ test("opens the activity log from the toolbar menu", async ({ page }) => {
   expect(commandLog.some((entry) => entry.command === "export_activity_log")).toBe(true);
 });
 
+test("surfaces activity export failures without an unhandled action", async ({ page }) => {
+  await installDesktopMock(page, "switching", undefined, {
+    activityError: { message: "activity export unavailable" },
+  });
+
+  await page.goto("/");
+  await dispatchDesktopEvent(page, "tray-command-result", {
+    scope: "tool",
+    tool: "claude",
+    label: "Switch profile",
+    status: "success",
+    message: "Switched claude to work.",
+  });
+
+  await page.locator(".sidebar").getByRole("button", { name: "Activity", exact: true }).click();
+  await expect(page.locator(".activity-event-row").first()).toBeVisible();
+  await page.getByRole("button", { name: "Activity more actions" }).click();
+  await page.getByRole("menuitem", { name: "Export Redacted Activity…" }).click();
+
+  await expect(page.getByRole("alert")).toContainText("activity export unavailable");
+  await expect(page.getByText("Opened aisw-desktop-activity-123.json.")).toHaveCount(0);
+});
+
 test("shows recorded activity details and opens the log file from the activity screen", async ({
   page,
 }) => {

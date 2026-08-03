@@ -1802,6 +1802,7 @@ export async function installDesktopMock(
         settings: deepClone(scenarioState.settings ?? bootstrapSettings),
         doctorError: scenarioState.doctorError ? deepClone(scenarioState.doctorError) : null,
         backupError: scenarioState.backupError ? deepClone(scenarioState.backupError) : null,
+        activityError: scenarioState.activityError ? deepClone(scenarioState.activityError) : null,
         initRuns: 0,
         snapshotReads: 0,
         doctorRuns: 0,
@@ -2622,6 +2623,9 @@ export async function installDesktopMock(
           };
         }
         if (command === "export_activity_log") {
+          if (state.activityError) {
+            throw deepClone(state.activityError);
+          }
           return {
             path: "/tmp/aisw-desktop/aisw-desktop-activity-123.json",
             filename: "aisw-desktop-activity-123.json",
