@@ -14,6 +14,7 @@ import { ToolBrand } from "../../../components/ToolBrand";
 import { getShellGuidance, runDoctor, updateSettings } from "../../../lib/client";
 import { buildBundledRuntimeSettingsUpdate } from "../../../lib/desktop-settings";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
+import { formatResolvedErrorMessage } from "../../../lib/error-details";
 import { sharedProfileEntries } from "../../../lib/profile-display";
 import {
   runtimeReadinessLabel,
@@ -40,6 +41,7 @@ import {
 import { DEFAULT_EDITABLE_STATE_MODE, resolveGlobalStateMode } from "../../shared/state-modes";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
+import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import { invalidatePostMutationQueries } from "../../shared/postMutationRefresh";
 import {
   ONBOARDING_ACCOUNTS_STEP_COPY,
@@ -227,6 +229,7 @@ export function SetupPanel({
   }
 
   function openLiveImport(account: LiveAccount) {
+    addProfileMutation.reset();
     setPendingLiveImport(account);
     setProfileNames((current) => ({
       ...current,
@@ -295,6 +298,13 @@ export function SetupPanel({
           </button>
         </ButtonRow>
       </div>
+      {initMutation.error ? (
+        <p className="inline-note diagnostic-status-fail" role="alert">
+          {formatResolvedErrorMessage(initMutation.error, "Setup scan failed.", {
+            normalizeText: normalizeRuntimeLanguage,
+          })}
+        </p>
+      ) : null}
       <SplitView
         className="onboarding-layout onboarding-layout-compact"
         primaryClassName="onboarding-summary-pane"
@@ -455,10 +465,8 @@ export function SetupPanel({
                     </button>
                   </ButtonRow>
                   {restoreBundledRuntimeMutation.error ? (
-                    <p className="inline-note">
-                      {restoreIncludedEngineErrorMessage(
-                        restoreBundledRuntimeMutation.error,
-                      )}
+                    <p className="inline-note diagnostic-status-fail" role="alert">
+                      {restoreIncludedEngineErrorMessage(restoreBundledRuntimeMutation.error)}
                     </p>
                   ) : null}
                 </article>
@@ -622,6 +630,15 @@ export function SetupPanel({
                       </button>
                     </ButtonRow>
                   </div>
+                ) : null}
+                {useAllProfilesMutation.error ? (
+                  <p className="inline-note diagnostic-status-fail" role="alert">
+                    {formatResolvedErrorMessage(
+                      useAllProfilesMutation.error,
+                      "First switch failed.",
+                      { normalizeText: normalizeRuntimeLanguage },
+                    )}
+                  </p>
                 ) : null}
               </article>
             ) : null}
@@ -790,7 +807,11 @@ export function SetupPanel({
               </button>
             </ButtonRow>
             {addProfileMutation.error ? (
-              <p className="inline-note">{addProfileMutation.error.message}</p>
+              <p className="inline-note diagnostic-status-fail" role="alert">
+                {formatResolvedErrorMessage(addProfileMutation.error, "Profile import failed.", {
+                  normalizeText: normalizeRuntimeLanguage,
+                })}
+              </p>
             ) : null}
           </form>
         </DialogSurface>

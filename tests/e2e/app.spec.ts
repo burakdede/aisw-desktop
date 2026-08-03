@@ -20,6 +20,27 @@ test("imports a detected account during onboarding", async ({ page }) => {
   await expect(page.getByLabel("First switch profile")).toContainText("Work");
 });
 
+test("surfaces onboarding live-import failures without closing the dialog", async ({ page }) => {
+  await installDesktopMock(page, "onboarding");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Inspect Claude" }).click();
+  await page.getByRole("button", { name: "Import as profile" }).click();
+
+  await overrideDesktopCommand(page, "add_profile", {
+    error: { message: "credential store unavailable" },
+  });
+
+  const dialog = page.getByRole("dialog", { name: "Import Claude Code Profile" });
+  await dialog.getByLabel("Profile name").fill("work");
+  await dialog.getByLabel("Label").fill("Work");
+  await dialog.getByRole("button", { name: "Import" }).click();
+
+  await expect(dialog.getByRole("alert")).toContainText("credential store unavailable");
+  await expect(dialog).toBeVisible();
+});
+
 test("dismisses the onboarding live-import dialog without saving a profile", async ({
   page,
 }) => {
@@ -368,6 +389,25 @@ test("opens security settings from onboarding credential storage guidance", asyn
   await expect(securityPane.getByText("~/.aisw")).toBeVisible();
 });
 
+test("surfaces onboarding first-switch failures", async ({ page }) => {
+  await installDesktopMock(page, "onboarding");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await importDetectedAccount(page, "codex", "work");
+  await page.getByRole("tab", { name: "First switch" }).click();
+  const firstSwitchProfile = page.getByLabel("First switch profile");
+  await expect(firstSwitchProfile).toContainText("Work");
+  await firstSwitchProfile.selectOption("work");
+
+  await overrideDesktopCommand(page, "use_all_profiles", {
+    error: { message: "switch command unavailable" },
+  });
+  await page.getByRole("button", { name: "Switch now" }).click();
+
+  await expect(page.getByRole("alert")).toContainText("switch command unavailable");
+});
+
 test("reruns onboarding setup detection and surfaces newly detected live accounts", async ({
   page,
 }) => {
@@ -419,6 +459,21 @@ test("guides onboarding with step footer navigation", async ({ page }) => {
   await expect(page.getByText("Step 5 of 5")).toBeVisible();
   await expect(page.getByRole("heading", { name: "You're ready" })).toBeVisible();
   await expect(page.getByLabel("Setup completion status").getByText("Claude Code")).toBeVisible();
+});
+
+test("surfaces onboarding setup-scan failures", async ({ page }) => {
+  await installDesktopMock(page, "noLiveAccounts");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await expect(page.getByRole("button", { name: "Refresh Setup" })).toBeVisible();
+
+  await overrideDesktopCommand(page, "run_init", {
+    error: { message: "setup command unavailable" },
+  });
+  await page.getByRole("button", { name: "Refresh Setup" }).click();
+
+  await expect(page.getByRole("alert")).toContainText("setup command unavailable");
 });
 
 test("opens profiles from onboarding when an installed tool still needs a saved profile", async ({
