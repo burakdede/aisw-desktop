@@ -23,6 +23,7 @@ import { exportDiagnosticBundle, runDoctor, runRepair, runVerify } from "../../.
 import { DESKTOP_ACTION_COPY } from "../../../lib/desktop-action-copy";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
 import { WIDE_PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
+import { formatResolvedErrorMessage } from "../../../lib/error-details";
 import { resolveSelectionItem } from "../../../lib/utils";
 import { useLastCommandResults } from "../../shared/lastCommandResult";
 import { useDesktopActions } from "../../shared/useDesktopActions";
@@ -115,21 +116,25 @@ export function DiagnosticsPanel({
     queryKey: DESKTOP_QUERY_KEYS.doctor,
     queryFn: runDoctor,
     enabled: readEnabled,
+    retry: false,
   });
   const verify = useQuery({
     queryKey: DESKTOP_QUERY_KEYS.verify,
     queryFn: runVerify,
     enabled: readEnabled,
+    retry: false,
   });
   const repair = useQuery({
     queryKey: DESKTOP_QUERY_KEYS.repairDryRun,
     queryFn: () => runRepair({ apply: false, fixes: [] }),
     enabled: readEnabled,
+    retry: false,
   });
   const [bundleCopyMessage, setBundleCopyMessage] = useState("");
   const [selectedFindingKey, setSelectedFindingKey] = useState<string | null>(null);
   const [repairPlanOpen, setRepairPlanOpen] = useState(false);
   const [selectedSafeFixes, setSelectedSafeFixes] = useState<string[]>([]);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
   const [toolbarMenuOpen, setToolbarMenuOpen] = useState(false);
   const [inspectorMenuOpen, setInspectorMenuOpen] = useState(false);
   const toolbarMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
@@ -151,8 +156,21 @@ export function DiagnosticsPanel({
   const exportBundle = useMutation({
     mutationFn: exportDiagnosticBundle,
   });
-  const requestDiagnosticsRefresh = () =>
-    void refreshDiagnosticsData(queryClient, doctor.refetch, verify.refetch, repair.refetch);
+  const requestDiagnosticsRefresh = () => {
+    setRefreshError(null);
+    void refreshDiagnosticsData(
+      queryClient,
+      () => doctor.refetch({ throwOnError: true }),
+      () => verify.refetch({ throwOnError: true }),
+      () => repair.refetch({ throwOnError: true }),
+    ).catch((error) => {
+      setRefreshError(
+        formatResolvedErrorMessage(error, "Could not refresh diagnostics.", {
+          normalizeText: normalizeRuntimeLanguage,
+        }),
+      );
+    });
+  };
 
   const summaryCards: SummaryCardData[] = [
     parseDoctorSummary(doctor.data),
@@ -222,7 +240,6 @@ export function DiagnosticsPanel({
     repair.dataUpdatedAt || 0,
   );
   const verifiedLabel = formatRelativeVerifiedTime(verifiedAt);
-  const diagnosticsSummary = buildDiagnosticsSummary(totalIssues, repairActions.length);
   const lastAppliedCount = Number(
     ((applyRepair.data?.result as {
       summary?: { actions_applied?: number };
@@ -239,6 +256,26 @@ export function DiagnosticsPanel({
       : undefined,
     appliedFixCount: applyRepair.data ? lastAppliedCount : undefined,
   });
+  const diagnosticsQueryError = doctor.error ?? verify.error ?? repair.error;
+  const diagnosticsQueryErrorMessage = diagnosticsQueryError
+    ? formatResolvedErrorMessage(diagnosticsQueryError, "Could not complete diagnostics checks.", {
+        normalizeText: normalizeRuntimeLanguage,
+      })
+    : null;
+  const repairErrorMessage = applyRepair.error
+    ? formatResolvedErrorMessage(applyRepair.error, "Could not apply safe fixes.", {
+        normalizeText: normalizeRuntimeLanguage,
+      })
+    : null;
+  const diagnosticsUnavailableMessage = diagnosticsQueryErrorMessage ?? refreshError;
+  const diagnosticsSummary = diagnosticsUnavailableMessage
+    ? {
+        title: "Diagnostics unavailable",
+        detail: diagnosticsUnavailableMessage,
+        tone: "warn" as const,
+        symbol: "▲" as const,
+      }
+    : buildDiagnosticsSummary(totalIssues, repairActions.length);
 
   useEffect(() => {
     setSelectedSafeFixes(safeFixIds);
@@ -352,6 +389,22 @@ export function DiagnosticsPanel({
         </ButtonRow>
       </div>
 
+      {diagnosticsUnavailableMessage ? (
+        <div className="diagnostics-footer-line diagnostics-footer-line-error" role="alert">
+          <p className="inline-note">
+            {diagnosticsUnavailableMessage}
+          </p>
+          <button
+            className="ghost-button"
+            type="button"
+            disabled={mutationLock.isBusy}
+            onClick={requestDiagnosticsRefresh}
+          >
+            {DIAGNOSTICS_PANEL_COPY.verifyAgainAriaLabel}
+          </button>
+        </div>
+      ) : null}
+
       <section
         className={`diagnostics-summary-strip diagnostics-summary-strip-${diagnosticsSummary.tone}`}
       >
@@ -419,6 +472,22 @@ export function DiagnosticsPanel({
                     </div>
                   </details>
                 ) : null}
+              </div>
+            ) : diagnosticsUnavailableMessage ? (
+              <div className="diagnostics-healthy-state" role="status">
+                <span aria-hidden="true">▲</span>
+                <h3>Diagnostics unavailable</h3>
+                <p className="inline-note">{diagnosticsUnavailableMessage}</p>
+                <ButtonRow>
+                  <button
+                    className="ghost-button"
+                    aria-label={DIAGNOSTICS_PANEL_COPY.verifyAgainAriaLabel}
+                    disabled={mutationLock.isBusy}
+                    onClick={requestDiagnosticsRefresh}
+                  >
+                    {DIAGNOSTICS_PANEL_COPY.verifyAgainAriaLabel}
+                  </button>
+                </ButtonRow>
               </div>
             ) : (
               <div className="diagnostics-healthy-state">
@@ -544,6 +613,12 @@ export function DiagnosticsPanel({
                   </div>
                 </details>
               </>
+            ) : diagnosticsUnavailableMessage ? (
+              <div className="diagnostics-healthy-state diagnostics-healthy-state-compact" role="status">
+                <span aria-hidden="true">▲</span>
+                <h3>Diagnostics unavailable</h3>
+                <p className="inline-note">{diagnosticsUnavailableMessage}</p>
+              </div>
             ) : (
               <div className="diagnostics-healthy-state diagnostics-healthy-state-compact">
                 <span aria-hidden="true">{diagnosticsSummary.symbol}</span>
@@ -603,6 +678,11 @@ export function DiagnosticsPanel({
               </p>
             </div>
           )}
+          {repairErrorMessage ? (
+            <p className="inline-note diagnostic-status-fail" role="alert">
+              {repairErrorMessage}
+            </p>
+          ) : null}
           <SheetFooter>
             <div className="quick-switch-selection">
               <p className="card-kicker">{DIAGNOSTICS_PANEL_COPY.repairPlanSelectionKicker}</p>

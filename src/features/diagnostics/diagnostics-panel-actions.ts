@@ -144,7 +144,16 @@ export async function refreshDiagnosticsData(
   refetchRepair: () => Promise<unknown>,
 ) {
   await invalidateSnapshotDesktopQueries(queryClient);
-  await Promise.all([refetchDoctor(), refetchVerify(), refetchRepair()]);
+  const results = await Promise.all([refetchDoctor(), refetchVerify(), refetchRepair()]);
+  const failedResult = results.find((result) => {
+    if (!result || typeof result !== "object") {
+      return false;
+    }
+    return "error" in result && Boolean(result.error);
+  });
+  if (failedResult && typeof failedResult === "object" && "error" in failedResult) {
+    throw failedResult.error;
+  }
 }
 
 export async function copyDiagnosticsBundlePath(

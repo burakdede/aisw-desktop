@@ -1800,6 +1800,7 @@ export async function installDesktopMock(
         snapshot: deepClone(scenarioState.snapshot),
         initReport: deepClone(scenarioState.initReport),
         settings: deepClone(scenarioState.settings ?? bootstrapSettings),
+        doctorError: scenarioState.doctorError ? deepClone(scenarioState.doctorError) : null,
         initRuns: 0,
         snapshotReads: 0,
         doctorRuns: 0,
@@ -2055,6 +2056,9 @@ export async function installDesktopMock(
           return cloneSnapshot();
         }
         if (command === "run_doctor") {
+          if (state.doctorError) {
+            throw deepClone(state.doctorError);
+          }
           if (activeScenario === "trayDiagnosticsRefresh") {
             state.doctorRuns += 1;
             if (state.doctorRuns > 1) {

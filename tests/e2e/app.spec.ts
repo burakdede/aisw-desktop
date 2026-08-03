@@ -4616,6 +4616,36 @@ test("shows healthy diagnostics states and reruns checks on demand", async ({ pa
     });
 });
 
+test("does not report diagnostics as healthy when a verification check fails", async ({ page }) => {
+  await installDesktopMock(page, "diagnosticsRepair", undefined, {
+    doctorError: { message: "doctor unavailable" },
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+
+  await expect(page.getByRole("alert")).toContainText("doctor unavailable");
+  await expect(page.getByRole("heading", { name: "Diagnostics unavailable" }).first()).toBeVisible();
+  await expect(page.getByText("Everything looks good")).toHaveCount(0);
+});
+
+test("keeps the safe-repair plan open when applying a repair fails", async ({ page }) => {
+  await installDesktopMock(page, "diagnosticsRepair");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+  await page.getByRole("button", { name: "Review Safe Fixes" }).click();
+
+  await overrideDesktopCommand(page, "run_repair", {
+    error: { message: "repair service unavailable" },
+  });
+  const repairDialog = page.getByRole("dialog", { name: "Review Safe Fixes" });
+  await repairDialog.getByRole("button", { name: "Apply Safe Fixes" }).click();
+
+  await expect(repairDialog).toBeVisible();
+  await expect(repairDialog.getByRole("alert")).toContainText("repair service unavailable");
+});
+
 test("shows doctor remediations for keyring, permission, and OAuth failures", async ({
   page,
 }) => {
