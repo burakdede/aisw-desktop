@@ -4880,6 +4880,37 @@ test("filters backups and restores a saved backup into the active profile", asyn
   ).toBe(true);
 });
 
+test("does not present a backup command failure as an empty catalog", async ({ page }) => {
+  await installDesktopMock(page, "backupCatalog", undefined, {
+    backupError: { message: "backup catalog unavailable" },
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Backups" }).click();
+
+  await expect(page.getByRole("alert")).toContainText("backup catalog unavailable");
+  await expect(page.getByRole("heading", { name: "Backups unavailable" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No backups found" })).toHaveCount(0);
+});
+
+test("keeps the restore confirmation open when restoring a backup fails", async ({ page }) => {
+  await installDesktopMock(page, "backupCatalog");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Backups" }).click();
+  await page.locator(".backups-table-row").first().click();
+  await page.getByRole("button", { name: "Restore…" }).click();
+
+  await overrideDesktopCommand(page, "restore_backup", {
+    error: { message: "restore service unavailable" },
+  });
+  const restoreDialog = page.getByRole("dialog", { name: "Restore Backup" });
+  await restoreDialog.getByRole("button", { name: "Restore Files" }).click();
+
+  await expect(restoreDialog).toBeVisible();
+  await expect(restoreDialog.getByRole("alert")).toContainText("restore service unavailable");
+});
+
 test("orders backups by created_at metadata and shows formatted timestamps", async ({ page }) => {
   await installDesktopMock(page, "switching");
 

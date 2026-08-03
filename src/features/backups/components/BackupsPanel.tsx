@@ -24,12 +24,14 @@ import {
   resolveBackupTarget,
 } from "../../../lib/backups";
 import { DESKTOP_QUERY_KEYS } from "../../../lib/desktop-query-keys";
+import { formatResolvedErrorMessage } from "../../../lib/error-details";
 import { PANEL_COMPACT_BREAKPOINT } from "../../../lib/layout";
 import { nullishToNull } from "../../../lib/parse-guards";
 import { findSnapshotToolStatus, toolProfileDisplayLabel } from "../../../lib/profile-display";
 import { AppBootstrap, AppSnapshot, DesktopSettings, type BackupEntry } from "../../../lib/schemas";
 import { toolDisplayName } from "../../../lib/tool-display";
 import { resolveStateModeRequest } from "../../shared/state-modes";
+import { normalizeRuntimeLanguage } from "../../shared/runtime-language";
 import { useDesktopActions } from "../../shared/useDesktopActions";
 import { useMutationAwareQueryEnabled } from "../../shared/mutationQueue";
 import {
@@ -70,6 +72,7 @@ export function BackupsPanel({
     queryKey: DESKTOP_QUERY_KEYS.backups,
     queryFn: listBackups,
     enabled: readEnabled,
+    retry: false,
   });
   const { restoreBackupMutation, useProfileMutation, mutationLock } = useDesktopActions();
   const [toolFilter, setToolFilter] = useState<ToolFilter>(DEFAULT_BACKUPS_TOOL_FILTER);
@@ -77,6 +80,8 @@ export function BackupsPanel({
   const [search, setSearch] = useState("");
   const [selectedBackupId, setSelectedBackupId] = useState<string | null>(null);
   const [copyMessage, setCopyMessage] = useState("");
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [toolbarMenuOpen, setToolbarMenuOpen] = useState(false);
   const [inspectorMenuOpen, setInspectorMenuOpen] = useState(false);
   const toolbarMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
@@ -115,6 +120,18 @@ export function BackupsPanel({
     snapshot,
   );
   const emptyState = buildBackupsEmptyState(backups.isLoading);
+  const backupsQueryErrorMessage = backups.error
+    ? formatResolvedErrorMessage(backups.error, "Could not load backups.", {
+        normalizeText: normalizeRuntimeLanguage,
+      })
+    : null;
+  const backupsUnavailableMessage = backupsQueryErrorMessage ?? refreshError;
+  const restoreError = restoreBackupMutation.error ?? useProfileMutation.error;
+  const restoreErrorMessage = restoreError
+    ? formatResolvedErrorMessage(restoreError, "Could not restore backup.", {
+        normalizeText: normalizeRuntimeLanguage,
+      })
+    : null;
 
   const restoreSheet = buildRestoreSheetState(
     nullishToNull(pendingRestore?.backupId),
@@ -130,12 +147,28 @@ export function BackupsPanel({
       setCopyMessage(backupIdCopyMessage(false, backupId));
       return;
     }
-    await navigator.clipboard.writeText(backupId);
-    setCopyMessage(backupIdCopyMessage(true, backupId));
+    try {
+      await navigator.clipboard.writeText(backupId);
+      setCopyMessage(backupIdCopyMessage(true, backupId));
+    } catch (error) {
+      setCopyMessage(
+        formatResolvedErrorMessage(error, backupIdCopyMessage(false, backupId), {
+          normalizeText: normalizeRuntimeLanguage,
+        }),
+      );
+    }
   }
 
   async function revealBackupFolder() {
-    await openAppDataFolder();
+    try {
+      await openAppDataFolder();
+    } catch (error) {
+      setActionError(
+        formatResolvedErrorMessage(error, "Could not reveal the backup folder.", {
+          normalizeText: normalizeRuntimeLanguage,
+        }),
+      );
+    }
   }
 
   function confirmRestore(entry: BackupEntry, mode: "files" | "activate") {
@@ -161,6 +194,17 @@ export function BackupsPanel({
           });
         }
       },
+    });
+  }
+
+  function requestBackupsRefresh() {
+    setRefreshError(null);
+    void backups.refetch({ throwOnError: true }).catch((error) => {
+      setRefreshError(
+        formatResolvedErrorMessage(error, "Could not refresh backups.", {
+          normalizeText: normalizeRuntimeLanguage,
+        }),
+      );
     });
   }
 
@@ -222,7 +266,7 @@ export function BackupsPanel({
               label: BACKUPS_PANEL_COPY.refreshLabel,
               onSelect: () => {
                 setToolbarMenuOpen(false);
-                void backups.refetch();
+                requestBackupsRefresh();
               },
             },
           ]}
@@ -230,13 +274,34 @@ export function BackupsPanel({
         />
       </div>
 
+      {backupsUnavailableMessage || actionError ? (
+        <div className="diagnostics-footer-line diagnostics-footer-line-error" role="alert">
+          <p className="inline-note">{backupsUnavailableMessage ?? actionError}</p>
+          {backupsUnavailableMessage ? (
+            <button className="ghost-button" type="button" onClick={requestBackupsRefresh}>
+              {BACKUPS_PANEL_COPY.refreshLabel}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
       <SplitView
         className="backups-master-detail"
         primaryClassName="backups-table-pane"
         secondaryClassName="backups-inspector-pane"
         primary={showTable ? (
           <section className="backups-pane">
-            {filteredBackups.length ? (
+            {backupsUnavailableMessage ? (
+              <div className="backups-empty-state" role="status">
+                <h3>Backups unavailable</h3>
+                <p className="inline-note">{backupsUnavailableMessage}</p>
+                <ButtonRow>
+                  <button className="ghost-button" type="button" onClick={requestBackupsRefresh}>
+                    {BACKUPS_PANEL_COPY.refreshLabel}
+                  </button>
+                </ButtonRow>
+              </div>
+            ) : filteredBackups.length ? (
               <div className="backups-table-wrap">
                 <div className="backups-table-header" aria-hidden="true">
                   <span>{BACKUPS_PANEL_COPY.columns.created}</span>
@@ -324,12 +389,14 @@ export function BackupsPanel({
                       className="primary-button"
                       type="button"
                       disabled={mutationLock.isBusy}
-                      onClick={() =>
+                      onClick={() => {
+                        restoreBackupMutation.reset();
+                        useProfileMutation.reset();
                         setPendingRestore({
                           backupId: selectedInspector.entry.backup_id,
                           mode: "files",
-                        })
-                      }
+                        });
+                      }}
                     >
                       {BACKUPS_PANEL_COPY.inspector.restoreLabel}
                     </button>
@@ -348,6 +415,8 @@ export function BackupsPanel({
                           disabled: mutationLock.isBusy,
                           onSelect: () => {
                             setInspectorMenuOpen(false);
+                            restoreBackupMutation.reset();
+                            useProfileMutation.reset();
                             setPendingRestore({
                               backupId: selectedInspector.entry.backup_id,
                               mode: "activate",
@@ -437,6 +506,12 @@ export function BackupsPanel({
         ) : null}
       />
 
+      {restoreErrorMessage && !restoreSheet ? (
+        <div className="diagnostics-footer-line diagnostics-footer-line-error" role="alert">
+          <p className="inline-note">{restoreErrorMessage}</p>
+        </div>
+      ) : null}
+
       {restoreSheet ? (
         <DialogSurface
           ariaLabel={BACKUPS_PANEL_COPY.restoreSheet.ariaLabel}
@@ -471,6 +546,11 @@ export function BackupsPanel({
             ]}
           />
           <p className="inline-note">{restoreSheet.followup}</p>
+          {restoreErrorMessage ? (
+            <p className="inline-note diagnostic-status-fail" role="alert">
+              {restoreErrorMessage}
+            </p>
+          ) : null}
           <SheetFooter>
             <ButtonRow>
               <button

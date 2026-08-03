@@ -1801,6 +1801,7 @@ export async function installDesktopMock(
         initReport: deepClone(scenarioState.initReport),
         settings: deepClone(scenarioState.settings ?? bootstrapSettings),
         doctorError: scenarioState.doctorError ? deepClone(scenarioState.doctorError) : null,
+        backupError: scenarioState.backupError ? deepClone(scenarioState.backupError) : null,
         initRuns: 0,
         snapshotReads: 0,
         doctorRuns: 0,
@@ -2249,6 +2250,9 @@ export async function installDesktopMock(
           return { result: projectBindingsResult() };
         }
         if (command === "list_backups") {
+          if (state.backupError) {
+            throw deepClone(state.backupError);
+          }
           state.backupReads += 1;
           if (activeScenario === "trayBackupRefresh") {
             return state.trayBackupApplied
