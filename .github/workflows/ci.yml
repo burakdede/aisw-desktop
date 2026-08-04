@@ -87,6 +87,17 @@ jobs:
           npm run build
           npm run verify:release
 
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts-${{ matrix.platform }}
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+          if-no-files-found: ignore
+
       - name: Verify Rust
         run: |
           cargo fmt --manifest-path src-tauri/Cargo.toml --check

@@ -3483,18 +3483,25 @@ test("stores a relabel override for an existing profile", async ({ page }) => {
 
 test("keeps profile editing open when saving a display label fails", async ({ page }) => {
   await installDesktopMock(page, "switching");
-
-  await page.goto("/");
-  await overrideDesktopCommand(page, "update_settings", {
+  // Install the failure before the first paint so no save can slip through while
+  // the override is being attached.
+  await overrideDesktopCommandOnStartup(page, "update_settings", {
     error: { message: "settings write failed" },
   });
+
+  await page.goto("/");
   await page.getByRole("button", { name: "Profiles", exact: true }).click();
   await page.getByRole("option", { name: "Inspect Claude Code Work" }).click();
 
   await page.locator(".profiles-inspector").getByRole("button", { name: "More profile actions" }).click();
   await page.getByRole("menuitem", { name: "Change Label…" }).click();
-  await page.getByLabel("label work").fill("Acme Work");
+
+  const labelInput = page.getByLabel("label work");
+  await labelInput.fill("Acme Work");
+  await expect(labelInput).toHaveValue("Acme Work");
   await page.getByRole("button", { name: "Save" }).click();
+
+  await expect.poll(async () => expectCommandCount(page, "update_settings")).toBeGreaterThan(0);
 
   const editDialog = page.getByRole("dialog", { name: "Edit Profile" });
   await expect(editDialog).toBeVisible();
@@ -5665,21 +5672,26 @@ test("saves the selected update channel before checking for updates", async ({ p
   await expect(page.getByText("Channel: beta")).toBeVisible();
   await expect(page.getByText("Endpoint: https://updates.example.com/beta.json")).toBeVisible();
   await expect(page.getByText("Update available: 0.3.0-beta.1")).toBeVisible();
+  // The app also runs automatic background update checks (channel changes, window
+  // focus), so only the ordering of the saved channel against the check is stable.
   await expect
     .poll(async () => expectCommandCount(page, "check_for_updates"))
-    .toBe(checkCountBefore + 1);
+    .toBeGreaterThan(checkCountBefore);
 
-  const commandLog = await readCommandLog(page);
-  const updateSettingsIndex = commandLog.findIndex(
-    (entry) =>
-      entry.command === "update_settings" && entry.args?.request?.update_channel === "beta",
-  );
-  const checkForUpdatesIndex = commandLog.findLastIndex(
-    (entry) => entry.command === "check_for_updates",
-  );
+  await expect
+    .poll(async () => {
+      const commandLog = await readCommandLog(page);
+      const updateSettingsIndex = commandLog.findIndex(
+        (entry) =>
+          entry.command === "update_settings" && entry.args?.request?.update_channel === "beta",
+      );
+      const checkForUpdatesIndex = commandLog.findLastIndex(
+        (entry) => entry.command === "check_for_updates",
+      );
 
-  expect(updateSettingsIndex).toBeGreaterThanOrEqual(0);
-  expect(checkForUpdatesIndex).toBeGreaterThan(updateSettingsIndex);
+      return updateSettingsIndex >= 0 && checkForUpdatesIndex > updateSettingsIndex;
+    })
+    .toBe(true);
 });
 
 test("shows updater remediation when update checks fail in settings", async ({ page }) => {
@@ -6698,7 +6710,7 @@ async function overrideDesktopCommand(
         }
       ).__AISW_DESKTOP_MOCK__;
       if (!currentMock) {
-        return;
+        throw new Error(`Desktop mock is not installed; cannot override "${name}"`);
       }
 
       (
@@ -6713,6 +6725,44 @@ async function overrideDesktopCommand(
             }
           ).__AISW_COMMAND_LOG__;
           commandLog?.push({ command, args: args ?? null });
+          if (error) {
+            throw error;
+          }
+          return result;
+        }
+
+        return currentMock(command, args);
+      };
+    },
+    {
+      name: commandName,
+      result: options.result ?? null,
+      error: options.error ?? null,
+    },
+  );
+}
+
+// Same contract as overrideDesktopCommand, but attached as an init script so the
+// override is already in place for the very first command the app issues.
+async function overrideDesktopCommandOnStartup(
+  page: Page,
+  commandName: string,
+  options: { result?: unknown; error?: Record<string, unknown> },
+) {
+  await page.addInitScript(
+    ({ name, result, error }) => {
+      const scope = window as typeof window & {
+        __AISW_DESKTOP_MOCK__?: (command: string, args?: Record<string, unknown>) => Promise<unknown>;
+        __AISW_COMMAND_LOG__?: Array<{ command: string; args?: Record<string, unknown> | null }>;
+      };
+      const currentMock = scope.__AISW_DESKTOP_MOCK__;
+      if (!currentMock) {
+        throw new Error(`Desktop mock is not installed; cannot override "${name}"`);
+      }
+
+      scope.__AISW_DESKTOP_MOCK__ = async (command, args) => {
+        if (command === name) {
+          scope.__AISW_COMMAND_LOG__?.push({ command, args: args ?? null });
           if (error) {
             throw error;
           }
