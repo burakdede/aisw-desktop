@@ -1,6 +1,15 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
 import { expect, type Page } from "@playwright/test";
 
-const CURRENT_APP_VERSION = process.env.npm_package_version ?? "0.1.6";
+// Read the shipped version directly so the mocked update reports stay in sync
+// with the app on every release, regardless of how Playwright was launched.
+export const CURRENT_APP_VERSION = (
+  JSON.parse(
+    readFileSync(fileURLToPath(new URL("../../package.json", import.meta.url)), "utf8"),
+  ) as { version: string }
+).version;
 
 type ScenarioName =
   | "onboarding"

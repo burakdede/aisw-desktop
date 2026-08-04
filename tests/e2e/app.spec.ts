@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { importDetectedAccount, installDesktopMock } from "./desktopMock";
+import { CURRENT_APP_VERSION, importDetectedAccount, installDesktopMock } from "./desktopMock";
 
 test("imports a detected account during onboarding", async ({ page }) => {
   await installDesktopMock(page, "onboarding");
@@ -5569,7 +5569,7 @@ test("shows installed app and engine versions in updates settings", async ({ pag
   await page.locator(".settings-category-pane").getByRole("button", { name: "Updates" }).click();
 
   await expect(page.getByText("Current version")).toBeVisible();
-  await expect(page.getByText("0.1.11", { exact: true })).toBeVisible();
+  await expect(page.getByText(CURRENT_APP_VERSION, { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Bundled AISW Engine")).toBeVisible();
   await expect(page.getByText("0.3.8", { exact: true })).toBeVisible();
   await expect(page.getByText("Compatibility")).toBeVisible();

@@ -9,6 +9,7 @@ import type {
   VerifyReport,
   WorkspaceStatusReport,
 } from "../lib/schemas";
+import packageJson from "../../package.json";
 import {
   asObject,
   asOptionalString,
@@ -961,8 +962,8 @@ export function createMarketingDesktopMock(sceneName: MarketingSceneName) {
         return {
           configured: true,
           channel: "stable",
-          current_version: "0.1.11",
-          installed_version: "0.1.11",
+          current_version: packageJson.version,
+          installed_version: packageJson.version,
           restart_requested: false,
           message: "AI Switcher is already current.",
         };
