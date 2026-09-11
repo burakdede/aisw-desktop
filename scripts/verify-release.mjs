@@ -350,12 +350,19 @@ export function verifyReleaseContract(rootDir = repoRoot) {
           publishWorkflow.indexOf("Verify macOS Gatekeeper acceptance"),
     },
     {
-      label: "publish workflow wires target-specific sidecar secrets",
+      label: "publish workflow downloads a pinned, checksum-verified aisw sidecar",
       ok:
-        publishWorkflow.includes("AISW_SIDECAR_URL_MACOS_ARM64") &&
-        publishWorkflow.includes("AISW_SIDECAR_URL_MACOS_X64") &&
-        publishWorkflow.includes("AISW_SIDECAR_URL_LINUX_X64") &&
-        publishWorkflow.includes("AISW_SIDECAR_URL_WINDOWS_X64"),
+        /AISW_VERSION: "\d+\.\d+\.\d+"/.test(publishWorkflow) &&
+        publishWorkflow.includes("releases/download/v${AISW_VERSION}") &&
+        publishWorkflow.includes("$asset.sha256") &&
+        publishWorkflow.includes("Checksum mismatch"),
+    },
+    {
+      label: "ci and publish workflows pin the same aisw version",
+      ok: (() => {
+        const pinned = (workflow) => workflow.match(/AISW_VERSION: "([^"]+)"/)?.[1];
+        return Boolean(pinned(publishWorkflow)) && pinned(publishWorkflow) === pinned(ciWorkflow);
+      })(),
     },
   ];
 

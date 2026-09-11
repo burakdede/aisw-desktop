@@ -13,10 +13,6 @@ export { resolveSecretValue } from "./github-secret-utils.mjs";
 export const DEFAULT_ENVIRONMENT = "production";
 
 export const requiredReleaseSecrets = [
-  "AISW_SIDECAR_URL_MACOS_ARM64",
-  "AISW_SIDECAR_URL_MACOS_X64",
-  "AISW_SIDECAR_URL_LINUX_X64",
-  "AISW_SIDECAR_URL_WINDOWS_X64",
   "AISW_DESKTOP_UPDATER_ENDPOINT_STABLE",
   "TAURI_SIGNING_PUBLIC_KEY",
   "TAURI_SIGNING_PRIVATE_KEY",

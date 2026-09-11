@@ -29,10 +29,6 @@ function makeTempFile(contents) {
 
 function makeRequiredEnv(overrides = {}) {
   return {
-    AISW_SIDECAR_URL_MACOS_ARM64: "https://example.com/aisw-arm64",
-    AISW_SIDECAR_URL_MACOS_X64: "https://example.com/aisw-x64",
-    AISW_SIDECAR_URL_LINUX_X64: "https://example.com/aisw-linux",
-    AISW_SIDECAR_URL_WINDOWS_X64: "https://example.com/aisw-win.exe",
     AISW_DESKTOP_UPDATER_ENDPOINT_STABLE: "https://updates.example.com/stable.json",
     TAURI_SIGNING_PUBLIC_KEY: "public-key",
     TAURI_SIGNING_PRIVATE_KEY: "private-key",
@@ -77,7 +73,7 @@ describe("configure-release-secrets", () => {
       makeRequiredEnv({
         APPLE_ID: "ship@example.com",
         APPLE_TEAM_ID: "TEAMID123",
-        AISW_SIDECAR_URL_WINDOWS_X64: undefined,
+        TAURI_SIGNING_PRIVATE_KEY_PASSWORD: undefined,
       }),
     );
 
@@ -86,7 +82,7 @@ describe("configure-release-secrets", () => {
       { name: "APPLE_ID", value: "ship@example.com" },
       { name: "APPLE_TEAM_ID", value: "TEAMID123" },
     ]);
-    expect(secrets.missing).toEqual(["AISW_SIDECAR_URL_WINDOWS_X64"]);
+    expect(secrets.missing).toEqual(["TAURI_SIGNING_PRIVATE_KEY_PASSWORD"]);
   });
 
   it("creates the environment and uploads all available secrets", () => {
@@ -138,13 +134,13 @@ describe("configure-release-secrets", () => {
       args: [
         "secret",
         "set",
-        "AISW_SIDECAR_URL_MACOS_ARM64",
+        "AISW_DESKTOP_UPDATER_ENDPOINT_STABLE",
         "--repo",
         "burakdede/aisw-desktop",
         "--env",
         "production",
       ],
-      input: "https://example.com/aisw-arm64",
+      input: "https://updates.example.com/stable.json",
     });
     expect(stdout.write).toHaveBeenCalled();
   });
