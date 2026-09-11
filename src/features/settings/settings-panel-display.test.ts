@@ -303,14 +303,14 @@ describe("settings-panel-display", () => {
       runtimeVersionLabel(
         makeRuntimeStatus({
           version: {
-            version: "0.3.8",
+            version: "0.3.9",
             cli_api_version: 3,
             json_schema_version: 1,
             progress_schema_version: 1,
           },
         }),
       ),
-    ).toBe("0.3.8");
+    ).toBe("0.3.9");
   });
 
   it("shares effective and resolved runtime paths", () => {

@@ -808,7 +808,7 @@ test("restores the bundled engine from onboarding runtime setup", async ({ page 
   await expect(
     page.getByText("AI Switch is already set to use the desktop engine bundled with this app."),
   ).toBeVisible();
-  await expect(page.getByText("Ready. Version 0.3.8.")).toBeVisible();
+  await expect(page.getByText("Ready. Version 0.3.9.")).toBeVisible();
 
   const commandLog = await readCommandLog(page);
   expect(
@@ -5571,7 +5571,7 @@ test("shows installed app and engine versions in updates settings", async ({ pag
   await expect(page.getByText("Current version")).toBeVisible();
   await expect(page.getByText(CURRENT_APP_VERSION, { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Bundled AISW Engine")).toBeVisible();
-  await expect(page.getByText("0.3.8", { exact: true })).toBeVisible();
+  await expect(page.getByText("0.3.9", { exact: true })).toBeVisible();
   await expect(page.getByText("Compatibility")).toBeVisible();
   await expect(page.getByText("Supported")).toBeVisible();
 });
@@ -5977,7 +5977,7 @@ test("shows runtime detection details in settings", async ({ page }) => {
   const runtimeGroup = page.locator(".settings-group").filter({ hasText: "AISW Runtime" }).first();
   await expect(runtimeGroup).toBeVisible();
   await expect(runtimeGroup.getByText("Bundled runtime")).toBeVisible();
-  await expect(runtimeGroup.getByText("0.3.8", { exact: true })).toBeVisible();
+  await expect(runtimeGroup.getByText("0.3.9", { exact: true })).toBeVisible();
   await expect(runtimeGroup.getByText("Status")).toBeVisible();
   await expect(runtimeGroup.getByText("Ready")).toBeVisible();
   await expect(runtimeGroup.getByText("Current path")).toBeVisible();

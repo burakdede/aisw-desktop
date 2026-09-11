@@ -415,7 +415,7 @@ describe("app-shell helpers", () => {
     expect(
       describeRuntimeBlocker({
         resolved_path: "/bin/aisw",
-        version: { version: "0.3.8" },
+        version: { version: "0.3.9" },
         capabilities: { features: {} },
         issues: ["unsupported feature"],
       }).summary,

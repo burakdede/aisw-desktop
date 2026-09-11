@@ -1,6 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod bridge;
+#[cfg(test)]
+mod bridge_contract_tests;
 mod commands;
 mod diagnostic_bundle;
 mod errors;
