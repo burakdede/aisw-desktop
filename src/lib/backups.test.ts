@@ -70,8 +70,18 @@ describe("backups", () => {
 
     expect(formatBackupListTimestamp("2026-07-15T08:30:00Z", now)).toMatch(/^Today, /);
     expect(formatBackupListTimestamp("2026-07-14T08:30:00Z", now)).toMatch(/^Yesterday, /);
-    expect(formatBackupListTimestamp("2026-07-10T08:30:00Z", now)).toBe("Jul 10");
-    expect(formatBackupListTimestamp("2025-12-31T08:30:00Z", now)).toBe("Dec 31, 2025");
+    // The list follows the user's locale, so derive expectations from the runtime locale.
+    expect(formatBackupListTimestamp("2026-07-10T08:30:00Z", now)).toBe(
+      new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(
+        new Date("2026-07-10T08:30:00Z"),
+      ),
+    );
+    expect(formatBackupListTimestamp("2025-12-31T08:30:00Z", now)).toBe(
+      new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(
+        new Date("2025-12-31T08:30:00Z"),
+      ),
+    );
+    expect(formatBackupListTimestamp("2025-12-31T08:30:00Z", now)).toContain("2025");
 
     expect(formatBackupInspectorTimestamp("2025-12-31T08:30:00Z")).toContain("2025");
     expect(formatBackupInspectorTimestamp("not-a-date")).toBe(DATE_UNAVAILABLE_LABEL);
