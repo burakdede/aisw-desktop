@@ -8,6 +8,7 @@ use crate::bridge::{AiswBridge, CliAiswBridge};
 use crate::models::{
     AddProfileMode, AddProfileRequest, RuntimeKind, UseAllProfilesRequest, UseProfileRequest,
 };
+use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 use tempfile::tempdir;
 
@@ -42,6 +43,19 @@ async fn real_aisw_supports_desktop_workflows() {
     std::env::set_var("HOME", &home);
     std::env::set_var("CODEX_HOME", home.join(".codex"));
     std::env::set_var("CLAUDE_CONFIG_DIR", home.join(".claude"));
+
+    // aisw refuses to add a profile for a tool it cannot find on PATH, and it
+    // probes the binary with `--version`. A stub keeps the test independent of
+    // whatever agent CLIs the runner has installed.
+    let stub_bin = sandbox.path().join("bin");
+    std::fs::create_dir_all(&stub_bin).unwrap();
+    let codex_stub = stub_bin.join("codex");
+    std::fs::write(&codex_stub, "#!/bin/sh\necho 'codex-cli 0.154.0'\n").unwrap();
+    std::fs::set_permissions(&codex_stub, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let path = std::env::var_os("PATH").unwrap_or_default();
+    let mut search = vec![stub_bin];
+    search.extend(std::env::split_paths(&path));
+    std::env::set_var("PATH", std::env::join_paths(search).unwrap());
 
     let bridge = CliAiswBridge::new(
         RuntimeKind::Custom,
