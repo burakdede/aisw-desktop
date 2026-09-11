@@ -60,7 +60,7 @@ const bootstrap: AppBootstrapFixture = {
   runtime_status: {
     resolved_path: "/Applications/AI Switch.app/Contents/Resources/aisw",
     version: {
-      version: "0.3.9",
+      version: "0.3.10",
       cli_api_version: 1,
       json_schema_version: 1,
       progress_schema_version: 1,
@@ -8511,7 +8511,7 @@ describe("App", () => {
       expect(screen.getByText("Current version")).toBeInTheDocument();
       expect(screen.getByText(CURRENT_APP_VERSION)).toBeInTheDocument();
       expect(screen.getByText("Bundled AISW Engine")).toBeInTheDocument();
-      expect(screen.getByText("0.3.9")).toBeInTheDocument();
+      expect(screen.getByText("0.3.10")).toBeInTheDocument();
     });
   });
 
@@ -9121,7 +9121,7 @@ describe("App", () => {
     await waitFor(() => {
       const runtimeContent = within(runtimeGroup as HTMLElement);
       expect(runtimeContent.getByText("Bundled runtime")).toBeInTheDocument();
-      expect(runtimeContent.getByText("0.3.9")).toBeInTheDocument();
+      expect(runtimeContent.getByText("0.3.10")).toBeInTheDocument();
       expect(runtimeContent.getByText("Status")).toBeInTheDocument();
       expect(runtimeContent.getByText("Ready")).toBeInTheDocument();
       expect(runtimeContent.getByText("Current path")).toBeInTheDocument();

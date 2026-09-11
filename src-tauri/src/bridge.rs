@@ -994,7 +994,7 @@ if [ "$1" = "add" ]; then
   printf '{"command":"add","args":"%s %s %s %s %s","received":"%s"}' "$1" "$2" "$3" "$4" "$5" "$secret"
   exit 0
 fi
-printf '{"version":"0.3.9","cli_api_version":1,"json_schema_version":1,"progress_schema_version":1}'
+printf '{"version":"0.3.10","cli_api_version":1,"json_schema_version":1,"progress_schema_version":1}'
 "#,
         );
         let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
@@ -1029,7 +1029,7 @@ if [ "$1" = "add" ]; then
   printf '{"command":"add","args":"%s %s %s %s %s"}' "$1" "$2" "$3" "$4" "$5"
   exit 0
 fi
-printf '{"version":"0.3.9","cli_api_version":1,"json_schema_version":1,"progress_schema_version":1}'
+printf '{"version":"0.3.10","cli_api_version":1,"json_schema_version":1,"progress_schema_version":1}'
 "#,
         );
         let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
@@ -1058,7 +1058,7 @@ if [ "$1" = "add" ]; then
   printf '{"command":"add","args":"%s %s %s %s %s %s %s"}' "$1" "$2" "$3" "$4" "$5" "$6" "$7"
   exit 0
 fi
-printf '{"version":"0.3.9","cli_api_version":1,"json_schema_version":1,"progress_schema_version":1}'
+printf '{"version":"0.3.10","cli_api_version":1,"json_schema_version":1,"progress_schema_version":1}'
 "#,
         );
         let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
@@ -1092,7 +1092,7 @@ if [ "$1" = "add" ]; then
   printf '%s\n' '{"type":"result","seq":4,"command":"add","tool":"claude","profile":"work","ok":true,"result":{"tool":"claude","profile":"work","auth_method":"oauth"}}'
   exit 0
 fi
-printf '{"version":"0.3.9","cli_api_version":1,"json_schema_version":1,"progress_schema_version":1}'
+printf '{"version":"0.3.10","cli_api_version":1,"json_schema_version":1,"progress_schema_version":1}'
 "#,
         );
         let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);
@@ -1143,7 +1143,7 @@ if [ "$1" = "add" ]; then
   printf '%s\n' '{"type":"info","seq":4,"command":"add","tool":"codex","profile":"work","phase":"cleanup","message":"Cleaning up browser session"}'
   exit 0
 fi
-printf '{"version":"0.3.9","cli_api_version":1,"json_schema_version":1,"progress_schema_version":1}'
+printf '{"version":"0.3.10","cli_api_version":1,"json_schema_version":1,"progress_schema_version":1}'
 "#,
         );
         let bridge = CliAiswBridge::new(RuntimeKind::Custom, Some(path), None);

@@ -34,7 +34,7 @@ jobs:
             sidecar_ext: ".exe"
     runs-on: ${{ matrix.platform }}
     env:
-      AISW_VERSION: "0.3.9"
+      AISW_VERSION: "0.3.10"
       AISW_DESKTOP_UPDATER_ENDPOINT_STABLE: ${{ secrets.AISW_DESKTOP_UPDATER_ENDPOINT_STABLE }}
       TAURI_SIGNING_PUBLIC_KEY: ${{ secrets.TAURI_SIGNING_PUBLIC_KEY }}
     steps:
