@@ -146,12 +146,18 @@ npm run configure:release-secrets -- --repo burakdede/aisw-desktop
 
 This helper ensures the `production` GitHub environment exists and then uploads every locally available release secret with `gh secret set --env production`.
 
+The bundled aisw version is pinned by `AISW_VERSION` in both `ci.yml` and `publish.yml`.
+Both workflows download the target asset from the matching `burakdede/aisw` GitHub release and reject it unless it matches the published `.sha256`.
+To adopt a new aisw release, bump `AISW_VERSION` in both files (`npm run verify:release` fails if they differ), then run the contract test against that binary:
+
+```sh
+AISW_CONTRACT_BINARY=/absolute/path/to/aisw cargo test --manifest-path src-tauri/Cargo.toml real_aisw -- --ignored
+```
+
+The test drives the real binary through the desktop bridge inside a throwaway `HOME` and `AISW_HOME`, so it never touches your own accounts. CI runs it on macOS and Linux.
+
 The repository workflow expects these required secrets:
 
-- `AISW_SIDECAR_URL_MACOS_ARM64`
-- `AISW_SIDECAR_URL_MACOS_X64`
-- `AISW_SIDECAR_URL_LINUX_X64`
-- `AISW_SIDECAR_URL_WINDOWS_X64`
 - `AISW_DESKTOP_UPDATER_ENDPOINT_STABLE`
 - `TAURI_SIGNING_PUBLIC_KEY`
 - `TAURI_SIGNING_PRIVATE_KEY`

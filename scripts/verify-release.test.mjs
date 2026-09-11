@@ -113,6 +113,8 @@ function createReleaseFixture(overrides = {}) {
     ".github/workflows/ci.yml",
     overrides.ciWorkflow ??
       `
+env:
+  AISW_VERSION: "0.3.9"
 run: |
   npm test
   npm run test:coverage
@@ -158,10 +160,10 @@ aarch64-apple-darwin
 x86_64-apple-darwin
 x86_64-unknown-linux-gnu
 x86_64-pc-windows-msvc
-AISW_SIDECAR_URL_MACOS_ARM64
-AISW_SIDECAR_URL_MACOS_X64
-AISW_SIDECAR_URL_LINUX_X64
-AISW_SIDECAR_URL_WINDOWS_X64
+AISW_VERSION: "0.3.9"
+base="https://github.com/burakdede/aisw/releases/download/v\${AISW_VERSION}"
+curl -fsSL "$base/$asset.sha256"
+echo "Checksum mismatch for $asset"
 AISW_DESKTOP_UPDATER_ENDPOINT_STABLE
 TAURI_SIGNING_PUBLIC_KEY
 node-version: 20.19.0
@@ -388,9 +390,7 @@ TAURI_SIGNING_PRIVATE_KEY
 aarch64-apple-darwin
 x86_64-apple-darwin
 x86_64-unknown-linux-gnu
-AISW_SIDECAR_URL_MACOS_ARM64
-AISW_SIDECAR_URL_MACOS_X64
-AISW_SIDECAR_URL_LINUX_X64
+curl -L "\${SIDE_CAR_URL}"
 `,
     });
     writeFixture(
@@ -431,7 +431,13 @@ AISW_SIDECAR_URL_LINUX_X64
     );
     expect(result.checks).toContainEqual(
       expect.objectContaining({
-        label: "publish workflow wires target-specific sidecar secrets",
+        label: "publish workflow downloads a pinned, checksum-verified aisw sidecar",
+        ok: false,
+      }),
+    );
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        label: "ci and publish workflows pin the same aisw version",
         ok: false,
       }),
     );
