@@ -90,6 +90,12 @@ cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
 ```
 
+Bridge contract against a real `aisw` binary (runs in a throwaway `HOME`, never touching your own accounts):
+
+```sh
+AISW_CONTRACT_BINARY=/absolute/path/to/aisw cargo test --manifest-path src-tauri/Cargo.toml real_aisw -- --ignored
+```
+
 ## Packaging
 
 Unsigned local smoke bundle:
@@ -104,7 +110,7 @@ Signed release bundle:
 npm run tauri:build
 ```
 
-Before either build, stage the correct [`aisw`](https://github.com/burakdede/aisw) sidecar with `npm run prepare:sidecar`. The repository does not track staged sidecar binaries.
+Before either build, stage the correct [`aisw`](https://github.com/burakdede/aisw) sidecar with `npm run prepare:sidecar`. The repository does not track staged sidecar binaries. CI and release builds download the version pinned by `AISW_VERSION` in `.github/workflows/` and verify its published SHA-256 checksum; see `docs/release-runbook.md` for adopting a new `aisw` release.
 
 ## Repository notes
 
