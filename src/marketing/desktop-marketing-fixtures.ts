@@ -57,7 +57,7 @@ type SnapshotPayloadRecord = NonNullable<AppSnapshot["workspace_status"]>;
 const baseRuntimeStatus: RuntimeStatus = {
   resolved_path: "/Applications/AI Switcher.app/Contents/Resources/aisw",
   version: {
-    version: "0.3.9",
+    version: "0.3.10",
     cli_api_version: 1,
     json_schema_version: 1,
     progress_schema_version: 1,
