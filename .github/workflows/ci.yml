@@ -6,6 +6,9 @@ on:
     branches:
       - main
 
+env:
+  AISW_VERSION: "0.3.9"
+
 jobs:
   smoke:
     strategy:
@@ -71,7 +74,21 @@ jobs:
           esac
 
           mkdir -p "$RUNNER_TEMP/aisw-sidecar"
-          curl -fsSL "https://github.com/burakdede/aisw/releases/download/v0.3.8/$asset" -o "$RUNNER_TEMP/aisw-sidecar/$asset"
+          cd "$RUNNER_TEMP/aisw-sidecar"
+          base="https://github.com/burakdede/aisw/releases/download/v${AISW_VERSION}"
+          curl -fsSL "$base/$asset" -o "$asset"
+          curl -fsSL "$base/$asset.sha256" -o "$asset.sha256"
+          expected="$(awk '{print $1}' "$asset.sha256")"
+          if command -v sha256sum >/dev/null; then
+            actual="$(sha256sum "$asset" | awk '{print $1}')"
+          else
+            actual="$(shasum -a 256 "$asset" | awk '{print $1}')"
+          fi
+          if [ "$expected" != "$actual" ]; then
+            echo "Checksum mismatch for $asset: expected $expected, got $actual" >&2
+            exit 1
+          fi
+          chmod +x "$asset"
           echo "AISW_TARGET_TRIPLE=$target" >> "$GITHUB_ENV"
           echo "AISW_SIDECAR_PATH=$RUNNER_TEMP/aisw-sidecar/$asset" >> "$GITHUB_ENV"
 
@@ -104,3 +121,9 @@ jobs:
           cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
           cargo test --manifest-path src-tauri/Cargo.toml
           cargo check --manifest-path src-tauri/Cargo.toml
+
+      - name: Verify bridge against real aisw
+        if: runner.os != 'Windows'
+        run: cargo test --manifest-path src-tauri/Cargo.toml real_aisw -- --ignored
+        env:
+          AISW_CONTRACT_BINARY: ${{ env.AISW_SIDECAR_PATH }}
