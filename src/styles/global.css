@@ -1653,11 +1653,23 @@ html[data-appearance="dark"] .tool-logo-antigravity {
 
 .onboarding-detection-stack {
   gap: 10px;
+  container-type: inline-size;
 }
 
-.onboarding-account-layout {
+/* Compound selectors: the generic `.desktop-split-view` columns are declared
+   later in this file and would otherwise win, collapsing the list pane to 0px
+   so the detail card paints over it. */
+.desktop-split-view.onboarding-account-layout {
   grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
   align-items: start;
+}
+
+/* The accounts step can sit in a narrow side column on wide windows, where
+   viewport breakpoints never fire. */
+@container (max-width: 700px) {
+  .desktop-split-view.onboarding-account-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .onboarding-account-list-card,
