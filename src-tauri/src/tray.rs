@@ -105,8 +105,13 @@ pub fn build_tray<R: Runtime>(
     let tooltip = tray_status_label(runtime_compatible, snapshot);
 
     let menu = tray_menu(app, settings, snapshot, runtime_compatible)?;
+    let icon = app
+        .default_window_icon()
+        .cloned()
+        .ok_or_else(|| tauri::Error::AssetNotFound("bundled application icon".into()))?;
     Ok(tauri::tray::TrayIconBuilder::with_id(TRAY_ID)
-        .icon_as_template(cfg!(target_os = "macos"))
+        .icon(icon)
+        .icon_as_template(false)
         .menu(&menu)
         .tooltip(tooltip)
         .show_menu_on_left_click(true)
